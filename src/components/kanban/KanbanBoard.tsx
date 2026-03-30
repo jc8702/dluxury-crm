@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 
+export interface KanbanItem {
+  id: string;
+  title: string;
+  subtitle?: string;
   label?: string;
   status: string;
   color?: string;
   dateTime?: string;
   visitFormat?: string;
+  description?: string;
 }
 
 interface KanbanBoardProps {
