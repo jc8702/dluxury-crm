@@ -138,7 +138,7 @@ const Settings: React.FC = () => {
            <div className="card" style={{ borderStyle: 'dotted', background: 'transparent' }}>
               <h3 style={{ fontSize: '1rem', color: 'var(--danger)', marginBottom: '1rem' }}>Informações do Sistema</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Versão: 1.2.1-stable<br/>
+                Versão: 1.2.2-stable<br/>
                 Ambiente: Produção<br/>
                 Última sincronização de preços: Hoje, 08:30
               </p>
