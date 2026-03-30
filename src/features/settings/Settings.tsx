@@ -1,40 +1,76 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 
 const Settings: React.FC = () => {
   const { 
-    taxaFinanceiraPadrao, setTaxaFinanceiraPadrao, 
     monthlyGoals, setMonthlyGoal 
   } = useAppContext();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempGoals, setTempGoals] = useState<Record<string, number>>({});
+
+  // Initialize tempGoals when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setTempGoals({ ...monthlyGoals });
+    }
+  }, [isEditing, monthlyGoals]);
+
+  const handleSave = () => {
+    Object.entries(tempGoals).forEach(([period, amount]) => {
+      if (monthlyGoals[period] !== amount) {
+        setMonthlyGoal(period, amount);
+      }
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header>
         <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Configurações do Sistema</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Gerencie permissões, metas e parâmetros globais de simulação.</p>
+        <p style={{ color: 'var(--text-muted)' }}>Gerencie permissões e metas mensais.</p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className="card">
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Parâmetros de Simulação (Global)</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Taxa Financeira Padrão Mensal (%)</label>
-                <input 
-                  type="number" 
-                  className="input" 
-                  value={taxaFinanceiraPadrao} 
-                  onChange={(e) => setTaxaFinanceiraPadrao(parseFloat(e.target.value) || 0)}
-                  step="0.1"
-                />
-                <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>* Esta taxa será aplicada automaticamente pro-rata no simulador de preços.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.125rem', margin: 0 }}>Gestão de Metas Mensais (2026)</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {!isEditing ? (
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => setIsEditing(true)}
+                    style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    Editar
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      className="btn" 
+                      onClick={handleCancel}
+                      style={{ padding: '0.4rem 1rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)' }}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={handleSave}
+                      style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                    >
+                      Salvar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="card">
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Gestão de Metas Mensais (2026)</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                {[
                  { id: '01', name: 'Janeiro' }, { id: '02', name: 'Fevereiro' },
@@ -45,13 +81,23 @@ const Settings: React.FC = () => {
                  { id: '11', name: 'Novembro' }, { id: '12', name: 'Dezembro' }
                ].map(m => (
                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{m.name}</label>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isEditing ? 'var(--primary)' : 'inherit' }}>{m.name}</label>
                     <input 
                       type="number" 
                       className="input" 
                       placeholder="R$ 0,00"
-                      value={monthlyGoals[`2026-${m.id}`] || ''}
-                      onChange={(e) => setMonthlyGoal(`2026-${m.id}`, parseFloat(e.target.value) || 0)}
+                      value={isEditing ? (tempGoals[`2026-${m.id}`] ?? '') : (monthlyGoals[`2026-${m.id}`] || '')}
+                      onChange={(e) => {
+                        if (isEditing) {
+                          setTempGoals(prev => ({ ...prev, [`2026-${m.id}`]: parseFloat(e.target.value) || 0 }));
+                        }
+                      }}
+                      disabled={!isEditing}
+                      style={{ 
+                        opacity: isEditing ? 1 : 0.7,
+                        cursor: isEditing ? 'text' : 'not-allowed',
+                        borderColor: isEditing ? 'var(--primary)' : 'transparent'
+                      }}
                     />
                  </div>
                ))}

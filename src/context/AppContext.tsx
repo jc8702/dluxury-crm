@@ -107,15 +107,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const [monthlyGoals, setMonthlyGoals] = useState<Record<string, number>>(() => {
-    const saved = localStorage.getItem('monthly_goals');
-    return saved ? JSON.parse(saved) : { '2026-03': 250000 };
-  });
+  const [monthlyGoals, setMonthlyGoals] = useState<Record<string, number>>({});
 
-  const setMonthlyGoal = (period: string, amount: number) => {
-    const newGoals = { ...monthlyGoals, [period]: amount };
-    setMonthlyGoals(newGoals);
-    localStorage.setItem('monthly_goals', JSON.stringify(newGoals));
+  const setMonthlyGoal = async (period: string, amount: number) => {
+    try {
+      await apiService.updateMonthlyGoal(period, amount);
+      setMonthlyGoals(prev => ({ ...prev, [period]: amount }));
+    } catch (error) {
+      console.error('Erro ao salvar meta mensal:', error);
+      // Fallback local em caso de erro na API
+      setMonthlyGoals(prev => ({ ...prev, [period]: amount }));
+    }
   };
 
   // Legacy fallback
@@ -134,11 +136,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const reloadData = useCallback(async () => {
     try {
-      const [clientsData, billingsData, kanbanData] = await Promise.all([
+      const [clientsData, billingsData, kanbanData, goalsData] = await Promise.all([
         apiService.getClients(),
         apiService.getBillings(),
-        apiService.getKanbanItems()
+        apiService.getKanbanItems(),
+        apiService.getMonthlyGoals().catch(() => ({}))
       ]);
+
+      // Migration: If server has no goals but localStorage has them, sync to server
+      if (Object.keys(goalsData).length === 0) {
+        const saved = localStorage.getItem('monthly_goals');
+        if (saved) {
+          const localGoals = JSON.parse(saved);
+          console.log('Migrando metas do localStorage para o Neon...');
+          for (const [period, amount] of Object.entries(localGoals)) {
+            await apiService.updateMonthlyGoal(period, amount as number);
+          }
+          setMonthlyGoals(localGoals);
+          localStorage.removeItem('monthly_goals');
+        } else {
+          setMonthlyGoals(goalsData);
+        }
+      } else {
+        setMonthlyGoals(goalsData);
+      }
 
       // Map Clients (Snake case to Camel case)
       setClients(clientsData.map((c: any) => ({

@@ -48,6 +48,11 @@ export const apiService = {
   getLogs: () => apiService.fetch('/api/logs'),
   addLog: (type: string, severity: string, message: string) => 
     apiService.fetch('/api/logs', { method: 'POST', body: JSON.stringify({ type, severity, message }) }),
+
+  // Monthly Goals
+  getMonthlyGoals: () => apiService.fetch('/api/goals'),
+  updateMonthlyGoal: (period: string, amount: number) => 
+    apiService.fetch('/api/goals', { method: 'POST', body: JSON.stringify({ period, amount }) }),
 };
 
 export const setAppPin = (pin: string) => sessionStorage.setItem('app_pin', pin);

@@ -51,6 +51,15 @@ CREATE TABLE system_logs (
 INSERT INTO clients (razao_social, cnpj, historico) VALUES ('MUELLER S/A', '12.345.678/0001-90', 'Cliente Premium');
 INSERT INTO kanban_items (title, subtitle, status, type) VALUES ('Implementação API', 'Metalúrgica Silva', 'prospeccao', 'project');
 
+-- 5. Monthly Goals (Strategic Planning)
+CREATE TABLE IF NOT EXISTS monthly_goals (
+    period TEXT PRIMARY KEY, -- 'YYYY-MM'
+    amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO monthly_goals (period, amount) VALUES ('2026-03', 250000) ON CONFLICT DO NOTHING;
+
 -- 6. Expansão de Clientes (Cartão CNPJ)
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS nome_fantasia TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS porte TEXT;
