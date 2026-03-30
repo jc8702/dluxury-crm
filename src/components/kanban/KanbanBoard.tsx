@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 
-export interface KanbanItem {
-  id: string;
-  title: string;
-  subtitle?: string;
   label?: string;
   status: string;
   color?: string;
+  dateTime?: string;
+  visitFormat?: string;
 }
 
 interface KanbanBoardProps {
   items: KanbanItem[];
   columns: { id: string; title: string }[];
   onMove: (id: string, newStatus: string) => void;
+  onEdit?: (item: KanbanItem) => void;
 }
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove }) => {
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit }) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const handleDragStart = (id: string) => {
@@ -77,10 +76,42 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove }) => 
                   opacity: draggedId === item.id ? 0.4 : 1
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>{item.title}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1 }}>{item.title}</p>
+                    {onEdit && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+                        style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                      >
+                        Editar
+                      </button>
+                    )}
+                  </div>
                   {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
-                  {item.label && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{item.label}</div>}
+                  
+                  {item.dateTime && (
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      📅 {new Date(item.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </div>
+                  )}
+
+                  {item.visitFormat && (
+                    <div style={{ 
+                      fontSize: '0.6rem', 
+                      background: item.visitFormat === 'Presencial' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(52, 115, 255, 0.1)',
+                      color: item.visitFormat === 'Presencial' ? '#10b981' : 'var(--primary)',
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      width: 'fit-content',
+                      marginTop: '0.25rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {item.visitFormat}
+                    </div>
+                  )}
+
+                  {item.label && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>{item.label}</div>}
                 </div>
               </div>
             ))}

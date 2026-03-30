@@ -57,6 +57,9 @@ export default async function handler(req: any, res: any) {
         label TEXT,
         status TEXT NOT NULL,
         type TEXT NOT NULL,
+        date_time TIMESTAMP WITH TIME ZONE,
+        visit_format TEXT,
+        description TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )

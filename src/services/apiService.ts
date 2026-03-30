@@ -41,8 +41,8 @@ export const apiService = {
   // Kanban
   getKanbanItems: () => apiService.fetch('/api/kanban'),
   addKanbanItem: (data: any) => apiService.fetch('/api/kanban', { method: 'POST', body: JSON.stringify(data) }),
-  updateKanbanStatus: (id: string, status: string) => 
-    apiService.fetch(`/api/kanban?id=${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  updateKanbanStatus: (id: string, status: string, extraData: any = {}) => 
+    apiService.fetch(`/api/kanban?id=${id}`, { method: 'PATCH', body: JSON.stringify({ status, ...extraData }) }),
 
   // Logs
   getLogs: () => apiService.fetch('/api/logs'),

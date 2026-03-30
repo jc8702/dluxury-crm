@@ -11,6 +11,7 @@ const PriceSimulator: React.FC = () => {
   const [basePrice, setBasePrice] = useState<string>('');
   const [prazoDias, setPrazoDias] = useState<number>(0);
   const [valorSubsidio, setValorSubsidio] = useState<number>(0);
+  const [custoFinanceiroPct, setCustoFinanceiroPct] = useState<number>(taxaFinanceiraPadrao);
   const [showSalesforceModal, setShowSalesforceModal] = useState(false);
   const [syncStatus, setSyncStatus] = useState<{ loading: boolean; message: string; success?: boolean; degraded?: boolean } | null>(null);
 
@@ -30,7 +31,7 @@ const PriceSimulator: React.FC = () => {
   const simulationResults = useMemo(() => {
     if (!selectedProduct || !basePrice) return null;
     const valBase = parseFloat(basePrice);
-    const taxaDiaria = (taxaFinanceiraPadrao / 100) / 30;
+    const taxaDiaria = (custoFinanceiroPct / 100) / 30;
     const custoFinanceiroPrazo = valBase * (taxaDiaria * prazoDias);
     const margemSimuladaFinal = valBase + custoFinanceiroPrazo - valorSubsidio;
     const minPermitido = useBureau ? selectedProduct.minComBureau : selectedProduct.minSemBureau;
@@ -118,8 +119,18 @@ const PriceSimulator: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input type="number" className="input" placeholder="Preço Base (A vista)" value={basePrice} onChange={e => setBasePrice(e.target.value)} />
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <input type="number" className="input" placeholder="Prazo (Dias)" value={prazoDias} onChange={e => setPrazoDias(parseInt(e.target.value) || 0)} />
-                  <input type="number" className="input" placeholder="Subsídio (R$)" value={valorSubsidio} onChange={e => setValorSubsidio(parseFloat(e.target.value) || 0)} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: '600' }}>Prazo (Dias)</label>
+                    <input type="number" className="input" placeholder="Dias" value={prazoDias} onChange={e => setPrazoDias(parseInt(e.target.value) || 0)} />
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: '600' }}>Subsídio (R$)</label>
+                    <input type="number" className="input" placeholder="Subsídio" value={valorSubsidio} onChange={e => setValorSubsidio(parseFloat(e.target.value) || 0)} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                   <label style={{ fontSize: '0.75rem', fontWeight: '600' }}>Custo Financeiro (% ao mês)</label>
+                   <input type="number" className="input" step="0.01" value={custoFinanceiroPct} onChange={e => setCustoFinanceiroPct(parseFloat(e.target.value) || 0)} />
                 </div>
               </div>
             </div>

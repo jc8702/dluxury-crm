@@ -46,7 +46,17 @@ export type Billing = {
   data: string; 
   status: 'FATURADO' | 'PENDENTE' | 'CANCELADO';
 };
-export type KanbanItem = { id: string; title: string; subtitle?: string; label?: string; status: string; type: 'project' | 'visit'; };
+export type KanbanItem = { 
+  id: string; 
+  title: string; 
+  subtitle?: string; 
+  label?: string; 
+  status: string; 
+  type: 'project' | 'visit';
+  dateTime?: string;
+  visitFormat?: 'Presencial' | 'Online';
+  description?: string;
+};
 export type OfflineSync = { id: string; data: any; timestamp: string; status: 'PENDING' | 'SYNCED' | 'FAILED'; };
 
 export type SystemLog = {
@@ -92,6 +102,7 @@ interface AppContextType {
   totalPedidosCarteira: number;
   yearlyEvolutionData: any[];
   reloadData: () => Promise<void>;
+  updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
   currentMeta: number;
   totalPeriodo: number;
 }
@@ -223,8 +234,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         razaoSocial: c.razao_social || c.razaoSocial || '',
         nomeFantasia: c.nome_fantasia || c.nomeFantasia || '',
         porte: c.porte ?? '',
-// ... (rest updated)
-        frequenciaCompra: c.frequencia_compra || c.frequenciaCompra || '',
+        dataAbertura: c.data_abertura || c.dataAbertura || '',
+        cnaePrincipal: c.cnae_principal || c.cnaePrincipal || '',
+        cnaeSecundario: c.cnae_secundario || c.cnaeSecundario || '',
+        naturezaJuridica: c.natureza_juridica || c.naturezaJuridica || '',
+        logradouro: c.logradouro || c.logradouro || '',
+        numero: c.numero || c.numero || '',
+        complemento: c.complemento || c.complemento || '',
+        cep: c.cep || c.cep || '',
+        bairro: c.bairro || c.bairro || '',
+        municipio: c.municipio || c.municipio || '',
+        uf: c.uf || c.uf || '',
+        email: c.email || c.email || '',
+        telefone: c.telefone || c.telefone || '',
+        situacaoCadastral: c.situacao_cadastral || c.situacaoCadastral || 'ATIVA',
+        dataSituacaoCadastral: c.data_situacao_cadastral || c.dataSituacaoCadastral || '',
+        motivoSituacao: c.motivo_situacao || c.motivoSituacao || '',
+        codigoErp: c.codigo_erp || c.codigoErp || '',
+        historico: c.historico || c.historico || '',
+        frequenciaCompra: c.frequencia_compra || c.frequenciaCompra || 'Mensal',
       })));
 
       setBillings(finalBillings.map((b: any) => ({ 
@@ -234,7 +262,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: b.status || 'FATURADO'
       })));
       
-      const kItems = finalKanban.map((k: any) => ({ ...k, id: k.id?.toString() || Math.random().toString() }));
+      const kItems = finalKanban.map((k: any) => ({ 
+        ...k, 
+        id: k.id?.toString() || Math.random().toString(),
+        dateTime: k.date_time || k.dateTime,
+        visitFormat: k.visit_format || k.visitFormat,
+        description: k.description
+      }));
       setProjects(kItems.filter((i: any) => (i.type || i.type_kanban) === 'project'));
       setVisits(kItems.filter((i: any) => (i.type || i.type_kanban) === 'visit'));
 
@@ -516,7 +550,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addKanbanItem = async (data: any) => {
     const saved = await apiService.addKanbanItem(data);
     const setter = data.type === 'project' ? setProjects : setVisits;
-    setter((prev: KanbanItem[]) => [...prev, { ...saved, id: saved.id.toString() }]);
+    setter((prev: KanbanItem[]) => [...prev, { 
+      ...saved, 
+      id: saved.id.toString(),
+      dateTime: saved.date_time || saved.dateTime,
+      visitFormat: saved.visit_format || saved.visitFormat
+    }]);
+  };
+
+  const updateKanbanItem = async (id: string, data: Partial<KanbanItem>) => {
+    const saved = await apiService.updateKanbanStatus(id, data.status!, {
+      title: data.title,
+      subtitle: data.subtitle,
+      label: data.label,
+      date_time: data.dateTime,
+      visit_format: data.visitFormat,
+      description: data.description
+    });
+    setProjects((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
+    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
   };
 
   return (
@@ -525,7 +577,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       metaMensal, setMetaMensal, monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       clients, billings, projects, visits, syncQueue, isCircuitOpen,
       systemLogs, isAdmin, setIsAdmin, addLog,
-      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, syncToSalesforce,
+      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, syncToSalesforce,
       totalFaturadoMes, totalPedidosCarteira, yearlyEvolutionData, currentMeta, totalPeriodo, reloadData
     }}>
       {children}

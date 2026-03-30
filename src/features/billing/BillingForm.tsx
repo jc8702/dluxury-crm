@@ -55,7 +55,7 @@ const BillingModule: React.FC = () => {
       : b.data.startsWith(selectedMonth);
 
     return matchesStatus && matchesSearch && matchesPeriod;
-  });
+  }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
   // Pagination Logic
   const itemsPerPage = 10;
@@ -309,6 +309,11 @@ const BillingModule: React.FC = () => {
                <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Data</label>
                <input type="date" className="input" required value={formData.data} onChange={e => setFormData({ ...formData, data: e.target.value })} />
             </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+             <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Código ERP</label>
+             <input className="input" placeholder="Opcional" value={formData.erp} onChange={e => setFormData({ ...formData, erp: e.target.value })} />
           </div>
 
 
