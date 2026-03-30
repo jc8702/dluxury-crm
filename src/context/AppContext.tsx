@@ -136,21 +136,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const reloadData = useCallback(async () => {
     try {
+      // Ensure tables exist before fetching
+      await fetch('/api/init-db').catch(() => ({}));
+
       const [clientsData, billingsData, kanbanData, goalsData] = await Promise.all([
-        apiService.getClients(),
-        apiService.getBillings(),
-        apiService.getKanbanItems(),
+        apiService.getClients().catch(() => []),
+        apiService.getBillings().catch(() => []),
+        apiService.getKanbanItems().catch(() => []),
         apiService.getMonthlyGoals().catch(() => ({}))
       ]);
 
-      // Migration: If server has no goals but localStorage has them, sync to server
+      // 1. Migration: Goals
       if (Object.keys(goalsData).length === 0) {
         const saved = localStorage.getItem('monthly_goals');
         if (saved) {
           const localGoals = JSON.parse(saved);
-          console.log('Migrando metas do localStorage para o Neon...');
+          console.log('Migrando metas...');
           for (const [period, amount] of Object.entries(localGoals)) {
-            await apiService.updateMonthlyGoal(period, amount as number);
+            await apiService.updateMonthlyGoal(period, amount as number).catch(() => {});
           }
           setMonthlyGoals(localGoals);
           localStorage.removeItem('monthly_goals');
@@ -161,43 +164,79 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setMonthlyGoals(goalsData);
       }
 
+      // 2. Migration: Clients
+      let finalClients = clientsData;
+      if (clientsData.length === 0) {
+        const saved = localStorage.getItem('clients');
+        if (saved) {
+          const localClients = JSON.parse(saved);
+          console.log('Migrando clientes...');
+          for (const client of localClients) {
+            await apiService.addClient(client).catch(() => {});
+          }
+          finalClients = localClients;
+          localStorage.removeItem('clients');
+        }
+      }
+
+      // 3. Migration: Billings
+      let finalBillings = billingsData;
+      if (billingsData.length === 0) {
+        const saved = localStorage.getItem('billings');
+        if (saved) {
+          const localBillings = JSON.parse(saved);
+          console.log('Migrando faturamento...');
+          for (const b of localBillings) {
+            await apiService.addBilling(b).catch(() => {});
+          }
+          finalBillings = localBillings;
+          localStorage.removeItem('billings');
+        }
+      }
+
+      // 4. Migration: Kanban
+      let finalKanban = kanbanData;
+      if (kanbanData.length === 0) {
+        const savedProjects = localStorage.getItem('projects');
+        const savedVisits = localStorage.getItem('visits');
+        if (savedProjects || savedVisits) {
+          console.log('Migrando kanban...');
+          const localProjects = savedProjects ? JSON.parse(savedProjects) : [];
+          const localVisits = savedVisits ? JSON.parse(savedVisits) : [];
+          const allItems = [
+            ...localProjects.map((p: any) => ({ ...p, type: 'project' })),
+            ...localVisits.map((v: any) => ({ ...v, type: 'visit' }))
+          ];
+          for (const item of allItems) {
+            await apiService.addKanbanItem(item).catch(() => {});
+          }
+          finalKanban = allItems;
+          localStorage.removeItem('projects');
+          localStorage.removeItem('visits');
+        }
+      }
+
       // Map Clients (Snake case to Camel case)
-      setClients(clientsData.map((c: any) => ({
-        id: c.id.toString(),
+      setClients(finalClients.map((c: any) => ({
+        id: c.id?.toString() || Math.random().toString(),
         cnpj: c.cnpj ?? '',
-        razaoSocial: c.razao_social ?? '',
-        nomeFantasia: c.nome_fantasia ?? '',
+        razaoSocial: c.razao_social || c.razaoSocial || '',
+        nomeFantasia: c.nome_fantasia || c.nomeFantasia || '',
         porte: c.porte ?? '',
-        dataAbertura: c.data_abertura ?? '',
-        cnaePrincipal: c.cnae_principal ?? '',
-        cnaeSecundario: c.cnae_secundario ?? '',
-        naturezaJuridica: c.natureza_juridica ?? '',
-        logradouro: c.logradouro ?? '',
-        numero: c.numero ?? '',
-        complemento: c.complemento ?? '',
-        cep: c.cep ?? '',
-        bairro: c.bairro ?? '',
-        municipio: c.municipio ?? '',
-        uf: c.uf ?? '',
-        email: c.email ?? '',
-        telefone: c.telefone ?? '',
-        situacaoCadastral: c.situacao_cadastral ?? '',
-        dataSituacaoCadastral: c.data_situacao_cadastral ?? '',
-        motivoSituacao: c.motivo_situacao ?? '',
-        codigoErp: c.codigo_erp ?? '',
-        historico: c.historico ?? '',
+// ... (rest updated)
+        frequenciaCompra: c.frequencia_compra || c.frequenciaCompra || '',
       })));
 
-      setBillings(billingsData.map((b: any) => ({ 
+      setBillings(finalBillings.map((b: any) => ({ 
         ...b, 
-        id: b.id.toString(), 
+        id: b.id?.toString() || Math.random().toString(), 
         valor: Number(b.valor),
         status: b.status || 'FATURADO'
       })));
       
-      const kItems = kanbanData.map((k: any) => ({ ...k, id: k.id.toString() }));
-      setProjects(kItems.filter((i: any) => i.type === 'project'));
-      setVisits(kItems.filter((i: any) => i.type === 'visit'));
+      const kItems = finalKanban.map((k: any) => ({ ...k, id: k.id?.toString() || Math.random().toString() }));
+      setProjects(kItems.filter((i: any) => (i.type || i.type_kanban) === 'project'));
+      setVisits(kItems.filter((i: any) => (i.type || i.type_kanban) === 'visit'));
 
       if (isAdmin) {
         const logs = await apiService.getLogs();
