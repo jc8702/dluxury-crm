@@ -5,17 +5,20 @@ import Clients from './features/clients/Clients';
 import BillingForm from './features/billing/BillingForm';
 import ProjectKanban from './features/projects/ProjectKanban';
 import VisitKanban from './features/visits/VisitKanban';
-import PriceSimulator from './features/simulator/PriceSimulator';
+import { SimulatorPage } from './features/simulator/SimulatorPage';
 import Settings from './features/settings/Settings';
 import SystemHealth from './features/admin/SystemHealth';
 import { AppProvider } from './context/AppContext';
+import { SimulationProvider } from './context/simulator/SimulationContext';
 
 type Tab = 'dashboard' | 'clients' | 'billing' | 'projects' | 'visits' | 'simulator' | 'settings' | 'system-health';
 
 function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <SimulationProvider>
+        <AppContent />
+      </SimulationProvider>
     </AppProvider>
   );
 }
@@ -36,7 +39,7 @@ function AppContent() {
       case 'visits':
         return <VisitKanban />;
       case 'simulator':
-        return <PriceSimulator />;
+        return <SimulatorPage />;
       case 'settings':
         return <Settings />;
       case 'system-health':
