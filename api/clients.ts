@@ -6,7 +6,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'GET') {
     try {
-      const result = await sql`SELECT * FROM clients ORDER BY razao_social ASC`;
+      const result = await sql`SELECT * FROM clients ORDER BY created_at DESC`;
       return res.status(200).json(result);
     } catch (e: any) {
       return res.status(500).json({ error: e.message });
@@ -15,28 +15,29 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     const { 
-      razaoSocial, cnpj, nomeFantasia, porte, dataAbertura, 
-      cnaePrincipal, cnaeSecundario, naturezaJuridica,
-      logradouro, numero, complemento, cep, bairro, municipio, uf,
-      email, telefone, situacaoCadastral, dataSituacaoCadastral, motivoSituacao,
-      codigoErp, historico, frequenciaCompra 
+      nome, cpf, telefone, email, endereco, bairro, cidade, uf,
+      tipo_imovel, comodos_interesse, origem, observacoes, status,
+      razao_social // do fallback do front
     } = req.body;
+
+    const safeRazao = razao_social || nome || 'Sem Nome';
+    const safeCnpj = cpf || '';
+    const safeCadastro = status === 'ativo' ? 'ATIVA' : 'INATIVA';
+    const comodosStr = Array.isArray(comodos_interesse) ? comodos_interesse.join(', ') : (comodos_interesse || '');
 
     try {
       const result = await sql`
         INSERT INTO clients (
-          razao_social, cnpj, nome_fantasia, porte, data_abertura,
-          cnae_principal, cnae_secundario, natureza_juridica,
-          logradouro, numero, complemento, cep, bairro, municipio, uf,
-          email, telefone, situacao_cadastral, data_situacao_cadastral, motivo_situacao,
-          codigo_erp, historico, frequencia_compra
+          nome, cpf, telefone, email, endereco, bairro, cidade, uf,
+          tipo_imovel, comodos_interesse, origem, observacoes, status,
+          razao_social, cnpj, logradouro, municipio, situacao_cadastral
         )
         VALUES (
-          ${razaoSocial}, ${cnpj}, ${nomeFantasia}, ${porte}, ${dataAbertura},
-          ${cnaePrincipal}, ${cnaeSecundario}, ${naturezaJuridica},
-          ${logradouro}, ${numero}, ${complemento}, ${cep}, ${bairro}, ${municipio}, ${uf},
-          ${email}, ${telefone}, ${situacaoCadastral}, ${dataSituacaoCadastral}, ${motivoSituacao},
-          ${codigoErp}, ${historico}, ${frequenciaCompra}
+          ${nome || null}, ${cpf || null}, ${telefone || null}, ${email || null}, 
+          ${endereco || null}, ${bairro || null}, ${cidade || null}, ${uf || null},
+          ${tipo_imovel || null}, ${comodosStr || null}, ${origem || null}, 
+          ${observacoes || null}, ${status || 'ativo'},
+          ${safeRazao}, ${safeCnpj}, ${endereco || null}, ${cidade || null}, ${safeCadastro}
         )
         RETURNING *
       `;
@@ -49,26 +50,31 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'PATCH') {
     const { id } = req.query;
     const { 
-      razaoSocial, cnpj, nomeFantasia, porte, dataAbertura, 
-      cnaePrincipal, cnaeSecundario, naturezaJuridica,
-      logradouro, numero, complemento, cep, bairro, municipio, uf,
-      email, telefone, situacaoCadastral, dataSituacaoCadastral, motivoSituacao,
-      codigoErp, historico, frequenciaCompra 
+      nome, cpf, telefone, email, endereco, bairro, cidade, uf,
+      tipo_imovel, comodos_interesse, origem, observacoes, status,
+      razao_social
     } = req.body;
+
+    const safeRazao = razao_social || nome;
+    const comodosStr = Array.isArray(comodos_interesse) ? comodos_interesse.join(', ') : (comodos_interesse || null);
 
     try {
       const result = await sql`
         UPDATE clients SET
-          razao_social = ${razaoSocial}, cnpj = ${cnpj}, nome_fantasia = ${nomeFantasia}, 
-          porte = ${porte}, data_abertura = ${dataAbertura},
-          cnae_principal = ${cnaePrincipal}, cnae_secundario = ${cnaeSecundario}, 
-          natureza_juridica = ${naturezaJuridica},
-          logradouro = ${logradouro}, numero = ${numero}, complemento = ${complemento}, 
-          cep = ${cep}, bairro = ${bairro}, municipio = ${municipio}, uf = ${uf},
-          email = ${email}, telefone = ${telefone}, 
-          situacao_cadastral = ${situacaoCadastral}, data_situacao_cadastral = ${dataSituacaoCadastral}, 
-          motivo_situacao = ${motivoSituacao},
-          codigo_erp = ${codigoErp}, historico = ${historico}, frequencia_compra = ${frequenciaCompra}
+          nome = COALESCE(${nome || null}, nome),
+          cpf = COALESCE(${cpf || null}, cpf),
+          telefone = COALESCE(${telefone || null}, telefone),
+          email = COALESCE(${email || null}, email),
+          endereco = COALESCE(${endereco || null}, endereco),
+          bairro = COALESCE(${bairro || null}, bairro),
+          cidade = COALESCE(${cidade || null}, cidade),
+          uf = COALESCE(${uf || null}, uf),
+          tipo_imovel = COALESCE(${tipo_imovel || null}, tipo_imovel),
+          comodos_interesse = COALESCE(${comodosStr}, comodos_interesse),
+          origem = COALESCE(${origem || null}, origem),
+          observacoes = COALESCE(${observacoes || null}, observacoes),
+          status = COALESCE(${status || null}, status),
+          razao_social = COALESCE(${safeRazao || null}, razao_social)
         WHERE id = ${id}
         RETURNING *
       `;
@@ -88,6 +94,6 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-  res.status(405).end(`Method ${req.method} Not Allowed`);
+  res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE']);
+  res.status(405).end('Method Not Allowed');
 }
