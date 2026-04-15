@@ -38,8 +38,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 100,
     }}>
-      <div style={{ marginBottom: '2rem', padding: '0 0.75rem', overflow: 'hidden' }}>
-        <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ marginBottom: '2rem', padding: '0.5rem 0.75rem' }}>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <img src="/logo.png" alt="D'Luxury Logo" style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
           <span className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em' }}>D'LUXURY</span>
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ADMIN MODE</span>
             <input type="checkbox" checked={isAdmin} onChange={e => setIsAdmin(e.target.checked)} />
          </div>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <img src="/logo.png" alt="Admin" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
             <div className="sidebar-label">
               <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Admin</p>
