@@ -10,6 +10,44 @@ const Settings: React.FC = () => {
   const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
   const [profileMsg, setProfileMsg] = useState('');
 
+  // Gestão de Usuários
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userError, setUserError] = useState('');
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'vendedor' as const });
+
+  useEffect(() => {
+    loadSystemUsers();
+  }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserError('');
+    try {
+      await apiService.registerUser(newUser);
+      await loadSystemUsers();
+      setShowUserModal(false);
+      setNewUser({ name: '', email: '', password: '', role: 'vendedor' });
+    } catch (err: any) {
+      setUserError(err.message || 'Erro ao registrar usuário');
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (confirm('Tem certeza que deseja remover este acesso?')) {
+      try {
+        await apiService.removeUser(id);
+        await loadSystemUsers();
+      } catch (err: any) {
+        alert(err.message || 'Erro ao remover usuário');
+      }
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none',
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMsg('');
