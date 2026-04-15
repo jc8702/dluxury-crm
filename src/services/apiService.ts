@@ -1,21 +1,33 @@
 /**
  * API SERVICE — D'LUXURY AMBIENTES CRM
- * Centralized fetch wrapper.
+ * Centralized fetch wrapper com suporte JWT.
  */
 
-const getPin = () => sessionStorage.getItem('app_pin') || '';
+const getToken = () => localStorage.getItem('dluxury_token') || '';
 
 export const apiService = {
   async fetch(endpoint: string, options: RequestInit = {}) {
-    const headers = {
+    // Add JWT Token to Authorization header
+    const token = getToken();
+    const headers: any = {
       'Content-Type': 'application/json',
-      'x-pin-auth': getPin(),
       ...options.headers,
     };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(endpoint, { ...options, headers });
 
     if (!response.ok) {
+      // Allow components to handle 401 specifically if needed
+      if (response.status === 401) {
+         if (typeof window !== 'undefined' && endpoint !== '/api/auth?action=me' && endpoint !== '/api/auth?action=login') {
+            // Emissão global para logout ou redirecionamento pode ser adicionada aqui
+            console.error('Session expired');
+         }
+      }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
@@ -23,6 +35,10 @@ export const apiService = {
     if (response.status === 204) return null;
     return response.json();
   },
+
+  // Auth
+  login: (credentials: any) => apiService.fetch('/api/auth?action=login', { method: 'POST', body: JSON.stringify(credentials) }),
+  checkSession: () => apiService.fetch('/api/auth?action=me'),
 
   // Clients
   getClients: () => apiService.fetch('/api/clients'),
@@ -64,5 +80,6 @@ export const apiService = {
     apiService.fetch('/api/goals', { method: 'POST', body: JSON.stringify({ period, amount }) }),
 };
 
-export const setAppPin = (pin: string) => sessionStorage.setItem('app_pin', pin);
-export const hasAppPin = () => !!sessionStorage.getItem('app_pin');
+export const setAuthToken = (token: string) => localStorage.setItem('dluxury_token', token);
+export const removeAuthToken = () => localStorage.removeItem('dluxury_token');
+export const hasAuthToken = () => !!localStorage.getItem('dluxury_token');

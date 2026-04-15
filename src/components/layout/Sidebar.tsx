@@ -9,20 +9,22 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { isAdmin, setIsAdmin } = useAppContext();
+  const { user, logout } = useAppContext();
   
-  const menuItems: { id: Tab; label: string; icon: string; adminOnly?: boolean }[] = [
-    { id: 'dashboard', label: 'Painel Geral', icon: '📊' },
-    { id: 'clients', label: 'Clientes', icon: '👤' },
-    { id: 'estimates', label: 'Orçamentos', icon: '📐' },
-    { id: 'projects', label: 'Projetos', icon: '📋' },
-    { id: 'production', label: 'Produção', icon: '🔨' },
-    { id: 'visits', label: 'Visitas', icon: '🗓️' },
-    { id: 'inventory', label: 'Estoque', icon: '🪵' },
-    { id: 'finance', label: 'Financeiro', icon: '💰' },
-    { id: 'settings', label: 'Configurações', icon: '⚙️' },
-    { id: 'system-health', label: 'System Health', icon: '🏥', adminOnly: true },
+  const menuItems: { id: Tab; label: string; icon: string; roles: string[] }[] = [
+    { id: 'dashboard', label: 'Painel Geral', icon: '📊', roles: ['admin', 'vendedor'] },
+    { id: 'clients', label: 'Clientes', icon: '👤', roles: ['admin', 'vendedor'] },
+    { id: 'estimates', label: 'Orçamentos', icon: '📐', roles: ['admin', 'vendedor'] },
+    { id: 'projects', label: 'Projetos', icon: '📋', roles: ['admin', 'vendedor'] },
+    { id: 'production', label: 'Produção', icon: '🔨', roles: ['admin', 'marceneiro'] },
+    { id: 'visits', label: 'Visitas', icon: '🗓️', roles: ['admin', 'vendedor'] },
+    { id: 'inventory', label: 'Estoque', icon: '🪵', roles: ['admin', 'marceneiro'] },
+    { id: 'finance', label: 'Financeiro', icon: '💰', roles: ['admin'] },
+    { id: 'settings', label: 'Configurações', icon: '⚙️', roles: ['admin'] },
+    { id: 'system-health', label: 'System Health', icon: '🏥', roles: ['admin'] },
   ];
+
+  const visibleMenuItems = menuItems.filter(item => user && item.roles.includes(user.role));
 
   return (
     <aside style={{
@@ -49,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       </div>
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {menuItems.filter(i => !i.adminOnly || isAdmin).map((item) => (
+        {visibleMenuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
@@ -75,17 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       </nav>
 
       <div style={{ padding: '1rem 0.5rem', borderTop: '1px solid var(--border)' }}>
-         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ADMIN MODE</span>
-            <input type="checkbox" checked={isAdmin} onChange={e => setIsAdmin(e.target.checked)} />
-         </div>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img src="/logo.png" alt="Admin" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
-            <div className="sidebar-label">
-              <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Admin</p>
-              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>D'Luxury Ambientes</p>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#d4af37', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+              {user?.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="sidebar-label" style={{ flex: 1 }}>
+              <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>{user?.name}</p>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role}</p>
             </div>
          </div>
+         <button 
+           onClick={logout}
+           className="sidebar-label"
+           style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', textAlign: 'center' }}
+         >
+           Sair
+         </button>
       </div>
       
       <style>{`

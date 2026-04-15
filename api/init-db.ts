@@ -1,4 +1,5 @@
 import { sql } from './lib/_db.js';
+import bcrypt from 'bcryptjs';
 
 export default async function handler(req: any, res: any) {
   try {
@@ -151,6 +152,32 @@ export default async function handler(req: any, res: any) {
 
     for (const m of migrations) {
       await sql(m).catch(() => {});
+    }
+
+    // 7. Users Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Initialize Default Admin if users table is empty
+    const usersCountRes = await sql`SELECT count(*) as count FROM users`;
+    const usersCount = parseInt(usersCountRes[0].count, 10);
+    
+    if (usersCount === 0) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash('admin123', salt);
+      await sql`
+        INSERT INTO users (name, email, password_hash, role)
+        VALUES ('Administrador', 'admin@dluxury.com', ${hash}, 'admin')
+      `;
+      console.log('Default admin created: admin@dluxury.com / admin123');
     }
 
     return res.status(200).json({ success: true, message: 'D\'Luxury CRM database initialized' });

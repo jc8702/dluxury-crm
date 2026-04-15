@@ -9,8 +9,9 @@ import VisitKanban from './features/visits/VisitKanban';
 import Inventory from './features/inventory/Inventory';
 import Settings from './features/settings/Settings';
 import SystemHealth from './features/admin/SystemHealth';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, useAppContext } from './context/AppContext';
 import BillingForm from './features/billing/BillingForm';
+import Login from './features/auth/Login';
 
 type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings' | 'system-health';
 
@@ -23,7 +24,12 @@ function App() {
 }
 
 function AppContent() {
+  const { user } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+
+  if (!user) {
+    return <Login />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {

@@ -6,8 +6,30 @@ if (!process.env.DATABASE_URL) {
 
 export const sql = neon(process.env.DATABASE_URL);
 
-// Simple PIN Auth Helper - DISABLED for easier testing as requested
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.VITE_SUPABASE_ANON_KEY || 'dluxury-secret-key-2024';
+
+export const extractAndVerifyToken = (req: any) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { user: null, error: 'Token não fornecido ou inválido' };
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    
+    return { user: decoded, error: null };
+  } catch (e: any) {
+    return { user: null, error: 'Sessão expirada ou inválida' };
+  }
+};
+
 export const validateAuth = (req: any) => {
-  // Retorna sempre autorizado para evitar bloqueios durante o desenvolvimento
-  return { authorized: true, error: null as string | null };
+  const { user, error } = extractAndVerifyToken(req);
+  if (error) {
+    return { authorized: false, error };
+  }
+  return { authorized: true, user, error: null };
 };

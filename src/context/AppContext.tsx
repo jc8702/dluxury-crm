@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
-import { apiService, hasAppPin } from '../services/apiService';
+import { apiService } from '../services/apiService';
 
 // ─── TIPOS ────────────────────────────────────────────────
 
@@ -94,9 +94,23 @@ export type SystemLog = {
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
 };
 
+export type Role = 'admin' | 'vendedor' | 'marceneiro';
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+};
+
 // ─── CONTEXTO ─────────────────────────────────────────────
 
 interface AppContextType {
+  // Auth
+  user: User | null;
+  setUser: (user: User | null) => void;
+  logout: () => void;
+
   // Clients PF
   clients: Client[];
   addClient: (client: Omit<Client, 'id'>) => Promise<void>;
@@ -136,8 +150,6 @@ interface AppContextType {
 
   // Admin
   systemLogs: SystemLog[];
-  isAdmin: boolean;
-  setIsAdmin: (val: boolean) => void;
   addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 
   // General
@@ -149,6 +161,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // ─── STATE ─────────────────────────────────────────────
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [billings, setBillings] = useState<Billing[]>([]);
@@ -162,7 +177,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Admin & Health
   const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
-  const [isAdmin, setIsAdmin] = useState(hasAppPin());
+
+  // ─── AUTHENTICATION ────────────────────────────────────
+  const logout = () => {
+    import('../services/apiService').then(({ removeAuthToken }) => removeAuthToken());
+    setUser(null);
+  };
 
   // ─── GOALS ─────────────────────────────────────────────
   const setMonthlyGoal = async (period: string, amount: number) => {
@@ -180,6 +200,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── DATA LOADING ──────────────────────────────────────
   const reloadData = useCallback(async () => {
+    if (!user) return;
     try {
       await fetch('/api/init-db').catch(() => ({}));
 
@@ -253,7 +274,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         observacoes: p.observations || '',
       })));
 
-      if (isAdmin) {
+      if (user?.role === 'admin') {
         const logs = await apiService.getLogs();
         setSystemLogs(logs.map((l: any) => ({
           ...l,
@@ -264,11 +285,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error('Falha ao carregar dados do CRM:', error);
     }
-  }, [isAdmin]);
+  }, [user]);
 
   useEffect(() => {
-    reloadData();
-  }, [reloadData]);
+    import('../services/apiService').then(async ({ apiService, hasAuthToken }) => {
+      if (hasAuthToken()) {
+        try {
+          const res = await apiService.checkSession();
+          setUser(res.user);
+        } catch {
+          import('../services/apiService').then(({ removeAuthToken }) => removeAuthToken());
+          setUser(null);
+        }
+      }
+      setAuthLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      reloadData();
+    }
+  }, [user, authLoading, reloadData]);
 
   // ─── HELPERS ───────────────────────────────────────────
   function mapLegacyStatus(status: string): ProjectStatus {
@@ -535,8 +573,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const totalFaturadoMes = totalPeriodo;
 
   // ─── PROVIDER ──────────────────────────────────────────
+  if (authLoading) {
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--background)', color: 'var(--primary)' }}>Carregando sessão...</div>;
+  }
+
   return (
     <AppContext.Provider value={{
+      user, setUser, logout,
       clients, addClient, updateClient, removeClient,
       projects, addProject, updateProject, removeProject,
       visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
@@ -544,7 +587,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       currentMeta, metaMensal, setMetaMensal,
       totalFaturadoMes, totalPeriodo,
-      systemLogs, isAdmin, setIsAdmin, addLog,
+      systemLogs, addLog,
       reloadData
     }}>
       {children}
