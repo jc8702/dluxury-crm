@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const menuItems: { id: Tab; label: string; icon: string; roles: string[] }[] = [
     { id: 'dashboard', label: 'Painel Geral', icon: '📊', roles: ['admin', 'vendedor'] },
     { id: 'clients', label: 'Clientes', icon: '👤', roles: ['admin', 'vendedor'] },
-    { id: 'estimates', label: 'Orçamentos', icon: '📐', roles: ['admin', 'vendedor'] },
+    { id: 'estimates', label: 'Orçamentos', icon: '📄', roles: ['admin', 'vendedor'] },
     { id: 'projects', label: 'Projetos', icon: '📋', roles: ['admin', 'vendedor'] },
     { id: 'production', label: 'Produção', icon: '🔨', roles: ['admin', 'marceneiro'] },
     { id: 'visits', label: 'Visitas', icon: '🗓️', roles: ['admin', 'vendedor'] },
