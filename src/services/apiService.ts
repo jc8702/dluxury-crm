@@ -80,11 +80,6 @@ export const apiService = {
   updateKanbanStatus: (id: string, status: string, extraData: any = {}) =>
     apiService.fetch(`/api/kanban?id=${id}`, { method: 'PATCH', body: JSON.stringify({ status, ...extraData }) }),
 
-  // Logs
-  getLogs: () => apiService.fetch('/api/logs'),
-  addLog: (type: string, severity: string, message: string) =>
-    apiService.fetch('/api/logs', { method: 'POST', body: JSON.stringify({ type, severity, message }) }),
-
   // Monthly Goals
   getMonthlyGoals: () => apiService.fetch('/api/goals'),
   updateMonthlyGoal: (period: string, amount: number) =>

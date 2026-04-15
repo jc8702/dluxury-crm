@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings' | 'system-health';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -21,7 +21,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'inventory', label: 'Estoque', icon: '🪵', roles: ['admin', 'marceneiro'] },
     { id: 'finance', label: 'Financeiro', icon: '💰', roles: ['admin'] },
     { id: 'settings', label: 'Configurações', icon: '⚙️', roles: ['admin'] },
-    { id: 'system-health', label: 'System Health', icon: '🏥', roles: ['admin'] },
   ];
 
   const visibleMenuItems = menuItems.filter(item => user && item.roles.includes(user.role));

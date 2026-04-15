@@ -86,13 +86,6 @@ export type KanbanItem = {
   description?: string;
 };
 
-export type SystemLog = {
-  id: string;
-  type: string;
-  message: string;
-  timestamp: string;
-  severity: 'INFO' | 'WARNING' | 'CRITICAL';
-};
 
 export type Role = 'admin' | 'vendedor' | 'marceneiro';
 
@@ -175,10 +168,8 @@ interface AppContextType {
   totalPeriodo: number;
 
   // Admin
-  systemLogs: SystemLog[];
   systemUsers: SystemUser[];
   loadSystemUsers: () => Promise<void>;
-  addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 
   // General
   reloadData: () => Promise<void>;
@@ -204,8 +195,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
   const [monthlyGoals, setMonthlyGoals] = useState<Record<string, number>>({});
 
-  // Admin & Health
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  // Admin
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
 
   const loadSystemUsers = async () => {
@@ -325,14 +315,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         observacoes: p.observations || '',
       })));
 
-      if (user?.role === 'admin') {
-        const logs = await apiService.getLogs();
-        setSystemLogs(logs.map((l: any) => ({
-          ...l,
-          id: l.id.toString(),
-          timestamp: new Date(l.timestamp).toLocaleTimeString()
-        })));
-      }
+      // Removendo logs da carga principal pois System Health foi removido
     } catch (error) {
       console.error('Falha ao carregar dados do CRM:', error);
     }
@@ -381,23 +364,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return map[status] || 'lead';
   }
 
-  // ─── LOGS ──────────────────────────────────────────────
-  const addLog = async (type: string, message: string, severity: SystemLog['severity']) => {
-    try {
-      const newLog = await apiService.addLog(type, severity, message);
-      setSystemLogs(prev => [{
-        ...newLog,
-        id: newLog.id.toString(),
-        timestamp: new Date(newLog.timestamp).toLocaleTimeString()
-      }, ...prev].slice(0, 50));
-    } catch (_e: any) {
-      setSystemLogs((prev: SystemLog[]) => [{
-        id: 'error-' + Date.now(),
-        type, message, severity,
-        timestamp: new Date().toLocaleTimeString()
-      }, ...prev].slice(0, 50));
-    }
-  };
 
   // ─── CLIENT CRUD ───────────────────────────────────────
   const addClient = async (data: any) => {
@@ -419,7 +385,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       status: 'ativo',
     };
     setClients((prev: Client[]) => [...prev, mapped]);
-    addLog('SYSTEM_INFO', `Novo cliente: ${mapped.nome}`, 'INFO');
   };
 
   const updateClient = async (id: string, data: any) => {
@@ -442,13 +407,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: saved.status || data.status || c.status,
       } : c
     ));
-    addLog('SYSTEM_INFO', `Cliente atualizado: ${data.nome || id}`, 'INFO');
   };
 
   const removeClient = async (id: string) => {
     await apiService.removeClient(id);
     setClients((prev: Client[]) => prev.filter((c: Client) => c.id !== id));
-    addLog('SYSTEM_INFO', `Cliente removido ID: ${id}`, 'WARNING');
   };
 
   // ─── PROJECT CRUD ──────────────────────────────────────
@@ -479,7 +442,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       observacoes: data.observacoes,
     };
     setProjects((prev: Project[]) => [...prev, mapped]);
-    addLog('SYSTEM_INFO', `Novo projeto: ${data.ambiente}`, 'INFO');
   };
 
   const updateProject = async (id: string, data: Partial<Project>) => {
@@ -514,7 +476,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       categoria: saved.categoria || data.categoria || 'outros',
       status: saved.status || 'PAGO'
     }, ...prev]);
-    addLog('SYSTEM_INFO', `Registro financeiro: ${data.descricao}`, 'INFO');
   };
 
   const updateBilling = async (id: string, data: any) => {
@@ -535,7 +496,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const removeBilling = async (id: string) => {
     await apiService.removeBilling(id);
     setBillings((prev: Billing[]) => prev.filter((b: Billing) => b.id !== id));
-    addLog('SYSTEM_INFO', `Registro financeiro removido ID: ${id}`, 'WARNING');
   };
 
   // ─── KANBAN (visits) ──────────────────────────────────
@@ -659,7 +619,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       currentMeta, metaMensal, setMetaMensal,
       totalFaturadoMes, totalPeriodo,
-      systemLogs, systemUsers, loadSystemUsers, addLog,
+      systemUsers, loadSystemUsers,
       reloadData
     }}>
       {children}

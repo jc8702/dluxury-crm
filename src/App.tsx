@@ -8,12 +8,11 @@ import Production from './features/production/Production';
 import VisitKanban from './features/visits/VisitKanban';
 import Inventory from './features/inventory/Inventory';
 import Settings from './features/settings/Settings';
-import SystemHealth from './features/admin/SystemHealth';
 import { AppProvider, useAppContext } from './context/AppContext';
 import BillingForm from './features/billing/BillingForm';
 import Login from './features/auth/Login';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings' | 'system-health';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings';
 
 function App() {
   return (
@@ -51,8 +50,6 @@ function AppContent() {
         return <BillingForm />;
       case 'settings':
         return <Settings />;
-      case 'system-health':
-        return <SystemHealth />;
       default:
         return null;
     }
