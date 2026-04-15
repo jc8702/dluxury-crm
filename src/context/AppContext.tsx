@@ -312,7 +312,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         comodosInteresse: c.comodos_interesse || c.comodosInteresse || [],
         origem: c.origem || '',
         observacoes: c.observacoes || c.historico || '',
-        status: c.status || c.situacao_cadastral === 'INATIVA' ? 'inativo' : 'ativo',
+        status: c.status || (c.situacao_cadastral === 'INATIVA' ? 'inativo' : 'ativo'),
         created_at: c.created_at,
       })));
 
@@ -426,7 +426,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       comodosInteresse: saved.comodos_interesse || data.comodosInteresse || [],
       origem: saved.origem || data.origem,
       observacoes: saved.observacoes || data.observacoes || '',
-      status: 'ativo',
+      status: saved.status || data.status || 'ativo',
     };
     setClients((prev: Client[]) => [...prev, mapped]);
   };
