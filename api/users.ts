@@ -26,6 +26,24 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'DELETE']);
+  if (req.method === 'PATCH') {
+    const { email, password } = req.body;
+    try {
+      if (password) {
+        // dynamic import bcryptjs to avoid changing file imports
+        const bcrypt = await import('bcryptjs');
+        const salt = await bcrypt.default.genSalt(10);
+        const hash = await bcrypt.default.hash(password, salt);
+        await sql`UPDATE users SET email = ${email}, password_hash = ${hash} WHERE id = ${user.id}`;
+      } else {
+        await sql`UPDATE users SET email = ${email} WHERE id = ${user.id}`;
+      }
+      return res.status(200).json({ success: true });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'DELETE', 'PATCH']);
   res.status(405).end(`Method ${req.method} Not Allowed`);
 }

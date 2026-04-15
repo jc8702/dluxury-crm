@@ -67,6 +67,7 @@ export const apiService = {
   getUsers: () => apiService.fetch('/api/users'),
   registerUser: (data: any) => apiService.fetch('/api/auth?action=register', { method: 'POST', body: JSON.stringify(data) }),
   removeUser: (id: string) => apiService.fetch(`/api/users?id=${id}`, { method: 'DELETE' }),
+  updateProfile: (data: any) => apiService.fetch('/api/users', { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Inventory
   getInventory: () => apiService.fetch('/api/inventory'),

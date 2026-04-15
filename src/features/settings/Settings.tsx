@@ -7,149 +7,56 @@ const Settings: React.FC = () => {
     user, monthlyGoals, setMonthlyGoal, selectedPeriod, systemUsers, loadSystemUsers
   } = useAppContext();
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempGoals, setTempGoals] = useState<Record<string, number>>({});
+  const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
+  const [profileMsg, setProfileMsg] = useState('');
 
-  // Initialize tempGoals when entering edit mode
-  useEffect(() => {
-    if (isEditing) {
-      setTempGoals({ ...monthlyGoals });
-    }
-  }, [isEditing, monthlyGoals]);
-
-  // Gestão de Usuários
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [userError, setUserError] = useState('');
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'vendedor' as const });
-
-  useEffect(() => {
-    loadSystemUsers();
-  }, []);
-
-  const handleAddUser = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUserError('');
+    setProfileMsg('');
     try {
-      await apiService.registerUser(newUser);
-      await loadSystemUsers();
-      setShowUserModal(false);
-      setNewUser({ name: '', email: '', password: '', role: 'vendedor' });
+      await apiService.updateProfile({ email: profileData.email, password: profileData.password || undefined });
+      setProfileMsg('Dados atualizados com sucesso! Faça login novamente se alterou a senha.');
+      setProfileData({ ...profileData, password: '' });
     } catch (err: any) {
-      setUserError(err.message || 'Erro ao registrar usuário');
+      setProfileMsg('Erro: ' + (err.message || 'Falha ao atualizar'));
     }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    if (confirm('Tem certeza que deseja remover este acesso?')) {
-      try {
-        await apiService.removeUser(id);
-        await loadSystemUsers();
-      } catch (err: any) {
-        alert(err.message || 'Erro ao remover usuário');
-      }
-    }
-  };
-
-  const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none',
-  };
-
-  const handleSave = () => {
-    if (selectedPeriod === 'Annual') {
-      // No single annual goal defined in this simplified UI, 
-      // typically we'd edit monthly components.
-      setIsEditing(false);
-      return;
-    }
-    Object.entries(tempGoals).forEach(([period, amount]) => {
-      if (monthlyGoals[period] !== amount) {
-        setMonthlyGoal(period, amount);
-      }
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
   };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header>
         <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Configurações do Sistema</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Gerencie permissões e metas mensais.</p>
+        <p style={{ color: 'var(--text-muted)' }}>Gerencie permissões e dados de acesso.</p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.125rem', margin: 0 }}>Gestão de Metas Mensais (2026)</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {!isEditing ? (
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => setIsEditing(true)}
-                    style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
-                  >
-                    Editar
-                  </button>
-                ) : (
-                  <>
-                    <button 
-                      className="btn" 
-                      onClick={handleCancel}
-                      style={{ padding: '0.4rem 1rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)' }}
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      className="btn btn-primary" 
-                      onClick={handleSave}
-                      style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
-                    >
-                      Salvar
-                    </button>
-                  </>
-                )}
+          <div className="card glass">
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Meus Dados (Admin)</h3>
+            {profileMsg && (
+              <div style={{ padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', background: profileMsg.includes('Erro') ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: profileMsg.includes('Erro') ? '#ef4444' : '#10b981' }}>
+                {profileMsg}
               </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-               {[
-                 { id: '01', name: 'Janeiro' }, { id: '02', name: 'Fevereiro' },
-                 { id: '03', name: 'Março' }, { id: '04', name: 'Abril' },
-                 { id: '05', name: 'Maio' }, { id: '06', name: 'Junho' },
-                 { id: '07', name: 'Julho' }, { id: '08', name: 'Agosto' },
-                 { id: '09', name: 'Setembro' }, { id: '10', name: 'Outubro' },
-                 { id: '11', name: 'Novembro' }, { id: '12', name: 'Dezembro' }
-               ].map(m => (
-                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isEditing ? 'var(--primary)' : 'inherit' }}>{m.name}</label>
-                    <input 
-                      type="number" 
-                      className="input" 
-                      placeholder="R$ 0,00"
-                      value={isEditing ? (tempGoals[`2026-${m.id}`] ?? '') : (monthlyGoals[`2026-${m.id}`] || '')}
-                      onChange={(e) => {
-                        if (isEditing) {
-                          setTempGoals(prev => ({ ...prev, [`2026-${m.id}`]: parseFloat(e.target.value) || 0 }));
-                        }
-                      }}
-                      disabled={!isEditing}
-                      style={{ 
-                        opacity: isEditing ? 1 : 0.7,
-                        cursor: isEditing ? 'text' : 'not-allowed',
-                        borderColor: isEditing ? 'var(--primary)' : 'transparent'
-                      }}
-                    />
-                 </div>
-               ))}
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-              As metas definidas aqui são comparadas com o faturamento real no Dashboard.
-            </p>
+            )}
+            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Novo E-mail de Login</label>
+                <input 
+                  type="email" required style={inputStyle} 
+                  value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Nova Senha (deixe em branco para manter)</label>
+                <input 
+                  type="password" style={inputStyle} placeholder="******"
+                  value={profileData.password} onChange={e => setProfileData({...profileData, password: e.target.value})} 
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem', fontWeight: 'bold', marginTop: '0.5rem' }}>
+                Atualizar Credenciais
+              </button>
+            </form>
           </div>
         </div>
 
