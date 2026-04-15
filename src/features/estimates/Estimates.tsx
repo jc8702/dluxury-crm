@@ -21,6 +21,8 @@ const Estimates: React.FC = () => {
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
   const [marginPercent, setMarginPercent] = useState(30);
+  const [prazoEntrega, setPrazoEntrega] = useState('45 DIAS ÚTEIS');
+  const [formaPagamento, setFormaPagamento] = useState('50% DE ENTRADA + 50% NA ENTREGA');
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [showItemForm, setShowItemForm] = useState(false);
 
@@ -30,9 +32,11 @@ const Estimates: React.FC = () => {
       const saved = localStorage.getItem(`draft_estimate_${selectedProject}`);
       if (saved) {
         try {
-          const { items: savedItems, margin } = JSON.parse(saved);
+          const { items: savedItems, margin, prazo, pagamento } = JSON.parse(saved);
           setItems(savedItems);
-          setMarginPercent(margin);
+          setMarginPercent(margin || 30);
+          setPrazoEntrega(prazo || '45 DIAS ÚTEIS');
+          setFormaPagamento(pagamento || '50% DE ENTRADA + 50% NA ENTREGA');
         } catch (e) { console.error("Error loading draft", e); }
       } else {
         setItems([]);
@@ -42,11 +46,16 @@ const Estimates: React.FC = () => {
 
   React.useEffect(() => {
     if (selectedProject && items.length > 0) {
-      localStorage.setItem(`draft_estimate_${selectedProject}`, JSON.stringify({ items, margin: marginPercent }));
+      localStorage.setItem(`draft_estimate_${selectedProject}`, JSON.stringify({ 
+        items, 
+        margin: marginPercent,
+        prazo: prazoEntrega,
+        pagamento: formaPagamento
+      }));
     } else if (selectedProject && items.length === 0) {
       localStorage.removeItem(`draft_estimate_${selectedProject}`);
     }
-  }, [items, marginPercent, selectedProject]);
+  }, [items, marginPercent, selectedProject, prazoEntrega, formaPagamento]);
 
   const clearDraft = () => {
     if (confirm("Deseja realmente limpar os itens deste orçamento?")) {
@@ -180,11 +189,24 @@ const Estimates: React.FC = () => {
     const textWidth = doc.getTextWidth(totalStr);
     doc.text(totalStr, 196 - textWidth, finalY + 15);
 
+    // Dynamic Terms Section
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text("CONDIÇÕES COMERCIAIS", 14, finalY + 15);
+    doc.setDrawColor(212, 175, 55);
+    doc.line(14, finalY + 16, 50, finalY + 16);
+
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Prazo de Entrega: ${prazoEntrega}`, 14, finalY + 22);
+    doc.text(`Forma de Pagamento: ${formaPagamento}`, 14, finalY + 27);
+
     // Terms
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(150);
-    doc.text("* Valor estimado considerando margem de projeto. Sujeito a alteração após medição técnica.", 14, finalY + 25);
+    doc.text("* Valor estimado considerando margem de projeto. Sujeito a alteração após medição técnica.", 14, finalY + 35);
 
     // Footer
     doc.setFontSize(8);
@@ -252,7 +274,19 @@ const Estimates: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: '1rem' }}>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Prazo de Entrega</label>
+            <input style={inputStyle} placeholder="Ex: 45 dias úteis" value={prazoEntrega} onChange={e => setPrazoEntrega(e.target.value.toUpperCase())} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Condições de Pagamento</label>
+            <input style={inputStyle} placeholder="Ex: 50% ENTRADA + 50% ENTREGA" value={formaPagamento} onChange={e => setFormaPagamento(e.target.value.toUpperCase())} />
+          </div>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
           <button onClick={() => setShowItemForm(true)}
             style={{
               background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
