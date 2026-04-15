@@ -1,57 +1,73 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
-import { salesforceService } from '../services/salesforceService';
 import { apiService, hasAppPin } from '../services/apiService';
+
+// ─── TIPOS ────────────────────────────────────────────────
 
 export type Client = {
   id: string;
-  // Identificação
-  cnpj: string;
-  razaoSocial: string;
-  nomeFantasia?: string;
-  porte?: 'ME' | 'EPP' | 'Demais';
-  dataAbertura?: string;
-  // Atividade
-  cnaePrincipal?: string;
-  cnaeSecundario?: string;
-  naturezaJuridica?: string;
-  // Endereço
-  logradouro?: string;
-  numero?: string;
-  complemento?: string;
-  cep?: string;
-  bairro?: string;
-  municipio?: string;
-  uf?: string;
-  // Contato
+  nome: string;
+  cpf?: string;
+  telefone: string;
   email?: string;
-  telefone?: string;
-  // Situação Cadastral
-  situacaoCadastral?: string;
-  dataSituacaoCadastral?: string;
-  motivoSituacao?: string;
-  // Integração interna
-  codigoErp?: string;
-  // Legado
-  historico?: string;
-  frequenciaCompra?: 'Mensal' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual' | 'Ultima Compra';
+  endereco?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  tipoImovel?: 'casa' | 'apartamento' | 'comercial';
+  comodosInteresse?: string[];
+  origem?: 'indicacao' | 'instagram' | 'google' | 'feira' | 'passante' | 'outro';
+  observacoes?: string;
+  status?: 'ativo' | 'inativo';
+  created_at?: string;
 };
-export type Billing = { 
-  id: string; 
-  nf: string; 
-  pedido: string; 
-  cliente: string; 
-  erp: string; 
-  valor: number; 
-  data: string; 
-  status: 'FATURADO' | 'PENDENTE' | 'CANCELADO';
+
+export type ProjectStatus =
+  | 'lead'
+  | 'visita_tecnica'
+  | 'orcamento_enviado'
+  | 'aprovado'
+  | 'em_producao'
+  | 'pronto_entrega'
+  | 'instalado'
+  | 'concluido';
+
+export type ProductionStep = 'corte' | 'furacao' | 'montagem' | 'pintura' | 'acabamento' | 'entrega';
+
+export type Project = {
+  id: string;
+  clientId: string;
+  clientName?: string; // denormalizado para exibição
+  ambiente: string;
+  descricao?: string;
+  valorEstimado?: number;
+  valorFinal?: number;
+  prazoEntrega?: string;
+  status: ProjectStatus;
+  etapaProducao?: ProductionStep;
+  responsavel?: string;
+  observacoes?: string;
+  created_at?: string;
+  updated_at?: string;
 };
-export type KanbanItem = { 
-  id: string; 
-  title: string; 
-  subtitle?: string; 
-  label?: string; 
-  status: string; 
+
+export type Billing = {
+  id: string;
+  projectId?: string;
+  descricao: string;
+  tipo: 'entrada' | 'saida';
+  valor: number;
+  data: string;
+  categoria?: 'sinal' | 'parcela' | 'final' | 'material' | 'mo_terceirizada' | 'outros';
+  status: 'PAGO' | 'PENDENTE' | 'CANCELADO';
+};
+
+export type KanbanItem = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  label?: string;
+  status: string;
   type: 'project' | 'visit';
   contactName?: string;
   contactRole?: string;
@@ -65,12 +81,10 @@ export type KanbanItem = {
   visitTime?: string;
   visitType?: string;
   observations?: string;
-  // Legacy / Hybrid fields
   dateTime?: string;
   visitFormat?: 'Presencial' | 'Online';
   description?: string;
 };
-export type OfflineSync = { id: string; data: any; timestamp: string; status: 'PENDING' | 'SYNCED' | 'FAILED'; };
 
 export type SystemLog = {
   id: string;
@@ -80,88 +94,93 @@ export type SystemLog = {
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
 };
 
+// ─── CONTEXTO ─────────────────────────────────────────────
+
 interface AppContextType {
-  taxaFinanceiraPadrao: number;
-  setTaxaFinanceiraPadrao: (val: number) => void;
-  metaMensal: number;
-  setMetaMensal: (val: number) => void;
+  // Clients PF
+  clients: Client[];
+  addClient: (client: Omit<Client, 'id'>) => Promise<void>;
+  updateClient: (id: string, client: Partial<Client>) => Promise<void>;
+  removeClient: (id: string) => Promise<void>;
+
+  // Projects
+  projects: Project[];
+  addProject: (project: Omit<Project, 'id'>) => Promise<void>;
+  updateProject: (id: string, data: Partial<Project>) => Promise<void>;
+  removeProject: (id: string) => Promise<void>;
+
+  // Kanban (visits - legado adaptado)
+  visits: KanbanItem[];
+  updateKanbanStatus: (type: 'project' | 'visit', id: string, newStatus: string) => Promise<void>;
+  addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
+  updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
+
+  // Billing
+  billings: Billing[];
+  addBilling: (billing: Omit<Billing, 'id'>) => Promise<void>;
+  updateBilling: (id: string, billing: Partial<Billing>) => Promise<void>;
+  removeBilling: (id: string) => Promise<void>;
+
+  // Goals
   monthlyGoals: Record<string, number>;
   setMonthlyGoal: (period: string, amount: number) => void;
   selectedPeriod: string;
   setSelectedPeriod: (period: string) => void;
-  clients: Client[];
-  billings: Billing[];
-  projects: KanbanItem[];
-  visits: KanbanItem[];
-  syncQueue: OfflineSync[];
-  isCircuitOpen: boolean;
-  
-  // Phase 5 Health & Admin
+  currentMeta: number;
+  metaMensal: number;
+  setMetaMensal: (val: number) => void;
+
+  // KPIs
+  totalFaturadoMes: number;
+  totalPeriodo: number;
+
+  // Admin
   systemLogs: SystemLog[];
   isAdmin: boolean;
   setIsAdmin: (val: boolean) => void;
   addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 
-  addClient: (client: Omit<Client, 'id'>) => Promise<void>;
-  updateClient: (id: string, client: Omit<Client, 'id'>) => Promise<void>;
-  removeClient: (id: string) => Promise<void>;
-  addBilling: (billing: Omit<Billing, 'id'>) => Promise<void>;
-  updateBilling: (id: string, billing: Partial<Billing>) => Promise<void>;
-  removeBilling: (id: string) => Promise<void>;
-  updateKanbanStatus: (type: 'project' | 'visit', id: string, newStatus: string) => Promise<void>;
-  addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
-  syncToSalesforce: (data: any) => Promise<{ success: boolean; message: string; degraded?: boolean }>;
-  totalFaturadoMes: number;
-  totalPedidosCarteira: number;
-  yearlyEvolutionData: any[];
+  // General
   reloadData: () => Promise<void>;
-  updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
-  currentMeta: number;
-  totalPeriodo: number;
-  addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [taxaFinanceiraPadrao, setTaxaFinanceiraPadrao] = useState(2.5);
-  
-  // Goals & Periods
+
+  // ─── STATE ─────────────────────────────────────────────
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [billings, setBillings] = useState<Billing[]>([]);
+  const [visits, setVisits] = useState<KanbanItem[]>([]);
+
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-
   const [monthlyGoals, setMonthlyGoals] = useState<Record<string, number>>({});
 
+  // Admin & Health
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  const [isAdmin, setIsAdmin] = useState(hasAppPin());
+
+  // ─── GOALS ─────────────────────────────────────────────
   const setMonthlyGoal = async (period: string, amount: number) => {
     try {
       await apiService.updateMonthlyGoal(period, amount);
       setMonthlyGoals((prev: Record<string, number>) => ({ ...prev, [period]: amount }));
     } catch (error) {
       console.error('Erro ao salvar meta mensal:', error);
-      // Fallback local em caso de erro na API
       setMonthlyGoals((prev: Record<string, number>) => ({ ...prev, [period]: amount }));
     }
   };
 
-  // Legacy fallback
   const metaMensal = monthlyGoals[selectedPeriod] || 0;
   const setMetaMensal = (val: number) => setMonthlyGoal(selectedPeriod, val);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [billings, setBillings] = useState<Billing[]>([]);
-  const [projects, setProjects] = useState<KanbanItem[]>([]);
-  const [visits, setVisits] = useState<KanbanItem[]>([]);
-  const [syncQueue, setSyncQueue] = useState<OfflineSync[]>([]);
-  const [isCircuitOpen, setIsCircuitOpen] = useState(false);
-  
-  // Admin & Health
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
-  const [isAdmin, setIsAdmin] = useState(hasAppPin());
 
+  // ─── DATA LOADING ──────────────────────────────────────
   const reloadData = useCallback(async () => {
     try {
-      // Ensure tables exist before fetching
       await fetch('/api/init-db').catch(() => ({}));
 
       const [clientsData, billingsData, kanbanData, goalsData] = await Promise.all([
@@ -171,113 +190,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         apiService.getMonthlyGoals().catch(() => ({}))
       ]);
 
-      // 1. Migration: Goals
-      if (Object.keys(goalsData).length === 0) {
-        const saved = localStorage.getItem('monthly_goals');
-        if (saved) {
-          const localGoals = JSON.parse(saved);
-          console.log('Migrando metas...');
-          for (const [period, amount] of Object.entries(localGoals)) {
-            await apiService.updateMonthlyGoal(period, amount as number).catch(() => {});
-          }
-          setMonthlyGoals(localGoals);
-          localStorage.removeItem('monthly_goals');
-        } else {
-          setMonthlyGoals(goalsData);
-        }
-      } else {
-        setMonthlyGoals(goalsData);
-      }
+      // Goals
+      setMonthlyGoals(Object.keys(goalsData).length > 0 ? goalsData : {});
 
-      // 2. Migration: Clients
-      let finalClients = clientsData;
-      if (clientsData.length === 0) {
-        const saved = localStorage.getItem('clients');
-        if (saved) {
-          const localClients = JSON.parse(saved);
-          console.log('Migrando clientes...');
-          for (const client of localClients) {
-            await apiService.addClient(client).catch(() => {});
-          }
-          finalClients = localClients;
-          localStorage.removeItem('clients');
-        }
-      }
-
-      // 3. Migration: Billings
-      let finalBillings = billingsData;
-      if (billingsData.length === 0) {
-        const saved = localStorage.getItem('billings');
-        if (saved) {
-          const localBillings = JSON.parse(saved);
-          console.log('Migrando faturamento...');
-          for (const b of localBillings) {
-            await apiService.addBilling(b).catch(() => {});
-          }
-          finalBillings = localBillings;
-          localStorage.removeItem('billings');
-        }
-      }
-
-      // 4. Migration: Kanban
-      let finalKanban = kanbanData;
-      if (kanbanData.length === 0) {
-        const savedProjects = localStorage.getItem('projects');
-        const savedVisits = localStorage.getItem('visits');
-        if (savedProjects || savedVisits) {
-          console.log('Migrando kanban...');
-          const localProjects = savedProjects ? JSON.parse(savedProjects) : [];
-          const localVisits = savedVisits ? JSON.parse(savedVisits) : [];
-          const allItems = [
-            ...localProjects.map((p: any) => ({ ...p, type: 'project' })),
-            ...localVisits.map((v: any) => ({ ...v, type: 'visit' }))
-          ];
-          for (const item of allItems) {
-            await apiService.addKanbanItem(item).catch(() => {});
-          }
-          finalKanban = allItems;
-          localStorage.removeItem('projects');
-          localStorage.removeItem('visits');
-        }
-      }
-
-      // Map Clients (Snake case to Camel case)
-      setClients(finalClients.map((c: any) => ({
+      // Clients PF
+      setClients(clientsData.map((c: any) => ({
         id: c.id?.toString() || Math.random().toString(),
-        cnpj: c.cnpj ?? '',
-        razaoSocial: c.razao_social || c.razaoSocial || '',
-        nomeFantasia: c.nome_fantasia || c.nomeFantasia || '',
-        porte: c.porte ?? '',
-        dataAbertura: c.data_abertura || c.dataAbertura || '',
-        cnaePrincipal: c.cnae_principal || c.cnaePrincipal || '',
-        cnaeSecundario: c.cnae_secundario || c.cnaeSecundario || '',
-        naturezaJuridica: c.natureza_juridica || c.naturezaJuridica || '',
-        logradouro: c.logradouro || c.logradouro || '',
-        numero: c.numero || c.numero || '',
-        complemento: c.complemento || c.complemento || '',
-        cep: c.cep || c.cep || '',
-        bairro: c.bairro || c.bairro || '',
-        municipio: c.municipio || c.municipio || '',
-        uf: c.uf || c.uf || '',
-        email: c.email || c.email || '',
-        telefone: c.telefone || c.telefone || '',
-        situacaoCadastral: c.situacao_cadastral || c.situacaoCadastral || 'ATIVA',
-        dataSituacaoCadastral: c.data_situacao_cadastral || c.dataSituacaoCadastral || '',
-        motivoSituacao: c.motivo_situacao || c.motivoSituacao || '',
-        codigoErp: c.codigo_erp || c.codigoErp || '',
-        historico: c.historico || c.historico || '',
-        frequenciaCompra: c.frequencia_compra || c.frequenciaCompra || 'Mensal',
+        nome: c.nome || c.razao_social || c.razaoSocial || '',
+        cpf: c.cpf || '',
+        telefone: c.telefone || '',
+        email: c.email || '',
+        endereco: c.endereco || c.logradouro || '',
+        bairro: c.bairro || '',
+        cidade: c.cidade || c.municipio || '',
+        uf: c.uf || '',
+        tipoImovel: c.tipo_imovel || c.tipoImovel || '',
+        comodosInteresse: c.comodos_interesse || c.comodosInteresse || [],
+        origem: c.origem || '',
+        observacoes: c.observacoes || c.historico || '',
+        status: c.status || c.situacao_cadastral === 'INATIVA' ? 'inativo' : 'ativo',
+        created_at: c.created_at,
       })));
 
-      setBillings(finalBillings.map((b: any) => ({ 
-        ...b, 
-        id: b.id?.toString() || Math.random().toString(), 
+      // Billings
+      setBillings(billingsData.map((b: any) => ({
+        ...b,
+        id: b.id?.toString() || Math.random().toString(),
+        descricao: b.descricao || b.nf || '',
+        tipo: b.tipo || 'entrada',
         valor: Number(b.valor),
-        status: b.status || 'FATURADO'
+        categoria: b.categoria || 'outros',
+        status: b.status || 'PAGO'
       })));
-      
-      const kItems = finalKanban.map((k: any) => ({ 
-        ...k, 
+
+      // Kanban (visits)
+      const kItems = kanbanData.map((k: any) => ({
+        ...k,
         id: k.id?.toString() || Math.random().toString(),
         contactName: k.contact_name || k.contactName,
         contactRole: k.contact_role || k.contactRole,
@@ -285,13 +233,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         visitDate: k.visit_date || k.visitDate,
         visitTime: k.visit_time || k.visitTime,
         visitType: k.visit_type || k.visitType,
-        observations: k.observations || k.observations,
+        observations: k.observations,
         dateTime: k.date_time || k.dateTime,
         visitFormat: k.visit_format || k.visitFormat,
         description: k.description
       }));
-      setProjects(kItems.filter((i: any) => (i.type || i.type_kanban) === 'project'));
       setVisits(kItems.filter((i: any) => (i.type || i.type_kanban) === 'visit'));
+
+      // Projects (from kanban items of type 'project' for now — will migrate to projects table)
+      const projectKanbans = kItems.filter((i: any) => (i.type || i.type_kanban) === 'project');
+      setProjects(projectKanbans.map((p: any) => ({
+        id: p.id?.toString(),
+        clientId: '',
+        clientName: p.subtitle || '',
+        ambiente: p.title || '',
+        descricao: p.description || p.observations || '',
+        valorEstimado: p.value,
+        status: mapLegacyStatus(p.status),
+        observacoes: p.observations || '',
+      })));
 
       if (isAdmin) {
         const logs = await apiService.getLogs();
@@ -310,6 +270,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     reloadData();
   }, [reloadData]);
 
+  // ─── HELPERS ───────────────────────────────────────────
+  function mapLegacyStatus(status: string): ProjectStatus {
+    const map: Record<string, ProjectStatus> = {
+      'novo': 'lead',
+      'analise': 'visita_tecnica',
+      'proposta': 'orcamento_enviado',
+      'negociacao': 'orcamento_enviado',
+      'assinatura': 'aprovado',
+      'ganho': 'concluido',
+      // Direct mappings
+      'lead': 'lead',
+      'visita_tecnica': 'visita_tecnica',
+      'orcamento_enviado': 'orcamento_enviado',
+      'aprovado': 'aprovado',
+      'em_producao': 'em_producao',
+      'pronto_entrega': 'pronto_entrega',
+      'instalado': 'instalado',
+      'concluido': 'concluido',
+    };
+    return map[status] || 'lead';
+  }
+
+  // ─── LOGS ──────────────────────────────────────────────
   const addLog = async (type: string, message: string, severity: SystemLog['severity']) => {
     try {
       const newLog = await apiService.addLog(type, severity, message);
@@ -318,8 +301,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         id: newLog.id.toString(),
         timestamp: new Date(newLog.timestamp).toLocaleTimeString()
       }, ...prev].slice(0, 50));
-    } catch (e: any) {
-      // Local fallback if API fails
+    } catch (_e: any) {
       setSystemLogs((prev: SystemLog[]) => [{
         id: 'error-' + Date.now(),
         type, message, severity,
@@ -328,221 +310,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const syncToSalesforce = async (data: any) => {
-    try {
-      const result = await salesforceService.openCase(data);
-      const status = salesforceService.getCircuitStatus();
-      setIsCircuitOpen(status.state === 'OPEN');
-
-      if (!result.success && result.queued) {
-        addLog(status.state === 'OPEN' ? 'API_FAIL' : 'API_RETRY', result.message, 'WARNING');
-        setSyncQueue((prev: OfflineSync[]) => [{ id: Math.random().toString(36).substr(2, 9), data, timestamp: new Date().toISOString(), status: 'PENDING' }, ...prev]);
-        return { ...result, degraded: true };
-      }
-      
-      if (result.success) addLog('SYSTEM_INFO', 'Sincronização realizada com Salesforce.', 'INFO');
-      return result;
-    } catch (error: any) {
-      addLog('API_FAIL', error.message, 'CRITICAL');
-      return { success: false, message: error.message };
-    }
-  };
-
-  const currentMeta = useMemo(() => {
-    if (selectedPeriod === 'Annual') {
-      return Object.values(monthlyGoals).reduce((acc: number, curr: number) => acc + curr, 0);
-    }
-    return monthlyGoals[selectedPeriod] || 0;
-  }, [selectedPeriod, monthlyGoals]);
-
-  const totalPeriodo = useMemo(() => {
-    const fatured = billings.filter((b: Billing) => b.status === 'FATURADO');
-    if (selectedPeriod === 'Annual') {
-      const currentYear = new Date().getFullYear().toString();
-      return fatured
-        .filter((b: Billing) => b.data.startsWith(currentYear))
-        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
-    }
-    return fatured
-      .filter((b: Billing) => b.data.startsWith(selectedPeriod))
-      .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
-  }, [billings, selectedPeriod]);
-
-  const totalFaturadoMes = totalPeriodo; // Alias for backward compatibility
-
-  const totalPedidosCarteira = useMemo(() => {
-    // Determine the range for projection based on selectedPeriod
-    const isAnnual = selectedPeriod === 'Annual';
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // 1-12
-
-    let targetMonths: number[] = [];
-    if (isAnnual) {
-      // For Annual, project for all months from currentMonth + 1 (future) to 12
-      for (let m = currentMonth + 1; m <= 12; m++) targetMonths.push(m);
-    } else {
-      // For a specific month (e.g., "2026-04")
-      const [year, month] = selectedPeriod.split('-').map(Number);
-      // Only project if the selected month is in the future
-      if (year === currentYear && month > currentMonth) {
-        targetMonths = [month];
-      }
-    }
-
-    // 1. Current Pending Billings for the TARGET PERIOD
-    const existingPendente = billings
-      .filter((b: Billing) => {
-        if (b.status !== 'PENDENTE') return false;
-        if (isAnnual) return b.data.startsWith(String(currentYear));
-        return b.data.startsWith(selectedPeriod);
-      })
-      .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
-
-    // 2. Future Recurrence Projection
-    let projection = 0;
-
-    clients
-      .filter(client => (client.situacaoCadastral || 'ATIVA') === 'ATIVA')
-      .forEach(client => {
-      const frequency = client.frequenciaCompra || 'Mensal';
-      const clientBillings = billings.filter(b => b.cliente === client.razaoSocial);
-      
-      const lastBilling = [...clientBillings].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
-      const baseValue = lastBilling?.valor || 0;
-
-      if (baseValue <= 0) return;
-
-      const interval = {
-        'Mensal': 1, 'Bimestral': 2, 'Trimestral': 3, 'Semestral': 6, 'Anual': 12
-      }[frequency] || 1;
-
-      targetMonths.forEach(m => {
-        // Simple heuristic: if month fits the recurring pattern
-        const isPurchaseMonth = frequency === 'Ultima Compra' || ((m - 1) % interval === 0);
-
-        if (isPurchaseMonth) {
-          const monthKey = `${currentYear}-${String(m).padStart(2, '0')}`;
-          const alreadyPlanned = clientBillings.some(b => b.data.startsWith(monthKey));
-
-          if (!alreadyPlanned) {
-            projection += baseValue;
-          }
-        }
-      });
-    });
-
-    return existingPendente + projection;
-  }, [billings, clients, selectedPeriod]);
-
-  const yearlyEvolutionData = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-    return months.map((name, i) => {
-      const m = i + 1;
-      const monthKey = `${currentYear}-${String(m).padStart(2, '0')}`;
-      
-      const meta = monthlyGoals[monthKey] || 0;
-      const faturado = billings
-        .filter((b: Billing) => b.status === 'FATURADO' && b.data.startsWith(monthKey))
-        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
-      
-      const pendenteDirect = billings
-        .filter((b: Billing) => b.status === 'PENDENTE' && b.data.startsWith(monthKey))
-        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
-      
-      let projected = 0;
-      if (m > currentMonth) {
-        clients
-          .filter(client => (client.situacaoCadastral || 'ATIVA') === 'ATIVA')
-          .forEach(client => {
-          const frequency = client.frequenciaCompra || 'Mensal';
-          const clientBillings = billings.filter(b => b.cliente === client.razaoSocial);
-          const lastBilling = [...clientBillings].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
-          const baseValue = lastBilling?.valor || 0;
-          if (baseValue <= 0) return;
-
-          const interval = { 'Mensal': 1, 'Bimestral': 2, 'Trimestral': 3, 'Semestral': 6, 'Anual': 12 }[frequency] || 1;
-          const isPurchaseMonth = frequency === 'Ultima Compra' || ((m - 1) % interval === 0);
-          if (isPurchaseMonth && !clientBillings.some(b => b.data.startsWith(monthKey))) {
-            projected += baseValue;
-          }
-        });
-      }
-
-      return {
-        month: name,
-        meta,
-        faturado,
-        carteira: pendenteDirect + projected,
-        activeClients: new Set(billings
-          .filter((b: Billing) => b.status === 'FATURADO' && b.data.startsWith(monthKey))
-          .map(b => b.cliente)).size
-      };
-    });
-  }, [billings, clients, monthlyGoals]);
-
+  // ─── CLIENT CRUD ───────────────────────────────────────
   const addClient = async (data: any) => {
     const saved = await apiService.addClient(data);
-    setClients((prev: Client[]) => [...prev, {
+    const mapped: Client = {
       id: saved.id.toString(),
-      cnpj: saved.cnpj ?? '',
-      razaoSocial: saved.razao_social ?? '',
-      nomeFantasia: saved.nome_fantasia ?? '',
-      porte: saved.porte ?? '',
-      dataAbertura: saved.data_abertura ?? '',
-      cnaePrincipal: saved.cnae_principal ?? '',
-      cnaeSecundario: saved.cnae_secundario ?? '',
-      naturezaJuridica: saved.natureza_juridica ?? '',
-      logradouro: saved.logradouro ?? '',
-      numero: saved.numero ?? '',
-      complemento: saved.complemento ?? '',
-      cep: saved.cep ?? '',
-      bairro: saved.bairro ?? '',
-      municipio: saved.municipio ?? '',
-      uf: saved.uf ?? '',
-      email: saved.email ?? '',
-      telefone: saved.telefone ?? '',
-      situacaoCadastral: saved.situacao_cadastral ?? '',
-      dataSituacaoCadastral: saved.data_situacao_cadastral ?? '',
-      motivoSituacao: saved.motivo_situacao ?? '',
-      codigoErp: saved.codigo_erp ?? '',
-      historico: saved.historico ?? '',
-      frequenciaCompra: saved.frequencia_compra ?? 'Mensal',
-    }]);
-    addLog('SYSTEM_INFO', `Novo cliente cadastrado: ${data.razaoSocial}`, 'INFO');
+      nome: saved.nome || saved.razao_social || data.nome || '',
+      cpf: saved.cpf || data.cpf || '',
+      telefone: saved.telefone || data.telefone || '',
+      email: saved.email || data.email || '',
+      endereco: saved.endereco || data.endereco || '',
+      bairro: saved.bairro || data.bairro || '',
+      cidade: saved.cidade || data.cidade || '',
+      uf: saved.uf || data.uf || '',
+      tipoImovel: saved.tipo_imovel || data.tipoImovel,
+      comodosInteresse: saved.comodos_interesse || data.comodosInteresse || [],
+      origem: saved.origem || data.origem,
+      observacoes: saved.observacoes || data.observacoes || '',
+      status: 'ativo',
+    };
+    setClients((prev: Client[]) => [...prev, mapped]);
+    addLog('SYSTEM_INFO', `Novo cliente: ${mapped.nome}`, 'INFO');
   };
- 
+
   const updateClient = async (id: string, data: any) => {
     const saved = await apiService.updateClient(id, data);
-    setClients((prev: Client[]) => prev.map((c: Client) => c.id === id ? {
-      id: saved.id.toString(),
-      cnpj: saved.cnpj ?? '',
-      razaoSocial: saved.razao_social ?? '',
-      nomeFantasia: saved.nome_fantasia ?? '',
-      porte: saved.porte ?? '',
-      dataAbertura: saved.data_abertura ?? '',
-      cnaePrincipal: saved.cnae_principal ?? '',
-      cnaeSecundario: saved.cnae_secundario ?? '',
-      naturezaJuridica: saved.natureza_juridica ?? '',
-      logradouro: saved.logradouro ?? '',
-      numero: saved.numero ?? '',
-      complemento: saved.complemento ?? '',
-      cep: saved.cep ?? '',
-      bairro: saved.bairro ?? '',
-      municipio: saved.municipio ?? '',
-      uf: saved.uf ?? '',
-      email: saved.email ?? '',
-      telefone: saved.telefone ?? '',
-      situacaoCadastral: saved.situacao_cadastral ?? '',
-      dataSituacaoCadastral: saved.data_situacao_cadastral ?? '',
-      motivoSituacao: saved.motivo_situacao ?? '',
-      codigoErp: saved.codigo_erp ?? '',
-      historico: saved.historico ?? '',
-      frequenciaCompra: saved.frequencia_compra ?? 'Mensal',
-    } : c));
-    addLog('SYSTEM_INFO', `Cliente atualizado: ${data.razaoSocial}`, 'INFO');
+    setClients((prev: Client[]) => prev.map((c: Client) =>
+      c.id === id ? {
+        ...c,
+        nome: saved.nome || data.nome || c.nome,
+        cpf: saved.cpf || data.cpf || c.cpf,
+        telefone: saved.telefone || data.telefone || c.telefone,
+        email: saved.email || data.email || c.email,
+        endereco: saved.endereco || data.endereco || c.endereco,
+        bairro: saved.bairro || data.bairro || c.bairro,
+        cidade: saved.cidade || data.cidade || c.cidade,
+        uf: saved.uf || data.uf || c.uf,
+        tipoImovel: saved.tipo_imovel || data.tipoImovel || c.tipoImovel,
+        comodosInteresse: saved.comodos_interesse || data.comodosInteresse || c.comodosInteresse,
+        origem: saved.origem || data.origem || c.origem,
+        observacoes: saved.observacoes || data.observacoes || c.observacoes,
+        status: saved.status || data.status || c.status,
+      } : c
+    ));
+    addLog('SYSTEM_INFO', `Cliente atualizado: ${data.nome || id}`, 'INFO');
   };
 
   const removeClient = async (id: string) => {
@@ -551,28 +362,99 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addLog('SYSTEM_INFO', `Cliente removido ID: ${id}`, 'WARNING');
   };
 
+  // ─── PROJECT CRUD ──────────────────────────────────────
+  const addProject = async (data: Omit<Project, 'id'>) => {
+    // Use kanban endpoint for now (will migrate to projects table)
+    const payload = {
+      title: data.ambiente,
+      subtitle: data.clientName || '',
+      status: data.status || 'lead',
+      type: 'project' as const,
+      value: data.valorEstimado,
+      observations: data.observacoes || data.descricao || '',
+      description: data.descricao || '',
+    };
+    const saved = await apiService.addKanbanItem(payload);
+    const mapped: Project = {
+      id: saved.id.toString(),
+      clientId: data.clientId,
+      clientName: data.clientName,
+      ambiente: data.ambiente,
+      descricao: data.descricao,
+      valorEstimado: data.valorEstimado,
+      valorFinal: data.valorFinal,
+      prazoEntrega: data.prazoEntrega,
+      status: data.status || 'lead',
+      etapaProducao: data.etapaProducao,
+      responsavel: data.responsavel,
+      observacoes: data.observacoes,
+    };
+    setProjects((prev: Project[]) => [...prev, mapped]);
+    addLog('SYSTEM_INFO', `Novo projeto: ${data.ambiente}`, 'INFO');
+  };
+
+  const updateProject = async (id: string, data: Partial<Project>) => {
+    const payload: any = {};
+    if (data.ambiente) payload.title = data.ambiente;
+    if (data.clientName) payload.subtitle = data.clientName;
+    if (data.status) payload.status = data.status;
+    if (data.valorEstimado !== undefined) payload.value = data.valorEstimado;
+    if (data.observacoes) payload.observations = data.observacoes;
+    if (data.descricao) payload.description = data.descricao;
+
+    await apiService.updateKanbanStatus(id, data.status || '', payload);
+    setProjects((prev: Project[]) => prev.map((p: Project) =>
+      p.id === id ? { ...p, ...data } : p
+    ));
+  };
+
+  const removeProject = async (id: string) => {
+    // Will need a delete endpoint — for now just remove from state
+    setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== id));
+  };
+
+  // ─── BILLING CRUD ──────────────────────────────────────
   const addBilling = async (data: any) => {
     const saved = await apiService.addBilling(data);
-    setBillings((prev: Billing[]) => [{ ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' }, ...prev]);
-    addLog('SYSTEM_INFO', `Faturamento registrado: ${data.nf}`, 'INFO');
+    setBillings((prev: Billing[]) => [{
+      ...saved,
+      id: saved.id.toString(),
+      descricao: saved.descricao || data.descricao || '',
+      tipo: saved.tipo || data.tipo || 'entrada',
+      valor: Number(saved.valor),
+      categoria: saved.categoria || data.categoria || 'outros',
+      status: saved.status || 'PAGO'
+    }, ...prev]);
+    addLog('SYSTEM_INFO', `Registro financeiro: ${data.descricao}`, 'INFO');
   };
 
   const updateBilling = async (id: string, data: any) => {
     const saved = await apiService.updateBilling(id, data);
-    setBillings((prev: Billing[]) => prev.map((b: Billing) => b.id === id ? { ...saved, id: saved.id.toString(), valor: Number(saved.valor), status: saved.status || 'FATURADO' } : b));
-    addLog('SYSTEM_INFO', `Faturamento atualizado: ${saved.nf}`, 'INFO');
+    setBillings((prev: Billing[]) => prev.map((b: Billing) =>
+      b.id === id ? {
+        ...saved,
+        id: saved.id.toString(),
+        descricao: saved.descricao || data.descricao || b.descricao,
+        tipo: saved.tipo || data.tipo || b.tipo,
+        valor: Number(saved.valor),
+        categoria: saved.categoria || data.categoria || b.categoria,
+        status: saved.status || data.status || b.status
+      } : b
+    ));
   };
 
   const removeBilling = async (id: string) => {
     await apiService.removeBilling(id);
     setBillings((prev: Billing[]) => prev.filter((b: Billing) => b.id !== id));
-    addLog('SYSTEM_INFO', `Faturamento removido ID: ${id}`, 'WARNING');
+    addLog('SYSTEM_INFO', `Registro financeiro removido ID: ${id}`, 'WARNING');
   };
 
-  const updateKanbanStatus = async (type: any, id: string, newStatus: string) => {
+  // ─── KANBAN (visits) ──────────────────────────────────
+  const updateKanbanStatus = async (_type: any, id: string, newStatus: string) => {
     await apiService.updateKanbanStatus(id, newStatus);
-    const setter = type === 'project' ? setProjects : setVisits;
-    setter((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, status: newStatus } : i));
+    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
+      i.id === id ? { ...i, status: newStatus } : i
+    ));
   };
 
   const addKanbanItem = async (data: any) => {
@@ -592,7 +474,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       observations: data.observations || data.description
     };
     const saved = await apiService.addKanbanItem(payload);
-    const setter = data.type === 'project' ? setProjects : setVisits;
     const mapped = {
       ...saved,
       id: saved.id.toString(),
@@ -607,7 +488,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       visitFormat: saved.visit_format,
       description: saved.description
     };
-    setter((prev: KanbanItem[]) => [...prev, mapped]);
+    if (data.type === 'visit') {
+      setVisits((prev: KanbanItem[]) => [...prev, mapped]);
+    }
   };
 
   const updateKanbanItem = async (id: string, data: Partial<KanbanItem>) => {
@@ -623,18 +506,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       description: data.description || data.observations
     };
     await apiService.updateKanbanStatus(id, data.status!, payload);
-    const setter = data.type === 'project' ? setProjects : setVisits;
-    setter((prev: KanbanItem[]) => prev.map((i: KanbanItem) => i.id === id ? { ...i, ...data } : i));
+    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
+      i.id === id ? { ...i, ...data } : i
+    ));
   };
 
+  // ─── KPIs ──────────────────────────────────────────────
+  const currentMeta = useMemo(() => {
+    if (selectedPeriod === 'Annual') {
+      return Object.values(monthlyGoals).reduce((acc: number, curr: number) => acc + curr, 0);
+    }
+    return monthlyGoals[selectedPeriod] || 0;
+  }, [selectedPeriod, monthlyGoals]);
+
+  const totalPeriodo = useMemo(() => {
+    const paid = billings.filter((b: Billing) => b.status === 'PAGO' && b.tipo === 'entrada');
+    if (selectedPeriod === 'Annual') {
+      const currentYear = new Date().getFullYear().toString();
+      return paid
+        .filter((b: Billing) => b.data.startsWith(currentYear))
+        .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
+    }
+    return paid
+      .filter((b: Billing) => b.data.startsWith(selectedPeriod))
+      .reduce((acc: number, curr: Billing) => acc + curr.valor, 0);
+  }, [billings, selectedPeriod]);
+
+  const totalFaturadoMes = totalPeriodo;
+
+  // ─── PROVIDER ──────────────────────────────────────────
   return (
-    <AppContext.Provider value={{ 
-      taxaFinanceiraPadrao, setTaxaFinanceiraPadrao, 
-      metaMensal, setMetaMensal, monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
-      clients, billings, projects, visits, syncQueue, isCircuitOpen,
+    <AppContext.Provider value={{
+      clients, addClient, updateClient, removeClient,
+      projects, addProject, updateProject, removeProject,
+      visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
+      billings, addBilling, updateBilling, removeBilling,
+      monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
+      currentMeta, metaMensal, setMetaMensal,
+      totalFaturadoMes, totalPeriodo,
       systemLogs, isAdmin, setIsAdmin, addLog,
-      addClient, updateClient, removeClient, addBilling, updateBilling, removeBilling, updateKanbanStatus, addKanbanItem, updateKanbanItem, syncToSalesforce,
-      totalFaturadoMes, totalPedidosCarteira, yearlyEvolutionData, currentMeta, totalPeriodo, reloadData
+      reloadData
     }}>
       {children}
     </AppContext.Provider>

@@ -1,105 +1,90 @@
 import React from 'react';
-import Gauge from '../../components/charts/Gauge';
-import StackedBarChart from '../../components/charts/StackedBarChart';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
-import type { Billing } from '../../context/AppContext';
+import type { Project, ProjectStatus } from '../../context/AppContext';
 
 const Dashboard: React.FC = () => {
-  const { billings, totalPeriodo, totalPedidosCarteira, yearlyEvolutionData, currentMeta, selectedPeriod, setSelectedPeriod } = useAppContext();
-  const [recentPage, setRecentPage] = React.useState(1);
-  const [drilldownModal, setDrilldownModal] = React.useState<{ open: boolean; title: string; clients: any[] }>({ open: false, title: '', clients: [] });
-  const recentItemsPerPage = 5;
-
-  const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
+  const { projects, clients, billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, monthlyGoals, setMonthlyGoal } = useAppContext();
+  const [editGoal, setEditGoal] = React.useState(false);
+  const [goalValue, setGoalValue] = React.useState('');
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  const faturedBillings = billings.filter(b => b.status === 'FATURADO');
-  
   const periods = [
-    { id: 'Annual', label: 'Visão Anual (2026)' },
-    { id: '2026-01', label: 'Janeiro 2026' },
-    { id: '2026-02', label: 'Fevereiro 2026' },
-    { id: '2026-03', label: 'Março 2026' },
-    { id: '2026-04', label: 'Abril 2026' },
-    { id: '2026-05', label: 'Maio 2026' },
-    { id: '2026-06', label: 'Junho 2026' },
-    { id: '2026-07', label: 'Julho 2026' },
-    { id: '2026-08', label: 'Agosto 2026' },
-    { id: '2026-09', label: 'Setembro 2026' },
-    { id: '2026-10', label: 'Outubro 2026' },
-    { id: '2026-11', label: 'Novembro 2026' },
-    { id: '2026-12', label: 'Dezembro 2026' },
+    { id: '2026-01', label: 'Jan/26' }, { id: '2026-02', label: 'Fev/26' },
+    { id: '2026-03', label: 'Mar/26' }, { id: '2026-04', label: 'Abr/26' },
+    { id: '2026-05', label: 'Mai/26' }, { id: '2026-06', label: 'Jun/26' },
+    { id: '2026-07', label: 'Jul/26' }, { id: '2026-08', label: 'Ago/26' },
+    { id: '2026-09', label: 'Set/26' }, { id: '2026-10', label: 'Out/26' },
+    { id: '2026-11', label: 'Nov/26' }, { id: '2026-12', label: 'Dez/26' },
   ];
 
-  const activeClientsYear = React.useMemo(() => {
-    const currentYear = new Date().getFullYear().toString();
-    const yearly = faturedBillings.filter(b => b.data.startsWith(currentYear));
-    const uniqueClients = Array.from(new Set(yearly.map(b => b.cliente)));
-    return uniqueClients.map(name => {
-        const value = yearly.filter(b => b.cliente === name).reduce((acc, curr) => acc + curr.valor, 0);
-        return { name, value };
-    }).sort((a, b) => b.value - a.value);
-  }, [faturedBillings]);
+  // ─── KPIs ──────────────────────────────────────────────
+  const statusLabels: Record<ProjectStatus, string> = {
+    lead: '📥 Lead',
+    visita_tecnica: '📐 Visita Técnica',
+    orcamento_enviado: '📄 Orçamento Enviado',
+    aprovado: '✅ Aprovado',
+    em_producao: '🔨 Em Produção',
+    pronto_entrega: '📦 Pronto p/ Entrega',
+    instalado: '🏠 Instalado',
+    concluido: '🏁 Concluído',
+  };
 
-  const activeClientsMonth = React.useMemo(() => {
-    const period = selectedPeriod === 'Annual' 
-      ? `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}` 
-      : selectedPeriod;
-    const monthly = faturedBillings.filter(b => b.data.startsWith(period));
-    const uniqueClients = Array.from(new Set(monthly.map(b => b.cliente)));
-    return uniqueClients.map(name => {
-        const value = monthly.filter(b => b.cliente === name).reduce((acc, curr) => acc + curr.valor, 0);
-        return { name, value };
-    }).sort((a, b) => b.value - a.value);
-  }, [faturedBillings, selectedPeriod]);
+  const statusCounts = Object.keys(statusLabels).map(status => ({
+    status: status as ProjectStatus,
+    label: statusLabels[status as ProjectStatus],
+    count: projects.filter(p => p.status === status).length,
+    value: projects.filter(p => p.status === status).reduce((acc, p) => acc + (p.valorEstimado || 0), 0),
+  }));
 
-  const currentPeriodBillings = selectedPeriod === 'Annual' 
-    ? faturedBillings.filter(b => b.data.startsWith(new Date().getFullYear().toString()))
-    : faturedBillings.filter(b => b.data.startsWith(selectedPeriod));
+  const totalPipeline = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
+  const inProduction = projects.filter(p => p.status === 'em_producao').length;
+  const concluidos = projects.filter(p => p.status === 'concluido').length;
+  const ticketMedio = concluidos > 0
+    ? projects.filter(p => p.status === 'concluido').reduce((acc, p) => acc + (p.valorFinal || p.valorEstimado || 0), 0) / concluidos
+    : 0;
 
-  const ticketMedioCliente = activeClientsMonth.length > 0 ? (totalPeriodo / activeClientsMonth.length) : 0;
+  // Origem dos leads
+  const origemCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    clients.forEach(c => {
+      const key = c.origem || 'outro';
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [clients]);
 
-  // Recent Billings Pagination
-  const recentTotalPages = Math.max(1, Math.ceil(billings.length / recentItemsPerPage));
-  const paginatedRecent = billings.slice((recentPage - 1) * recentItemsPerPage, recentPage * recentItemsPerPage);
+  const origemLabels: Record<string, { label: string; color: string }> = {
+    indicacao: { label: '👥 Indicação', color: '#10b981' },
+    instagram: { label: '📸 Instagram', color: '#e1306c' },
+    google: { label: '🔍 Google', color: '#4285f4' },
+    feira: { label: '🎪 Feira', color: '#f59e0b' },
+    passante: { label: '🚶 Passante', color: '#8b5cf6' },
+    outro: { label: '📌 Outro', color: '#6b7280' },
+  };
 
-  const headers = ['Nota Fiscal', 'Pedido', 'Cliente', 'Código ERP', 'Valor R$', 'Data'];
+  const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
 
-  const renderBillingRow = (b: Billing) => (
-    <>
-      <td style={{ padding: '1rem' }}>{b.nf}</td>
-      <td style={{ padding: '1rem' }}>{b.pedido}</td>
-      <td style={{ padding: '1rem' }}>{b.cliente}</td>
-      <td style={{ padding: '1rem' }}>{b.erp}</td>
-      <td style={{ padding: '1rem', fontWeight: 'bold' }}>{formatCurrency(b.valor)}</td>
-      <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{formatDate(b.data)}</td>
-    </>
-  );
+  // Recent projects
+  const recentProjects = [...projects]
+    .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+    .slice(0, 6);
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Painel Geral de Vendas</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Métricas extraídas em tempo real do banco de dados.</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Painel Geral</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Visão executiva — D'Luxury Ambientes</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
-          <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary)' }}>Filtrar Período:</label>
-          <select 
-            className="input" 
-            style={{ width: '200px', background: 'var(--surface)', borderColor: 'var(--primary)' }}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <select
+            className="input"
+            style={{ width: '140px', background: 'var(--surface)', borderColor: '#d4af37', fontSize: '0.8rem' }}
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
           >
@@ -108,94 +93,165 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '1.5rem' }}>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>Meta do Período ({selectedPeriod === 'Annual' ? 'Ano' : 'Real'})</h3>
-          <Gauge value={percentualMeta} label="Atingido" sublabel={`Objetivo: ${formatCurrency(currentMeta)}`} />
-          <p style={{ fontSize: '0.875rem', marginTop: '1rem', color: 'var(--text-muted)' }}>
-            Faturamento: <b>{formatCurrency(totalPeriodo)}</b>
+      {/* KPIs principais */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #d4af37' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Clientes</p>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#d4af37' }}>{clients.length}</h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #3b82f6' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Projetos Ativos</p>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#3b82f6' }}>
+            {projects.filter(p => !['concluido'].includes(p.status)).length}
+          </h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #f59e0b' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Em Produção</p>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#f59e0b' }}>{inProduction}</h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #10b981' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Concluídos</p>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#10b981' }}>{concluidos}</h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #8b5cf6' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Ticket Médio</p>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#8b5cf6' }}>{formatCurrency(ticketMedio)}</h3>
+        </div>
+      </div>
+
+      {/* Meta + Pipeline por etapa */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
+        {/* Meta mensal */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Meta do Período</h3>
+          <div style={{
+            width: '140px', height: '140px', borderRadius: '50%',
+            background: `conic-gradient(#d4af37 ${percentualMeta * 3.6}deg, rgba(255,255,255,0.05) 0deg)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              width: '110px', height: '110px', borderRadius: '50%', background: 'var(--surface)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: '800', color: '#d4af37' }}>{percentualMeta}%</span>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>atingido</span>
+            </div>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            {formatCurrency(totalPeriodo)} / {formatCurrency(currentMeta)}
           </p>
+          <button onClick={() => { setEditGoal(true); setGoalValue(currentMeta.toString()); }}
+            style={{ fontSize: '0.7rem', color: '#d4af37', background: 'none', border: '1px solid rgba(212,175,55,0.3)', padding: '0.3rem 0.8rem', borderRadius: '20px', cursor: 'pointer' }}>
+            Editar Meta
+          </button>
+        </div>
+
+        {/* Pipeline resumo */}
+        <div className="card">
+          <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Pipeline por Etapa</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {statusCounts.map(s => {
+              const maxCount = Math.max(...statusCounts.map(x => x.count), 1);
+              const barWidth = (s.count / maxCount) * 100;
+              return (
+                <div key={s.status} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', width: '160px', flexShrink: 0, color: 'var(--text-muted)' }}>{s.label}</span>
+                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: '4px', height: '24px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${barWidth}%`, height: '100%',
+                      background: 'linear-gradient(90deg, #d4af37, #b49050)',
+                      borderRadius: '4px', transition: 'width 0.5s ease',
+                      display: 'flex', alignItems: 'center', paddingLeft: '0.5rem',
+                      minWidth: s.count > 0 ? '32px' : '0'
+                    }}>
+                      {s.count > 0 && <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#1a1a2e' }}>{s.count}</span>}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#d4af37', width: '80px', textAlign: 'right' }}>
+                    {formatCurrency(s.value)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total no Pipeline</span>
+            <span style={{ fontSize: '1rem', fontWeight: '800', color: '#d4af37' }}>{formatCurrency(totalPipeline)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Origem de leads + Projetos recentes */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
+        <div className="card">
+          <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Origem dos Leads</h3>
+          {origemCounts.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum cliente cadastrado.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {origemCounts.map(o => {
+                const info = origemLabels[o.key] || origemLabels.outro;
+                const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
+                return (
+                  <div key={o.key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.8rem', width: '120px' }}>{info.label}</span>
+                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: '4px', height: '20px', overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${pct}%`, height: '100%', background: info.color,
+                        borderRadius: '4px', transition: 'width 0.5s ease',
+                        minWidth: pct > 0 ? '24px' : '0'
+                      }} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: info.color, width: '40px', textAlign: 'right' }}>{o.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="card">
-           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.125rem' }}>Faturamentos Recentes</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                 <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} disabled={recentPage === 1} onClick={() => setRecentPage(p => p - 1)}>←</button>
-                 <span style={{ fontSize: '0.75rem', alignSelf: 'center' }}>{recentPage} / {recentTotalPages}</span>
-                 <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} disabled={recentPage === recentTotalPages} onClick={() => setRecentPage(p => p + 1)}>→</button>
-              </div>
-           </div>
-           <DataTable 
-             headers={headers} 
-             data={paginatedRecent} 
-             renderRow={renderBillingRow} 
-           />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-        <div className="card glass">
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ticket Médio (Faturamento / NFs)</p>
-           <h4 style={{ fontSize: '1.25rem' }}>{currentPeriodBillings.length > 0 ? formatCurrency(totalPeriodo / currentPeriodBillings.length) : 'R$ 0,00'}</h4>
-        </div>
-        <div className="card glass" style={{ borderLeft: '4px solid var(--primary)' }}>
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ticket Médio (Faturamento / Clientes)</p>
-           <h4 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{formatCurrency(ticketMedioCliente)}</h4>
-        </div>
-        <div className="card glass" style={{ borderLeft: '4px solid var(--warning)', cursor: 'pointer' }}>
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pedidos em Carteira</p>
-           <h4 style={{ fontSize: '1.25rem', color: 'var(--warning)' }}>{formatCurrency(totalPedidosCarteira)}</h4>
-        </div>
-        <div 
-          className="card glass" 
-          style={{ borderLeft: '4px solid var(--primary)', cursor: 'pointer', transition: 'transform 0.2s' }}
-          onClick={() => setDrilldownModal({ open: true, title: 'Clientes Ativos no Período', clients: activeClientsMonth })}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clientes Ativos (Mês) 🔍</p>
-           <h4 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{activeClientsMonth.length}</h4>
-        </div>
-        <div 
-          className="card glass" 
-          style={{ borderLeft: '4px solid var(--success)', cursor: 'pointer', transition: 'transform 0.2s' }}
-          onClick={() => setDrilldownModal({ open: true, title: 'Clientes Ativos no Ano', clients: activeClientsYear })}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clientes Ativos (Ano) 🔍</p>
-           <h4 style={{ fontSize: '1.25rem', color: 'var(--success)' }}>{activeClientsYear.length}</h4>
-        </div>
-        <div className="card glass">
-           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total de Notas Fiscais</p>
-           <h4 style={{ fontSize: '1.25rem' }}>{currentPeriodBillings.length}</h4>
-        </div>
-      </div>
-
-      <div>
-         <StackedBarChart 
-            data={yearlyEvolutionData} 
-            title="Evolução Mensal (Meta vs Faturado vs Carteira)" 
-         />
-      </div>
-
-      <Modal 
-        isOpen={drilldownModal.open} 
-        onClose={() => setDrilldownModal(prev => ({ ...prev, open: false }))}
-        title={drilldownModal.title}
-      >
-        <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-            <DataTable 
-                headers={['Cliente', 'Total Faturado']}
-                data={drilldownModal.clients}
-                renderRow={(c) => (
-                    <>
-                        <td style={{ padding: '1rem' }}>{c.name}</td>
-                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{formatCurrency(c.value)}</td>
-                    </>
-                )}
+          <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Projetos Recentes</h3>
+          {recentProjects.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum projeto cadastrado.</p>
+          ) : (
+            <DataTable
+              headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
+              data={recentProjects}
+              renderRow={(p: Project) => (
+                <>
+                  <td style={{ padding: '0.75rem', fontWeight: '600' }}>{p.ambiente}</td>
+                  <td style={{ padding: '0.75rem' }}>{p.clientName || '-'}</td>
+                  <td style={{ padding: '0.75rem', fontWeight: '700', color: '#d4af37' }}>
+                    {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
+                  </td>
+                  <td style={{ padding: '0.75rem' }}>
+                    <span style={{
+                      fontSize: '0.7rem', fontWeight: '600',
+                      padding: '0.2rem 0.6rem', borderRadius: '12px',
+                      background: 'rgba(212,175,55,0.1)', color: '#d4af37',
+                      border: '1px solid rgba(212,175,55,0.2)'
+                    }}>
+                      {statusLabels[p.status] || p.status}
+                    </span>
+                  </td>
+                </>
+              )}
             />
+          )}
+        </div>
+      </div>
+
+      {/* Modal editar meta */}
+      <Modal isOpen={editGoal} onClose={() => setEditGoal(false)} title="Definir Meta Mensal">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Valor da meta para {selectedPeriod}:</label>
+          <input type="number" className="input" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+            value={goalValue} onChange={e => setGoalValue(e.target.value)} />
+          <button className="btn" onClick={() => { setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0); setEditGoal(false); }}
+            style={{ background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e', fontWeight: '700', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer' }}>
+            Salvar Meta
+          </button>
         </div>
       </Modal>
     </div>
@@ -203,5 +259,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-

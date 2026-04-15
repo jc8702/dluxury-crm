@@ -1,103 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
 import Modal from '../../components/common/Modal';
 import { useAppContext } from '../../context/AppContext';
+import type { ProjectStatus } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, updateKanbanStatus, addKanbanItem, updateKanbanItem } = useAppContext();
+  const { projects, clients, addProject, updateProject } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [cities, setCities] = useState<string[]>([]);
-  const [isLoadingCities, setIsLoadingCities] = useState(false);
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    subtitle: '', 
-    contactName: '', 
-    contactRole: '', 
-    email: '', 
-    phone: '', 
-    city: '', 
-    state: '', 
-    value: '', 
-    temperature: '❄️ Frio',
-    description: '',
-    status: 'novo' 
+  const [formData, setFormData] = useState({
+    clientId: '',
+    ambiente: '',
+    descricao: '',
+    valorEstimado: '',
+    prazoEntrega: '',
+    responsavel: '',
+    observacoes: '',
+    status: 'lead' as ProjectStatus
   });
 
   const columns = [
-    { id: 'novo', title: 'Novo' },
-    { id: 'analise', title: 'Analise de Necessidade' },
-    { id: 'proposta', title: 'Cliente Avaliando Proposta' },
-    { id: 'negociacao', title: 'Negociação' },
-    { id: 'assinatura', title: 'Aguardando Assinatura de contrato' },
-    { id: 'ganho', title: 'Ganho' },
+    { id: 'lead', title: '📥 Lead' },
+    { id: 'visita_tecnica', title: '📐 Visita Técnica' },
+    { id: 'orcamento_enviado', title: '📄 Orçamento Enviado' },
+    { id: 'aprovado', title: '✅ Aprovado' },
+    { id: 'em_producao', title: '🔨 Em Produção' },
+    { id: 'pronto_entrega', title: '📦 Pronto p/ Entrega' },
+    { id: 'instalado', title: '🏠 Instalado' },
+    { id: 'concluido', title: '🏁 Concluído' },
   ];
 
-  // Busca cidades do IBGE ao trocar o estado
-  useEffect(() => {
-    if (!formData.state) {
-      setCities([]);
-      return;
-    }
-
-    const fetchCities = async () => {
-      setIsLoadingCities(true);
-      try {
-        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${formData.state}/municipios`);
-        const data = await response.json();
-        setCities(data.map((m: any) => m.nome).sort((a: string, b: string) => a.localeCompare(b)));
-      } catch (error) {
-        console.error("Erro ao buscar cidades:", error);
-        setCities([]);
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-
-    fetchCities();
-  }, [formData.state]);
+  const ambientes = [
+    'Cozinha', 'Quarto Casal', 'Quarto Solteiro', 'Sala de Estar',
+    'Banheiro', 'Lavanderia', 'Closet', 'Home Office',
+    'Área Gourmet', 'Varanda', 'Sala de Jantar', 'Outro'
+  ];
 
   const handleMove = (id: string, newStatus: string) => {
-    updateKanbanStatus('project', id, newStatus);
+    updateProject(id, { status: newStatus as ProjectStatus });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToSave = { ...formData, value: parseFloat(formData.value) || 0, type: 'project' as const };
-    
+    const selectedClient = clients.find(c => c.id === formData.clientId);
+    const data = {
+      clientId: formData.clientId,
+      clientName: selectedClient?.nome || '',
+      ambiente: formData.ambiente,
+      descricao: formData.descricao,
+      valorEstimado: parseFloat(formData.valorEstimado) || undefined,
+      prazoEntrega: formData.prazoEntrega || undefined,
+      responsavel: formData.responsavel || undefined,
+      observacoes: formData.observacoes,
+      status: formData.status
+    };
+
     if (editingItem) {
-      await updateKanbanItem(editingItem.id, dataToSave);
+      await updateProject(editingItem.id, data);
     } else {
-      await addKanbanItem(dataToSave);
+      await addProject(data);
     }
-    
-    setIsModalOpen(false);
-    setEditingItem(null);
-    setFormData({ 
-      title: '', subtitle: '', contactName: '', contactRole: '', 
-      email: '', phone: '', city: '', state: '', value: '', 
-      temperature: '❄️ Frio', description: '', status: 'novo' 
-    });
+
+    closeModal();
   };
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setFormData({
-      title: item.title,
-      subtitle: item.subtitle || '',
-      contactName: item.contactName || '',
-      contactRole: item.contactRole || '',
-      email: item.email || '',
-      phone: item.phone || '',
-      city: item.city || '',
-      state: item.state || '',
-      value: item.value?.toString() || '',
-      temperature: item.temperature || '❄️ Frio',
-      description: item.description || '',
+      clientId: item.clientId || '',
+      ambiente: item.ambiente || item.title || '',
+      descricao: item.descricao || item.description || '',
+      valorEstimado: item.valorEstimado?.toString() || item.value?.toString() || '',
+      prazoEntrega: item.prazoEntrega || '',
+      responsavel: item.responsavel || '',
+      observacoes: item.observacoes || item.observations || '',
       status: item.status
     });
     setIsModalOpen(true);
   };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+    setFormData({
+      clientId: '', ambiente: '', descricao: '', valorEstimado: '',
+      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead'
+    });
+  };
+
+  // Map projects to kanban items format
+  const kanbanItems = projects.map(p => ({
+    id: p.id,
+    title: p.ambiente,
+    subtitle: p.clientName || '',
+    label: p.valorEstimado ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+    status: p.status,
+    type: 'project' as const,
+    value: p.valorEstimado,
+    // Carry original project data
+    clientId: p.clientId,
+    clientName: p.clientName,
+    ambiente: p.ambiente,
+    descricao: p.descricao,
+    valorEstimado: p.valorEstimado,
+    prazoEntrega: p.prazoEntrega,
+    responsavel: p.responsavel,
+    observacoes: p.observacoes,
+    description: p.descricao,
+    observations: p.observacoes,
+  }));
 
   const inputStyle: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.05)',
@@ -111,219 +122,130 @@ const ProjectKanban: React.FC = () => {
   };
 
   const labelStyle: React.CSSProperties = {
-    fontSize: '0.85rem',
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: '0.4rem',
     display: 'block'
   };
 
-  const customSelectStyle: React.CSSProperties = {
+  const selectStyle: React.CSSProperties = {
     ...inputStyle,
-    appearance: 'none',
-    background: 'rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 0.75rem center',
-    cursor: 'pointer'
+    cursor: 'pointer',
   };
+
+  // Summary stats
+  const totalValue = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
+  const inProduction = projects.filter(p => p.status === 'em_producao').length;
+  const approved = projects.filter(p => p.status === 'aprovado').length;
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Gestão de Projetos</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Mapeamento de implementações técnicas.</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Pipeline de Projetos</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Acompanhe cada projeto do lead à instalação.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingItem(null); setFormData({ title: '', subtitle: '', contactName: '', contactRole: '', email: '', phone: '', city: '', state: '', value: '', temperature: '❄️ Frio', description: '', status: 'novo' }); setIsModalOpen(true); }}>+ Novo Projeto</button>
+        <button className="btn" onClick={() => { setEditingItem(null); setIsModalOpen(true); }}
+          style={{
+            background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
+            fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
+          }}>
+          + Novo Projeto
+        </button>
       </header>
 
-      <KanbanBoard 
-        items={projects} 
-        columns={columns} 
-        onMove={handleMove} 
+      {/* Mini KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #d4af37' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Projetos</p>
+          <h4 style={{ fontSize: '1.25rem', color: '#d4af37' }}>{projects.length}</h4>
+        </div>
+        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #10b981' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Aprovados</p>
+          <h4 style={{ fontSize: '1.25rem', color: '#10b981' }}>{approved}</h4>
+        </div>
+        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #3b82f6' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Em Produção</p>
+          <h4 style={{ fontSize: '1.25rem', color: '#3b82f6' }}>{inProduction}</h4>
+        </div>
+        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #f59e0b' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Valor Total Pipeline</p>
+          <h4 style={{ fontSize: '1rem', color: '#f59e0b' }}>R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+        </div>
+      </div>
+
+      <KanbanBoard
+        items={kanbanItems}
+        columns={columns}
+        onMove={handleMove}
         onEdit={handleEdit}
       />
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? "Editar Oportunidade" : "Cadastrar Oportunidade"} width="700px">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '80vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
-          
-          {/* Linha 1 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div>
-              <label style={labelStyle}>Nome do Projeto</label>
-              <input 
-                style={inputStyle} 
-                placeholder="Ex: Projeto ABC Corp" 
-                required 
-                value={formData.title} 
-                onChange={e => setFormData({ ...formData, title: e.target.value })} 
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Cliente/Empresa (Novo ou Existente)</label>
-              <input 
-                style={inputStyle} 
-                placeholder="Ex: ABC Corp" 
-                required 
-                value={formData.subtitle} 
-                onChange={e => setFormData({ ...formData, subtitle: e.target.value })} 
-              />
-            </div>
-          </div>
+      <Modal isOpen={isModalOpen} onClose={closeModal}
+        title={editingItem ? "Editar Projeto" : "Novo Projeto"} width="650px">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '80vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
 
-          {/* Linha 2 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={labelStyle}>Nome do Contato</label>
-              <input 
-                style={inputStyle} 
-                placeholder="Ex: João Silva" 
-                value={formData.contactName} 
-                onChange={e => setFormData({ ...formData, contactName: e.target.value })} 
-              />
+              <label style={labelStyle}>Cliente *</label>
+              <select style={selectStyle} required
+                value={formData.clientId} onChange={e => setFormData({ ...formData, clientId: e.target.value })}>
+                <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id} style={{ background: '#1a1a1a' }}>{c.nome}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label style={labelStyle}>Cargo do Contato</label>
-              <input 
-                style={inputStyle} 
-                placeholder="Ex: Gerente de Projetos" 
-                value={formData.contactRole} 
-                onChange={e => setFormData({ ...formData, contactRole: e.target.value })} 
-              />
-            </div>
-          </div>
-
-          {/* Linha 3 */}
-          <div>
-            <label style={labelStyle}>E-mail</label>
-            <input 
-              type="email" 
-              style={inputStyle} 
-              placeholder="exemplo@email.com" 
-              value={formData.email} 
-              onChange={e => setFormData({ ...formData, email: e.target.value })} 
-            />
-          </div>
-
-          {/* Linha 4 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div>
-              <label style={labelStyle}>Telefone</label>
-              <input 
-                style={inputStyle} 
-                placeholder="(11) 99999-9999" 
-                value={formData.phone} 
-                onChange={e => setFormData({ ...formData, phone: e.target.value })} 
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Cidade</label>
-              <select 
-                style={customSelectStyle} 
-                value={formData.city} 
-                onChange={e => setFormData({ ...formData, city: e.target.value })}
-                disabled={!formData.state || isLoadingCities}
-              >
-                <option value="" disabled style={{ background: '#1a1a1a' }}>
-                  {isLoadingCities ? 'Carregando...' : formData.state ? 'Selecione a cidade...' : 'Selecione o estado primeiro'}
-                </option>
-                {cities.map(city => (
-                  <option key={city} value={city} style={{ background: '#1a1a1a' }}>{city}</option>
+              <label style={labelStyle}>Ambiente *</label>
+              <select style={selectStyle} required
+                value={formData.ambiente} onChange={e => setFormData({ ...formData, ambiente: e.target.value })}>
+                <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
+                {ambientes.map(a => (
+                  <option key={a} value={a} style={{ background: '#1a1a1a' }}>{a}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Linha 5 */}
-          <div>
-            <label style={labelStyle}>Estado</label>
-            <select 
-              style={customSelectStyle} 
-              value={formData.state} 
-              onChange={e => setFormData({ ...formData, state: e.target.value })}
-            >
-              <option value="" disabled style={{ background: '#1a1a1a' }}>Selecione...</option>
-              <option value="AC" style={{ background: '#1a1a1a' }}>Acre</option>
-              <option value="AL" style={{ background: '#1a1a1a' }}>Alagoas</option>
-              <option value="AP" style={{ background: '#1a1a1a' }}>Amapá</option>
-              <option value="AM" style={{ background: '#1a1a1a' }}>Amazonas</option>
-              <option value="BA" style={{ background: '#1a1a1a' }}>Bahia</option>
-              <option value="CE" style={{ background: '#1a1a1a' }}>Ceará</option>
-              <option value="DF" style={{ background: '#1a1a1a' }}>Distrito Federal</option>
-              <option value="ES" style={{ background: '#1a1a1a' }}>Espírito Santo</option>
-              <option value="GO" style={{ background: '#1a1a1a' }}>Goiás</option>
-              <option value="MA" style={{ background: '#1a1a1a' }}>Maranhão</option>
-              <option value="MT" style={{ background: '#1a1a1a' }}>Mato Grosso</option>
-              <option value="MS" style={{ background: '#1a1a1a' }}>Mato Grosso do Sul</option>
-              <option value="MG" style={{ background: '#1a1a1a' }}>Minas Gerais</option>
-              <option value="PA" style={{ background: '#1a1a1a' }}>Pará</option>
-              <option value="PB" style={{ background: '#1a1a1a' }}>Paraíba</option>
-              <option value="PR" style={{ background: '#1a1a1a' }}>Paraná</option>
-              <option value="PE" style={{ background: '#1a1a1a' }}>Pernambuco</option>
-              <option value="PI" style={{ background: '#1a1a1a' }}>Piauí</option>
-              <option value="RJ" style={{ background: '#1a1a1a' }}>Rio de Janeiro</option>
-              <option value="RN" style={{ background: '#1a1a1a' }}>Rio Grande do Norte</option>
-              <option value="RS" style={{ background: '#1a1a1a' }}>Rio Grande do Sul</option>
-              <option value="RO" style={{ background: '#1a1a1a' }}>Rondônia</option>
-              <option value="RR" style={{ background: '#1a1a1a' }}>Roraima</option>
-              <option value="SC" style={{ background: '#1a1a1a' }}>Santa Catarina</option>
-              <option value="SP" style={{ background: '#1a1a1a' }}>São Paulo</option>
-              <option value="SE" style={{ background: '#1a1a1a' }}>Sergipe</option>
-              <option value="TO" style={{ background: '#1a1a1a' }}>Tocantins</option>
-            </select>
-          </div>
-
-          {/* Linha 6 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={labelStyle}>Valor do Projeto (R$)</label>
-              <input 
-                type="number" 
-                step="0.01" 
-                style={inputStyle} 
-                placeholder="0.00" 
-                value={formData.value} 
-                onChange={e => setFormData({ ...formData, value: e.target.value })} 
-              />
+              <label style={labelStyle}>Valor Estimado (R$)</label>
+              <input type="number" step="0.01" style={inputStyle} placeholder="0,00"
+                value={formData.valorEstimado} onChange={e => setFormData({ ...formData, valorEstimado: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>Temperatura do Projeto</label>
-              <select 
-                style={customSelectStyle} 
-                value={formData.temperature} 
-                onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-              >
-                <option value="❄️ Frio" style={{ background: '#1a1a1a' }}>❄️ Frio</option>
-                <option value="☁️ Morno" style={{ background: '#1a1a1a' }}>☁️ Morno</option>
-                <option value="🔥 Quente" style={{ background: '#1a1a1a' }}>🔥 Quente</option>
-              </select>
+              <label style={labelStyle}>Prazo de Entrega</label>
+              <input type="date" style={inputStyle}
+                value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
             </div>
           </div>
 
-          {/* Observações / Descrição */}
           <div>
-            <label style={labelStyle}>Descrição / Notas</label>
-            <textarea 
-              style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
-              placeholder="Detalhes adicionais sobre o projeto..." 
-              value={formData.description} 
-              onChange={e => setFormData({ ...formData, description: e.target.value })} 
-            />
+            <label style={labelStyle}>Responsável (Marceneiro)</label>
+            <input style={inputStyle} placeholder="Ex: João"
+              value={formData.responsavel} onChange={e => setFormData({ ...formData, responsavel: e.target.value })} />
           </div>
 
-          {/* Footer Actions */}
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button 
-              type="submit" 
-              className="btn" 
-              style={{ background: '#0070f3', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              ✓ {editingItem ? 'Salvar Alterações' : 'Cadastrar Oportunidade'}
+          <div>
+            <label style={labelStyle}>Descrição do Projeto</label>
+            <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+              placeholder="Detalhes: materiais, acabamento, referências..."
+              value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn"
+              style={{
+                background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
+                border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}>
+              ✓ {editingItem ? 'Salvar' : 'Criar Projeto'}
             </button>
-            <button 
-              type="button" 
-              className="btn" 
-              onClick={() => setIsModalOpen(false)}
-              style={{ background: '#e0e0e0', color: '#1a1a1a', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
-            >
+            <button type="button" onClick={closeModal}
+              style={{ background: '#333', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>
               Cancelar
             </button>
           </div>
@@ -334,5 +256,3 @@ const ProjectKanban: React.FC = () => {
 };
 
 export default ProjectKanban;
-
-

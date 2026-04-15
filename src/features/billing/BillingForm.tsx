@@ -5,156 +5,154 @@ import { useAppContext } from '../../context/AppContext';
 import type { Billing } from '../../context/AppContext';
 
 const BillingModule: React.FC = () => {
-  const { billings, addBilling, updateBilling, removeBilling, clients } = useAppContext();
+  const { billings, addBilling, updateBilling, removeBilling, projects } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBilling, setEditingBilling] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'FATURADO' | 'PENDENTE' | 'CANCELADO'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'entrada' | 'saida'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
-
-  const periods = [
-    { id: 'Annual', label: 'Visão Anual (2026)' },
-    { id: '2026-01', label: 'Janeiro 2026' },
-    { id: '2026-02', label: 'Fevereiro 2026' },
-    { id: '2026-03', label: 'Março 2026' },
-    { id: '2026-04', label: 'Abril 2026' },
-    { id: '2026-05', label: 'Maio 2026' },
-    { id: '2026-06', label: 'Junho 2026' },
-    { id: '2026-07', label: 'Julho 2026' },
-    { id: '2026-08', label: 'Agosto 2026' },
-    { id: '2026-09', label: 'Setembro 2026' },
-    { id: '2026-10', label: 'Outubro 2026' },
-    { id: '2026-11', label: 'Novembro 2026' },
-    { id: '2026-12', label: 'Dezembro 2026' },
-  ];
 
   const [formData, setFormData] = useState({
-    nf: '',
-    pedido: '',
-    cliente: '',
-    erp: '',
+    descricao: '',
+    tipo: 'entrada' as 'entrada' | 'saida',
+    projectId: '',
     valor: '',
     data: new Date().toISOString().split('T')[0],
-    status: 'FATURADO' as Billing['status']
+    categoria: 'sinal' as string,
+    status: 'PAGO' as Billing['status']
   });
 
-  // Combined Filters
-  const filteredBillings = billings.filter(b => {
-    const matchesStatus = statusFilter === 'ALL' || b.status === statusFilter;
-    const matchesSearch = 
-      b.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.nf.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.pedido.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesPeriod = selectedMonth === 'Annual' 
-      ? b.data.startsWith(new Date().getFullYear().toString())
-      : b.data.startsWith(selectedMonth);
+  const categorias = {
+    entrada: [
+      { value: 'sinal', label: '💰 Sinal / Entrada' },
+      { value: 'parcela', label: '📅 Parcela' },
+      { value: 'final', label: '✅ Pagamento Final' },
+    ],
+    saida: [
+      { value: 'material', label: '🪵 Material' },
+      { value: 'mo_terceirizada', label: '🔧 MO Terceirizada' },
+      { value: 'outros', label: '📌 Outros' },
+    ]
+  };
 
-    return matchesStatus && matchesSearch && matchesPeriod;
+  const filteredBillings = billings.filter(b => {
+    const matchesType = typeFilter === 'ALL' || b.tipo === typeFilter;
+    const matchesSearch = b.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    return matchesType && matchesSearch;
   }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
-  // Pagination Logic
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredBillings.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredBillings.length / itemsPerPage));
   const currentData = filteredBillings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
+  const totalEntradas = billings.filter(b => b.tipo === 'entrada' && b.status === 'PAGO').reduce((acc, b) => acc + b.valor, 0);
+  const totalSaidas = billings.filter(b => b.tipo === 'saida' && b.status === 'PAGO').reduce((acc, b) => acc + b.valor, 0);
+  const saldo = totalEntradas - totalSaidas;
+
+  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = { ...formData, valor: parseFloat(formData.valor) };
+      const data = {
+        ...formData,
+        valor: parseFloat(formData.valor),
+        nf: formData.descricao, // backward compat
+        pedido: formData.projectId || '-',
+        cliente: projects.find(p => p.id === formData.projectId)?.clientName || '-',
+      };
       if (editingBilling) {
         await updateBilling(editingBilling.id, data);
       } else {
         await addBilling(data);
       }
-      setFormData({ nf: '', pedido: '', cliente: '', erp: '', valor: '', data: new Date().toISOString().split('T')[0], status: 'FATURADO' });
-      setEditingBilling(null);
-      setIsModalOpen(false);
+      resetForm();
     } catch (err: any) {
-      alert('Erro ao salvar faturamento: ' + err.message);
+      alert('Erro: ' + err.message);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({ descricao: '', tipo: 'entrada', projectId: '', valor: '', data: new Date().toISOString().split('T')[0], categoria: 'sinal', status: 'PAGO' });
+    setEditingBilling(null);
+    setIsModalOpen(false);
   };
 
   const handleEdit = (b: Billing) => {
     setEditingBilling(b);
     setFormData({
-      nf: b.nf,
-      pedido: b.pedido,
-      cliente: b.cliente,
-      erp: b.erp,
+      descricao: b.descricao || '',
+      tipo: b.tipo || 'entrada',
+      projectId: b.projectId || '',
       valor: b.valor.toString(),
       data: new Date(b.data).toISOString().split('T')[0],
+      categoria: b.categoria || 'outros',
       status: b.status
     });
     setIsModalOpen(true);
   };
 
-  const setStatus = async (b: Billing, status: Billing['status']) => {
-    await updateBilling(b.id, { status });
+  const inputStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    padding: '0.75rem',
+    color: 'white',
+    fontSize: '0.95rem',
+    width: '100%',
+    outline: 'none',
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  const headers = ['Data', 'Status', 'Nota Fiscal', 'Pedido', 'Cliente', 'Código ERP', 'Valor R$', 'Ações'];
+  const headers = ['Data', 'Tipo', 'Descrição', 'Categoria', 'Valor', 'Status', 'Ações'];
 
   const renderRow = (b: Billing) => (
     <>
-      <td style={{ padding: '1rem' }}>{formatDate(b.data)}</td>
-      <td style={{ padding: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+      <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
+        {new Date(b.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+      </td>
+      <td style={{ padding: '0.75rem' }}>
+        <span style={{
+          padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: '700',
+          background: b.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+          color: b.tipo === 'entrada' ? '#10b981' : '#ef4444',
+        }}>
+          {b.tipo === 'entrada' ? '↑ Entrada' : '↓ Saída'}
+        </span>
+      </td>
+      <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{b.descricao || '-'}</td>
+      <td style={{ padding: '0.75rem' }}>
+        <span style={{ fontSize: '0.75rem', color: '#d4af37' }}>
+          {categorias[b.tipo]?.find(c => c.value === b.categoria)?.label || b.categoria || '-'}
+        </span>
+      </td>
+      <td style={{ padding: '0.75rem', fontWeight: '700', color: b.tipo === 'entrada' ? '#10b981' : '#ef4444' }}>
+        {b.tipo === 'saida' ? '- ' : ''}{formatCurrency(b.valor)}
+      </td>
+      <td style={{ padding: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.3rem' }}>
           {[
-            { id: 'FATURADO', color: '#10b981', label: 'Faturado' },
-            { id: 'PENDENTE', color: '#f59e0b', label: 'Pendente' },
-            { id: 'CANCELADO', color: '#ef4444', label: 'Cancelado' }
+            { id: 'PAGO', color: '#10b981' },
+            { id: 'PENDENTE', color: '#f59e0b' },
+            { id: 'CANCELADO', color: '#ef4444' }
           ].map(s => (
-            <div 
-              key={s.id}
-              onClick={() => setStatus(b, s.id as any)}
-              title={s.label}
-              style={{ 
-                cursor: 'pointer',
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: b.status === s.id ? s.color : 'rgba(255, 255, 255, 0.05)',
+            <div key={s.id} onClick={() => updateBilling(b.id, { status: s.id as any })}
+              title={s.id} style={{
+                cursor: 'pointer', width: '20px', height: '20px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: b.status === s.id ? s.color : 'rgba(255,255,255,0.05)',
                 border: `1px solid ${b.status === s.id ? 'transparent' : 'var(--border)'}`,
-                transition: 'all 0.2s ease',
-                boxShadow: b.status === s.id ? `0 0 10px ${s.color}66` : 'none'
-              }}
-            >
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: b.status === s.id ? 'white' : s.color }}></div>
+                transition: 'all 0.2s'
+              }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: b.status === s.id ? 'white' : s.color }} />
             </div>
           ))}
         </div>
       </td>
-      <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.nf}</td>
-      <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.pedido}</td>
-      <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{b.cliente}</td>
-      <td style={{ padding: '1rem', fontSize: '0.875rem', color: 'var(--primary)' }}>{b.erp || '-'}</td>
-      <td style={{ padding: '1rem', fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(b.valor)}</td>
-      <td style={{ padding: '1rem' }}>
-         <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => handleEdit(b)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold' }}>Editar</button>
-            <button onClick={() => removeBilling(b.id)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 'bold' }}>Excluir</button>
-         </div>
+      <td style={{ padding: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => handleEdit(b)} style={{ all: 'unset', cursor: 'pointer', color: '#d4af37', fontSize: '0.7rem', fontWeight: 'bold' }}>Editar</button>
+          <button onClick={() => removeBilling(b.id)} style={{ all: 'unset', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', fontWeight: 'bold' }}>Excluir</button>
+        </div>
       </td>
     </>
   );
@@ -163,171 +161,143 @@ const BillingModule: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Registro de Faturamento</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Gerencie entradas manuais e sincronização de pedidos.</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Financeiro</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Controle de entradas e saídas por projeto.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditingBilling(null); setIsModalOpen(true); }}>+ Registrar Faturamento</button>
+        <button className="btn" onClick={() => { setEditingBilling(null); setIsModalOpen(true); }}
+          style={{
+            background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
+            fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
+          }}>
+          + Novo Lançamento
+        </button>
       </header>
 
-      <div className="card">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem', padding: '0.5rem' }}>
-           {/* Row 1: Search and Period */}
-           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input 
-                  type="text" 
-                  className="input" 
-                  placeholder="Buscar por Cliente, NF ou Pedido..." 
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  style={{ width: '100%', paddingLeft: '2.5rem' }}
-                />
-                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
-              </div>
-              <select 
-                className="input" 
-                style={{ width: '220px', background: 'var(--surface)', borderColor: 'var(--primary)' }}
-                value={selectedMonth}
-                onChange={(e) => { setSelectedMonth(e.target.value); setCurrentPage(1); }}
-              >
-                {periods.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
-           </div>
+      {/* Resumo */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #10b981' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Entradas</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981' }}>{formatCurrency(totalEntradas)}</h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #ef4444' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Saídas</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>{formatCurrency(totalSaidas)}</h3>
+        </div>
+        <div className="card glass" style={{ padding: '1.25rem', borderLeft: `3px solid ${saldo >= 0 ? '#d4af37' : '#ef4444'}` }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Saldo</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: saldo >= 0 ? '#d4af37' : '#ef4444' }}>{formatCurrency(saldo)}</h3>
+        </div>
+      </div>
 
-           {/* Row 2: Status Filters and Result Count */}
-           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Status:</span>
-                {[
-                  { id: 'ALL', label: 'Tudo', color: 'var(--primary)' },
-                  { id: 'FATURADO', label: 'Faturados', color: '#10b981' },
-                  { id: 'PENDENTE', label: 'Pendentes', color: '#f59e0b' },
-                  { id: 'CANCELADO', label: 'Cancelados', color: '#ef4444' }
-                ].map(f => (
-                  <button 
-                    key={f.id}
-                    onClick={() => { setStatusFilter(f.id as any); setCurrentPage(1); }}
-                    style={{ 
-                      all: 'unset',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '8px',
-                      background: statusFilter === f.id ? f.color : 'transparent',
-                      color: statusFilter === f.id ? 'white' : 'var(--text-muted)',
-                      border: `1px solid ${statusFilter === f.id ? f.color : 'var(--border)'}`,
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Encontrados: <b>{filteredBillings.length}</b> registros
-              </div>
-           </div>
+      {/* Filtros + tabela */}
+      <div className="card">
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+          <input type="text" className="input" placeholder="Buscar por descrição..."
+            style={{ flex: 1 }} value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {[
+              { id: 'ALL', label: 'Todos', color: '#d4af37' },
+              { id: 'entrada', label: '↑ Entradas', color: '#10b981' },
+              { id: 'saida', label: '↓ Saídas', color: '#ef4444' },
+            ].map(f => (
+              <button key={f.id} onClick={() => { setTypeFilter(f.id as any); setCurrentPage(1); }}
+                style={{
+                  padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer',
+                  border: typeFilter === f.id ? `1px solid ${f.color}` : '1px solid var(--border)',
+                  background: typeFilter === f.id ? f.color : 'transparent',
+                  color: typeFilter === f.id ? 'white' : 'var(--text-muted)',
+                  transition: 'all 0.2s'
+                }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <DataTable headers={headers} data={currentData} renderRow={renderRow} />
 
-        {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem', padding: '1rem', borderTop: '1px solid var(--border)' }}>
-            <button 
-              className="btn" 
-              disabled={currentPage === 1} 
-              onClick={() => handlePageChange(currentPage - 1)}
-              style={{ padding: '0.5rem 1rem', opacity: currentPage === 1 ? 0.3 : 1 }}
-            >
-              ← Anterior
-            </button>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => handlePageChange(i + 1)}
-                  style={{ 
-                    all: 'unset',
-                    cursor: 'pointer',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: 'bold',
-                    background: currentPage === i + 1 ? 'var(--primary)' : 'transparent',
-                    color: currentPage === i + 1 ? 'white' : 'var(--text-muted)',
-                    border: currentPage === i + 1 ? 'none' : '1px solid var(--border)'
-                  }}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button 
-              className="btn" 
-              disabled={currentPage === totalPages} 
-              onClick={() => handlePageChange(currentPage + 1)}
-              style={{ padding: '0.5rem 1rem', opacity: currentPage === totalPages ? 0.3 : 1 }}
-            >
-              Próximo →
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+            <button className="btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}
+              style={{ padding: '0.5rem 0.75rem' }}>←</button>
+            <span style={{ alignSelf: 'center', fontSize: '0.8rem' }}>{currentPage}/{totalPages}</span>
+            <button className="btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}
+              style={{ padding: '0.5rem 0.75rem' }}>→</button>
           </div>
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingBilling(null); }} title={editingBilling ? "Editar Faturamento" : "Lançar Faturamento Manual"}>
+      {/* Modal */}
+      <Modal isOpen={isModalOpen} onClose={resetForm}
+        title={editingBilling ? "Editar Lançamento" : "Novo Lançamento"}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {(['entrada', 'saida'] as const).map(t => (
+              <button key={t} type="button" onClick={() => setFormData({ ...formData, tipo: t, categoria: t === 'entrada' ? 'sinal' : 'material' })}
+                style={{
+                  flex: 1, padding: '0.75rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                  border: formData.tipo === t ? 'none' : '1px solid var(--border)',
+                  background: formData.tipo === t ? (t === 'entrada' ? '#10b981' : '#ef4444') : 'transparent',
+                  color: formData.tipo === t ? 'white' : 'var(--text-muted)',
+                }}>
+                {t === 'entrada' ? '↑ Entrada' : '↓ Saída'}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Descrição *</label>
+            <input style={inputStyle} required placeholder="Ex: Sinal Cozinha Maria"
+              value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-               <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Nota Fiscal</label>
-               <input className="input" required value={formData.nf} onChange={e => setFormData({ ...formData, nf: e.target.value })} />
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Projeto</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={formData.projectId}
+                onChange={e => setFormData({ ...formData, projectId: e.target.value })}>
+                <option value="" style={{ background: '#1a1a1a' }}>Sem projeto</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id} style={{ background: '#1a1a1a' }}>{p.ambiente} — {p.clientName}</option>
+                ))}
+              </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-               <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Pedido</label>
-               <input className="input" required value={formData.pedido} onChange={e => setFormData({ ...formData, pedido: e.target.value })} />
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Categoria</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={formData.categoria}
+                onChange={e => setFormData({ ...formData, categoria: e.target.value })}>
+                {categorias[formData.tipo].map(c => (
+                  <option key={c.value} value={c.value} style={{ background: '#1a1a1a' }}>{c.label}</option>
+                ))}
+              </select>
             </div>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-             <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Cliente</label>
-             <select className="input" required value={formData.cliente} onChange={e => setFormData({ ...formData, cliente: e.target.value })}>
-                <option value="">Selecione um cliente...</option>
-                {clients.map(c => <option key={c.id} value={c.razaoSocial}>{c.razaoSocial}</option>)}
-             </select>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-               <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Valor (R$)</label>
-               <input type="number" className="input" required value={formData.valor} onChange={e => setFormData({ ...formData, valor: e.target.value })} />
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Valor (R$) *</label>
+              <input type="number" step="0.01" style={inputStyle} required placeholder="0,00"
+                value={formData.valor} onChange={e => setFormData({ ...formData, valor: e.target.value })} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-               <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Data</label>
-               <input type="date" className="input" required value={formData.data} onChange={e => setFormData({ ...formData, data: e.target.value })} />
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Data *</label>
+              <input type="date" style={inputStyle} required
+                value={formData.data} onChange={e => setFormData({ ...formData, data: e.target.value })} />
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-             <label style={{ fontSize: '0.875rem', fontWeight: '600' }}>Código ERP</label>
-             <input className="input" placeholder="Opcional" value={formData.erp} onChange={e => setFormData({ ...formData, erp: e.target.value })} />
-          </div>
-
-
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', height: '3rem', fontSize: '1rem', fontWeight: 'bold', justifyContent: 'center' }}>
-            {editingBilling ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+          <button type="submit" className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
+              fontWeight: '700', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
+              fontSize: '1rem', marginTop: '0.5rem'
+            }}>
+            {editingBilling ? 'Salvar' : 'Lançar'}
           </button>
         </form>
       </Modal>
-
-      <div className="card glass">
-         <h4 style={{ fontSize: '0.875rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>Integração ERP (Simulado)</h4>
-         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Os faturamentos manuais lançados aqui impactam diretamente o Dashboard em tempo real.</p>
-      </div>
     </div>
   );
 };

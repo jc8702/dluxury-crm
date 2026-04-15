@@ -1,7 +1,7 @@
 :root {
-  --primary: #8741e2;
-  --primary-glow: rgba(135, 65, 226, 0.3);
-  --primary-hover: #7232c7;
+  --primary: #d4af37;
+  --primary-glow: rgba(212, 175, 55, 0.3);
+  --primary-hover: #b49050;
   --secondary: #64748b;
   --success: #10b981;
   --warning: #f59e0b;
@@ -11,7 +11,7 @@
   --surface-hover: #161a29;
   --text: #f1f5f9;
   --text-muted: #94a3b8;
-  --border: rgba(135, 65, 226, 0.15);
+  --border: rgba(212, 175, 55, 0.15);
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 80px;
   --radius-sm: 10px;
@@ -21,7 +21,7 @@
   --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 50px -12px rgba(0, 0, 0, 0.6);
   --glass-bg: rgba(15, 18, 29, 0.7);
-  --glass-border: rgba(135, 65, 226, 0.1);
+  --glass-border: rgba(212, 175, 55, 0.1);
   --glass-blur: blur(25px);
 }
 

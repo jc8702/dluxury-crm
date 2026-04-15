@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 
-type Tab = 'dashboard' | 'clients' | 'billing' | 'projects' | 'visits' | 'simulator' | 'settings' | 'system-health';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings' | 'system-health';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -12,13 +12,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { isAdmin, setIsAdmin } = useAppContext();
   
   const menuItems: { id: Tab; label: string; icon: string; adminOnly?: boolean }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'clients', label: 'Clientes', icon: '👥' },
-    { id: 'billing', label: 'Faturamentos', icon: '💰' },
-    { id: 'projects', label: 'Projetos', icon: '🚀' },
-    { id: 'visits', label: 'Visitas', icon: '🚗' },
-    { id: 'simulator', label: 'Consulta de Preços', icon: '🧮' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'dashboard', label: 'Painel Geral', icon: '📊' },
+    { id: 'clients', label: 'Clientes', icon: '👤' },
+    { id: 'estimates', label: 'Orçamentos', icon: '📐' },
+    { id: 'projects', label: 'Projetos', icon: '📋' },
+    { id: 'production', label: 'Produção', icon: '🔨' },
+    { id: 'visits', label: 'Visitas', icon: '🗓️' },
+    { id: 'inventory', label: 'Estoque', icon: '🪵' },
+    { id: 'finance', label: 'Financeiro', icon: '💰' },
+    { id: 'settings', label: 'Configurações', icon: '⚙️' },
     { id: 'system-health', label: 'System Health', icon: '🏥', adminOnly: true },
   ];
 
@@ -37,9 +39,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       zIndex: 100,
     }}>
       <div style={{ marginBottom: '2rem', padding: '0 0.75rem', overflow: 'hidden' }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1rem', background: 'var(--primary)', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>J</span>
-          <span className="sidebar-label">JMDCORP</span>
+        <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img src="/logo.png" alt="D'Luxury Logo" style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
+          <span className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em' }}>D'LUXURY</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: '500', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>AMBIENTES</span>
+          </span>
         </h1>
       </div>
 
@@ -57,9 +62,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
               alignItems: 'center',
               gap: '1rem',
               transition: 'all 0.2s ease',
-              background: activeTab === item.id ? 'var(--primary)' : 'transparent',
-              color: activeTab === item.id ? 'white' : 'var(--text-muted)',
-              fontWeight: activeTab === item.id ? '600' : '400',
+              background: activeTab === item.id ? 'linear-gradient(135deg, #d4af37, #b49050)' : 'transparent',
+              color: activeTab === item.id ? '#1a1a2e' : 'var(--text-muted)',
+              fontWeight: activeTab === item.id ? '700' : '400',
               overflow: 'hidden'
             }}
           >
@@ -75,10 +80,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             <input type="checkbox" checked={isAdmin} onChange={e => setIsAdmin(e.target.checked)} />
          </div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-            <div style={{ minWidth: '32px', height: '32px', borderRadius: '50%', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>AD</div>
+            <img src="/logo.png" alt="Admin" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
             <div className="sidebar-label">
-              <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Admin Dev</p>
-              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>System Specialist</p>
+              <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Admin</p>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>D'Luxury Ambientes</p>
             </div>
          </div>
       </div>

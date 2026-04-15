@@ -2,23 +2,22 @@ import { useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import Dashboard from './features/dashboard/Dashboard';
 import Clients from './features/clients/Clients';
-import BillingForm from './features/billing/BillingForm';
+import Estimates from './features/estimates/Estimates';
 import ProjectKanban from './features/projects/ProjectKanban';
+import Production from './features/production/Production';
 import VisitKanban from './features/visits/VisitKanban';
-import { SimulatorPage } from './features/simulator/SimulatorPage';
+import Inventory from './features/inventory/Inventory';
 import Settings from './features/settings/Settings';
 import SystemHealth from './features/admin/SystemHealth';
 import { AppProvider } from './context/AppContext';
-import { SimulationProvider } from './context/simulator/SimulationContext';
+import BillingForm from './features/billing/BillingForm';
 
-type Tab = 'dashboard' | 'clients' | 'billing' | 'projects' | 'visits' | 'simulator' | 'settings' | 'system-health';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings' | 'system-health';
 
 function App() {
   return (
     <AppProvider>
-      <SimulationProvider>
-        <AppContent />
-      </SimulationProvider>
+      <AppContent />
     </AppProvider>
   );
 }
@@ -32,14 +31,18 @@ function AppContent() {
         return <Dashboard />;
       case 'clients':
         return <Clients />;
-      case 'billing':
-        return <BillingForm />;
+      case 'estimates':
+        return <Estimates />;
       case 'projects':
         return <ProjectKanban />;
+      case 'production':
+        return <Production />;
       case 'visits':
         return <VisitKanban />;
-      case 'simulator':
-        return <SimulatorPage />;
+      case 'inventory':
+        return <Inventory />;
+      case 'finance':
+        return <BillingForm />;
       case 'settings':
         return <Settings />;
       case 'system-health':
@@ -62,8 +65,8 @@ function AppContent() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ position: 'absolute', top: 0, right: 0, width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-             <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%)' }}></div>
-             <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)' }}></div>
+             <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(180, 144, 80, 0.08) 0%, transparent 70%)' }}></div>
+             <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%)' }}></div>
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             {renderContent()}

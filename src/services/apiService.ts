@@ -1,6 +1,6 @@
 /**
- * API SERVICE
- * Centralized fetch wrapper for the Corporate CRM Simulator.
+ * API SERVICE — D'LUXURY AMBIENTES CRM
+ * Centralized fetch wrapper.
  */
 
 const getPin = () => sessionStorage.getItem('app_pin') || '';
@@ -27,31 +27,40 @@ export const apiService = {
   // Clients
   getClients: () => apiService.fetch('/api/clients'),
   addClient: (data: any) => apiService.fetch('/api/clients', { method: 'POST', body: JSON.stringify(data) }),
-  updateClient: (id: string, data: any) => 
+  updateClient: (id: string, data: any) =>
     apiService.fetch(`/api/clients?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeClient: (id: string) => apiService.fetch(`/api/clients?id=${id}`, { method: 'DELETE' }),
+
+  // Projects
+  getProjects: () => apiService.fetch('/api/projects'),
+  getProjectsByClient: (clientId: string) => apiService.fetch(`/api/projects?client_id=${clientId}`),
+  getProjectsByStatus: (status: string) => apiService.fetch(`/api/projects?status=${status}`),
+  addProject: (data: any) => apiService.fetch('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+  updateProject: (id: string, data: any) =>
+    apiService.fetch(`/api/projects?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeProject: (id: string) => apiService.fetch(`/api/projects?id=${id}`, { method: 'DELETE' }),
 
   // Billings
   getBillings: () => apiService.fetch('/api/billings'),
   addBilling: (data: any) => apiService.fetch('/api/billings', { method: 'POST', body: JSON.stringify(data) }),
-  updateBilling: (id: string, data: any) => 
+  updateBilling: (id: string, data: any) =>
     apiService.fetch(`/api/billings?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeBilling: (id: string) => apiService.fetch(`/api/billings?id=${id}`, { method: 'DELETE' }),
 
-  // Kanban
+  // Kanban (Visits)
   getKanbanItems: () => apiService.fetch('/api/kanban'),
   addKanbanItem: (data: any) => apiService.fetch('/api/kanban', { method: 'POST', body: JSON.stringify(data) }),
-  updateKanbanStatus: (id: string, status: string, extraData: any = {}) => 
+  updateKanbanStatus: (id: string, status: string, extraData: any = {}) =>
     apiService.fetch(`/api/kanban?id=${id}`, { method: 'PATCH', body: JSON.stringify({ status, ...extraData }) }),
 
   // Logs
   getLogs: () => apiService.fetch('/api/logs'),
-  addLog: (type: string, severity: string, message: string) => 
+  addLog: (type: string, severity: string, message: string) =>
     apiService.fetch('/api/logs', { method: 'POST', body: JSON.stringify({ type, severity, message }) }),
 
   // Monthly Goals
   getMonthlyGoals: () => apiService.fetch('/api/goals'),
-  updateMonthlyGoal: (period: string, amount: number) => 
+  updateMonthlyGoal: (period: string, amount: number) =>
     apiService.fetch('/api/goals', { method: 'POST', body: JSON.stringify({ period, amount }) }),
 };
 
