@@ -44,7 +44,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'PATCH') {
     const { id } = req.query;
-    const { descricao, tipo, valor, data, categoria, status, projectId } = req.body;
+    const { descricao, tipo, valor, data, categoria, status, projectId, cliente } = req.body;
     try {
       const result = await sql`
         UPDATE billings SET
@@ -54,7 +54,8 @@ export default async function handler(req: any, res: any) {
           data = COALESCE(${data}, data),
           categoria = COALESCE(${categoria}, categoria),
           status = COALESCE(${status}, status),
-          project_id = COALESCE(${projectId}, project_id)
+          project_id = COALESCE(${projectId}, project_id),
+          cliente = COALESCE(${cliente}, cliente)
         WHERE id = ${id}
         RETURNING *
       `;

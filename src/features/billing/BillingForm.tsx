@@ -104,7 +104,7 @@ const BillingModule: React.FC = () => {
     outline: 'none',
   };
 
-  const headers = ['Data', 'Tipo', 'Descrição', 'Projeto', 'Categoria', 'Valor', 'Status', 'Ações'];
+  const headers = ['Data', 'Tipo', 'Descrição', 'Cliente', 'Projeto', 'Categoria', 'Valor', 'Status', 'Ações'];
 
   const renderRow = (b: Billing) => {
     const linkedProject = projects.find(p => p.id === b.projectId);
@@ -123,6 +123,9 @@ const BillingModule: React.FC = () => {
         </span>
       </td>
       <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{b.descricao || '-'}</td>
+      <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        {b.cliente || linkedProject?.clientName || '-'}
+      </td>
       <td style={{ padding: '0.75rem' }}>
         {linkedProject ? (
           <span style={{ 
@@ -171,6 +174,7 @@ const BillingModule: React.FC = () => {
       </td>
     </>
   );};
+
 
 
   return (

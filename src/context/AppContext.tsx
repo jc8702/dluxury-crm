@@ -54,6 +54,7 @@ export type Project = {
 export type Billing = {
   id: string;
   projectId?: string;
+  cliente?: string;
   descricao: string;
   tipo: 'entrada' | 'saida';
   valor: number;
@@ -322,6 +323,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         descricao: b.descricao || b.nf || '',
         tipo: b.tipo || 'entrada',
         projectId: b.project_id || b.projectId,
+        cliente: b.cliente || '',
         valor: Number(b.valor),
         categoria: b.categoria || 'outros',
         status: b.status || 'PAGO'
@@ -515,6 +517,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       descricao: saved.descricao || data.descricao || '',
       tipo: saved.tipo || data.tipo || 'entrada',
       projectId: saved.project_id || saved.projectId || data.projectId,
+      cliente: saved.cliente || data.cliente || '',
       valor: Number(saved.valor),
       categoria: saved.categoria || data.categoria || 'outros',
       status: saved.status || 'PAGO'
@@ -530,6 +533,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         descricao: saved.descricao || data.descricao || b.descricao,
         tipo: saved.tipo || data.tipo || b.tipo,
         projectId: saved.project_id || saved.projectId || data.projectId || b.projectId,
+        cliente: saved.cliente || data.cliente || b.cliente || '',
         valor: Number(saved.valor),
         categoria: saved.categoria || data.categoria || b.categoria,
         status: saved.status || data.status || b.status
