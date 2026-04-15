@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface EstimateItem {
   id: string;
@@ -86,7 +86,7 @@ const Estimates: React.FC = () => {
       formatCurrency((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity) + (((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity)) * (marginPercent / 100)))
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 70,
       head: [['Móvel', 'Qtd', 'Material', 'Dimensões (LxAxP)', 'Subtotal']],
       body: tableData,
@@ -95,7 +95,7 @@ const Estimates: React.FC = () => {
       styles: { fontSize: 9 },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 70;
+    const finalY = (doc as any).lastAutoTable?.finalY || 70;
 
     // Totals
     doc.setFontSize(12);
