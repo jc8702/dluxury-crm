@@ -248,6 +248,7 @@ const Settings: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
       {showCondModal && (
         <CondicaoModal 
           show={showCondModal} 
