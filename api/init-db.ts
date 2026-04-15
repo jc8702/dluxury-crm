@@ -174,6 +174,75 @@ export default async function handler(req: any, res: any) {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    
+    // 9. Condições de Pagamento
+    await sql`
+      CREATE TABLE IF NOT EXISTS condicoes_pagamento (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        n_parcelas INTEGER DEFAULT 1,
+        ativo BOOLEAN DEFAULT true,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 10. Orcamentos
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamentos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        cliente_id UUID REFERENCES clients(id),
+        projeto_id UUID REFERENCES projects(id),
+        numero TEXT UNIQUE NOT NULL,
+        status TEXT DEFAULT 'rascunho',
+        valor_base NUMERIC(12,2) DEFAULT 0,
+        taxa_mensal NUMERIC(5,4) DEFAULT 0,
+        condicao_pagamento_id UUID REFERENCES condicoes_pagamento(id),
+        valor_final NUMERIC(12,2) DEFAULT 0,
+        prazo_entrega_dias INTEGER DEFAULT 45,
+        prazo_tipo TEXT DEFAULT 'padrao',
+        adicional_urgencia_pct NUMERIC(5,4) DEFAULT 0.15,
+        observacoes TEXT,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 11. Itens Orcamento
+    await sql`
+      CREATE TABLE IF NOT EXISTS itens_orcamento (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+        descricao TEXT,
+        ambiente TEXT,
+        largura_cm NUMERIC(10,2),
+        altura_cm NUMERIC(10,2),
+        profundidade_cm NUMERIC(10,2),
+        material TEXT,
+        acabamento TEXT,
+        quantidade INTEGER DEFAULT 1,
+        valor_unitario NUMERIC(12,2) DEFAULT 0,
+        valor_total NUMERIC(12,2) DEFAULT 0
+      )
+    `;
+
+    // Seed Condições de Pagamento se vazio
+    try {
+      const condCountRes = await sql`SELECT count(*) as count FROM condicoes_pagamento`;
+      if (parseInt(condCountRes[0].count, 10) === 0) {
+        await sql`
+          INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES 
+          ('À vista (PIX/Dinheiro)', 1),
+          ('50% entrada + 50% na entrega', 1),
+          ('30/60 dias', 2),
+          ('3x cartão', 3),
+          ('4x cartão', 4),
+          ('6x cartão', 6),
+          ('12x cartão', 12)
+        `;
+      }
+    } catch (err) {
+      console.log('Seed error (ignoring):', err);
+    }
 
     // Initialize Default Admin if users table is empty
     const usersCountRes = await sql`SELECT count(*) as count FROM users`;

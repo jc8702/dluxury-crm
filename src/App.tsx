@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import Dashboard from './features/dashboard/Dashboard';
 import Clients from './features/clients/Clients';
-import Estimates from './features/estimates/Estimates';
+import OrcamentosPage from './features/orcamentos/OrcamentosPage';
 import ProjectKanban from './features/projects/ProjectKanban';
 import Production from './features/production/Production';
 import VisitKanban from './features/visits/VisitKanban';
@@ -37,7 +37,7 @@ function AppContent() {
       case 'clients':
         return <Clients />;
       case 'estimates':
-        return <Estimates />;
+        return <OrcamentosPage />;
       case 'projects':
         return <ProjectKanban />;
       case 'production':

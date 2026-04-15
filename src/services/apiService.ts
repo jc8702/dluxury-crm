@@ -85,6 +85,21 @@ export const apiService = {
   getMonthlyGoals: () => apiService.fetch('/api/goals'),
   updateMonthlyGoal: (period: string, amount: number) =>
     apiService.fetch('/api/goals', { method: 'POST', body: JSON.stringify({ period, amount }) }),
+
+  // Orcamentos (Budgets)
+  getOrcamentos: () => apiService.fetch('/api/orcamentos'),
+  getOrcamento: (id: string) => apiService.fetch(`/api/orcamentos?id=${id}`),
+  addOrcamento: (data: any) => apiService.fetch('/api/orcamentos', { method: 'POST', body: JSON.stringify(data) }),
+  updateOrcamento: (id: string, data: any) =>
+    apiService.fetch(`/api/orcamentos?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeOrcamento: (id: string) => apiService.fetch(`/api/orcamentos?id=${id}`, { method: 'DELETE' }),
+
+  // Payment Conditions
+  getCondicoesPagamento: () => apiService.fetch('/api/condicoes-pagamento'),
+  addCondicaoPagamento: (data: any) => apiService.fetch('/api/condicoes-pagamento', { method: 'POST', body: JSON.stringify(data) }),
+  updateCondicaoPagamento: (id: string, data: any) =>
+    apiService.fetch(`/api/condicoes-pagamento?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeCondicaoPagamento: (id: string) => apiService.fetch(`/api/condicoes-pagamento?id=${id}`, { method: 'DELETE' }),
 };
 
 export const setAuthToken = (token: string) => localStorage.setItem('dluxury_token', token);

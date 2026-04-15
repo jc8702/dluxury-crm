@@ -4,7 +4,8 @@ import { apiService } from '../../services/apiService';
 
 const Settings: React.FC = () => {
   const { 
-    user, systemUsers, loadSystemUsers
+    user, systemUsers, loadSystemUsers,
+    condicoesPagamento, addCondicaoPagamento, updateCondicaoPagamento, removeCondicaoPagamento
   } = useAppContext();
 
   const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
@@ -18,6 +19,27 @@ const Settings: React.FC = () => {
   useEffect(() => {
     loadSystemUsers();
   }, []);
+
+  // Gestão de Condições de Pagamento
+  const [showCondModal, setShowCondModal] = useState(false);
+  const [newCond, setNewCond] = useState({ nome: '', n_parcelas: 1 });
+  const [editingCondId, setEditingCondId] = useState<string | null>(null);
+
+  const handleAddCond = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingCondId) {
+        await updateCondicaoPagamento(editingCondId, newCond);
+      } else {
+        await addCondicaoPagamento(newCond);
+      }
+      setShowCondModal(false);
+      setNewCond({ nome: '', n_parcelas: 1 });
+      setEditingCondId(null);
+    } catch (err: any) {
+      alert('Erro ao salvar condição');
+    }
+  };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,6 +165,54 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
+      <div className="card glass" style={{ marginTop: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.25rem', color: '#d4af37' }}>💰 Configurações Financeiras</h3>
+          <button onClick={() => { setEditingCondId(null); setNewCond({nome:'', n_parcelas:1}); setShowCondModal(true); }} className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
+            + Nova Condição de Pagamento
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div>
+            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>Condições de Pagamento</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {condicoesPagamento.map(c => (
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px' }}>
+                  <div>
+                    <p style={{ fontWeight: '600' }}>{c.nome}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.n_parcelas} parcela(s)</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => { setEditingCondId(c.id); setNewCond({nome: c.nome, n_parcelas: c.n_parcelas}); setShowCondModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>✎</button>
+                    <button onClick={() => { if(confirm('Excluir?')) removeCondicaoPagamento(c.id); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>×</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>Padrões de Orçamento</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Taxa Mensal Padrão (%)</label>
+                <input type="number" step="0.1" style={inputStyle} defaultValue={3.0} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Prazo Padrão de Entrega (Dias Úteis)</label>
+                <input type="number" style={inputStyle} defaultValue={45} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Adicional de Urgência (%)</label>
+                <input type="number" style={inputStyle} defaultValue={15} />
+              </div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>* Estes valores serão usados como base para novos orçamentos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {showUserModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border)' }}>
@@ -178,7 +248,43 @@ const Settings: React.FC = () => {
             </form>
           </div>
         </div>
+      {showCondModal && (
+        <CondicaoModal 
+          show={showCondModal} 
+          onClose={() => setShowCondModal(false)} 
+          onSave={handleAddCond} 
+          data={newCond} 
+          setData={setNewCond} 
+          isEditing={!!editingCondId} 
+          s={inputStyle} 
+        />
       )}
+    </div>
+  );
+};
+
+// Modal Condição de Pagamento
+const CondicaoModal: React.FC<{ show: boolean, onClose: () => void, onSave: (e: React.FormEvent) => void, data: any, setData: any, isEditing: boolean, s: any }> = ({ show, onClose, onSave, data, setData, isEditing, s }) => {
+  if (!show) return null;
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border)' }}>
+        <h3 style={{ color: 'white', marginBottom: '1.5rem' }}>{isEditing ? 'Editar Condição' : 'Nova Condição de Pagamento'}</h3>
+        <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Nome da Condição</label>
+            <input required style={s} value={data.nome} onChange={e => setData({...data, nome: e.target.value.toUpperCase()})} placeholder="EX: 4X CARTÃO" />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Número de Parcelas</label>
+            <input required type="number" min="1" style={s} value={data.n_parcelas} onChange={e => setData({...data, n_parcelas: Number(e.target.value)})} />
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button type="submit" style={{ flex: 1, background: 'var(--primary)', color: '#1a1a2e', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
+            <button type="button" onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

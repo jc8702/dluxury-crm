@@ -63,6 +63,47 @@ export type Billing = {
   status: 'PAGO' | 'PENDENTE' | 'CANCELADO';
 };
 
+export type OrcamentoItem = {
+  id?: string;
+  descricao: string;
+  ambiente: string;
+  largura_cm: number;
+  altura_cm: number;
+  profundidade_cm: number;
+  material: string;
+  acabamento: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+};
+
+export type Orcamento = {
+  id: string;
+  cliente_id: string;
+  cliente_nome?: string;
+  projeto_id?: string;
+  numero: string;
+  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado';
+  valor_base: number;
+  taxa_mensal: number;
+  condicao_pagamento_id: string;
+  valor_final: number;
+  prazo_entrega_dias: number;
+  prazo_tipo: 'padrao' | 'urgente';
+  adicional_urgencia_pct: number;
+  observacoes?: string;
+  itens: OrcamentoItem[];
+  criado_em?: string;
+  atualizado_em?: string;
+};
+
+export type CondicaoPagamento = {
+  id: string;
+  nome: string;
+  n_parcelas: number;
+  ativo: boolean;
+};
+
 export type KanbanItem = {
   id: string;
   title: string;
@@ -185,6 +226,18 @@ interface AppContextType {
   updateBilling: (id: string, billing: Partial<Billing>) => Promise<void>;
   removeBilling: (id: string) => Promise<void>;
 
+  // Orcamentos
+  orcamentos: Orcamento[];
+  addOrcamento: (data: any) => Promise<void>;
+  updateOrcamento: (id: string, data: any) => Promise<void>;
+  removeOrcamento: (id: string) => Promise<void>;
+
+  // Condicoes Pagamento
+  condicoesPagamento: CondicaoPagamento[];
+  addCondicaoPagamento: (data: any) => Promise<void>;
+  updateCondicaoPagamento: (id: string, data: any) => Promise<void>;
+  removeCondicaoPagamento: (id: string) => Promise<void>;
+
   // Goals
   monthlyGoals: Record<string, number>;
   setMonthlyGoal: (period: string, amount: number) => void;
@@ -219,6 +272,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [billings, setBillings] = useState<Billing[]>([]);
   const [visits, setVisits] = useState<KanbanItem[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+  const [condicoesPagamento, setCondicoesPagamento] = useState<CondicaoPagamento[]>([]);
 
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
@@ -267,8 +322,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         apiService.getBillings().catch(() => []),
         apiService.getKanbanItems().catch(() => []),
         apiService.getMonthlyGoals().catch(() => ({})),
-        apiService.getInventory().catch(() => [])
+        apiService.getInventory().catch(() => []),
+        apiService.getOrcamentos().catch(() => []),
+        apiService.getCondicoesPagamento().catch(() => [])
       ]);
+
+      // Orcamentos
+      setOrcamentos(orcamentosData.map((o: any) => ({
+        ...o,
+        valor_base: Number(o.valor_base),
+        valor_final: Number(o.valor_final),
+        taxa_mensal: Number(o.taxa_mensal),
+        adicional_urgencia_pct: Number(o.adicional_urgencia_pct)
+      })));
+
+      // Condicoes
+      setCondicoesPagamento(condicoesData.map((c: any) => ({
+        ...c,
+        n_parcelas: Number(c.n_parcelas)
+      })));
 
       // Inventory - will use mapInventoryItem after it's defined (reloadData runs after mount)
       setInventory(invData.map((i: any) => ({
@@ -647,6 +719,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setInventory(prev => prev.filter(inv => inv.id !== id));
   };
 
+  // ─── ORCAMENTO CRUD ────────────────────────────────────
+  const addOrcamento = async (data: any) => {
+    const saved = await apiService.addOrcamento(data);
+    setOrcamentos(prev => [saved, ...prev]);
+  };
+
+  const updateOrcamento = async (id: string, data: any) => {
+    const saved = await apiService.updateOrcamento(id, data);
+    setOrcamentos(prev => prev.map(o => o.id === id ? saved : o));
+  };
+
+  const removeOrcamento = async (id: string) => {
+    await apiService.removeOrcamento(id);
+    setOrcamentos(prev => prev.filter(o => o.id !== id));
+  };
+
+  // ─── CONDICAO PAGAMENTO CRUD ────────────────────────────
+  const addCondicaoPagamento = async (data: any) => {
+    const saved = await apiService.addCondicaoPagamento(data);
+    setCondicoesPagamento(prev => [...prev, saved]);
+  };
+
+  const updateCondicaoPagamento = async (id: string, data: any) => {
+    const saved = await apiService.updateCondicaoPagamento(id, data);
+    setCondicoesPagamento(prev => prev.map(c => c.id === id ? saved : c));
+  };
+
+  const removeCondicaoPagamento = async (id: string) => {
+    await apiService.removeCondicaoPagamento(id);
+    setCondicoesPagamento(prev => prev.filter(c => c.id !== id));
+  };
+
   // ─── KPIs ──────────────────────────────────────────────
   const currentMeta = useMemo(() => {
     if (selectedPeriod === 'Annual') {
@@ -683,6 +787,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
       inventory, addInventory, updateInventoryQty, removeInventoryItem,
       billings, addBilling, updateBilling, removeBilling,
+      orcamentos, addOrcamento, updateOrcamento, removeOrcamento,
+      condicoesPagamento, addCondicaoPagamento, updateCondicaoPagamento, removeCondicaoPagamento,
       monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       currentMeta, metaMensal, setMetaMensal,
       totalFaturadoMes, totalPeriodo,
