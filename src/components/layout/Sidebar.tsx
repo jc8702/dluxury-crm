@@ -38,14 +38,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 100,
     }}>
-      <div style={{ marginBottom: '2rem', padding: '0.5rem 0.75rem' }}>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img src="/logo.png" alt="D'Luxury Logo" style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
-          <span className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em' }}>D'LUXURY</span>
-            <span style={{ fontSize: '0.6rem', fontWeight: '500', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>AMBIENTES</span>
-          </span>
-        </h1>
+      <div style={{ marginBottom: '2rem', padding: '0.5rem 0.5rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img src="/logo.png" alt="D'Luxury" style={{ width: '56px', minWidth: '56px', height: '56px', minHeight: '56px', objectFit: 'contain', flexShrink: 0, borderRadius: '8px' }} />
+          <div className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <span style={{ fontSize: '1rem', fontWeight: '900', color: '#d4af37', lineHeight: '1', letterSpacing: '0.02em' }}>D'LUXURY</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.05em', lineHeight: '1' }}>MÓVEIS SOB MEDIDA</span>
+          </div>
+        </div>
       </div>
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
