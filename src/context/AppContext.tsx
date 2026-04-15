@@ -98,13 +98,43 @@ export type User = {
 
 export type InventoryItem = {
   id: string;
+  // Identificação
   name: string;
-  category: 'madeira' | 'ferragem' | 'pintura' | 'acabamento' | 'fixacao' | string;
-  unit: 'un' | 'mt' | 'm2' | 'l' | 'kg' | string;
+  sku?: string;
+  description?: string;
+  category: string;
+  family?: string;
+  subcategory?: string;
+  unit: string;
+  location: string;
+  // Estoque
   quantity: number;
   minQuantity: number;
-  location: string;
+  maxQuantity?: number;
+  reorderPoint?: number;
   price: number;
+  // Fornecedor
+  supplierName?: string;
+  supplierCode?: string;
+  leadTimeDays?: number;
+  // Fiscal
+  ncm?: string;
+  cfop?: string;
+  icms?: number;
+  ipi?: number;
+  pis?: number;
+  cofins?: number;
+  fiscalOrigin?: string;
+  // Compra
+  purchaseUnit?: string;
+  conversionFactor?: number;
+  purchasePrice?: number;
+  currency?: string;
+  // MRP
+  minLot?: number;
+  replenishmentPolicy?: string;
+  planningType?: string;
+  resupplyDays?: number;
   updated_at?: string;
 };
 
@@ -239,16 +269,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         apiService.getInventory().catch(() => [])
       ]);
 
-      // Inventory
+      // Inventory - will use mapInventoryItem after it's defined (reloadData runs after mount)
       setInventory(invData.map((i: any) => ({
         id: i.id.toString(),
-        name: i.name,
-        category: i.category,
-        unit: i.unit,
-        quantity: Number(i.quantity),
-        minQuantity: Number(i.min_quantity),
-        location: i.location || '',
+        name: i.name, sku: i.sku, description: i.description,
+        category: i.category, family: i.family, subcategory: i.subcategory,
+        unit: i.unit, location: i.location || '',
+        quantity: Number(i.quantity), minQuantity: Number(i.min_quantity),
+        maxQuantity: Number(i.max_quantity) || 0, reorderPoint: Number(i.reorder_point) || 0,
         price: Number(i.price),
+        supplierName: i.supplier_name, supplierCode: i.supplier_code,
+        leadTimeDays: Number(i.lead_time_days) || 0,
+        ncm: i.ncm, cfop: i.cfop,
+        icms: Number(i.icms) || 0, ipi: Number(i.ipi) || 0,
+        pis: Number(i.pis) || 0, cofins: Number(i.cofins) || 0,
+        fiscalOrigin: i.fiscal_origin || '0',
+        purchaseUnit: i.purchase_unit, conversionFactor: Number(i.conversion_factor) || 1,
+        purchasePrice: Number(i.purchase_price) || 0, currency: i.currency || 'BRL',
+        minLot: Number(i.min_lot) || 1,
+        replenishmentPolicy: i.replenishment_policy || 'FOQ',
+        planningType: i.planning_type || 'MRP',
+        resupplyDays: Number(i.resupply_days) || 0,
         updated_at: i.updated_at
       })));
 
@@ -563,12 +604,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // ─── INVENTORY CRUD ────────────────────────────────────
   const addInventory = async (data: any) => {
     const saved = await apiService.addInventory(data);
-    setInventory(prev => [...prev, {
-        id: saved.id.toString(), name: saved.name, category: saved.category, unit: saved.unit,
-        quantity: Number(saved.quantity), minQuantity: Number(saved.min_quantity),
-        location: saved.location || '', price: Number(saved.price)
-    }]);
+    setInventory(prev => [...prev, mapInventoryItem(saved)]);
   };
+
+  const mapInventoryItem = (i: any): InventoryItem => ({
+    id: i.id.toString(),
+    name: i.name, sku: i.sku, description: i.description,
+    category: i.category, family: i.family, subcategory: i.subcategory,
+    unit: i.unit, location: i.location || '',
+    quantity: Number(i.quantity), minQuantity: Number(i.min_quantity),
+    maxQuantity: Number(i.max_quantity) || 0, reorderPoint: Number(i.reorder_point) || 0,
+    price: Number(i.price),
+    supplierName: i.supplier_name, supplierCode: i.supplier_code,
+    leadTimeDays: Number(i.lead_time_days) || 0,
+    ncm: i.ncm, cfop: i.cfop,
+    icms: Number(i.icms) || 0, ipi: Number(i.ipi) || 0,
+    pis: Number(i.pis) || 0, cofins: Number(i.cofins) || 0,
+    fiscalOrigin: i.fiscal_origin || '0',
+    purchaseUnit: i.purchase_unit, conversionFactor: Number(i.conversion_factor) || 1,
+    purchasePrice: Number(i.purchase_price) || 0, currency: i.currency || 'BRL',
+    minLot: Number(i.min_lot) || 1,
+    replenishmentPolicy: i.replenishment_policy || 'FOQ',
+    planningType: i.planning_type || 'MRP',
+    resupplyDays: Number(i.resupply_days) || 0,
+    updated_at: i.updated_at
+  });
 
   const updateInventoryQty = async (id: string, qty: number) => {
     await apiService.updateInventory(id, qty);
