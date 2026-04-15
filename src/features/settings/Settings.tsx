@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
         <p style={{ color: 'var(--text-muted)' }}>Gerencie permissões e dados de acesso.</p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      <div className="grid-2" style={{ gap: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className="card glass">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Meus Dados (Admin)</h3>

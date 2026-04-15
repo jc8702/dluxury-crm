@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       {/* KPIs principais */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+      <div className="grid-4" style={{ gap: '1rem' }}>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #d4af37' }}>
           <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Clientes</p>
           <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#d4af37' }}>{clients.length}</h3>
@@ -120,7 +120,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Meta + Pipeline por etapa */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
+      <div className="grid-2" style={{ gap: '1.5rem' }}>
         {/* Meta mensal */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
           <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Meta do Período</h3>

@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 100,
     }}>
-      <div style={{ marginBottom: '2rem', padding: '0.5rem 0.5rem', flexShrink: 0 }}>
+      <div className="sidebar-header" style={{ marginBottom: '2rem', padding: '0.5rem 0.5rem', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <img src="/logo.png" alt="D'Luxury" style={{ width: '56px', minWidth: '56px', height: '56px', minHeight: '56px', objectFit: 'contain', flexShrink: 0, borderRadius: '8px' }} />
           <div className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         ))}
       </nav>
 
-      <div style={{ padding: '1rem 0.5rem', borderTop: '1px solid var(--border)' }}>
+      <div className="sidebar-footer" style={{ padding: '1rem 0.5rem', borderTop: '1px solid var(--border)' }}>
          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#d4af37', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
               {user?.name.charAt(0).toUpperCase()}
