@@ -133,26 +133,20 @@ export default async function handler(req: any, res: any) {
     `;
 
     // Add new columns if they don't exist (safe migrations)
-    const migrations = [
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS nome TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS cpf TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS endereco TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS cidade TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS tipo_imovel TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS comodos_interesse TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS origem TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS observacoes TEXT`,
-      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ativo'`,
-      `ALTER TABLE billings ADD COLUMN IF NOT EXISTS descricao TEXT`,
-      `ALTER TABLE billings ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'entrada'`,
-      `ALTER TABLE billings ADD COLUMN IF NOT EXISTS project_id TEXT`,
-      `ALTER TABLE billings ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'outros'`,
-      `ALTER TABLE kanban_items ADD COLUMN IF NOT EXISTS project_id TEXT`,
-    ];
-
-    for (const m of migrations) {
-      await sql(m).catch(() => {});
-    }
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS nome TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS cpf TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS endereco TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS cidade TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS tipo_imovel TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS comodos_interesse TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS origem TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS observacoes TEXT`.catch(() => {});
+    await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ativo'`.catch(() => {});
+    await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
+    await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'entrada'`.catch(() => {});
+    await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS project_id TEXT`.catch(() => {});
+    await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'outros'`.catch(() => {});
+    await sql`ALTER TABLE kanban_items ADD COLUMN IF NOT EXISTS project_id TEXT`.catch(() => {});
 
     // 7. Users Table
     await sql`
