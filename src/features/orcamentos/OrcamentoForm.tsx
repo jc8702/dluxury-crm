@@ -128,33 +128,57 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px', padding: '0.6rem', color: 'white', width: '100%', outline: 'none'
+    background: '#161a29', 
+    border: '1px solid rgba(212, 175, 55, 0.3)',
+    borderRadius: '8px', 
+    padding: '0.75rem', 
+    color: 'white', 
+    width: '100%', 
+    outline: 'none',
+    fontSize: '0.9rem'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.75rem', 
+    color: '#94a3b8', 
+    marginBottom: '0.4rem', 
+    display: 'block',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em'
+  };
+
+  const sectionStyle: React.CSSProperties = {
+    padding: '1.5rem',
+    background: 'var(--surface)',
+    borderRadius: '12px',
+    border: '1px solid var(--border)',
+    boxShadow: 'var(--shadow-sm)'
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '85vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
       
       {/* Seção 1 — Dados Gerais */}
-      <section className="card glass" style={{ padding: '1.25rem' }}>
-        <h4 style={{ color: '#d4af37', marginBottom: '1rem', fontSize: '1rem' }}>1. Dados Gerais</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <section style={sectionStyle}>
+        <h4 style={{ color: '#d4af37', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>1. Dados Gerais</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cliente</label>
+            <label style={labelStyle}>Cliente</label>
             <select style={inputStyle} value={formData.cliente_id} onChange={e => setFormData({...formData, cliente_id: e.target.value})}>
               <option value="">Selecione...</option>
-              {clients.map(c => <option key={c.id} value={c.id} style={{background: '#1a1a2e'}}>{c.nome}</option>)}
+              {clients.length > 0 ? clients.map(c => <option key={c.id} value={c.id} style={{background: '#1a1a2e'}}>{c.nome}</option>) : <option disabled>Carregando clientes...</option>}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Projeto Vinculado (Opcional)</label>
+            <label style={labelStyle}>Projeto Vinculado (Opcional)</label>
             <select style={inputStyle} value={formData.projeto_id} onChange={e => setFormData({...formData, projeto_id: e.target.value})}>
               <option value="">Nenhum</option>
               {projects.map(p => <option key={p.id} value={p.id} style={{background: '#1a1a2e'}}>{p.ambiente} - {p.clientName}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status</label>
+            <label style={labelStyle}>Status do Orçamento</label>
             <select style={inputStyle} value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}>
               <option value="rascunho" style={{background: '#1a1a2e'}}>Rascunho</option>
               <option value="enviado" style={{background: '#1a1a2e'}}>Enviado ao Cliente</option>
@@ -166,90 +190,90 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
       </section>
 
       {/* Seção 2 — Itens do Orçamento */}
-      <section className="card glass" style={{ padding: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h4 style={{ color: '#d4af37', fontSize: '1rem', margin: 0 }}>2. Itens do Orçamento</h4>
-          <button onClick={() => { setEditingItemIndex(null); setShowItemModal(true); }} className="btn btn-primary" style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}>+ Item</button>
+      <section style={sectionStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h4 style={{ color: '#d4af37', fontSize: '1.1rem', margin: 0, fontWeight: 'bold' }}>2. Itens do Orçamento</h4>
+          <button onClick={() => { setEditingItemIndex(null); setShowItemModal(true); }} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>+ ADICIONAR ITEM</button>
         </div>
         
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                <th style={{ padding: '0.5rem' }}>Ambiente</th>
-                <th style={{ padding: '0.5rem' }}>Descrição</th>
-                <th style={{ padding: '0.5rem' }}>Dimensões</th>
-                <th style={{ padding: '0.5rem', textAlign: 'right' }}>Total</th>
-                <th style={{ padding: '0.5rem' }}></th>
+              <tr style={{ background: 'rgba(212, 175, 55, 0.1)', textAlign: 'left' }}>
+                <th style={{ padding: '0.75rem' }}>Ambiente</th>
+                <th style={{ padding: '0.75rem' }}>Descrição</th>
+                <th style={{ padding: '0.75rem' }}>Dimensões</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total</th>
+                <th style={{ padding: '0.75rem' }}></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '0.5rem' }}>{item.ambiente}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.descricao}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.largura_cm}x{item.altura_cm}x{item.profundidade_cm}</td>
-                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(item.valor_total)}</td>
-                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>
-                    <button onClick={() => { setEditingItemIndex(idx); setNewItem(item); setShowItemModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '0.5rem' }}>✎</button>
-                    <button onClick={() => setItems(items.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>×</button>
+                  <td style={{ padding: '0.75rem' }}>{item.ambiente}</td>
+                  <td style={{ padding: '0.75rem' }}>{item.descricao}</td>
+                  <td style={{ padding: '0.75rem' }}>{item.largura_cm}x{item.altura_cm}x{item.profundidade_cm}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(item.valor_total)}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                    <button onClick={() => { setEditingItemIndex(idx); setNewItem(item); setShowItemModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '0.75rem', fontSize: '1.1rem' }}>✎</button>
+                    <button onClick={() => setItems(items.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {items.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Nenhum item adicionado.</p>}
+          {items.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Nenhum item adicionado ao orçamento ainda.</p>}
         </div>
       </section>
 
       {/* Seção 3 — Condição de Pagamento */}
-      <section className="card glass" style={{ padding: '1.25rem' }}>
-        <h4 style={{ color: '#d4af37', marginBottom: '1rem', fontSize: '1rem' }}>3. Financeiro e Pagamento</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', alignItems: 'end' }}>
+      <section style={sectionStyle}>
+        <h4 style={{ color: '#d4af37', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>3. Financeiro e Pagamento</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', alignItems: 'end' }}>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Condição de Pagamento</label>
+            <label style={labelStyle}>Condição de Pagamento</label>
             <select style={inputStyle} value={formData.condicao_pagamento_id} onChange={e => setFormData({...formData, condicao_pagamento_id: e.target.value})}>
-              <option value="">Selecione...</option>
-              {condicoesPagamento.map(c => <option key={c.id} value={c.id} style={{background: '#1a1a2e'}}>{c.nome}</option>)}
+              <option value="">Selecione a forma de pagamento...</option>
+              {condicoesPagamento.length > 0 ? condicoesPagamento.map(c => <option key={c.id} value={c.id} style={{background: '#1a1a2e'}}>{c.nome}</option>) : <option disabled>Carregando condições...</option>}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Taxa Mensal (%)</label>
+            <label style={labelStyle}>Taxa Mensal (%)</label>
             <input type="number" step="0.1" style={inputStyle} value={formData.taxa_mensal} onChange={e => setFormData({...formData, taxa_mensal: Number(e.target.value)})} />
           </div>
         </div>
         
-        <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.9rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-            <span>Valor Base (Itens):</span>
-            <span>{formatCurrency(valorBase)}</span>
+        <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.95rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ color: '#94a3b8' }}>Valor Base (Líquido):</span>
+            <span style={{ fontWeight: '500' }}>{formatCurrency(valorBase)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', color: '#ef4444' }}>
-            <span>Encargo Financeiro ({selectedCondicao?.n_parcelas || 1}x):</span>
-            <span>+ {formatCurrency(encargoFinanceiro)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#ff4d4d' }}>
+            <span style={{ color: '#94a3b8' }}>Encargo Financeiro ({selectedCondicao?.n_parcelas || 1}x):</span>
+            <span style={{ fontWeight: '600' }}>+ {formatCurrency(encargoFinanceiro)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
-            <span>Valor Final Projetado:</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '1.1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', marginTop: '0.75rem', color: '#d4af37' }}>
+            <span>Valor com Encargos:</span>
             <span>{formatCurrency(valorFinalSemUrgencia)}</span>
           </div>
         </div>
       </section>
 
       {/* Seção 4 — Prazo de Entrega */}
-      <section className="card glass" style={{ padding: '1.25rem' }}>
-        <h4 style={{ color: '#d4af37', marginBottom: '1rem', fontSize: '1rem' }}>4. Prazo de Entrega</h4>
-        <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input type="radio" name="prazo" checked={formData.prazo_tipo === 'padrao'} onChange={() => setFormData({...formData, prazo_tipo: 'padrao'})} /> 
+      <section style={sectionStyle}>
+        <h4 style={{ color: '#d4af37', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>4. Prazo de Entrega</h4>
+        <div style={{ display: 'flex', gap: '2.5rem', marginBottom: '1.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.95rem' }}>
+            <input type="radio" name="prazo" checked={formData.prazo_tipo === 'padrao'} onChange={() => setFormData({...formData, prazo_tipo: 'padrao'})} style={{ width: '1.1rem', height: '1.1rem', accentColor: '#d4af37' }} /> 
             <span>Prazo Padrão</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#ffa500' }}>
-            <input type="radio" name="prazo" checked={formData.prazo_tipo === 'urgente'} onChange={() => setFormData({...formData, prazo_tipo: 'urgente'})} /> 
-            <span>Urgente (+15%)</span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: '#ffa500', fontSize: '0.95rem', fontWeight: 'bold' }}>
+            <input type="radio" name="prazo" checked={formData.prazo_tipo === 'urgente'} onChange={() => setFormData({...formData, prazo_tipo: 'urgente'})} style={{ width: '1.1rem', height: '1.1rem', accentColor: '#ffa500' }} /> 
+            <span>Urgente (+15% Adicional)</span>
           </label>
         </div>
         <div>
-          <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Dias Úteis para Entrega</label>
+          <label style={labelStyle}>Dias Úteis para Entrega (Válido após aprovação)</label>
           <input type="number" style={inputStyle} value={formData.prazo_entrega_dias} onChange={e => setFormData({...formData, prazo_entrega_dias: Number(e.target.value)})} />
         </div>
       </section>
