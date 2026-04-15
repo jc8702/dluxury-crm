@@ -23,6 +23,37 @@ const Estimates: React.FC = () => {
   const [marginPercent, setMarginPercent] = useState(30);
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [showItemForm, setShowItemForm] = useState(false);
+
+  // Persistence Logic
+  React.useEffect(() => {
+    if (selectedProject) {
+      const saved = localStorage.getItem(`draft_estimate_${selectedProject}`);
+      if (saved) {
+        try {
+          const { items: savedItems, margin } = JSON.parse(saved);
+          setItems(savedItems);
+          setMarginPercent(margin);
+        } catch (e) { console.error("Error loading draft", e); }
+      } else {
+        setItems([]);
+      }
+    }
+  }, [selectedProject]);
+
+  React.useEffect(() => {
+    if (selectedProject && items.length > 0) {
+      localStorage.setItem(`draft_estimate_${selectedProject}`, JSON.stringify({ items, margin: marginPercent }));
+    } else if (selectedProject && items.length === 0) {
+      localStorage.removeItem(`draft_estimate_${selectedProject}`);
+    }
+  }, [items, marginPercent, selectedProject]);
+
+  const clearDraft = () => {
+    if (confirm("Deseja realmente limpar os itens deste orçamento?")) {
+      setItems([]);
+      if (selectedProject) localStorage.removeItem(`draft_estimate_${selectedProject}`);
+    }
+  };
   const [newItem, setNewItem] = useState({
     name: '', quantity: 1, woodType: 'MDF 15mm',
     width: 100, height: 100, depth: 40,
@@ -53,23 +84,36 @@ const Estimates: React.FC = () => {
     return client && p.clientName === client.nome;
   });
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const doc = new jsPDF();
     const client = clients.find(c => c.id === selectedClient);
     const project = projects.find(p => p.id === selectedProject);
 
-    // Header
+    // Add Logo
+    try {
+      const img = new Image();
+      img.src = '/logo.png';
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // Continue even if logo fails
+      });
+      if (img.complete && img.naturalWidth > 0) {
+        doc.addImage(img, 'PNG', 14, 10, 25, 25);
+      }
+    } catch (e) { console.error("Logo error", e); }
+
+    // Header (Move text right if logo exists)
     doc.setFontSize(22);
     doc.setTextColor(212, 175, 55); // D'Luxury Gold
-    doc.text("D'LUXURY AMBIENTES", 14, 20);
+    doc.text("D'LUXURY AMBIENTES", 45, 20);
     
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text("MÓVEIS SOB MEDIDA", 14, 26);
+    doc.text("MÓVEIS SOB MEDIDA", 45, 26);
     
     doc.setFontSize(14);
     doc.setTextColor(40);
-    doc.text("Orçamento de Projeto", 14, 40);
+    doc.text("Orçamento de Projeto", 45, 40);
 
     // Client Info Section
     doc.setFontSize(10);
@@ -216,6 +260,15 @@ const Estimates: React.FC = () => {
             }}>
             + Adicionar Móvel
           </button>
+          {items.length > 0 && (
+            <button onClick={clearDraft}
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700'
+              }}>
+              🗑️ Limpar Rascunho
+            </button>
+          )}
         </div>
       </div>
 
