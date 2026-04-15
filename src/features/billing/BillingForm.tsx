@@ -56,10 +56,11 @@ const BillingModule: React.FC = () => {
     try {
       const data = {
         ...formData,
+        descricao: formData.descricao.toUpperCase(),
         valor: parseFloat(formData.valor),
-        nf: formData.descricao, // backward compat
+        nf: formData.descricao.toUpperCase(),
         pedido: formData.projectId || '-',
-        cliente: projects.find(p => p.id === formData.projectId)?.clientName || '-',
+        cliente: projects.find(p => p.id === formData.projectId)?.clientName?.toUpperCase() || '-',
       };
       if (editingBilling) {
         await updateBilling(editingBilling.id, data);

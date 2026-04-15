@@ -18,11 +18,22 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === 'POST') {
-    const { nf, pedido, cliente, erp, valor, data, status = 'FATURADO' } = req.body;
+    const { descricao, tipo, projectId, valor, data, categoria, status = 'PAGO', nf, pedido, cliente } = req.body;
     try {
       const result = await sql`
-        INSERT INTO billings (nf, pedido, cliente, erp, valor, data, status)
-        VALUES (${nf}, ${pedido}, ${cliente}, ${erp}, ${valor}, ${data}, ${status})
+        INSERT INTO billings (descricao, tipo, project_id, valor, data, categoria, status, nf, pedido, cliente)
+        VALUES (
+          ${descricao || nf || ''}, 
+          ${tipo || 'entrada'}, 
+          ${projectId || null},
+          ${valor}, 
+          ${data}, 
+          ${categoria || 'outros'}, 
+          ${status},
+          ${nf || descricao || ''},
+          ${pedido || '-'},
+          ${cliente || '-'}
+        )
         RETURNING *
       `;
       return res.status(201).json(result[0]);
@@ -33,17 +44,17 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'PATCH') {
     const { id } = req.query;
-    const { nf, pedido, cliente, erp, valor, data, status } = req.body;
+    const { descricao, tipo, valor, data, categoria, status, projectId } = req.body;
     try {
       const result = await sql`
         UPDATE billings SET
-          nf = COALESCE(${nf}, nf),
-          pedido = COALESCE(${pedido}, pedido),
-          cliente = COALESCE(${cliente}, cliente),
-          erp = COALESCE(${erp}, erp),
+          descricao = COALESCE(${descricao}, descricao),
+          tipo = COALESCE(${tipo}, tipo),
           valor = COALESCE(${valor}, valor),
           data = COALESCE(${data}, data),
-          status = COALESCE(${status}, status)
+          categoria = COALESCE(${categoria}, categoria),
+          status = COALESCE(${status}, status),
+          project_id = COALESCE(${projectId}, project_id)
         WHERE id = ${id}
         RETURNING *
       `;

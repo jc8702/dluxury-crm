@@ -149,6 +149,21 @@ body {
   border-color: var(--danger) !important;
 }
 
+/* Uppercase em todos inputs de texto */
+input[type="text"],
+input[type="email"],
+input[type="search"],
+input:not([type]),
+input:not([type="number"]):not([type="date"]):not([type="password"]):not([type="checkbox"]):not([type="radio"]),
+textarea {
+  text-transform: uppercase;
+}
+
+input::placeholder,
+textarea::placeholder {
+  text-transform: none;
+}
+
 .badge {
   padding: 0.3rem 0.8rem;
   border-radius: 9999px;
