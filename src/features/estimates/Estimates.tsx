@@ -71,41 +71,82 @@ const Estimates: React.FC = () => {
     doc.setTextColor(40);
     doc.text("Orçamento de Projeto", 14, 40);
 
-    // Client Info
+    // Client Info Section
     doc.setFontSize(10);
-    doc.text(`Cliente: ${client?.nome || 'Não especificado'}`, 14, 50);
-    doc.text(`Ambiente: ${project?.ambiente || 'Não especificado'}`, 14, 56);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 62);
+    doc.setTextColor(50, 50, 50);
+    doc.text("DADOS DO CLIENTE", 14, 48);
+    doc.setDrawColor(212, 175, 55);
+    doc.line(14, 49, 50, 49); // Underline for section
+
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Cliente: ${client?.nome || 'AVULSO'}`, 14, 55);
+    doc.text(`Telefone: ${client?.telefone || '-'}`, 14, 60);
+    doc.text(`Cidade/UF: ${client?.cidade || '-'}/${client?.uf || '-'}`, 14, 65);
+    
+    doc.text(`Ambiente: ${project?.ambiente || 'NÃO DEFINIDO'}`, 120, 55);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 120, 60);
+    doc.text(`Referência: #EST-${Date.now().toString().slice(-6)}`, 120, 65);
 
     // Items table
     const tableData = items.map(item => [
-      item.name,
+      item.name.toUpperCase(),
       item.quantity.toString(),
-      item.woodType,
+      item.woodType.toUpperCase(),
       `${item.width}x${item.height}x${item.depth}cm`,
       formatCurrency((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity) + (((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity)) * (marginPercent / 100)))
     ]);
 
     autoTable(doc, {
-      startY: 70,
-      head: [['Móvel', 'Qtd', 'Material', 'Dimensões (LxAxP)', 'Subtotal']],
+      startY: 75,
+      head: [['MÓVEL', 'QTD', 'MATERIAL', 'DIMENSÕES', 'VALOR UNIT.*']],
       body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [212, 175, 55], textColor: [26, 26, 46], fontStyle: 'bold' },
-      styles: { fontSize: 9 },
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [212, 175, 55], 
+        textColor: [26, 26, 46], 
+        fontStyle: 'bold',
+        fontSize: 10,
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { halign: 'center' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
+        4: { halign: 'right' }
+      },
+      styles: { fontSize: 8, cellPadding: 3 },
     });
 
-    const finalY = (doc as any).lastAutoTable?.finalY || 70;
+    const finalY = (doc as any).lastAutoTable?.finalY || 80;
 
-    // Totals
-    doc.setFontSize(12);
-    doc.setTextColor(40);
-    doc.text(`Valor Total Estimado: ${formatCurrency(totalFinal)}`, 14, finalY + 15);
+    // Totals Section
+    doc.setDrawColor(200, 200, 200);
+    doc.line(120, finalY + 5, 196, finalY + 5);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("TOTAL DO ORÇAMENTO:", 120, finalY + 15);
+    
+    doc.setFontSize(16);
+    doc.setTextColor(212, 175, 55);
+    doc.setFont("helvetica", "bold");
+    const totalStr = formatCurrency(totalFinal);
+    const textWidth = doc.getTextWidth(totalStr);
+    doc.text(totalStr, 196 - textWidth, finalY + 15);
+
+    // Terms
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(150);
+    doc.text("* Valor estimado considerando margem de projeto. Sujeito a alteração após medição técnica.", 14, finalY + 25);
 
     // Footer
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("Orçamento válido por 15 dias. Formas de pagamento: 50% entrada, 50% na entrega.", 14, 280);
+    doc.setTextColor(180);
+    doc.text("D'Luxury Ambientes - Qualidade e Sofisticação em Móveis Planejados", 105, 285, { align: 'center' });
+    doc.text("Este documento é apenas uma estimativa comercial.", 105, 290, { align: 'center' });
 
     doc.save(`Orcamento_DLuxury_${client?.nome?.replace(/\s+/g, '_') || 'Avulso'}.pdf`);
   };
