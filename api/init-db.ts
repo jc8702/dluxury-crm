@@ -160,6 +160,21 @@ export default async function handler(req: any, res: any) {
       )
     `;
 
+    // 8. Inventory Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS inventory (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        unit TEXT NOT NULL,
+        quantity DECIMAL(10,2) NOT NULL DEFAULT 0,
+        min_quantity DECIMAL(10,2) NOT NULL DEFAULT 0,
+        location TEXT,
+        price DECIMAL(10,2) DEFAULT 0,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     // Initialize Default Admin if users table is empty
     const usersCountRes = await sql`SELECT count(*) as count FROM users`;
     const usersCount = parseInt(usersCountRes[0].count, 10);

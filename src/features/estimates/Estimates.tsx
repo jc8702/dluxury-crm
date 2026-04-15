@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface EstimateItem {
   id: string;
@@ -22,38 +24,18 @@ const Estimates: React.FC = () => {
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [showItemForm, setShowItemForm] = useState(false);
   const [newItem, setNewItem] = useState({
-    name: '',
-    quantity: 1,
-    woodType: 'MDF 15mm',
-    width: 100,
-    height: 100,
-    depth: 40,
-    laborHours: 4,
-    laborRate: 50,
-    woodPrice: 150
+    name: '', quantity: 1, woodType: 'MDF 15mm',
+    width: 100, height: 100, depth: 40,
+    laborHours: 4, laborRate: 50, woodPrice: 150
   });
 
-  const woodTypes = [
-    'MDF 15mm', 'MDF 18mm', 'MDF 25mm', 'MDP 15mm', 'MDP 18mm',
-    'Compensado 15mm', 'Compensado 18mm',
-    'Madeira Maciça', 'Natulac', 'Freijó', 'Imbuia',
-    'Fórmica', 'Laminado'
-  ];
+  const woodTypes = ['MDF 15mm', 'MDF 18mm', 'MDF 25mm', 'MDP 15mm', 'MDP 18mm', 'Compensado 15mm', 'Compensado 18mm', 'Madeira Maciça', 'Natulac', 'Freijó', 'Imbuia', 'Fórmica', 'Laminado'];
 
   const addItem = () => {
     const volumeM3 = (newItem.width * newItem.height * newItem.depth) / 1000000;
-    const item: EstimateItem = {
-      id: Date.now().toString(),
-      ...newItem,
-      woodPrice: newItem.woodPrice * volumeM3
-    };
-    setItems([...items, item]);
-    setShowItemForm(false);
-    setNewItem({
-      name: '', quantity: 1, woodType: 'MDF 15mm',
-      width: 100, height: 100, depth: 40,
-      laborHours: 4, laborRate: 50, woodPrice: 150
-    });
+    const item: EstimateItem = { ...newItem, id: Date.now().toString(), woodPrice: newItem.woodPrice * volumeM3 };
+    setItems([...items, item]); setShowItemForm(false);
+    setNewItem({ name: '', quantity: 1, woodType: 'MDF 15mm', width: 100, height: 100, depth: 40, laborHours: 4, laborRate: 50, woodPrice: 150 });
   };
 
   const removeItem = (id: string) => setItems(items.filter(i => i.id !== id));
@@ -71,27 +53,78 @@ const Estimates: React.FC = () => {
     return client && p.clientName === client.nome;
   });
 
-  const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    color: 'white',
-    fontSize: '0.95rem',
-    width: '100%',
-    outline: 'none',
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const client = clients.find(c => c.id === selectedClient);
+    const project = projects.find(p => p.id === selectedProject);
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(212, 175, 55); // D'Luxury Gold
+    doc.text("D'LUXURY AMBIENTES", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("MÓVEIS SOB MEDIDA", 14, 26);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(40);
+    doc.text("Orçamento de Projeto", 14, 40);
+
+    // Client Info
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${client?.nome || 'Não especificado'}`, 14, 50);
+    doc.text(`Ambiente: ${project?.ambiente || 'Não especificado'}`, 14, 56);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 62);
+
+    // Items table
+    const tableData = items.map(item => [
+      item.name,
+      item.quantity.toString(),
+      item.woodType,
+      `${item.width}x${item.height}x${item.depth}cm`,
+      formatCurrency((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity) + (((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity)) * (marginPercent / 100)))
+    ]);
+
+    (doc as any).autoTable({
+      startY: 70,
+      head: [['Móvel', 'Qtd', 'Material', 'Dimensões (LxAxP)', 'Subtotal']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [212, 175, 55], textColor: [26, 26, 46], fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 70;
+
+    // Totals
+    doc.setFontSize(12);
+    doc.setTextColor(40);
+    doc.text(`Valor Total Estimado: ${formatCurrency(totalFinal)}`, 14, finalY + 15);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Orçamento válido por 15 dias. Formas de pagamento: 50% entrada, 50% na entrega.", 14, 280);
+
+    doc.save(`Orcamento_DLuxury_${client?.nome?.replace(/\s+/g, '_') || 'Avulso'}.pdf`);
   };
 
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
-  };
+  const inputStyle: React.CSSProperties = { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '0.75rem', color: 'white', fontSize: '0.95rem', width: '100%', outline: 'none' };
+  const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header>
-        <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Orçamentos</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Monte propostas detalhadas para móveis planejados.</p>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Orçamentos</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Monte propostas detalhadas para móveis planejados.</p>
+        </div>
+        <div>
+          <button onClick={generatePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed' }}>
+            🖨️ Exportar Orçamento PDF
+          </button>
+        </div>
       </header>
 
       {/* Dados do orçamento */}

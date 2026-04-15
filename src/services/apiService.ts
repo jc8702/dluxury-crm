@@ -63,6 +63,17 @@ export const apiService = {
     apiService.fetch(`/api/billings?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeBilling: (id: string) => apiService.fetch(`/api/billings?id=${id}`, { method: 'DELETE' }),
 
+  // Users (Admin Only)
+  getUsers: () => apiService.fetch('/api/users'),
+  registerUser: (data: any) => apiService.fetch('/api/auth?action=register', { method: 'POST', body: JSON.stringify(data) }),
+  removeUser: (id: string) => apiService.fetch(`/api/users?id=${id}`, { method: 'DELETE' }),
+
+  // Inventory
+  getInventory: () => apiService.fetch('/api/inventory'),
+  addInventory: (data: any) => apiService.fetch('/api/inventory', { method: 'POST', body: JSON.stringify(data) }),
+  updateInventory: (id: string, qty: number) => apiService.fetch(`/api/inventory?id=${id}`, { method: 'PATCH', body: JSON.stringify({ quantity: qty }) }),
+  removeInventoryItem: (id: string) => apiService.fetch(`/api/inventory?id=${id}`, { method: 'DELETE' }),
+
   // Kanban (Visits)
   getKanbanItems: () => apiService.fetch('/api/kanban'),
   addKanbanItem: (data: any) => apiService.fetch('/api/kanban', { method: 'POST', body: JSON.stringify(data) }),

@@ -103,6 +103,26 @@ export type User = {
   role: Role;
 };
 
+export type InventoryItem = {
+  id: string;
+  name: string;
+  category: 'madeira' | 'ferragem' | 'pintura' | 'acabamento' | 'fixacao' | string;
+  unit: 'un' | 'mt' | 'm2' | 'l' | 'kg' | string;
+  quantity: number;
+  minQuantity: number;
+  location: string;
+  price: number;
+  updated_at?: string;
+};
+
+export type SystemUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  created_at: string;
+};
+
 // ─── CONTEXTO ─────────────────────────────────────────────
 
 interface AppContextType {
@@ -129,6 +149,12 @@ interface AppContextType {
   addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
   updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
 
+  // Inventory
+  inventory: InventoryItem[];
+  addInventory: (item: Omit<InventoryItem, 'id'>) => Promise<void>;
+  updateInventoryQty: (id: string, qty: number) => Promise<void>;
+  removeInventoryItem: (id: string) => Promise<void>;
+
   // Billing
   billings: Billing[];
   addBilling: (billing: Omit<Billing, 'id'>) => Promise<void>;
@@ -150,6 +176,8 @@ interface AppContextType {
 
   // Admin
   systemLogs: SystemLog[];
+  systemUsers: SystemUser[];
+  loadSystemUsers: () => Promise<void>;
   addLog: (type: string, message: string, severity: SystemLog['severity']) => void;
 
   // General
@@ -168,6 +196,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [projects, setProjects] = useState<Project[]>([]);
   const [billings, setBillings] = useState<Billing[]>([]);
   const [visits, setVisits] = useState<KanbanItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
@@ -177,6 +206,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Admin & Health
   const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
+
+  const loadSystemUsers = async () => {
+    if (user?.role === 'admin') {
+      const u = await apiService.getUsers().catch(() => []);
+      setSystemUsers(u);
+    }
+  };
 
   // ─── AUTHENTICATION ────────────────────────────────────
   const logout = () => {
@@ -204,12 +241,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await fetch('/api/init-db').catch(() => ({}));
 
-      const [clientsData, billingsData, kanbanData, goalsData] = await Promise.all([
+      const [clientsData, billingsData, kanbanData, goalsData, invData] = await Promise.all([
         apiService.getClients().catch(() => []),
         apiService.getBillings().catch(() => []),
         apiService.getKanbanItems().catch(() => []),
-        apiService.getMonthlyGoals().catch(() => ({}))
+        apiService.getMonthlyGoals().catch(() => ({})),
+        apiService.getInventory().catch(() => [])
       ]);
+
+      // Inventory
+      setInventory(invData.map((i: any) => ({
+        id: i.id.toString(),
+        name: i.name,
+        category: i.category,
+        unit: i.unit,
+        quantity: Number(i.quantity),
+        minQuantity: Number(i.min_quantity),
+        location: i.location || '',
+        price: Number(i.price),
+        updated_at: i.updated_at
+      })));
 
       // Goals
       setMonthlyGoals(Object.keys(goalsData).length > 0 ? goalsData : {});
@@ -549,6 +600,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
+  // ─── INVENTORY CRUD ────────────────────────────────────
+  const addInventory = async (data: any) => {
+    const saved = await apiService.addInventory(data);
+    setInventory(prev => [...prev, {
+        id: saved.id.toString(), name: saved.name, category: saved.category, unit: saved.unit,
+        quantity: Number(saved.quantity), minQuantity: Number(saved.min_quantity),
+        location: saved.location || '', price: Number(saved.price)
+    }]);
+  };
+
+  const updateInventoryQty = async (id: string, qty: number) => {
+    await apiService.updateInventory(id, qty);
+    setInventory(prev => prev.map(inv => inv.id === id ? { ...inv, quantity: qty } : inv));
+  };
+
+  const removeInventoryItem = async (id: string) => {
+    await apiService.removeInventoryItem(id);
+    setInventory(prev => prev.filter(inv => inv.id !== id));
+  };
+
   // ─── KPIs ──────────────────────────────────────────────
   const currentMeta = useMemo(() => {
     if (selectedPeriod === 'Annual') {
@@ -583,11 +654,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       clients, addClient, updateClient, removeClient,
       projects, addProject, updateProject, removeProject,
       visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
+      inventory, addInventory, updateInventoryQty, removeInventoryItem,
       billings, addBilling, updateBilling, removeBilling,
       monthlyGoals, setMonthlyGoal, selectedPeriod, setSelectedPeriod,
       currentMeta, metaMensal, setMetaMensal,
       totalFaturadoMes, totalPeriodo,
-      systemLogs, addLog,
+      systemLogs, systemUsers, loadSystemUsers, addLog,
       reloadData
     }}>
       {children}

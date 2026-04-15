@@ -1,54 +1,47 @@
 import React, { useState } from 'react';
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: 'madeira' | 'ferragem' | 'pintura' | 'acabamento' | 'fixacao';
-  unit: 'un' | 'mt' | 'm2' | 'l' | 'kg';
-  quantity: number;
-  minQuantity: number;
-  location: string;
-  price: number;
-}
+import { useAppContext } from '../../context/AppContext';
 
 const Inventory: React.FC = () => {
-  const [items, setItems] = useState<InventoryItem[]>([
-    { id: '1', name: 'MDF 15mm', category: 'madeira', unit: 'm2', quantity: 150, minQuantity: 50, location: 'Armário A', price: 120 },
-    { id: '2', name: 'Puxador Alumínio', category: 'ferragem', unit: 'un', quantity: 200, minQuantity: 50, location: 'Armário B', price: 15 },
-    { id: '3', name: 'Tinta Acrílica Branco', category: 'pintura', unit: 'l', quantity: 20, minQuantity: 5, location: 'Depósito', price: 45 },
-  ]);
+  const { inventory, addInventory, updateInventoryQty } = useAppContext();
 
   const [showModal, setShowModal] = useState(false);
   const [newItem, setNewItem] = useState({
-    name: '',
-    category: 'madeira' as const,
-    unit: 'un' as const,
-    quantity: 0,
-    minQuantity: 0,
-    location: '',
-    price: 0
+    name: '', category: 'madeira' as const, unit: 'un' as const,
+    quantity: 0, minQuantity: 0, location: '', price: 0
   });
 
   const [movementType, setMovementType] = useState<'entry' | 'exit'>('entry');
   const [movementQty, setMovementQty] = useState(0);
   const [selectedItemId, setSelectedItemId] = useState('');
 
-  const addItem = () => {
-    setItems([...items, { ...newItem, id: Date.now().toString() }]);
-    setShowModal(false);
-    setNewItem({ name: '', category: 'madeira', unit: 'un', quantity: 0, minQuantity: 0, location: '', price: 0 });
+  const addItem = async () => {
+    try {
+      await addInventory({
+        name: newItem.name, category: newItem.category, unit: newItem.unit,
+        quantity: newItem.quantity, minQuantity: newItem.minQuantity,
+        location: newItem.location, price: newItem.price
+      });
+      setShowModal(false);
+      setNewItem({ name: '', category: 'madeira', unit: 'un', quantity: 0, minQuantity: 0, location: '', price: 0 });
+    } catch (e) {
+      alert('Erro ao salvar item.');
+    }
   };
 
-  const handleMovement = () => {
-    setItems(items.map(item => {
-      if (item.id === selectedItemId) {
-        const qty = movementType === 'entry' ? item.quantity + movementQty : item.quantity - movementQty;
-        return { ...item, quantity: qty < 0 ? 0 : qty };
-      }
-      return item;
-    }));
-    setMovementQty(0);
-    setSelectedItemId('');
+  const handleMovement = async () => {
+    const item = inventory.find(i => i.id === selectedItemId);
+    if (!item) return;
+    
+    const qty = movementType === 'entry' ? item.quantity + movementQty : item.quantity - movementQty;
+    const finalQty = qty < 0 ? 0 : qty;
+    
+    try {
+      await updateInventoryQty(selectedItemId, finalQty);
+      setMovementQty(0);
+      setSelectedItemId('');
+    } catch (e) {
+      alert('Erro ao registrar movimentação.');
+    }
   };
 
   const getCategoryColor = (cat: string) => {
@@ -94,7 +87,7 @@ const Inventory: React.FC = () => {
               <label style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '0.5rem' }}>Item</label>
               <select style={selectStyle} value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)}>
                 <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
-                {items.map(i => <option key={i.id} value={i.id} style={{ background: '#1a1a1a' }}>{i.name}</option>)}
+                 {inventory.map(i => <option key={i.id} value={i.id} style={{ background: '#1a1a1a' }}>{i.name}</option>)}
               </select>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -133,7 +126,7 @@ const Inventory: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {items.map(item => (
+            {inventory.map(item => (
               <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: item.quantity < item.minQuantity ? 'rgba(239,68,68,0.1)' : 'transparent' }}>
                 <td style={{ padding: '0.75rem', fontWeight: '600' }}>{item.name}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>

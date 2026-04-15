@@ -148,35 +148,54 @@ const Dashboard: React.FC = () => {
 
         {/* Pipeline resumo */}
         <div className="card">
-          <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Pipeline por Etapa</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {statusCounts.map(s => {
-              const maxCount = Math.max(...statusCounts.map(x => x.count), 1);
-              const barWidth = (s.count / maxCount) * 100;
+          <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Evolução Financeira</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {periods.slice(0, 6).map(p => {
+              const monthBillings = billings.filter(b => b.data && b.data.startsWith(p.id));
+              const entradas = monthBillings.filter(b => b.tipo !== 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+              const saidas = monthBillings.filter(b => b.tipo === 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+              
+              // Define um teto máximo para a barra (mínimo de 1 para evitar divisão por zero)
+              const maxVal = Math.max(entradas, saidas, 1000); 
+              const percEntrada = (entradas / maxVal) * 100;
+              const percSaida = (saidas / maxVal) * 100;
+
               return (
-                <div key={s.status} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', width: '160px', flexShrink: 0, color: 'var(--text-muted)' }}>{s.label}</span>
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: '4px', height: '24px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${barWidth}%`, height: '100%',
-                      background: 'linear-gradient(90deg, #d4af37, #b49050)',
-                      borderRadius: '4px', transition: 'width 0.5s ease',
-                      display: 'flex', alignItems: 'center', paddingLeft: '0.5rem',
-                      minWidth: s.count > 0 ? '32px' : '0'
-                    }}>
-                      {s.count > 0 && <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#1a1a2e' }}>{s.count}</span>}
+                <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.label}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    {/* Barra de Entrada */}
+                    <div style={{ display: 'flex', alignItems: 'center', height: '12px' }}>
+                       <div style={{ 
+                         width: `${Math.min(percEntrada, 100)}%`, height: '100%', 
+                         background: '#10b981', borderTopRightRadius: '4px', borderBottomRightRadius: '4px',
+                         transition: 'width 0.5s ease'
+                       }} />
+                       {entradas > 0 && <span style={{ fontSize: '0.6rem', color: '#10b981', marginLeft: '6px' }}>{formatCurrency(entradas)}</span>}
+                    </div>
+                    {/* Barra de Saída */}
+                    <div style={{ display: 'flex', alignItems: 'center', height: '12px' }}>
+                       <div style={{ 
+                         width: `${Math.min(percSaida, 100)}%`, height: '100%', 
+                         background: '#ef4444', borderTopRightRadius: '4px', borderBottomRightRadius: '4px',
+                         transition: 'width 0.5s ease'
+                       }} />
+                       {saidas > 0 && <span style={{ fontSize: '0.6rem', color: '#ef4444', marginLeft: '6px' }}>{formatCurrency(saidas)}</span>}
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#d4af37', width: '80px', textAlign: 'right' }}>
-                    {formatCurrency(s.value)}
-                  </span>
                 </div>
               );
             })}
           </div>
-          <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total no Pipeline</span>
-            <span style={{ fontSize: '1rem', fontWeight: '800', color: '#d4af37' }}>{formatCurrency(totalPipeline)}</span>
+          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '12px', height: '12px', background: '#10b981', borderRadius: '2px' }} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Entradas</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px' }} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Saídas</span>
+            </div>
           </div>
         </div>
       </div>
