@@ -104,9 +104,11 @@ const BillingModule: React.FC = () => {
     outline: 'none',
   };
 
-  const headers = ['Data', 'Tipo', 'Descrição', 'Categoria', 'Valor', 'Status', 'Ações'];
+  const headers = ['Data', 'Tipo', 'Descrição', 'Projeto', 'Categoria', 'Valor', 'Status', 'Ações'];
 
-  const renderRow = (b: Billing) => (
+  const renderRow = (b: Billing) => {
+    const linkedProject = projects.find(p => p.id === b.projectId);
+    return (
     <>
       <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
         {new Date(b.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
@@ -121,6 +123,18 @@ const BillingModule: React.FC = () => {
         </span>
       </td>
       <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{b.descricao || '-'}</td>
+      <td style={{ padding: '0.75rem' }}>
+        {linkedProject ? (
+          <span style={{ 
+            fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '12px',
+            background: 'rgba(212,175,55,0.1)', color: '#d4af37', whiteSpace: 'nowrap'
+          }}>
+            {linkedProject.ambiente}
+          </span>
+        ) : (
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
+        )}
+      </td>
       <td style={{ padding: '0.75rem' }}>
         <span style={{ fontSize: '0.75rem', color: '#d4af37' }}>
           {categorias[b.tipo]?.find(c => c.value === b.categoria)?.label || b.categoria || '-'}
@@ -156,7 +170,8 @@ const BillingModule: React.FC = () => {
         </div>
       </td>
     </>
-  );
+  );};
+
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
