@@ -4,7 +4,7 @@ import { apiService } from '../../services/apiService';
 
 const Settings: React.FC = () => {
   const { 
-    user, monthlyGoals, setMonthlyGoal, selectedPeriod, systemUsers, loadSystemUsers
+    user, systemUsers, loadSystemUsers
   } = useAppContext();
 
   const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
