@@ -671,18 +671,89 @@ export default async function handler(req: any, res: any) {
       )
     `;
 
-    // 7. Controle de Estoque Industrial
+    // 8. Movimentações Industriais (Rastro Real)
     await sql`
-      CREATE TABLE IF NOT EXISTS erp_inventory (
-        sku_id UUID PRIMARY KEY REFERENCES erp_skus(id) ON DELETE CASCADE,
-        estoque_atual DECIMAL(14,4) DEFAULT 0,
-        estoque_reservado DECIMAL(14,4) DEFAULT 0,
-        ponto_pedido DECIMAL(14,4) DEFAULT 0,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      CREATE TABLE IF NOT EXISTS erp_movimentacoes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sku_id UUID REFERENCES erp_skus(id) ON DELETE CASCADE,
+        tipo TEXT NOT NULL, -- entrada_compra, saida_producao, ajuste_inventario, perda_tecnica
+        quantidade DECIMAL(14,6) NOT NULL,
+        projeto_id UUID REFERENCES projects(id),
+        custo_unitario_bh DECIMAL(12,4), -- Custo no momento da movimentação
+        criado_por TEXT,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
 
-    return res.status(200).json({ success: true, message: 'D\'Luxury CRM database initialized' });
+    // ─── CAMADA ANALÍTICA (BI VIEWS) ─────────────────────────
+
+    // 1. View de Custos Totais por Projeto (Planejado)
+    await sql`
+      CREATE OR REPLACE VIEW bi_custos_projeto AS
+      SELECT 
+          pi.project_id,
+          p.ambiente,
+          p.client_name as cliente,
+          SUM(cr.quantidade_com_perda * s.preco_base) as custo_material_total,
+          COUNT(DISTINCT pi.id) as total_modulos
+      FROM erp_project_items pi
+      JOIN projects p ON pi.project_id = p.id
+      JOIN erp_consumption_results cr ON cr.project_item_id = pi.id
+      JOIN erp_skus s ON s.id = cr.sku_id
+      GROUP BY pi.project_id, p.ambiente, p.client_name
+    `;
+
+    // 2. View de Desvio Técnico (Eficiência da Produção)
+    await sql`
+      CREATE OR REPLACE VIEW bi_desvio_producao AS
+      SELECT 
+          pi.project_id,
+          s.nome as sku_nome,
+          SUM(cr.quantidade_com_perda) as qtd_planejada,
+          COALESCE(SUM(m.quantidade), 0) as qtd_real,
+          COALESCE(SUM(m.quantidade), 0) - SUM(cr.quantidade_com_perda) as desvio_absoluto,
+          CASE 
+            WHEN SUM(cr.quantidade_com_perda) > 0 
+            THEN ((COALESCE(SUM(m.quantidade), 0) / SUM(cr.quantidade_com_perda)) - 1) * 100 
+            ELSE 0 
+          END as desvio_percentual
+      FROM erp_project_items pi
+      JOIN erp_consumption_results cr ON cr.project_item_id = pi.id
+      JOIN erp_skus s ON s.id = cr.sku_id
+      LEFT JOIN erp_movimentacoes m ON m.projeto_id = pi.project_id AND m.sku_id = cr.sku_id AND m.tipo = 'saida_producao'
+      GROUP BY pi.project_id, s.nome
+    `;
+
+    // 3. View Curva ABC de Materiais (Impacto Econômico)
+    await sql`
+      CREATE OR REPLACE VIEW bi_curva_abc_materiais AS
+      WITH MaterialValue AS (
+          SELECT 
+              s.id,
+              s.sku_code,
+              s.nome,
+              SUM(cr.quantidade_com_perda * s.preco_base) as valor_total_consumido
+          FROM erp_skus s
+          JOIN erp_consumption_results cr ON cr.sku_id = s.id
+          GROUP BY s.id, s.sku_code, s.nome
+      ),
+      TotalProjectValue AS (
+          SELECT SUM(valor_total_consumido) as total_global FROM MaterialValue
+      )
+      SELECT 
+          mv.*,
+          (mv.valor_total_consumido / tp.total_global) * 100 as percentual_participacao,
+          SUM((mv.valor_total_consumido / tp.total_global) * 100) OVER (ORDER BY mv.valor_total_consumido DESC) as percentual_acumulado,
+          CASE 
+              WHEN SUM((mv.valor_total_consumido / tp.total_global) * 100) OVER (ORDER BY mv.valor_total_consumido DESC) <= 80 THEN 'A'
+              WHEN SUM((mv.valor_total_consumido / tp.total_global) * 100) OVER (ORDER BY mv.valor_total_consumido DESC) <= 95 THEN 'B'
+              ELSE 'C'
+          END as classe_abc
+      FROM MaterialValue mv, TotalProjectValue tp
+      ORDER BY mv.valor_total_consumido DESC
+    `;
+
+    return res.status(200).json({ success: true, message: 'D\'Luxury CRM database initialized with Industrial BI Layer' });
   } catch (e: any) {
     console.error('Initialization Error:', e);
     return res.status(500).json({ success: false, error: e.message, stack: e.stack });
