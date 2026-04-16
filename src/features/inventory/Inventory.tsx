@@ -155,16 +155,19 @@ const Inventory: React.FC = () => {
 
           {viewMode === 'grid' ? (
             <div className="grid-4 animate-fade-in" style={{ gap: '1.25rem' }}>
-              {filteredMaterials.map(m => (
-                <MaterialCard 
-                  key={m.id} 
-                  material={m} 
-                  categoria={categorias.find(c => c.id === m.categoria_id)}
-                  onClick={() => handleOpenMov(m)}
-                  onEdit={() => handleEdit(m)}
-                  onDelete={() => handleDelete(m)}
-                />
-              ))}
+              {filteredMaterials.map(m => {
+                if (!m || !m.id) return null;
+                return (
+                  <MaterialCard 
+                    key={m.id} 
+                    material={m} 
+                    categoria={categorias ? categorias.find(c => c.id === m.categoria_id) : undefined}
+                    onClick={() => handleOpenMov(m)}
+                    onEdit={() => handleEdit(m)}
+                    onDelete={() => handleDelete(m)}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="card animate-fade-in" style={{ padding: '0' }}>
@@ -182,16 +185,19 @@ const Inventory: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredMaterials.map(m => {
+                    if (!m || !m.id) return null;
                     const status = statusEstoque(m.estoque_atual, m.estoque_minimo);
-                    const cat = categorias.find(c => c.id === m.categoria_id);
+                    const cat = categorias ? categorias.find(c => c.id === m.categoria_id) : undefined;
+                    const equivalencia = Number(m.estoque_atual || 0) * Number(m.fator_conversao || 1);
+                    
                     return (
                       <tr key={m.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem' }}>{m.sku}</td>
-                        <td style={{ padding: '1rem', fontWeight: '600' }}>{m.nome}</td>
-                        <td style={{ padding: '1rem', fontSize: '0.85rem' }}>{cat?.nome}</td>
-                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{m.estoque_atual} {m.unidade_compra}</td>
+                        <td style={{ padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem' }}>{m.sku || '-'}</td>
+                        <td style={{ padding: '1rem', fontWeight: '600' }}>{m.nome || 'Material sem nome'}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.85rem' }}>{cat?.nome || '-'}</td>
+                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{m.estoque_atual || 0} {m.unidade_compra}</td>
                         <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                          {Number(m.estoque_atual || 0) * Number(m.fator_conversao || 1)} {m.unidade_uso}
+                          {equivalencia.toFixed(2)} {m.unidade_uso}
                         </td>
                         <td style={{ padding: '1rem' }}>
                           <span style={{ 

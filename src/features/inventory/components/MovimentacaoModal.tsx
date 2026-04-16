@@ -23,15 +23,18 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const equivalencia = useMemo(() => 
-    converterParaUso(quantidade, material.fator_conversao)
-  , [quantidade, material.fator_conversao]);
+  const equivalencia = useMemo(() => {
+    const qty = Number(quantidade || 0);
+    const factor = Number(material.fator_conversao || 1);
+    return qty * factor;
+  }, [quantidade, material.fator_conversao]);
 
   const novoEstoque = useMemo(() => {
-    const atual = Number(material.estoque_atual);
-    if (tipo === 'entrada') return atual + quantidade;
-    if (tipo === 'saida') return atual - quantidade;
-    if (tipo === 'ajuste') return quantidade;
+    const atual = Number(material.estoque_atual || 0);
+    const qty = Number(quantidade || 0);
+    if (tipo === 'entrada') return atual + qty;
+    if (tipo === 'saida') return atual - qty;
+    if (tipo === 'ajuste') return qty;
     return atual;
   }, [tipo, quantidade, material.estoque_atual]);
 

@@ -457,45 +457,77 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.log(`[ReloadData] Loaded: ${matsData.length} materiais, ${catsData.length} categorias, ${orcamentosData.length} orçamentos.`);
 
       setCategorias(Array.isArray(catsData) ? catsData : []);
-      setMateriais(Array.isArray(matsData) ? matsData.map((m: any) => ({
-        ...m,
-        nome: m.nome || '',
-        sku: m.sku || '',
-        fator_conversao: Number(m.fator_conversao || 1),
-        estoque_atual: Number(m.estoque_atual || 0),
-        estoque_minimo: Number(m.estoque_minimo || 0),
-        preco_custo: Number(m.preco_custo || 0),
-        preco_venda: m.preco_venda ? Number(m.preco_venda) : undefined,
-        margem_lucro: m.margem_lucro ? Number(m.margem_lucro) : undefined,
-        icms: m.icms ? Number(m.icms) : undefined,
-        icms_st: m.icms_st ? Number(m.icms_st) : undefined,
-        ipi: m.ipi ? Number(m.ipi) : undefined,
-        pis: m.pis ? Number(m.pis) : undefined,
-        cofins: m.cofins ? Number(m.cofins) : undefined,
-        origem: m.origem ? Number(m.origem) : undefined,
-        largura_mm: m.largura_mm ? Number(m.largura_mm) : undefined,
-        altura_mm: m.altura_mm ? Number(m.altura_mm) : undefined
-      })) : []);
+      let mappedMaterials: any[] = [];
+      if (Array.isArray(matsData)) {
+        matsData.forEach((m: any) => {
+          try {
+            mappedMaterials.push({
+              ...m,
+              id: String(m.id || ''),
+              nome: m.nome || '',
+              sku: m.sku || '',
+              fator_conversao: Number(m.fator_conversao || 1),
+              estoque_atual: Number(m.estoque_atual || 0),
+              estoque_minimo: Number(m.estoque_minimo || 0),
+              preco_custo: Number(m.preco_custo || 0),
+              preco_venda: m.preco_venda ? Number(m.preco_venda) : undefined,
+              margem_lucro: m.margem_lucro ? Number(m.margem_lucro) : undefined,
+              icms: m.icms ? Number(m.icms) : undefined,
+              icms_st: m.icms_st ? Number(m.icms_st) : undefined,
+              ipi: m.ipi ? Number(m.ipi) : undefined,
+              pis: m.pis ? Number(m.pis) : undefined,
+              cofins: m.cofins ? Number(m.cofins) : undefined,
+              origem: m.origem ? Number(m.origem) : undefined,
+              largura_mm: m.largura_mm ? Number(m.largura_mm) : undefined,
+              altura_mm: m.altura_mm ? Number(m.altura_mm) : undefined
+            });
+          } catch (e) {
+            console.error('Error mapping material record:', m, e);
+          }
+        });
+      }
+      setMateriais(mappedMaterials);
       setFornecedores(Array.isArray(fornsData) ? fornsData : []);
 
-      setOrcamentos(Array.isArray(orcamentosData) ? orcamentosData.map((o: any) => ({
-        ...o,
-        valor_base: Number(o.valor_base || 0),
-        valor_final: Number(o.valor_final || 0),
-        taxa_mensal: Number(o.taxa_mensal || 0),
-        adicional_urgencia_pct: Number(o.adicional_urgencia_pct || 0)
-      })) : []);
+      let mappedOrcamentos: any[] = [];
+      if (Array.isArray(orcamentosData)) {
+        orcamentosData.forEach((o: any) => {
+          try {
+            mappedOrcamentos.push({
+              ...o,
+              id: String(o.id || ''),
+              valor_base: Number(o.valor_base || 0),
+              valor_final: Number(o.valor_final || 0),
+              taxa_mensal: Number(o.taxa_mensal || 0),
+              adicional_urgencia_pct: Number(o.adicional_urgencia_pct || 0)
+            });
+          } catch (e) {
+            console.error('Error mapping orcamento record:', o, e);
+          }
+        });
+      }
+      setOrcamentos(mappedOrcamentos);
 
-      setMovimentacoes(Array.isArray(movsData) ? movsData.map((m: any) => ({
-        ...m,
-        id: m.id.toString(),
-        quantidade: Number(m.quantidade || 0),
-        quantidade_uso: Number(m.quantidade_uso || 0),
-        estoque_antes: Number(m.estoque_antes || 0),
-        estoque_depois: Number(m.estoque_depois || 0),
-        preco_unitario: Number(m.preco_unitario || 0),
-        valor_total: Number(m.valor_total || 0)
-      })) : []);
+      let mappedMovs: any[] = [];
+      if (Array.isArray(movsData)) {
+        movsData.forEach((m: any) => {
+          try {
+            mappedMovs.push({
+              ...m,
+              id: String(m.id || ''),
+              quantidade: Number(m.quantidade || 0),
+              quantidade_uso: Number(m.quantidade_uso || 0),
+              estoque_antes: Number(m.estoque_antes || 0),
+              estoque_depois: Number(m.estoque_depois || 0),
+              preco_unitario: Number(m.preco_unitario || 0),
+              valor_total: Number(m.valor_total || 0)
+            });
+          } catch (e) {
+            console.error('Error mapping mov record:', m, e);
+          }
+        });
+      }
+      setMovimentacoes(mappedMovs);
 
       setCondicoesPagamento(Array.isArray(condicoesData) ? condicoesData.map((c: any) => ({
         ...c,
