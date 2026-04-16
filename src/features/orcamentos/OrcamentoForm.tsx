@@ -425,7 +425,21 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
               const proj = projects.find(p => p.id === formData.projeto_id);
               const cond = condicoesPagamento.find(c => c.id === formData.condicao_pagamento_id);
               const existingOrc = orcamentos.find(o => o.id === orcamentoId);
-              if (existingOrc) generateOrcamentoPDF(existingOrc, cli, proj, cond);
+              
+              const orcamentoData = {
+                ...existingOrc,
+                itens: items,
+                valor_base: valorBase,
+                valor_final: valorTotalFinal,
+                taxa_mensal: formData.taxa_mensal / 100,
+                prazo_entrega_dias: formData.prazo_entrega_dias,
+                prazo_tipo: formData.prazo_tipo,
+                adicional_urgencia_pct: formData.prazo_tipo === 'urgente' ? 0.15 : 0,
+                observacoes: formData.observacoes
+              };
+              
+              console.log("Generating PDF with data:", orcamentoData);
+              generateOrcamentoPDF(orcamentoData, cli, proj, cond);
             }}
           >
             GERAR PDF
