@@ -21,7 +21,7 @@ export default async function handler(req: any, res: any) {
         if (!projectId) return res.status(400).json({ error: 'projectId é obrigatório' });
         const romaneio = await sql`
           SELECT 
-            pi.ambiente, 
+            pi.label as ambiente, 
             cr.componente_nome, 
             s.nome as sku_nome, 
             s.sku_code,
@@ -31,7 +31,7 @@ export default async function handler(req: any, res: any) {
           JOIN erp_consumption_results cr ON cr.project_item_id = pi.id
           JOIN erp_skus s ON s.id = cr.sku_id
           WHERE pi.project_id = ${projectId}
-          ORDER BY pi.ambiente, cr.componente_nome
+          ORDER BY pi.label, cr.componente_nome
         `;
         return res.status(200).json(romaneio);
 
