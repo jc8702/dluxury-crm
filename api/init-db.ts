@@ -191,18 +191,21 @@ export default async function handler(req: any, res: any) {
     // Migração: se tabela já existia com coluna 'status' TEXT ao invés de 'ativo' BOOLEAN
     await sql`ALTER TABLE condicoes_pagamento ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT true`.catch(() => {});
 
-    // Seed condições de pagamento padrão
-    const condicoesCount = await sql`SELECT COUNT(*) as count FROM condicoes_pagamento`;
-    if (parseInt(condicoesCount[0].count, 10) === 0) {
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('À Vista', 1)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('2x sem juros', 2)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('3x', 3)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('4x', 4)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('5x', 5)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('6x', 6)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('8x', 8)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('10x', 10)`;
-      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('12x', 12)`;
+    // Seed condições de pagamento padrão (não pode bloquear criação das tabelas seguintes)
+    try {
+      const condicoesCount = await sql`SELECT COUNT(*) as count FROM condicoes_pagamento`;
+      if (parseInt(condicoesCount[0]?.count ?? '0', 10) === 0) {
+        const condicoesSeed = [
+          ['À Vista', 1], ['2x sem juros', 2], ['3x', 3], ['4x', 4],
+          ['5x', 5], ['6x', 6], ['8x', 8], ['10x', 10], ['12x', 12],
+          ['Cartão de Crédito', 1], ['Boleto 30/60/90', 3]
+        ];
+        for (const [nome, parcelas] of condicoesSeed) {
+          await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES (${nome}, ${parcelas})`.catch(() => {});
+        }
+      }
+    } catch (seedErr) {
+      console.error('Seed condições falhou (não-bloqueante):', seedErr);
     }
 
     // 10. Orcamentos
