@@ -11,7 +11,7 @@ interface MaterialCardProps {
   onDelete?: (m: Material) => void;
 }
 
-const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClick, onDelete }) => {
+const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClick, onEdit, onDelete }) => {
   const status = statusEstoque(material.estoque_atual, material.estoque_minimo);
   
   const IconComponent = Package;
