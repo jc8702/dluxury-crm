@@ -50,10 +50,38 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     }
   }, [material]);
 
-  // Cálculo automático de preço de venda
-  const updatePrecoVenda = (custo: number, margem: number) => {
-    const venda = custo * (1 + (margem / 100));
-    setForm(prev => ({ ...prev, preco_custo: custo, margem_lucro: margem, preco_venda: Number(venda.toFixed(2)) }));
+  // Cálculos em Tempo Real
+  const calculos = React.useMemo(() => {
+    const custoNF = Number(form.preco_custo || 0);
+    const fator = Number(form.fator_conversao || 1);
+    const margem = Number(form.margem_lucro || 0);
+    
+    const custoUnitBruto = custoNF / fator;
+    // Perda técnica: 10% para Chapas, 1.0 para outros
+    const fatorPerda = form.unidade_compra === 'chapa' ? 1.10 : 1.05;
+    const custoComPerda = custoUnitBruto * fatorPerda;
+    const precoVendaCalculado = custoComPerda + margem;
+
+    return {
+      unitarioBruto: custoUnitBruto,
+      perdaPct: (fatorPerda - 1) * 100,
+      custoEfetivo: custoComPerda,
+      venda: precoVendaCalculado
+    };
+  }, [form.preco_custo, form.fator_conversao, form.margem_lucro, form.unidade_compra]);
+
+  const handlePriceChange = (field: 'preco_custo' | 'margem_lucro', value: number) => {
+    setForm(prev => {
+      const next = { ...prev, [field]: value };
+      // Recalcula o preço de venda para manter sincronia no estado antes de salvar
+      const custoNF = field === 'preco_custo' ? value : prev.preco_custo;
+      const margemVal = field === 'margem_lucro' ? value : prev.margem_lucro;
+      const fator = prev.fator_conversao || 1;
+      const fatorPerda = prev.unidade_compra === 'chapa' ? 1.10 : 1.05;
+      const calcVenda = ((custoNF / fator) * fatorPerda) + margemVal;
+      
+      return { ...next, preco_venda: Number(calcVenda.toFixed(2)) };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,22 +213,41 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             <h5 style={sectionTitleStyle}>Parâmetros Financeiros e Precificação</h5>
             <div className="grid-4">
               <div>
-                <label className="label-base">Preço Custo (R$)</label>
-                <input type="number" step="0.01" className="input-base" value={form.preco_custo} onChange={e => updatePrecoVenda(Number(e.target.value), form.margem_lucro)} />
+                <label className="label-base">Preço Custo (Total NF R$)</label>
+                <input type="number" step="0.01" className="input-base" value={form.preco_custo} onChange={e => handlePriceChange('preco_custo', Number(e.target.value))} />
               </div>
               <div>
-                <label className="label-base">Margem Lucro (%)</label>
-                <input type="number" step="0.1" className="input-base" value={form.margem_lucro} onChange={e => updatePrecoVenda(form.preco_custo, Number(e.target.value))} />
-              </div>
-              <div>
-                <label className="label-base" style={{ color: 'var(--primary)' }}>Preço Venda Final (R$)</label>
-                <input type="number" step="0.01" className="input-base" style={{ borderColor: 'var(--primary)' }} value={form.preco_venda} onChange={e => setForm({...form, preco_venda: Number(e.target.value)})} />
-              </div>
-              <div>
-                <label className="label-base">Estoque Mínimo</label>
-                <input type="number" step="0.01" className="input-base" value={form.estoque_minimo} onChange={e => setForm({...form, estoque_minimo: Number(e.target.value)})} />
+                <label className="label-base">Margem Lucro (Fixo R$)</label>
+                <input type="number" step="0.01" className="input-base" value={form.margem_lucro} onChange={e => handlePriceChange('margem_lucro', Number(e.target.value))} />
               </div>
             </div>
+
+            {/* Resumo de Custo Efetivo */}
+            <div style={{ 
+              marginTop: '1.25rem', 
+              padding: '1rem', 
+              background: 'rgba(212, 175, 55, 0.05)', 
+              border: '1px dashed var(--primary)', 
+              borderRadius: '12px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Resumo de Produção</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+                  Este material custa <span style={{ color: 'var(--primary)', fontWeight: '800' }}>R$ {calculos.custoEfetivo.toFixed(2)}</span> por {form.unidade_uso} efetivo.
+                </span>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Considerando {calculos.perdaPct}% de perda técnica sobre o custo unitário de R$ {calculos.unitarioBruto.toFixed(2)}.
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sugestão de Venda:</span>
+                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--success)' }}>R$ {calculos.venda.toFixed(2)}</div>
+              </div>
+            </div>
+
             <div style={{ marginTop: '1rem' }}>
                <label className="label-base">Fornecedor Principal</label>
                <input className="input-base" value={form.fornecedor_principal} onChange={e => setForm({...form, fornecedor_principal: e.target.value})} placeholder="Ex: Arauco" />
@@ -228,7 +275,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 </select>
               </div>
             </div>
-            <div className="grid-5" style={{ marginTop: '1rem', gap: '0.5rem' }}>
+            <div className="grid-2" style={{ marginTop: '1rem', gap: '1rem' }}>
                <div>
                 <label className="label-base" style={{ fontSize: '0.65rem' }}>ICMS (%)</label>
                 <input type="number" step="0.01" className="input-base" value={form.icms} onChange={e => setForm({...form, icms: Number(e.target.value)})} />
@@ -237,18 +284,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 <label className="label-base" style={{ fontSize: '0.65rem' }}>ICMS ST (%)</label>
                 <input type="number" step="0.01" className="input-base" value={form.icms_st} onChange={e => setForm({...form, icms_st: Number(e.target.value)})} />
               </div>
-              <div>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>IPI (%)</label>
-                <input type="number" step="0.01" className="input-base" value={form.ipi} onChange={e => setForm({...form, ipi: Number(e.target.value)})} />
-              </div>
-              <div>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>PIS (%)</label>
-                <input type="number" step="0.01" className="input-base" value={form.pis} onChange={e => setForm({...form, pis: Number(e.target.value)})} />
-              </div>
-              <div>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>COFINS (%)</label>
-                <input type="number" step="0.01" className="input-base" value={form.cofins} onChange={e => setForm({...form, cofins: Number(e.target.value)})} />
-              </div>
+              {/* PIS, COFINS e IPI mantidos no estado, mas ocultos visualmente conforme instrução */}
             </div>
           </div>
 
