@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useEscClose } from '../../hooks/useEscClose';
 import { useAppContext } from '../../context/AppContext';
 import OrcamentoForm from './OrcamentoForm';
+import { generateOrcamentoPDF } from '../../utils/generateOrcamentoPDF';
 
 const OrcamentosPage: React.FC = () => {
-  const { orcamentos, projects, removeOrcamento } = useAppContext();
+  const { orcamentos, projects, clients, condicoesPagamento, removeOrcamento } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [showModal, setShowModal] = useState(false);
@@ -90,6 +91,9 @@ const OrcamentosPage: React.FC = () => {
           <tbody>
             {filteredOrcamentos.map(o => {
               const proj = projects.find(p => p.id === o.projeto_id);
+              const cli = clients?.find(c => c.id?.toString() === o.cliente_id?.toString());
+              const cond = condicoesPagamento?.find(c => c.id === o.condicao_pagamento_id);
+
               return (
               <tr key={o.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="hover-row">
                 <td style={{ padding: '1rem', fontWeight: 'bold', color: '#d4af37' }}>{o.numero}</td>
@@ -109,8 +113,15 @@ const OrcamentosPage: React.FC = () => {
                   </span>
                 </td>
                 <td style={{ padding: '1rem', textAlign: 'right' }}>
-                  <button onClick={() => { setSelectedId(o.id); setShowModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '1rem', fontSize: '1rem' }}>✎</button>
-                  <button onClick={() => { if(confirm('Excluir este orçamento?')) removeOrcamento(o.id); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                  <button 
+                    onClick={() => generateOrcamentoPDF(o, cli, proj, cond)}
+                    title="Baixar PDF"
+                    style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', marginRight: '1rem', fontSize: '1.2rem' }}
+                  >
+                    📄
+                  </button>
+                  <button onClick={() => { setSelectedId(o.id); setShowModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '1rem', fontSize: '1rem' }} title="Editar">✎</button>
+                  <button onClick={() => { if(confirm('Excluir este orçamento?')) removeOrcamento(o.id); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }} title="Excluir">×</button>
                 </td>
               </tr>
             );

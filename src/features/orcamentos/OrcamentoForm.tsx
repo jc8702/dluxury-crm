@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import type { OrcamentoItem, Material } from '../../context/AppContext';
 import { calcularValorFinal, calcularCustoFinanceiro, calcularPercentualEncargo, calcularValorComUrgencia } from '../../utils/calculoFinanceiro';
+import { generateOrcamentoPDF } from '../../utils/generateOrcamentoPDF';
 
 
 interface OrcamentoFormProps {
@@ -21,7 +22,7 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
   const [formData, setFormData] = useState({
     cliente_id: '',
     projeto_id: '',
-    status: 'rascunho' as const,
+    status: 'rascunho' as 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'em_producao',
     taxa_mensal: defaultTaxa,
     condicao_pagamento_id: '',
     prazo_entrega_dias: defaultPrazo,
@@ -415,6 +416,21 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
 
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1rem' }}>
         <button className="btn btn-primary" style={{ flex: 1, padding: '1rem' }} onClick={handleSave}>SALVAR ORÇAMENTO</button>
+        {orcamentoId && (
+          <button 
+            className="btn" 
+            style={{ flex: 1, padding: '1rem', background: '#10b981', color: 'white', fontWeight: 'bold' }} 
+            onClick={() => {
+              const cli = clients.find(c => c.id?.toString() === formData.cliente_id?.toString());
+              const proj = projects.find(p => p.id === formData.projeto_id);
+              const cond = condicoesPagamento.find(c => c.id === formData.condicao_pagamento_id);
+              const existingOrc = orcamentos.find(o => o.id === orcamentoId);
+              if (existingOrc) generateOrcamentoPDF(existingOrc, cli, proj, cond);
+            }}
+          >
+            GERAR PDF
+          </button>
+        )}
         <button className="btn" style={{ flex: 1, padding: '1rem', background: 'rgba(255,255,255,0.05)' }} onClick={onClose}>CANCELAR</button>
       </div>
 
