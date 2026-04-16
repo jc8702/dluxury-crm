@@ -106,6 +106,21 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
         </p>
       </div>
 
+      {/* Exibição do Custo do Produto */}
+      <div style={{ 
+        background: 'rgba(212, 175, 55, 0.1)', 
+        padding: '0.5rem 0.8rem', 
+        borderRadius: 'var(--radius-sm)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase' }}>Custo Compra</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary)' }}>
+          R$ {Number(material.preco_custo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        </span>
+      </div>
+
       <div style={{ 
         marginTop: 'auto', borderTop: '1px solid var(--border)', 
         paddingTop: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' 
