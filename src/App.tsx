@@ -13,6 +13,7 @@ import BillingForm from './features/billing/BillingForm';
 import FornecedoresPage from './features/suppliers/FornecedoresPage';
 import EngineeringPage from './features/engineering/EngineeringPage';
 import SKUPage from './features/skus/SKUPage';
+import CopilotAssistant from './components/ai/CopilotAssistant';
 import Login from './features/auth/Login';
 import ErrorBoundary from './components/ErrorBoundaries';
 
@@ -117,6 +118,7 @@ function AppContent() {
           </div>
         </div>
       </main>
+      <CopilotAssistant />
       <ThemeToggle />
     </>
   );
