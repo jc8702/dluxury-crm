@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
-import { apiService } from '../services/apiService';
+import { apiService, removeAuthToken, hasAuthToken, setAuthToken } from '../services/apiService';
 
 // ─── TIPOS ────────────────────────────────────────────────
 
@@ -418,7 +418,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── AUTHENTICATION ────────────────────────────────────
   const logout = () => {
-    import('../services/apiService').then(({ removeAuthToken }) => removeAuthToken());
+    removeAuthToken();
     setUser(null);
   };
 
@@ -608,18 +608,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [user]);
 
   useEffect(() => {
-    import('../services/apiService').then(async ({ apiService, hasAuthToken }) => {
+    const init = async () => {
       if (hasAuthToken()) {
         try {
           const res = await apiService.checkSession();
           setUser(res.user);
         } catch {
-          import('../services/apiService').then(({ removeAuthToken }) => removeAuthToken());
+          removeAuthToken();
           setUser(null);
         }
       }
       setAuthLoading(false);
-    });
+    };
+    init();
   }, []);
 
   useEffect(() => {
