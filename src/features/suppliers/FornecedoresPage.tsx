@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscClose } from '../../hooks/useEscClose';
 import { useAppContext } from '../../context/AppContext';
 import type { Fornecedor } from '../../context/AppContext';
 import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2, X, Save } from 'lucide-react';
@@ -9,6 +10,8 @@ const FornecedoresPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEscClose(() => { if (showModal) setShowModal(false); });
 
   const [form, setForm] = useState({
     nome: '',

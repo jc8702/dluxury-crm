@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { Material } from '../../../context/AppContext';
 import { X, Save } from 'lucide-react';
@@ -10,6 +11,7 @@ interface MaterialFormModalProps {
 }
 
 const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose, onSuccess }) => {
+  useEscClose(onClose);
   const { categorias, addMaterial, updateMaterial } = useAppContext();
   const [form, setForm] = useState({
     sku: '', nome: '', descricao: '', categoria_id: '', subcategoria: '',

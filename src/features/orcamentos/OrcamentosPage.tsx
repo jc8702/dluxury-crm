@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useEscClose } from '../../hooks/useEscClose';
 import { useAppContext } from '../../context/AppContext';
 import OrcamentoForm from './OrcamentoForm';
 
@@ -8,6 +9,8 @@ const OrcamentosPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+
+  useEscClose(() => { if (showModal) setShowModal(false); });
 
   const filteredOrcamentos = useMemo(() => {
     return orcamentos.filter(o => {

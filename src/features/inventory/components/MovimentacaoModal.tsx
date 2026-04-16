@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { Material, Project, Orcamento } from '../../../context/AppContext';
 import { converterParaUso } from '../../../utils/estoque';
@@ -11,6 +12,7 @@ interface MovimentacaoModalProps {
 }
 
 const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose, onSuccess }) => {
+  useEscClose(onClose);
   const { registrarMovimentacao, projects, orcamentos } = useAppContext();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'ajuste'>('entrada');
   const [quantidade, setQuantidade] = useState<number>(0);
