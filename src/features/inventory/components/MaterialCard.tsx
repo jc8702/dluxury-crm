@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Material, CategoriaMaterial } from '../../../context/AppContext';
 import { statusEstoque, converterParaUso } from '../../../utils/estoque';
-import * as Lucide from 'lucide-react';
+import { Pencil, Trash2, Package } from 'lucide-react';
 
 interface MaterialCardProps {
   material: Material;
@@ -14,7 +14,7 @@ interface MaterialCardProps {
 const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClick, onDelete }) => {
   const status = statusEstoque(material.estoque_atual, material.estoque_minimo);
   
-  const IconComponent = (Lucide as any)[categoria?.icone || 'Package'] || Lucide.Package;
+  const IconComponent = Package;
 
   const getStatusConfig = (s: string) => {
     switch (s) {
@@ -65,7 +65,7 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
               }}
               title="Editar material"
             >
-              <Lucide.Pencil size={16} />
+              <Pencil size={16} />
             </button>
           )}
           {onDelete && (
@@ -81,7 +81,7 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
               }}
               title="Excluir material"
             >
-              <Lucide.Trash2 size={16} />
+              <Trash2 size={16} />
             </button>
           )}
           <span style={{ 

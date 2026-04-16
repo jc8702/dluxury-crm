@@ -6,7 +6,16 @@ import MovimentacaoModal from './components/MovimentacaoModal';
 import MaterialFormModal from './components/MaterialFormModal';
 import EstoqueAlertasBanner from './components/EstoqueAlertasBanner';
 import { statusEstoque } from '../../utils/estoque';
-import { Package, Plus, Search, Filter, History, LayoutGrid, List } from 'lucide-react';
+import { 
+  Package, 
+  Plus, 
+  Search, 
+  Filter, 
+  History, 
+  LayoutGrid, 
+  List,
+  AlertTriangle 
+} from 'lucide-react';
 
 type MainTab = 'materials' | 'history';
 

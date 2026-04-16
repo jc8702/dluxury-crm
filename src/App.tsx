@@ -12,6 +12,7 @@ import { AppProvider, useAppContext } from './context/AppContext';
 import BillingForm from './features/billing/BillingForm';
 import FornecedoresPage from './features/suppliers/FornecedoresPage';
 import Login from './features/auth/Login';
+import ErrorBoundary from './components/ErrorBoundaries';
 
 type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'settings';
 
@@ -77,7 +78,11 @@ function AppContent() {
       case 'visits':
         return <VisitKanban />;
       case 'inventory':
-        return <Inventory />;
+        return (
+          <ErrorBoundary moduleName="Estoque">
+            <Inventory />
+          </ErrorBoundary>
+        );
       case 'suppliers':
         return <FornecedoresPage />;
       case 'finance':
