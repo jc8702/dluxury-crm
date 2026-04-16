@@ -160,6 +160,8 @@ export default async function handler(req: any, res: any) {
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS preco_venda NUMERIC`.catch(() => {});
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS largura_mm NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS altura_mm NUMERIC`.catch(() => {});
 
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cfop TEXT`.catch(() => {});
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ncm TEXT`.catch(() => {});
@@ -169,6 +171,116 @@ export default async function handler(req: any, res: any) {
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS pis NUMERIC`.catch(() => {});
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cofins NUMERIC`.catch(() => {});
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`.catch(() => {});
+
+    // ─── NOVAS TABELAS PARA COMPOSIÇÃO TÉCNICA ────────────────
+
+    // 1. Ambientes do Orçamento
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamento_ambientes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+        nome TEXT NOT NULL,
+        ordem INTEGER DEFAULT 0,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 2. Móveis do Ambiente
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamento_moveis (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        ambiente_id UUID REFERENCES orcamento_ambientes(id) ON DELETE CASCADE,
+        nome TEXT NOT NULL,
+        tipo_movel TEXT, -- armario, gaveteiro, painel, balcao, estante, bancada, nicho, outro
+        largura_total_cm NUMERIC(8,2),
+        altura_total_cm NUMERIC(8,2),
+        profundidade_total_cm NUMERIC(8,2),
+        observacoes TEXT,
+        ordem INTEGER DEFAULT 0,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 3. Peças do Móvel (Chapas/Componentes)
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamento_pecas (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
+        material_id UUID REFERENCES materiais(id),
+        sku TEXT NOT NULL,
+        descricao_peca TEXT NOT NULL,
+        largura_cm NUMERIC(8,2) NOT NULL,
+        altura_cm NUMERIC(8,2) NOT NULL,
+        quantidade INTEGER NOT NULL DEFAULT 1,
+        m2_unitario NUMERIC(10,6),
+        m2_total NUMERIC(10,6),
+        fator_perda_pct NUMERIC(5,4) DEFAULT 0.10,
+        m2_com_perda NUMERIC(10,6),
+        preco_custo_m2 NUMERIC(10,4),
+        custo_total_peca NUMERIC(10,2),
+        metros_fita_borda NUMERIC(8,2) DEFAULT 0,
+        fita_material_id UUID REFERENCES materiais(id),
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 4. Ferragens e Acessórios
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamento_ferragens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
+        material_id UUID REFERENCES materiais(id),
+        sku TEXT NOT NULL,
+        descricao TEXT,
+        quantidade NUMERIC(8,2) NOT NULL,
+        unidade TEXT NOT NULL,
+        preco_custo_unitario NUMERIC(10,2),
+        custo_total NUMERIC(10,2),
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 5. Custos Extras (Mão de Obra, Frete, etc)
+    await sql`
+      CREATE TABLE IF NOT EXISTS orcamento_custos_extras (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+        descricao TEXT NOT NULL,
+        tipo TEXT, -- mao_de_obra_producao, mao_de_obra_instalacao, frete, projeto, outro
+        forma_calculo TEXT, -- valor_fixo, percentual_material, por_m2
+        percentual_ou_valor NUMERIC(10,4),
+        m2_total_referencia NUMERIC(10,4),
+        valor_calculado NUMERIC(10,2),
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 6. Configurações de Precificação (Global)
+    await sql`
+      CREATE TABLE IF NOT EXISTS configuracoes_precificacao (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        fator_perda_padrao NUMERIC(5,4) DEFAULT 0.10,
+        markup_padrao NUMERIC(5,4) DEFAULT 1.80,
+        aliquota_imposto NUMERIC(5,4) DEFAULT 0.00,
+        mo_producao_pct_padrao NUMERIC(5,4) DEFAULT 0.30,
+        mo_instalacao_pct_padrao NUMERIC(5,4) DEFAULT 0.15,
+        margem_minima_alerta NUMERIC(5,4) DEFAULT 0.25,
+        atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Seed Configuração Padrão se não existir
+     try {
+      const configCount = await sql`SELECT COUNT(*) as count FROM configuracoes_precificacao`;
+      if (parseInt(configCount[0]?.count ?? '0', 10) === 0) {
+        await sql`
+          INSERT INTO configuracoes_precificacao (
+            fator_perda_padrao, markup_padrao, aliquota_imposto, 
+            mo_producao_pct_padrao, mo_instalacao_pct_padrao, margem_minima_alerta
+          ) VALUES (0.10, 1.80, 0.00, 0.30, 0.15, 0.25)
+        `;
+      }
+    } catch (err) { console.error('Seed config erro:', err); }
 
 
     // 7. Users Table
@@ -233,7 +345,7 @@ export default async function handler(req: any, res: any) {
     await sql`
       CREATE TABLE IF NOT EXISTS orcamentos (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        cliente_id INTEGER REFERENCES clients(id),
+        cliente_id UUID REFERENCES clients(id),
         projeto_id TEXT, -- Pode vir do novo projects(uuid) ou do kanban antigo (integer)
         numero TEXT UNIQUE NOT NULL,
         status TEXT DEFAULT 'rascunho',

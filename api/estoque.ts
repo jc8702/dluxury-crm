@@ -166,25 +166,47 @@ export default async function handler(req: any, res: any) {
     }
 
     if (method === 'POST') {
-      const { sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes } = req.body;
+      const { 
+        sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, 
+        fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes,
+        cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro,
+        icms, icms_st, ipi, pis, cofins, origem
+      } = req.body;
+
       const result = await sql`
-        INSERT INTO materiais (sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes)
-        VALUES (${sku}, ${nome}, ${descricao}, ${categoria_id}, ${subcategoria}, ${unidade_compra}, ${unidade_uso}, ${fator_conversao}, ${estoque_minimo}, ${preco_custo}, ${fornecedor_principal}, ${observacoes})
+        INSERT INTO materiais (
+          sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, 
+          fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes,
+          cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro,
+          icms, icms_st, ipi, pis, cofins, origem
+        )
+        VALUES (
+          ${sku}, ${nome}, ${descricao}, ${categoria_id}, ${subcategoria}, ${unidade_compra}, ${unidade_uso}, 
+          ${fator_conversao}, ${estoque_minimo}, ${preco_custo}, ${fornecedor_principal}, ${observacoes},
+          ${cfop}, ${ncm}, ${largura_mm}, ${altura_mm}, ${preco_venda}, ${margem_lucro},
+          ${icms}, ${icms_st}, ${ipi}, ${pis}, ${cofins}, ${origem}
+        )
         RETURNING *
       `;
       return res.status(201).json(result[0]);
     }
 
     if (method === 'PATCH') {
-      const fields = req.body;
+      const f = req.body;
       const result = await sql`
         UPDATE materiais SET
-          sku = ${fields.sku}, nome = ${fields.nome}, descricao = ${fields.descricao},
-          categoria_id = ${fields.categoria_id}, subcategoria = ${fields.subcategoria},
-          unidade_compra = ${fields.unidade_compra}, unidade_uso = ${fields.unidade_uso},
-          fator_conversao = ${fields.fator_conversao}, estoque_minimo = ${fields.estoque_minimo},
-          preco_custo = ${fields.preco_custo}, fornecedor_principal = ${fields.fornecedor_principal},
-          observacoes = ${fields.observacoes}, atualizado_em = CURRENT_TIMESTAMP
+          sku = ${f.sku}, nome = ${f.nome}, descricao = ${f.descricao},
+          categoria_id = ${f.categoria_id}, subcategoria = ${f.subcategoria},
+          unidade_compra = ${f.unidade_compra}, unidade_uso = ${f.unidade_uso},
+          fator_conversao = ${f.fator_conversao}, estoque_minimo = ${f.estoque_minimo},
+          preco_custo = ${f.preco_custo}, fornecedor_principal = ${f.fornecedor_principal},
+          observacoes = ${f.observacoes}, 
+          cfop = ${f.cfop}, ncm = ${f.ncm}, 
+          largura_mm = ${f.largura_mm}, altura_mm = ${f.altura_mm},
+          preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro},
+          icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi},
+          pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem},
+          atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *
       `;

@@ -3,6 +3,8 @@ import { useAppContext } from '../../context/AppContext';
 import type { OrcamentoItem, Material } from '../../context/AppContext';
 import { calcularValorFinal, calcularCustoFinanceiro, calcularPercentualEncargo, calcularValorComUrgencia } from '../../utils/calculoFinanceiro';
 import { generateOrcamentoPDF } from '../../utils/generateOrcamentoPDF';
+import CompositorOrcamento from '../../components/orcamentos/technical/CompositorOrcamento';
+import * as Calc from '../../utils/precificacao';
 
 
 interface OrcamentoFormProps {
@@ -39,6 +41,8 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0,
     cfop: '', ncm: '', icms: undefined, icms_st: undefined, ipi: undefined, pis: undefined, cofins: undefined
   });
+  const [showTechnicalCompositor, setShowTechnicalCompositor] = useState(false);
+  const [technicalTotals, setTechnicalTotals] = useState<{ custo: number, preco: number } | null>(null);
 
   // Load existing orcamento
   useEffect(() => {
@@ -173,6 +177,30 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     }
   };
 
+  const handleTechnicalSettle = (custo: number, preco: number) => {
+    setTechnicalTotals({ custo, preco });
+    // O usuário solicitou: valor_base = custo total, valor_final = preço de venda
+    alert(`Composição técnica aplicada!\nCusto: ${formatCurrency(custo)}\nPreço Sugerido: ${formatCurrency(preco)}`);
+    
+    // Para que o cálculo comercial funcione, o "valorBase" precisa ser o custo técnico
+    // No entanto, no formulário atual, valorBase é calculado via useMemo sobre 'items'.
+    // Vou injetar um item especial representando a composição técnica se ele não existir, 
+    // ou apenas forçar o valor final se o usuário preferir.
+    // Conforme a regra: "valor_base no orcamento com o custo total calculado, valor_final com preço de venda calculado"
+    
+    setItems([{
+      descricao: "COMPOSIÇÃO TÉCNICA DETALHADA",
+      ambiente: "GERAL",
+      largura_cm: 0, altura_cm: 0, profundidade_cm: 0,
+      material: "MISTO", acabamento: "DIVERSOS",
+      quantidade: 1,
+      valor_unitario: preco,
+      valor_total: preco
+    }]);
+
+    setShowTechnicalCompositor(false);
+  };
+
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -243,7 +271,16 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
       <section style={sectionStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h4 style={{ color: '#d4af37', fontSize: '1.1rem', margin: 0, fontWeight: 'bold' }}>2. Itens do Orçamento</h4>
-          <button onClick={() => { setEditingItemIndex(null); setShowItemModal(true); }} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>+ ADICIONAR ITEM</button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button 
+              onClick={() => setShowTechnicalCompositor(true)} 
+              className="btn" 
+              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(212,175,55,0.1)', border: '1px solid #d4af37', color: '#d4af37', fontWeight: 'bold' }}
+            >
+              📐 COMPOSITOR TÉCNICO V2
+            </button>
+            <button onClick={() => { setEditingItemIndex(null); setShowItemModal(true); }} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>+ ADICIONAR ITEM</button>
+          </div>
         </div>
         
         <div style={{ overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
@@ -561,6 +598,23 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleAddItem}>CONFIRMAR</button>
               <button className="btn" style={{ flex: 1 }} onClick={() => setShowItemModal(false)}>CANCELAR</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compositor Técnico */}
+      {showTechnicalCompositor && orcamentoId && (
+        <CompositorOrcamento 
+          orcamentoId={orcamentoId} 
+          onClose={() => setShowTechnicalCompositor(false)} 
+          onSettle={handleTechnicalSettle}
+        />
+      )}
+      {showTechnicalCompositor && !orcamentoId && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
+            <p style={{ color: 'white', marginBottom: '1rem' }}>Salve o rascunho do orçamento primeiro para habilitar o compositor técnico.</p>
+            <button className="btn btn-primary" onClick={() => setShowTechnicalCompositor(false)}>Entendi</button>
           </div>
         </div>
       )}

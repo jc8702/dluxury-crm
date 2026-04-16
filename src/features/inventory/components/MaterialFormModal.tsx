@@ -18,7 +18,8 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     unidade_compra: 'chapa', unidade_uso: 'm2', fator_conversao: 1,
     estoque_minimo: 0, preco_custo: 0, preco_venda: 0, margem_lucro: 0,
     fornecedor_principal: '', observacoes: '',
-    cfop: '', ncm: '', icms: 0, icms_st: 0, ipi: 0, pis: 0, cofins: 0, origem: 0
+    cfop: '', ncm: '', icms: 0, icms_st: 0, ipi: 0, pis: 0, cofins: 0, origem: 0,
+    largura_mm: 0, altura_mm: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,7 +43,9 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         ipi: material.ipi || 0,
         pis: material.pis || 0,
         cofins: material.cofins || 0,
-        origem: material.origem || 0
+        origem: material.origem || 0,
+        largura_mm: material.largura_mm || 0,
+        altura_mm: material.altura_mm || 0
       });
     }
   }, [material]);
@@ -161,6 +164,18 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <input type="number" step="0.0001" className="input-base" value={form.fator_conversao} onChange={e => setForm({...form, fator_conversao: Number(e.target.value)})} />
                   <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Ex: 1 chapa = 5.0325 m². 1 rolo = 50m.</p>
                 </div>
+                {(form.unidade_compra === 'chapa' || form.unidade_uso === 'm2') && (
+                  <div className="grid-2">
+                    <div>
+                      <label className="label-base">Largura Chapa (mm)</label>
+                      <input type="number" className="input-base" value={form.largura_mm} onChange={e => setForm({...form, largura_mm: Number(e.target.value)})} placeholder="2750" />
+                    </div>
+                    <div>
+                      <label className="label-base">Altura Chapa (mm)</label>
+                      <input type="number" className="input-base" value={form.altura_mm} onChange={e => setForm({...form, altura_mm: Number(e.target.value)})} placeholder="1830" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

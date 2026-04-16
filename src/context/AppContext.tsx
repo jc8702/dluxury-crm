@@ -178,10 +178,87 @@ export type Material = {
   pis?: number;
   cofins?: number;
   origem?: number;
+  largura_mm?: number;
+  altura_mm?: number;
   fornecedor_principal?: string;
   observacoes?: string;
   ativo: boolean;
   updated_at?: string;
+};
+
+// ─── COMPOSIÇÃO TÉCNICA ──────────────────────────────────
+export type OrcamentoAmbiente = {
+  id: string;
+  orcamento_id: string;
+  nome: string;
+  ordem: number;
+  moveis?: OrcamentoMovel[];
+};
+
+export type OrcamentoMovel = {
+  id: string;
+  ambiente_id: string;
+  nome: string;
+  tipo_movel: 'armario' | 'gaveteiro' | 'painel' | 'balcao' | 'estante' | 'bancada' | 'nicho' | 'outro';
+  largura_total_cm: number;
+  altura_total_cm: number;
+  profundidade_total_cm: number;
+  observacoes?: string;
+  ordem: number;
+  pecas?: OrcamentoPeca[];
+  ferragens?: OrcamentoFerragem[];
+};
+
+export type OrcamentoPeca = {
+  id: string;
+  movel_id: string;
+  material_id: string;
+  sku: string;
+  descricao_peca: string;
+  largura_cm: number;
+  altura_cm: number;
+  quantidade: number;
+  m2_unitario: number;
+  m2_total: number;
+  fator_perda_pct: number;
+  m2_com_perda: number;
+  preco_custo_m2: number;
+  custo_total_peca: number;
+  metros_fita_borda: number;
+  fita_material_id?: string;
+};
+
+export type OrcamentoFerragem = {
+  id: string;
+  movel_id: string;
+  material_id: string;
+  sku: string;
+  descricao?: string;
+  quantidade: number;
+  unidade: string;
+  preco_custo_unitario: number;
+  custo_total: number;
+};
+
+export type OrcamentoCustoExtra = {
+  id: string;
+  orcamento_id: string;
+  descricao: string;
+  tipo: 'mao_de_obra_producao' | 'mao_de_obra_instalacao' | 'frete' | 'projeto' | 'outro';
+  forma_calculo: 'valor_fixo' | 'percentual_material' | 'por_m2';
+  percentual_ou_valor: number;
+  m2_total_referencia?: number;
+  valor_calculado: number;
+};
+
+export type ConfiguracaoPrecificacao = {
+  id: string;
+  fator_perda_padrao: number;
+  markup_padrao: number;
+  aliquota_imposto: number;
+  mo_producao_pct_padrao: number;
+  mo_instalacao_pct_padrao: number;
+  margem_minima_alerta: number;
 };
 
 export type MovimentacaoEstoque = {
@@ -365,17 +442,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await fetch('/api/init-db').catch(() => ({}));
 
       const [clientsData, billingsData, kanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
-        apiService.getClients().catch(() => []),
-        apiService.getBillings().catch(() => []),
-        apiService.getKanbanItems().catch(() => []),
-        apiService.getMonthlyGoals().catch(() => ({})),
-        apiService.getCategorias().catch(() => []),
-        apiService.getMateriais().catch(() => []),
-        apiService.getFornecedores().catch(() => []),
-        apiService.getOrcamentos().catch(() => []),
-        apiService.getCondicoesPagamento().catch(() => []),
-        apiService.getMovimentacoes().catch(() => [])
+        apiService.getClients().catch(err => { console.error('Clients load error:', err); return []; }),
+        apiService.getBillings().catch(err => { console.error('Billings load error:', err); return []; }),
+        apiService.getKanbanItems().catch(err => { console.error('Kanban load error:', err); return []; }),
+        apiService.getMonthlyGoals().catch(err => { console.error('Goals load error:', err); return []; }),
+        apiService.getCategorias().catch(err => { console.error('Categories load error:', err); return []; }),
+        apiService.getMateriais().catch(err => { console.error('Materials load error:', err); return []; }),
+        apiService.getFornecedores().catch(err => { console.error('Suppliers load error:', err); return []; }),
+        apiService.getOrcamentos().catch(err => { console.error('Budgets load error:', err); return []; }),
+        apiService.getCondicoesPagamento().catch(err => { console.error('PayConditions load error:', err); return []; }),
+        apiService.getMovimentacoes().catch(err => { console.error('StockMovs load error:', err); return []; })
       ]);
+
+      console.log(`[ReloadData] Loaded: ${matsData.length} materiais, ${catsData.length} categorias, ${orcamentosData.length} orçamentos.`);
 
       setCategorias(Array.isArray(catsData) ? catsData : []);
       setMateriais(Array.isArray(matsData) ? matsData.map((m: any) => ({
@@ -391,7 +470,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ipi: m.ipi ? Number(m.ipi) : undefined,
         pis: m.pis ? Number(m.pis) : undefined,
         cofins: m.cofins ? Number(m.cofins) : undefined,
-        origem: m.origem ? Number(m.origem) : undefined
+        origem: m.origem ? Number(m.origem) : undefined,
+        largura_mm: m.largura_mm ? Number(m.largura_mm) : undefined,
+        altura_mm: m.altura_mm ? Number(m.altura_mm) : undefined
       })) : []);
       setFornecedores(Array.isArray(fornsData) ? fornsData : []);
 

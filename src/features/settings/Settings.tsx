@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { apiService } from '../../services/apiService';
+import { ConfiguracaoPrecificacao } from '../../context/AppContext';
 
 const Settings: React.FC = () => {
   const { 
@@ -213,6 +214,8 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
+      <TechnicalPricingSection />
+
       {showUserModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border)' }}>
@@ -291,3 +294,76 @@ const CondicaoModal: React.FC<{ show: boolean, onClose: () => void, onSave: (e: 
 };
 
 export default Settings;
+
+// ─── SEÇÃO DE PRECIFICAÇÃO TÉCNICA ───────────────────────
+const TechnicalPricingSection: React.FC = () => {
+  const [config, setConfig] = useState<ConfiguracaoPrecificacao | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiService.getTechnicalConfig()
+      .then(setConfig)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!config) return;
+    setSaving(true);
+    try {
+      await apiService.updateTechnicalConfig(config);
+      alert('Configurações salvas com sucesso!');
+    } catch (err) {
+      alert('Erro ao salvar configurações.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none',
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className="card glass" style={{ marginTop: '2rem' }}>
+       <h3 style={{ fontSize: '1.25rem', color: '#d4af37', marginBottom: '1.5rem' }}>📐 Configurações de Precificação Técnica (Marcenaria)</h3>
+       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Markup Padrão (x)</label>
+            <input type="number" step="0.01" style={inputStyle} value={config?.markup_padrao} onChange={e => setConfig({...config!, markup_padrao: Number(e.target.value)})} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Alíquota de Imposto (%)</label>
+            <input type="number" step="0.01" style={inputStyle} value={config?.aliquota_imposto} onChange={e => setConfig({...config!, aliquota_imposto: Number(e.target.value)})} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Margem de Alerta Mínima (%)</label>
+            <input type="number" step="0.01" style={inputStyle} value={config?.margem_minima_alerta ? config.margem_minima_alerta * 100 : 25} onChange={e => setConfig({...config!, margem_minima_alerta: Number(e.target.value) / 100})} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Fator de Perda Padrão (%)</label>
+            <input type="number" step="1" style={inputStyle} value={config?.fator_perda_padrao} onChange={e => setConfig({...config!, fator_perda_padrao: Number(e.target.value)})} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>M.O. Produção (% do material)</label>
+            <input type="number" step="0.01" style={inputStyle} value={config?.mo_producao_pct_padrao ? config.mo_producao_pct_padrao * 100 : 30} onChange={e => setConfig({...config!, mo_producao_pct_padrao: Number(e.target.value) / 100})} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>M.O. Instalação (% do material)</label>
+            <input type="number" step="0.01" style={inputStyle} value={config?.mo_instalacao_pct_padrao ? config.mo_instalacao_pct_padrao * 100 : 15} onChange={e => setConfig({...config!, mo_instalacao_pct_padrao: Number(e.target.value) / 100})} />
+          </div>
+       </div>
+       <button 
+        onClick={handleSave} 
+        disabled={saving}
+        className="btn btn-primary" 
+        style={{ marginTop: '1.5rem', width: '100%', padding: '1rem', fontWeight: 'bold' }}
+       >
+         {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÇÕES TÉCNICAS'}
+       </button>
+    </div>
+  );
+};

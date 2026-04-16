@@ -107,6 +107,28 @@ export const apiService = {
     apiService.fetch(`/api/orcamentos?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeOrcamento: (id: string) => apiService.fetch(`/api/orcamentos?id=${id}`, { method: 'DELETE' }),
 
+  // Orcamento Técnico (Composição)
+  getOrcamentoTree: (orcamentoId: string) => apiService.fetch(`/api/orcamento-tecnico?type=tree&orcamento_id=${orcamentoId}`),
+  getTechnicalConfig: () => apiService.fetch('/api/orcamento-tecnico?type=config'),
+  updateTechnicalConfig: (data: any) => apiService.fetch('/api/orcamento-tecnico?type=config', { method: 'PATCH', body: JSON.stringify(data) }),
+  
+  addAmbiente: (orcamentoId: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=ambiente&orcamento_id=${orcamentoId}`, { method: 'POST', body: JSON.stringify(data) }),
+  addMovel: (ambienteId: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=movel&ambiente_id=${ambienteId}`, { method: 'POST', body: JSON.stringify(data) }),
+  addPeca: (movelId: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=peca&movel_id=${movelId}`, { method: 'POST', body: JSON.stringify(data) }),
+  addFerragem: (movelId: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=ferragem&movel_id=${movelId}`, { method: 'POST', body: JSON.stringify(data) }),
+  addCustoExtra: (orcamentoId: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=extra&orcamento_id=${orcamentoId}`, { method: 'POST', body: JSON.stringify(data) }),
+
+  updatePeca: (id: string, data: any) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=peca&id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  removeTechnicalEntity: (type: 'ambiente' | 'movel' | 'peca' | 'ferragem' | 'extra', id: string) => 
+    apiService.fetch(`/api/orcamento-tecnico?type=${type}&id=${id}`, { method: 'DELETE' }),
+
   // Payment Conditions
   getCondicoesPagamento: () => apiService.fetch('/api/condicoes-pagamento'),
   addCondicaoPagamento: (data: any) => apiService.fetch('/api/condicoes-pagamento', { method: 'POST', body: JSON.stringify(data) }),
