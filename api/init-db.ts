@@ -590,6 +590,95 @@ export default async function handler(req: any, res: any) {
       console.log('Default admin created: admin@dluxury.com / admin123');
     }
 
+    // ─── INFRAESTRUTURA ERP INDUSTRIAL (NOVO) ─────────────────
+    
+    // 1. Cadastro de SKUs (Insumos Industriais)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_skus (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sku_code TEXT UNIQUE NOT NULL,
+        nome TEXT NOT NULL,
+        unidade_medida TEXT NOT NULL,
+        preco_base DECIMAL(12,4) DEFAULT 0,
+        atributos JSONB, -- Ex: {"espessura": 15, "cor": "Branco Polar"}
+        ativo BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 2. Definição de Módulos de Móveis (Templates)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        codigo_modelo TEXT UNIQUE,
+        descricao TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 3. Variáveis Admitidas no Módulo (L, A, P)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_product_parameters (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID REFERENCES erp_products(id) ON DELETE CASCADE,
+        nome_variavel TEXT NOT NULL, -- Ex: 'LARGURA_MM'
+        valor_padrao DECIMAL DEFAULT 0,
+        label TEXT, -- Ex: 'Largura Total (mm)'
+        UNIQUE(product_id, nome_variavel)
+      )
+    `;
+
+    // 4. BOM Paramétrica (Engenharia)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_product_bom (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID REFERENCES erp_products(id) ON DELETE CASCADE,
+        sku_id UUID REFERENCES erp_skus(id),
+        componente_nome TEXT NOT NULL,
+        formula_quantidade TEXT NOT NULL, -- Ex: '(LARGURA_MM * ALTURA_MM) / 1000000'
+        formula_perda TEXT DEFAULT '1.10',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 5. Itens de Projeto (Execução)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_project_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES erp_products(id),
+        label TEXT,
+        parametros_definidos JSONB NOT NULL,
+        status TEXT DEFAULT 'rascunho',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 6. Explosão de Consumo (Resultados Calculados)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_consumption_results (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_item_id UUID REFERENCES erp_project_items(id) ON DELETE CASCADE,
+        sku_id UUID REFERENCES erp_skus(id),
+        quantidade_liquida DECIMAL(14,6),
+        quantidade_com_perda DECIMAL(14,6),
+        custo_total_estimado DECIMAL(14,4),
+        last_calculated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 7. Controle de Estoque Industrial
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_inventory (
+        sku_id UUID PRIMARY KEY REFERENCES erp_skus(id) ON DELETE CASCADE,
+        estoque_atual DECIMAL(14,4) DEFAULT 0,
+        estoque_reservado DECIMAL(14,4) DEFAULT 0,
+        ponto_pedido DECIMAL(14,4) DEFAULT 0,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     return res.status(200).json({ success: true, message: 'D\'Luxury CRM database initialized' });
   } catch (e: any) {
     console.error('Initialization Error:', e);
