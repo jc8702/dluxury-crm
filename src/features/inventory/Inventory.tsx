@@ -49,6 +49,17 @@ const Inventory: React.FC = () => {
     setShowFormModal(true);
   };
 
+  const handleDelete = async (m: Material) => {
+    if (confirm(`Tem certeza que deseja excluir "${m.nome}"?`)) {
+      try {
+        await removeMaterial(m.id);
+        reloadData();
+      } catch (err) {
+        alert('Erro ao excluir material: ' + (err as Error).message);
+      }
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '3rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -148,6 +159,7 @@ const Inventory: React.FC = () => {
                   material={m} 
                   categoria={categorias.find(c => c.id === m.categoria_id)}
                   onClick={() => handleOpenMov(m)}
+                  onDelete={() => handleDelete(m)}
                 />
               ))}
             </div>
@@ -191,7 +203,8 @@ const Inventory: React.FC = () => {
                           </span>
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button onClick={() => handleOpenMov(m)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Movimentar</button>
+                          <button onClick={() => handleOpenMov(m)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Movimentar</button>
+                          <button onClick={() => handleDelete(m)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }} title="Excluir">🗑</button>
                         </td>
                       </tr>
                     );

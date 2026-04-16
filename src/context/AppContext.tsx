@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
 import { apiService } from '../services/apiService';
 
 // ─── TIPOS ────────────────────────────────────────────────
@@ -169,6 +169,9 @@ export type Material = {
 export type MovimentacaoEstoque = {
   id: string;
   material_id: string;
+  material_nome?: string;
+  material_sku?: string;
+  material_unidade?: string;
   tipo: 'entrada' | 'saida' | 'ajuste';
   quantidade: number;
   quantidade_uso: number;
@@ -829,7 +832,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       projects, addProject, updateProject, removeProject,
       visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
       categorias, materiais, movimentacoes, fornecedores, addMaterial, updateMaterial, removeMaterial, registrarMovimentacao,
-      fornecedoresState: fornecedores, addFornecedor, updateFornecedor, removeFornecedor, // fornecedoresState para evitar conflito de nome se necessário
+      addFornecedor, updateFornecedor, removeFornecedor,
       billings, addBilling, updateBilling, removeBilling,
       orcamentos, addOrcamento, updateOrcamento, removeOrcamento,
       condicoesPagamento, addCondicaoPagamento, updateCondicaoPagamento, removeCondicaoPagamento,

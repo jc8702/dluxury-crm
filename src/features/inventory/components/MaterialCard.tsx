@@ -7,9 +7,10 @@ interface MaterialCardProps {
   material: Material;
   categoria?: CategoriaMaterial;
   onClick: (m: Material) => void;
+  onDelete?: (m: Material) => void;
 }
 
-const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClick }) => {
+const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClick, onDelete }) => {
   const status = statusEstoque(material.estoque_atual, material.estoque_minimo);
   
   const IconComponent = (Lucide as any)[categoria?.icone || 'Package'] || Lucide.Package;
@@ -49,13 +50,31 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
         }}>
           <IconComponent size={18} />
         </div>
-        <span style={{ 
-          fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '12px', 
-          background: config.bg, color: config.color,
-          fontWeight: '700', letterSpacing: '0.04em'
-        }}>
-          {config.label}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {onDelete && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDelete(material); }}
+              style={{ 
+                all: 'unset', 
+                cursor: 'pointer',
+                padding: '0.25rem',
+                borderRadius: '4px',
+                color: 'var(--text-muted)',
+                transition: 'color 0.2s'
+              }}
+              title="Excluir material"
+            >
+              <Lucide.Trash2 size={16} />
+            </button>
+          )}
+          <span style={{ 
+            fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '12px', 
+            background: config.bg, color: config.color,
+            fontWeight: '700', letterSpacing: '0.04em'
+          }}>
+            {config.label}
+          </span>
+        </div>
       </div>
 
       <div>
