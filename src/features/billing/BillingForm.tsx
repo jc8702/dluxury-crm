@@ -61,6 +61,8 @@ const BillingModule: React.FC = () => {
         nf: formData.descricao.toUpperCase(),
         pedido: formData.projectId || '-',
         cliente: projects.find(p => p.id === formData.projectId)?.clientName?.toUpperCase() || '-',
+        status: formData.status as Billing['status'],
+        categoria: formData.categoria as any
       };
       if (editingBilling) {
         await updateBilling(editingBilling.id, data);

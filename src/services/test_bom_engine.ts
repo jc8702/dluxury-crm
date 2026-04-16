@@ -1,4 +1,5 @@
-import { BOMEngine, BOMItem } from './bomEngine.ts';
+import { BOMEngine } from './bomEngine.ts';
+import type { BOMItem } from './bomEngine.ts';
 
 const mockParams = {
   l: 1200,   // Largura em mm

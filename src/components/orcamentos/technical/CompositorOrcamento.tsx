@@ -2,7 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppContext } from '../../../context/AppContext';
 import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
 import { apiService } from '../../../services/apiService';
-import * as Calc from '../../../utils/precificacao';
+import { 
+  calcularM2Peca, 
+  aplicarPerdaCorte, 
+  custoPeca, 
+  calcularPrecoVenda, 
+  calcularImposto, 
+  calcularMargemReal 
+} from '../../../utils/precificacao';
 import AmbienteModal from './AmbienteModal';
 import MovelModal from './MovelModal';
 
@@ -124,9 +131,9 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
     const moInstalacao = subtotalMateriais * (config?.mo_instalacao_pct_padrao || 0);
     
     const custoTotal = subtotalMateriais + moProducao + moInstalacao;
-    const precoVenda = Calc.calcularPrecoVenda(custoTotal, config?.markup_padrao || 1);
-    const imposto = Calc.calcularImposto(precoVenda, config?.aliquota_imposto || 0);
-    const margemReal = Calc.calcularMargemReal(precoVenda, custoTotal, imposto);
+    const precoVenda = calcularPrecoVenda(custoTotal, config?.markup_padrao || 1);
+    const imposto = calcularImposto(precoVenda, config?.aliquota_imposto || 0);
+    const margemReal = calcularMargemReal(precoVenda, custoTotal, imposto);
 
     return {
       custoPecas,
@@ -317,9 +324,9 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                               value={p.largura_cm}
                               onChange={(e) => {
                                 const val = Number(e.target.value);
-                                const m2 = Calc.calcularM2Peca(val, p.altura_cm);
-                                const m2Loss = Calc.aplicarPerdaCorte(m2, p.fator_perda_pct);
-                                const cost = Calc.custoPeca(m2Loss * p.quantidade, p.preco_custo_m2);
+                                const m2 = calcularM2Peca(val, p.altura_cm);
+                                const m2Loss = aplicarPerdaCorte(m2, p.fator_perda_pct);
+                                const cost = custoPeca(m2Loss * p.quantidade, p.preco_custo_m2);
                                 handleUpdatePeca(p.id, { largura_cm: val, m2_unitario: m2, m2_total: m2 * p.quantidade, m2_com_perda: m2Loss * p.quantidade, custo_total_peca: cost });
                               }}
                             />

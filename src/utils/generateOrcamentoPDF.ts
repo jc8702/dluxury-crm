@@ -43,12 +43,11 @@ export const generateOrcamentoPDF = (
   doc.line(15, 57, 195, 57);
 
   doc.setFontSize(10);
-  const clienteNome = cliente?.nome || cliente?.razaoSocial || orcamento.cliente_nome || 'Não informado';
   const clienteTel = cliente?.telefone || 'Não informado';
   const clienteEmail = cliente?.email || 'Não informado';
   const projetoNome = projeto ? `${projeto.ambiente} - ${projeto.clientName}` : 'Projeto Padrão';
   
-  doc.text(`Cliente: ${clienteNome}`, 15, 65);
+  doc.text(`Cliente: ${cliente?.nome || 'Não informado'}`, 15, 65);
   doc.text(`Telefone: ${clienteTel}`, 15, 72);
   doc.text(`E-mail: ${clienteEmail}`, 120, 65);
   doc.text(`Projeto: ${projetoNome}`, 120, 72);
