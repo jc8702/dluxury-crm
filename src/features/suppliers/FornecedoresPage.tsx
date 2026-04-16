@@ -114,7 +114,6 @@ const FornecedoresPage: React.FC = () => {
         />
       )}
     </div>
-    </div>
   );
 };
 
