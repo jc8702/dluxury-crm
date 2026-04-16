@@ -4,25 +4,13 @@ import { useAppContext } from '../../context/AppContext';
 import type { Fornecedor } from '../../context/AppContext';
 import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2, X, Save } from 'lucide-react';
 
+import FornecedorFormModal from './components/FornecedorFormModal';
+
 const FornecedoresPage: React.FC = () => {
-  const { fornecedores, addFornecedor, updateFornecedor, removeFornecedor } = useAppContext();
+  const { fornecedores, removeFornecedor } = useAppContext();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEscClose(() => { if (showModal) setShowModal(false); });
-
-  const [form, setForm] = useState({
-    nome: '',
-    cnpj: '',
-    contato: '',
-    telefone: '',
-    email: '',
-    cidade: '',
-    estado: '',
-    observacoes: ''
-  });
+  const [selectedFornecedor, setSelectedFornecedor] = useState<Fornecedor | null>(null);
 
   const filtered = fornecedores.filter(f => 
     f.nome.toLowerCase().includes(search.toLowerCase()) || 
@@ -30,50 +18,13 @@ const FornecedoresPage: React.FC = () => {
   );
 
   const handleEdit = (f: Fornecedor) => {
-    setForm({
-      nome: f.nome,
-      cnpj: f.cnpj || '',
-      contato: f.contato || '',
-      telefone: f.telefone || '',
-      email: f.email || '',
-      cidade: f.cidade || '',
-      estado: f.estado || '',
-      observacoes: f.observacoes || ''
-    });
-    setEditingId(f.id);
+    setSelectedFornecedor(f);
     setShowModal(true);
   };
 
   const handleNew = () => {
-    setForm({
-      nome: '',
-      cnpj: '',
-      contato: '',
-      telefone: '',
-      email: '',
-      cidade: '',
-      estado: '',
-      observacoes: ''
-    });
-    setEditingId(null);
+    setSelectedFornecedor(null);
     setShowModal(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (editingId) {
-        await updateFornecedor(editingId, form);
-      } else {
-        await addFornecedor(form);
-      }
-      setShowModal(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleDelete = async (id: string) => {
@@ -97,7 +48,7 @@ const FornecedoresPage: React.FC = () => {
           <Plus size={20} /> Novo Fornecedor
         </button>
       </header>
-
+ 
       <div className="card" style={{ padding: '0.75rem 1.25rem' }}>
         <div style={{ position: 'relative', maxWidth: '400px' }}>
           <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -156,65 +107,13 @@ const FornecedoresPage: React.FC = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-content animate-pop-in" style={{ maxWidth: '600px', width: '90%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
-                {editingId ? 'Editar Fornecedor' : 'Novo Fornecedor'}
-              </h3>
-              <button onClick={() => setShowModal(false)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}><X /></button>
-            </div>
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <label className="label-base">Razão Social / Nome *</label>
-                <input className="input-base" value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} required />
-              </div>
-              <div className="grid-2">
-                <div>
-                  <label className="label-base">CNPJ</label>
-                  <input className="input-base" value={form.cnpj} onChange={e => setForm({...form, cnpj: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-base">Pessoa de Contato</label>
-                  <input className="input-base" value={form.contato} onChange={e => setForm({...form, contato: e.target.value})} />
-                </div>
-              </div>
-              <div className="grid-2">
-                <div>
-                  <label className="label-base">Telefone</label>
-                  <input className="input-base" value={form.telefone} onChange={e => setForm({...form, telefone: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-base">E-mail</label>
-                  <input type="email" className="input-base" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                </div>
-              </div>
-              <div className="grid-2">
-                <div>
-                  <label className="label-base">Cidade</label>
-                  <input className="input-base" value={form.cidade} onChange={e => setForm({...form, cidade: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-base">Estado</label>
-                  <input className="input-base" maxLength={2} value={form.estado} onChange={e => setForm({...form, estado: e.target.value.toUpperCase()})} />
-                </div>
-              </div>
-              <div>
-                <label className="label-base">Observações</label>
-                <textarea className="input-base" style={{ height: '80px', resize: 'none' }} value={form.observacoes} onChange={e => setForm({...form, observacoes: e.target.value})} />
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-outline" style={{ flex: 1 }}>Cancelar</button>
-                <button type="submit" disabled={loading} className="btn btn-primary" style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Fornecedor'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <FornecedorFormModal 
+          fornecedor={selectedFornecedor}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => {}} 
+        />
       )}
+    </div>
     </div>
   );
 };

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { Material } from '../../../context/AppContext';
-import { X, Save } from 'lucide-react';
+import { X, Save, Plus } from 'lucide-react';
+import FornecedorFormModal from '../../suppliers/components/FornecedorFormModal';
 
 interface MaterialFormModalProps {
   material?: Material;
@@ -23,6 +24,8 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const { fornecedores } = useAppContext();
 
   useEffect(() => {
     if (material) {
@@ -255,7 +258,36 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
 
             <div style={{ marginTop: '1rem' }}>
                <label className="label-base">Fornecedor Principal</label>
-               <input className="input-base" value={form.fornecedor_principal} onChange={e => setForm({...form, fornecedor_principal: e.target.value})} placeholder="Ex: Arauco" />
+               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                 <select 
+                   className="input-base" 
+                   value={form.fornecedor_principal} 
+                   onChange={e => {
+                     if (e.target.value === 'NEW') {
+                       setShowSupplierModal(true);
+                     } else {
+                       setForm({...form, fornecedor_principal: e.target.value});
+                     }
+                   }}
+                 >
+                   <option value="">Selecione um fornecedor...</option>
+                   <option value="NEW" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Cadastrar Novo Fornecedor</option>
+                   <optgroup label="Fornecedores Cadastrados">
+                     {fornecedores.map(f => (
+                       <option key={f.id} value={f.nome}>{f.nome}</option>
+                     ))}
+                   </optgroup>
+                 </select>
+                 <button 
+                   type="button" 
+                   onClick={() => setShowSupplierModal(true)} 
+                   className="btn btn-outline" 
+                   style={{ padding: '0.5rem', minWidth: 'auto' }}
+                   title="Novo Fornecedor"
+                 >
+                   <Plus size={18} />
+                 </button>
+               </div>
             </div>
           </div>
 
@@ -307,6 +339,23 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             </button>
           </div>
         </form>
+
+        {showSupplierModal && (
+          <FornecedorFormModal 
+            onClose={() => setShowSupplierModal(false)}
+            onSuccess={(newSupplierId) => {
+              // Se tivermos o ID ou pudermos localizar o nome, selecionamos
+              // Aqui estamos salvando pelo NOME no material conforme a estrutura atual
+              if (newSupplierId) {
+                // O AppContext vai atualizar a lista de fornecedores.
+                // Como salvamos pelo NOME no materiais.fornecedor_principal:
+                // Precisamos esperar o reload ou assumir que o nome está no estado do modal.
+                // Na dúvida, o usuário seleciona ou o reload (que é automático no context) resolve.
+              }
+              setShowSupplierModal(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );
