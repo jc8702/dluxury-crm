@@ -100,8 +100,12 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
   };
 
   const handleSave = async () => {
-    if (!formData.cliente_id || !formData.condicao_pagamento_id) {
-      alert("Selecione o cliente e a condição de pagamento.");
+    if (!formData.cliente_id) {
+      alert("Selecione um cliente.");
+      return;
+    }
+    if (!formData.condicao_pagamento_id) {
+      alert("Selecione a condição de pagamento.");
       return;
     }
 

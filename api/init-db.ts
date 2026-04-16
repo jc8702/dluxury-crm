@@ -183,10 +183,27 @@ export default async function handler(req: any, res: any) {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nome TEXT NOT NULL,
         n_parcelas INTEGER DEFAULT 1,
-        status TEXT DEFAULT 'ativo',
+        ativo BOOLEAN DEFAULT true,
         criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Migração: se tabela já existia com coluna 'status' TEXT ao invés de 'ativo' BOOLEAN
+    await sql`ALTER TABLE condicoes_pagamento ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT true`.catch(() => {});
+
+    // Seed condições de pagamento padrão
+    const condicoesCount = await sql`SELECT COUNT(*) as count FROM condicoes_pagamento`;
+    if (parseInt(condicoesCount[0].count, 10) === 0) {
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('À Vista', 1)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('2x sem juros', 2)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('3x', 3)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('4x', 4)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('5x', 5)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('6x', 6)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('8x', 8)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('10x', 10)`;
+      await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES ('12x', 12)`;
+    }
 
     // 10. Orcamentos
     await sql`
