@@ -170,7 +170,7 @@ export default async function handler(req: any, res: any) {
         sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, 
         fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes,
         cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro,
-        icms, icms_st, ipi, pis, cofins, origem
+        icms, icms_st, ipi, pis, cofins, origem, marca
       } = req.body;
 
       const result = await sql`
@@ -178,13 +178,13 @@ export default async function handler(req: any, res: any) {
           sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, 
           fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes,
           cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro,
-          icms, icms_st, ipi, pis, cofins, origem
+          icms, icms_st, ipi, pis, cofins, origem, marca
         )
         VALUES (
           ${sku}, ${nome}, ${descricao}, ${categoria_id}, ${subcategoria}, ${unidade_compra}, ${unidade_uso}, 
           ${fator_conversao}, ${estoque_minimo}, ${preco_custo}, ${fornecedor_principal}, ${observacoes},
           ${cfop}, ${ncm}, ${largura_mm}, ${altura_mm}, ${preco_venda}, ${margem_lucro},
-          ${icms}, ${icms_st}, ${ipi}, ${pis}, ${cofins}, ${origem}
+          ${icms}, ${icms_st}, ${ipi}, ${pis}, ${cofins}, ${origem}, ${marca}
         )
         RETURNING *
       `;
@@ -206,6 +206,7 @@ export default async function handler(req: any, res: any) {
           preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro},
           icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi},
           pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem},
+          marca = ${f.marca},
           atualizado_em = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *

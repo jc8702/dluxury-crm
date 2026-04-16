@@ -104,6 +104,20 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
         <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
           {categoria?.nome || 'Sem categoria'}
         </p>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', borderTop: '1px solid var(--border)', paddingTop: '0.4rem' }}>
+          {material.marca && (
+            <div>
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Marca</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{material.marca}</span>
+            </div>
+          )}
+          {material.fornecedor_principal && (
+            <div>
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Fornecedor</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{material.fornecedor_principal}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Exibição do Custo do Produto */}

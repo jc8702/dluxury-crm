@@ -19,7 +19,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     estoque_minimo: 0, preco_custo: 0, preco_venda: 0, margem_lucro: 0,
     fornecedor_principal: '', observacoes: '',
     cfop: '', ncm: '', icms: 0, icms_st: 0, ipi: 0, pis: 0, cofins: 0, origem: 0,
-    largura_mm: 0, altura_mm: 0
+    largura_mm: 0, altura_mm: 0, marca: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,7 +45,8 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         cofins: material.cofins || 0,
         origem: material.origem || 0,
         largura_mm: material.largura_mm || 0,
-        altura_mm: material.altura_mm || 0
+        altura_mm: material.altura_mm || 0,
+        marca: material.marca || ''
       });
     }
   }, [material]);
@@ -151,6 +152,10 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <div>
                     <label className="label-base">Subcategoria</label>
                     <input className="input-base" value={form.subcategoria} onChange={e => setForm({...form, subcategoria: e.target.value})} placeholder="Ex: MDF, Ferragem..." />
+                  </div>
+                  <div>
+                    <label className="label-base">Marca / Fabricante</label>
+                    <input className="input-base" value={form.marca} onChange={e => setForm({...form, marca: e.target.value})} placeholder="Ex: Arauco, Duratex, Blum..." />
                   </div>
                 </div>
               </div>

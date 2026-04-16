@@ -162,6 +162,7 @@ export default async function handler(req: any, res: any) {
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`.catch(() => {});
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS largura_mm NUMERIC`.catch(() => {});
     await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS altura_mm NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS marca TEXT`.catch(() => {});
 
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cfop TEXT`.catch(() => {});
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ncm TEXT`.catch(() => {});

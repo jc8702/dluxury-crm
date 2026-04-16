@@ -180,6 +180,7 @@ export type Material = {
   origem?: number;
   largura_mm?: number;
   altura_mm?: number;
+  marca?: string;
   fornecedor_principal?: string;
   observacoes?: string;
   ativo: boolean;
@@ -479,7 +480,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               cofins: m.cofins ? Number(m.cofins) : undefined,
               origem: m.origem ? Number(m.origem) : undefined,
               largura_mm: m.largura_mm ? Number(m.largura_mm) : undefined,
-              altura_mm: m.altura_mm ? Number(m.altura_mm) : undefined
+              altura_mm: m.altura_mm ? Number(m.altura_mm) : undefined,
+              marca: m.marca || ''
             });
           } catch (e) {
             console.error('Error mapping material record:', m, e);
