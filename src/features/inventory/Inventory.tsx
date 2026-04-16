@@ -53,8 +53,8 @@ const Inventory: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '3rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Package size={28} style={{ color: '#d4af37' }} /> Gestão de Estoque
+          <h2 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Package size={28} style={{ color: 'var(--primary)' }} /> Gestão de Estoque
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Controle de materiais, entradas/saídas e alertas de reposição.
@@ -124,16 +124,16 @@ const Inventory: React.FC = () => {
       {activeTab === 'materials' ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '0.25rem', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', background: 'var(--badge-bg)', padding: '0.25rem', borderRadius: '8px' }}>
               <button 
                 onClick={() => setViewMode('grid')}
-                style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'grid' ? 'rgba(212,175,55,0.2)' : 'transparent', color: viewMode === 'grid' ? '#d4af37' : 'var(--text-muted)' }}
+                style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'grid' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)' }}
               >
                 <LayoutGrid size={18} />
               </button>
               <button 
                 onClick={() => setViewMode('table')}
-                style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'table' ? 'rgba(212,175,55,0.2)' : 'transparent', color: viewMode === 'table' ? '#d4af37' : 'var(--text-muted)' }}
+                style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'table' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)' }}
               >
                 <List size={18} />
               </button>
@@ -155,7 +155,7 @@ const Inventory: React.FC = () => {
             <div className="card animate-fade-in" style={{ padding: '0' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                  <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--table-border)', background: 'var(--table-header-bg)' }}>
                     <th style={{ padding: '1rem' }}>SKU</th>
                     <th style={{ padding: '1rem' }}>Nome</th>
                     <th style={{ padding: '1rem' }}>Categoria</th>
@@ -215,7 +215,7 @@ const Inventory: React.FC = () => {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
+                <tr style={{ background: 'var(--table-header-bg)', borderBottom: '1px solid var(--table-border)' }}>
                   <th style={{ padding: '1rem' }}>Data</th>
                   <th style={{ padding: '1rem' }}>Material</th>
                   <th style={{ padding: '1rem' }}>Tipo</th>

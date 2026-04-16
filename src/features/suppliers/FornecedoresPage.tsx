@@ -83,8 +83,8 @@ const FornecedoresPage: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Truck size={28} style={{ color: '#d4af37' }} /> Fornecedores
+          <h2 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Truck size={28} style={{ color: 'var(--primary)' }} /> Fornecedores
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Gerencie seus parceiros de materiais e acabamentos.
