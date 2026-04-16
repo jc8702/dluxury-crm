@@ -31,7 +31,7 @@ export default async function handler(req: any, res: any) {
     const { 
       cliente_id, projeto_id, status, valor_base, taxa_mensal, 
       condicao_pagamento_id, valor_final, prazo_entrega_dias, 
-      prazo_tipo, adicional_urgencia_pct, observacoes, itens 
+      prazo_tipo, adicional_urgencia_pct, observacoes, itens, materiais_consumidos 
     } = req.body;
 
     try {
@@ -45,17 +45,21 @@ export default async function handler(req: any, res: any) {
       }
       const numero = `ORC-${year}-${nextNum.toString().padStart(3, '0')}`;
 
+      const projId = projeto_id || null;
+      const matConsumidos = materiais_consumidos ? JSON.stringify(materiais_consumidos) : '[]';
+
       // Inserir Cabeçalho
       const orc = await sql`
         INSERT INTO orcamentos (
           cliente_id, projeto_id, numero, status, valor_base, taxa_mensal,
           condicao_pagamento_id, valor_final, prazo_entrega_dias,
-          prazo_tipo, adicional_urgencia_pct, observacoes
+          prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos
         )
         VALUES (
-          ${cliente_id}, ${projeto_id || null}, ${numero}, ${status || 'rascunho'},
+          ${cliente_id}, ${projId}, ${numero}, ${status || 'rascunho'},
           ${valor_base}, ${taxa_mensal}, ${condicao_pagamento_id}, ${valor_final},
-          ${prazo_entrega_dias}, ${prazo_tipo || 'padrao'}, ${adicional_urgencia_pct}, ${observacoes || null}
+          ${prazo_entrega_dias}, ${prazo_tipo || 'padrao'}, ${adicional_urgencia_pct}, ${observacoes || null},
+          ${matConsumidos}::jsonb
         )
         RETURNING *
       `;

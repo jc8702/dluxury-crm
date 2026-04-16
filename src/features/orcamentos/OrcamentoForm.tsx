@@ -143,9 +143,9 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
         await addOrcamento(payload);
       }
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Erro ao salvar orçamento. Verifique se todos os campos estão preenchidos.');
+      alert(err?.message || 'Erro ao salvar orçamento. Verifique o console.');
     }
   };
 
