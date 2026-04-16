@@ -74,6 +74,13 @@ export type OrcamentoItem = {
   quantidade: number;
   valor_unitario: number;
   valor_total: number;
+  cfop?: string;
+  ncm?: string;
+  icms?: number;
+  icms_st?: number;
+  ipi?: number;
+  pis?: number;
+  cofins?: number;
 };
 
 export type Orcamento = {

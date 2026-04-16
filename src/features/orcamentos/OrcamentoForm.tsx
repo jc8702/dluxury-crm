@@ -36,7 +36,8 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
   const [showItemModal, setShowItemModal] = useState(false);
   const [newItem, setNewItem] = useState<OrcamentoItem>({
     descricao: '', ambiente: '', largura_cm: 0, altura_cm: 0, profundidade_cm: 0,
-    material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0
+    material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0,
+    cfop: '', ncm: '', icms: undefined, icms_st: undefined, ipi: undefined, pis: undefined, cofins: undefined
   });
 
   // Load existing orcamento
@@ -96,7 +97,8 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     setShowItemModal(false);
     setNewItem({
       descricao: '', ambiente: '', largura_cm: 0, altura_cm: 0, profundidade_cm: 0,
-      material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0
+      material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0,
+      cfop: '', ncm: '', icms: undefined, icms_st: undefined, ipi: undefined, pis: undefined, cofins: undefined
     });
   };
 
@@ -478,6 +480,41 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
               <div>
                 <label style={{ fontSize: '0.75rem' }}>Valor Unitário</label>
                 <input type="number" style={inputStyle} value={newItem.valor_unitario} onChange={e => setNewItem({...newItem, valor_unitario: Number(e.target.value)})} />
+              </div>
+            </div>
+
+            {/* Dados Fiscais do Item */}
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <h5 style={{ color: '#d4af37', fontSize: '0.9rem', marginBottom: '1rem', margin: '0 0 1rem 0' }}>Dados Fiscais (opcional)</h5>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>CFOP</label>
+                  <input style={inputStyle} value={newItem.cfop || ''} onChange={e => setNewItem({...newItem, cfop: e.target.value})} placeholder="5.101" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>NCM</label>
+                  <input style={inputStyle} value={newItem.ncm || ''} onChange={e => setNewItem({...newItem, ncm: e.target.value})} placeholder="9403.60" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>ICMS (%)</label>
+                  <input type="number" step="0.01" style={inputStyle} value={newItem.icms ?? ''} onChange={e => setNewItem({...newItem, icms: Number(e.target.value) || undefined})} placeholder="18" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>ICMS ST (%)</label>
+                  <input type="number" step="0.01" style={inputStyle} value={newItem.icms_st ?? ''} onChange={e => setNewItem({...newItem, icms_st: Number(e.target.value) || undefined})} placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>IPI (%)</label>
+                  <input type="number" step="0.01" style={inputStyle} value={newItem.ipi ?? ''} onChange={e => setNewItem({...newItem, ipi: Number(e.target.value) || undefined})} placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>PIS (%)</label>
+                  <input type="number" step="0.01" style={inputStyle} value={newItem.pis ?? ''} onChange={e => setNewItem({...newItem, pis: Number(e.target.value) || undefined})} placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>COFINS (%)</label>
+                  <input type="number" step="0.01" style={inputStyle} value={newItem.cofins ?? ''} onChange={e => setNewItem({...newItem, cofins: Number(e.target.value) || undefined})} placeholder="0" />
+                </div>
               </div>
             </div>
             <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
