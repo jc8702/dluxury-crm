@@ -13,11 +13,12 @@ import BillingForm from './features/billing/BillingForm';
 import FornecedoresPage from './features/suppliers/FornecedoresPage';
 import EngineeringPage from './features/engineering/EngineeringPage';
 import SKUPage from './features/skus/SKUPage';
+import ReportsPage from './features/reports/ReportsPage';
 import CopilotAssistant from './components/ai/CopilotAssistant';
 import Login from './features/auth/Login';
 import ErrorBoundary from './components/ErrorBoundaries';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'settings';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings';
 
 function App() {
   return (
@@ -92,6 +93,8 @@ function AppContent() {
         return <EngineeringPage />;
       case 'skus':
         return <SKUPage />;
+      case 'reports':
+        return <ReportsPage />;
       case 'finance':
         return <BillingForm />;
       case 'settings':

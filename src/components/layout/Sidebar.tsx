@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'settings';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'suppliers', label: 'Fornecedores', icon: '🚚', roles: ['admin'] },
     { id: 'engineering', label: 'Engenharia', icon: '📐', roles: ['admin'] },
     { id: 'skus', label: 'Peças / SKUs', icon: '🧩', roles: ['admin'] },
+    { id: 'reports', label: 'Relatórios', icon: '📊', roles: ['admin'] },
     { id: 'finance', label: 'Financeiro', icon: '💰', roles: ['admin'] },
     { id: 'settings', label: 'Configurações', icon: '⚙️', roles: ['admin'] },
   ];
