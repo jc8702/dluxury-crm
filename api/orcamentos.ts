@@ -92,8 +92,10 @@ export default async function handler(req: any, res: any) {
     const { 
       status, valor_base, taxa_mensal, condicao_pagamento_id, 
       valor_final, prazo_entrega_dias, prazo_tipo, 
-      adicional_urgencia_pct, observacoes, itens 
+      adicional_urgencia_pct, observacoes, itens, materiais_consumidos
     } = req.body;
+
+
 
     try {
       const orc = await sql`
@@ -107,6 +109,8 @@ export default async function handler(req: any, res: any) {
           prazo_tipo = COALESCE(${prazo_tipo}, prazo_tipo),
           adicional_urgencia_pct = COALESCE(${adicional_urgencia_pct}, adicional_urgencia_pct),
           observacoes = COALESCE(${observacoes}, observacoes),
+          materiais_consumidos = COALESCE(${materiais_consumidos ? JSON.stringify(materiais_consumidos) : null}::jsonb, materiais_consumidos),
+
           atualizado_em = NOW()
         WHERE id = ${id}
         RETURNING *
@@ -117,6 +121,7 @@ export default async function handler(req: any, res: any) {
       // Atualizar Itens (simplificado: remove e reinsere)
       if (Array.isArray(itens)) {
         await sql`DELETE FROM itens_orcamento WHERE orcamento_id = ${id}`;
+
         for (const item of itens) {
           await sql`
             INSERT INTO itens_orcamento (

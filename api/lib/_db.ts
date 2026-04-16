@@ -1,10 +1,28 @@
 import { neon } from '@neondatabase/serverless';
+import fs from 'fs';
+import path from 'path';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is missing in environment variables');
+let dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const match = envContent.match(/DATABASE_URL=["']?(.+?)["']?(\n|$)/);
+      if (match) dbUrl = match[1];
+    }
+  } catch (err) {
+    console.error('Error reading .env manually:', err);
+  }
 }
 
-export const sql = neon(process.env.DATABASE_URL);
+if (!dbUrl) {
+  throw new Error('DATABASE_URL is missing in environment variables and .env file');
+}
+
+export const sql = neon(dbUrl);
+
 
 import jwt from 'jsonwebtoken';
 

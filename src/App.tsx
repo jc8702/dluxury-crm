@@ -10,9 +10,10 @@ import Inventory from './features/inventory/Inventory';
 import Settings from './features/settings/Settings';
 import { AppProvider, useAppContext } from './context/AppContext';
 import BillingForm from './features/billing/BillingForm';
+import FornecedoresPage from './features/suppliers/FornecedoresPage';
 import Login from './features/auth/Login';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'finance' | 'settings';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'settings';
 
 function App() {
   return (
@@ -46,6 +47,8 @@ function AppContent() {
         return <VisitKanban />;
       case 'inventory':
         return <Inventory />;
+      case 'suppliers':
+        return <FornecedoresPage />;
       case 'finance':
         return <BillingForm />;
       case 'settings':

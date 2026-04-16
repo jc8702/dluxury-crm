@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from 'react';
 import { apiService } from '../services/apiService';
 
 // ─── TIPOS ────────────────────────────────────────────────
@@ -83,7 +82,7 @@ export type Orcamento = {
   cliente_nome?: string;
   projeto_id?: string;
   numero: string;
-  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado';
+  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'em_producao';
   valor_base: number;
   taxa_mensal: number;
   condicao_pagamento_id: string;
@@ -92,6 +91,7 @@ export type Orcamento = {
   prazo_tipo: 'padrao' | 'urgente';
   adicional_urgencia_pct: number;
   observacoes?: string;
+  materiais_consumidos?: { material_id: string; quantidade: number }[];
   itens: OrcamentoItem[];
   criado_em?: string;
   atualizado_em?: string;
@@ -138,46 +138,62 @@ export type User = {
   role: Role;
 };
 
-export type InventoryItem = {
+export type CategoriaMaterial = {
   id: string;
-  // Identificação
-  name: string;
-  sku?: string;
-  description?: string;
-  category: string;
-  family?: string;
-  subcategory?: string;
-  unit: string;
-  location: string;
-  // Estoque
-  quantity: number;
-  minQuantity: number;
-  maxQuantity?: number;
-  reorderPoint?: number;
-  price: number;
-  // Fornecedor
-  supplierName?: string;
-  supplierCode?: string;
-  leadTimeDays?: number;
-  // Fiscal
-  ncm?: string;
-  cfop?: string;
-  icms?: number;
-  ipi?: number;
-  pis?: number;
-  cofins?: number;
-  fiscalOrigin?: string;
-  // Compra
-  purchaseUnit?: string;
-  conversionFactor?: number;
-  purchasePrice?: number;
-  currency?: string;
-  // MRP
-  minLot?: number;
-  replenishmentPolicy?: string;
-  planningType?: string;
-  resupplyDays?: number;
+  nome: string;
+  slug: string;
+  icone: string;
+};
+
+export type Material = {
+  id: string;
+  sku: string;
+  nome: string;
+  descricao?: string;
+  categoria_id: string;
+  categoria_nome?: string;
+  categoria_icone?: string;
+  subcategoria?: string;
+  unidade_compra: string;
+  unidade_uso: string;
+  fator_conversao: number;
+  estoque_atual: number;
+  estoque_minimo: number;
+  preco_custo: number;
+  fornecedor_principal?: string;
+  observacoes?: string;
+  ativo: boolean;
   updated_at?: string;
+};
+
+export type MovimentacaoEstoque = {
+  id: string;
+  material_id: string;
+  tipo: 'entrada' | 'saida' | 'ajuste';
+  quantidade: number;
+  quantidade_uso: number;
+  motivo?: string;
+  projeto_id?: string;
+  orcamento_id?: string;
+  preco_unitario?: number;
+  valor_total?: number;
+  estoque_antes: number;
+  estoque_depois: number;
+  criado_por: string;
+  criado_em: string;
+};
+
+export type Fornecedor = {
+  id: string;
+  nome: string;
+  cnpj?: string;
+  contato?: string;
+  telefone?: string;
+  email?: string;
+  cidade?: string;
+  estado?: string;
+  observacoes?: string;
+  ativo: boolean;
 };
 
 export type SystemUser = {
@@ -214,11 +230,18 @@ interface AppContextType {
   addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
   updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
 
-  // Inventory
-  inventory: InventoryItem[];
-  addInventory: (item: Omit<InventoryItem, 'id'>) => Promise<void>;
-  updateInventoryQty: (id: string, qty: number) => Promise<void>;
-  removeInventoryItem: (id: string) => Promise<void>;
+  // Estoque
+  categorias: CategoriaMaterial[];
+  materiais: Material[];
+  movimentacoes: MovimentacaoEstoque[];
+  fornecedores: Fornecedor[];
+  addMaterial: (data: any) => Promise<void>;
+  updateMaterial: (id: string, data: any) => Promise<void>;
+  removeMaterial: (id: string) => Promise<void>;
+  registrarMovimentacao: (data: any) => Promise<void>;
+  addFornecedor: (data: any) => Promise<void>;
+  updateFornecedor: (id: string, data: any) => Promise<void>;
+  removeFornecedor: (id: string) => Promise<void>;
 
   // Billing
   billings: Billing[];
@@ -271,7 +294,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [projects, setProjects] = useState<Project[]>([]);
   const [billings, setBillings] = useState<Billing[]>([]);
   const [visits, setVisits] = useState<KanbanItem[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaMaterial[]>([]);
+  const [materiais, setMateriais] = useState<Material[]>([]);
+  const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [condicoesPagamento, setCondicoesPagamento] = useState<CondicaoPagamento[]>([]);
 
@@ -317,54 +343,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await fetch('/api/init-db').catch(() => ({}));
 
-      const [clientsData, billingsData, kanbanData, goalsData, invData] = await Promise.all([
+      const [clientsData, billingsData, kanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
         apiService.getClients().catch(() => []),
         apiService.getBillings().catch(() => []),
         apiService.getKanbanItems().catch(() => []),
         apiService.getMonthlyGoals().catch(() => ({})),
-        apiService.getInventory().catch(() => []),
+        apiService.getCategorias().catch(() => []),
+        apiService.getMateriais().catch(() => []),
+        apiService.getFornecedores().catch(() => []),
         apiService.getOrcamentos().catch(() => []),
-        apiService.getCondicoesPagamento().catch(() => [])
+        apiService.getCondicoesPagamento().catch(() => []),
+        apiService.getMovimentacoes().catch(() => [])
       ]);
 
-      // Orcamentos
-      setOrcamentos(orcamentosData.map((o: any) => ({
+      setCategorias(Array.isArray(catsData) ? catsData : []);
+      setMateriais(Array.isArray(matsData) ? matsData.map((m: any) => ({
+        ...m,
+        fator_conversao: Number(m.fator_conversao || 1),
+        estoque_atual: Number(m.estoque_atual || 0),
+        estoque_minimo: Number(m.estoque_minimo || 0),
+        preco_custo: Number(m.preco_custo || 0)
+      })) : []);
+      setFornecedores(Array.isArray(fornsData) ? fornsData : []);
+
+      setOrcamentos(Array.isArray(orcamentosData) ? orcamentosData.map((o: any) => ({
         ...o,
-        valor_base: Number(o.valor_base),
-        valor_final: Number(o.valor_final),
-        taxa_mensal: Number(o.taxa_mensal),
-        adicional_urgencia_pct: Number(o.adicional_urgencia_pct)
-      })));
+        valor_base: Number(o.valor_base || 0),
+        valor_final: Number(o.valor_final || 0),
+        taxa_mensal: Number(o.taxa_mensal || 0),
+        adicional_urgencia_pct: Number(o.adicional_urgencia_pct || 0)
+      })) : []);
 
-      // Condicoes
-      setCondicoesPagamento(condicoesData.map((c: any) => ({
+      setMovimentacoes(Array.isArray(movsData) ? movsData.map((m: any) => ({
+        ...m,
+        id: m.id.toString(),
+        quantidade: Number(m.quantidade || 0),
+        quantidade_uso: Number(m.quantidade_uso || 0),
+        estoque_antes: Number(m.estoque_antes || 0),
+        estoque_depois: Number(m.estoque_depois || 0),
+        preco_unitario: Number(m.preco_unitario || 0),
+        valor_total: Number(m.valor_total || 0)
+      })) : []);
+
+      setCondicoesPagamento(Array.isArray(condicoesData) ? condicoesData.map((c: any) => ({
         ...c,
-        n_parcelas: Number(c.n_parcelas)
-      })));
-
-      // Inventory - will use mapInventoryItem after it's defined (reloadData runs after mount)
-      setInventory(invData.map((i: any) => ({
-        id: i.id.toString(),
-        name: i.name, sku: i.sku, description: i.description,
-        category: i.category, family: i.family, subcategory: i.subcategory,
-        unit: i.unit, location: i.location || '',
-        quantity: Number(i.quantity), minQuantity: Number(i.min_quantity),
-        maxQuantity: Number(i.max_quantity) || 0, reorderPoint: Number(i.reorder_point) || 0,
-        price: Number(i.price),
-        supplierName: i.supplier_name, supplierCode: i.supplier_code,
-        leadTimeDays: Number(i.lead_time_days) || 0,
-        ncm: i.ncm, cfop: i.cfop,
-        icms: Number(i.icms) || 0, ipi: Number(i.ipi) || 0,
-        pis: Number(i.pis) || 0, cofins: Number(i.cofins) || 0,
-        fiscalOrigin: i.fiscal_origin || '0',
-        purchaseUnit: i.purchase_unit, conversionFactor: Number(i.conversion_factor) || 1,
-        purchasePrice: Number(i.purchase_price) || 0, currency: i.currency || 'BRL',
-        minLot: Number(i.min_lot) || 1,
-        replenishmentPolicy: i.replenishment_policy || 'FOQ',
-        planningType: i.planning_type || 'MRP',
-        resupplyDays: Number(i.resupply_days) || 0,
-        updated_at: i.updated_at
-      })));
+        n_parcelas: Number(c.n_parcelas || 1)
+      })) : []);
 
       // Goals
       setMonthlyGoals(Object.keys(goalsData).length > 0 ? goalsData : {});
@@ -680,43 +704,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
-  // ─── INVENTORY CRUD ────────────────────────────────────
-  const addInventory = async (data: any) => {
-    const saved = await apiService.addInventory(data);
-    setInventory(prev => [...prev, mapInventoryItem(saved)]);
+  // ─── ESTOQUE CRUD ─────────────────────────────────────
+  const addMaterial = async (data: any) => {
+    const saved = await apiService.addMaterial(data);
+    setMateriais(prev => [...prev, {
+      ...saved,
+      fator_conversao: Number(saved.fator_conversao),
+      estoque_atual: Number(saved.estoque_atual),
+      estoque_minimo: Number(saved.estoque_minimo),
+      preco_custo: Number(saved.preco_custo)
+    }]);
   };
 
-  const mapInventoryItem = (i: any): InventoryItem => ({
-    id: i.id.toString(),
-    name: i.name, sku: i.sku, description: i.description,
-    category: i.category, family: i.family, subcategory: i.subcategory,
-    unit: i.unit, location: i.location || '',
-    quantity: Number(i.quantity), minQuantity: Number(i.min_quantity),
-    maxQuantity: Number(i.max_quantity) || 0, reorderPoint: Number(i.reorder_point) || 0,
-    price: Number(i.price),
-    supplierName: i.supplier_name, supplierCode: i.supplier_code,
-    leadTimeDays: Number(i.lead_time_days) || 0,
-    ncm: i.ncm, cfop: i.cfop,
-    icms: Number(i.icms) || 0, ipi: Number(i.ipi) || 0,
-    pis: Number(i.pis) || 0, cofins: Number(i.cofins) || 0,
-    fiscalOrigin: i.fiscal_origin || '0',
-    purchaseUnit: i.purchase_unit, conversionFactor: Number(i.conversion_factor) || 1,
-    purchasePrice: Number(i.purchase_price) || 0, currency: i.currency || 'BRL',
-    minLot: Number(i.min_lot) || 1,
-    replenishmentPolicy: i.replenishment_policy || 'FOQ',
-    planningType: i.planning_type || 'MRP',
-    resupplyDays: Number(i.resupply_days) || 0,
-    updated_at: i.updated_at
-  });
-
-  const updateInventoryQty = async (id: string, qty: number) => {
-    await apiService.updateInventory(id, qty);
-    setInventory(prev => prev.map(inv => inv.id === id ? { ...inv, quantity: qty } : inv));
+  const updateMaterial = async (id: string, data: any) => {
+    const saved = await apiService.updateMaterial(id, data);
+    setMateriais(prev => prev.map(m => m.id === id ? {
+      ...saved,
+      fator_conversao: Number(saved.fator_conversao),
+      estoque_atual: Number(saved.estoque_atual),
+      estoque_minimo: Number(saved.estoque_minimo),
+      preco_custo: Number(saved.preco_custo)
+    } : m));
   };
 
-  const removeInventoryItem = async (id: string) => {
-    await apiService.removeInventoryItem(id);
-    setInventory(prev => prev.filter(inv => inv.id !== id));
+  const removeMaterial = async (id: string) => {
+    await apiService.removeMaterial(id);
+    setMateriais(prev => prev.filter(m => m.id !== id));
+  };
+
+  const registrarMovimentacao = async (data: any) => {
+    const savedMov = await apiService.registrarMovimentacao(data);
+    // Após movimentação, recarregamos materiais para garantir saldo atualizado
+    const mats = await apiService.getMateriais();
+    setMateriais(mats.map((m: any) => ({
+      ...m,
+      fator_conversao: Number(m.fator_conversao),
+      estoque_atual: Number(m.estoque_atual),
+      estoque_minimo: Number(m.estoque_minimo),
+      preco_custo: Number(m.preco_custo)
+    })));
+    return savedMov;
+  };
+
+  // ─── FORNECEDORES CRUD ─────────────────────────────────
+  const addFornecedor = async (data: any) => {
+    const saved = await apiService.addFornecedor(data);
+    setFornecedores(prev => [...prev, saved]);
+  };
+
+  const updateFornecedor = async (id: string, data: any) => {
+    const saved = await apiService.updateFornecedor(id, data);
+    setFornecedores(prev => prev.map(f => f.id === id ? saved : f));
+  };
+
+  const removeFornecedor = async (id: string) => {
+    await apiService.removeFornecedor(id);
+    setFornecedores(prev => prev.filter(f => f.id !== id));
   };
 
   // ─── ORCAMENTO CRUD ────────────────────────────────────
@@ -785,7 +828,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       clients, addClient, updateClient, removeClient,
       projects, addProject, updateProject, removeProject,
       visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
-      inventory, addInventory, updateInventoryQty, removeInventoryItem,
+      categorias, materiais, movimentacoes, fornecedores, addMaterial, updateMaterial, removeMaterial, registrarMovimentacao,
+      fornecedoresState: fornecedores, addFornecedor, updateFornecedor, removeFornecedor, // fornecedoresState para evitar conflito de nome se necessário
       billings, addBilling, updateBilling, removeBilling,
       orcamentos, addOrcamento, updateOrcamento, removeOrcamento,
       condicoesPagamento, addCondicaoPagamento, updateCondicaoPagamento, removeCondicaoPagamento,

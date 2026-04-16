@@ -147,6 +147,8 @@ export default async function handler(req: any, res: any) {
     await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS project_id TEXT`.catch(() => {});
     await sql`ALTER TABLE billings ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'outros'`.catch(() => {});
     await sql`ALTER TABLE kanban_items ADD COLUMN IF NOT EXISTS project_id TEXT`.catch(() => {});
+    await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`.catch(() => {});
+
 
     // 7. Users Table
     await sql`
@@ -181,7 +183,7 @@ export default async function handler(req: any, res: any) {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nome TEXT NOT NULL,
         n_parcelas INTEGER DEFAULT 1,
-        ativo BOOLEAN DEFAULT true,
+        status TEXT DEFAULT 'ativo',
         criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -202,6 +204,7 @@ export default async function handler(req: any, res: any) {
         prazo_tipo TEXT DEFAULT 'padrao',
         adicional_urgencia_pct NUMERIC(5,4) DEFAULT 0.15,
         observacoes TEXT,
+        materiais_consumidos JSONB DEFAULT '[]',
         criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
@@ -224,6 +227,181 @@ export default async function handler(req: any, res: any) {
         valor_total NUMERIC(12,2) DEFAULT 0
       )
     `;
+
+    // 12. Fornecedores
+    await sql`
+      CREATE TABLE IF NOT EXISTS fornecedores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        cnpj TEXT,
+        contato TEXT,
+        telefone TEXT,
+        email TEXT,
+        cidade TEXT,
+        estado TEXT,
+        observacoes TEXT,
+        ativo BOOLEAN DEFAULT true,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 13. Categorias de Material
+    await sql`
+      CREATE TABLE IF NOT EXISTS categorias_material (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        icone TEXT,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 14. Materiais
+    await sql`
+      CREATE TABLE IF NOT EXISTS materiais (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sku TEXT UNIQUE NOT NULL,
+        nome TEXT NOT NULL,
+        descricao TEXT,
+        categoria_id UUID REFERENCES categorias_material(id),
+        subcategoria TEXT,
+        unidade_compra TEXT NOT NULL,
+        unidade_uso TEXT NOT NULL,
+        fator_conversao NUMERIC(10,4) DEFAULT 1,
+        estoque_atual NUMERIC(10,4) DEFAULT 0,
+        estoque_minimo NUMERIC(10,4) DEFAULT 0,
+        preco_custo NUMERIC(10,2) DEFAULT 0,
+        fornecedor_principal TEXT,
+        observacoes TEXT,
+        ativo BOOLEAN DEFAULT true,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // 15. Movimentações de Estoque
+    await sql`
+      CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        material_id UUID REFERENCES materiais(id),
+        tipo TEXT NOT NULL,
+        quantidade NUMERIC(10,4) NOT NULL,
+        quantidade_uso NUMERIC(10,4),
+        motivo TEXT,
+        projeto_id UUID REFERENCES projects(id),
+        orcamento_id UUID REFERENCES orcamentos(id),
+        preco_unitario NUMERIC(10,2),
+        valor_total NUMERIC(10,2),
+        estoque_antes NUMERIC(10,4),
+        estoque_depois NUMERIC(10,4),
+        criado_por TEXT,
+        criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Seed Categorias se vazio
+    try {
+      const catCountRes = await sql`SELECT count(*) as count FROM categorias_material`;
+      if (parseInt(catCountRes[0].count, 10) === 0) {
+        await sql`
+          INSERT INTO categorias_material (slug, nome, icone) VALUES 
+          ('chapas', 'Chapas (MDF/MDP/OSB)', 'Layers'),
+          ('fitas_borda', 'Fitas de Borda', 'Ruler'),
+          ('ferragens_dobradicas', 'Ferragens — Dobradiças', 'DoorOpen'),
+          ('ferragens_corredicas', 'Ferragens — Corrediças e Trilhos', 'Dices'),
+          ('fixacoes', 'Fixações (Parafusos/Cavilhas)', 'Pin'),
+          ('puxadores', 'Puxadores e Perfis', 'Hand'),
+          ('acabamentos', 'Acabamentos e Colas', 'Paintbrush'),
+          ('vidros', 'Vidros e Espelhos', 'Layout')
+        `;
+      }
+    } catch (err) { console.log('Cat Seed error:', err); }
+
+    // Seed Materiais Iniciais se vazio
+    try {
+      const matCountRes = await sql`SELECT count(*) as count FROM materiais`;
+      if (parseInt(matCountRes[0].count, 10) === 0) {
+        const cats = await sql`SELECT id, slug FROM categorias_material`;
+        const getCatId = (slug: string) => cats.find(c => c.slug === slug)?.id;
+
+        const chapasId = getCatId('chapas');
+        if (chapasId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('CHP-MDF-15-BP-BRC-2750x1830', 'Chapa MDF 15mm BP Branco Polar 2750×1830mm', ${chapasId}, 'chapa', 'm2', 5.0325),
+            ('CHP-MDF-18-BP-BRC-2750x1830', 'Chapa MDF 18mm BP Branco Polar 2750×1830mm', ${chapasId}, 'chapa', 'm2', 5.0325),
+            ('CHP-MDF-18-BP-GFT-2750x1830', 'Chapa MDF 18mm BP Grafite 2750×1830mm', ${chapasId}, 'chapa', 'm2', 5.0325),
+            ('CHP-MDF-18-CRU-2750x1830', 'Chapa MDF 18mm Cru 2750×1830mm', ${chapasId}, 'chapa', 'm2', 5.0325),
+            ('CHP-MDP-15-BP-BRC-2750x1830', 'Chapa MDP 15mm BP Branco 2750×1830mm', ${chapasId}, 'chapa', 'm2', 5.0325),
+            ('CHP-OSB-18-2440x1220', 'Chapa OSB 18mm 2440×1220mm', ${chapasId}, 'chapa', 'm2', 2.9768)
+          `;
+        }
+
+        const fitasId = getCatId('fitas_borda');
+        if (fitasId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('FTA-PVC-22x05-BRC', 'Fita PVC 22mm×0,5mm Branco Polar', ${fitasId}, 'rolo 50m', 'm', 50),
+            ('FTA-PVC-22x10-GFT', 'Fita PVC 22mm×1,0mm Grafite', ${fitasId}, 'rolo 50m', 'm', 50),
+            ('FTA-PVC-35x10-NOG', 'Fita PVC 35mm×1,0mm Nogueira', ${fitasId}, 'rolo 50m', 'm', 50),
+            ('FTA-ABS-22x15-PTO', 'Fita ABS 22mm×1,5mm Preto', ${fitasId}, 'rolo 50m', 'm', 50)
+          `;
+        }
+        
+        const dobId = getCatId('ferragens_dobradicas');
+        if (dobId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('FRG-DOB-35-110-NKL', 'Dobradiça 35mm 110° Níquel', ${dobId}, 'caixa c/20un', 'par', 10),
+            ('FRG-DOB-35-165-PTO', 'Dobradiça 35mm 165° Preto', ${dobId}, 'caixa c/20un', 'par', 10),
+            ('FRG-DOB-AMO-35-NKL', 'Dobradiça Amortecida 35mm Níquel', ${dobId}, 'caixa c/20un', 'par', 10)
+          `;
+        }
+
+        const corId = getCatId('ferragens_corredicas');
+        if (corId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('FRG-COR-300-SFT-BRC', 'Corrediça Soft Close 300mm Branco', ${corId}, 'par', 'par', 1),
+            ('FRG-COR-400-SFT-NKL', 'Corrediça Soft Close 400mm Níquel', ${corId}, 'par', 'par', 1),
+            ('FRG-COR-450-SFT-NKL', 'Corrediça Soft Close 450mm Níquel', ${corId}, 'par', 'par', 1)
+          `;
+        }
+
+        const fixId = getCatId('fixacoes');
+        if (fixId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('FIX-PAR-35x40-PZ', 'Parafuso MDF 3,5×40mm Zincado', ${fixId}, 'caixa c/200un', 'un', 200),
+            ('FIX-PAR-40x50-PZ', 'Parafuso MDF 4,0×50mm Zincado', ${fixId}, 'caixa c/200un', 'un', 200),
+            ('FIX-CAV-08x30', 'Cavilha Madeira 8mm×30mm', ${fixId}, 'caixa c/500un', 'un', 500),
+            ('FIX-CON-MIN-ZNC', 'Conector Minifix Zincado', ${fixId}, 'caixa c/100un', 'un', 100),
+            ('FIX-CAM-M6x15', 'Câmara Minifix M6×15mm', ${fixId}, 'caixa c/100un', 'un', 100)
+          `;
+        }
+
+        const puxId = getCatId('puxadores');
+        if (puxId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('PUX-BAR-128-NKL', 'Puxador Barra 128mm Níquel Escovado', ${puxId}, 'un', 'un', 1),
+            ('PUX-BAR-192-PTO', 'Puxador Barra 192mm Preto Fosco', ${puxId}, 'un', 'un', 1),
+            ('PRF-ALM-270-BRC', 'Perfil Alumínio puxador 270cm Branco', ${puxId}, 'barra', 'barra', 1)
+          `;
+        }
+
+        const acbId = getCatId('acabamentos');
+        if (acbId) {
+          await sql`
+            INSERT INTO materiais (sku, nome, categoria_id, unidade_compra, unidade_uso, fator_conversao) VALUES 
+            ('ACB-COL-EVA-1KG', 'Cola EVA para bordadeira 1kg', ${acbId}, 'un', 'kg', 1),
+            ('ACB-SIL-300ML', 'Silicone Neutro Transparente 300ml', ${acbId}, 'un', 'un', 1),
+            ('ACB-LIX-120', 'Lixa d''água grão 120', ${acbId}, 'un', 'un', 1),
+            ('ACB-LIX-220', 'Lixa d''água grão 220', ${acbId}, 'un', 'un', 1)
+          `;
+        }
+      }
+    } catch (err) { console.log('Mat Seed error:', err); }
 
     // Seed Condições de Pagamento se vazio
     try {

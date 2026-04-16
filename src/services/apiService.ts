@@ -69,11 +69,24 @@ export const apiService = {
   removeUser: (id: string) => apiService.fetch(`/api/users?id=${id}`, { method: 'DELETE' }),
   updateProfile: (data: any) => apiService.fetch('/api/users', { method: 'PATCH', body: JSON.stringify(data) }),
 
-  // Inventory
-  getInventory: () => apiService.fetch('/api/inventory'),
-  addInventory: (data: any) => apiService.fetch('/api/inventory', { method: 'POST', body: JSON.stringify(data) }),
-  updateInventory: (id: string, qty: number) => apiService.fetch(`/api/inventory?id=${id}`, { method: 'PATCH', body: JSON.stringify({ quantity: qty }) }),
-  removeInventoryItem: (id: string) => apiService.fetch(`/api/inventory?id=${id}`, { method: 'DELETE' }),
+  // Estoque (Materiais e Categorias)
+  getCategorias: () => apiService.fetch('/api/estoque?type=categories'),
+  getMateriais: () => apiService.fetch('/api/estoque'),
+  getMaterial: (id: string) => apiService.fetch(`/api/estoque?id=${id}`),
+  addMaterial: (data: any) => apiService.fetch('/api/estoque', { method: 'POST', body: JSON.stringify(data) }),
+  updateMaterial: (id: string, data: any) => apiService.fetch(`/api/estoque?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeMaterial: (id: string) => apiService.fetch(`/api/estoque?id=${id}`, { method: 'DELETE' }),
+
+  // Movimentações
+  getMovimentacoes: (materialId?: string) => 
+    apiService.fetch(`/api/movimentacoes${materialId ? `?material_id=${materialId}` : ''}`),
+  registrarMovimentacao: (data: any) => apiService.fetch('/api/movimentacoes', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Fornecedores
+  getFornecedores: () => apiService.fetch('/api/fornecedores'),
+  addFornecedor: (data: any) => apiService.fetch('/api/fornecedores', { method: 'POST', body: JSON.stringify(data) }),
+  updateFornecedor: (id: string, data: any) => apiService.fetch(`/api/fornecedores?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeFornecedor: (id: string) => apiService.fetch(`/api/fornecedores?id=${id}`, { method: 'DELETE' }),
 
   // Kanban (Visits)
   getKanbanItems: () => apiService.fetch('/api/kanban'),

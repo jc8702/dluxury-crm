@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import type { OrcamentoItem, Material } from '../../context/AppContext';
 import { calcularValorFinal, calcularCustoFinanceiro, calcularPercentualEncargo, calcularValorComUrgencia } from '../../utils/calculoFinanceiro';
-import { OrcamentoItem } from '../../context/AppContext';
+
 
 interface OrcamentoFormProps {
   onClose: () => void;
@@ -10,11 +11,10 @@ interface OrcamentoFormProps {
 
 const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) => {
   const { 
-    clients, projects, condicoesPagamento, addOrcamento, updateOrcamento, orcamentos 
+    clients, projects, condicoesPagamento, addOrcamento, updateOrcamento, orcamentos, materiais, registrarMovimentacao
   } = useAppContext();
 
-  // Settings mock (em prod viria de settings no context ou config global)
-  const defaultTaxa = 3; // 3%
+  const defaultTaxa = 3; 
   const defaultPrazo = 45;
   const adicionalUrgencia = 0.15;
 
@@ -27,6 +27,7 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     prazo_entrega_dias: defaultPrazo,
     prazo_tipo: 'padrao' as 'padrao' | 'urgente',
     observacoes: '',
+    materiais_consumidos: [] as { material_id: string; quantidade: number }[],
   });
 
   const [items, setItems] = useState<OrcamentoItem[]>([]);
@@ -51,6 +52,7 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
           prazo_entrega_dias: existing.prazo_entrega_dias,
           prazo_tipo: existing.prazo_tipo,
           observacoes: existing.observacoes || '',
+          materiais_consumidos: existing.materiais_consumidos || [],
         });
         setItems(existing.itens || []);
       }
@@ -108,19 +110,38 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
       taxa_mensal: formData.taxa_mensal / 100,
       valor_base: valorBase,
       valor_final: valorTotalFinal,
-      adicional_urgencia_pct: adicionalUrgencia,
-      itens: items
+      adicional_urgencia_pct: formData.prazo_tipo === 'urgente' ? adicionalUrgencia : 0,
+      itens: items,
+      materiais_consumidos: formData.materiais_consumidos
     };
 
     try {
       if (orcamentoId) {
+        const oldOrc = orcamentos.find(o => o.id === orcamentoId);
         await updateOrcamento(orcamentoId, payload);
+        
+        // Gatilho de Baixa de Estoque
+        if (payload.status === 'em_producao' && oldOrc?.status !== 'em_producao') {
+          for (const item of formData.materiais_consumidos) {
+            const mat = materiais.find(m => m.id === item.material_id);
+            if (mat) {
+              await registrarMovimentacao({
+                material_id: item.material_id,
+                tipo: 'saida',
+                quantidade: item.quantidade,
+                motivo: `Consumo Projeto: Orçamento ${oldOrc?.numero || orcamentoId}`,
+                orcamento_id: orcamentoId
+              });
+            }
+          }
+        }
       } else {
         await addOrcamento(payload);
       }
       onClose();
-    } catch (e) {
-      alert("Erro ao salvar orçamento.");
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao salvar orçamento. Verifique se todos os campos estão preenchidos.');
     }
   };
 
@@ -183,6 +204,7 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
               <option value="rascunho" style={{background: '#1a1a2e'}}>Rascunho</option>
               <option value="enviado" style={{background: '#1a1a2e'}}>Enviado ao Cliente</option>
               <option value="aprovado" style={{background: '#1a1a2e'}}>Aprovado</option>
+              <option value="em_producao" style={{background: '#1a1a2e'}}>Em Produção (Baixa Estoque)</option>
               <option value="recusado" style={{background: '#1a1a2e'}}>Recusado</option>
             </select>
           </div>
@@ -223,6 +245,74 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
             </tbody>
           </table>
           {items.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Nenhum item adicionado ao orçamento ainda.</p>}
+        </div>
+      </section>
+
+      {/* Seção 2.1 — Materiais Previstos para o Projeto */}
+      <section style={sectionStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h4 style={{ color: '#d4af37', fontSize: '1.1rem', margin: 0, fontWeight: 'bold' }}>2.1 Materiais Previstos (Estoque)</h4>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'flex-end' }}>
+          <div style={{ flex: 2 }}>
+            <label style={labelStyle}>Material</label>
+            <select 
+              id="material-select"
+              style={inputStyle} 
+              onChange={(e) => {
+                const matId = e.target.value;
+                if (!matId) return;
+                const qtyStr = prompt('Quantidade (' + materiais.find(m => m.id === matId)?.unidade_compra + '):');
+                const qty = parseFloat(qtyStr || '0');
+                if (qty > 0) {
+                  setFormData(prev => ({
+                    ...prev,
+                    materiais_consumidos: [...prev.materiais_consumidos, { material_id: matId, quantidade: qty }]
+                  }));
+                }
+                e.target.value = '';
+              }}
+            >
+              <option value="">+ Selecionar material para vincular...</option>
+              {materiais.map(m => (
+                <option key={m.id} value={m.id} style={{background: '#1a1a2e'}}>
+                  {m.sku} - {m.nome} ({m.estoque_atual} {m.unidade_compra} em estoque)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          {formData.materiais_consumidos.map((item, idx) => {
+            const mat = materiais.find(m => m.id === item.material_id);
+            return (
+              <div key={idx} style={{ 
+                background: 'rgba(212,175,55,0.05)', 
+                border: '1px solid rgba(212,175,55,0.2)', 
+                padding: '0.5rem 0.75rem', 
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                fontSize: '0.85rem'
+              }}>
+                <span style={{ fontWeight: '600' }}>{mat?.nome}</span>
+                <span style={{ color: '#d4af37' }}>{item.quantidade} {mat?.unidade_compra}</span>
+                <button 
+                  onClick={() => {
+                    const newList = [...formData.materiais_consumidos];
+                    newList.splice(idx, 1);
+                    setFormData({...formData, materiais_consumidos: newList});
+                  }}
+                  style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', fontWeight: 'bold' }}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 
