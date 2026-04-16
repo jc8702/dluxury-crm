@@ -5,7 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { ProjectStatus } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, clients, addProject, updateProject } = useAppContext();
+  const { projects, clients, addProject, updateProject, orcamentos } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -89,26 +89,32 @@ const ProjectKanban: React.FC = () => {
   };
 
   // Map projects to kanban items format
-  const kanbanItems = projects.map(p => ({
-    id: p.id,
-    title: p.ambiente,
-    subtitle: p.clientName || '',
-    label: p.valorEstimado ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
-    status: p.status,
-    type: 'project' as const,
-    value: p.valorEstimado,
-    // Carry original project data
-    clientId: p.clientId,
-    clientName: p.clientName,
-    ambiente: p.ambiente,
-    descricao: p.descricao,
-    valorEstimado: p.valorEstimado,
-    prazoEntrega: p.prazoEntrega,
-    responsavel: p.responsavel,
-    observacoes: p.observacoes,
-    description: p.descricao,
-    observations: p.observacoes,
-  }));
+  const kanbanItems = projects.map(p => {
+    const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
+    const badges = projOrcamentos.map(o => `📄 ${o.numero}`);
+
+    return {
+      id: p.id,
+      title: p.ambiente,
+      subtitle: p.clientName || '',
+      label: p.valorEstimado ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+      status: p.status,
+      type: 'project' as const,
+      value: p.valorEstimado,
+      badges,
+      // Carry original project data
+      clientId: p.clientId,
+      clientName: p.clientName,
+      ambiente: p.ambiente,
+      descricao: p.descricao,
+      valorEstimado: p.valorEstimado,
+      prazoEntrega: p.prazoEntrega,
+      responsavel: p.responsavel,
+      observacoes: p.observacoes,
+      description: p.descricao,
+      observations: p.observacoes,
+    };
+  });
 
   const inputStyle: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.05)',

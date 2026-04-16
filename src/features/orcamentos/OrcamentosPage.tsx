@@ -4,7 +4,7 @@ import { useAppContext } from '../../context/AppContext';
 import OrcamentoForm from './OrcamentoForm';
 
 const OrcamentosPage: React.FC = () => {
-  const { orcamentos, removeOrcamento } = useAppContext();
+  const { orcamentos, projects, removeOrcamento } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [showModal, setShowModal] = useState(false);
@@ -80,6 +80,7 @@ const OrcamentosPage: React.FC = () => {
             <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid var(--border)' }}>
               <th style={{ padding: '1rem' }}>Número</th>
               <th style={{ padding: '1rem' }}>Cliente</th>
+              <th style={{ padding: '1rem' }}>Projeto</th>
               <th style={{ padding: '1rem' }}>Valor Final</th>
               <th style={{ padding: '1rem' }}>Entrega</th>
               <th style={{ padding: '1rem' }}>Status</th>
@@ -87,10 +88,15 @@ const OrcamentosPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrcamentos.map(o => (
+            {filteredOrcamentos.map(o => {
+              const proj = projects.find(p => p.id === o.projeto_id);
+              return (
               <tr key={o.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="hover-row">
                 <td style={{ padding: '1rem', fontWeight: 'bold', color: '#d4af37' }}>{o.numero}</td>
                 <td style={{ padding: '1rem' }}>{o.cliente_nome || 'Cliente não encontrado'}</td>
+                <td style={{ padding: '1rem', color: proj ? 'var(--text)' : 'var(--text-muted)' }}>
+                  {proj ? proj.ambiente : '-'}
+                </td>
                 <td style={{ padding: '1rem', fontWeight: '600' }}>{formatCurrency(o.valor_final)}</td>
                 <td style={{ padding: '1rem' }}>{o.prazo_entrega_dias} dias ({o.prazo_tipo})</td>
                 <td style={{ padding: '1rem' }}>
@@ -107,7 +113,8 @@ const OrcamentosPage: React.FC = () => {
                   <button onClick={() => { if(confirm('Excluir este orçamento?')) removeOrcamento(o.id); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }}>×</button>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
         {filteredOrcamentos.length === 0 && (

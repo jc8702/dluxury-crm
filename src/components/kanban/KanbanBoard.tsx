@@ -10,6 +10,7 @@ export interface KanbanItem {
   dateTime?: string;
   visitFormat?: string;
   description?: string;
+  badges?: string[];
 }
 
 interface KanbanBoardProps {
@@ -113,6 +114,16 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                       fontWeight: 'bold'
                     }}>
                       {item.visitFormat}
+                    </div>
+                  )}
+
+                  {item.badges && item.badges.length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {item.badges.map((b, idx) => (
+                        <span key={idx} style={{ background: 'var(--primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                          {b}
+                        </span>
+                      ))}
                     </div>
                   )}
 
