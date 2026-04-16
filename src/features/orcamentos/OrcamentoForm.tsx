@@ -109,7 +109,11 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
   // Efeito para buscar dados do material selecionado
   useEffect(() => {
     if (showItemModal && newItem.material) {
-      const selectedMat = materiais.find(m => m.nome.toUpperCase() === newItem.material.toUpperCase() || m.sku.toUpperCase() === newItem.material.toUpperCase());
+      const matUpper = newItem.material.toUpperCase();
+      const selectedMat = materiais.find(m => 
+        (m.nome?.toUpperCase() === matUpper) || 
+        (m.sku?.toUpperCase() === matUpper)
+      );
       if (selectedMat) {
         setNewItem(prev => ({
           ...prev,
@@ -481,10 +485,10 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
             className="btn" 
             style={{ flex: 1, padding: '1rem', background: '#10b981', color: 'white', fontWeight: 'bold' }} 
             onClick={() => {
-              const cli = clients.find(c => c.id?.toString() === formData.cliente_id?.toString());
-              const proj = projects.find(p => p.id === formData.projeto_id);
-              const cond = condicoesPagamento.find(c => c.id === formData.condicao_pagamento_id);
-              const existingOrc = orcamentos.find(o => o.id === orcamentoId);
+              const cli = clients?.find(c => c.id?.toString() === formData.cliente_id?.toString());
+              const proj = projects?.find(p => p.id === formData.projeto_id);
+              const cond = condicoesPagamento?.find(c => c.id === formData.condicao_pagamento_id);
+              const existingOrc = orcamentos?.find(o => o.id === orcamentoId);
               
               const orcamentoData = {
                 ...existingOrc,

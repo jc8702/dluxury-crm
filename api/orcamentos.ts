@@ -18,12 +18,16 @@ export default async function handler(req: any, res: any) {
       const orcamentos = await sql`
         SELECT o.*, c.nome as cliente_nome 
         FROM orcamentos o
-        LEFT JOIN clients c ON o.cliente_id = c.id
+        LEFT JOIN clients c ON o.cliente_id::text = c.id::text
         ORDER BY o.criado_em DESC
-      `;
+      `.catch(err => {
+        console.error('SQL Error in getOrcamentos:', err);
+        throw err;
+      });
       return res.status(200).json(orcamentos);
     } catch (e: any) {
-      return res.status(500).json({ error: e.message });
+      console.error('Handler Error:', e);
+      return res.status(500).json({ error: e.message, details: e.stack });
     }
   }
 

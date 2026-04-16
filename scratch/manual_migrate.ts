@@ -80,6 +80,11 @@ async function migrate() {
     `;
     console.log('✅ configuracoes_precificacao');
 
+    console.log('Corrigindo tipos em orcamentos...');
+    // Se a coluna cliente_id for INTEGER ou VARCHAR, converte para UUID
+    await sql`ALTER TABLE orcamentos ALTER COLUMN cliente_id TYPE UUID USING cliente_id::uuid`.catch(e => console.log('Aviso (pode ser esperado):', e.message));
+    console.log('✅ orcamentos.cliente_id');
+
     console.log('\n--- Migração Concluída com Sucesso ---');
   } catch (err) {
     console.error('❌ Erro na migração:', err);

@@ -15,8 +15,10 @@ const OrcamentosPage: React.FC = () => {
 
   const filteredOrcamentos = useMemo(() => {
     return orcamentos.filter(o => {
-      const matchSearch = (o.numero + (o.cliente_nome || '')).toLowerCase().includes(searchTerm.toLowerCase());
-      const matchStatus = filterStatus === 'todos' || o.status === filterStatus;
+      const numero = o.numero || '';
+      const clienteNome = o.cliente_nome || '';
+      const matchSearch = (numero + clienteNome).toLowerCase().includes(searchTerm.toLowerCase());
+      const matchStatus = filterStatus === 'todos' || (o.status || 'rascunho') === filterStatus;
       return matchSearch && matchStatus;
     });
   }, [orcamentos, searchTerm, filterStatus]);
