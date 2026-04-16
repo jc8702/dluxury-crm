@@ -1,4 +1,6 @@
 import { sql, validateAuth } from './lib/_db.js';
+import { calculateBOM } from './lib/_bomEngine.js';
+import { reserveStockForProject } from './lib/_inventory.js';
 
 export default async function handler(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
@@ -146,8 +148,45 @@ export default async function handler(req: any, res: any) {
         }
       }
 
+      // ─── GATILHO INDUSTRIAL: RESERVA DE ESTOQUE ───
+      if (status === 'aprovado') {
+        // Buscar itens deste orçamento que tenham vinculação industrial
+        const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL`;
+        
+        for (const itm of itms) {
+          // 1. Buscar a BOM do produto industrial
+          const bom = await sql`SELECT * FROM erp_product_bom WHERE product_id = ${itm.erp_product_id}`;
+          
+          if (bom.length > 0) {
+            // 2. Explodir Consumo
+            const results = await calculateBOM(itm.erp_parametros, bom as any);
+            
+            // 3. Persistir Resultados e Reservar
+            // Primeiro criamos a "instância" industrial do item se não existir
+            const projectItem = await sql`
+              INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status)
+              VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'aprovado')
+              RETURNING id
+            `;
+            
+            const projectItemId = projectItem[0].id;
+            
+            for (const res of results) {
+              await sql`
+                INSERT INTO erp_consumption_results (project_item_id, sku_id, quantidade_liquida, quantidade_com_perda)
+                VALUES (${projectItemId}, ${res.sku_id}, ${res.quantidade_liquida}, ${res.quantidade_com_perda})
+              `;
+            }
+            
+            // 4. Efetivar a Reserva
+            await reserveStockForProject(projectItemId);
+          }
+        }
+      }
+
       return res.status(200).json({ ...orc[0], itens });
     } catch (e: any) {
+      console.error('Erro na aprovação industrial:', e);
       return res.status(500).json({ error: e.message });
     }
   }

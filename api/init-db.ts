@@ -378,7 +378,9 @@ export default async function handler(req: any, res: any) {
         acabamento TEXT,
         quantidade INTEGER DEFAULT 1,
         valor_unitario NUMERIC(12,2) DEFAULT 0,
-        valor_total NUMERIC(12,2) DEFAULT 0
+        valor_total NUMERIC(12,2) DEFAULT 0,
+        erp_product_id UUID REFERENCES erp_products(id),
+        erp_parametros JSONB DEFAULT '{}'
       )
     `;
 

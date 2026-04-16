@@ -1,4 +1,5 @@
 import { sql, validateAuth } from './lib/_db.js';
+import { writeOffStockForProject } from './lib/_inventory.js';
 
 export default async function handler(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
@@ -74,6 +75,16 @@ export default async function handler(req: any, res: any) {
         WHERE id = ${id}
         RETURNING *
       `;
+
+      if (result.length > 0 && status === 'concluido') {
+        // Buscar itens industriais deste projeto para dar baixa
+        const items = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} OR project_id = (SELECT id::text FROM projects WHERE id = ${id})`;
+        
+        for (const item of items) {
+          await writeOffStockForProject(item.id);
+        }
+      }
+
       return res.status(200).json(result[0]);
     } catch (e: any) {
       return res.status(500).json({ error: e.message });
