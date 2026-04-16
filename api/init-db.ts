@@ -212,7 +212,7 @@ export default async function handler(req: any, res: any) {
     await sql`
       CREATE TABLE IF NOT EXISTS orcamentos (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        cliente_id UUID REFERENCES clients(id),
+        cliente_id INTEGER REFERENCES clients(id),
         projeto_id UUID REFERENCES projects(id),
         numero TEXT UNIQUE NOT NULL,
         status TEXT DEFAULT 'rascunho',
@@ -459,6 +459,6 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ success: true, message: 'D\'Luxury CRM database initialized' });
   } catch (e: any) {
     console.error('Initialization Error:', e);
-    return res.status(500).json({ success: false, error: e.message });
+    return res.status(500).json({ success: false, error: e.message, stack: e.stack });
   }
 }
