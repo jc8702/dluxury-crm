@@ -1,5 +1,5 @@
 import { sql } from './lib/_db.js';
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 export default async function handler(req: any, res: any) {
   try {
@@ -427,8 +427,8 @@ export default async function handler(req: any, res: any) {
     const usersCount = parseInt(usersCountRes[0].count, 10);
     
     if (usersCount === 0) {
-      const salt = await bcrypt.default?.genSalt?.(10) || await (bcrypt as any).genSalt(10);
-      const hash = await bcrypt.default?.hash?.('admin123', salt) || await (bcrypt as any).hash('admin123', salt);
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash('admin123', salt);
       await sql`
         INSERT INTO users (name, email, password_hash, role)
         VALUES ('Administrador', 'admin@dluxury.com', ${hash}, 'admin')

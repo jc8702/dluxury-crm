@@ -77,16 +77,16 @@ export const apiService = {
   updateMaterial: (id: string, data: any) => apiService.fetch(`/api/estoque?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeMaterial: (id: string) => apiService.fetch(`/api/estoque?id=${id}`, { method: 'DELETE' }),
 
-  // Movimentações
+  // Movimentações (consolidado em /api/estoque?type=movimentacoes)
   getMovimentacoes: (materialId?: string) => 
-    apiService.fetch(`/api/movimentacoes${materialId ? `?material_id=${materialId}` : ''}`),
-  registrarMovimentacao: (data: any) => apiService.fetch('/api/movimentacoes', { method: 'POST', body: JSON.stringify(data) }),
+    apiService.fetch(`/api/estoque?type=movimentacoes${materialId ? `&material_id=${materialId}` : ''}`),
+  registrarMovimentacao: (data: any) => apiService.fetch('/api/estoque?type=movimentacoes', { method: 'POST', body: JSON.stringify(data) }),
 
-  // Fornecedores
-  getFornecedores: () => apiService.fetch('/api/fornecedores'),
-  addFornecedor: (data: any) => apiService.fetch('/api/fornecedores', { method: 'POST', body: JSON.stringify(data) }),
-  updateFornecedor: (id: string, data: any) => apiService.fetch(`/api/fornecedores?id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  removeFornecedor: (id: string) => apiService.fetch(`/api/fornecedores?id=${id}`, { method: 'DELETE' }),
+  // Fornecedores (consolidado em /api/estoque?type=fornecedores)
+  getFornecedores: () => apiService.fetch('/api/estoque?type=fornecedores'),
+  addFornecedor: (data: any) => apiService.fetch('/api/estoque?type=fornecedores', { method: 'POST', body: JSON.stringify(data) }),
+  updateFornecedor: (id: string, data: any) => apiService.fetch(`/api/estoque?type=fornecedores&id=${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeFornecedor: (id: string) => apiService.fetch(`/api/estoque?type=fornecedores&id=${id}`, { method: 'DELETE' }),
 
   // Kanban (Visits)
   getKanbanItems: () => apiService.fetch('/api/kanban'),

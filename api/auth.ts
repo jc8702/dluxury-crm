@@ -1,5 +1,5 @@
 import { sql, extractAndVerifyToken } from './lib/_db.js';
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.VITE_SUPABASE_ANON_KEY || 'dluxury-secret-key-2024';
@@ -19,7 +19,7 @@ export default async function handler(req: any, res: any) {
         }
 
         const user = users[0];
-        const valid = await (bcrypt.default?.compare?.(password, user.password_hash) || (bcrypt as any).compare(password, user.password_hash));
+        const valid = await bcrypt.compare(password, user.password_hash);
         
         if (!valid) {
           return res.status(401).json({ error: 'Senha incorreta' });
@@ -56,8 +56,8 @@ export default async function handler(req: any, res: any) {
         const check = await sql`SELECT id FROM users WHERE email = ${email}`;
         if (check.length > 0) return res.status(400).json({ error: 'E-mail já está em uso' });
 
-        const salt = await (bcrypt.default?.genSalt?.(10) || (bcrypt as any).genSalt(10));
-        const hash = await (bcrypt.default?.hash?.(password, salt) || (bcrypt as any).hash(password, salt));
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
 
         const result = await sql`
           INSERT INTO users (name, email, password_hash, role)
