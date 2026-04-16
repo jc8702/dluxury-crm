@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { apiService } from '../../services/apiService';
-import { ConfiguracaoPrecificacao } from '../../context/AppContext';
+import type { ConfiguracaoPrecificacao } from '../../context/AppContext';
 
 const Settings: React.FC = () => {
   const { 

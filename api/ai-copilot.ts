@@ -115,6 +115,19 @@ async function handlePurchaseAdvisor(model: any, res: any) {
     WHERE (i.estoque_atual - i.estoque_reservado) < 10
   `;
 
+  const { text } = await generateText({
+    model,
+    prompt: `
+      Com base no estado do estoque abaixo e na importância econômica (Classe ABC), sugira uma ordem de compra priorizada.
+      Dê ênfase máxima aos itens Classe A que estão com saldo disponível negativo ou próximo de zero.
+      
+      DADOS DE ESTOQUE: ${JSON.stringify(stockInfo)}
+    `,
+  });
+
+  return res.status(200).json({ suggestions: text });
+}
+
 /**
  * SKILL: Detecção de Anomalias (Auditoria Industrial)
  */
@@ -140,19 +153,6 @@ async function handleAnomalyDetection(model: any, res: any) {
       DADOS DE ANOMALIA: ${JSON.stringify(anomalies)}
       
       Gere um alerta curto e acionável para cada projeto com problemas graves.
-    `,
-  });
-
-  return res.status(200).json({ suggestions: text });
-}
-
-  const { text } = await generateText({
-    model,
-    prompt: `
-      Com base no estado do estoque abaixo e na importância econômica (Classe ABC), sugira uma ordem de compra priorizada.
-      Dê ênfase máxima aos itens Classe A que estão com saldo disponível negativo ou próximo de zero.
-      
-      DADOS DE ESTOQUE: ${JSON.stringify(stockInfo)}
     `,
   });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAppContext, OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
+import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
 import { apiService } from '../../../services/apiService';
 import * as Calc from '../../../utils/precificacao';
 import AmbienteModal from './AmbienteModal';
