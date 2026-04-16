@@ -459,6 +459,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCategorias(Array.isArray(catsData) ? catsData : []);
       setMateriais(Array.isArray(matsData) ? matsData.map((m: any) => ({
         ...m,
+        nome: m.nome || '',
+        sku: m.sku || '',
         fator_conversao: Number(m.fator_conversao || 1),
         estoque_atual: Number(m.estoque_atual || 0),
         estoque_minimo: Number(m.estoque_minimo || 0),

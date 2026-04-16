@@ -26,8 +26,10 @@ const Inventory: React.FC = () => {
 
   const filteredMaterials = useMemo(() => {
     return materiais.filter(m => {
-      const matchSearch = m.nome.toLowerCase().includes(search.toLowerCase()) || 
-                          m.sku.toLowerCase().includes(search.toLowerCase());
+      const nome = m.nome || '';
+      const sku = m.sku || '';
+      const matchSearch = nome.toLowerCase().includes(search.toLowerCase()) || 
+                          sku.toLowerCase().includes(search.toLowerCase());
       const matchCat = filterCategory ? m.categoria_id === filterCategory : true;
       const matchStatus = filterStatus ? statusEstoque(m.estoque_atual, m.estoque_minimo) === filterStatus : true;
       return matchSearch && matchCat && matchStatus;
@@ -200,7 +202,7 @@ const Inventory: React.FC = () => {
                             color: status === 'ok' ? '#10b981' : status === 'critico' ? '#ef4444' : '#f59e0b',
                             fontWeight: 'bold'
                           }}>
-                            {status.toUpperCase()}
+                            {status ? status.toUpperCase() : '—'}
                           </span>
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'right' }}>

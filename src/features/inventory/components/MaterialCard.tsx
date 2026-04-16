@@ -96,10 +96,10 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
 
       <div>
         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '0.15rem' }}>
-          {material.sku}
+          {material.sku || 'SEM SKU'}
         </p>
         <h4 style={{ fontSize: '0.95rem', fontWeight: '700', margin: 0, lineHeight: '1.35', color: 'var(--text)' }}>
-          {material.nome}
+          {material.nome || 'Material sem nome'}
         </h4>
         <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
           {categoria?.nome || 'Sem categoria'}
