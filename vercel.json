@@ -2,6 +2,8 @@
   "github": {
     "silent": true
   },
+  "framework": "vite",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
