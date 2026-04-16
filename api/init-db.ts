@@ -213,7 +213,7 @@ export default async function handler(req: any, res: any) {
       CREATE TABLE IF NOT EXISTS orcamentos (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         cliente_id INTEGER REFERENCES clients(id),
-        projeto_id UUID REFERENCES projects(id),
+        projeto_id TEXT, -- Pode vir do novo projects(uuid) ou do kanban antigo (integer)
         numero TEXT UNIQUE NOT NULL,
         status TEXT DEFAULT 'rascunho',
         valor_base NUMERIC(12,2) DEFAULT 0,
