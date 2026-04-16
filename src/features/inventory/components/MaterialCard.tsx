@@ -7,6 +7,7 @@ interface MaterialCardProps {
   material: Material;
   categoria?: CategoriaMaterial;
   onClick: (m: Material) => void;
+  onEdit?: (m: Material) => void;
   onDelete?: (m: Material) => void;
 }
 
@@ -51,6 +52,22 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
           <IconComponent size={18} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {onEdit && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit(material); }}
+              style={{ 
+                all: 'unset', 
+                cursor: 'pointer',
+                padding: '0.25rem',
+                borderRadius: '4px',
+                color: 'var(--text-muted)',
+                transition: 'color 0.2s'
+              }}
+              title="Editar material"
+            >
+              <Lucide.Pencil size={16} />
+            </button>
+          )}
           {onDelete && (
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(material); }}

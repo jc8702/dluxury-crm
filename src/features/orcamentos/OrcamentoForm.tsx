@@ -98,9 +98,30 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
     setNewItem({
       descricao: '', ambiente: '', largura_cm: 0, altura_cm: 0, profundidade_cm: 0,
       material: '', acabamento: '', quantidade: 1, valor_unitario: 0, valor_total: 0,
-      cfop: '', ncm: '', icms: undefined, icms_st: undefined, ipi: undefined, pis: undefined, cofins: undefined
+      cfop: '', ncm: '', icms: undefined, icms_st: undefined, ipi: undefined, pis: undefined, cofins: undefined, origem: undefined
     });
   };
+
+  // Efeito para buscar dados do material selecionado
+  useEffect(() => {
+    if (showItemModal && newItem.material) {
+      const selectedMat = materiais.find(m => m.nome.toUpperCase() === newItem.material.toUpperCase() || m.sku.toUpperCase() === newItem.material.toUpperCase());
+      if (selectedMat) {
+        setNewItem(prev => ({
+          ...prev,
+          valor_unitario: selectedMat.preco_venda || prev.valor_unitario,
+          cfop: selectedMat.cfop || prev.cfop,
+          ncm: selectedMat.ncm || prev.ncm,
+          icms: selectedMat.icms ?? prev.icms,
+          icms_st: selectedMat.icms_st ?? prev.icms_st,
+          ipi: selectedMat.ipi ?? prev.ipi,
+          pis: selectedMat.pis ?? prev.pis,
+          cofins: selectedMat.cofins ?? prev.cofins,
+          origem: selectedMat.origem ?? prev.origem
+        }));
+      }
+    }
+  }, [newItem.material, showItemModal, materiais]);
 
   const handleSave = async () => {
     if (!formData.cliente_id) {
@@ -465,8 +486,19 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
                 <input style={inputStyle} value={newItem.ambiente} onChange={e => setNewItem({...newItem, ambiente: e.target.value.toUpperCase()})} />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem' }}>Material</label>
-                <input style={inputStyle} value={newItem.material} onChange={e => setNewItem({...newItem, material: e.target.value.toUpperCase()})} />
+                <label style={{ fontSize: '0.75rem' }}>Material / SKU</label>
+                <input 
+                  list="lista-materiais"
+                  style={inputStyle} 
+                  value={newItem.material} 
+                  onChange={e => setNewItem({...newItem, material: e.target.value.toUpperCase()})} 
+                  placeholder="Selecione ou digite..."
+                />
+                <datalist id="lista-materiais">
+                  {materiais.map(m => (
+                    <option key={m.id} value={m.sku}>{m.nome}</option>
+                  ))}
+                </datalist>
               </div>
               <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                 <div><label style={{ fontSize: '0.65rem' }}>Larg (cm)</label><input type="number" style={inputStyle} value={newItem.largura_cm} onChange={e => setNewItem({...newItem, largura_cm: Number(e.target.value)})} /></div>
@@ -514,6 +546,14 @@ const OrcamentoForm: React.FC<OrcamentoFormProps> = ({ onClose, orcamentoId }) =
                 <div>
                   <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>COFINS (%)</label>
                   <input type="number" step="0.01" style={inputStyle} value={newItem.cofins ?? ''} onChange={e => setNewItem({...newItem, cofins: Number(e.target.value) || undefined})} placeholder="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Origem</label>
+                  <select style={inputStyle} value={newItem.origem ?? 0} onChange={e => setNewItem({...newItem, origem: Number(e.target.value)})}>
+                    <option value={0}>0 - Nac</option>
+                    <option value={1}>1 - Imp Dir</option>
+                    <option value={2}>2 - Imp Mer</option>
+                  </select>
                 </div>
               </div>
             </div>

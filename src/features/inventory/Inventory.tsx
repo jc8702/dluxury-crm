@@ -159,6 +159,7 @@ const Inventory: React.FC = () => {
                   material={m} 
                   categoria={categorias.find(c => c.id === m.categoria_id)}
                   onClick={() => handleOpenMov(m)}
+                  onEdit={() => handleEdit(m)}
                   onDelete={() => handleDelete(m)}
                 />
               ))}
@@ -203,6 +204,7 @@ const Inventory: React.FC = () => {
                           </span>
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'right' }}>
+                          <button onClick={() => handleEdit(m)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '1rem', marginRight: '0.75rem' }} title="Editar">✎</button>
                           <button onClick={() => handleOpenMov(m)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Movimentar</button>
                           <button onClick={() => handleDelete(m)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }} title="Excluir">🗑</button>
                         </td>

@@ -16,7 +16,9 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
   const [form, setForm] = useState({
     sku: '', nome: '', descricao: '', categoria_id: '', subcategoria: '',
     unidade_compra: 'chapa', unidade_uso: 'm2', fator_conversao: 1,
-    estoque_minimo: 0, preco_custo: 0, fornecedor_principal: '', observacoes: ''
+    estoque_minimo: 0, preco_custo: 0, preco_venda: 0, margem_lucro: 0,
+    fornecedor_principal: '', observacoes: '',
+    cfop: '', ncm: '', icms: 0, icms_st: 0, ipi: 0, pis: 0, cofins: 0, origem: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,11 +30,28 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         categoria_id: material.categoria_id, subcategoria: material.subcategoria || '',
         unidade_compra: material.unidade_compra, unidade_uso: material.unidade_uso,
         fator_conversao: material.fator_conversao, estoque_minimo: material.estoque_minimo,
-        preco_custo: material.preco_custo, fornecedor_principal: material.fornecedor_principal || '',
-        observacoes: material.observacoes || ''
+        preco_custo: material.preco_custo, 
+        preco_venda: material.preco_venda || 0,
+        margem_lucro: material.margem_lucro || 0,
+        fornecedor_principal: material.fornecedor_principal || '',
+        observacoes: material.observacoes || '',
+        cfop: material.cfop || '',
+        ncm: material.ncm || '',
+        icms: material.icms || 0,
+        icms_st: material.icms_st || 0,
+        ipi: material.ipi || 0,
+        pis: material.pis || 0,
+        cofins: material.cofins || 0,
+        origem: material.origem || 0
       });
     }
   }, [material]);
+
+  // Cálculo automático de preço de venda
+  const updatePrecoVenda = (custo: number, margem: number) => {
+    const venda = custo * (1 + (margem / 100));
+    setForm(prev => ({ ...prev, preco_custo: custo, margem_lucro: margem, preco_venda: Number(venda.toFixed(2)) }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,21 +165,74 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             </div>
           </div>
 
-          {/* Parâmetros Financeiros */}
+          {/* Parâmetros Financeiros e Precificação */}
           <div className="section">
-            <h5 style={sectionTitleStyle}>Parâmetros Financeiros e Estoque</h5>
-            <div className="grid-3">
+            <h5 style={sectionTitleStyle}>Parâmetros Financeiros e Precificação</h5>
+            <div className="grid-4">
               <div>
                 <label className="label-base">Preço Custo (R$)</label>
-                <input type="number" step="0.01" className="input-base" value={form.preco_custo} onChange={e => setForm({...form, preco_custo: Number(e.target.value)})} />
+                <input type="number" step="0.01" className="input-base" value={form.preco_custo} onChange={e => updatePrecoVenda(Number(e.target.value), form.margem_lucro)} />
+              </div>
+              <div>
+                <label className="label-base">Margem Lucro (%)</label>
+                <input type="number" step="0.1" className="input-base" value={form.margem_lucro} onChange={e => updatePrecoVenda(form.preco_custo, Number(e.target.value))} />
+              </div>
+              <div>
+                <label className="label-base" style={{ color: 'var(--primary)' }}>Preço Venda Final (R$)</label>
+                <input type="number" step="0.01" className="input-base" style={{ borderColor: 'var(--primary)' }} value={form.preco_venda} onChange={e => setForm({...form, preco_venda: Number(e.target.value)})} />
               </div>
               <div>
                 <label className="label-base">Estoque Mínimo</label>
                 <input type="number" step="0.01" className="input-base" value={form.estoque_minimo} onChange={e => setForm({...form, estoque_minimo: Number(e.target.value)})} />
               </div>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+               <label className="label-base">Fornecedor Principal</label>
+               <input className="input-base" value={form.fornecedor_principal} onChange={e => setForm({...form, fornecedor_principal: e.target.value})} placeholder="Ex: Arauco" />
+            </div>
+          </div>
+
+          {/* Dados Fiscais */}
+          <div className="section">
+            <h5 style={sectionTitleStyle}>Informações Fiscais (Brasil)</h5>
+            <div className="grid-3">
               <div>
-                <label className="label-base">Fornecedor Principal</label>
-                <input className="input-base" value={form.fornecedor_principal} onChange={e => setForm({...form, fornecedor_principal: e.target.value})} placeholder="Ex: Arauco" />
+                <label className="label-base">CFOP Padrão</label>
+                <input className="input-base" value={form.cfop} onChange={e => setForm({...form, cfop: e.target.value})} placeholder="5.101" />
+              </div>
+              <div>
+                <label className="label-base">NCM</label>
+                <input className="input-base" value={form.ncm} onChange={e => setForm({...form, ncm: e.target.value})} placeholder="9403.60.00" />
+              </div>
+              <div>
+                <label className="label-base">Origem</label>
+                <select className="input-base" value={form.origem} onChange={e => setForm({...form, origem: Number(e.target.value)})}>
+                  <option value={0}>0 - Nacional</option>
+                  <option value={1}>1 - Estrangeira (Importação Direta)</option>
+                  <option value={2}>2 - Estrangeira (Adquirida no Mercado Interno)</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid-5" style={{ marginTop: '1rem', gap: '0.5rem' }}>
+               <div>
+                <label className="label-base" style={{ fontSize: '0.65rem' }}>ICMS (%)</label>
+                <input type="number" step="0.01" className="input-base" value={form.icms} onChange={e => setForm({...form, icms: Number(e.target.value)})} />
+              </div>
+              <div>
+                <label className="label-base" style={{ fontSize: '0.65rem' }}>ICMS ST (%)</label>
+                <input type="number" step="0.01" className="input-base" value={form.icms_st} onChange={e => setForm({...form, icms_st: Number(e.target.value)})} />
+              </div>
+              <div>
+                <label className="label-base" style={{ fontSize: '0.65rem' }}>IPI (%)</label>
+                <input type="number" step="0.01" className="input-base" value={form.ipi} onChange={e => setForm({...form, ipi: Number(e.target.value)})} />
+              </div>
+              <div>
+                <label className="label-base" style={{ fontSize: '0.65rem' }}>PIS (%)</label>
+                <input type="number" step="0.01" className="input-base" value={form.pis} onChange={e => setForm({...form, pis: Number(e.target.value)})} />
+              </div>
+              <div>
+                <label className="label-base" style={{ fontSize: '0.65rem' }}>COFINS (%)</label>
+                <input type="number" step="0.01" className="input-base" value={form.cofins} onChange={e => setForm({...form, cofins: Number(e.target.value)})} />
               </div>
             </div>
           </div>

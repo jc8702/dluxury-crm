@@ -81,6 +81,7 @@ export type OrcamentoItem = {
   ipi?: number;
   pis?: number;
   cofins?: number;
+  origem?: number;
 };
 
 export type Orcamento = {
@@ -167,6 +168,16 @@ export type Material = {
   estoque_atual: number;
   estoque_minimo: number;
   preco_custo: number;
+  preco_venda?: number;
+  margem_lucro?: number;
+  cfop?: string;
+  ncm?: string;
+  icms?: number;
+  icms_st?: number;
+  ipi?: number;
+  pis?: number;
+  cofins?: number;
+  origem?: number;
   fornecedor_principal?: string;
   observacoes?: string;
   ativo: boolean;
@@ -372,7 +383,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fator_conversao: Number(m.fator_conversao || 1),
         estoque_atual: Number(m.estoque_atual || 0),
         estoque_minimo: Number(m.estoque_minimo || 0),
-        preco_custo: Number(m.preco_custo || 0)
+        preco_custo: Number(m.preco_custo || 0),
+        preco_venda: m.preco_venda ? Number(m.preco_venda) : undefined,
+        margem_lucro: m.margem_lucro ? Number(m.margem_lucro) : undefined,
+        icms: m.icms ? Number(m.icms) : undefined,
+        icms_st: m.icms_st ? Number(m.icms_st) : undefined,
+        ipi: m.ipi ? Number(m.ipi) : undefined,
+        pis: m.pis ? Number(m.pis) : undefined,
+        cofins: m.cofins ? Number(m.cofins) : undefined,
+        origem: m.origem ? Number(m.origem) : undefined
       })) : []);
       setFornecedores(Array.isArray(fornsData) ? fornsData : []);
 

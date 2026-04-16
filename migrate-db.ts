@@ -1,4 +1,4 @@
-import { sql } from './api/lib/_db';
+import { sql } from './api/lib/_db.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -18,6 +18,30 @@ async function migrate() {
     // 3. Clients - codigo_erp (já deve existir, mas garantindo)
     await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS codigo_erp TEXT`;
     console.log('Coluna codigo_erp adicionada a clients.');
+
+    // 4. Materiais - Campos Fiscais e Precificação
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS ncm TEXT`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS icms NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS icms_st NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS ipi NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS pis NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cofins NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS preco_venda NUMERIC`;
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`;
+    console.log('Colunas fiscais e de precificação adicionadas a materiais.');
+
+    // 5. Itens Orçamento - Campos Fiscais
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cfop TEXT`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ncm TEXT`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS icms NUMERIC`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS icms_st NUMERIC`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ipi NUMERIC`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS pis NUMERIC`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cofins NUMERIC`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`;
+    console.log('Colunas fiscais adicionadas a itens_orcamento.');
 
     console.log('Migração concluída com sucesso!');
     process.exit(0);

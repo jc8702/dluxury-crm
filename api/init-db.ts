@@ -149,6 +149,27 @@ export default async function handler(req: any, res: any) {
     await sql`ALTER TABLE kanban_items ADD COLUMN IF NOT EXISTS project_id TEXT`.catch(() => {});
     await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`.catch(() => {});
 
+    // Migrações Fiscais e Precificação (Novo)
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS ncm TEXT`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS icms NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS icms_st NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS ipi NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS pis NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cofins NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS preco_venda NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`.catch(() => {});
+
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cfop TEXT`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ncm TEXT`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS icms NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS icms_st NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS ipi NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS pis NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cofins NUMERIC`.catch(() => {});
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`.catch(() => {});
+
 
     // 7. Users Table
     await sql`
