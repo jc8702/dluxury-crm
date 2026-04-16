@@ -638,6 +638,7 @@ export default async function handler(req: any, res: any) {
         componente_nome TEXT NOT NULL,
         formula_quantidade TEXT NOT NULL, -- Ex: '(LARGURA_MM * ALTURA_MM) / 1000000'
         formula_perda TEXT DEFAULT '1.10',
+        tipo_regra TEXT DEFAULT 'PARAMETRICO', -- FIXO, AREA, PERIMETRO, PARAMETRICO
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;

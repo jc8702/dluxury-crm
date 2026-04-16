@@ -11,10 +11,12 @@ import Settings from './features/settings/Settings';
 import { AppProvider, useAppContext } from './context/AppContext';
 import BillingForm from './features/billing/BillingForm';
 import FornecedoresPage from './features/suppliers/FornecedoresPage';
+import EngineeringPage from './features/engineering/EngineeringPage';
+import SKUPage from './features/skus/SKUPage';
 import Login from './features/auth/Login';
 import ErrorBoundary from './components/ErrorBoundaries';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'settings';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'settings';
 
 function App() {
   return (
@@ -85,6 +87,10 @@ function AppContent() {
         );
       case 'suppliers':
         return <FornecedoresPage />;
+      case 'engineering':
+        return <EngineeringPage />;
+      case 'skus':
+        return <SKUPage />;
       case 'finance':
         return <BillingForm />;
       case 'settings':
