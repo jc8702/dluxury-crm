@@ -274,7 +274,98 @@ async function handleOrcamentos(req: any, res: any) {
   }
 }
 
-import { generateBOM, auditSKU, purchaseSuggestion, detectAnomalies, generateChatResponse } from '../src/api-lib/_ai.js';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { generateText, generateObject } from 'ai';
+import { z } from 'zod';
+
+const aiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
+const google = createGoogleGenerativeAI({ 
+  apiKey: aiApiKey,
+  apiVersion: 'v1' 
+});
+const modelPro = google('gemini-1.5-pro');
+const modelFlash = google('gemini-1.5-flash');
+
+async function generateBOM(payload: any) {
+  const materiais = await sql`SELECT id, nome, categoria_id, preco_custo, unidade_uso FROM materiais WHERE ativo = true`;
+  const { object } = await generateObject({
+    model: modelPro,
+    schema: z.object({
+      itens: z.array(z.object({
+        material_id: z.string().uuid().optional(),
+        descricao: z.string(),
+        quantidade: z.number(),
+        dimensoes: z.string().optional(),
+        justificativa: z.string()
+      })),
+      estimativa_custo_total: z.number(),
+      dificuldade_producao: z.enum(['baixa', 'media', 'alta'])
+    }),
+    prompt: `Gere uma lista de materiais (BOM) para: ${payload.tipo} (Dimensões: L:${payload.medidas.L}, A:${payload.medidas.A}, P:${payload.medidas.P}). Materiais: ${JSON.stringify(materiais)}`
+  });
+  return object;
+}
+
+async function auditSKU(payload: any) {
+  const existentes = await sql`SELECT nome, descricao, categoria_id FROM materiais WHERE ativo = true`;
+  const { object } = await generateObject({
+    model: modelPro,
+    schema: z.object({
+      is_duplicado: z.boolean(),
+      similaridade_pct: z.number(),
+      item_conflitante: z.string().optional(),
+      categoria_sugerida: z.string(),
+      recomendacao: z.string()
+    }),
+    prompt: `Verifique se o SKU "${payload.nome}" (${payload.descricao}) é duplicado. Itens: ${JSON.stringify(existentes)}`
+  });
+  return object;
+}
+
+async function purchaseSuggestion() {
+  const estoque = await sql`
+    SELECT m.nome, m.estoque_atual, m.estoque_minimo, m.unidade_compra,
+           (SELECT COUNT(*) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida' AND criado_em > NOW() - INTERVAL '30 days') as consumo_30d
+    FROM materiais m WHERE m.ativo = true AND m.estoque_atual <= m.estoque_minimo * 1.5
+  `;
+  const { object } = await generateObject({
+    model: modelPro,
+    schema: z.object({
+      pedidos_sugeridos: z.array(z.object({
+        material: z.string(),
+        quantidade_sugerida: z.number(),
+        prioridade: z.enum(['critica', 'alta', 'media']),
+        motivo: z.string()
+      }))
+    }),
+    prompt: `Analise o estoque e sugira compras: ${JSON.stringify(estoque)}`
+  });
+  return object;
+}
+
+async function detectAnomalies() {
+  const dados = await sql`
+    SELECT m.nome, m.preco_custo, 
+           (SELECT AVG(quantidade) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida') as media_saida
+    FROM materiais m WHERE m.ativo = true
+  `;
+  const { object } = await generateObject({
+    model: modelPro,
+    schema: z.object({
+      anomalias: z.array(z.object({ item: z.string(), tipo_anomalia: z.string(), gravidade: z.enum(['baixa', 'media', 'critica']), detalhes: z.string() }))
+    }),
+    prompt: `Identifique anomalias nos dados: ${JSON.stringify(dados)}`
+  });
+  return object;
+}
+
+async function generateChatResponse(payload: any) {
+  const { text } = await generateText({
+    model: modelFlash,
+    prompt: `Você é o D'Luxury Copilot. Responda à dúvida do usuário técnico de marcenaria. Histórico: ${JSON.stringify(payload.history || [])}. Pergunta: ${payload.message}`
+  });
+  return { content: text };
+}
 
 async function handleAICopilot(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
@@ -282,28 +373,16 @@ async function handleAICopilot(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).end();
   
   const { skill, payload } = req.body;
-  const apiKey = process.env.GOOGLE_GENERATION_AI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'Configuração de IA (API Key) ausente' });
+  if (!aiApiKey) return res.status(500).json({ error: 'Configuração de IA (API Key) ausente' });
 
   try {
     switch (skill) {
-      case 'chat':
-        return res.status(200).json(await generateChatResponse(payload));
-      
-      case 'generate-bom':
-        return res.status(200).json(await generateBOM(payload));
-      
-      case 'audit-sku':
-        return res.status(200).json(await auditSKU(payload));
-      
-      case 'purchase-suggestion':
-        return res.status(200).json(await purchaseSuggestion());
-      
-      case 'detect-anomalies':
-        return res.status(200).json(await detectAnomalies());
-      
-      default:
-        return res.status(400).json({ error: `Skill '${skill}' não suportada pelo Copiloto.` });
+      case 'chat': return res.status(200).json(await generateChatResponse(payload));
+      case 'generate-bom': return res.status(200).json(await generateBOM(payload));
+      case 'audit-sku': return res.status(200).json(await auditSKU(payload));
+      case 'purchase-suggestion': return res.status(200).json(await purchaseSuggestion());
+      case 'detect-anomalies': return res.status(200).json(await detectAnomalies());
+      default: return res.status(400).json({ error: 'Skill de IA não reconhecida' });
     }
   } catch (err: any) {
     console.error('AI Copilot Error:', err);
