@@ -2,7 +2,7 @@ import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject, tool } from 'ai';
 import { z } from 'zod';
-import { gerarOrcamentoRelatorio } from '../utils/industrialCopilot.js';
+import { gerarProjetoCompleto } from '../utils/industrialCopilot.js';
 
 const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
@@ -153,14 +153,14 @@ async function getRawLLMIntent(message: string, history: any[] = []): Promise<st
   MENSAGEM ATUAL: "${message}"
 
   INTENÇÕES E REGRAS:
-  1. SUGGEST_CREATE_SKU: Usuário quer cadastrar algo. Extraia familia, descricao e unidade.
-  2. CONFIRM_ACTION: Usuário disse "sim", "pode", "ok", "confirma" para uma sugestão anterior.
-  3. SUGGEST_BOM: Usuário descreveu um móvel (ex: gaveteiro, armário). Extraia tipo e dimensões (L, A, P).
-  4. ANALYZE_STOCK: Pergunta sobre o que comprar ou estado do estoque.
-  5. SEARCH_SKU: Busca de itens.
+  1. SUGGEST_CREATE_SKU: Usuário quer cadastrar algo. Ex: "cadastra mdf 15mm".
+  2. CONFIRM_ACTION: Usuário confirma uma sugestão anterior: "sim", "pode", "ok".
+  3. SUGGEST_BOM: Usuário descreveu um móvel com medidas ou componentes. Ex: "gaveteiro 600x700", "armário 2 portas".
+  4. ANALYZE_STOCK: Pergunta sobre compra ou estoque. Ex: "o que preciso comprar?".
+  5. SEARCH_SKU: Busca de itens: "tem parafuso?".
 
   RETORNE APENAS JSON PURO.
-  Padrão: {"type": "...", "entities": {...}}`;
+  Exemplo de SUGGEST_BOM: {"type": "SUGGEST_BOM", "entities": {"projeto": {"tipo": "gaveteiro", "medidas": {"L": 600, "A": 700, "P": 450}}}}`;
 
   const { text } = await generateText({
     model: modelFlash,
@@ -322,30 +322,34 @@ async function handleConfirmAction(history: any[]) {
 }
 
 async function handleSuggestBOM(entities: Entities, originalMessage: string) {
-  const orcamento = gerarOrcamentoRelatorio(originalMessage);
-  const { estrutura, bom, custo, venda } = orcamento;
+  const analise = gerarProjetoCompleto(originalMessage);
+  const { projeto, pecas, planoDeCorte, custo, venda } = analise;
 
-  let report = `### 📋 Orçamento Técnico: ${estrutura.tipo}\n`;
-  report += `**Dimensões:** ${estrutura.largura} x ${estrutura.altura} x ${estrutura.profundidade} mm\n`;
-  if (estrutura.gavetas) report += `**Componentes:** ${estrutura.gavetas} Gavetas\n`;
-  if (estrutura.portas) report += `**Componentes:** ${estrutura.portas} Portas\n`;
+  let report = `### 📋 Engenharia de Projeto: ${projeto.tipo}\n`;
+  report += `**Configuração:** ${projeto.largura} x ${projeto.altura} x ${projeto.profundidade} mm (MDF ${projeto.espessura}mm)\n`;
   report += `\n---\n\n`;
 
-  report += `#### 🌲 Materiais Estimados (BOM)\n`;
-  report += `| Item | Qtd | Un | \n`;
+  report += `#### 🪚 Plano de Corte (Nesting)\n`;
+  planoDeCorte.forEach(chapa => {
+    report += `- **Chapa #${chapa.chapaId}** (2750x1850): **${chapa.aproveitamento}%** de aproveitamento\n`;
+  });
+  report += `\n---\n\n`;
+
+  report += `#### 📏 Lista de Peças (CAD)\n`;
+  report += `| Peça | Dimensões (mm) | Material | \n`;
   report += `| :--- | :--- | :--- | \n`;
   
-  bom.chapas.forEach(c => report += `| ${c.item} | ${c.quantidade} | ${c.unidade} |\n`);
-  bom.ferragens.forEach(f => report += `| ${f.item} | ${f.quantidade} | ${f.unidade} |\n`);
-  bom.acabamento.forEach(a => report += `| ${a.item} | ${a.quantidade} | ${a.unidade} |\n`);
+  pecas.forEach(p => {
+    report += `| ${p.nome} | ${p.largura} x ${p.altura} | ${p.material} ${p.espessura}mm |\n`;
+  });
 
   report += `\n---\n\n`;
-  report += `#### 💰 Análise Comercial\n`;
-  report += `- **Custo de Materiais:** R$ ${custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-  report += `- **Preço Sugerido (Markup 2.5x):** R$ ${venda.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-  report += `- **Margem Bruta:** ${venda.margem}%\n\n`;
+  report += `#### 💰 Orçamento Industrial\n`;
+  report += `- **Custo Real (Materiais + Ferragens):** R$ ${custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+  report += `- **Preço de Venda Sugerido:** R$ ${venda.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+  report += `- **Margem Operacional:** ${venda.margem}%\n\n`;
 
-  report += `> Deseja transformar esta estrutura em um orçamento formal no sistema?`;
+  report += `> **Ação Recomendada:** Deseja que eu gere os documentos de produção e o orçamento formal para este projeto?`;
   
   return { message: report };
 }
@@ -393,14 +397,24 @@ async function processUserMessage(message: string, history: any[] = []) {
         .trim();
     };
 
-    if (intent.type === "UNKNOWN") {
-      const msgLow = message.toLowerCase();
-      if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha")) {
-         intent = { type: "SUGGEST_CREATE_SKU", entities: { familia: "Parafuso", descricao: cleanDesc(message), unidade: "CENTO" } };
+    const msgLow = message.toLowerCase();
+
+    // FALLBACK ROBUSTO: Se o NLU vacilar, as keywords de marcenaria assumem
+    if (intent.type === "UNKNOWN" || intent.type === "SEARCH_SKU") {
+      if (msgLow.match(/\d+\s*x\s*\d+/) || msgLow.includes("gaveteiro") || msgLow.includes("armário") || msgLow.includes("balcão")) {
+        intent.type = "SUGGEST_BOM";
+      } else if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha") || msgLow.includes("fix-")) {
+        if (msgLow.includes("cadastra") || msgLow.includes("cria")) {
+          intent = { type: "SUGGEST_CREATE_SKU", entities: { familia: "Parafuso", descricao: cleanDesc(message), unidade: "CENTO" } };
+        } else {
+          intent.type = "SEARCH_SKU";
+        }
+      } else if (msgLow.includes("comprar") || msgLow.includes("estoque") || msgLow.includes("crítico")) {
+        intent.type = "ANALYZE_STOCK";
       }
     }
 
-    if (intent.entities.descricao) intent.entities.descricao = cleanDesc(intent.entities.descricao);
+    if (intent.entities?.descricao) intent.entities.descricao = cleanDesc(intent.entities.descricao);
 
     switch (intent.type) {
       case "SUGGEST_CREATE_SKU": return await handleSuggestCreateSKU(intent.entities);
