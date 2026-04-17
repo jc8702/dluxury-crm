@@ -56,7 +56,8 @@ async function handleAuth(req: any, res: any) {
   if (req.method === 'POST') {
     if (action === 'login') {
       const { email, password } = req.body;
-      const users = await sql`SELECT * FROM users WHERE email = ${email}`;
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const users = await sql`SELECT * FROM users WHERE email = ${normalizedEmail}`;
       if (users.length === 0) return res.status(401).json({ error: 'Usuário não encontrado' });
       const user = users[0];
       const valid = await bcrypt.compare(password, user.password_hash);

@@ -294,12 +294,11 @@ select.input-base {
   border-color: var(--danger) !important;
 }
 
-/* Uppercase for text inputs */
+/* Uppercase for text inputs (excluding email) */
 input[type="text"],
-input[type="email"],
 input[type="search"],
 input:not([type]),
-input:not([type="number"]):not([type="date"]):not([type="password"]):not([type="checkbox"]):not([type="radio"]),
+input:not([type="number"]):not([type="date"]):not([type="password"]):not([type="email"]):not([type="checkbox"]):not([type="radio"]),
 textarea {
   text-transform: uppercase;
 }
