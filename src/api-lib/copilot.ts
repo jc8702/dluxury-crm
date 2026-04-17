@@ -136,13 +136,12 @@ export async function handleAIParser(req: any, res: any) {
     const { message } = req.body;
     const prompt = `Atue como um classificador NLU de ERP industrial. 
     Mapeie a mensagem: "${message}" para uma intent. 
-    Intenções: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA. 
+    Sua missão é extrair a FICHA TÉCNICA do item.
+
+    - Intent: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA.
+    - entities.descricao: Deve conter APENAS o nome e especificações técnicas (ex: "Parafuso 6x65 mm zincado"). NUNCA inclua palavras de comando como "cadastra", "adiciona", "para mim" ou pontuações de diálogo.
 
     RETORNE APENAS JSON PURO.
-    NÃO USE: explicações, texto antes ou depois, markdown, crases, comentários.
-
-    RESPOSTA CORRETA:
-    {"type": "CREATE_SKU", "entities": {"familia": "...", "descricao": "...", "unidade": "..."}}`;
 
     const { text } = await generateText({
       model: modelFlash,
@@ -283,15 +282,24 @@ async function processUserMessage(message: string) {
   try {
     let intent = await parseIntent(message);
     
+    // Função utilitária para limpar comandos da descrição
+    const cleanDesc = (text: string) => {
+      return text
+        .replace(/^(cadastra|cadastrar|crie|cria|adiciona|adicionar|incluir|inclua|por favor|para mim|agora)[:\s]*/i, '')
+        .trim();
+    };
+
     // FALLBACK INTELIGENTE (BASEADO EM KEYWORDS)
     if (intent.type === "UNKNOWN") {
       const msgLow = message.toLowerCase();
+      const cleaned = cleanDesc(message);
+      
       if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha")) {
          intent = {
            type: "CREATE_SKU",
            entities: {
              familia: "Parafuso",
-             descricao: message,
+             descricao: cleaned,
              unidade: "CENTO"
            }
          };
@@ -300,11 +308,14 @@ async function processUserMessage(message: string) {
            type: "CREATE_SKU",
            entities: {
              familia: "Chapa",
-             descricao: message,
+             descricao: cleaned,
              unidade: "M2"
            }
          };
       }
+    } else if (intent.type === "CREATE_SKU" && intent.entities.descricao) {
+      // Garante limpeza mesmo se o LLM alucinar o prefixo
+      intent.entities.descricao = cleanDesc(intent.entities.descricao);
     }
 
     const entities = intent.entities || {};
