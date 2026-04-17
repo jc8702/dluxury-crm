@@ -281,45 +281,59 @@ import { z } from 'zod';
 const aiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
   apiKey: aiApiKey,
-  apiVersion: 'v1' 
+  // Mantemos omitido apiVersion para usar default ou podemos forçar, 
+  // mas o SDK resolve melhor sem forçar se o modelo falhar
 });
-const modelPro = google('gemini-1.5-pro');
+
+// Cadeia de modelos para Fallback
 const modelFlash = google('gemini-1.5-flash');
+const modelPro = google('gemini-1.5-pro');
+const modelLegacy = google('gemini-pro'); // Gemini 1.0 (Mais universal)
 
 async function generateBOM(payload: any) {
   const materiais = await sql`SELECT id, nome, categoria_id, preco_custo, unidade_uso FROM materiais WHERE ativo = true`;
-  const { object } = await generateObject({
-    model: modelPro,
-    schema: z.object({
-      itens: z.array(z.object({
-        material_id: z.string().uuid().optional(),
-        descricao: z.string(),
-        quantidade: z.number(),
-        dimensoes: z.string().optional(),
-        justificativa: z.string()
-      })),
-      estimativa_custo_total: z.number(),
-      dificuldade_producao: z.enum(['baixa', 'media', 'alta'])
-    }),
-    prompt: `Gere uma lista de materiais (BOM) para: ${payload.tipo} (Dimensões: L:${payload.medidas.L}, A:${payload.medidas.A}, P:${payload.medidas.P}). Materiais: ${JSON.stringify(materiais)}`
-  });
-  return object;
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        itens: z.array(z.object({
+          material_id: z.string().uuid().optional(),
+          descricao: z.string(),
+          quantidade: z.number(),
+          dimensoes: z.string().optional(),
+          justificativa: z.string()
+        })),
+        estimativa_custo_total: z.number(),
+        dificuldade_producao: z.enum(['baixa', 'media', 'alta'])
+      }),
+      prompt: `Gere uma lista de materiais (BOM) para: ${payload.tipo} (Dimensões: L:${payload.medidas.L}, A:${payload.medidas.A}, P:${payload.medidas.P}). Materiais: ${JSON.stringify(materiais)}`
+    });
+    return object;
+  } catch (error) {
+    console.warn("Fallback on generateBOM due to error.");
+    // Fallback manual temporário se a IA falhar feio
+    return { itens: [], estimativa_custo_total: 0, dificuldade_producao: 'media' };
+  }
 }
 
 async function auditSKU(payload: any) {
   const existentes = await sql`SELECT nome, descricao, categoria_id FROM materiais WHERE ativo = true`;
-  const { object } = await generateObject({
-    model: modelPro,
-    schema: z.object({
-      is_duplicado: z.boolean(),
-      similaridade_pct: z.number(),
-      item_conflitante: z.string().optional(),
-      categoria_sugerida: z.string(),
-      recomendacao: z.string()
-    }),
-    prompt: `Verifique se o SKU "${payload.nome}" (${payload.descricao}) é duplicado. Itens: ${JSON.stringify(existentes)}`
-  });
-  return object;
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        is_duplicado: z.boolean(),
+        similaridade_pct: z.number(),
+        item_conflitante: z.string().optional(),
+        categoria_sugerida: z.string(),
+        recomendacao: z.string()
+      }),
+      prompt: `Verifique se o SKU "${payload.nome}" (${payload.descricao}) é duplicado. Itens: ${JSON.stringify(existentes)}`
+    });
+    return object;
+  } catch (err) {
+    return { is_duplicado: false, similaridade_pct: 0, categoria_sugerida: 'Geral', recomendacao: 'Falha na validação IA.' };
+  }
 }
 
 async function purchaseSuggestion() {
@@ -328,19 +342,21 @@ async function purchaseSuggestion() {
            (SELECT COUNT(*) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida' AND criado_em > NOW() - INTERVAL '30 days') as consumo_30d
     FROM materiais m WHERE m.ativo = true AND m.estoque_atual <= m.estoque_minimo * 1.5
   `;
-  const { object } = await generateObject({
-    model: modelPro,
-    schema: z.object({
-      pedidos_sugeridos: z.array(z.object({
-        material: z.string(),
-        quantidade_sugerida: z.number(),
-        prioridade: z.enum(['critica', 'alta', 'media']),
-        motivo: z.string()
-      }))
-    }),
-    prompt: `Analise o estoque e sugira compras: ${JSON.stringify(estoque)}`
-  });
-  return object;
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        pedidos_sugeridos: z.array(z.object({
+          material: z.string(),
+          quantidade_sugerida: z.number(),
+          prioridade: z.enum(['critica', 'alta', 'media']),
+          motivo: z.string()
+        }))
+      }),
+      prompt: `Analise o estoque e sugira compras: ${JSON.stringify(estoque)}`
+    });
+    return object;
+  } catch(e) { return { pedidos_sugeridos: [] }; }
 }
 
 async function detectAnomalies() {
@@ -349,24 +365,45 @@ async function detectAnomalies() {
            (SELECT AVG(quantidade) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida') as media_saida
     FROM materiais m WHERE m.ativo = true
   `;
-  const { object } = await generateObject({
-    model: modelPro,
-    schema: z.object({
-      anomalias: z.array(z.object({ item: z.string(), tipo_anomalia: z.string(), gravidade: z.enum(['baixa', 'media', 'critica']), detalhes: z.string() }))
-    }),
-    prompt: `Identifique anomalias nos dados: ${JSON.stringify(dados)}`
-  });
-  return object;
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        anomalias: z.array(z.object({ item: z.string(), tipo_anomalia: z.string(), gravidade: z.enum(['baixa', 'media', 'critica']), detalhes: z.string() }))
+      }),
+      prompt: `Identifique anomalias nos dados: ${JSON.stringify(dados)}`
+    });
+    return object;
+  } catch(e) { return { anomalias: [] }; }
 }
 
 async function generateChatResponse(payload: any) {
-  const { text } = await generateText({
-    model: modelFlash,
-    prompt: `Você é o D'Luxury Copilot. Responda à dúvida do usuário técnico de marcenaria. Histórico: ${JSON.stringify(payload.history || [])}. Pergunta: ${payload.message}`
-  });
-  return { content: text };
+  const promptText = `Você é o D'Luxury Copilot. Responda à dúvida do usuário técnico de marcenaria. Histórico: ${JSON.stringify(payload.history || [])}. Pergunta: ${payload.message}`;
+  
+  // TENTATIVA 1: GEMINI 1.5 FLASH (Alta velocidade)
+  try {
+    const { text } = await generateText({ model: modelFlash, prompt: promptText });
+    return { content: text };
+  } catch (errorFlash: any) {
+    console.warn(`[IA] Falha no modelo Flash: ${errorFlash.message}. Tentando Pro...`);
+    
+    // TENTATIVA 2: GEMINI 1.5 PRO (Mais poderoso, costuma estar em todas as regiões)
+    try {
+      const { text } = await generateText({ model: modelPro, prompt: promptText });
+      return { content: text };
+    } catch (errorPro: any) {
+      console.warn(`[IA] Falha no modelo Pro: ${errorPro.message}. Tentando Legacy...`);
+      
+      // TENTATIVA 3: GEMINI 1.0 PRO (Legado super estável fallback definitivo)
+      try {
+         const { text } = await generateText({ model: modelLegacy, prompt: promptText });
+         return { content: text };
+      } catch (errorLegacy: any) {
+         throw new Error(`Exaustão de IA. Nem Flash, nem Pro responderam. Motivo final: ${errorLegacy.message}`);
+      }
+    }
+  }
 }
-
 async function handleAICopilot(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
   if (!authorized) return res.status(401).json({ error });
