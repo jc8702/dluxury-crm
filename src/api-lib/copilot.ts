@@ -2,6 +2,7 @@ import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject, tool } from 'ai';
 import { z } from 'zod';
+import { gerarOrcamentoRelatorio } from '../utils/industrialCopilot.js';
 
 const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
@@ -320,27 +321,33 @@ async function handleConfirmAction(history: any[]) {
   return { message: "Confirmado! (Ação não mapeada especificamente)" };
 }
 
-async function handleSuggestBOM(entities: Entities) {
-  const tipo = entities.projeto?.tipo || 'Móvel Sob Medida';
-  const L = entities.projeto?.medidas?.L || 600;
-  const A = entities.projeto?.medidas?.A || 700;
-  const P = entities.projeto?.medidas?.P || 500;
+async function handleSuggestBOM(entities: Entities, originalMessage: string) {
+  const orcamento = gerarOrcamentoRelatorio(originalMessage);
+  const { estrutura, bom, custo, venda } = orcamento;
 
-  let BOM = `### Sugestão de materiais para ${tipo}\n\n`;
-  if (tipo.toLowerCase().includes('gaveteiro')) {
-    BOM += `- MDF Branco 18mm (Corpo/Frentes) → ~${((L*A*2 + L*P*2 + A*P*2)/1000000).toFixed(2)} m²\n`;
-    BOM += `- Corrediça Telescópica 450mm → 3 UN\n`;
-    BOM += `- Fita de Borda PVC Branca 22mm → ~15 m\n`;
-    BOM += `- Parafuso 4x50mm → 48 UN\n\n`;
-    BOM += `**Custo Estimado:** R$ 285,00\n`;
-    BOM += `**Preço Sugerido:** R$ 850,00 (Margem 66%)\n\n`;
-  } else {
-    BOM += `- MDF Branco 18mm → Sob consulta\n`;
-    BOM += `- Ferragens Básicas → Kit Montagem\n\n`;
-  }
+  let report = `### 📋 Orçamento Técnico: ${estrutura.tipo}\n`;
+  report += `**Dimensões:** ${estrutura.largura} x ${estrutura.altura} x ${estrutura.profundidade} mm\n`;
+  if (estrutura.gavetas) report += `**Componentes:** ${estrutura.gavetas} Gavetas\n`;
+  if (estrutura.portas) report += `**Componentes:** ${estrutura.portas} Portas\n`;
+  report += `\n---\n\n`;
+
+  report += `#### 🌲 Materiais Estimados (BOM)\n`;
+  report += `| Item | Qtd | Un | \n`;
+  report += `| :--- | :--- | :--- | \n`;
   
-  BOM += `Deseja transformar esta lista em um orçamento?`;
-  return { message: BOM };
+  bom.chapas.forEach(c => report += `| ${c.item} | ${c.quantidade} | ${c.unidade} |\n`);
+  bom.ferragens.forEach(f => report += `| ${f.item} | ${f.quantidade} | ${f.unidade} |\n`);
+  bom.acabamento.forEach(a => report += `| ${a.item} | ${a.quantidade} | ${a.unidade} |\n`);
+
+  report += `\n---\n\n`;
+  report += `#### 💰 Análise Comercial\n`;
+  report += `- **Custo de Materiais:** R$ ${custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+  report += `- **Preço Sugerido (Markup 2.5x):** R$ ${venda.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+  report += `- **Margem Bruta:** ${venda.margem}%\n\n`;
+
+  report += `> Deseja transformar esta estrutura em um orçamento formal no sistema?`;
+  
+  return { message: report };
 }
 
 async function handleAnalyzeStock() {
@@ -398,7 +405,7 @@ async function processUserMessage(message: string, history: any[] = []) {
     switch (intent.type) {
       case "SUGGEST_CREATE_SKU": return await handleSuggestCreateSKU(intent.entities);
       case "CONFIRM_ACTION": return await handleConfirmAction(history);
-      case "SUGGEST_BOM": return await handleSuggestBOM(intent.entities);
+      case "SUGGEST_BOM": return await handleSuggestBOM(intent.entities, message);
       case "ANALYZE_STOCK": return await handleAnalyzeStock();
       case "GET_LAST_SKU": return await handleGetLast();
       case "SEARCH_SKU": return await handleSearch(intent.entities);
