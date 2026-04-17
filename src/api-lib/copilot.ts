@@ -155,7 +155,7 @@ const chatTools = {
     }),
     execute: async (args) => {
       try {
-        const lastSkuQuery = await sql`SELECT sku FROM materiais ORDER BY id DESC LIMIT 1`;
+        const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE sku IS NOT NULL ORDER BY sku DESC LIMIT 1`;
         let proximoSku = 'SKU-0001';
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
            const match = lastSkuQuery[0].sku.match(/\d+/);
