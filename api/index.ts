@@ -394,7 +394,6 @@ const chatTools = {
       descricao: z.string().describe('Breve descrição do escopo do projeto'),
     }),
     execute: async (args) => {
-      // Inserção com dados base. Os demais campos (valor, prazo) ficam nulos para preenchimento humano posterior
       try {
         const r = await sql`INSERT INTO projects (client_name, ambiente, descricao, status, valor_estimado, valor_final) VALUES (${args.client_name}, ${args.ambiente}, ${args.descricao}, 'lead', 0, 0) RETURNING id`;
         return { success: true, project_id: r[0].id, message: `Projeto estruturado e salvo com ID ${r[0].id}` };
@@ -406,14 +405,13 @@ const chatTools = {
   cadastrarMaterial: tool({
     description: 'Cadastra um novo item de material solto no estoque/catálogo. O sistema irá gerar um SKU automaticamente.',
     parameters: z.object({
-      nome: z.string().describe('Nome curto do material (ex: Dobradiça Curva HD)'),
-      descricao: z.string().describe('Descrição estendida técnica do material'),
-      unidade_uso: z.string().describe('Unidade de medida padrão para uso e compra (ex: UN, MT, M2, CX)'),
-      preco_custo: z.number().describe('Preço de custo unitário base (usar 0 se não souber)')
+      nome: z.string().describe('Nome principal curto e direto. Ex: Chapa MDF Guararapes'),
+      descricao: z.string().describe('Toda e qualquer outra informação. Ex: Marca, dimensões, espessura, detalhes. Concatene tudo aqui!'),
+      unidade_uso: z.string().optional().describe('Unidade de medida padrão para uso e compra (ex: UN, MT, M2, CX)'),
+      preco_custo: z.number().optional().describe('Preço de custo unitário base (usar 0 se não souber)')
     }),
     execute: async (args) => {
       try {
-        // Gera o SKU Sequencial
         const lastSkuQuery = await sql`SELECT sku FROM materiais ORDER BY id DESC LIMIT 1`;
         let proximoSku = 'SKU-0001';
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
@@ -423,8 +421,9 @@ const chatTools = {
            }
         }
         
-        // Inserção tolerante no banco. Categoria null pois o usuário terá que classificar visualmente.
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${args.unidade_uso}, ${args.unidade_uso}, ${args.preco_custo}, 50, ${args.preco_custo * 1.5}, null, true) RETURNING id`;
+        const unidade = args.unidade_uso || 'UN';
+        const preco = args.preco_custo || 0;
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, null, true) RETURNING id`;
         return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido com SKU ${proximoSku}` };
       } catch (err: any) {
         return { success: false, error: err.message };
@@ -434,7 +433,7 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const promptText = `Você é o D'Luxury Copilot, uma IA ativa do ERP com poderes de administrador. Você PODE CADASTRAR MATERIAL E CADASTRAR PROJETO (Lead). QUANDO O USUÁRIO PEDIR UM CADASTRO VOCÊ DEVE OBRIGATORIAMENTE CHAMAR A TOOL, e depois confirme o resultado pro usuário e diga qual foi o código novo: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
+  const promptText = `Você é o D'Luxury Copilot, IA integrada com o ERP. ATENÇÃO: QUANDO O USUÁRIO PEDIR CADASTRO, NÃO MOSTRE CÓDIGO FONTE, NEM JSON. VOCÊ DEVE OBRIGATORIAMENTE CHAMAR A TOOL E EXECUTAR. Mapeie eventuais especificações do usuário (marca, medidas) para a string 'descricao'. Resuma a confirmação de operação dizendo o ID/SKU gerado. Histórico: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
   
   const aiConfig = { tools: chatTools, maxSteps: 5, prompt: promptText };
 

@@ -162,7 +162,10 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
                     color: m.type === 'user' ? 'var(--primary-text)' : 'var(--text)',
                     fontSize: '0.875rem',
                     border: m.type === 'ai' ? '1px solid var(--border)' : 'none',
-                    boxShadow: 'var(--shadow-xs)'
+                    boxShadow: 'var(--shadow-xs)',
+                    whiteSpace: 'pre-wrap', 
+                    wordBreak: 'break-word',
+                    lineHeight: '1.5'
                   }}>
                     {m.content}
                   </div>
