@@ -73,6 +73,11 @@ export async function handleEstoque(req: any, res: any) {
         const movs = await sql`SELECT * FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY criado_em DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
+      const { q } = req.query;
+      if (q) {
+        const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true AND (m.sku ILIKE ${'%' + q + '%'} OR m.nome ILIKE ${'%' + q + '%'}) ORDER BY m.nome ASC LIMIT 10`;
+        return res.status(200).json({ success: true, data: result });
+      }
       const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true ORDER BY m.nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }

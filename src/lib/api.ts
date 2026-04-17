@@ -56,7 +56,7 @@ export const api = {
     delete: (id: string) => apiCall<any>(`clients?id=${id}`, 'DELETE'),
   },
   estoque: {
-    list: () => apiCall<any[]>('estoque'),
+    list: (params?: any) => apiCall<any[]>(`estoque${params?.q ? `?q=${params.q}` : ''}`),
     create: (data: any) => apiCall<any>('estoque', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`estoque?id=${id}`, 'PATCH', data),
     getMovimentacoes: (materialId?: string) => apiCall<any[]>(`estoque?type=movimentacoes${materialId ? `&material_id=${materialId}` : ''}`),

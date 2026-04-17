@@ -29,6 +29,67 @@ const Estimates: React.FC = () => {
   const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [skuSearch, setSkuSearch] = useState('');
+  const [skuResults, setSkuResults] = useState<any[]>([]);
+
+  const searchSKU = async (q: string) => {
+    setSkuSearch(q);
+    if (q.length < 2) {
+      setSkuResults([]);
+      return;
+    }
+    try {
+      const data = await api.estoque.list({ q });
+      setSkuResults(data);
+    } catch (e) {
+      console.error("Error searching SKU", e);
+    }
+  };
+
+  const selectSKU = (mat: any) => {
+    setNewItem({
+      ...newItem,
+      name: mat.nome,
+      woodType: mat.categoria_nome || 'Geral',
+      woodPrice: Number(mat.preco_custo) || 0,
+      laborHours: 2, // Default sugestivo
+      laborRate: 150 // Default sugestivo
+    });
+    setSkuResults([]);
+    setSkuSearch(mat.sku);
+  };
+
+  const loadForEdit = async (orcId: string) => {
+    try {
+      setLoading(true);
+      const orc = await api.orcamentos.get(orcId);
+      setEditingId(orcId);
+      setSelectedClient(orc.cliente_id);
+      setSelectedProject(orc.projeto_id || '');
+      setPrazoEntrega(orc.prazo_entrega_dias ? `${orc.prazo_entrega_dias} DIAS ÚTEIS` : '');
+      setFormaPagamento(orc.observacoes?.split('Pagamento: ')[1] || orc.observacoes || '');
+      
+      const mappedItems: EstimateItem[] = orc.itens.map((it: any) => ({
+        id: it.id,
+        name: it.descricao,
+        quantity: it.quantidade,
+        width: Number(it.largura_cm),
+        height: Number(it.altura_cm),
+        depth: Number(it.profundidade_cm),
+        woodType: it.material,
+        woodPrice: (Number(it.valor_unitario) / 2), // Estimativa reversa para o simulador
+        laborHours: 0,
+        laborRate: 0
+      }));
+      setItems(mappedItems);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      alert("Erro ao carregar orçamento para edição.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadHistory = async () => {
     try {
@@ -58,7 +119,7 @@ const Estimates: React.FC = () => {
 
     try {
       setSaving(true);
-      const payload = {
+      const orcData = {
         cliente_id: selectedClient,
         projeto_id: selectedProject || null,
         status: 'rascunho',
@@ -84,9 +145,17 @@ const Estimates: React.FC = () => {
         }))
       };
 
-      await api.orcamentos.create(payload);
-      alert("Orçamento gravado com sucesso no histórico!");
+      if (editingId) {
+        await api.orcamentos.update(editingId, orcData);
+        alert("Orçamento atualizado com sucesso!");
+      } else {
+        await api.orcamentos.create(orcData);
+        alert("Orçamento gravado com sucesso no histórico!");
+      }
+      
+      setEditingId(null);
       loadHistory();
+      clearDraft();
     } catch (e: any) {
       alert("Erro ao salvar orçamento: " + e.message);
     } finally {
@@ -161,75 +230,63 @@ const Estimates: React.FC = () => {
     return client && p.clientName === client.nome;
   });
 
-  const generatePDF = async () => {
+  const generatePDF_Export = async (itemsList: any[], clientName: string, budgetNum: string, total: number, obs: string) => {
     const doc = new jsPDF();
-    const client = clients.find(c => c.id === selectedClient);
-    const project = projects.find(p => p.id === selectedProject);
-
+    
     // Add Logo
     try {
       const img = new Image();
       img.src = '/logo.png';
       await new Promise((resolve) => {
         img.onload = resolve;
-        img.onerror = resolve; // Continue even if logo fails
+        img.onerror = resolve; 
       });
       if (img.complete && img.naturalWidth > 0) {
         doc.addImage(img, 'PNG', 14, 10, 25, 25);
       }
     } catch (e) { console.error("Logo error", e); }
 
-    // Header (Move text right if logo exists)
+    // Header
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.setTextColor(212, 175, 55); // D'Luxury Gold
-    doc.text("D'LUXURY AMBIENTES", 45, 20);
-    
+    doc.setTextColor(212, 175, 55); 
+    doc.text("D’LUXURY", 45, 22);
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text("MÓVEIS SOB MEDIDA", 45, 26);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(40);
-    doc.text("Orçamento de Projeto", 45, 40);
+    doc.text("MÓVEIS SOB MEDIDA | ALTO PADRÃO", 45, 28);
+    doc.setFont("helvetica", "normal");
+    doc.text("www.dluxury.com.br", 45, 33);
 
-    // Client Info Section
     doc.setFontSize(10);
-    doc.setTextColor(50, 50, 50);
-    doc.text("DADOS DO CLIENTE", 14, 48);
+    doc.setTextColor(0);
+    doc.text(`PROPOSTA: ${budgetNum || 'RASCUNHO'}`, 140, 22);
+    doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')}`, 140, 28);
+
     doc.setDrawColor(212, 175, 55);
-    doc.line(14, 49, 50, 49); // Underline for section
+    doc.line(14, 40, 196, 40);
 
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    doc.text(`Cliente: ${client?.nome || 'AVULSO'}`, 14, 55);
-    doc.text(`Telefone: ${client?.telefone || '-'}`, 14, 60);
-    doc.text(`Cidade/UF: ${client?.cidade || '-'}/${client?.uf || '-'}`, 14, 65);
-    
-    doc.text(`Ambiente: ${project?.ambiente || 'NÃO DEFINIDO'}`, 120, 55);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 120, 60);
-    doc.text(`Referência: #EST-${Date.now().toString().slice(-6)}`, 120, 65);
+    // Client Info
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("INFORMAÇÕES DO CLIENTE", 14, 50);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${clientName || 'Consumidor Final'}`, 14, 57);
+    doc.text(`Ambiente: ${obs.split('.')[0] || 'Geral'}`, 14, 62);
 
-    // Items table
-    const tableData = items.map(item => [
-      item.name.toUpperCase(),
-      item.quantity.toString(),
-      item.woodType.toUpperCase(),
+    // Items Table
+    const tableData = itemsList.map(item => [
+      item.name,
+      item.quantity,
+      item.woodType,
       `${item.width}x${item.height}x${item.depth}cm`,
-      formatCurrency((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity) + (((item.woodPrice * item.quantity) + (item.laborHours * item.laborRate * item.quantity)) * (marginPercent / 100)))
+      formatCurrency(((item.woodPrice) + (item.laborHours * item.laborRate)) * (1 + marginPercent/100) * item.quantity)
     ]);
 
     autoTable(doc, {
-      startY: 75,
-      head: [['MÓVEL', 'QTD', 'MATERIAL', 'DIMENSÕES', 'VALOR UNIT.*']],
+      startY: 70,
+      head: [['MÓVEL / AMBIENTE', 'QTD', 'MATERIAL', 'DIMENSÕES', 'VALOR (R$)']],
       body: tableData,
-      theme: 'striped',
-      headStyles: { 
-        fillColor: [212, 175, 55], 
-        textColor: [26, 26, 46], 
-        fontStyle: 'bold',
-        fontSize: 10,
-        halign: 'center'
-      },
       columnStyles: {
         0: { cellWidth: 'auto' },
         1: { halign: 'center' },
@@ -292,8 +349,12 @@ const Estimates: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Orçamentos</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Monte propostas detalhadas para móveis planejados.</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', background: 'linear-gradient(to right, #fff, #d4af37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {editingId ? '📝 Editando Proposta' : '💎 Simulador Comercial D’Luxury'}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            {editingId ? 'Alterando valores e itens de proposta existente.' : 'Gere orçamentos precisos com base em custos e margens industriais.'}
+          </p>
         </div>
         <div>
           <button onClick={generatePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed' }}>
@@ -355,13 +416,21 @@ const Estimates: React.FC = () => {
         </div>
 
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-          <button onClick={saveBudget} disabled={saving || items.length === 0}
+            <button onClick={saveBudget} disabled={saving || items.length === 0}
             style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white',
+              background: editingId ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white',
               border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: (saving || items.length === 0) ? 'not-allowed' : 'pointer', fontWeight: '700', opacity: (saving || items.length === 0) ? 0.6 : 1
             }}>
-            {saving ? '⌛ Gravando...' : '💾 Gravar Proposta no Banco'}
+            {saving ? '⌛ Processando...' : (editingId ? '✅ Atualizar Proposta' : '💾 Gravar Proposta no Banco')}
           </button>
+          {editingId && (
+            <button onClick={() => { setEditingId(null); clearDraft(); }}
+              style={{
+                background: '#333', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
+              }}>
+              Cancelar Edição
+            </button>
+          )}
           {items.length > 0 && (
             <button onClick={clearDraft}
               style={{
@@ -449,8 +518,24 @@ const Estimates: React.FC = () => {
       {/* Modal adicionar móvel */}
       {showItemForm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--border)' }}>
+          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ color: 'white', marginBottom: '1.5rem' }}>Adicionar Móvel</h3>
+            
+            {/* SKU Search */}
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.1)' }}>
+              <label style={{ fontSize: '0.8rem', color: '#d4af37', display: 'block', marginBottom: '0.5rem' }}>🔍 Buscar na Engenharia (SKU ou Nome)</label>
+              <input style={{...inputStyle, borderColor: 'rgba(212,175,55,0.3)'}} placeholder="Puxe dados direto da engenharia..." value={skuSearch} onChange={e => searchSKU(e.target.value)} />
+              {skuResults.length > 0 && (
+                <div style={{ background: '#1a1a1a', borderRadius: '8px', marginTop: '0.5rem', border: '1px solid var(--border)' }}>
+                  {skuResults.map(res => (
+                    <div key={res.id} onClick={() => selectSKU(res)} style={{ padding: '0.75rem', borderBottom: '1px solid #333', cursor: 'pointer', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{res.sku}</span> - {res.nome}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Nome do Móvel</label>
@@ -559,14 +644,37 @@ const Estimates: React.FC = () => {
                       }}>{orc.status}</span>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button 
-                        onClick={() => {
-                          alert(`Número da Proposta: ${orc.numero}\nFunção de re-impressão em breve.`);
-                        }}
-                        style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
-                      >
-                        📄 Ver Detalhes
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button 
+                          onClick={() => loadForEdit(orc.id)}
+                          style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            const detail = await api.orcamentos.get(orc.id);
+                            // Simula o estado para o PDF generator
+                            const docItems = detail.itens.map((it: any) => ({
+                              id: it.id,
+                              name: it.descricao,
+                              quantity: it.quantidade,
+                              width: it.largura_cm,
+                              height: it.altura_cm,
+                              depth: it.profundidade_cm,
+                              woodType: it.material,
+                              woodPrice: it.valor_unitario / 2,
+                              laborHours: 0,
+                              laborRate: 0
+                            }));
+                            // Chamada manual do PDF core
+                            generatePDF_Export(docItems, orc.cliente_nome, orc.numero, orc.valor_final, orc.observacoes);
+                          }}
+                          style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          📄 PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
