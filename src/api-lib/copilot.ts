@@ -143,230 +143,134 @@ const chatTools = {
         return { success: false, error: err.message };
       }
     }
-  }),
-  createSKU: tool({
-    description: 'Cadastra um novo material/SKU baseado na família ou prefixo.',
-    parameters: z.object({
-      familia: z.string().describe('OBRIGATÓRIO: Família do item para gerar a categoria. Ex: Parafuso, Chapa, etc.'),
-      descricao: z.string().describe('OBRIGATÓRIO: Descrição completa do item. Ex: Parafuso zincado 6x30'),
-      unidade: z.string().describe('Unidade. Ex: UN, M2, ML, CENTO'),
-    }),
-    execute: async (args) => {
-      try {
-        // Find category ID based on family string
-        let categoryId = 'OUT';
-        const famLow = args.familia.toLowerCase();
-        if (famLow.includes('chapa') || famLow.includes('mdf') || famLow.includes('mdp')) categoryId = 'CHP';
-        else if (famLow.includes('fita') || famLow.includes('borda') || famLow.includes('pvc')) categoryId = 'BRD';
-        else if (famLow.includes('dobradiça') || famLow.includes('puxador') || famLow.includes('ferragem')) categoryId = 'FRG';
-        else if (famLow.includes('parafuso') || famLow.includes('bucha') || famLow.includes('fix')) categoryId = 'FIX';
-        else if (famLow.includes('cola') || famLow.includes('silicone') || famLow.includes('insumo')) categoryId = 'INS';
-        else if (famLow.includes('led') || famLow.includes('fonte') || famLow.includes('ilum')) categoryId = 'ILU';
-        else if (famLow.includes('lixeira') || famLow.includes('aramado') || famLow.includes('aces')) categoryId = 'ACS';
-        else if (famLow.includes('pe') || famLow.includes('pé') || famLow.includes('sapata') || famLow.includes('est')) categoryId = 'EST';
-        else categoryId = args.familia.substring(0, 3).toUpperCase();
+// ===============================
+// INTENT ROUTER ARCHITECTURE (ARIA 2.0)
+// ===============================
 
-        const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE categoria_id = ${categoryId} ORDER BY sku DESC LIMIT 1`;
-        let proximoSku = `${categoryId}-0001`;
-        if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
-           const match = lastSkuQuery[0].sku.match(/\d+/);
-           if (match) { proximoSku = `${categoryId}-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
-        }
-        
-        await sql`
-          INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) 
-          VALUES (${proximoSku}, ${args.descricao}, ${args.descricao}, ${args.unidade}, ${args.unidade}, 0, 50, 0, ${categoryId}, true, 0, 0)
-        `;
-        
-        // This object simulates the event trigger for the UI, but essentially returns exactly the format the prompt expects.
-        return { 
-          success: true, 
-          skuId: proximoSku,
-          descricao: args.descricao,
-          unidade: args.unidade,
-          message: `✅ Item cadastrado com sucesso\n\nSKU: ${proximoSku}\nDescrição: ${args.descricao}\nUnidade: ${args.unidade}` 
-        };
-      } catch (err: any) {
-        return { success: false, error: err.message };
-      }
+type IntentType = "CREATE_SKU" | "UPDATE_SKU" | "DELETE_SKU" | "GET_LAST_SKU" | "SEARCH_SKU" | "LIST_BY_FAMILIA" | "UNKNOWN";
+
+interface Entities {
+  familia?: string;
+  descricao?: string;
+  unidade?: string;
+  skuId?: string;
+}
+
+interface Intent {
+  type: IntentType;
+  entities: Entities;
+}
+
+async function parseIntent(message: string): Promise<Intent> {
+  const { object } = await generateObject({
+    model: modelPro,
+    schema: z.object({
+      type: z.enum(["CREATE_SKU", "UPDATE_SKU", "DELETE_SKU", "GET_LAST_SKU", "SEARCH_SKU", "LIST_BY_FAMILIA", "UNKNOWN"]),
+      entities: z.object({
+        familia: z.string().optional(),
+        descricao: z.string().optional(),
+        unidade: z.string().optional(),
+        skuId: z.string().optional()
+      })
+    }),
+    prompt: `Extraia a intenção da mensagem: "${message}". Identifique se é CREATE_SKU, GET_LAST_SKU, SEARCH_SKU ou LIST_BY_FAMILIA. Se for cadastro, extraia a familiaridade (ex: Parafuso), a descricao exata, e unidade.`
+  });
+  return object as Intent;
+}
+
+const SKUService = {
+  async create(data: Entities) {
+    let categoryId = 'OUT';
+    const famLow = (data.familia || '').toLowerCase();
+    if (famLow.includes('chapa') || famLow.includes('mdf') || famLow.includes('mdp')) categoryId = 'CHP';
+    else if (famLow.includes('fita') || famLow.includes('borda') || famLow.includes('pvc')) categoryId = 'BRD';
+    else if (famLow.includes('dobradiça') || famLow.includes('ferragem') || famLow.includes('puxador')) categoryId = 'FRG';
+    else if (famLow.includes('parafuso') || famLow.includes('bucha') || famLow.includes('fix')) categoryId = 'FIX';
+    else categoryId = (data.familia || 'GEN').substring(0, 3).toUpperCase();
+
+    const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE categoria_id = ${categoryId} ORDER BY sku DESC LIMIT 1`;
+    let proximoSku = `${categoryId}-0001`;
+    if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
+       const match = lastSkuQuery[0].sku.match(/\d+/);
+       if (match) { proximoSku = `${categoryId}-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
     }
-  }),
-  buscarUltimoSKU: tool({
-    description: 'Recupera o último item/SKU cadastrado no banco de materiais.',
-    parameters: z.object({}),
-    execute: async () => {
-      try {
-        const r = await sql`SELECT sku, nome, unidade_uso FROM materiais ORDER BY id DESC LIMIT 1`;
-        if (r.length > 0) {
-          return { success: true, sku: r[0].sku, descricao: r[0].nome, unidade: r[0].unidade_uso };
-        }
-        return { success: false, error: 'Nenhum material encontrado no banco.' };
-      } catch (error: any) {
-         return { success: false, error: error.message };
-      }
-    }
-  }),
-  consultarFinanceiro: tool({
-    description: 'Consulta o resumo financeiro atual (entradas, saídas e saldo).',
-    parameters: z.object({}),
-    execute: async () => {
-      try {
-        const result = await sql`
-          SELECT 
-            SUM(CASE WHEN tipo = 'entrada' AND status = 'PAGO' THEN valor ELSE 0 END) as total_entradas,
-            SUM(CASE WHEN tipo = 'saida' AND status = 'PAGO' THEN valor ELSE 0 END) as total_saidas
-          FROM billings
-        `;
-        const entradas = parseFloat(result[0].total_entradas || '0');
-        const saidas = parseFloat(result[0].total_saidas || '0');
-        return { success: true, resumo: { entradas, saidas, saldo: Math.round((entradas - saidas) * 100) / 100 } };
-      } catch (err: any) {
-        return { success: false, error: err.message };
-      }
-    }
-  }),
-  consultarRelatorioABC: tool({
-    description: 'Gera a curva ABC de clientes baseada no faturamento histórico.',
-    parameters: z.object({}),
-    execute: async () => {
-      try {
-        const result = await sql`
-          SELECT cliente, SUM(valor) as total_faturado
-          FROM billings
-          WHERE tipo = 'entrada' AND status = 'PAGO' AND cliente IS NOT NULL
-          GROUP BY cliente
-          ORDER BY total_faturado DESC
-          LIMIT 10
-        `;
-        return { success: true, top_clientes: result };
-      } catch (err: any) {
-        return { success: false, error: err.message };
-      }
-    }
-  })
+    
+    await sql`
+      INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) 
+      VALUES (${proximoSku}, ${data.descricao}, ${data.descricao}, ${data.unidade}, ${data.unidade}, 0, 50, 0, ${categoryId}, true)
+    `;
+    return { skuId: proximoSku, descricao: data.descricao, unidade: data.unidade };
+  },
+  async getLast() {
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais ORDER BY id DESC LIMIT 1`;
+    return r.length > 0 ? r[0] : null;
+  },
+  async search(filtro: Entities) {
+    const searchString = '%' + (filtro.descricao || filtro.familia || '') + '%';
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE nome ILIKE ${searchString} LIMIT 5`;
+    return r;
+  },
+  async listByFamilia(familia: string) {
+    const famStr = familia.substring(0, 3).toUpperCase();
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE categoria_id = ${famStr} LIMIT 5`;
+    return r;
+  }
 };
 
-async function generateChatResponse(payload: any) {
-const systemPrompt = `Você é um agente operacional interno do CRM ERP D'Luxury, de marcenaria.
+async function handleCreateSKU(entities: Entities) {
+  if (!entities.descricao) return { message: "Qual a especificação do item? (ex: 6x30, branco, 18mm)" };
+  if (!entities.familia) entities.familia = entities.descricao.split(' ')[0] || 'Genérico';
+  if (!entities.unidade) entities.unidade = 'UN';
 
-Seu papel NÃO é responder com texto genérico.
-
-Seu papel é:
-1. interpretar a intenção do usuário
-2. mapear para uma ação do sistema
-3. executar a ação
-4. retornar o resultado de forma clara e objetiva
-
-----------------------------------------
-1. REGRA PRINCIPAL
-----------------------------------------
-
-NUNCA responda com:
-- "não consigo processar"
-- "acesse o módulo"
-- "não tenho acesso"
-
-Você TEM acesso ao sistema.
-Se existir uma intenção → você DEVE executar. NUNCA responder textos sem a tag tool executada.
-
-----------------------------------------
-2. INTENÇÕES QUE VOCÊ DEVE SUPORTAR
-----------------------------------------
-
-Cadastrar SKU:
-Exemplo:
-"cadastra o parafuso zincado 6x30 cento"
-
-Você deve:
-1. identificar: família (Parafuso), descrição (Parafuso zincado 6x30), unidade (CENTO)
-2. gerar SKU automaticamente (usando regra de prefixo por família via call createSKU)
-3. criar registro no banco
-4. retornar confirmação
-
-----------------------------------------
-3. EXECUÇÃO REAL (OBRIGATÓRIO)
-----------------------------------------
-
-Você DEVE acionar suas functions nativamente:
-createSKU({ familia: "Parafuso", descricao: "Parafuso zincado 6x30", unidade: "CENTO" })
-
-----------------------------------------
-4. RESPOSTA OBRIGATÓRIA AO USUÁRIO
-----------------------------------------
-
-Após cadastrar, SEMPRE responder EXATAMENTE no formato abaixo:
-
-✅ Item cadastrado com sucesso
-
-SKU: PAR-0007  
-Descrição: Parafuso zincado 6x30  
-Unidade: CENTO  
-
-NENHUM TEXTO ADICIONAL ALEM DE MANIPULAR O EVENTO UI!
-
-----------------------------------------
-5. REGRA DE FEEDBACK VISUAL (CRÍTICO)
-----------------------------------------
-Ao lado ou ao final do chat text, escreva exatamente o disparo abaixo para que eu renderize a notificação no front end:
-[EVENT_EMIT_SKU_CRIADO]
-
-----------------------------------------
-6. TRATAMENTO DE ERRO
-----------------------------------------
-Se faltar informação (ex: "cadastra parafuso"), responda: "Qual especificação do parafuso? (ex: 4x50, 6x30)" - Nunca simplesmente falhe.
-
-----------------------------------------
-7. CONSULTAS
-----------------------------------------
-Para perguntas como "qual foi o ultimo item cadastrado?", você deve disparar:
-buscarUltimoSKU()
-E responder exatamente:
-Último item cadastrado:
-SKU: PAR-0007  
-Descrição: Parafuso zincado 6x30
-
-Toda mensagem sua deve virar uma ação real sempre que possível.`;
-  const messagesArray = (payload.history || []).map((m: any) => ({
-    role: m.type === 'ai' ? 'assistant' : 'user',
-    content: m.content
-  }));
-  messagesArray.push({ role: 'user', content: payload.message });
-  
-  const aiConfig: any = { tools: chatTools, maxSteps: 5, system: systemPrompt, messages: messagesArray };
-
-  const extrairConteudo = (res: any) => {
-    let final = res.text || '';
-    const parseResult = (tr: any) => {
-      const data = tr.result || tr.output;
-      if (data && data.message) return `✔️ ${data.message}`;
-      if (data && data.error) return `❌ ERRO: ${data.error}`;
-      return '';
-    };
-    if (res.steps && res.steps.length > 0) {
-       for (const step of res.steps) {
-         if (step.text && !final.includes(step.text)) final += step.text + '\n';
-         if (step.toolResults && step.toolResults.length > 0) {
-            const logs = step.toolResults.map(parseResult).filter(Boolean).join('\n');
-            if (logs) final += '\n' + logs;
-         }
-       }
-    }
-    return final.trim() || 'Processado com sucesso.';
+  const sku = await SKUService.create(entities);
+  return {
+    message: `✅ Item cadastrado com sucesso\n\nSKU: ${sku.skuId}\nDescrição: ${sku.descricao}\nUnidade: ${sku.unidade}\n\n[EVENT_EMIT_SKU_CRIADO]`
   };
+}
 
+async function handleGetLast() {
+  const sku = await SKUService.getLast();
+  if (!sku) return { message: "Nenhum item encontrado no banco de dados." };
+  return { message: `Último item cadastrado:\n\nSKU: ${sku.skuId}\nDescrição: ${sku.descricao}` };
+}
+
+async function handleSearch(entities: Entities) {
+  const r = await SKUService.search(entities);
+  if (!r || !r.length) return { message: "Nenhum item encontrado." };
+  return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
+}
+
+async function handleListByFamilia(entities: Entities) {
+  if (!entities.familia) return { message: "Qual família deseja listar?" };
+  const r = await SKUService.listByFamilia(entities.familia);
+  if (!r || !r.length) return { message: "Nenhum item encontrado." };
+  return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
+}
+
+async function processUserMessage(message: string) {
   try {
-    const resFlash = await generateText({ model: modelFlash, ...aiConfig });
-    return { content: extrairConteudo(resFlash) };
-  } catch (errorFlash: any) {
-    try {
-      const resPro = await generateText({ model: modelPro, ...aiConfig });
-      return { content: extrairConteudo(resPro) };
-    } catch (errorPro: any) {
-      const resLegacy = await generateText({ model: modelLegacy, system: systemPrompt, messages: messagesArray });
-      return { content: extrairConteudo(resLegacy) };
+    const intent = await parseIntent(message);
+    const entities = intent.entities || {};
+    if (entities.unidade) entities.unidade = entities.unidade.toUpperCase().trim();
+    
+    switch (intent.type) {
+      case "CREATE_SKU": return await handleCreateSKU(entities);
+      case "GET_LAST_SKU": return await handleGetLast();
+      case "SEARCH_SKU": return await handleSearch(entities);
+      case "LIST_BY_FAMILIA": return await handleListByFamilia(entities);
+      default: return { message: "Não entendi a solicitação. Pode reformular a instrução operacional?" };
     }
+  } catch (error) {
+    console.error("Erro no agente NLU:", error);
+    return { message: "Erro de processamento interno NLU." };
   }
 }
+
+async function generateChatResponse(payload: any) {
+  const response = await processUserMessage(payload.message);
+  return { content: response.message };
+}
+
 
 export async function handleAICopilot(req: any, res: any) {
   try {
