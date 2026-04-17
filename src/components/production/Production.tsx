@@ -274,6 +274,8 @@ const Production: React.FC = () => {
           })}
         </div>
       )}
+      </>
+    )}
     </div>
   );
 };
