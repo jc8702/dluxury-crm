@@ -63,7 +63,21 @@ export async function handleEngineering(req: any, res: any) {
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ALTER COLUMN componente_nome DROP NOT NULL`.catch(() => {});
+    
+    // Force Null em colunas legadas (hotfix industrial v6)
+    try {
+      await sql`
+        DO $$ 
+        DECLARE r RECORD;
+        BEGIN
+            FOR r IN (SELECT column_name FROM information_schema.columns WHERE table_name = 'erp_product_bom' AND is_nullable = 'NO' AND column_name NOT IN ('id', 'nome', 'codigo_modelo')) 
+            LOOP
+                EXECUTE 'ALTER TABLE erp_product_bom ALTER COLUMN ' || quote_ident(r.column_name) || ' DROP NOT NULL';
+            END LOOP;
+        END $$;
+      `;
+    } catch (e) {}
+
     try { await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`; } catch(e){}
 
     if (req.method === 'GET') {
