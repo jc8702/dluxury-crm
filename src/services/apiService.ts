@@ -117,6 +117,18 @@ export const apiService = {
 
   aiDetectAnomalies: () =>
     apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'detect-anomalies' }) }),
+  
+  // Engenharia
+  getProducts: () => apiService.fetch('/api/engineering'),
+  addProduct: (data: any) => apiService.fetch('/api/engineering', { method: 'POST', body: JSON.stringify(data) }),
+
+  // SKUs
+  getSKUs: () => apiService.fetch('/api/skus'),
+  addSKU: (data: any) => apiService.fetch('/api/skus', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Relatórios
+  getReports: (type: string, projectId?: string) => 
+    apiService.fetch(`/api/reports?type=${type}${projectId ? `&projectId=${projectId}` : ''}`),
 
   // Orcamentos (Budgets)
   getOrcamentos: () => apiService.fetch('/api/orcamentos'),

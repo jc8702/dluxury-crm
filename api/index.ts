@@ -26,6 +26,10 @@ export default async function handler(req: any, res: any) {
   const cleanUrl = url.split('?')[0];
 
   try {
+    if (cleanUrl === '/api' && req.method === 'POST' && req.body.action === 'ia_message') {
+       return res.status(200).json(await generateChatResponse({ message: req.body.message }));
+    }
+
     if (cleanUrl.startsWith('/api/auth')) return await handleAuth(req, res);
     if (cleanUrl.startsWith('/api/clients')) return await handleClients(req, res);
     if (cleanUrl.startsWith('/api/billings')) return await handleBillings(req, res);
@@ -35,9 +39,11 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/condicoes-pagamento')) return await handleCondicoesPagamento(req, res);
     if (cleanUrl.startsWith('/api/goals')) return await handleGoals(req, res);
     if (cleanUrl.startsWith('/api/kanban')) return await handleKanban(req, res);
+    if (cleanUrl.startsWith('/api/engineering')) return await handleEngineering(req, res);
+    if (cleanUrl.startsWith('/api/skus')) return await handleSKUs(req, res);
+    if (cleanUrl.startsWith('/api/reports')) return await handleReports(req, res);
     if (cleanUrl.startsWith('/api/orcamento-tecnico')) return await handleOrcamentoTecnico(req, res);
     if (cleanUrl.startsWith('/api/projects')) return await handleProjects(req, res);
-    if (cleanUrl.startsWith('/api/reports')) return await handleReports(req, res);
     if (cleanUrl.startsWith('/api/simulations')) return await handleSimulations(req, res);
     if (cleanUrl.startsWith('/api/users')) return await handleUsers(req, res);
     if (cleanUrl.startsWith('/api/init-db')) return await handleInitDB(req, res);
@@ -394,10 +400,13 @@ const chatTools = {
       descricao: z.string()
     }),
     execute: async (args) => {
+      console.log('[IA] SQL a executar: INSERT INTO projects (client_name, ambiente, descricao, status, valor_estimado, valor_final) VALUES (...); args:', args);
       try {
         const r = await sql`INSERT INTO projects (client_name, ambiente, descricao, status, valor_estimado, valor_final) VALUES (${args.client_name}, ${args.ambiente}, ${args.descricao}, 'lead', 0, 0) RETURNING id`;
+        console.log('[IA] Resultado do banco:', r);
         return { success: true, project_id: r[0].id, message: `Projeto estruturado e salvo com ID ${r[0].id}` };
       } catch (err: any) {
+        console.error('[IA] Erro (se houver):', err);
         return { success: false, error: err.message };
       }
     }
@@ -411,6 +420,7 @@ const chatTools = {
       preco_custo: z.number().describe('0 se nao houver preço')
     }),
     execute: async (args) => {
+      console.log('[IA] Intenção detectada: cadastrar_material; args:', args);
       try {
         if (!args.nome || !args.descricao) {
            return { success: false, message: 'FALHA DE IA: Você não enviou o parâmetro nome ou descricao.' };
@@ -428,10 +438,14 @@ const chatTools = {
 
         const unidade = args.unidade_uso || 'UN';
         const preco = args.preco_custo || 0;
+        console.log('[IA] SQL a executar: INSERT INTO materiais (sku, nome, ...) VALUES (%s, %s, ...)', proximoSku, args.nome);
+        
         const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
         
+        console.log('[IA] Resultado do banco:', r);
         return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido no estoque com SKU: ${proximoSku}` };
       } catch (err: any) {
+        console.error('[IA] Erro (se houver):', err);
         return { success: false, message: `Erro fatal no Banco de Dados (Material): ${err.message}` };
       }
     }
@@ -488,17 +502,24 @@ REGRAS DE OURO:
   };
 
   try {
+    console.log('[IA] Mensagem recebida:', payload.message);
     const resFlash = await generateText({ model: modelFlash, ...aiConfig });
+    console.log('[IA] Resposta da IA (Raw):', JSON.stringify(resFlash, null, 2));
     return { content: extrairConteudo(resFlash) };
   } catch (errorFlash: any) {
+    console.warn('[IA] Falha no Flash, tentando Pro:', errorFlash.message);
     try {
       const resPro = await generateText({ model: modelPro, ...aiConfig });
+      console.log('[IA] Resposta da IA (Pro Raw):', JSON.stringify(resPro, null, 2));
       return { content: extrairConteudo(resPro) };
     } catch (errorPro: any) {
+      console.warn('[IA] Falha no Pro, tentando Legacy:', errorPro.message);
       try {
          const resLegacy = await generateText({ model: modelLegacy, system: systemPrompt, messages: messagesArray });
+         console.log('[IA] Resposta da IA (Legacy Raw):', JSON.stringify(resLegacy, null, 2));
          return { content: extrairConteudo(resLegacy) };
       } catch (errorLegacy: any) {
+         console.error('[IA] Erro exaustivo:', errorLegacy);
          const log = await listAvailableModels(aiApiKey as string);
          throw new Error(`Exaustão dos motores. Disponíveis: [${log}]. Detalhe: ${errorLegacy.message}`);
       }
@@ -631,11 +652,37 @@ async function handleProjects(req: any, res: any) {
 async function handleReports(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
   if (!authorized) return res.status(401).json({ error });
-  const { type, projectId } = req.query;
+  const { type, projectId } = req.query || {};
   if (type === 'fin-rentabilidade') return res.status(200).json(await sql`SELECT * FROM bi_custos_projeto ORDER BY custo_material_total DESC`);
   if (type === 'ind-romaneio') return res.status(200).json(await sql`SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku_code, cr.quantidade_com_perda, s.unidade_medida FROM erp_project_items pi JOIN erp_consumption_results cr ON cr.project_item_id = pi.id JOIN erp_skus s ON s.id = cr.sku_id WHERE pi.project_id = ${projectId} ORDER BY pi.label, cr.componente_nome`);
-  if (type === 'com-necessidade') return res.status(200).json(await sql`SELECT s.sku_code, s.nome, s.categoria, i.estoque_atual, i.estoque_reservado, abc.classe_abc FROM erp_skus s JOIN erp_inventory i ON i.sku_id = s.id LEFT JOIN bi_curva_abc_materiais abc ON abc.id = s.id WHERE (i.estoque_atual - i.estoque_reservado) < i.ponto_pedido OR abc.classe_abc = 'A' ORDER BY abc.classe_abc ASC`);
+  if (type === 'com-necessidade') return res.status(200).json(await sql`SELECT s.sku_code, s.nome, i.estoque_atual, i.estoque_minimo FROM erp_skus s JOIN erp_inventory i ON i.sku_id = s.id WHERE i.estoque_atual <= i.estoque_minimo ORDER BY (i.estoque_minimo - i.estoque_atual) DESC`);
+  if (type === 'ind-desvios') return res.status(200).json(await sql`SELECT * FROM bi_desvio_producao`);
   return res.status(400).json({ error: 'Tipo inválido' });
+}
+
+async function handleEngineering(req: any, res: any) {
+  const { authorized, error } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ error });
+  if (req.method === 'GET') return res.status(200).json(await sql`SELECT * FROM erp_products ORDER BY created_at DESC`);
+  if (req.method === 'POST') {
+    const { nome, codigo_modelo, descricao } = req.body || {};
+    const r = await sql`INSERT INTO erp_products (nome, codigo_modelo, descricao) VALUES (${nome}, ${codigo_modelo}, ${descricao}) RETURNING *`;
+    return res.status(201).json(r[0]);
+  }
+}
+
+async function handleSKUs(req: any, res: any) {
+  const { authorized, error } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ error });
+  if (req.method === 'GET') return res.status(200).json(await sql`SELECT * FROM erp_skus WHERE ativo = true ORDER BY sku_code ASC`);
+  if (req.method === 'POST') {
+    const { sku_code, nome, preco_base, unidade_medida, atributos } = req.body || {};
+    const r = await sql`INSERT INTO erp_skus (sku_code, nome, preco_base, unidade_medida, atributos) VALUES (${sku_code}, ${nome}, ${preco_base}, ${unidade_medida}, ${JSON.stringify(atributos || {})}) RETURNING *`;
+    // Create initial inventory entry
+    const skuId = r[0].id;
+    await sql`INSERT INTO erp_inventory (sku_id, estoque_atual, estoque_minimo, estoque_reservado) VALUES (${skuId}, 0, 5, 0)`;
+    return res.status(201).json(r[0]);
+  }
 }
 
 async function handleSimulations(req: any, res: any) {
