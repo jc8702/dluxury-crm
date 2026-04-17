@@ -20,7 +20,7 @@ const Production: React.FC = () => {
   const [viewType, setViewType] = useState<'list' | 'kanban'>('kanban');
 
   // Projects in production-related statuses
-  const productionProjects = projects.filter(p => {
+  const productionProjects = (projects || []).filter(p => {
     if (filter === 'all') return ['aprovado', 'em_producao', 'pronto_entrega'].includes(p.status);
     return p.status === filter;
   });
@@ -120,7 +120,7 @@ const Production: React.FC = () => {
               background: filter === f.id ? `${f.color}22` : 'transparent',
               color: filter === f.id ? f.color : 'var(--text-muted)',
             }}>
-            {f.label} ({projects.filter(p => f.id === 'all' ? ['aprovado', 'em_producao', 'pronto_entrega'].includes(p.status) : p.status === f.id).length})
+            {f.label} ({(projects || []).filter(p => f.id === 'all' ? ['aprovado', 'em_producao', 'pronto_entrega'].includes(p.status) : p.status === f.id).length})
           </button>
         ))}
       </div>
@@ -142,7 +142,7 @@ const Production: React.FC = () => {
         <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #3b82f6' }}>
           <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Prontos p/ Entrega</p>
           <h4 style={{ fontSize: '1.5rem', color: '#3b82f6' }}>
-            {projects.filter(p => p.status === 'pronto_entrega').length}
+            {(projects || []).filter(p => p.status === 'pronto_entrega').length}
           </h4>
         </div>
       </div>

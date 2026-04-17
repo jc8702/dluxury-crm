@@ -48,7 +48,7 @@ const ProductionDashboard: React.FC = () => {
 
       <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Eficiência (OEE)</p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{metrics?.taxaEficiencia.toFixed(1)}%</h4>
+        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{(metrics?.taxaEficiencia ?? 0).toFixed(1)}%</h4>
         <div style={{ fontSize: '0.7rem', color: '#10b981' }}>📈 Meta de Produção</div>
       </div>
 
