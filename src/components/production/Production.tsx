@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import ProductionPanel from './ProductionPanel';
 import type { Project, ProductionStep } from '../../context/AppContext';
 
 const PRODUCTION_STEPS: { id: ProductionStep; label: string; icon: string }[] = [
@@ -15,6 +16,7 @@ const Production: React.FC = () => {
   const { projects, updateProject } = useAppContext();
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'em_producao' | 'aprovado' | 'pronto_entrega'>('em_producao');
+  const [viewType, setViewType] = useState<'list' | 'kanban'>('kanban');
 
   // Projects in production-related statuses
   const productionProjects = projects.filter(p => {
@@ -68,13 +70,43 @@ const Production: React.FC = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header>
-        <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Produção</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Acompanhe cada projeto na oficina — visão do marceneiro.</p>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Produção</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Acompanhe cada projeto na oficina — visão do marceneiro.</p>
+        </div>
+        <div className="glass" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px' }}>
+          <button 
+            onClick={() => setViewType('kanban')}
+            style={{ 
+              padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              background: viewType === 'kanban' ? '#d4af37' : 'transparent',
+              color: viewType === 'kanban' ? '#1a1a2e' : 'var(--text-muted)',
+              fontSize: '0.8rem', fontWeight: '800', transition: 'all 0.3s'
+            }}
+          >
+            QUADRO (KANBAN)
+          </button>
+          <button 
+            onClick={() => setViewType('list')}
+            style={{ 
+              padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              background: viewType === 'list' ? '#d4af37' : 'transparent',
+              color: viewType === 'list' ? '#1a1a2e' : 'var(--text-muted)',
+              fontSize: '0.8rem', fontWeight: '800', transition: 'all 0.3s'
+            }}
+          >
+            LISTA DE ENGENHARIA
+          </button>
+        </div>
       </header>
 
-      {/* Filtros */}
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+      {viewType === 'kanban' ? (
+        <ProductionPanel />
+      ) : (
+        <>
+          {/* Filtros */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {filterButtons.map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
