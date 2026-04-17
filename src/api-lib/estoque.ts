@@ -58,7 +58,7 @@ export async function handleEstoque(req: any, res: any) {
 
     if (type === 'categories') {
       if (method === 'GET') {
-        const result = await sql`SELECT * FROM categorias_material ORDER BY nome ASC`;
+        const result = await sql`SELECT * FROM erp_categories ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
@@ -69,11 +69,11 @@ export async function handleEstoque(req: any, res: any) {
 
     if (method === 'GET') {
       if (id) {
-        const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN categorias_material c ON m.categoria_id = c.id WHERE m.id = ${id}`;
+        const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
         const movs = await sql`SELECT * FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY criado_em DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
-      const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN categorias_material c ON m.categoria_id = c.id WHERE m.ativo = true ORDER BY m.nome ASC`;
+      const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true ORDER BY m.nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
 
