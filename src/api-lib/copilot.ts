@@ -131,23 +131,33 @@ interface Intent {
 /**
  * Endpoint Handler: Retorna apenas o texto bruto do LLM para o parser robusto.
  */
+/**
+ * Lógica central de extração bruta do LLM
+ */
+async function getRawLLMIntent(message: string): Promise<string> {
+  const prompt = `Atue como um classificador NLU de ERP industrial. 
+  Mapeie a mensagem: "${message}" para uma intent. 
+  Sua missão é extrair a FICHA TÉCNICA do item.
+
+  - Intent: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA.
+  - entities.descricao: Deve conter APENAS o nome e especificações técnicas (ex: "Parafuso 6x65 mm zincado"). NUNCA inclua palavras de comando como "cadastra", "adiciona", "para mim" ou pontuações de diálogo.
+
+  RETORNE APENAS JSON PURO.`;
+
+  const { text } = await generateText({
+    model: modelFlash,
+    prompt: prompt
+  });
+  return text;
+}
+
+/**
+ * Endpoint Handler: Retorna apenas o texto bruto do LLM para o parser robusto.
+ */
 export async function handleAIParser(req: any, res: any) {
   try {
     const { message } = req.body;
-    const prompt = `Atue como um classificador NLU de ERP industrial. 
-    Mapeie a mensagem: "${message}" para uma intent. 
-    Sua missão é extrair a FICHA TÉCNICA do item.
-
-    - Intent: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA.
-    - entities.descricao: Deve conter APENAS o nome e especificações técnicas (ex: "Parafuso 6x65 mm zincado"). NUNCA inclua palavras de comando como "cadastra", "adiciona", "para mim" ou pontuações de diálogo.
-
-    RETORNE APENAS JSON PURO.
-
-    const { text } = await generateText({
-      model: modelFlash,
-      prompt: prompt
-    });
-
+    const text = await getRawLLMIntent(message);
     res.setHeader('Content-Type', 'text/plain');
     return res.status(200).send(text);
   } catch (err: any) {
@@ -173,14 +183,8 @@ function sanitizeIntent(raw: any): Intent {
  */
 async function parseIntent(message: string): Promise<Intent> {
   try {
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/ai/parser`, {
-      method: "POST",
-      body: JSON.stringify({ message }),
-      headers: { "Content-Type": "application/json" }
-    });
-
-    const text = await response.text();
+    // Chamada direta para evitar problemas de fetch em ambiente serverless
+    const text = await getRawLLMIntent(message);
     console.log("RAW LLM RESPONSE:", text);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
