@@ -111,7 +111,7 @@ async function detectAnomalies() {
 }
 
 // ===============================
-// INTENT ROUTER ARCHITECTURE (ARIA 2.0)
+// INTENT ROUTER ARCHITECTURE (ARIA 2.0 - ROBUST)
 // ===============================
 
 type IntentType = "CREATE_SKU" | "UPDATE_SKU" | "DELETE_SKU" | "GET_LAST_SKU" | "SEARCH_SKU" | "LIST_BY_FAMILIA" | "UNKNOWN";
@@ -128,21 +128,76 @@ interface Intent {
   entities: Entities;
 }
 
+/**
+ * Endpoint Handler: Retorna apenas o texto bruto do LLM para o parser robusto.
+ */
+export async function handleAIParser(req: any, res: any) {
+  try {
+    const { message } = req.body;
+    const prompt = `Atue como um classificador NLU de ERP industrial. 
+    Mapeie a mensagem: "${message}" para uma intent. 
+    Intenções: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA. 
+
+    RETORNE APENAS JSON PURO.
+    NÃO USE: explicações, texto antes ou depois, markdown, crases, comentários.
+
+    RESPOSTA CORRETA:
+    {"type": "CREATE_SKU", "entities": {"familia": "...", "descricao": "...", "unidade": "..."}}`;
+
+    const { text } = await generateText({
+      model: modelFlash,
+      prompt: prompt
+    });
+
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(200).send(text);
+  } catch (err: any) {
+    return res.status(500).send(`Erro interno no LLM: ${err.message}`);
+  }
+}
+
+/**
+ * Função Sanatizadora para evitar quebra de contrato
+ */
+function sanitizeIntent(raw: any): Intent {
+  if (!raw || typeof raw !== "object") {
+    return { type: "UNKNOWN", entities: {} };
+  }
+  return {
+    type: raw.type || "UNKNOWN",
+    entities: raw.entities || {}
+  };
+}
+
+/**
+ * Parser Robusto: Extrai JSON de texto sujo usando Regex
+ */
 async function parseIntent(message: string): Promise<Intent> {
-  const { object } = await generateObject({
-    model: modelFlash,
-    schema: z.object({
-      type: z.enum(["CREATE_SKU", "UPDATE_SKU", "DELETE_SKU", "GET_LAST_SKU", "SEARCH_SKU", "LIST_BY_FAMILIA", "UNKNOWN"]),
-      entities: z.object({
-        familia: z.string().optional(),
-        descricao: z.string().optional(),
-        unidade: z.string().optional(),
-        skuId: z.string().optional()
-      })
-    }),
-    prompt: `Extraia a intenção da mensagem: "${message}". Identifique se é CREATE_SKU, GET_LAST_SKU, SEARCH_SKU ou LIST_BY_FAMILIA. Se for cadastro, extraia a familiaridade (ex: Parafuso), a descricao exata, e unidade.`
-  });
-  return object as Intent;
+  try {
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/ai/parser`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const text = await response.text();
+    console.log("RAW LLM RESPONSE:", text);
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      console.error("JSON não encontrado na resposta bruta:", text);
+      return { type: "UNKNOWN", entities: {} };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return sanitizeIntent(parsed);
+
+  } catch (error) {
+    console.error("Erro fatal no parseIntent:", error);
+    return { type: "UNKNOWN", entities: {} };
+  }
 }
 
 const SKUService = {
@@ -226,7 +281,32 @@ async function handleListByFamilia(entities: Entities) {
 
 async function processUserMessage(message: string) {
   try {
-    const intent = await parseIntent(message);
+    let intent = await parseIntent(message);
+    
+    // FALLBACK INTELIGENTE (BASEADO EM KEYWORDS)
+    if (intent.type === "UNKNOWN") {
+      const msgLow = message.toLowerCase();
+      if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha")) {
+         intent = {
+           type: "CREATE_SKU",
+           entities: {
+             familia: "Parafuso",
+             descricao: message,
+             unidade: "CENTO"
+           }
+         };
+      } else if (msgLow.includes("chapa") || msgLow.includes("mdf") || msgLow.includes("mdp")) {
+         intent = {
+           type: "CREATE_SKU",
+           entities: {
+             familia: "Chapa",
+             descricao: message,
+             unidade: "M2"
+           }
+         };
+      }
+    }
+
     const entities = intent.entities || {};
     if (entities.unidade) entities.unidade = entities.unidade.toUpperCase().trim();
     
@@ -238,8 +318,8 @@ async function processUserMessage(message: string) {
       default: return { message: "Não entendi a solicitação. Pode reformular a instrução operacional?" };
     }
   } catch (error) {
-    console.error("Erro no agente NLU:", error);
-    return { message: "Erro de processamento interno NLU." };
+    console.error("Erro crítico no agente NLU:", error);
+    return { message: "Erro de processamento central da inteligência." };
   }
 }
 

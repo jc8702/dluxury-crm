@@ -25,6 +25,11 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/estoque')) return await handleEstoque(req, res);
     if (cleanUrl.startsWith('/api/orcamentos')) return await handleOrcamentos(req, res);
     if (cleanUrl.startsWith('/api/ai-copilot')) return await handleAICopilot(req, res);
+    if (cleanUrl.startsWith('/api/ai/parser')) {
+      if (req.method !== 'POST') return res.status(405).end();
+      const { handleAIParser } = await import('../src/api-lib/copilot.js');
+      return await handleAIParser(req, res);
+    }
     if (cleanUrl.startsWith('/api/condicoes-pagamento')) return await handleCondicoesPagamento(req, res);
     if (cleanUrl.startsWith('/api/goals')) return await handleGoals(req, res);
     if (cleanUrl.startsWith('/api/kanban')) return await handleKanban(req, res);
