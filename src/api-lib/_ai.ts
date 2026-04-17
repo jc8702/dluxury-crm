@@ -1,10 +1,11 @@
 import { generateObject, generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import { sql } from './_db.js';
 
 const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
-const model = google('gemini-1.5-pro-latest', { apiKey });
+const google = createGoogleGenerativeAI({ apiKey });
+const model = google('gemini-1.5-pro-latest');
 
 /**
  * SKILL 1: GERAR BOM AUTOMATICAMENTE
@@ -141,7 +142,7 @@ export async function detectAnomalies() {
  */
 export async function generateChatResponse(payload: { message: string, history?: any[] }) {
   try {
-    const flashModel = google('gemini-1.5-flash-latest', { apiKey });
+    const flashModel = google('gemini-1.5-flash-latest');
     const { text } = await generateText({
       model: flashModel,
       prompt: `Você é o D'Luxury Copilot, um especialista em ERP Industrial e marcenaria sob medida de alto padrão.
