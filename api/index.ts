@@ -434,25 +434,37 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const promptText = `Você é o D'Luxury Copilot, uma IA integrada com acesso vivo ao CRM. Responda dúvidas, converse, e se o usuário pedir para CADASTRAR UM MATERIAL ou CADASTRAR UM PROJETO, use a tool correspondente e confirme para ele a conclusão informando os dados (como o SKU). Se faltar algo obrigatório, use o placeholder genérico ou 0, e avise o usuário para editar. Histórico: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
+  const promptText = `Você é o D'Luxury Copilot, uma IA ativa do ERP com poderes de administrador. Você PODE CADASTRAR MATERIAL E CADASTRAR PROJETO (Lead). QUANDO O USUÁRIO PEDIR UM CADASTRO VOCÊ DEVE OBRIGATORIAMENTE CHAMAR A TOOL, e depois confirme o resultado pro usuário e diga qual foi o código novo: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
   
   const aiConfig = { tools: chatTools, maxSteps: 5, prompt: promptText };
 
+  const extrairConteudo = (res: any) => {
+    let final = res.text || '';
+    if (!final || final.trim() === '') {
+       if (res.steps && res.steps.length > 0) {
+         final = res.steps.map((s: any) => s.text).filter(Boolean).join('\n\n');
+       }
+       if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
+         final = res.toolResults.map((tr: any) => '✔️ ' + (tr.result.message || 'Ação concluída com sucesso.')).join('\n');
+       }
+    }
+    return final || "Feito! O sistema processou sua solicitação.";
+  };
+
   try {
-    const { text } = await generateText({ model: modelFlash, ...aiConfig });
-    return { content: text };
+    const resFlash = await generateText({ model: modelFlash, ...aiConfig });
+    return { content: extrairConteudo(resFlash) };
   } catch (errorFlash: any) {
     try {
-      const { text } = await generateText({ model: modelPro, ...aiConfig });
-      return { content: text };
+      const resPro = await generateText({ model: modelPro, ...aiConfig });
+      return { content: extrairConteudo(resPro) };
     } catch (errorPro: any) {
       try {
-         // Fallback Legacy (Sem agent steps pois v1 não suporta tool array dinâmico às vezes)
-         const { text } = await generateText({ model: modelLegacy, prompt: promptText });
-         return { content: text };
+         const resLegacy = await generateText({ model: modelLegacy, prompt: promptText });
+         return { content: extrairConteudo(resLegacy) };
       } catch (errorLegacy: any) {
-         const modelosDisponiveis = await listAvailableModels(aiApiKey as string);
-         throw new Error(`Falha nos 3 modelos (Flash, Pro, Legacy). A sua Vercel está com permissão para estes modelos do Google: [${modelosDisponiveis}]. Erro original: ${errorLegacy.message}`);
+         const log = await listAvailableModels(aiApiKey as string);
+         throw new Error(`Exaustão dos motores. Disponíveis: [${log}]. Detalhe: ${errorLegacy.message}`);
       }
     }
   }
