@@ -412,12 +412,12 @@ const chatTools = {
     }
   }),
   cadastrarMaterial: tool({
-    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Preencha todos os parâmetros, usando "UN" para unidade se não souber, e 0 para preço se não souber.',
+    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Extraia o máximo de informações do texto do usuário.',
     parameters: z.object({
-      nome: z.string().describe('Nome curto do material. Ex: MDF BP Carvalho'),
-      descricao: z.string().describe('Todas e quisquer outras informações de medida ou marca.'),
-      unidade_uso: z.string().describe('Sempre UN'),
-      preco_custo: z.number().describe('0 se nao houver preço')
+      nome: z.string().describe('Título curto e claro do material. Ex: MDF Branco Polar. NUNCA DEIXE VAZIO.'),
+      descricao: z.string().describe('Ficha técnica completa (medidas, cor, fabricante, acabamento). NUNCA DEIXE VAZIO. Se não souber, use o texto bruto do usuário.'),
+      unidade_uso: z.string().describe('Unidade de medida. Se não souber, use UN.'),
+      preco_custo: z.number().describe('Preço de custo. Use 0 se não for informado.')
     }),
     execute: async (args) => {
       console.log('[IA] Intenção detectada: cadastrar_material; args:', args);
@@ -453,12 +453,22 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const systemPrompt = `Você é o D'Luxury Copilot, o cérebro operacional do CRM.
+  const systemPrompt = `Você é o D'Luxury Copilot, o cérebro operacional do CRM industrial.
 REGRAS DE OURO:
-1. Sempre que o usuário mencionar "cadastrar", "adicionar" ou "salvar" um material ou projeto, você DEVE extrair os dados e usar a ferramenta correspondente.
-2. Identifique o NOME (título curto) e a DESCRIÇÃO (medidas, marcas, cores).
-3. Seja preciso. Se o usuário disser "chapa mdf branca 15mm guararapes", o nome é "Chapa MDF Branca" e a descrição contém "15mm, Guararapes".
-4. NÃO confirme nada em texto sem que a ferramenta tenha retornado sucesso.`;
+1. Sempre que o usuário mencionar "cadastrar", "adicionar" ou "salvar" um material ou projeto, você DEVE extrair os dados e acionar a ferramenta correspondente imediatamente.
+2. Identifique o NOME (título curto e comercial) e a DESCRIÇÃO (ficha técnica: medidas, marcas, cores, acabamentos).
+3. Seja preciso e exaustivo na extração. NUNCA envie parâmetros vazios para as ferramentas.
+
+EXEMPLOS DE EXTRAÇÃO:
+- Entrada: "cadastre chapa MDF 18mm branco polar duratex 2.75x1.84"
+  Nome: "MDF Branco Polar"
+  Descricao: "Espessura 18mm, Fabricante Duratex, Dimensões 2.75x1.84"
+
+- Entrada: "adicionar mdf bp carvalho dian 15mm 2,75x1,85 2f duratex"
+  Nome: "MDF BP Carvalho Dian"
+  Descricao: "Espessura 15mm, Dimensões 2.75x1.85, Acabamento 2F, Fabricante Duratex"
+
+4. NÃO confirme o cadastro em texto até que a ferramenta retorne sucesso. Se a ferramenta falhar, repasse o erro técnico ao usuário.`;
   
   const messagesArray = (payload.history || []).map((m: any) => ({
     role: m.type === 'ai' ? 'assistant' : 'user',
