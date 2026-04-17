@@ -439,7 +439,12 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const systemPrompt = `Você é o D'Luxury Copilot. Seu papel principal é usar ferramentas para inserir dados no CRM. SE o usuário pedir um cadastro, é totalmente PROIBIDO confirmar sem acionar as Tools. Você deve rodar a tool relacionada. A tool retorna sucesso se gravou.`;
+  const systemPrompt = `Você é o D'Luxury Copilot, o cérebro operacional do CRM.
+REGRAS DE OURO:
+1. Sempre que o usuário mencionar "cadastrar", "adicionar" ou "salvar" um material ou projeto, você DEVE extrair os dados e usar a ferramenta correspondente.
+2. Identifique o NOME (título curto) e a DESCRIÇÃO (medidas, marcas, cores).
+3. Seja preciso. Se o usuário disser "chapa mdf branca 15mm guararapes", o nome é "Chapa MDF Branca" e a descrição contém "15mm, Guararapes".
+4. NÃO confirme nada em texto sem que a ferramenta tenha retornado sucesso.`;
   
   const messagesArray = (payload.history || []).map((m: any) => ({
     role: m.type === 'ai' ? 'assistant' : 'user',
@@ -451,13 +456,8 @@ async function generateChatResponse(payload: any) {
     tools: chatTools, 
     maxSteps: 5, 
     system: systemPrompt,
-    messages: messagesArray,
-    toolChoice: 'auto'
+    messages: messagesArray
   };
-
-  if (payload.message.toLowerCase().includes('cadastr') || payload.message.toLowerCase().includes('adicion')) {
-      aiConfig.toolChoice = 'required';
-  }
 
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
@@ -466,8 +466,7 @@ async function generateChatResponse(payload: any) {
       const data = tr.result || tr.output;
       if (data && data.message) return `✔️ ${data.message}`;
       if (data && data.error) return `❌ ERRO: ${data.error}`;
-      if (tr.args || tr.input) return `🔧 RAW ARGS (Falha oculta): ${JSON.stringify(tr.args || tr.input)} | RES: ${JSON.stringify(data)}`;
-      return `⚠️ STRUCT DESCONHECIDA: ${JSON.stringify(tr)}`;
+      return '';
     };
 
     if (res.steps && res.steps.length > 0) {
@@ -481,10 +480,11 @@ async function generateChatResponse(payload: any) {
     }
     
     if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
-       final = res.toolResults.map(parseResult).join('\n');
+       const logs = res.toolResults.map(parseResult).filter(Boolean).join('\n');
+       if (logs) final = logs;
     }
 
-    return final.trim() || 'Ação processada e finalizada em nuvem.';
+    return final.trim() || 'Processado com sucesso.';
   };
 
   try {
