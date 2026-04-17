@@ -21,11 +21,28 @@ export async function handleOrcamentos(req: any, res: any) {
 
     if (req.method === 'POST') {
       const f = req.body;
-      const year = new Date().getFullYear();
-      const last = await sql`SELECT numero FROM orcamentos WHERE numero LIKE ${`ORC-${year}-%`} ORDER BY numero DESC LIMIT 1`;
-      const num = `ORC-${year}-${(last.length ? (parseInt(last[0].numero.split('-')[2]) + 1) : 1).toString().padStart(3, '0')}`;
+      
+      // Nova Lógica de Numeração PRO-DIA-MES-ANO-REVISAO-CLIENTE
+      const now = new Date();
+      const dia = now.getDate().toString().padStart(2, '0');
+      const mes = (now.getMonth() + 1).toString().padStart(2, '0');
+      const ano = now.getFullYear();
+      const dataStr = `${dia}${mes}${ano}`;
+
+      // Busca nome do cliente para o sufixo
+      const client = (await sql`SELECT nome FROM clients WHERE id = ${f.cliente_id}`)[0];
+      const clientSuffix = (client?.nome || 'AVULSO').split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      // Contador de revisões para este prefixo no dia
+      const prefix = `PRO-${dataStr}-REV`;
+      const relatives = await sql`SELECT numero FROM orcamentos WHERE numero LIKE ${prefix + '%'}`;
+      const revNum = relatives.length.toString().padStart(2, '0');
+      
+      const num = `PRO-${dataStr}-REV${revNum}-${clientSuffix}`;
+
       const orc = await sql`INSERT INTO orcamentos (cliente_id, projeto_id, numero, status, valor_base, taxa_mensal, condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos) VALUES (${f.cliente_id}, ${f.projeto_id || null}, ${num}, ${f.status || 'rascunho'}, ${f.valor_base}, ${f.taxa_mensal}, ${f.condicao_pagamento_id}, ${f.valor_final}, ${f.prazo_entrega_dias}, ${f.prazo_tipo || 'padrao'}, ${f.adicional_urgencia_pct}, ${f.observacoes}, ${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : '[]'}::jsonb) RETURNING *`;
       const orcId = orc[0].id;
+      
       if (Array.isArray(f.itens)) {
         for (const itm of f.itens) {
           await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total) VALUES (${orcId}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total})`;

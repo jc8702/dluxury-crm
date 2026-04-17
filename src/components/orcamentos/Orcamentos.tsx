@@ -25,6 +25,73 @@ const Estimates: React.FC = () => {
   const [formaPagamento, setFormaPagamento] = useState('50% DE ENTRADA + 50% NA ENTREGA');
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [showItemForm, setShowItemForm] = useState(false);
+  const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadHistory = async () => {
+    try {
+      setLoading(true);
+      const data = await api.orcamentos.list();
+      setOrcamentosList(data);
+    } catch (e) {
+      console.error("Error loading history", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const saveBudget = async () => {
+    if (!selectedClient) {
+      alert("Selecione um cliente para salvar o orçamento.");
+      return;
+    }
+    if (items.length === 0) {
+      alert("Adicione pelo menos um móvel ao orçamento.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const payload = {
+        cliente_id: selectedClient,
+        projeto_id: selectedProject || null,
+        status: 'rascunho',
+        valor_base: subtotalCusto,
+        taxa_mensal: 0,
+        condicao_pagamento_id: null,
+        valor_final: totalFinal,
+        prazo_entrega_dias: parseInt(prazoEntrega) || 45,
+        prazo_tipo: 'uteis',
+        adicional_urgencia_pct: 0,
+        observacoes: `Prazo: ${prazoEntrega}. Pagamento: ${formaPagamento}`,
+        itens: items.map(it => ({
+          descricao: it.name,
+          ambiente: 'Geral',
+          largura_cm: it.width,
+          altura_cm: it.height,
+          profundidade_cm: it.depth,
+          material: it.woodType,
+          acabamento: 'Padrão',
+          quantidade: it.quantity,
+          valor_unitario: (it.woodPrice + (it.laborHours * it.laborRate)) * (1 + marginPercent/100),
+          valor_total: ((it.woodPrice + (it.laborHours * it.laborRate)) * (1 + marginPercent/100)) * it.quantity
+        }))
+      };
+
+      await api.orcamentos.create(payload);
+      alert("Orçamento gravado com sucesso no histórico!");
+      loadHistory();
+    } catch (e: any) {
+      alert("Erro ao salvar orçamento: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Persistence Logic
   React.useEffect(() => {
@@ -287,12 +354,12 @@ const Estimates: React.FC = () => {
         </div>
 
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-          <button onClick={() => setShowItemForm(true)}
+          <button onClick={saveBudget} disabled={saving || items.length === 0}
             style={{
-              background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-              border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700'
+              background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white',
+              border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: (saving || items.length === 0) ? 'not-allowed' : 'pointer', fontWeight: '700', opacity: (saving || items.length === 0) ? 0.6 : 1
             }}>
-            + Adicionar Móvel
+            {saving ? '⌛ Gravando...' : '💾 Gravar Proposta no Banco'}
           </button>
           {items.length > 0 && (
             <button onClick={clearDraft}
@@ -442,6 +509,71 @@ const Estimates: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Histórico de Orçamentos */}
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>📜 Histórico de Propostas</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Últimos orçamentos registrados no sistema.</p>
+          </div>
+          <button onClick={loadHistory} style={{ background: 'none', border: 'none', color: '#d4af37', cursor: 'pointer' }}>🔄 Atualizar</button>
+        </header>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Carregando histórico...</div>
+        ) : orcamentosList.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', border: '1px dashed var(--border)', borderRadius: '12px' }}>Nenhuma proposta gravada ainda.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ textAlign: 'left', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>NÚMERO PROPOSTA</th>
+                  <th style={{ textAlign: 'left', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>CLIENTE</th>
+                  <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>DATA</th>
+                  <th style={{ textAlign: 'right', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>VALOR TOTAL</th>
+                  <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>STATUS</th>
+                  <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orcamentosList.map(orc => (
+                  <tr key={orc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                    <td style={{ padding: '1rem', fontWeight: '700', color: '#d4af37' }}>{orc.numero}</td>
+                    <td style={{ padding: '1rem' }}>{orc.cliente_nome || 'N/A'}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      {new Date(orc.criado_em).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(orc.valor_final || 0)}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <span style={{ 
+                        fontSize: '0.7rem', 
+                        padding: '0.2rem 0.6rem', 
+                        borderRadius: '12px', 
+                        background: orc.status === 'aprovado' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+                        color: orc.status === 'aprovado' ? '#10b981' : 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                        fontWeight: 'bold'
+                      }}>{orc.status}</span>
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <button 
+                        onClick={() => {
+                          alert(`Número da Proposta: ${orc.numero}\nFunção de re-impressão em breve.`);
+                        }}
+                        style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        📄 Ver Detalhes
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

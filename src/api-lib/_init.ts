@@ -184,7 +184,49 @@ export async function runInitDB() {
     }
   }
 
-  // 13. Production Orders Table (MES)
+  // 13. Budgeting Tables (CRM/Industrial)
+  await sql`
+    CREATE TABLE IF NOT EXISTS orcamentos (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      cliente_id UUID REFERENCES clients(id),
+      projeto_id UUID REFERENCES projects(id),
+      numero TEXT UNIQUE,
+      status TEXT DEFAULT 'rascunho',
+      valor_base DECIMAL(12,2),
+      taxa_mensal DECIMAL(12,2),
+      condicao_pagamento_id UUID,
+      valor_final DECIMAL(12,2),
+      prazo_entrega_dias INTEGER,
+      prazo_tipo TEXT DEFAULT 'padrao',
+      adicional_urgencia_pct DECIMAL(5,2) DEFAULT 0,
+      observacoes TEXT,
+      materiais_consumidos JSONB DEFAULT '[]',
+      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS itens_orcamento (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      descricao TEXT,
+      ambiente TEXT,
+      largura_cm DECIMAL(10,2),
+      altura_cm DECIMAL(10,2),
+      profundidade_cm DECIMAL(10,2),
+      material TEXT,
+      acabamento TEXT,
+      quantidade INTEGER DEFAULT 1,
+      valor_unitario DECIMAL(12,2),
+      valor_total DECIMAL(12,2),
+      erp_product_id UUID,
+      erp_parametros JSONB DEFAULT '{}',
+      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  // 14. Production Orders Table (MES)
   await sql`
     CREATE TABLE IF NOT EXISTS ordens_producao (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -209,7 +251,7 @@ export async function runInitDB() {
   await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
   await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
 
-  // 14. Engineering Modules Table (BOM)
+  // 15. Engineering Modules Table (BOM)
   await sql`
     CREATE TABLE IF NOT EXISTS erp_product_bom (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
