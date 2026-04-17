@@ -30,9 +30,11 @@ export const extractAndVerifyToken = (req: any) => {
 };
 
 export const validateAuth = (req: any) => {
-  const { user, error } = extractAndVerifyToken(req);
-  if (error) {
-    return { authorized: false, error };
-  }
-  return { authorized: true, user, error: null };
+  // BYPASS DE SEGURANÇA (Modo Desenvolvimento/Teste)
+  // Como a tela de login foi removida, liberamos o acesso automático.
+  return { 
+    authorized: true, 
+    user: { id: 'admin-bypass', name: 'Administrador (Bypass)', role: 'admin' }, 
+    error: null 
+  };
 };
