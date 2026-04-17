@@ -457,12 +457,19 @@ async function generateChatResponse(payload: any) {
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
     
+const parseResult = (tr: any) => {
+      if (tr.result && tr.result.message) return `✔️ ${tr.result.message}`;
+      if (tr.result && tr.result.error) return `❌ ERRO: ${tr.result.error}`;
+      if (tr.args) return `🔧 DUMP ZOD/SDK ARGS: ${JSON.stringify(tr.args)} | RESULT: ${JSON.stringify(tr.result)}`;
+      return `⚠️ STRUCT DESCONHECIDA: ${JSON.stringify(tr)}`;
+    };
+
     // Captura resultados ocultos nos steps internos
     if (res.steps && res.steps.length > 0) {
        for (const step of res.steps) {
          if (step.text && !final.includes(step.text)) final += step.text + '\n';
          if (step.toolResults && step.toolResults.length > 0) {
-            const logs = step.toolResults.map((tr: any) => tr.result?.message ? `✔️ ${tr.result.message}` : '').filter(Boolean).join('\n');
+            const logs = step.toolResults.map(parseResult).filter(Boolean).join('\n');
             if (logs) final += '\n' + logs;
          }
        }
@@ -470,7 +477,7 @@ async function generateChatResponse(payload: any) {
     
     // Captura raiz (fallback)
     if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
-       final = res.toolResults.map((tr: any) => tr.result?.message ? `✔️ ${tr.result.message}` : 'Operação realizada.').join('\n');
+       final = res.toolResults.map(parseResult).join('\n');
     }
 
     return final.trim() || 'Ação processada e finalizada em nuvem.';
