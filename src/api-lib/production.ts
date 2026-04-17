@@ -23,10 +23,12 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
     if (method === 'POST') return await createOP(req, res);
+    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res);
     if (method === 'PATCH') return await updateOPStatus(req, res);
     
     return res.status(405).json({ success: false, error: 'Método não permitido' });
@@ -96,6 +98,28 @@ async function createOP(req: any, res: any) {
 }
 
 /**
+ * Atualiza detalhes da OP (checklist, produto, pecas)
+ */
+async function updateOPDetails(req: any, res: any) {
+  const { op_id, produto, pecas, checklist } = req.body;
+
+  const [atualizada] = await sql`
+    UPDATE ordens_producao 
+    SET produto = ${produto},
+        pecas = ${pecas},
+        checklist = ${JSON.stringify(checklist || [])},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE op_id = ${op_id}
+    RETURNING *
+  `;
+
+  // Se mudou peças, recalcula previsões
+  await syncQueueForecasting();
+
+  return res.status(200).json({ success: true, data: atualizada });
+}
+
+/**
  * Atualiza o status da OP e gerencia os tempos de produção
  */
 async function updateOPStatus(req: any, res: any) {
@@ -108,14 +132,22 @@ async function updateOPStatus(req: any, res: any) {
   let data_inicio = op.data_inicio;
   let data_fim = op.data_fim;
 
-  // Se começou agora (moveu de PENDENTE)
+  // Se começou agora (moveu de PENDENTE para qualquer etapa produtiva)
   if (!data_inicio && status !== "PENDENTE") {
     data_inicio = new Date();
+  }
+
+  // Se voltou para PENDENTE, reseta início
+  if (status === "PENDENTE") {
+    data_inicio = null;
   }
 
   // Se finalizou
   if (status === "FINALIZADA") {
     data_fim = new Date();
+  } else {
+    // Se saiu de FINALIZADA (reabriu), reseta fim
+    data_fim = null;
   }
 
   const [atualizada] = await sql`
@@ -128,7 +160,7 @@ async function updateOPStatus(req: any, res: any) {
     RETURNING *
   `;
 
-  // Recalcular fila se mudou status (pode afetar gargalos)
+  // Recalcular fila se mudou status (pode afetar gargalos e datas)
   await syncQueueForecasting();
 
   return res.status(200).json({ success: true, data: atualizada });

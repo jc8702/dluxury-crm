@@ -197,6 +197,7 @@ export async function runInitDB() {
       tempo_previsto_corte INTEGER DEFAULT 0,
       tempo_previsto_montagem INTEGER DEFAULT 0,
       data_prevista_entrega TIMESTAMP WITH TIME ZONE,
+      checklist JSONB DEFAULT '[]',
       metadata JSONB DEFAULT '{}',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -206,6 +207,7 @@ export async function runInitDB() {
   await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
   await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
   await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
+  await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
 
   // 14. Engineering Modules Table (BOM)
   await sql`
