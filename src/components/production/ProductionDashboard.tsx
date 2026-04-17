@@ -6,6 +6,8 @@ interface Metrics {
   emProducao: number;
   leadTimeMedio: number;
   taxaEficiencia: number;
+  opsAtrasadas: number;
+  filaTotalDias: number;
 }
 
 const ProductionDashboard: React.FC = () => {
@@ -40,22 +42,22 @@ const ProductionDashboard: React.FC = () => {
         <div style={{ fontSize: '0.7rem', color: '#10b981' }}>📊 Monitoramento Ativo</div>
       </div>
 
+      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #ef4444' }}>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Atrasos Críticos</p>
+        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0', color: (metrics?.opsAtrasadas || 0) > 0 ? '#ef4444' : 'inherit' }}>{metrics?.opsAtrasadas || 0}</h4>
+        <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>⚠️ Requer Atenção</div>
+      </div>
+
       <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Em Execução</p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{metrics?.emProducao || 0}</h4>
-        <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>⚙️ Chão de Fábrica</div>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Carga de Fila</p>
+        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{metrics?.filaTotalDias || 0} dias</h4>
+        <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>⏳ Prazo p/ Limpar Fila</div>
       </div>
 
       <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Eficiência (OEE)</p>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>OEE / Eficiência</p>
         <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{(metrics?.taxaEficiencia ?? 0).toFixed(1)}%</h4>
-        <div style={{ fontSize: '0.7rem', color: '#10b981' }}>📈 Meta de Produção</div>
-      </div>
-
-      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #f59e0b' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>Lead Time Médio</p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>{metrics?.leadTimeMedio || 0} min</h4>
-        <div style={{ fontSize: '0.7rem', color: '#f59e0b' }}>⏱️ Tempo de Ciclo</div>
+        <div style={{ fontSize: '0.7rem', color: '#10b981' }}>📈 Meta Mensal</div>
       </div>
     </div>
   );

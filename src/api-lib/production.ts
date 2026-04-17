@@ -1,4 +1,5 @@
 import { sql } from './_db.js';
+import { calcularPrevisaoEntrega } from './_productionForecasting.js';
 
 /**
  * MÓDULO MES (Manufacturing Execution System) - ARIA 4.0
@@ -12,6 +13,11 @@ export async function handleProduction(req: any, res: any) {
   const { id } = req.query || {};
 
   try {
+    // Garantia de migração (v6 hotfix)
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
+
     if (method === 'GET' && !id) return await listOPs(res);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
     if (method === 'POST') return await createOP(req, res);
@@ -24,6 +30,26 @@ export async function handleProduction(req: any, res: any) {
 }
 
 // --- 2. LÓGICA DE NEGÓCIO ---
+
+/**
+ * Sincroniza as previsões de entrega de toda a fila ativa
+ */
+async function syncQueueForecasting() {
+  const allOps = await sql`SELECT * FROM ordens_producao WHERE status != 'FINALIZADA' ORDER BY created_at ASC`;
+  if (allOps.length === 0) return;
+
+  const previstos = calcularPrevisaoEntrega(allOps as any);
+
+  for (const op of previstos) {
+    await sql`
+      UPDATE ordens_producao 
+      SET data_prevista_entrega = ${new Date(op.data_prevista_entrega as number)},
+          tempo_previsto_corte = ${op.tempo_previsto_corte},
+          tempo_previsto_montagem = ${op.tempo_previsto_montagem}
+      WHERE op_id = ${op.op_id}
+    `;
+  }
+}
 
 /**
  * Lista todas as OPs
@@ -49,6 +75,9 @@ async function createOP(req: any, res: any) {
     RETURNING *
   `;
 
+  // Atualizar fila
+  await syncQueueForecasting();
+
   return res.status(201).json({ success: true, data: novaOP });
 }
 
@@ -57,7 +86,6 @@ async function createOP(req: any, res: any) {
  */
 async function updateOPStatus(req: any, res: any) {
   const { op_id, status } = req.body;
-  const fluxo = ["PENDENTE", "CORTE", "MONTAGEM", "FINALIZADA"];
 
   // Busca estado atual
   const [op] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
@@ -86,6 +114,9 @@ async function updateOPStatus(req: any, res: any) {
     RETURNING *
   `;
 
+  // Recalcular fila se mudou status (pode afetar gargalos)
+  await syncQueueForecasting();
+
   return res.status(200).json({ success: true, data: atualizada });
 }
 
@@ -94,10 +125,12 @@ async function updateOPStatus(req: any, res: any) {
  */
 async function getProductionMetrics(res: any) {
   const allOps = await sql`SELECT * FROM ordens_producao`;
+  const agora = Date.now();
   
   const finalizadas = allOps.filter(o => o.status === "FINALIZADA" && o.data_inicio && o.data_fim);
+  const pendentes = allOps.filter(o => o.status !== "FINALIZADA");
   
-  // Cálculo de Lead Time Médio em minutos
+  // Cálculo de Lead Time Médio em minutos (histórico)
   const tempos = finalizadas.map(o => {
     const inicio = new Date(o.data_inicio).getTime();
     const fim = new Date(o.data_fim).getTime();
@@ -108,12 +141,24 @@ async function getProductionMetrics(res: any) {
     ? (tempos.reduce((a, b) => a + b, 0) / tempos.length) 
     : 0;
 
+  // Novas métricas de previsão
+  const opsAtrasadas = pendentes.filter(o => 
+    o.data_prevista_entrega && new Date(o.data_prevista_entrega).getTime() < agora
+  ).length;
+
+  const totalMinutosFila = pendentes.reduce((acc, o) => 
+    acc + (o.tempo_previsto_corte || 0) + (o.tempo_previsto_montagem || 0), 0
+  );
+
   const metrics = {
     totalOPs: allOps.length,
     finalizadas: finalizadas.length,
     emProducao: allOps.filter(o => o.status !== "PENDENTE" && o.status !== "FINALIZADA").length,
     leadTimeMedio: parseFloat(leadTimeMedio.toFixed(2)),
-    taxaEficiencia: allOps.length > 0 ? (finalizadas.length / allOps.length) * 100 : 0
+    taxaEficiencia: allOps.length > 0 ? (finalizadas.length / allOps.length) * 100 : 0,
+    // Previsão
+    opsAtrasadas,
+    filaTotalDias: parseFloat((totalMinutosFila / 480).toFixed(1)) // Carga diária
   };
 
   return res.status(200).json({ success: true, data: metrics });

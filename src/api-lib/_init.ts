@@ -194,11 +194,18 @@ export async function runInitDB() {
       pecas INTEGER DEFAULT 0,
       data_inicio TIMESTAMP WITH TIME ZONE,
       data_fim TIMESTAMP WITH TIME ZONE,
+      tempo_previsto_corte INTEGER DEFAULT 0,
+      tempo_previsto_montagem INTEGER DEFAULT 0,
+      data_prevista_entrega TIMESTAMP WITH TIME ZONE,
       metadata JSONB DEFAULT '{}',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `;
+  
+  await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
 
   // 14. Engineering Modules Table (BOM)
   await sql`

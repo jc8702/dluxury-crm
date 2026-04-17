@@ -123,9 +123,25 @@ const ProductionPanel: React.FC = () => {
                 
                 <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.25rem' }}>{op.produto}</h4>
                 
+                <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>📅 Previsão:</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() ? '#ef4444' : 'var(--text)' }}>
+                      {op.data_prevista_entrega ? new Date(op.data_prevista_entrega).toLocaleDateString('pt-BR') : 'Calculando...'}
+                    </span>
+                  </div>
+                  {op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() && op.status !== 'FINALIZADA' && (
+                    <div className="pulse" style={{ fontSize: '0.6rem', color: '#ef4444', fontWeight: '900', textAlign: 'right', textTransform: 'uppercase' }}>⚠️ EM ATRASO</div>
+                  )}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>⏱️ Corte: {op.tempo_previsto_corte || 0}m</span>
+                    <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>⏱️ Mont: {op.tempo_previsto_montagem || 0}m</span>
+                  </div>
+                </div>
+
                 {op.data_inicio && (
                   <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                    ⏱️ Iniciado: {new Date(op.data_inicio).toLocaleTimeString('pt-BR')}
+                    🛠️ Iniciado: {new Date(op.data_inicio).toLocaleTimeString('pt-BR')}
                   </p>
                 )}
 
