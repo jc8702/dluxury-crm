@@ -42,8 +42,8 @@ export async function handleReports(req: any, res: any) {
     const { type, projectId } = req.query || {};
     let result;
     if (type === 'fin-rentabilidade') result = await sql`SELECT * FROM bi_custos_projeto ORDER BY custo_material_total DESC`;
-    if (type === 'ind-romaneio') result = await sql`SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku_code, cr.quantidade_com_perda, s.unidade_medida FROM erp_project_items pi JOIN erp_consumption_results cr ON cr.project_item_id = pi.id JOIN erp_skus s ON s.id = cr.sku_id WHERE pi.project_id = ${projectId} ORDER BY pi.label, cr.componente_nome`;
-    if (type === 'com-necessidade') result = await sql`SELECT s.sku_code, s.nome, i.estoque_atual, i.estoque_minimo FROM erp_skus s JOIN erp_inventory i ON i.sku_id = s.id WHERE i.estoque_atual <= i.estoque_minimo ORDER BY (i.estoque_minimo - i.estoque_atual) DESC`;
+    if (type === 'ind-romaneio') result = await sql`SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku as sku_code, cr.quantidade_com_perda, s.unidade_uso as unidade_medida FROM erp_project_items pi JOIN erp_consumption_results cr ON cr.project_item_id = pi.id JOIN materiais s ON s.id = cr.sku_id WHERE pi.project_id = ${projectId} ORDER BY pi.label, cr.componente_nome`;
+    if (type === 'com-necessidade') result = await sql`SELECT s.sku as sku_code, s.nome, s.estoque_atual, s.estoque_minimo FROM materiais s WHERE s.estoque_atual <= s.estoque_minimo ORDER BY (s.estoque_minimo - s.estoque_atual) DESC`;
     if (type === 'ind-desvios') result = await sql`SELECT * FROM bi_desvio_producao`;
     if (!result) return res.status(400).json({ success: false, error: 'Tipo inválido' });
     return res.status(200).json({ success: true, data: result });
@@ -71,16 +71,16 @@ export async function handleSKUs(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM erp_skus ORDER BY nome ASC`;
+      const result = await sql`SELECT id, sku as sku_code, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo FROM materiais ORDER BY nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
       const f = req.body;
-      const r = await sql`INSERT INTO erp_skus (sku_code, nome, preco_base, unidade_medida, atributos) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.atributos}) RETURNING *`;
+      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0) RETURNING id, sku as sku_code, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo`;
       return res.status(201).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {
-      await sql`DELETE FROM erp_skus WHERE id = ${req.query.id}`;
+      await sql`UPDATE materiais SET ativo = false WHERE id = ${req.query.id}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
