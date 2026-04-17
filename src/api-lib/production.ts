@@ -10,7 +10,13 @@ import { calcularPrevisaoEntrega } from './_productionForecasting.js';
 
 export async function handleProduction(req: any, res: any) {
   const method = req.method;
-  const { id } = req.query || {};
+  const url = req.url || '';
+  
+  // Extração robusta de ID/Sub-rota (suporta ?id=X ou /api/production/metrics)
+  let { id } = req.query || {};
+  if (!id && url.includes('/production/')) {
+    id = url.split('/production/')[1].split('?')[0];
+  }
 
   try {
     // Garantia de migração (v6 hotfix)
@@ -18,13 +24,14 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
 
-    if (method === 'GET' && !id) return await listOPs(res);
+    if (method === 'GET' && (!id || id === 'list')) return await listOPs(res);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
     if (method === 'POST') return await createOP(req, res);
     if (method === 'PATCH') return await updateOPStatus(req, res);
     
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
+    console.error('PRODUCTION_HANDLER_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -51,11 +58,18 @@ async function syncQueueForecasting() {
   }
 }
 
-/**
- * Lista todas as OPs
- */
 async function listOPs(res: any) {
   const ops = await sql`SELECT * FROM ordens_producao ORDER BY created_at DESC`;
+  
+  // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
+  const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
+  if (precisaSincronizar) {
+    console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...');
+    await syncQueueForecasting();
+    const opsAtualizadas = await sql`SELECT * FROM ordens_producao ORDER BY created_at DESC`;
+    return res.status(200).json({ success: true, data: opsAtualizadas });
+  }
+
   return res.status(200).json({ success: true, data: ops });
 }
 
