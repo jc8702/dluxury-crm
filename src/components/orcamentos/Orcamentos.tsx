@@ -357,7 +357,7 @@ const Estimates: React.FC = () => {
           </p>
         </div>
         <div>
-          <button onClick={generatePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed' }}>
+          <button onClick={handleGeneratePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed' }}>
             🖨️ Exportar Orçamento PDF
           </button>
         </div>
