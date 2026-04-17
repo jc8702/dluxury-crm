@@ -416,26 +416,40 @@ const chatTools = {
         let proximoSku = 'SKU-0001';
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
            const match = lastSkuQuery[0].sku.match(/\d+/);
-           if (match) {
-              proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`;
-           }
+           if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
         
+        // Buscando uma categoria existente para não falhar regra de FK
+        const categorias = await sql`SELECT id FROM categorias_material LIMIT 1`;
+        const catId = categorias.length > 0 ? categorias[0].id : null;
+
         const unidade = args.unidade_uso || 'UN';
         const preco = args.preco_custo || 0;
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, null, true) RETURNING id`;
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
+        
         return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido com SKU ${proximoSku}` };
       } catch (err: any) {
-        return { success: false, error: err.message };
+        return { success: false, message: `Erro fatal no Banco de Dados (Material): ${err.message}` };
       }
     }
   })
 };
 
 async function generateChatResponse(payload: any) {
-  const promptText = `Você é o D'Luxury Copilot, IA integrada com o ERP. ATENÇÃO: QUANDO O USUÁRIO PEDIR CADASTRO, NÃO MOSTRE CÓDIGO FONTE, NEM JSON. VOCÊ DEVE OBRIGATORIAMENTE CHAMAR A TOOL E EXECUTAR. Mapeie eventuais especificações do usuário (marca, medidas) para a string 'descricao'. Resuma a confirmação de operação dizendo o ID/SKU gerado. Histórico: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
+  const systemPrompt = `Você é o D'Luxury Copilot. IMPORTANTE: Seu objetivo principal é AJUDAR O GERENTE. SE ele pedir para adicionar um material, VOCÊ NÃO PODE apenas dizer que fez. Você TEM que acionar nativamente a ferramenta (Tool Function) 'cadastrarMaterial'. SEMPRE ACIONE a Tool. Se o sistema retornar sucesso, mostre os dados.`;
   
-  const aiConfig = { tools: chatTools, maxSteps: 5, prompt: promptText };
+  const messagesArray = (payload.history || []).map((m: any) => ({
+    role: m.type === 'ai' ? 'assistant' : 'user',
+    content: m.content
+  }));
+  messagesArray.push({ role: 'user', content: payload.message });
+  
+  const aiConfig = { 
+    tools: chatTools, 
+    maxSteps: 5, 
+    system: systemPrompt,
+    messages: messagesArray 
+  };
 
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
@@ -459,7 +473,7 @@ async function generateChatResponse(payload: any) {
       return { content: extrairConteudo(resPro) };
     } catch (errorPro: any) {
       try {
-         const resLegacy = await generateText({ model: modelLegacy, prompt: promptText });
+         const resLegacy = await generateText({ model: modelLegacy, system: systemPrompt, messages: messagesArray });
          return { content: extrairConteudo(resLegacy) };
       } catch (errorLegacy: any) {
          const log = await listAvailableModels(aiApiKey as string);
