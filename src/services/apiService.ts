@@ -29,7 +29,10 @@ export const apiService = {
          }
       }
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const fullError = errorData.error 
+        ? `${errorData.error}${errorData.details ? `: ${errorData.details}` : ''}` 
+        : `HTTP error! status: ${response.status}`;
+      throw new Error(fullError);
     }
 
     if (response.status === 204) return null;
