@@ -72,26 +72,27 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                 key={item.id}
                 draggable
                 onDragStart={() => handleDragStart(item.id)}
-                className="card"
+                onClick={() => onEdit && onEdit(item)}
+                className="card hover-scale"
                 style={{ 
-                  cursor: 'grab', 
+                  cursor: 'pointer', 
                   padding: '1rem', 
                   background: 'var(--surface)',
                   border: '1px solid var(--border)',
                   userSelect: 'none',
-                  opacity: draggedId === item.id ? 0.4 : 1
+                  opacity: draggedId === item.id ? 0.4 : 1,
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1 }}>{item.title}</p>
                     {onEdit && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                        style={{ all: 'unset', cursor: 'pointer', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                      <div 
+                        style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
                       >
                         Editar
-                      </button>
+                      </div>
                     )}
                   </div>
                   {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}

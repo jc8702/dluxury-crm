@@ -10,16 +10,49 @@ export async function handleClients(req: any, res: any) {
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
-      const { nome, cpf, telefone, email, endereco, bairro, cidade, uf, tipo_imovel, comodos_interesse, origem, observacoes, status, razao_social } = req.body;
-      const comodosStr = Array.isArray(comodos_interesse) ? comodos_interesse.join(', ') : (comodos_interesse || '');
-      const result = await sql`INSERT INTO clients (nome, cpf, telefone, email, endereco, bairro, cidade, uf, tipo_imovel, comodos_interesse, origem, observacoes, status, razao_social, cnpj, municipio, situacao_cadastral) VALUES (${nome}, ${cpf}, ${telefone}, ${email}, ${endereco}, ${bairro}, ${cidade}, ${uf}, ${tipo_imovel}, ${comodosStr}, ${origem}, ${observacoes}, ${status || 'ativo'}, ${razao_social || nome}, ${cpf}, ${cidade}, ${status === 'ativo' ? 'ATIVA' : 'INATIVA'}) RETURNING *`;
+      const f = req.body;
+      const comodosStr = Array.isArray(f.comodos_interesse) ? f.comodos_interesse.join(', ') : (f.comodos_interesse || '');
+      
+      const result = await sql`
+        INSERT INTO clients (
+          nome, cpf, telefone, email, endereco, bairro, cidade, uf, 
+          tipo_imovel, comodos_interesse, origem, observacoes, status, 
+          razao_social, cnpj, municipio, situacao_cadastral
+        ) VALUES (
+          ${f.nome || ''}, ${f.cpf || ''}, ${f.telefone || ''}, ${f.email || ''}, 
+          ${f.endereco || ''}, ${f.bairro || ''}, ${f.cidade || ''}, ${f.uf || ''}, 
+          ${f.tipo_imovel || 'casa'}, ${comodosStr}, ${f.origem || 'indicacao'}, 
+          ${f.observacoes || ''}, ${f.status || 'ativo'}, ${f.razao_social || f.nome || ''}, 
+          ${f.cpf || ''}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}
+        ) RETURNING *
+      `;
       return res.status(201).json({ success: true, data: result[0] });
     }
-    if (req.method === 'PATCH') {
+    if (req.method === 'PATCH' || req.method === 'PUT') {
       const { id } = req.query;
       const f = req.body;
       const comodosStr = Array.isArray(f.comodos_interesse) ? f.comodos_interesse.join(', ') : (f.comodos_interesse || null);
-      const result = await sql`UPDATE clients SET nome = COALESCE(${f.nome}, nome), cpf = COALESCE(${f.cpf}, cpf), telefone = COALESCE(${f.telefone}, telefone), email = COALESCE(${f.email}, email), endereco = COALESCE(${f.endereco}, endereco), bairro = COALESCE(${f.bairro}, bairro), cidade = COALESCE(${f.cidade}, cidade), uf = COALESCE(${f.uf}, uf), tipo_imovel = COALESCE(${f.tipo_imovel}, tipo_imovel), comodos_interesse = COALESCE(${comodosStr}, comodos_interesse), origem = COALESCE(${f.origem}, origem), observacoes = COALESCE(${f.observacoes}, observacoes), status = COALESCE(${f.status}, status), razao_social = COALESCE(${f.razao_social}, razao_social) WHERE id = ${id} RETURNING *`;
+      
+      const result = await sql`
+        UPDATE clients SET 
+          nome = COALESCE(${f.nome}, nome), 
+          cpf = COALESCE(${f.cpf}, cpf), 
+          telefone = COALESCE(${f.telefone}, telefone), 
+          email = COALESCE(${f.email}, email), 
+          endereco = COALESCE(${f.endereco}, endereco), 
+          bairro = COALESCE(${f.bairro}, bairro), 
+          cidade = COALESCE(${f.cidade}, cidade), 
+          uf = COALESCE(${f.uf}, uf), 
+          tipo_imovel = COALESCE(${f.tipo_imovel}, tipo_imovel), 
+          comodos_interesse = COALESCE(${comodosStr}, comodos_interesse), 
+          origem = COALESCE(${f.origem}, origem), 
+          observacoes = COALESCE(${f.observacoes}, observacoes), 
+          status = COALESCE(${f.status}, status), 
+          razao_social = COALESCE(${f.razao_social}, razao_social),
+          municipio = COALESCE(${f.cidade}, municipio),
+          situacao_cadastral = COALESCE(${f.status === 'ativo' ? 'ATIVA' : f.status === 'inativo' ? 'INATIVA' : null}, situacao_cadastral)
+        WHERE id = ${id} RETURNING *
+      `;
       return res.status(200).json({ success: true, data: result[0] });
     }
     if (req.method === 'DELETE') {

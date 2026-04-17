@@ -42,6 +42,27 @@ const VisitKanban: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 1. Verificar se o cliente já existe, senão faz pré-cadastro
+    const existingClient = clients.find(c => c.nome.toLowerCase() === formData.title.toLowerCase());
+    
+    if (!existingClient && !editingItem) {
+        // Pré-cadastro automático
+        try {
+            const newClientData = {
+                nome: formData.title,
+                telefone: formData.phone || '',
+                cidade: formData.city || '',
+                origem: 'outro' as const,
+                observacoes: 'Gerado automaticamente via agendamento de visita.',
+                status: 'ativo' as const
+            };
+            await useAppContext().addClient(newClientData);
+        } catch (err) {
+            console.error('Falha no pré-cadastro de cliente:', err);
+        }
+    }
+
     const dataToSave = { ...formData, type: 'visit' as const };
 
     if (editingItem) {
@@ -129,15 +150,20 @@ const VisitKanban: React.FC = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={labelStyle}>Cliente *</label>
-              <select style={selectStyle} required
+              <label style={labelStyle}>Cliente (Nome ou Selecionar) *</label>
+              <input 
+                list="clients-list"
+                required
+                style={inputStyle}
+                placeholder="Digite o nome do cliente..."
                 value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}>
-                <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+              />
+              <datalist id="clients-list">
                 {clients.map(c => (
-                  <option key={c.id} value={c.nome} style={{ background: '#1a1a1a' }}>{c.nome}</option>
+                  <option key={c.id} value={c.nome} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div>
               <label style={labelStyle}>Projeto Vinculado</label>
