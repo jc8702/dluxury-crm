@@ -127,40 +127,101 @@ const chatTools = {
       }
     }
   }),
+  listarCategorias: tool({
+    description: 'Use esta função para listar as categorias e famílias industriais disponíveis ANTES de cadastrar um material, para saber qual ID usar.',
+    parameters: z.object({}),
+    execute: async () => {
+      try {
+        const result = await sql`
+          SELECT c.id as cat_id, c.nome as categoria, f.id as fam_id, f.nome as familia
+          FROM erp_categories c
+          LEFT JOIN erp_families f ON f.categoria_id = c.id
+          ORDER BY c.nome, f.nome
+        `;
+        return { success: true, data: result };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+  }),
   cadastrarMaterial: tool({
-    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Extraia o máximo de informações do texto do usuário.',
+    description: 'Use esta função para CADASTRAR UM NOVO MATERIAL/SKU no estoque.',
     parameters: z.object({
-      nome: z.string().describe('Título curto e claro do material. Ex: MDF Branco Polar. NUNCA DEIXE VAZIO.'),
-      descricao: z.string().describe('Ficha técnica completa (medidas, cor, fabricante, acabamento). NUNCA DEIXE VAZIO. Se não souber, use o texto bruto do usuário.'),
-      unidade_uso: z.string().describe('Unidade de medida. Se não souber, use UN.'),
-      preco_custo: z.number().describe('Preço de custo. Use 0 se não for informado.')
+      nome: z.string().describe('Título claro do material. Ex: Chapa MDF 15mm Branco.'),
+      descricao: z.string().describe('Detalhes complementares (medidas, fabricante).'),
+      categoria_id: z.string().describe('ID da Categoria (ex: CHP). Use listarCategorias se não souber.').optional(),
+      unidade_uso: z.string().optional().describe('Ex: UN, M2, ML'),
+      preco_custo: z.number().optional()
     }),
     execute: async (args) => {
       try {
-        if (!args.nome || !args.descricao) {
-           return { success: false, message: 'FALHA DE IA: Você não enviou o parâmetro nome ou descricao.' };
-        }
         const lastSkuQuery = await sql`SELECT sku FROM materiais ORDER BY id DESC LIMIT 1`;
         let proximoSku = 'SKU-0001';
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
            const match = lastSkuQuery[0].sku.match(/\d+/);
            if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
-        const categorias = await sql`SELECT id FROM categorias_material LIMIT 1`;
-        const catId = categorias.length > 0 ? categorias[0].id : null;
         const unidade = args.unidade_uso || 'UN';
         const preco = args.preco_custo || 0;
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
-        return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido no estoque com SKU: ${proximoSku}` };
+        
+        const r = await sql`
+          INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) 
+          VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${args.categoria_id || null}, true, 0, 0) RETURNING id
+        `;
+        return { success: true, message: `Material ${args.nome} inserido com SKU: ${proximoSku}` };
       } catch (err: any) {
-        return { success: false, message: `Erro fatal no Banco de Dados (Material): ${err.message}` };
+        return { success: false, message: `Erro ao cadastrar material: ${err.message}` };
+      }
+    }
+  }),
+  consultarFinanceiro: tool({
+    description: 'Consulta o resumo financeiro atual (entradas, saídas e saldo).',
+    parameters: z.object({}),
+    execute: async () => {
+      try {
+        const result = await sql`
+          SELECT 
+            SUM(CASE WHEN tipo = 'entrada' AND status = 'PAGO' THEN valor ELSE 0 END) as total_entradas,
+            SUM(CASE WHEN tipo = 'saida' AND status = 'PAGO' THEN valor ELSE 0 END) as total_saidas
+          FROM billings
+        `;
+        const entradas = parseFloat(result[0].total_entradas || '0');
+        const saidas = parseFloat(result[0].total_saidas || '0');
+        return { success: true, resumo: { entradas, saidas, saldo: Math.round((entradas - saidas) * 100) / 100 } };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+  }),
+  consultarRelatorioABC: tool({
+    description: 'Gera a curva ABC de clientes baseada no faturamento histórico.',
+    parameters: z.object({}),
+    execute: async () => {
+      try {
+        const result = await sql`
+          SELECT cliente, SUM(valor) as total_faturado
+          FROM billings
+          WHERE tipo = 'entrada' AND status = 'PAGO' AND cliente IS NOT NULL
+          GROUP BY cliente
+          ORDER BY total_faturado DESC
+          LIMIT 10
+        `;
+        return { success: true, top_clientes: result };
+      } catch (err: any) {
+        return { success: false, error: err.message };
       }
     }
   })
 };
 
 async function generateChatResponse(payload: any) {
-  const systemPrompt = `Você é o D'Luxury Copilot, o cérebro operacional do CRM industrial...`;
+  const systemPrompt = `Você é o D'Luxury Copilot, o agente inteligente do CRM industrial.
+Sua função é realizar ações diretas nos módulos do sistema (Financeiro, Estoque, Projetos, etc) executando as ferramentas disponíveis.
+DIRETRIZES:
+1. Se o usuário pedir para CADASTRAR algo (ex: material), não responda com texto explicativo. USE A FERRAMENTA 'cadastrarMaterial'. Preencha os campos com base no que foi dito; não seja excessivamente rígido pedindo dados que podem ser deduzidos de forma sensata.
+2. Se perguntarem sobre FINANÇAS (saldo, caixa, faturamento), use a ferramenta 'consultarFinanceiro' para embasar sua resposta.
+3. Se perguntarem sobre MELHORES CLIENTES ou CURVA ABC, use a ferramenta 'consultarRelatorioABC'.
+4. Responda de forma direta e concisa. Informe ao usuário se você criou, operou ou pesquisou dados usando ferramentas. O usuário quer ver ações realizadas, não apenas conversas.`;
   const messagesArray = (payload.history || []).map((m: any) => ({
     role: m.type === 'ai' ? 'assistant' : 'user',
     content: m.content
