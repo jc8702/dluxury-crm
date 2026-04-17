@@ -9,9 +9,9 @@ const google = createGoogleGenerativeAI({
 });
 
 // Cadeia de modelos Super Atualizada para Fallback
-const modelFlash = google('gemini-2.5-flash');
-const modelPro = google('gemini-2.5-pro');
-const modelLegacy = google('gemini-flash-latest');
+const modelFlash = google('gemini-1.5-flash');
+const modelPro = google('gemini-1.5-pro');
+const modelLegacy = google('gemini-1.5-flash');
 
 async function listAvailableModels(key: string) {
   try {
@@ -110,39 +110,6 @@ async function detectAnomalies() {
   } catch(e) { return { anomalias: [] }; }
 }
 
-const chatTools = {
-  cadastrarProjeto: tool({
-    description: 'Use esta função obrigatoriamente para CADASTRAR UM PROJETO no CRM.',
-    parameters: z.object({
-      client_name: z.string(),
-      ambiente: z.string(),
-      descricao: z.string()
-    }),
-    execute: async (args) => {
-      try {
-        const r = await sql`INSERT INTO projects (client_name, ambiente, descricao, status, valor_estimado, valor_final) VALUES (${args.client_name}, ${args.ambiente}, ${args.descricao}, 'lead', 0, 0) RETURNING id`;
-        return { success: true, project_id: r[0].id, message: `Projeto estruturado e salvo com ID ${r[0].id}` };
-      } catch (err: any) {
-        return { success: false, error: err.message };
-      }
-    }
-  }),
-  listarCategorias: tool({
-    description: 'Use esta função para listar as categorias e famílias industriais disponíveis ANTES de cadastrar um material, para saber qual ID usar.',
-    parameters: z.object({}),
-    execute: async () => {
-      try {
-        const result = await sql`
-          SELECT c.id as cat_id, c.nome as categoria, f.id as fam_id, f.nome as familia
-          FROM erp_categories c
-          LEFT JOIN erp_families f ON f.categoria_id = c.id
-          ORDER BY c.nome, f.nome
-        `;
-        return { success: true, data: result };
-      } catch (err: any) {
-        return { success: false, error: err.message };
-      }
-    }
 // ===============================
 // INTENT ROUTER ARCHITECTURE (ARIA 2.0)
 // ===============================
