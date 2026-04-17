@@ -10,6 +10,7 @@ const SKUPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
   const [formData, setFormData] = useState({ 
     sku_code: '', 
     nome: '', 
@@ -49,10 +50,14 @@ const SKUPage: React.FC = () => {
     }
   };
 
-  const filteredSkus = skus.filter(s => 
-    s.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.sku_code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSkus = skus.filter(s => {
+    const term = searchTerm.toLowerCase();
+    const matchSearch = s.nome.toLowerCase().includes(term) || s.sku.toLowerCase().includes(term);
+    const matchCategory = filterCategory ? s.categoria_id === filterCategory : true;
+    return matchSearch && matchCategory;
+  });
+
+  const extractedCategories = Array.from(new Set(skus.map(s => s.categoria_id))).filter(Boolean) as string[];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -86,9 +91,15 @@ const SKUPage: React.FC = () => {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={18} /> Filtros
-          </button>
+          <select 
+            className="input-base" 
+            style={{ padding: '0.65rem 1rem', background: 'var(--elevated)', color: 'var(--text)' }}
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+          >
+            <option value="">Todas as Categorias</option>
+            {extractedCategories.map(c => <option key={c} value={c}>Cód: {c}</option>)}
+          </select>
         </div>
       </div>
 
@@ -103,7 +114,7 @@ const SKUPage: React.FC = () => {
             data={filteredSkus}
             renderRow={(s) => (
               <>
-                <td style={{ padding: '1rem' }}><span className="badge badge-primary">{s.sku_code}</span></td>
+                <td style={{ padding: '1rem' }}><span className="badge badge-primary">{s.sku}</span></td>
                 <td style={{ padding: '1rem', fontWeight: '600' }}>{s.nome}</td>
                 <td style={{ padding: '1rem' }}>{s.unidade_medida}</td>
                 <td style={{ padding: '1rem' }}>R$ {Number(s.preco_base).toFixed(2)}</td>
