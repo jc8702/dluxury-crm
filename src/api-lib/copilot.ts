@@ -2,7 +2,7 @@ import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject, tool } from 'ai';
 import { z } from 'zod';
-import { gerarProjetoCompleto } from '../utils/industrialCopilot.js';
+import { gerarProjetoCompleto, gerarOP } from '../utils/industrialCopilot.js';
 
 const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
@@ -314,8 +314,26 @@ async function handleConfirmAction(history: any[]) {
     return { message: `✅ Perfeito! Item cadastrado com sucesso.\n\n**SKU:** ${sku.skuId}\n**Descrição:** ${sku.descricao}\n\n[EVENT_EMIT_SKU_CRIADO]` };
   }
 
-  if (lastAiMessage.content.includes("Sugestão de materiais")) {
-    return { message: "Entendido! Criando orçamento com base nesta lista de materiais... (Ação simulada para o módulo de Orçamentos)" };
+  if (lastAiMessage.content.includes("Engenharia de Projeto")) {
+    // Busca a mensagem do usuário que originou o projeto (uma antes da última do assistente)
+    const userProjectMsg = [...history].reverse().find((m, i, arr) => m.role === 'user' && i > arr.indexOf(lastAiMessage));
+    const msg = userProjectMsg?.content || "";
+    
+    const projetoCompleto = gerarProjetoCompleto(msg);
+    const op = gerarOP(projetoCompleto);
+
+    let opReport = `✅ **Ordem de Produção Gerada: ${op.opId}**\n\n`;
+    opReport += `**Produto:** ${op.produto}\n`;
+    opReport += `**Status:** 🏭 PENDENTE (AGUARDANDO CORTE)\n\n`;
+    
+    opReport += `#### 📋 Resumo de Materiais Consolidados:\n`;
+    op.materiais.forEach(m => {
+      opReport += `- ${m.descricao}: **${m.quantidade} ${m.unidade}**\n`;
+    });
+
+    opReport += `\n**Ação:** Os dados foram enviados para o mapa de corte e separação de materiais.`;
+    
+    return { message: opReport };
   }
 
   return { message: "Confirmado! (Ação não mapeada especificamente)" };

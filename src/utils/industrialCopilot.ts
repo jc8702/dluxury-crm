@@ -198,3 +198,67 @@ export function gerarProjetoCompleto(msg: string): ResultadoProjetoCompleto {
     }
   };
 }
+
+export interface OrdemProducao {
+  opId: string;
+  produto: string;
+  dataCriacao: Date;
+  status: "PENDENTE" | "EM_PRODUCAO" | "FINALIZADA";
+  pecas: Peca[];
+  materiais: MaterialOP[];
+  planoCorte: PlanoCorte[];
+}
+
+export interface MaterialOP {
+  skuId: string;
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+}
+
+export function gerarNumeroOP(): string {
+  const timestamp = Date.now().toString().slice(-6);
+  return `OP-${timestamp}`;
+}
+
+export function agruparMateriais(pecas: Peca[]): MaterialOP[] {
+  const mapa: Record<string, MaterialOP> = {};
+
+  pecas.forEach(p => {
+    const sku = mapearSKU(p.material, p.espessura);
+    const area = (p.largura * p.altura) / 1000000;
+
+    if (!mapa[sku.skuId]) {
+      mapa[sku.skuId] = {
+        skuId: sku.skuId,
+        descricao: sku.descricao,
+        quantidade: 0,
+        unidade: sku.unidade
+      };
+    }
+
+    mapa[sku.skuId].quantidade = parseFloat((mapa[sku.skuId].quantidade + area).toFixed(2));
+  });
+
+  return Object.values(mapa);
+}
+
+export function gerarOP(projetoCompleto: ResultadoProjetoCompleto): OrdemProducao {
+  const { projeto, pecas, planoDeCorte } = projetoCompleto;
+  const materiais = agruparMateriais(pecas);
+
+  return {
+    opId: gerarNumeroOP(),
+    produto: projeto.tipo,
+    dataCriacao: new Date(),
+    status: "PENDENTE",
+    pecas: pecas,
+    materiais,
+    planoCorte: planoDeCorte
+  };
+}
+
+export function gerarOrdemProducao(msg: string): OrdemProducao {
+  const projetoCompleto = gerarProjetoCompleto(msg);
+  return gerarOP(projetoCompleto);
+}
