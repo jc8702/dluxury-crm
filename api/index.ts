@@ -403,15 +403,19 @@ const chatTools = {
     }
   }),
   cadastrarMaterial: tool({
-    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Preencha todos os 4 argumentos. Se não souber preço, use 0. Se não souber unidade, use "UN".',
+    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Preencha todos os parâmetros, usando "UN" para unidade se não souber, e 0 para preço se não souber.',
     parameters: z.object({
-      nome: z.string(),
-      descricao: z.string(),
-      unidade_uso: z.string(),
-      preco_custo: z.number()
+      nome: z.string().describe('Nome curto do material. Ex: MDF BP Carvalho'),
+      descricao: z.string().describe('Todas e quisquer outras informações de medida ou marca.'),
+      unidade_uso: z.string().describe('Sempre UN'),
+      preco_custo: z.number().describe('0 se nao houver preço')
     }),
     execute: async (args) => {
       try {
+        if (!args.nome || !args.descricao) {
+           return { success: false, message: 'FALHA DE IA: Você não enviou o parâmetro nome ou descricao.' };
+        }
+        
         const lastSkuQuery = await sql`SELECT sku FROM materiais ORDER BY id DESC LIMIT 1`;
         let proximoSku = 'SKU-0001';
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
@@ -422,7 +426,9 @@ const chatTools = {
         const categorias = await sql`SELECT id FROM categorias_material LIMIT 1`;
         const catId = categorias.length > 0 ? categorias[0].id : null;
 
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${args.unidade_uso}, ${args.unidade_uso}, ${args.preco_custo}, 50, ${args.preco_custo * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
+        const unidade = args.unidade_uso || 'UN';
+        const preco = args.preco_custo || 0;
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
         
         return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido no estoque com SKU: ${proximoSku}` };
       } catch (err: any) {
@@ -449,7 +455,6 @@ async function generateChatResponse(payload: any) {
     toolChoice: 'auto'
   };
 
-  // Se o usuário explicitly demandar, tenta forçar
   if (payload.message.toLowerCase().includes('cadastr') || payload.message.toLowerCase().includes('adicion')) {
       aiConfig.toolChoice = 'required';
   }
@@ -457,14 +462,14 @@ async function generateChatResponse(payload: any) {
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
     
-const parseResult = (tr: any) => {
-      if (tr.result && tr.result.message) return `✔️ ${tr.result.message}`;
-      if (tr.result && tr.result.error) return `❌ ERRO: ${tr.result.error}`;
-      if (tr.args) return `🔧 DUMP ZOD/SDK ARGS: ${JSON.stringify(tr.args)} | RESULT: ${JSON.stringify(tr.result)}`;
+    const parseResult = (tr: any) => {
+      const data = tr.result || tr.output;
+      if (data && data.message) return `✔️ ${data.message}`;
+      if (data && data.error) return `❌ ERRO: ${data.error}`;
+      if (tr.args || tr.input) return `🔧 RAW ARGS (Falha oculta): ${JSON.stringify(tr.args || tr.input)} | RES: ${JSON.stringify(data)}`;
       return `⚠️ STRUCT DESCONHECIDA: ${JSON.stringify(tr)}`;
     };
 
-    // Captura resultados ocultos nos steps internos
     if (res.steps && res.steps.length > 0) {
        for (const step of res.steps) {
          if (step.text && !final.includes(step.text)) final += step.text + '\n';
@@ -475,7 +480,6 @@ const parseResult = (tr: any) => {
        }
     }
     
-    // Captura raiz (fallback)
     if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
        final = res.toolResults.map(parseResult).join('\n');
     }
