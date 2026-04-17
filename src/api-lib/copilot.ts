@@ -147,8 +147,8 @@ const chatTools = {
   cadastrarMaterial: tool({
     description: 'Use esta função para CADASTRAR UM NOVO MATERIAL/SKU no estoque.',
     parameters: z.object({
-      nome: z.string().describe('Título claro do material. Ex: Chapa MDF 15mm Branco.'),
-      descricao: z.string().describe('Detalhes complementares (medidas, fabricante).'),
+      nome: z.string().optional().describe('Título claro do material. Ex: Chapa MDF 15mm Branco.'),
+      descricao: z.string().optional().describe('Detalhes complementares (medidas, fabricante).'),
       categoria_id: z.string().describe('ID da Categoria (ex: CHP). Use listarCategorias se não souber.').optional(),
       unidade_uso: z.string().optional().describe('Ex: UN, M2, ML'),
       preco_custo: z.number().optional()
@@ -161,14 +161,16 @@ const chatTools = {
            const match = lastSkuQuery[0].sku.match(/\d+/);
            if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
+        const nomeFinal = args.nome || 'Novo Material Automático';
+        const descricaoFinal = args.descricao || 'Inserido via IA Copilot';
         const unidade = args.unidade_uso || 'UN';
         const preco = args.preco_custo || 0;
         
         const r = await sql`
           INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) 
-          VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${args.categoria_id || null}, true, 0, 0) RETURNING id
+          VALUES (${proximoSku}, ${nomeFinal}, ${descricaoFinal}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${args.categoria_id || null}, true, 0, 0) RETURNING id
         `;
-        return { success: true, message: `Material ${args.nome} inserido com SKU: ${proximoSku}` };
+        return { success: true, message: `Material ${nomeFinal} inserido com SKU: ${proximoSku}` };
       } catch (err: any) {
         return { success: false, message: `Erro ao cadastrar material: ${err.message}` };
       }
