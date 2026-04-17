@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import ProductionPanel from './ProductionPanel';
+import ProductionDashboard from './ProductionDashboard';
 import type { Project, ProductionStep } from '../../context/AppContext';
 
 const PRODUCTION_STEPS: { id: ProductionStep; label: string; icon: string }[] = [
@@ -102,7 +103,10 @@ const Production: React.FC = () => {
       </header>
 
       {viewType === 'kanban' ? (
-        <ProductionPanel />
+        <>
+          <ProductionDashboard />
+          <ProductionPanel />
+        </>
       ) : (
         <>
           {/* Filtros */}

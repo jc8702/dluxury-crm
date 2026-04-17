@@ -184,6 +184,22 @@ export async function runInitDB() {
     }
   }
 
-  return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy' };
+  // 13. Production Orders Table (MES)
+  await sql`
+    CREATE TABLE IF NOT EXISTS ordens_producao (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      op_id TEXT UNIQUE NOT NULL,
+      produto TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'PENDENTE',
+      pecas INTEGER DEFAULT 0,
+      data_inicio TIMESTAMP WITH TIME ZONE,
+      data_fim TIMESTAMP WITH TIME ZONE,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy and MES support' };
 }
 

@@ -322,6 +322,12 @@ async function handleConfirmAction(history: any[]) {
     const projetoCompleto = gerarProjetoCompleto(msg);
     const op = gerarOP(projetoCompleto);
 
+    // Persiste no banco de dados (MES)
+    await sql`
+      INSERT INTO ordens_producao (op_id, produto, pecas, metadata)
+      VALUES (${op.opId}, ${op.produto}, ${op.pecas.length}, ${JSON.stringify(op)})
+    `;
+
     let opReport = `✅ **Ordem de Produção Gerada: ${op.opId}**\n\n`;
     opReport += `**Produto:** ${op.produto}\n`;
     opReport += `**Status:** 🏭 PENDENTE (AGUARDANDO CORTE)\n\n`;

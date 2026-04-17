@@ -1,39 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import type { Project, ProductionStep } from '../../context/AppContext';
 
 type StatusCol = "PENDENTE" | "CORTE" | "MONTAGEM" | "FINALIZADA";
 
-const ProductionPanel: React.FC = () => {
-  const { projects, updateProject } = useAppContext();
+interface OrdemProducao {
+  id: string;
+  op_id: string;
+  produto: string;
+  status: StatusCol;
+  pecas: number;
+  data_inicio?: string;
+  data_fim?: string;
+}
 
-  // Filtragem dos projetos em colunas baseada no estado real do sistema
-  const getColProjects = (col: StatusCol) => {
-    return projects.filter(p => {
-      if (col === "PENDENTE") return p.status === 'aprovado' || (p.status === 'em_producao' && !p.etapaProducao);
-      if (col === "CORTE") return p.etapaProducao === 'corte' || p.etapaProducao === 'furacao';
-      if (col === "MONTAGEM") return p.etapaProducao === 'montagem' || p.etapaProducao === 'pintura' || p.etapaProducao === 'acabamento';
-      if (col === "FINALIZADA") return p.status === 'pronto_entrega' || p.etapaProducao === 'entrega';
-      return false;
-    });
+const ProductionPanel: React.FC = () => {
+  const [ops, setOps] = useState<OrdemProducao[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOPs = async () => {
+    try {
+      const res = await fetch('/api/production');
+      const json = await res.json();
+      if (json.success) setOps(json.data);
+    } catch (e) {
+      console.error('Erro ao buscar Ordens de Produção');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const avancarStatus = async (project: Project) => {
-    const currentStatus = project.status;
-    const currentStep = project.etapaProducao;
+  useEffect(() => {
+    fetchOPs();
+    const interval = setInterval(fetchOPs, 10000); // Poll a cada 10s para simulado real-time
+    return () => clearInterval(interval);
+  }, []);
 
-    let updates: Partial<Project> = {};
+  const avancarStatus = async (op: OrdemProducao) => {
+    const fluxo: StatusCol[] = ["PENDENTE", "CORTE", "MONTAGEM", "FINALIZADA"];
+    const index = fluxo.indexOf(op.status);
+    const novoStatus = fluxo[index + 1] || op.status;
 
-    if (currentStatus === 'aprovado') {
-      updates = { status: 'em_producao', etapaProducao: 'corte' };
-    } else if (currentStep === 'corte' || currentStep === 'furacao') {
-      updates = { etapaProducao: 'montagem' };
-    } else if (currentStep === 'montagem' || currentStep === 'pintura' || currentStep === 'acabamento') {
-      updates = { status: 'pronto_entrega', etapaProducao: 'entrega' };
-    }
+    if (novoStatus === op.status) return;
 
-    if (Object.keys(updates).length > 0) {
-      await updateProject(project.id, updates);
+    try {
+      const res = await fetch('/api/production', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ op_id: op.op_id, status: novoStatus })
+      });
+      const json = await res.json();
+      if (json.success) {
+        // Atualização otimista
+        setOps(prev => prev.map(o => o.op_id === op.op_id ? json.data : o));
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar status da OP');
     }
   };
 
@@ -41,8 +62,10 @@ const ProductionPanel: React.FC = () => {
     { id: "PENDENTE", label: "Aguardando", color: "var(--text-muted)" },
     { id: "CORTE", label: "Corte / Preparação", color: "#f59e0b" },
     { id: "MONTAGEM", label: "Montagem / Acabamento", color: "#3b82f6" },
-    { id: "FINALIZADA", label: "Pronto p/ Entrega", color: "#10b981" }
+    { id: "FINALIZADA", label: "Finalizado", color: "#10b981" }
   ];
+
+  if (loading && ops.length === 0) return <div style={{ padding: '2rem', color: 'var(--text-muted)' }}>Sincronizando com chão de fábrica...</div>;
 
   return (
     <div style={{ 
@@ -75,13 +98,13 @@ const ProductionPanel: React.FC = () => {
               fontSize: '0.75rem', 
               fontWeight: 'bold' 
             }}>
-              {getColProjects(col.id).length}
+              {ops.filter(o => o.status === col.id).length}
             </span>
           </header>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {getColProjects(col.id).map(project => (
-              <div key={project.id} className="card-hover" style={{ 
+            {ops.filter(o => o.status === col.id).map(op => (
+              <div key={op.id} className="card-hover" style={{ 
                 background: 'rgba(255,255,255,0.03)', 
                 borderRadius: '16px', 
                 padding: '1rem', 
@@ -91,26 +114,25 @@ const ProductionPanel: React.FC = () => {
               }}>
                 <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-                    #{project.id.slice(0, 5).toUpperCase()}
+                    #{op.op_id}
                   </span>
-                  {project.etapaProducao && (
-                    <span style={{ fontSize: '0.65rem', padding: '1px 6px', background: `${col.color}22`, color: col.color, borderRadius: '4px', fontWeight: 'bold' }}>
-                      {project.etapaProducao.toUpperCase()}
-                    </span>
-                  )}
+                  <span style={{ fontSize: '0.65rem', padding: '1px 6px', background: `${col.color}22`, color: col.color, borderRadius: '4px', fontWeight: 'bold' }}>
+                    {op.pecas} PEÇAS
+                  </span>
                 </div>
                 
-                <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.25rem' }}>{project.ambiente}</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{project.clientName}</p>
+                <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.25rem' }}>{op.produto}</h4>
+                
+                {op.data_inicio && (
+                  <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                    ⏱️ Iniciado: {new Date(op.data_inicio).toLocaleTimeString('pt-BR')}
+                  </p>
+                )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#d4af37' }}>
-                    {project.valorEstimado ? `R$ ${project.valorEstimado.toLocaleString('pt-BR')}` : '--'}
-                  </div>
-                  
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '1rem' }}>
                   {col.id !== "FINALIZADA" && (
                     <button 
-                      onClick={() => avancarStatus(project)}
+                      onClick={() => avancarStatus(op)}
                       style={{ 
                         background: 'linear-gradient(135deg, #d4af37, #b49050)', 
                         color: '#1a1a2e', 
