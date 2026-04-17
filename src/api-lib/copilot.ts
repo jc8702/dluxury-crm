@@ -144,35 +144,65 @@ const chatTools = {
       }
     }
   }),
-  cadastrarMaterial: tool({
-    description: 'Use esta função para CADASTRAR UM NOVO MATERIAL/SKU no estoque da empresa.',
+  createSKU: tool({
+    description: 'Cadastra um novo material/SKU baseado na família ou prefixo.',
     parameters: z.object({
-      nome: z.string().describe('OBRIGATÓRIO: Nome claro e principal do material. Ex: Chapa MDF 15mm Branca.'),
-      descricao: z.string().describe('OBRIGATÓRIO: Detalhes como dimensões, marca e acabamento.'),
-      categoria_id: z.string().describe('ID da Categoria (ex: CHP).').optional(),
-      unidade_uso: z.string().optional().describe('Unidade. Ex: UN, M2, ML'),
-      preco_custo: z.number().optional()
+      familia: z.string().describe('OBRIGATÓRIO: Família do item para gerar a categoria. Ex: Parafuso, Chapa, etc.'),
+      descricao: z.string().describe('OBRIGATÓRIO: Descrição completa do item. Ex: Parafuso zincado 6x30'),
+      unidade: z.string().describe('Unidade. Ex: UN, M2, ML, CENTO'),
     }),
     execute: async (args) => {
       try {
-        const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE sku IS NOT NULL ORDER BY sku DESC LIMIT 1`;
-        let proximoSku = 'SKU-0001';
+        // Find category ID based on family string
+        let categoryId = 'OUT';
+        const famLow = args.familia.toLowerCase();
+        if (famLow.includes('chapa') || famLow.includes('mdf') || famLow.includes('mdp')) categoryId = 'CHP';
+        else if (famLow.includes('fita') || famLow.includes('borda') || famLow.includes('pvc')) categoryId = 'BRD';
+        else if (famLow.includes('dobradiça') || famLow.includes('puxador') || famLow.includes('ferragem')) categoryId = 'FRG';
+        else if (famLow.includes('parafuso') || famLow.includes('bucha') || famLow.includes('fix')) categoryId = 'FIX';
+        else if (famLow.includes('cola') || famLow.includes('silicone') || famLow.includes('insumo')) categoryId = 'INS';
+        else if (famLow.includes('led') || famLow.includes('fonte') || famLow.includes('ilum')) categoryId = 'ILU';
+        else if (famLow.includes('lixeira') || famLow.includes('aramado') || famLow.includes('aces')) categoryId = 'ACS';
+        else if (famLow.includes('pe') || famLow.includes('pé') || famLow.includes('sapata') || famLow.includes('est')) categoryId = 'EST';
+        else categoryId = args.familia.substring(0, 3).toUpperCase();
+
+        const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE categoria_id = ${categoryId} ORDER BY sku DESC LIMIT 1`;
+        let proximoSku = `${categoryId}-0001`;
         if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
            const match = lastSkuQuery[0].sku.match(/\d+/);
-           if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
+           if (match) { proximoSku = `${categoryId}-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
-        const nomeFinal = args.nome || 'Material Cadastrado via IA';
-        const descricaoFinal = args.descricao || 'Verifique as medidas';
-        const unidade = args.unidade_uso || 'UN';
-        const preco = args.preco_custo || 0;
         
-        const r = await sql`
+        await sql`
           INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) 
-          VALUES (${proximoSku}, ${nomeFinal}, ${descricaoFinal}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${args.categoria_id || null}, true, 0, 0) RETURNING id
+          VALUES (${proximoSku}, ${args.descricao}, ${args.descricao}, ${args.unidade}, ${args.unidade}, 0, 50, 0, ${categoryId}, true, 0, 0)
         `;
-        return { success: true, message: `✅ SUCESSO Absoluto! O item "${nomeFinal}" foi gravado oficialmente no banco de dados corporativo sob o código SKU: ${proximoSku}. (Nota: Avise o usuário para atualizar a página / apertar F5 para visualizar o novo card no estoque).` };
+        
+        // This object simulates the event trigger for the UI, but essentially returns exactly the format the prompt expects.
+        return { 
+          success: true, 
+          skuId: proximoSku,
+          descricao: args.descricao,
+          unidade: args.unidade,
+          message: `✅ Item cadastrado com sucesso\n\nSKU: ${proximoSku}\nDescrição: ${args.descricao}\nUnidade: ${args.unidade}` 
+        };
       } catch (err: any) {
-        return { success: false, message: `Erro crasso ao cadastrar material: ${err.message}` };
+        return { success: false, error: err.message };
+      }
+    }
+  }),
+  buscarUltimoSKU: tool({
+    description: 'Recupera o último item/SKU cadastrado no banco de materiais.',
+    parameters: z.object({}),
+    execute: async () => {
+      try {
+        const r = await sql`SELECT sku, nome, unidade_uso FROM materiais ORDER BY id DESC LIMIT 1`;
+        if (r.length > 0) {
+          return { success: true, sku: r[0].sku, descricao: r[0].nome, unidade: r[0].unidade_uso };
+        }
+        return { success: false, error: 'Nenhum material encontrado no banco.' };
+      } catch (error: any) {
+         return { success: false, error: error.message };
       }
     }
   }),
@@ -217,66 +247,85 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const systemPrompt = `Você é o ARIA — Assistente de Inteligência D'Luxury, agente operacional
-integrado ao CRM D'Luxury Ambientes, especializado em móveis planejados sob medida.
+const systemPrompt = `Você é um agente operacional interno do CRM ERP D'Luxury, de marcenaria.
 
-Você tem acesso direto ao banco de dados e sistemas do CRM via funções (tools) disponíveis nesta sessão. Seu papel é executar tarefas reais no sistema, não apenas orientar o usuário a fazê-las manualmente.
+Seu papel NÃO é responder com texto genérico.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-## IDENTIDADE E COMPORTAMENTO
+Seu papel é:
+1. interpretar a intenção do usuário
+2. mapear para uma ação do sistema
+3. executar a ação
+4. retornar o resultado de forma clara e objetiva
 
-Idioma: sempre português brasileiro
-Tom: profissional, direto, sem florear
-Você não inventa dados — só usa o que o usuário forneceu
-Você confirma antes de executar ações destrutivas (delete, ajuste de estoque)
-Você guia o usuário quando faltam dados obrigatórios
-Você devolve feedback claro após cada operação
+----------------------------------------
+1. REGRA PRINCIPAL
+----------------------------------------
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-## REGRAS DE OPERAÇÃO
+NUNCA responda com:
+- "não consigo processar"
+- "acesse o módulo"
+- "não tenho acesso"
 
-### Uso eficiente da API
-- Processe a intenção completa do usuário acionando as ferramentas disponiveis.
-- Se você criar materiais ou projetos, OBRIGATORIAMENTE use as tools, nunca responda com JSON bruto.
-- Nunca escreva blocos de texto em JSON no chat. Você roda as funções nativas e repassa o resultado humanizado.
+Você TEM acesso ao sistema.
+Se existir uma intenção → você DEVE executar. NUNCA responder textos sem a tag tool executada.
 
-### Extração de intenção
-Ao receber uma mensagem, identifique a OPERAÇÃO. Se as tools que você possui (cadastrarMaterial, consultarFinanceiro, consultarRelatorioABC, cadastrarProjeto, listarCategorias) corresponderem ao desejado, execute-as.
+----------------------------------------
+2. INTENÇÕES QUE VOCÊ DEVE SUPORTAR
+----------------------------------------
 
-### Geração automática de SKU
-Ao usar 'cadastrarMaterial', não preencha o campo sku diretamente pois o banco gera. Mas defina os IDs de Categoria com base em:
-- "Chapa MDF" / "MDF BP" / "MDP" → Categoria 'CHP'
-- "Fita de borda" / "Fita PVC" / "Perfil de Acabamento" → Categoria 'BRD'
-- "Dobradiça" / "Corrediça" / "Puxador" / "Ferragem" → Categoria 'FRG'
-- "Parafuso" / "Fixação" / "Embalagem" → Categoria 'FIX' ou 'EMB'
-- "Vidro temperado" → Categoria 'VID'
+Cadastrar SKU:
+Exemplo:
+"cadastra o parafuso zincado 6x30 cento"
 
-### Exemplo de fluxo de cadastro via tool:
-Usuário: "cadastra chapa MDF azul petróleo 15mm 2750x1850 Duratex"
-Você aciona a tool cadastrarMaterial passando:
-{
-  "nome": "Chapa MDF 15mm Azul Petróleo 2750×1850 Duratex",
-  "descricao": "Medidas: 2750x1850 | Marca: Duratex",
-  "categoria_id": "CHP"
-}
-Após a tool retornar sucesso, você responde:
-"✅ Material cadastrado com sucesso! (...)"
+Você deve:
+1. identificar: família (Parafuso), descrição (Parafuso zincado 6x30), unidade (CENTO)
+2. gerar SKU automaticamente (usando regra de prefixo por família via call createSKU)
+3. criar registro no banco
+4. retornar confirmação
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-## FORMATAÇÃO DAS RESPOSTAS
+----------------------------------------
+3. EXECUÇÃO REAL (OBRIGATÓRIO)
+----------------------------------------
 
-Confirmações de cadastro → usar ✅ no início
-Alertas e avisos → usar ⚠️ no início
-Erros → usar ❌ no início
-Listas de dados → formatar bem para leitura
-Valores monetários → sempre em R$ com vírgula decimal (R$ 1.234,56)
+Você DEVE acionar suas functions nativamente:
+createSKU({ familia: "Parafuso", descricao: "Parafuso zincado 6x30", unidade: "CENTO" })
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-## LIMITAÇÕES QUE VOCÊ DEVE COMUNICAR
+----------------------------------------
+4. RESPOSTA OBRIGATÓRIA AO USUÁRIO
+----------------------------------------
 
-Se o usuário pedir algo fora das suas capacidades (como registrar romaneios complexos, atualizar etapas em detalhes, baixar estoque) ou usar comandos de módulos que você ainda não possui tools ativas, avise claramente:
-"Ainda não consigo processar esta tarefa diretamente por aqui. Para isso, acesse o módulo correspondente no menu."
-Nunca invente dados do banco.`;
+Após cadastrar, SEMPRE responder EXATAMENTE no formato abaixo:
+
+✅ Item cadastrado com sucesso
+
+SKU: PAR-0007  
+Descrição: Parafuso zincado 6x30  
+Unidade: CENTO  
+
+NENHUM TEXTO ADICIONAL ALEM DE MANIPULAR O EVENTO UI!
+
+----------------------------------------
+5. REGRA DE FEEDBACK VISUAL (CRÍTICO)
+----------------------------------------
+Ao lado ou ao final do chat text, escreva exatamente o disparo abaixo para que eu renderize a notificação no front end:
+[EVENT_EMIT_SKU_CRIADO]
+
+----------------------------------------
+6. TRATAMENTO DE ERRO
+----------------------------------------
+Se faltar informação (ex: "cadastra parafuso"), responda: "Qual especificação do parafuso? (ex: 4x50, 6x30)" - Nunca simplesmente falhe.
+
+----------------------------------------
+7. CONSULTAS
+----------------------------------------
+Para perguntas como "qual foi o ultimo item cadastrado?", você deve disparar:
+buscarUltimoSKU()
+E responder exatamente:
+Último item cadastrado:
+SKU: PAR-0007  
+Descrição: Parafuso zincado 6x30
+
+Toda mensagem sua deve virar uma ação real sempre que possível.`;
   const messagesArray = (payload.history || []).map((m: any) => ({
     role: m.type === 'ai' ? 'assistant' : 'user',
     content: m.content
