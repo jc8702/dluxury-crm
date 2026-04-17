@@ -274,21 +274,38 @@ async function handleOrcamentos(req: any, res: any) {
   }
 }
 
+import { generateBOM, auditSKU, purchaseSuggestion, detectAnomalies } from '../src/api-lib/_ai.js';
+
 async function handleAICopilot(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
   if (!authorized) return res.status(401).json({ error });
   if (req.method !== 'POST') return res.status(405).end();
+  
   const { skill, payload } = req.body;
   const apiKey = process.env.GOOGLE_GENERATION_AI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'Configuração de IA ausente' });
-  const model = google('gemini-1.5-pro-latest');
-  if (skill === 'generate-bom') {
-    const skus = await sql`SELECT id, sku_code, nome, unidade_medida FROM erp_skus WHERE ativo = true LIMIT 50`;
-    const { object } = await generateObject({ model, schema: z.object({ itens: z.array(z.object({ sku_id: z.string(), componente_nome: z.string(), formula_quantidade: z.string(), formula_perda: z.string(), tipo_regra: z.enum(['FIXO', 'AREA', 'PERIMETRO', 'PARAMETRICO']), justificativa: z.string() })) }), prompt: `Explodir BOM para ${payload.descricao}. Medidas: L=${payload.medidas.L}, A=${payload.medidas.A}, P=${payload.medidas.P}. SKUs: ${JSON.stringify(skus)}` });
-    return res.status(200).json(object);
+  if (!apiKey) return res.status(500).json({ error: 'Configuração de IA (API Key) ausente' });
+
+  try {
+    switch (skill) {
+      case 'generate-bom':
+        return res.status(200).json(await generateBOM(payload));
+      
+      case 'audit-sku':
+        return res.status(200).json(await auditSKU(payload));
+      
+      case 'purchase-suggestion':
+        return res.status(200).json(await purchaseSuggestion());
+      
+      case 'detect-anomalies':
+        return res.status(200).json(await detectAnomalies());
+      
+      default:
+        return res.status(400).json({ error: `Skill '${skill}' não suportada pelo Copiloto.` });
+    }
+  } catch (err: any) {
+    console.error('AI Copilot Error:', err);
+    return res.status(500).json({ error: 'Erro ao processar inteligência', details: err.message });
   }
-  // Adicionar outras skills simplificadas...
-  return res.status(400).json({ error: 'Skill não suportada' });
 }
 
 async function handleCondicoesPagamento(req: any, res: any) {

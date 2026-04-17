@@ -99,6 +99,19 @@ export const apiService = {
   updateMonthlyGoal: (period: string, amount: number) =>
     apiService.fetch('/api/goals', { method: 'POST', body: JSON.stringify({ period, amount }) }),
 
+  // AI Copilot Skills
+  aiGenerateBOM: (payload: { tipo: string; medidas: { L: number; A: number; P: number }; observacoes?: string }) =>
+    apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'generate-bom', payload }) }),
+
+  aiAuditSKU: (payload: { nome: string; descricao: string; categoria_id?: string }) =>
+    apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'audit-sku', payload }) }),
+
+  aiGetPurchaseSuggestions: () =>
+    apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'purchase-suggestion' }) }),
+
+  aiDetectAnomalies: () =>
+    apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'detect-anomalies' }) }),
+
   // Orcamentos (Budgets)
   getOrcamentos: () => apiService.fetch('/api/orcamentos'),
   getOrcamento: (id: string) => apiService.fetch(`/api/orcamentos?id=${id}`),
