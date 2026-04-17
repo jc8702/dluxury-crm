@@ -241,12 +241,12 @@ const ProductionPanel: React.FC = () => {
                   </button>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto', paddingRight: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto', paddingRight: '8px', marginBottom: '1.5rem' }}>
                   {(editingOP.checklist || []).length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.75rem', border: '1px dashed var(--border)', borderRadius: '14px' }}>Nenhuma tarefa definida para esta OP.</div>
+                    <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.7rem', border: '1px dashed var(--border)', borderRadius: '14px' }}>Nenhuma tarefa de conferência definida.</div>
                   )}
                   {(editingOP.checklist || []).map((item, idx) => (
-                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '14px', border: '1px solid transparent', transition: 'all 0.2s' }}>
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px' }}>
                       <input 
                         type="checkbox" 
                         checked={item.completed} 
@@ -255,26 +255,57 @@ const ProductionPanel: React.FC = () => {
                           newCheck[idx].completed = e.target.checked;
                           setEditingOP({...editingOP, checklist: newCheck});
                         }}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <input 
                         value={item.task}
-                        placeholder="Nome da tarefa (ex: Corte conferido)"
                         onChange={e => {
                           const newCheck = [...(editingOP.checklist || [])];
                           newCheck[idx].task = e.target.value;
                           setEditingOP({...editingOP, checklist: newCheck});
                         }}
-                        style={{ flex: 1, background: 'none', border: 'none', color: item.completed ? 'var(--text-muted)' : 'var(--text)', fontSize: '0.85rem', textDecoration: item.completed ? 'line-through' : 'none' }}
+                        style={{ flex: 1, background: 'none', border: 'none', color: item.completed ? 'var(--text-muted)' : 'var(--text)', fontSize: '0.8rem' }}
                       />
                       <button onClick={() => {
                         const newCheck = (editingOP.checklist || []).filter((_, i) => i !== idx);
                         setEditingOP({...editingOP, checklist: newCheck});
-                      }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.6 }}>
-                        <Trash2 size={16} />
+                      }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
+                </div>
+
+                {/* Engenharia e Lista de Peças */}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block', marginBottom: '1rem' }}>📦 ENGENHARIA E MATERIAIS</label>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    {/* Materiais */}
+                    <div>
+                      <h5 style={{ fontSize: '0.65rem', color: '#d4af37', marginBottom: '0.75rem', fontWeight: 'bold' }}>MATERIAIS</h5>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {(editingOP as any).metadata?.materiais?.map((m: any, i: number) => (
+                          <div key={i} style={{ fontSize: '0.7rem', display: 'flex', justifyContent: 'space-between', padding: '6px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                            <span>{m.descricao}</span>
+                            <span style={{ fontWeight: '900' }}>{m.quantidade}{m.unidade}</span>
+                          </div>
+                        )) || <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Sem dados de materiais</div>}
+                      </div>
+                    </div>
+
+                    {/* Peças de Corte */}
+                    <div>
+                      <h5 style={{ fontSize: '0.65rem', color: '#d4af37', marginBottom: '0.75rem', fontWeight: 'bold' }}>LISTA DE CORTE</h5>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {(editingOP as any).metadata?.pecas?.map((p: any, i: number) => (
+                          <div key={i} style={{ fontSize: '0.65rem', display: 'flex', justifyContent: 'space-between', padding: '6px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                            <span>{p.nome}</span>
+                            <span style={{ color: 'var(--text-muted)' }}>{p.largura}x{p.altura}</span>
+                          </div>
+                        )) || <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Sem lista de peças</div>}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
