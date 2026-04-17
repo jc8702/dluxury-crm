@@ -10,7 +10,6 @@ const SKUPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
   const [formData, setFormData] = useState({ 
     sku_code: '', 
     nome: '', 
@@ -52,12 +51,8 @@ const SKUPage: React.FC = () => {
 
   const filteredSkus = skus.filter(s => {
     const term = searchTerm.toLowerCase();
-    const matchSearch = s.nome.toLowerCase().includes(term) || s.sku.toLowerCase().includes(term);
-    const matchCategory = filterCategory ? s.categoria_id === filterCategory : true;
-    return matchSearch && matchCategory;
+    return s.nome.toLowerCase().includes(term) || s.sku.toLowerCase().includes(term);
   });
-
-  const extractedCategories = Array.from(new Set(skus.map(s => s.categoria_id))).filter(Boolean) as string[];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -86,20 +81,11 @@ const SKUPage: React.FC = () => {
             <input 
               className="input-base" 
               style={{ paddingLeft: '2.5rem', width: '100%' }}
-              placeholder="Buscar por código SKU ou nome..." 
+              placeholder="Buscar por descrição ou código SKU..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <select 
-            className="input-base" 
-            style={{ padding: '0.65rem 1rem', background: 'var(--elevated)', color: 'var(--text)' }}
-            value={filterCategory}
-            onChange={e => setFilterCategory(e.target.value)}
-          >
-            <option value="">Todas as Categorias</option>
-            {extractedCategories.map(c => <option key={c} value={c}>Cód: {c}</option>)}
-          </select>
         </div>
       </div>
 
