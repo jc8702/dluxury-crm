@@ -57,17 +57,13 @@ export async function handleEngineering(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     
-    // Garantia de infra: cria tabela se não existir (v4 hotfix)
-    await sql`
-      CREATE TABLE IF NOT EXISTS erp_product_bom (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        nome TEXT NOT NULL,
-        codigo_modelo TEXT UNIQUE NOT NULL,
-        descricao TEXT,
-        regras_calculo JSONB DEFAULT '[]',
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
+    // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
+    await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS nome TEXT`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
+    try { await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`; } catch(e){}
 
     if (req.method === 'GET') {
       const result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;

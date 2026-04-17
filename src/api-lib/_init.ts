@@ -204,13 +204,20 @@ export async function runInitDB() {
   await sql`
     CREATE TABLE IF NOT EXISTS erp_product_bom (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      nome TEXT NOT NULL,
-      codigo_modelo TEXT UNIQUE NOT NULL,
+      nome TEXT,
+      codigo_modelo TEXT UNIQUE,
       descricao TEXT,
       regras_calculo JSONB DEFAULT '[]',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `;
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS nome TEXT`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
+  try {
+    await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_codigo_modelo_unique UNIQUE (codigo_modelo)`;
+  } catch (e) {}
 
   return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy and MES support' };
 }
