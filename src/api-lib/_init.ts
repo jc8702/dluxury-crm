@@ -76,6 +76,100 @@ export async function runInitDB() {
     )
   `;
 
-  return { success: true, message: 'D\'Luxury CRM database initialized' };
+  // 11. New Industrial Taxonomy
+  await sql`
+    CREATE TABLE IF NOT EXISTS erp_categories (
+      id TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS erp_families (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      categoria_id TEXT REFERENCES erp_categories(id),
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS erp_subfamilies (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      familia_id UUID REFERENCES erp_families(id),
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
+  // 12. Seed Industrial Taxonomy
+  const categories = [
+    { id: 'CHP', nome: 'Chapas' },
+    { id: 'BRD', nome: 'Bordas e Acabamentos' },
+    { id: 'FRG', nome: 'Ferragens' },
+    { id: 'FIX', nome: 'Fixação e Montagem' },
+    { id: 'INS', nome: 'Insumos de Produção' },
+    { id: 'ILU', nome: 'Iluminação' },
+    { id: 'ACS', nome: 'Acessórios Internos' },
+    { id: 'EST', nome: 'Estruturas e Apoio' },
+    { id: 'PRF', nome: 'Perfis e Alumínios' },
+    { id: 'VID', nome: 'Vidros e Componentes' },
+    { id: 'EMB', nome: 'Embalagem' },
+    { id: 'FER', nome: 'Ferramentas' },
+    { id: 'QUI', nome: 'Químicos e Tratamentos' }
+  ];
+
+  for (const cat of categories) {
+    await sql`INSERT INTO erp_categories (id, nome) VALUES (${cat.id}, ${cat.nome}) ON CONFLICT (id) DO UPDATE SET nome = EXCLUDED.nome`;
+  }
+
+  const familyData: Record<string, string[]> = {
+    'CHP': ['MDF Cru', 'MDF BP', 'MDP', 'Compensado', 'HDF', 'OSB', 'Chapas Especiais'],
+    'BRD': ['Fita PVC', 'Fita ABS', 'Fita Melamínica', 'Perfil de Acabamento', 'Tapa Furo'],
+    'FRG': ['Dobradiça', 'Corrediça', 'Puxador', 'Conector', 'Suporte', 'Rodízio', 'Fecho'],
+    'FIX': ['Parafuso', 'Bucha', 'Cavilha', 'Minifix', 'Cantoneira', 'Prego'],
+    'INS': ['Cola PVA', 'Cola Contato', 'Cola Hotmelt', 'Silicone', 'Fita Crepe', 'Lixa', 'Espuma Expansiva'],
+    'ILU': ['Fita LED', 'Fonte', 'Driver', 'Sensor', 'Interruptor'],
+    'ACS': ['Porta Talheres', 'Lixeira Embutida', 'Porta Temperos', 'Aramados', 'Divisores', 'Cabideiros'],
+    'EST': ['Pé Regulável', 'Sapata', 'Nivelador', 'Mão Francesa'],
+    'PRF': ['Perfil Alumínio', 'Perfil LED', 'Trilho', 'Moldura'],
+    'VID': ['Vidro Comum', 'Vidro Temperado', 'Espelho', 'Ferragem para Vidro'],
+    'EMB': ['Plástico Bolha', 'Stretch', 'Papelão', 'Fita Adesiva', 'Proteção Cantoneira'],
+    'FER': ['Ferramenta Manual', 'Ferramenta Elétrica', 'Broca', 'Disco de Corte', 'Serra'],
+    'QUI': ['Verniz', 'Selador', 'Tinta', 'Removedor', 'Produto Limpeza Técnica']
+  };
+
+  for (const [catId, families] of Object.entries(familyData)) {
+    for (const famName of families) {
+      const exists = await sql`SELECT id FROM erp_families WHERE categoria_id = ${catId} AND nome = ${famName}`;
+      if (!exists.length) {
+        await sql`INSERT INTO erp_families (nome, categoria_id) VALUES (${famName}, ${catId})`;
+      }
+    }
+  }
+
+  const subFamilyData: Record<string, string[]> = {
+    'Dobradiça': ['Caneco 35mm', 'Reta', 'Curva', 'Super Curva', 'Com Amortecedor', 'Sem Amortecedor'],
+    'Corrediça': ['Telescópica', 'Invisível', 'Push to Open', 'Amortecida'],
+    'MDF BP': ['Madeirado', 'Unicolor', 'Texturizado']
+  };
+
+  for (const [famName, subFamilies] of Object.entries(subFamilyData)) {
+    const fam = await sql`SELECT id FROM erp_families WHERE nome = ${famName}`;
+    if (fam.length) {
+      for (const subName of subFamilies) {
+        const exists = await sql`SELECT id FROM erp_subfamilies WHERE familia_id = ${fam[0].id} AND nome = ${subName}`;
+        if (!exists.length) {
+          await sql`INSERT INTO erp_subfamilies (nome, familia_id) VALUES (${subName}, ${fam[0].id})`;
+        }
+      }
+    }
+  }
+
+  return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy' };
 }
 

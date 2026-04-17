@@ -122,3 +122,23 @@ export interface KanbanItem {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface ERPCategory {
+  id: string; // Ex: 'CHP'
+  nome: string;
+  ativo: boolean;
+}
+
+export interface ERPFamily {
+  id: string; // UUID
+  nome: string;
+  categoria_id: string;
+  ativo: boolean;
+}
+
+export interface ERPSubfamily {
+  id: string; // UUID
+  nome: string;
+  familia_id: string;
+  ativo: boolean;
+}
