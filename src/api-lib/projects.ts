@@ -74,6 +74,15 @@ export async function handleSKUs(req: any, res: any) {
       const result = await sql`SELECT * FROM erp_skus ORDER BY nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
+    if (req.method === 'POST') {
+      const f = req.body;
+      const r = await sql`INSERT INTO erp_skus (sku_code, nome, preco_base, unidade_medida, atributos) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.atributos}) RETURNING *`;
+      return res.status(201).json({ success: true, data: r[0] });
+    }
+    if (req.method === 'DELETE') {
+      await sql`DELETE FROM erp_skus WHERE id = ${req.query.id}`;
+      return res.status(200).json({ success: true });
+    }
     return res.status(405).end();
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

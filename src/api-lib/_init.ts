@@ -76,6 +76,20 @@ export async function runInitDB() {
     )
   `;
 
+  // 10.1 ERP SKUs for Engineering
+  await sql`
+    CREATE TABLE IF NOT EXISTS erp_skus (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sku_code TEXT UNIQUE NOT NULL,
+      nome TEXT NOT NULL,
+      unidade_medida TEXT DEFAULT 'UN',
+      preco_base DECIMAL(12,2) DEFAULT 0.00,
+      atributos JSONB DEFAULT '{}',
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
   // 11. New Industrial Taxonomy
   await sql`
     CREATE TABLE IF NOT EXISTS erp_categories (
