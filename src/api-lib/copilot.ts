@@ -111,16 +111,25 @@ async function detectAnomalies() {
 }
 
 // ===============================
-// INTENT ROUTER ARCHITECTURE (ARIA 2.0 - ROBUST)
+// INTENT ROUTER ARCHITECTURE (ARIA 2.0 - CONSULTIVE COPILOT)
 // ===============================
 
-type IntentType = "CREATE_SKU" | "UPDATE_SKU" | "DELETE_SKU" | "GET_LAST_SKU" | "SEARCH_SKU" | "LIST_BY_FAMILIA" | "UNKNOWN";
+type IntentType = 
+  | "SUGGEST_CREATE_SKU"   // Novo: Sugerir em vez de criar direto
+  | "CONFIRM_ACTION"       // Novo: Interpretar "sim", "pode fazer"
+  | "SEARCH_SKU"
+  | "GET_LAST_SKU"
+  | "SUGGEST_BOM"          // Novo: Gerar lista de materiais sugerida
+  | "ANALYZE_STOCK"        // Novo: Análise de reposição
+  | "LIST_BY_FAMILIA"
+  | "UNKNOWN";
 
 interface Entities {
   familia?: string;
   descricao?: string;
   unidade?: string;
   skuId?: string;
+  projeto?: { tipo: string; medidas: { L: number; A: number; P: number }; gavetas?: number };
 }
 
 interface Intent {
@@ -129,20 +138,28 @@ interface Intent {
 }
 
 /**
- * Endpoint Handler: Retorna apenas o texto bruto do LLM para o parser robusto.
+ * Lógica central de extração bruta do LLM com suporte a Histórico
  */
-/**
- * Lógica central de extração bruta do LLM
- */
-async function getRawLLMIntent(message: string): Promise<string> {
-  const prompt = `Atue como um classificador NLU de ERP industrial. 
-  Mapeie a mensagem: "${message}" para uma intent. 
-  Sua missão é extrair a FICHA TÉCNICA do item.
+async function getRawLLMIntent(message: string, history: any[] = []): Promise<string> {
+  const context = history.map(h => `${h.role === 'user' ? 'Usuário' : 'Copiloto'}: ${h.content}`).join('\n');
+  
+  const prompt = `Você é o COPILOTO INDUSTRIAL da D'Luxury, especialista em marcenaria.
+  Sua função é interpretar a intenção do usuário no ERP.
+  
+  CONTEXTO RECENTE:
+  ${context}
 
-  - Intent: CREATE_SKU, GET_LAST_SKU, SEARCH_SKU, LIST_BY_FAMILIA.
-  - entities.descricao: Deve conter APENAS o nome e especificações técnicas (ex: "Parafuso 6x65 mm zincado"). NUNCA inclua palavras de comando como "cadastra", "adiciona", "para mim" ou pontuações de diálogo.
+  MENSAGEM ATUAL: "${message}"
 
-  RETORNE APENAS JSON PURO.`;
+  INTENÇÕES E REGRAS:
+  1. SUGGEST_CREATE_SKU: Usuário quer cadastrar algo. Extraia familia, descricao e unidade.
+  2. CONFIRM_ACTION: Usuário disse "sim", "pode", "ok", "confirma" para uma sugestão anterior.
+  3. SUGGEST_BOM: Usuário descreveu um móvel (ex: gaveteiro, armário). Extraia tipo e dimensões (L, A, P).
+  4. ANALYZE_STOCK: Pergunta sobre o que comprar ou estado do estoque.
+  5. SEARCH_SKU: Busca de itens.
+
+  RETORNE APENAS JSON PURO.
+  Padrão: {"type": "...", "entities": {...}}`;
 
   const { text } = await generateText({
     model: modelFlash,
@@ -181,10 +198,10 @@ function sanitizeIntent(raw: any): Intent {
 /**
  * Parser Robusto: Extrai JSON de texto sujo usando Regex
  */
-async function parseIntent(message: string): Promise<Intent> {
+async function parseIntent(message: string, history: any[] = []): Promise<Intent> {
   try {
     // Chamada direta para evitar problemas de fetch em ambiente serverless
-    const text = await getRawLLMIntent(message);
+    const text = await getRawLLMIntent(message, history);
     console.log("RAW LLM RESPONSE:", text);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -204,6 +221,11 @@ async function parseIntent(message: string): Promise<Intent> {
 }
 
 const SKUService = {
+  async checkDuplicity(descricao: string) {
+    const searchString = `%${descricao.split(' ')[0]}%${descricao.split(' ').slice(-1)}%`;
+    const r = await sql`SELECT sku, nome FROM materiais WHERE nome ILIKE ${'%' + descricao + '%'} LIMIT 1`;
+    return r.length > 0 ? r[0] : null;
+  },
   async create(data: Entities) {
     let categoryId = 'OUT';
     const famLow = (data.familia || '').toLowerCase();
@@ -252,15 +274,87 @@ const SKUService = {
   }
 };
 
-async function handleCreateSKU(entities: Entities) {
-  if (!entities.descricao) return { message: "Qual a especificação do item? (ex: 6x30, branco, 18mm)" };
-  if (!entities.familia) entities.familia = entities.descricao.split(' ')[0] || 'Genérico';
-  if (!entities.unidade) entities.unidade = 'UN';
-
-  const sku = await SKUService.create(entities);
-  return {
-    message: `✅ Item cadastrado com sucesso\n\nSKU: ${sku.skuId}\nDescrição: ${sku.descricao}\nUnidade: ${sku.unidade}\n\n[EVENT_EMIT_SKU_CRIADO]`
+async function handleSuggestCreateSKU(entities: Entities) {
+  if (!entities.descricao) return { message: "Qual item você deseja cadastrar?" };
+  
+  const similar = await SKUService.checkDuplicity(entities.descricao);
+  const suggestion = {
+    familia: entities.familia || entities.descricao.split(' ')[0] || 'Geral',
+    descricao: entities.descricao,
+    unidade: entities.unidade || 'UN'
   };
+
+  let message = `### Sugestão de Cadastro\n\n`;
+  message += `**Família:** ${suggestion.familia}\n`;
+  message += `**Descrição:** ${suggestion.descricao}\n`;
+  message += `**Unidade:** ${suggestion.unidade}\n\n`;
+
+  if (similar) {
+     message += `⚠️ **Aviso de Duplicidade:**\nEncontrei um item semelhante: \`${similar.sku} - ${similar.nome}\`.\n\nDeseja usar o existente ou criar este novo?`;
+  } else {
+     message += `Deseja que eu realize o cadastro deste item com estas informações?`;
+  }
+
+  return { message };
+}
+
+async function handleConfirmAction(history: any[]) {
+  // Pega a última mensagem do assistente para saber o que está sendo confirmado
+  const lastAiMessage = [...history].reverse().find(m => m.role === 'assistant');
+  if (!lastAiMessage) return { message: "O que você deseja confirmar? Não identifiquei uma sugestão pendente." };
+
+  if (lastAiMessage.content.includes("Sugestão de Cadastro")) {
+    const lines = lastAiMessage.content.split('\n');
+    const descricao = lines.find(l => l.includes("Descrição:"))?.split('** ')[1] || '';
+    const familia = lines.find(l => l.includes("Família:"))?.split('** ')[1] || '';
+    const unidade = lines.find(l => l.includes("Unidade:"))?.split('** ')[1] || 'UN';
+
+    const sku = await SKUService.create({ descricao, familia, unidade });
+    return { message: `✅ Perfeito! Item cadastrado com sucesso.\n\n**SKU:** ${sku.skuId}\n**Descrição:** ${sku.descricao}\n\n[EVENT_EMIT_SKU_CRIADO]` };
+  }
+
+  if (lastAiMessage.content.includes("Sugestão de materiais")) {
+    return { message: "Entendido! Criando orçamento com base nesta lista de materiais... (Ação simulada para o módulo de Orçamentos)" };
+  }
+
+  return { message: "Confirmado! (Ação não mapeada especificamente)" };
+}
+
+async function handleSuggestBOM(entities: Entities) {
+  const tipo = entities.projeto?.tipo || 'Móvel Sob Medida';
+  const L = entities.projeto?.medidas?.L || 600;
+  const A = entities.projeto?.medidas?.A || 700;
+  const P = entities.projeto?.medidas?.P || 500;
+
+  let BOM = `### Sugestão de materiais para ${tipo}\n\n`;
+  if (tipo.toLowerCase().includes('gaveteiro')) {
+    BOM += `- MDF Branco 18mm (Corpo/Frentes) → ~${((L*A*2 + L*P*2 + A*P*2)/1000000).toFixed(2)} m²\n`;
+    BOM += `- Corrediça Telescópica 450mm → 3 UN\n`;
+    BOM += `- Fita de Borda PVC Branca 22mm → ~15 m\n`;
+    BOM += `- Parafuso 4x50mm → 48 UN\n\n`;
+    BOM += `**Custo Estimado:** R$ 285,00\n`;
+    BOM += `**Preço Sugerido:** R$ 850,00 (Margem 66%)\n\n`;
+  } else {
+    BOM += `- MDF Branco 18mm → Sob consulta\n`;
+    BOM += `- Ferragens Básicas → Kit Montagem\n\n`;
+  }
+  
+  BOM += `Deseja transformar esta lista em um orçamento?`;
+  return { message: BOM };
+}
+
+async function handleAnalyzeStock() {
+  const criticos = await sql`SELECT sku, nome, estoque_atual, estoque_minimo FROM materiais WHERE estoque_atual <= estoque_minimo AND ativo = true LIMIT 5`;
+  
+  if (criticos.length === 0) return { message: "✅ Estoque saudável! Nenhum item crítico identificado no momento." };
+
+  let report = `### Sugestão de Reposição\n\nIdentifiquei itens em nível crítico:\n\n`;
+  criticos.forEach((c: any) => {
+    report += `- **${c.sku}**: ${c.nome} (Estoque: ${c.estoque_atual} | Mín: ${c.estoque_minimo})\n`;
+  });
+  
+  report += `\nRecomendo gerar pedido de compra para estes itens hoje.`;
+  return { message: report };
 }
 
 async function handleGetLast() {
@@ -282,55 +376,34 @@ async function handleListByFamilia(entities: Entities) {
   return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
 }
 
-async function processUserMessage(message: string) {
+async function processUserMessage(message: string, history: any[] = []) {
   try {
-    let intent = await parseIntent(message);
+    let intent = await parseIntent(message, history);
     
-    // Função utilitária para limpar comandos da descrição
     const cleanDesc = (text: string) => {
       return text
         .replace(/^(cadastra|cadastrar|crie|cria|adiciona|adicionar|incluir|inclua|por favor|para mim|agora)[:\s]*/i, '')
         .trim();
     };
 
-    // FALLBACK INTELIGENTE (BASEADO EM KEYWORDS)
     if (intent.type === "UNKNOWN") {
       const msgLow = message.toLowerCase();
-      const cleaned = cleanDesc(message);
-      
       if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha")) {
-         intent = {
-           type: "CREATE_SKU",
-           entities: {
-             familia: "Parafuso",
-             descricao: cleaned,
-             unidade: "CENTO"
-           }
-         };
-      } else if (msgLow.includes("chapa") || msgLow.includes("mdf") || msgLow.includes("mdp")) {
-         intent = {
-           type: "CREATE_SKU",
-           entities: {
-             familia: "Chapa",
-             descricao: cleaned,
-             unidade: "M2"
-           }
-         };
+         intent = { type: "SUGGEST_CREATE_SKU", entities: { familia: "Parafuso", descricao: cleanDesc(message), unidade: "CENTO" } };
       }
-    } else if (intent.type === "CREATE_SKU" && intent.entities.descricao) {
-      // Garante limpeza mesmo se o LLM alucinar o prefixo
-      intent.entities.descricao = cleanDesc(intent.entities.descricao);
     }
 
-    const entities = intent.entities || {};
-    if (entities.unidade) entities.unidade = entities.unidade.toUpperCase().trim();
-    
+    if (intent.entities.descricao) intent.entities.descricao = cleanDesc(intent.entities.descricao);
+
     switch (intent.type) {
-      case "CREATE_SKU": return await handleCreateSKU(entities);
+      case "SUGGEST_CREATE_SKU": return await handleSuggestCreateSKU(intent.entities);
+      case "CONFIRM_ACTION": return await handleConfirmAction(history);
+      case "SUGGEST_BOM": return await handleSuggestBOM(intent.entities);
+      case "ANALYZE_STOCK": return await handleAnalyzeStock();
       case "GET_LAST_SKU": return await handleGetLast();
-      case "SEARCH_SKU": return await handleSearch(entities);
-      case "LIST_BY_FAMILIA": return await handleListByFamilia(entities);
-      default: return { message: "Não entendi a solicitação. Pode reformular a instrução operacional?" };
+      case "SEARCH_SKU": return await handleSearch(intent.entities);
+      case "LIST_BY_FAMILIA": return await handleListByFamilia(intent.entities);
+      default: return { message: "Sou seu Copiloto Industrial. Posso sugerir cadastros, calcular materiais (BOM) ou analisar seu estoque. Como posso acelerar seu trabalho agora?" };
     }
   } catch (error) {
     console.error("Erro crítico no agente NLU:", error);
@@ -339,7 +412,7 @@ async function processUserMessage(message: string) {
 }
 
 async function generateChatResponse(payload: any) {
-  const response = await processUserMessage(payload.message);
+  const response = await processUserMessage(payload.message, payload.history || []);
   return { content: response.message };
 }
 
