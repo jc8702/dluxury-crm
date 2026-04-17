@@ -130,7 +130,7 @@ interface Intent {
 
 async function parseIntent(message: string): Promise<Intent> {
   const { object } = await generateObject({
-    model: modelPro,
+    model: modelFlash,
     schema: z.object({
       type: z.enum(["CREATE_SKU", "UPDATE_SKU", "DELETE_SKU", "GET_LAST_SKU", "SEARCH_SKU", "LIST_BY_FAMILIA", "UNKNOWN"]),
       entities: z.object({
@@ -163,8 +163,18 @@ const SKUService = {
     }
     
     await sql`
-      INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) 
-      VALUES (${proximoSku}, ${data.descricao}, ${data.descricao}, ${data.unidade}, ${data.unidade}, 0, 50, 0, ${categoryId}, true)
+      INSERT INTO materiais (
+        sku, nome, descricao, unidade_uso, unidade_compra, 
+        preco_custo, margem_lucro, preco_venda, categoria_id, ativo,
+        subcategoria, fator_conversao, estoque_minimo, estoque_atual,
+        cfop, ncm, marca
+      ) 
+      VALUES (
+        ${proximoSku}, ${data.descricao}, ${data.descricao}, ${data.unidade}, ${data.unidade}, 
+        0, 50, 0, ${categoryId}, true,
+        'Geral', 1, 0, 0,
+        '', '', 'D-Luxury'
+      )
     `;
     return { skuId: proximoSku, descricao: data.descricao, unidade: data.unidade };
   },
