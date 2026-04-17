@@ -103,3 +103,4 @@ export function markupParaMargem(
   if (div <= 0) return 1;
   return 1 / div
 }
+

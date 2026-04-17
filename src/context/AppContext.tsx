@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
-import { apiService, removeAuthToken, hasAuthToken, setAuthToken } from '../services/apiService';
+import { api, removeAuthToken, hasAuthToken, setAuthToken } from '../lib/api';
 
 // ─── TIPOS ────────────────────────────────────────────────
 
@@ -411,7 +411,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadSystemUsers = async () => {
     if (user?.role === 'admin') {
-      const u = await apiService.getUsers().catch(() => []);
+      const u = await api.users.list().catch(() => []);
       setSystemUsers(u);
     }
   };
@@ -425,7 +425,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // ─── GOALS ─────────────────────────────────────────────
   const setMonthlyGoal = async (period: string, amount: number) => {
     try {
-      await apiService.updateMonthlyGoal(period, amount);
+      await api.goals.update(period, amount);
       setMonthlyGoals((prev: Record<string, number>) => ({ ...prev, [period]: amount }));
     } catch (error) {
       console.error('Erro ao salvar meta mensal:', error);
@@ -443,19 +443,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await fetch('/api/init-db').catch(() => ({}));
 
       const [clientsData, billingsData, kanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
-        apiService.getClients().catch(err => { console.error('Clients load error:', err); return []; }),
-        apiService.getBillings().catch(err => { console.error('Billings load error:', err); return []; }),
-        apiService.getKanbanItems().catch(err => { console.error('Kanban load error:', err); return []; }),
-        apiService.getMonthlyGoals().catch(err => { console.error('Goals load error:', err); return []; }),
-        apiService.getCategorias().catch(err => { console.error('Categories load error:', err); return []; }),
-        apiService.getMateriais().catch(err => { console.error('Materials load error:', err); return []; }),
-        apiService.getFornecedores().catch(err => { console.error('Suppliers load error:', err); return []; }),
-        apiService.getOrcamentos().catch(err => { console.error('Budgets load error:', err); return []; }),
-        apiService.getCondicoesPagamento().catch(err => { console.error('PayConditions load error:', err); return []; }),
-        apiService.getMovimentacoes().catch(err => { console.error('StockMovs load error:', err); return []; })
+        api.clients.list().catch(err => { console.error('Clients load error:', err); return []; }),
+        api.billings.list().catch(err => { console.error('Billings load error:', err); return []; }),
+        api.kanban.list().catch(err => { console.error('Kanban load error:', err); return []; }),
+        api.goals.list().catch(err => { console.error('Goals load error:', err); return []; }),
+        api.estoqueCategorias.list().catch(err => { console.error('Categories load error:', err); return []; }),
+        api.estoque.list().catch(err => { console.error('Materials load error:', err); return []; }),
+        api.estoque.fornecedores.list().catch(err => { console.error('Suppliers load error:', err); return []; }),
+        api.orcamentos.list().catch(err => { console.error('Budgets load error:', err); return []; }),
+        api.condicoesPagamento.list().catch(err => { console.error('PayConditions load error:', err); return []; }),
+        api.estoque.getMovimentacoes().catch(err => { console.error('StockMovs load error:', err); return []; })
       ]);
 
-      console.log(`[ReloadData] Loaded: ${matsData.length} materiais, ${catsData.length} categorias, ${orcamentosData.length} orçamentos.`);
 
       setCategorias(Array.isArray(catsData) ? catsData : []);
       let mappedMaterials: any[] = [];
@@ -611,7 +610,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const init = async () => {
       if (hasAuthToken()) {
         try {
-          const res = await apiService.checkSession();
+          const res = await api.auth.me();
           setUser(res.user);
         } catch {
           removeAuthToken();
@@ -654,7 +653,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── CLIENT CRUD ───────────────────────────────────────
   const addClient = async (data: any) => {
-    const saved = await apiService.addClient(data);
+    const saved = await api.clients.create(data);
     const mapped: Client = {
       id: saved.id.toString(),
       nome: saved.nome || saved.razao_social || data.nome || '',
@@ -675,7 +674,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateClient = async (id: string, data: any) => {
-    const saved = await apiService.updateClient(id, data);
+    const saved = await api.clients.update(id, data);
     setClients((prev: Client[]) => prev.map((c: Client) =>
       c.id === id ? {
         ...c,
@@ -697,7 +696,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const removeClient = async (id: string) => {
-    await apiService.removeClient(id);
+    await api.clients.delete(id);
     setClients((prev: Client[]) => prev.filter((c: Client) => c.id !== id));
   };
 
@@ -713,7 +712,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       observations: data.observacoes || data.descricao || '',
       description: data.descricao || '',
     };
-    const saved = await apiService.addKanbanItem(payload);
+    const saved = await api.kanban.create(payload);
     const mapped: Project = {
       id: saved.id.toString(),
       clientId: data.clientId,
@@ -740,7 +739,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.observacoes) payload.observations = data.observacoes;
     if (data.descricao) payload.description = data.descricao;
 
-    await apiService.updateKanbanStatus(id, data.status || '', payload);
+    await api.kanban.updateStatus(id, data.status || '', payload);
     setProjects((prev: Project[]) => prev.map((p: Project) =>
       p.id === id ? { ...p, ...data } : p
     ));
@@ -753,7 +752,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── BILLING CRUD ──────────────────────────────────────
   const addBilling = async (data: any) => {
-    const saved = await apiService.addBilling(data);
+    const saved = await api.billings.create(data);
     setBillings((prev: Billing[]) => [{
       ...saved,
       id: saved.id.toString(),
@@ -768,7 +767,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateBilling = async (id: string, data: any) => {
-    const saved = await apiService.updateBilling(id, data);
+    const saved = await api.billings.update(id, data);
     setBillings((prev: Billing[]) => prev.map((b: Billing) =>
       b.id === id ? {
         ...saved,
@@ -785,13 +784,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const removeBilling = async (id: string) => {
-    await apiService.removeBilling(id);
+    await api.billings.delete(id);
     setBillings((prev: Billing[]) => prev.filter((b: Billing) => b.id !== id));
   };
 
   // ─── KANBAN (visits) ──────────────────────────────────
   const updateKanbanStatus = async (_type: any, id: string, newStatus: string) => {
-    await apiService.updateKanbanStatus(id, newStatus);
+    await api.kanban.updateStatus(id, newStatus);
     setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
       i.id === id ? { ...i, status: newStatus } : i
     ));
@@ -813,7 +812,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       temperature: data.temperature,
       observations: data.observations || data.description
     };
-    const saved = await apiService.addKanbanItem(payload);
+    const saved = await api.kanban.create(payload);
     const mapped = {
       ...saved,
       id: saved.id.toString(),
@@ -845,7 +844,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       visit_format: data.visitFormat,
       description: data.description || data.observations
     };
-    await apiService.updateKanbanStatus(id, data.status!, payload);
+    await api.kanban.updateStatus(id, data.status!, payload);
     setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
       i.id === id ? { ...i, ...data } : i
     ));
@@ -853,7 +852,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── ESTOQUE CRUD ─────────────────────────────────────
   const addMaterial = async (data: any) => {
-    const saved = await apiService.addMaterial(data);
+    const saved = await api.estoque.create(data);
     setMateriais(prev => [...prev, {
       ...saved,
       fator_conversao: Number(saved.fator_conversao),
@@ -864,7 +863,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateMaterial = async (id: string, data: any) => {
-    const saved = await apiService.updateMaterial(id, data);
+    const saved = await api.estoque.update(id, data);
     setMateriais(prev => prev.map(m => m.id === id ? {
       ...saved,
       fator_conversao: Number(saved.fator_conversao),
@@ -875,14 +874,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const removeMaterial = async (id: string) => {
-    await apiService.removeMaterial(id);
+    await api.estoque.delete(id);
     setMateriais(prev => prev.filter(m => m.id !== id));
   };
 
   const registrarMovimentacao = async (data: any) => {
-    const savedMov = await apiService.registrarMovimentacao(data);
-    // Após movimentação, recarregamos materiais para garantir saldo atualizado
-    const mats = await apiService.getMateriais();
+    const savedMov = await api.estoque.addMovimentacao(data);
+    await reloadData();
+    const mats = await api.estoque.list();
     setMateriais(mats.map((m: any) => ({
       ...m,
       fator_conversao: Number(m.fator_conversao),
@@ -895,49 +894,49 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── FORNECEDORES CRUD ─────────────────────────────────
   const addFornecedor = async (data: any) => {
-    const saved = await apiService.addFornecedor(data);
+    const saved = await api.estoque.fornecedores.create(data);
     setFornecedores(prev => [...prev, saved]);
   };
 
   const updateFornecedor = async (id: string, data: any) => {
-    const saved = await apiService.updateFornecedor(id, data);
+    const saved = await api.estoque.fornecedores.update(id, data);
     setFornecedores(prev => prev.map(f => f.id === id ? saved : f));
   };
 
   const removeFornecedor = async (id: string) => {
-    await apiService.removeFornecedor(id);
+    await api.estoque.fornecedores.delete(id);
     setFornecedores(prev => prev.filter(f => f.id !== id));
   };
 
   // ─── ORCAMENTO CRUD ────────────────────────────────────
   const addOrcamento = async (data: any) => {
-    const saved = await apiService.addOrcamento(data);
+    const saved = await api.orcamentos.create(data);
     setOrcamentos(prev => [saved, ...prev]);
   };
 
   const updateOrcamento = async (id: string, data: any) => {
-    const saved = await apiService.updateOrcamento(id, data);
+    const saved = await api.orcamentos.update(id, data);
     setOrcamentos(prev => prev.map(o => o.id === id ? saved : o));
   };
 
   const removeOrcamento = async (id: string) => {
-    await apiService.removeOrcamento(id);
+    await api.orcamentos.delete(id);
     setOrcamentos(prev => prev.filter(o => o.id !== id));
   };
 
   // ─── CONDICAO PAGAMENTO CRUD ────────────────────────────
   const addCondicaoPagamento = async (data: any) => {
-    const saved = await apiService.addCondicaoPagamento(data);
+    const saved = await api.condicoesPagamento.create(data);
     setCondicoesPagamento(prev => [...prev, saved]);
   };
 
   const updateCondicaoPagamento = async (id: string, data: any) => {
-    const saved = await apiService.updateCondicaoPagamento(id, data);
+    const saved = await api.condicoesPagamento.update(id, data);
     setCondicoesPagamento(prev => prev.map(c => c.id === id ? saved : c));
   };
 
   const removeCondicaoPagamento = async (id: string) => {
-    await apiService.removeCondicaoPagamento(id);
+    await api.condicoesPagamento.delete(id);
     setCondicoesPagamento(prev => prev.filter(c => c.id !== id));
   };
 
@@ -996,3 +995,4 @@ export const useAppContext = () => {
   if (!context) throw new Error('useAppContext must be used within AppProvider');
   return context;
 };
+

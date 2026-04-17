@@ -52,3 +52,4 @@ export const runDiagnostics = () => {
 
     return results;
 };
+

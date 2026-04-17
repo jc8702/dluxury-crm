@@ -78,3 +78,4 @@ export async function runInitDB() {
 
   return { success: true, message: 'D\'Luxury CRM database initialized' };
 }
+

@@ -53,3 +53,4 @@ export const getSimulation = async (id: string): Promise<SimulationRecord> => {
   if (!item) throw new Error('Simulação não encontrada');
   return item;
 };
+

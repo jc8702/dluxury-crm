@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { apiService } from '../services/apiService';
+import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
 
 export function useEstoque() {
@@ -10,7 +10,7 @@ export function useEstoque() {
   const listarMateriais = useCallback(async (filtros?: any) => {
     setLoading(true);
     try {
-      const data = await apiService.getMateriais();
+      const data = await api.estoque.list();
       // Filtros em memória por enquanto (o backend já retorna tudo)
       if (!filtros) return data;
       
@@ -29,21 +29,21 @@ export function useEstoque() {
   }, []);
 
   const buscarMaterial = useCallback(async (id: string) => {
-    return apiService.getMaterial(id);
+    return api.estoque.get(id);
   }, []);
 
   const criarMaterial = useCallback(async (data: any) => {
-    await apiService.addMaterial(data);
+    await api.estoque.create(data);
     await reloadData();
   }, [reloadData]);
 
   const editarMaterial = useCallback(async (id: string, data: any) => {
-    await apiService.updateMaterial(id, data);
+    await api.estoque.update(id, data);
     await reloadData();
   }, [reloadData]);
 
   const registrarEntrada = useCallback(async (materialId: string, quantidade: number, motivo: string, precoUnitario?: number) => {
-    await apiService.registrarMovimentacao({
+    await api.estoque.movimentacoes.create({
       material_id: materialId,
       tipo: 'entrada',
       quantidade,
@@ -54,7 +54,7 @@ export function useEstoque() {
   }, [reloadData]);
 
   const registrarSaida = useCallback(async (materialId: string, quantidade: number, motivo: string, projetoId?: string) => {
-    await apiService.registrarMovimentacao({
+    await api.estoque.movimentacoes.create({
       material_id: materialId,
       tipo: 'saida',
       quantidade,
@@ -65,7 +65,7 @@ export function useEstoque() {
   }, [reloadData]);
 
   const registrarAjuste = useCallback(async (materialId: string, estoqueNovo: number, motivo: string) => {
-    await apiService.registrarMovimentacao({
+    await api.estoque.movimentacoes.create({
       material_id: materialId,
       tipo: 'ajuste',
       quantidade: estoqueNovo,
@@ -75,11 +75,11 @@ export function useEstoque() {
   }, [reloadData]);
 
   const listarMovimentacoes = useCallback(async (materialId?: string) => {
-    return apiService.getMovimentacoes(materialId);
+    return api.estoque.movimentacoes.list(materialId);
   }, []);
 
   const listarAbaixoMinimo = useCallback(async () => {
-    const materiais = await apiService.getMateriais();
+    const materiais = await api.estoque.list();
     return materiais.filter((m: any) => Number(m.estoque_atual) <= Number(m.estoque_minimo));
   }, []);
 
@@ -97,3 +97,4 @@ export function useEstoque() {
     listarAbaixoMinimo
   };
 }
+

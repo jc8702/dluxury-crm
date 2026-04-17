@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Bot, AlertTriangle, ShoppingCart, Settings2, X, Send, Loader2, User } from 'lucide-react';
-import { apiService } from '../../services/apiService';
+import { api } from '../../lib/api';
 
 interface CopilotAssistantProps {
   onSuggestBOM?: (suggestion: any) => void;
@@ -28,9 +28,9 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
     try {
       let data;
       switch(skill) {
-        case 'generate-bom': data = await apiService.aiGenerateBOM(payload); break;
-        case 'purchase-suggestion': data = await apiService.aiGetPurchaseSuggestions(); break;
-        case 'detect-anomalies': data = await apiService.aiDetectAnomalies(); break;
+        case 'generate-bom': data = await api.ai.generateBOM(payload); break;
+        case 'purchase-suggestion': data = await api.ai.purchaseSuggestion(); break;
+        case 'detect-anomalies': data = await api.ai.detectAnomalies(); break;
         default: data = { content: "Função não reconhecida." };
       }
       
@@ -69,7 +69,7 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
 
     try {
       const history = messages.slice(-5).map(m => ({ role: m.type === 'ai' ? 'assistant' : 'user', content: m.content }));
-      const response = await apiService.aiChat(userMsg, history);
+      const response = await api.ai.chat({ message: userMsg, history });
       
       setMessages(prev => [...prev, {
         type: 'ai',
@@ -238,3 +238,4 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
 };
 
 export default CopilotAssistant;
+

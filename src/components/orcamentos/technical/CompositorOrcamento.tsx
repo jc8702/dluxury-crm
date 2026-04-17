@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppContext } from '../../../context/AppContext';
 import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
-import { apiService } from '../../../services/apiService';
+import { api } from '../../../lib/api';
 import { 
   calcularM2Peca, 
   aplicarPerdaCorte, 
@@ -38,8 +38,8 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
     setLoading(true);
     try {
       const [treeData, configData] = await Promise.all([
-        apiService.getOrcamentoTree(orcamentoId),
-        apiService.getTechnicalConfig()
+        api.orcamentoTecnico.getTree(orcamentoId),
+        api.orcamentoTecnico.getConfig()
       ]);
       setTree(treeData);
       setConfig(configData);
@@ -69,19 +69,19 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
 
   // -- Actions (Atomic Save) --
   const handleAddAmbiente = async (nome: string) => {
-    await apiService.addAmbiente(orcamentoId, { nome, ordem: tree.ambientes.length });
+    await api.orcamentoTecnico.addEntity('ambiente', 'orcamento_id', orcamentoId, { nome, ordem: tree.ambientes.length });
     await loadTree();
   };
 
   const handleAddMovel = async (data: any) => {
     if (!selectedAmbienteId) return;
-    await apiService.addMovel(selectedAmbienteId, data);
+    await api.orcamentoTecnico.addEntity('movel', 'ambiente_id', selectedAmbienteId, data);
     await loadTree();
   };
 
   const handleRemove = async (type: any, id: string) => {
     if (!confirm('Tem certeza que deseja excluir?')) return;
-    await apiService.removeTechnicalEntity(type, id);
+    await api.orcamentoTecnico.deleteEntity(type, id);
     if (type === 'ambiente' && id === selectedAmbienteId) { setSelectedAmbienteId(null); setSelectedMovelId(null); }
     if (type === 'movel' && id === selectedMovelId) setSelectedMovelId(null);
     await loadTree();
@@ -90,7 +90,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
   const handleAddPeca = async () => {
     if (!selectedMovelId) return;
     const defaultMat = materiais.find(m => m.categoria_nome?.toLowerCase().includes('chapa')) || materiais[0];
-    await apiService.addPeca(selectedMovelId, {
+    await api.orcamentoTecnico.addEntity('peca', 'movel_id', selectedMovelId, {
       material_id: defaultMat?.id,
       sku: defaultMat?.sku || 'SKU',
       descricao_peca: 'NOVA PEÇA',
@@ -104,7 +104,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
   };
 
   const handleUpdatePeca = async (pecaId: string, data: any) => {
-    await apiService.updatePeca(pecaId, data);
+    await api.orcamentoTecnico.updateEntity('peca', pecaId, data);
     await loadTree();
   };
 
@@ -435,3 +435,4 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
 };
 
 export default CompositorOrcamento;
+

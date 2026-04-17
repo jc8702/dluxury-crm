@@ -1,22 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/layout/Sidebar';
-import Dashboard from './features/dashboard/Dashboard';
-import Clients from './features/clients/Clients';
-import OrcamentosPage from './features/orcamentos/OrcamentosPage';
-import ProjectKanban from './features/projects/ProjectKanban';
-import Production from './features/production/Production';
-import VisitKanban from './features/visits/VisitKanban';
-import Inventory from './features/inventory/Inventory';
-import Settings from './features/settings/Settings';
 import { AppProvider, useAppContext } from './context/AppContext';
-import BillingForm from './features/billing/BillingForm';
-import FornecedoresPage from './features/suppliers/FornecedoresPage';
-import EngineeringPage from './features/engineering/EngineeringPage';
-import SKUPage from './features/skus/SKUPage';
-import ReportsPage from './features/reports/ReportsPage';
 import CopilotAssistant from './components/ai/CopilotAssistant';
-import Login from './features/auth/Login';
+import Login from './components/auth/Login';
 import ErrorBoundary from './components/ErrorBoundaries';
+
+// Importando da nova camada de Pages
+import DashboardPage from './pages/DashboardPage';
+import ClientsPage from './pages/ClientsPage';
+import OrcamentosPage from './pages/OrcamentosPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProductionPage from './pages/ProductionPage';
+import VisitsPage from './pages/VisitsPage';
+import InventoryPage from './pages/InventoryPage';
+import SuppliersPage from './pages/SuppliersPage';
+import FinancePage from './pages/FinancePage';
+import EngineeringPage from './pages/EngineeringPage';
+import SKUsPage from './pages/SKUsPage';
+import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 
 type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings';
 
@@ -73,39 +75,43 @@ function AppContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <DashboardPage />;
       case 'clients':
-        return <Clients />;
+        return <ClientsPage />;
       case 'estimates':
         return <OrcamentosPage />;
       case 'projects':
-        return <ProjectKanban />;
+        return <ProjectsPage />;
       case 'production':
-        return <Production />;
+        return <ProductionPage />;
       case 'visits':
-        return <VisitKanban />;
+        return <VisitsPage />;
       case 'inventory':
         return (
           <ErrorBoundary moduleName="Estoque">
-            <Inventory />
+            <InventoryPage />
           </ErrorBoundary>
         );
       case 'suppliers':
-        return <FornecedoresPage />;
+        return <SuppliersPage />;
       case 'engineering':
         return <EngineeringPage />;
       case 'skus':
-        return <SKUPage />;
+        return <SKUsPage />;
       case 'reports':
         return <ReportsPage />;
       case 'finance':
-        return <BillingForm />;
+        return <FinancePage />;
       case 'settings':
-        return <Settings />;
+        return <SettingsPage />;
       default:
         return null;
     }
   };
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <>
@@ -131,3 +137,4 @@ function AppContent() {
 }
 
 export default App;
+

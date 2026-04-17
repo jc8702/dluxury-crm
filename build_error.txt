@@ -1,7 +1,0 @@
-
-> corp-crm-simulator@0.0.0 build
-> tsc -b && vite build
-
-src/features/simulator/PriceSimulator.tsx(4,1): error TS6133: 'Product' is declared but its value is never read.
-src/features/simulator/PriceSimulator.tsx(10,21): error TS6133: 'setUseBureau' is declared but its value is never read.
-src/services/salesforceService.ts(73,13): error TS6133: 'response' is declared but its value is never read.

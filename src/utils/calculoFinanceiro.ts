@@ -34,3 +34,4 @@ export function calcularValorComUrgencia(
 ): number {
   return valorFinal * (1 + adicionalPct);
 }
+

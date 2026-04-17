@@ -88,3 +88,4 @@ export const reportService = {
     doc.save(`Mapa_Custos_${new Date().getTime()}.pdf`);
   }
 };
+

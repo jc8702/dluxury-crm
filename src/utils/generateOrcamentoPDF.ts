@@ -138,3 +138,4 @@ export const generateOrcamentoPDF = (
 
   doc.save(`Proposta_${orcamento.numero}_DLuxury.pdf`);
 };
+

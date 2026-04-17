@@ -43,3 +43,4 @@ export function valorEmEstoque(
 ): number {
   return (estoqueAtual || 0) * (precoCusto || 0);
 }
+

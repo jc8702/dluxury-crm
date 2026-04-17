@@ -58,3 +58,4 @@ export async function calculateBOM(paramsJson: any, bom: BOMItem[]) {
     }
   });
 }
+
