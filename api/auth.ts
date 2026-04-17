@@ -2,7 +2,7 @@ import { sql, extractAndVerifyToken } from './lib/_db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.VITE_SUPABASE_ANON_KEY || 'dluxury-secret-key-2024';
+const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 
 export default async function handler(req: any, res: any) {
   const action = req.query.action || 'login';

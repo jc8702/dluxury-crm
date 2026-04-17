@@ -1,4 +1,3 @@
-import { supabase } from '../supabaseClient';
 import type { SimulationResult, SimulationInput } from '../../types/simulator';
 
 export interface SimulationRecord {
@@ -10,45 +9,47 @@ export interface SimulationRecord {
   created_at?: string;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('dluxury_token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
+
 export const saveSimulation = async (record: SimulationRecord): Promise<SimulationRecord> => {
-  const { data, error } = await supabase
-    .from('simulations')
-    .insert(record)
-    .select()
-    .single();
+  const response = await fetch('/api/simulations', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(record)
+  });
   
-  if (error) {
-    console.error('Erro ao salvar no Supabase:', error);
-    throw new Error(error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Erro ao salvar simulação');
   }
-  return data as SimulationRecord;
+  
+  return response.json();
 };
 
 export const listSimulations = async (clienteId?: string): Promise<SimulationRecord[]> => {
-  let query = supabase
-    .from('simulations')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const url = clienteId ? `/api/simulations?clienteId=${clienteId}` : '/api/simulations';
+  const response = await fetch(url, {
+    headers: getAuthHeaders()
+  });
   
-  if (clienteId) {
-    query = query.eq('cliente_id', clienteId);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Erro ao listar simulações');
   }
   
-  const { data, error } = await query;
-  if (error) {
-    console.error('Erro ao buscar do Supabase:', error);
-    throw new Error(error.message);
-  }
-  return (data || []) as SimulationRecord[];
+  return response.json();
 };
 
 export const getSimulation = async (id: string): Promise<SimulationRecord> => {
-  const { data, error } = await supabase
-    .from('simulations')
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  if (error) throw error;
-  return data as SimulationRecord;
+  // Para simplicidade, usamos a listagem e filtramos no front ou estendemos a API se necessário
+  const list = await listSimulations();
+  const item = list.find(s => s.id === id);
+  if (!item) throw new Error('Simulação não encontrada');
+  return item;
 };

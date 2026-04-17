@@ -11,7 +11,7 @@ export const sql = neon(dbUrl);
 
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.VITE_SUPABASE_ANON_KEY || 'dluxury-secret-key-2024';
+const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 
 export const extractAndVerifyToken = (req: any) => {
   try {

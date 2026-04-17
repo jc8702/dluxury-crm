@@ -685,6 +685,18 @@ export default async function handler(req: any, res: any) {
       )
     `;
 
+    // 9. Simulações Industriais (Persistência)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_simulations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        cliente_id TEXT,
+        cliente_nome TEXT,
+        dados_simulacao JSONB NOT NULL,
+        dados_input JSONB NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     // ─── CAMADA ANALÍTICA (BI VIEWS) ─────────────────────────
 
     // 1. View de Custos Totais por Projeto (Planejado)

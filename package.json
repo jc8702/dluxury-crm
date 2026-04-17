@@ -15,7 +15,6 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
     "@neondatabase/serverless": "^1.0.2",
-    "@supabase/supabase-js": "^2.101.1",
     "ai": "^6.0.167",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
