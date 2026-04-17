@@ -76,9 +76,14 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
         content: response.content || "Não consegui processar sua dúvida agora.",
         timestamp: new Date()
       }]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { type: 'ai', content: "Desculpe, tive um erro na conexão.", timestamp: new Date() }]);
+    } catch (err: any) {
+      console.error('CHAT_FRONTEND_ERROR:', err);
+      const errorMessage = err.message || "Erro desconhecido na conexão.";
+      setMessages(prev => [...prev, { 
+        type: 'ai', 
+        content: `⚠️ Erro Técnico: ${errorMessage}. Verifique se a API Key do Gemini está configurada na Vercel.`, 
+        timestamp: new Date() 
+      }]);
     } finally {
       setLoading(false);
     }
