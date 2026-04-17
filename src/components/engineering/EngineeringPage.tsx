@@ -35,8 +35,9 @@ const EngineeringPage: React.FC = () => {
       setIsModalOpen(false);
       setFormData({ nome: '', codigo_modelo: '', descricao: '' });
       await fetchProducts();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save product:', err);
+      alert(`Erro ao salvar: ${err.message || 'Erro desconhecido'}`);
     } finally {
       setSaving(false);
     }

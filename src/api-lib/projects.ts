@@ -56,24 +56,30 @@ export async function handleEngineering(req: any, res: any) {
   try {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    
+    // Garantia de infra: cria tabela se não existir (v4 hotfix)
+    await sql`
+      CREATE TABLE IF NOT EXISTS erp_product_bom (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nome TEXT NOT NULL,
+        codigo_modelo TEXT UNIQUE NOT NULL,
+        descricao TEXT,
+        regras_calculo JSONB DEFAULT '[]',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     if (req.method === 'GET') {
       const result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: result });
     }
+    
     if (req.method === 'POST') {
       const { nome, codigo_modelo, descricao } = req.body;
       
-      // Redundância defensiva: garante que a tabela exista antes de inserir
-      await sql`
-        CREATE TABLE IF NOT EXISTS erp_product_bom (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          nome TEXT NOT NULL,
-          codigo_modelo TEXT UNIQUE NOT NULL,
-          descricao TEXT,
-          regras_calculo JSONB DEFAULT '[]',
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
+      if (!nome || !codigo_modelo) {
+        return res.status(400).json({ success: false, error: 'Nome e Código são obrigatórios' });
+      }
 
       const [result] = await sql`
         INSERT INTO erp_product_bom (nome, codigo_modelo, descricao) 
@@ -86,9 +92,11 @@ export async function handleEngineering(req: any, res: any) {
       `;
       return res.status(201).json({ success: true, data: result });
     }
+    
     return res.status(405).end();
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('ENGINEERING_PERSISTENCE_ERROR:', err);
+    return res.status(500).json({ success: false, error: `Falha na Engenharia: ${err.message}` });
   }
 }
 
