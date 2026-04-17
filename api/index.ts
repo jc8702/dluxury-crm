@@ -453,15 +453,24 @@ async function generateChatResponse(payload: any) {
 
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
-    if (!final || final.trim() === '') {
-       if (res.steps && res.steps.length > 0) {
-         final = res.steps.map((s: any) => s.text).filter(Boolean).join('\n\n');
-       }
-       if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
-         final = res.toolResults.map((tr: any) => '✔️ ' + (tr.result.message || 'Ação concluída com sucesso.')).join('\n');
+    
+    // Captura resultados ocultos nos steps internos
+    if (res.steps && res.steps.length > 0) {
+       for (const step of res.steps) {
+         if (step.text && !final.includes(step.text)) final += step.text + '\n';
+         if (step.toolResults && step.toolResults.length > 0) {
+            const logs = step.toolResults.map((tr: any) => tr.result?.message ? `✔️ ${tr.result.message}` : '').filter(Boolean).join('\n');
+            if (logs) final += '\n' + logs;
+         }
        }
     }
-    return final || "Feito! O sistema processou sua solicitação.";
+    
+    // Captura raiz (fallback)
+    if ((!final || final.trim() === '') && res.toolResults && res.toolResults.length > 0) {
+       final = res.toolResults.map((tr: any) => tr.result?.message ? `✔️ ${tr.result.message}` : 'Operação realizada.').join('\n');
+    }
+
+    return final.trim() || 'Ação processada e finalizada em nuvem.';
   };
 
   try {
