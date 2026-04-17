@@ -156,13 +156,13 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
                     background: m.type === 'user' ? 'var(--primary)' : 'var(--surface-hover)',
                     color: m.type === 'user' ? 'var(--primary-text)' : 'var(--text)',
                     fontSize: '0.875rem',
-                    border: m.type === ' ai' ? '1px solid var(--border)' : 'none',
+                    border: m.type === 'ai' ? '1px solid var(--border)' : 'none',
                     boxShadow: 'var(--shadow-xs)'
                   }}>
                     {m.content}
                   </div>
                   <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: m.type === 'user' ? 'right' : 'left' }}>
-                    {m.timestamp.toLocaleTimeString([], { hour: '2-刻', minute: '2-digit' })}
+                    {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               ))}
