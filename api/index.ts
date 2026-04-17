@@ -387,11 +387,11 @@ async function detectAnomalies() {
 
 const chatTools = {
   cadastrarProjeto: tool({
-    description: 'Cadastra um novo projeto, lead ou oportunidade no sistema do CRM para um cliente',
+    description: 'Use esta função obrigatoriamente para CADASTRAR UM PROJETO no CRM.',
     parameters: z.object({
-      client_name: z.string().describe('Nome do cliente interessado'),
-      ambiente: z.string().describe('Nome do ambiente principal (ex: Cozinha Planejada)'),
-      descricao: z.string().describe('Breve descrição do escopo do projeto'),
+      client_name: z.string(),
+      ambiente: z.string(),
+      descricao: z.string()
     }),
     execute: async (args) => {
       try {
@@ -403,12 +403,12 @@ const chatTools = {
     }
   }),
   cadastrarMaterial: tool({
-    description: 'Cadastra um novo item de material solto no estoque/catálogo. O sistema irá gerar um SKU automaticamente.',
+    description: 'Use esta função obrigatoriamente para CADASTRAR UM MATERIAL. Preencha todos os 4 argumentos. Se não souber preço, use 0. Se não souber unidade, use "UN".',
     parameters: z.object({
-      nome: z.string().describe('Nome principal curto e direto. Ex: Chapa MDF Guararapes'),
-      descricao: z.string().describe('Toda e qualquer outra informação. Ex: Marca, dimensões, espessura, detalhes. Concatene tudo aqui!'),
-      unidade_uso: z.string().optional().describe('Unidade de medida padrão para uso e compra (ex: UN, MT, M2, CX)'),
-      preco_custo: z.number().optional().describe('Preço de custo unitário base (usar 0 se não souber)')
+      nome: z.string(),
+      descricao: z.string(),
+      unidade_uso: z.string(),
+      preco_custo: z.number()
     }),
     execute: async (args) => {
       try {
@@ -419,15 +419,12 @@ const chatTools = {
            if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
         
-        // Buscando uma categoria existente para não falhar regra de FK
         const categorias = await sql`SELECT id FROM categorias_material LIMIT 1`;
         const catId = categorias.length > 0 ? categorias[0].id : null;
 
-        const unidade = args.unidade_uso || 'UN';
-        const preco = args.preco_custo || 0;
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${args.unidade_uso}, ${args.unidade_uso}, ${args.preco_custo}, 50, ${args.preco_custo * 1.5}, ${catId}, true, 0, 0) RETURNING id`;
         
-        return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido com SKU ${proximoSku}` };
+        return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido no estoque com SKU: ${proximoSku}` };
       } catch (err: any) {
         return { success: false, message: `Erro fatal no Banco de Dados (Material): ${err.message}` };
       }
@@ -436,7 +433,7 @@ const chatTools = {
 };
 
 async function generateChatResponse(payload: any) {
-  const systemPrompt = `Você é o D'Luxury Copilot. IMPORTANTE: Seu objetivo principal é AJUDAR O GERENTE. SE ele pedir para adicionar um material, VOCÊ NÃO PODE apenas dizer que fez. Você TEM que acionar nativamente a ferramenta (Tool Function) 'cadastrarMaterial'. SEMPRE ACIONE a Tool. Se o sistema retornar sucesso, mostre os dados.`;
+  const systemPrompt = `Você é o D'Luxury Copilot. Seu papel principal é usar ferramentas para inserir dados no CRM. SE o usuário pedir um cadastro, é totalmente PROIBIDO confirmar sem acionar as Tools. Você deve rodar a tool relacionada. A tool retorna sucesso se gravou.`;
   
   const messagesArray = (payload.history || []).map((m: any) => ({
     role: m.type === 'ai' ? 'assistant' : 'user',
@@ -444,12 +441,18 @@ async function generateChatResponse(payload: any) {
   }));
   messagesArray.push({ role: 'user', content: payload.message });
   
-  const aiConfig = { 
+  const aiConfig: any = { 
     tools: chatTools, 
     maxSteps: 5, 
     system: systemPrompt,
-    messages: messagesArray 
+    messages: messagesArray,
+    toolChoice: 'auto'
   };
+
+  // Se o usuário explicitly demandar, tenta forçar
+  if (payload.message.toLowerCase().includes('cadastr') || payload.message.toLowerCase().includes('adicion')) {
+      aiConfig.toolChoice = 'required';
+  }
 
   const extrairConteudo = (res: any) => {
     let final = res.text || '';
