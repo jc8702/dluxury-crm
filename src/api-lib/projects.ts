@@ -62,7 +62,28 @@ export async function handleEngineering(req: any, res: any) {
     }
     if (req.method === 'POST') {
       const { nome, codigo_modelo, descricao } = req.body;
-      const [result] = await sql`INSERT INTO erp_product_bom (nome, codigo_modelo, descricao) VALUES (${nome}, ${codigo_modelo}, ${descricao}) RETURNING *`;
+      
+      // Redundância defensiva: garante que a tabela exista antes de inserir
+      await sql`
+        CREATE TABLE IF NOT EXISTS erp_product_bom (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          nome TEXT NOT NULL,
+          codigo_modelo TEXT UNIQUE NOT NULL,
+          descricao TEXT,
+          regras_calculo JSONB DEFAULT '[]',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+
+      const [result] = await sql`
+        INSERT INTO erp_product_bom (nome, codigo_modelo, descricao) 
+        VALUES (${nome}, ${codigo_modelo}, ${descricao}) 
+        ON CONFLICT (codigo_modelo) 
+        DO UPDATE SET 
+          nome = EXCLUDED.nome, 
+          descricao = EXCLUDED.descricao
+        RETURNING *
+      `;
       return res.status(201).json({ success: true, data: result });
     }
     return res.status(405).end();
