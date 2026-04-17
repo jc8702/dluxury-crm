@@ -215,6 +215,7 @@ export async function runInitDB() {
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ALTER COLUMN componente_nome DROP NOT NULL`.catch(() => {});
   try {
     await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_codigo_modelo_unique UNIQUE (codigo_modelo)`;
   } catch (e) {}
