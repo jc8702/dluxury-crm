@@ -200,6 +200,18 @@ export async function runInitDB() {
     )
   `;
 
+  // 14. Engineering Modules Table (BOM)
+  await sql`
+    CREATE TABLE IF NOT EXISTS erp_product_bom (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      codigo_modelo TEXT UNIQUE NOT NULL,
+      descricao TEXT,
+      regras_calculo JSONB DEFAULT '[]',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+
   return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy and MES support' };
 }
 

@@ -60,6 +60,11 @@ export async function handleEngineering(req: any, res: any) {
       const result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: result });
     }
+    if (req.method === 'POST') {
+      const { nome, codigo_modelo, descricao } = req.body;
+      const [result] = await sql`INSERT INTO erp_product_bom (nome, codigo_modelo, descricao) VALUES (${nome}, ${codigo_modelo}, ${descricao}) RETURNING *`;
+      return res.status(201).json({ success: true, data: result });
+    }
     return res.status(405).end();
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
