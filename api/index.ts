@@ -275,7 +275,7 @@ async function handleOrcamentos(req: any, res: any) {
 }
 
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateText, generateObject } from 'ai';
+import { generateText, generateObject, tool } from 'ai';
 import { z } from 'zod';
 
 const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
@@ -385,28 +385,79 @@ async function detectAnomalies() {
   } catch(e) { return { anomalias: [] }; }
 }
 
+const chatTools = {
+  cadastrarProjeto: tool({
+    description: 'Cadastra um novo projeto, lead ou oportunidade no sistema do CRM para um cliente',
+    parameters: z.object({
+      client_name: z.string().describe('Nome do cliente interessado'),
+      ambiente: z.string().describe('Nome do ambiente principal (ex: Cozinha Planejada)'),
+      descricao: z.string().describe('Breve descrição do escopo do projeto'),
+    }),
+    execute: async (args) => {
+      // Inserção com dados base. Os demais campos (valor, prazo) ficam nulos para preenchimento humano posterior
+      try {
+        const r = await sql`INSERT INTO projects (client_name, ambiente, descricao, status, valor_estimado, valor_final) VALUES (${args.client_name}, ${args.ambiente}, ${args.descricao}, 'lead', 0, 0) RETURNING id`;
+        return { success: true, project_id: r[0].id, message: `Projeto estruturado e salvo com ID ${r[0].id}` };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+  }),
+  cadastrarMaterial: tool({
+    description: 'Cadastra um novo item de material solto no estoque/catálogo. O sistema irá gerar um SKU automaticamente.',
+    parameters: z.object({
+      nome: z.string().describe('Nome curto do material (ex: Dobradiça Curva HD)'),
+      descricao: z.string().describe('Descrição estendida técnica do material'),
+      unidade_uso: z.string().describe('Unidade de medida padrão para uso e compra (ex: UN, MT, M2, CX)'),
+      preco_custo: z.number().describe('Preço de custo unitário base (usar 0 se não souber)')
+    }),
+    execute: async (args) => {
+      try {
+        // Gera o SKU Sequencial
+        const lastSkuQuery = await sql`SELECT sku FROM materiais ORDER BY id DESC LIMIT 1`;
+        let proximoSku = 'SKU-0001';
+        if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
+           const match = lastSkuQuery[0].sku.match(/\d+/);
+           if (match) {
+              proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`;
+           }
+        }
+        
+        // Inserção tolerante no banco. Categoria null pois o usuário terá que classificar visualmente.
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo) VALUES (${proximoSku}, ${args.nome}, ${args.descricao}, ${args.unidade_uso}, ${args.unidade_uso}, ${args.preco_custo}, 50, ${args.preco_custo * 1.5}, null, true) RETURNING id`;
+        return { success: true, sku_gerado: proximoSku, material_id: r[0].id, message: `Material ${args.nome} inserido com SKU ${proximoSku}` };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+  })
+};
+
 async function generateChatResponse(payload: any) {
-  const promptText = `Você é o D'Luxury Copilot. Responda à dúvida do usuário técnico de marcenaria. Histórico: ${JSON.stringify(payload.history || [])}. Pergunta: ${payload.message}`;
+  const promptText = `Você é o D'Luxury Copilot, uma IA integrada com acesso vivo ao CRM. Responda dúvidas, converse, e se o usuário pedir para CADASTRAR UM MATERIAL ou CADASTRAR UM PROJETO, use a tool correspondente e confirme para ele a conclusão informando os dados (como o SKU). Se faltar algo obrigatório, use o placeholder genérico ou 0, e avise o usuário para editar. Histórico: ${JSON.stringify(payload.history || [])}. Usuário: ${payload.message}`;
   
+  const aiConfig = { tools: chatTools, maxSteps: 5, prompt: promptText };
+
   try {
-    const { text } = await generateText({ model: modelFlash, prompt: promptText });
+    const { text } = await generateText({ model: modelFlash, ...aiConfig });
     return { content: text };
   } catch (errorFlash: any) {
     try {
-      const { text } = await generateText({ model: modelPro, prompt: promptText });
+      const { text } = await generateText({ model: modelPro, ...aiConfig });
       return { content: text };
     } catch (errorPro: any) {
       try {
+         // Fallback Legacy (Sem agent steps pois v1 não suporta tool array dinâmico às vezes)
          const { text } = await generateText({ model: modelLegacy, prompt: promptText });
          return { content: text };
       } catch (errorLegacy: any) {
-         // O SEGREDO DO DIAGNÓSTICO: Buscar modelos na conta do Google
          const modelosDisponiveis = await listAvailableModels(aiApiKey as string);
          throw new Error(`Falha nos 3 modelos (Flash, Pro, Legacy). A sua Vercel está com permissão para estes modelos do Google: [${modelosDisponiveis}]. Erro original: ${errorLegacy.message}`);
       }
     }
   }
 }
+
 async function handleAICopilot(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
   if (!authorized) return res.status(401).json({ error });
