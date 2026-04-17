@@ -154,7 +154,7 @@ async function getRawLLMIntent(message: string, history: any[] = []): Promise<st
 
   INTENÇÕES E REGRAS:
   1. SUGGEST_CREATE_SKU: Usuário quer cadastrar algo. Ex: "cadastra mdf 15mm".
-  2. CONFIRM_ACTION: Usuário confirma uma sugestão anterior: "sim", "pode", "ok".
+  2. CONFIRM_ACTION: Usuário confirma uma sugestão anterior: "sim", "pode", "ok", "gerar ordem de produção", "gerar op", "confirmar projeto", "fazer orçamento".
   3. SUGGEST_BOM: Usuário descreveu um móvel com medidas ou componentes. Ex: "gaveteiro 600x700", "armário 2 portas".
   4. ANALYZE_STOCK: Pergunta sobre compra ou estoque. Ex: "o que preciso comprar?".
   5. SEARCH_SKU: Busca de itens: "tem parafuso?".
@@ -304,7 +304,11 @@ async function handleConfirmAction(history: any[]) {
   const lastAiMessage = [...history].reverse().find(m => m.role === 'assistant');
   if (!lastAiMessage) return { message: "O que você deseja confirmar? Não identifiquei uma sugestão pendente." };
 
-  if (lastAiMessage.content.includes("Sugestão de Cadastro")) {
+  const content = lastAiMessage.content;
+  const isBOM = content.includes("Engenharia") || content.includes("📐") || content.includes("Projeto") || content.includes("BOM");
+  const isSKU = content.includes("Sugestão de Cadastro") || content.includes("material");
+
+  if (isSKU) {
     const lines = lastAiMessage.content.split('\n');
     const descricao = lines.find(l => l.includes("Descrição:"))?.split('** ')[1] || '';
     const familia = lines.find(l => l.includes("Família:"))?.split('** ')[1] || '';
@@ -314,7 +318,8 @@ async function handleConfirmAction(history: any[]) {
     return { message: `✅ Perfeito! Item cadastrado com sucesso.\n\n**SKU:** ${sku.skuId}\n**Descrição:** ${sku.descricao}\n\n[EVENT_EMIT_SKU_CRIADO]` };
   }
 
-  if (lastAiMessage.content.includes("Engenharia de Projeto")) {
+  if (isBOM) {
+    // Busca a mensagem do usuário que originou o projeto (uma antes da última do assistente)
     // Busca a mensagem do usuário que originou o projeto (uma antes da última do assistente)
     const userProjectMsg = [...history].reverse().find((m, i, arr) => m.role === 'user' && i > arr.indexOf(lastAiMessage));
     const msg = userProjectMsg?.content || "";
@@ -435,6 +440,11 @@ async function processUserMessage(message: string, history: any[] = []) {
         }
       } else if (msgLow.includes("comprar") || msgLow.includes("estoque") || msgLow.includes("crítico")) {
         intent.type = "ANALYZE_STOCK";
+      }
+
+      // NOVO: Fallback específico para Ordens de Produção (bypass NLU se for comando direto)
+      if (msgLow.includes("gerar op") || msgLow.includes("gerar ordem de produção") || msgLow.includes("confirmar projeto")) {
+        intent.type = "CONFIRM_ACTION";
       }
     }
 
