@@ -283,10 +283,10 @@ const google = createGoogleGenerativeAI({
   apiKey: aiApiKey,
 });
 
-// Cadeia de modelos para Fallback
-const modelFlash = google('gemini-1.5-flash');
-const modelPro = google('gemini-1.5-pro');
-const modelLegacy = google('gemini-pro'); // Gemini 1.0 (Mais universal)
+// Cadeia de modelos Super Atualizada para Fallback (Com base no Raio-X)
+const modelFlash = google('gemini-2.5-flash'); // Modelo ultra-rápido confirmado na sua chave
+const modelPro = google('gemini-2.5-pro');     // Modelo pesado/inteligente confirmado na sua chave
+const modelLegacy = google('gemini-flash-latest'); // Fallback garantido que apareceu na lista
 
 async function listAvailableModels(key: string) {
   try {
