@@ -145,12 +145,12 @@ const chatTools = {
     }
   }),
   cadastrarMaterial: tool({
-    description: 'Use esta função para CADASTRAR UM NOVO MATERIAL/SKU no estoque.',
+    description: 'Use esta função para CADASTRAR UM NOVO MATERIAL/SKU no estoque da empresa.',
     parameters: z.object({
-      nome: z.string().optional().describe('Título claro do material. Ex: Chapa MDF 15mm Branco.'),
-      descricao: z.string().optional().describe('Detalhes complementares (medidas, fabricante).'),
-      categoria_id: z.string().describe('ID da Categoria (ex: CHP). Use listarCategorias se não souber.').optional(),
-      unidade_uso: z.string().optional().describe('Ex: UN, M2, ML'),
+      nome: z.string().describe('OBRIGATÓRIO: Nome claro e principal do material. Ex: Chapa MDF 15mm Branca.'),
+      descricao: z.string().describe('OBRIGATÓRIO: Detalhes como dimensões, marca e acabamento.'),
+      categoria_id: z.string().describe('ID da Categoria (ex: CHP).').optional(),
+      unidade_uso: z.string().optional().describe('Unidade. Ex: UN, M2, ML'),
       preco_custo: z.number().optional()
     }),
     execute: async (args) => {
@@ -161,8 +161,8 @@ const chatTools = {
            const match = lastSkuQuery[0].sku.match(/\d+/);
            if (match) { proximoSku = `SKU-${(parseInt(match[0], 10) + 1).toString().padStart(4, '0')}`; }
         }
-        const nomeFinal = args.nome || 'Novo Material Automático';
-        const descricaoFinal = args.descricao || 'Inserido via IA Copilot';
+        const nomeFinal = args.nome || 'Material Cadastrado via IA';
+        const descricaoFinal = args.descricao || 'Verifique as medidas';
         const unidade = args.unidade_uso || 'UN';
         const preco = args.preco_custo || 0;
         
@@ -170,9 +170,9 @@ const chatTools = {
           INSERT INTO materiais (sku, nome, descricao, unidade_uso, unidade_compra, preco_custo, margem_lucro, preco_venda, categoria_id, ativo, estoque_atual, estoque_minimo) 
           VALUES (${proximoSku}, ${nomeFinal}, ${descricaoFinal}, ${unidade}, ${unidade}, ${preco}, 50, ${preco * 1.5}, ${args.categoria_id || null}, true, 0, 0) RETURNING id
         `;
-        return { success: true, message: `Material ${nomeFinal} inserido com SKU: ${proximoSku}` };
+        return { success: true, message: `✅ SUCESSO Absoluto! O item "${nomeFinal}" foi gravado oficialmente no banco de dados corporativo sob o código SKU: ${proximoSku}. (Nota: Avise o usuário para atualizar a página / apertar F5 para visualizar o novo card no estoque).` };
       } catch (err: any) {
-        return { success: false, message: `Erro ao cadastrar material: ${err.message}` };
+        return { success: false, message: `Erro crasso ao cadastrar material: ${err.message}` };
       }
     }
   }),
