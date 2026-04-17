@@ -278,17 +278,26 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject } from 'ai';
 import { z } from 'zod';
 
-const aiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
+const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
   apiKey: aiApiKey,
-  // Mantemos omitido apiVersion para usar default ou podemos forçar, 
-  // mas o SDK resolve melhor sem forçar se o modelo falhar
 });
 
 // Cadeia de modelos para Fallback
 const modelFlash = google('gemini-1.5-flash');
 const modelPro = google('gemini-1.5-pro');
 const modelLegacy = google('gemini-pro'); // Gemini 1.0 (Mais universal)
+
+async function listAvailableModels(key: string) {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const data = await res.json();
+    if (data.models) return data.models.map((m: any) => m.name.replace('models/', '')).join(', ');
+    return 'Nenhum (Chave inválida ou sem permissão)';
+  } catch (e) {
+    return 'Erro ao consultar Google AI';
+  }
+}
 
 async function generateBOM(payload: any) {
   const materiais = await sql`SELECT id, nome, categoria_id, preco_custo, unidade_uso FROM materiais WHERE ativo = true`;
@@ -311,7 +320,6 @@ async function generateBOM(payload: any) {
     return object;
   } catch (error) {
     console.warn("Fallback on generateBOM due to error.");
-    // Fallback manual temporário se a IA falhar feio
     return { itens: [], estimativa_custo_total: 0, dificuldade_producao: 'media' };
   }
 }
@@ -380,26 +388,21 @@ async function detectAnomalies() {
 async function generateChatResponse(payload: any) {
   const promptText = `Você é o D'Luxury Copilot. Responda à dúvida do usuário técnico de marcenaria. Histórico: ${JSON.stringify(payload.history || [])}. Pergunta: ${payload.message}`;
   
-  // TENTATIVA 1: GEMINI 1.5 FLASH (Alta velocidade)
   try {
     const { text } = await generateText({ model: modelFlash, prompt: promptText });
     return { content: text };
   } catch (errorFlash: any) {
-    console.warn(`[IA] Falha no modelo Flash: ${errorFlash.message}. Tentando Pro...`);
-    
-    // TENTATIVA 2: GEMINI 1.5 PRO (Mais poderoso, costuma estar em todas as regiões)
     try {
       const { text } = await generateText({ model: modelPro, prompt: promptText });
       return { content: text };
     } catch (errorPro: any) {
-      console.warn(`[IA] Falha no modelo Pro: ${errorPro.message}. Tentando Legacy...`);
-      
-      // TENTATIVA 3: GEMINI 1.0 PRO (Legado super estável fallback definitivo)
       try {
          const { text } = await generateText({ model: modelLegacy, prompt: promptText });
          return { content: text };
       } catch (errorLegacy: any) {
-         throw new Error(`Exaustão de IA. Nem Flash, nem Pro responderam. Motivo final: ${errorLegacy.message}`);
+         // O SEGREDO DO DIAGNÓSTICO: Buscar modelos na conta do Google
+         const modelosDisponiveis = await listAvailableModels(aiApiKey as string);
+         throw new Error(`Falha nos 3 modelos (Flash, Pro, Legacy). A sua Vercel está com permissão para estes modelos do Google: [${modelosDisponiveis}]. Erro original: ${errorLegacy.message}`);
       }
     }
   }
