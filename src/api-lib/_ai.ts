@@ -4,7 +4,10 @@ import { z } from 'zod';
 import { sql } from './_db.js';
 
 const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
-const google = createGoogleGenerativeAI({ apiKey });
+const google = createGoogleGenerativeAI({ 
+  apiKey,
+  apiVersion: 'v1' // Força o uso da versão estável para evitar erros de v1beta
+});
 const model = google('gemini-1.5-pro');
 
 /**
