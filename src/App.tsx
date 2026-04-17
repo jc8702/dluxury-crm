@@ -55,17 +55,20 @@ function ThemeToggle() {
 }
 
 function AppContent() {
-  const { user } = useAppContext();
+  const { user, setUser } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
-  if (!user) {
-    return (
-      <>
-        <Login />
-        <ThemeToggle />
-      </>
-    );
-  }
+  // Bypass temporário de Login para acesso direto
+  useEffect(() => {
+    if (!user) {
+      setUser({
+        id: 'bypass-id',
+        name: 'Acesso Direto (Admin)',
+        email: 'admin@dluxury.com',
+        role: 'admin'
+      });
+    }
+  }, [user, setUser]);
 
   const renderContent = () => {
     switch (activeTab) {
