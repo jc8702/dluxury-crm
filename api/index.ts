@@ -274,7 +274,7 @@ async function handleOrcamentos(req: any, res: any) {
   }
 }
 
-import { generateBOM, auditSKU, purchaseSuggestion, detectAnomalies } from '../src/api-lib/_ai.js';
+import { generateBOM, auditSKU, purchaseSuggestion, detectAnomalies, generateChatResponse } from '../src/api-lib/_ai.js';
 
 async function handleAICopilot(req: any, res: any) {
   const { authorized, error } = validateAuth(req);
@@ -287,6 +287,9 @@ async function handleAICopilot(req: any, res: any) {
 
   try {
     switch (skill) {
+      case 'chat':
+        return res.status(200).json(await generateChatResponse(payload));
+      
       case 'generate-bom':
         return res.status(200).json(await generateBOM(payload));
       

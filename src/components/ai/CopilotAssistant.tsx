@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Sparkles, Bot, AlertTriangle, ShoppingCart, Settings2, X, ChevronRight, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Sparkles, Bot, AlertTriangle, ShoppingCart, Settings2, X, Send, Loader2, User } from 'lucide-react';
+import { apiService } from '../../services/apiService';
 
 interface CopilotAssistantProps {
   onSuggestBOM?: (suggestion: any) => void;
@@ -8,27 +9,48 @@ interface CopilotAssistantProps {
 const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<any[]>([
+    { type: 'ai', content: 'Olá! Sou seu Copiloto Industrial. Como posso ajudar hoje?', timestamp: new Date() }
+  ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isOpen) scrollToBottom();
+  }, [messages, isOpen]);
 
   const callSkill = async (skill: string, payload: any = {}) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/ai-copilot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skill, payload })
-      });
-      const data = await res.json();
-      
-      setMessages(prev => [{
-        skill,
-        content: data.suggestions || data.audit || "Sugestão gerada com sucesso!",
-        timestamp: new Date()
-      }, ...prev]);
-
-      if (skill === 'generate-bom' && onSuggestBOM) {
-        onSuggestBOM(data);
+      let data;
+      switch(skill) {
+        case 'generate-bom': data = await apiService.aiGenerateBOM(payload); break;
+        case 'purchase-suggestion': data = await apiService.aiGetPurchaseSuggestions(); break;
+        case 'detect-anomalies': data = await apiService.aiDetectAnomalies(); break;
+        default: data = { content: "Função não reconhecida." };
       }
+      
+      const content = data.pedidos_sugeridos 
+        ? `Sugestão de Compras gerada! Encontrei ${data.pedidos_sugeridos.length} itens críticos.`
+        : data.anomalias 
+          ? `Auditoria concluída. Detectei ${data.anomalias.length} possíveis anomalias.`
+          : data.itens
+            ? `BOM gerada com sucesso para ${payload.tipo}.`
+            : "Ação concluída.";
+
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        skill,
+        content,
+        data,
+        timestamp: new Date()
+      }]);
+
+      if (skill === 'generate-bom' && onSuggestBOM) onSuggestBOM(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -36,9 +58,34 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
     }
   };
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const userMsg = input;
+    setInput('');
+    setMessages(prev => [...prev, { type: 'user', content: userMsg, timestamp: new Date() }]);
+    setLoading(true);
+
+    try {
+      const history = messages.slice(-5).map(m => ({ role: m.type === 'ai' ? 'assistant' : 'user', content: m.content }));
+      const response = await apiService.aiChat(userMsg, history);
+      
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: response.content || "Não consegui processar sua dúvida agora.",
+        timestamp: new Date()
+      }]);
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { type: 'ai', content: "Desculpe, tive um erro na conexão.", timestamp: new Date() }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 1000 }}>
-      {/* Botão Flutuante */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -54,76 +101,99 @@ const CopilotAssistant: React.FC<CopilotAssistantProps> = ({ onSuggestBOM }) => 
         </button>
       )}
 
-      {/* Painel do Copiloto */}
       {isOpen && (
-        <div className="card animate-slide-up" style={{
-          width: '380px', maxHeight: '600px',
+        <div className="card animate-pop-in" style={{
+          width: '400px', height: '600px',
           display: 'flex', flexDirection: 'column',
-          boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
-          background: 'rgba(20, 20, 20, 0.95)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid var(--primary-low)',
+          boxShadow: '0 12px 64px rgba(0,0,0,0.6)',
+          background: 'rgba(10, 13, 20, 0.98)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--border-strong)',
           borderRadius: '1.5rem',
           overflow: 'hidden'
         }}>
           <header style={{ 
             padding: '1.25rem', borderBottom: '1px solid var(--border)',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            background: 'linear-gradient(90deg, var(--primary-low), transparent)'
+            background: 'linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ 
-                background: 'var(--primary)', color: 'white', padding: '0.4rem', 
-                borderRadius: '0.75rem', display: 'flex' 
-              }}>
+              <div style={{ background: 'var(--primary)', color: 'var(--primary-text)', padding: '0.4rem', borderRadius: '0.75rem' }}>
                 <Bot size={20} />
               </div>
-              <span style={{ fontWeight: '700', letterSpacing: '0.02em' }}>IA COPILOT</span>
+              <span style={{ fontWeight: '700', letterSpacing: '0.02em', fontSize: '0.9rem' }}>IA COPILOT</span>
             </div>
-            <button onClick={() => setIsOpen(false)} style={{ all: 'unset', cursor: 'pointer', opacity: 0.6 }}>
+            <button onClick={() => setIsOpen(false)} style={{ all: 'unset', cursor: 'pointer', opacity: 0.6, padding: '0.5rem' }}>
               <X size={20} />
             </button>
           </header>
 
           <div style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Ações Rápidas */}
-            <section>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem', fontWeight: '600' }}>AÇÕES INDUSTRIAIS</p>
+            <section style={{ marginBottom: '0.5rem' }}>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.75rem', fontWeight: '700', letterSpacing: '0.05em' }}>AÇÕES RÁPIDAS</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <button onClick={() => callSkill('purchase-advisor')} className="ai-skill-btn">
-                  <ShoppingCart size={16} /> Compras
+                <button onClick={() => callSkill('purchase-suggestion')} className="ai-skill-btn">
+                  <ShoppingCart size={14} /> Compras
                 </button>
-                <button onClick={() => callSkill('generate-bom', { descricao: 'Armário Cozinha', medidas: {L:1200,A:700,P:500} })} className="ai-skill-btn">
-                  <Settings2 size={16} /> Gerar BOM
-                </button>
-                <button onClick={() => callSkill('anomaly-detection')} className="ai-skill-btn" style={{ borderColor: 'var(--danger-low)', color: '#ffb347' }}>
-                  <AlertTriangle size={16} /> Anomalias
+                <button onClick={() => callSkill('generate-bom', { tipo: 'Armário Padrão', medidas: {L:1200,A:700,P:500} })} className="ai-skill-btn">
+                  <Settings2 size={14} /> Sugerir BOM
                 </button>
               </div>
             </section>
 
-            {/* Histórico de Sugestões */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {loading && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.85rem' }}>
-                  <Loader2 className="animate-spin" size={16} /> Consultando inteligência industrial...
-                </div>
-              )}
-              
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {messages.map((m, i) => (
-                <div key={i} className="card-sub" style={{ padding: '0.85rem', fontSize: '0.85rem', borderLeft: '3px solid var(--primary)' }}>
-                   <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text)' }}>{m.content}</p>
-                   <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>{m.timestamp.toLocaleTimeString()}</small>
+                <div key={i} style={{ 
+                  alignSelf: m.type === 'user' ? 'flex-end' : 'flex-start',
+                  maxWidth: '85%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem'
+                }}>
+                  <div style={{ 
+                    padding: '0.85rem 1rem',
+                    borderRadius: m.type === 'user' ? '1rem 1rem 0 1rem' : '1rem 1rem 1rem 0',
+                    background: m.type === 'user' ? 'var(--primary)' : 'var(--surface-hover)',
+                    color: m.type === 'user' ? 'var(--primary-text)' : 'var(--text)',
+                    fontSize: '0.875rem',
+                    border: m.type === ' ai' ? '1px solid var(--border)' : 'none',
+                    boxShadow: 'var(--shadow-xs)'
+                  }}>
+                    {m.content}
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: m.type === 'user' ? 'right' : 'left' }}>
+                    {m.timestamp.toLocaleTimeString([], { hour: '2-刻', minute: '2-digit' })}
+                  </span>
                 </div>
               ))}
+              {loading && (
+                <div style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.75rem' }}>
+                   <Loader2 className="animate-spin" size={14} /> Processando...
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
           </div>
 
           <footer style={{ padding: '1rem', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-               <AlertTriangle size={12} style={{ color: 'var(--danger)' }} />
-               Dica: Use IA para validar duplicidades no cadastro.
-             </div>
+            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem' }}>
+              <input 
+                type="text"
+                className="input"
+                placeholder="Pergunte qualquer coisa..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                style={{ borderRadius: '1rem', padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+              />
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={loading || !input.trim()}
+                style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0, minWidth: '40px' }}
+              >
+                <Send size={18} />
+              </button>
+            </form>
           </footer>
         </div>
       )}

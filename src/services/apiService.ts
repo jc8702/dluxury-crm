@@ -105,6 +105,9 @@ export const apiService = {
 
   aiAuditSKU: (payload: { nome: string; descricao: string; categoria_id?: string }) =>
     apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'audit-sku', payload }) }),
+  
+  aiChat: (message: string, history?: any[]) =>
+    apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'chat', payload: { message, history } }) }),
 
   aiGetPurchaseSuggestions: () =>
     apiService.fetch('/api/ai-copilot', { method: 'POST', body: JSON.stringify({ skill: 'purchase-suggestion' }) }),

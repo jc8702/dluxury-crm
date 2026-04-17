@@ -133,3 +133,24 @@ export async function detectAnomalies() {
 
   return object;
 }
+
+/**
+ * SKILL: CONVERSA LIVRE (CHAT)
+ * Processa mensagens genéricas sobre o sistema e marcenaria.
+ */
+export async function generateChatResponse(payload: { message: string, history?: any[] }) {
+  const { text } = await generateText({
+    model,
+    prompt: `Você é o D'Luxury Copilot, um especialista em ERP Industrial e marcenaria sob medida de alto padrão.
+    Seu objetivo é ajudar o usuário com dúvidas sobre o sistema, produção de móveis, materiais e orçamentos.
+    
+    Histórico da conversa:
+    ${JSON.stringify(payload.history || [])}
+    
+    Pergunta do Usuário: ${payload.message}
+    
+    Responda de forma direta, técnica e elegante.`
+  });
+
+  return { content: text };
+}
