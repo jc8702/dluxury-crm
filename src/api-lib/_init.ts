@@ -284,6 +284,22 @@ export async function runInitDB() {
     )
   `);
 
+  // 19. Industrial Cutting Plan
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS planos_corte (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      status TEXT DEFAULT 'rascunho',
+      kerf_mm DECIMAL(5,2) DEFAULT 3.0,
+      grupos JSONB DEFAULT '[]',
+      pecas JSONB DEFAULT '[]',
+      resultado JSONB DEFAULT '{}',
+      orcamento_id TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   console.log('--- Sincronização Concluída ---');
 
   return { success: true, message: 'Schema sincronizado com sucesso' };

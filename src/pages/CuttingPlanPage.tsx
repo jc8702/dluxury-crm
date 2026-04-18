@@ -180,50 +180,107 @@ const CuttingPlanPage: React.FC = () => {
   const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
 
   return (
-    <div className="flex flex-col h-full bg-[#0D2137] text-white overflow-hidden p-0">
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="px-6 py-3 bg-[#162a45] border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <input 
-              value={plano?.nome || ''} 
-              onChange={e => setPlano({ ...plano, nome: e.target.value })}
-              className="bg-transparent border-b border-white/20 focus:border-[#E2AC00] outline-none px-2 py-1 font-semibold text-lg w-64"
-            />
-            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg">
-              <span className="text-xs text-slate-400">Kerf (mm):</span>
-              <input type="number" value={kerf} onChange={e => setKerf(Number(e.target.value))} className="bg-transparent w-12 text-center text-[#E2AC00] font-bold outline-none" />
+    <div className="animate-fade-in" style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100dvh', 
+      background: 'var(--background)', 
+      color: 'var(--text)', 
+      overflow: 'hidden' 
+    }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {/* TOP BAR */}
+        <div className="glass" style={{ 
+          padding: '0.75rem 1.5rem', 
+          borderBottom: '1px solid var(--border)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'between',
+          gap: '1rem',
+          background: 'rgba(17, 24, 39, 0.4)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Scissors className="text-[#E2AC00] w-5 h-5" />
+              <input 
+                value={plano?.nome || ''} 
+                onChange={e => setPlano({ ...plano, nome: e.target.value })}
+                className="input-base"
+                style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', padding: '2px 8px', width: '250px', fontWeight: '800', fontSize: '1.1rem' }}
+                placeholder="NOME DO PLANO"
+              />
+            </div>
+            <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '4px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Kerf (mm):</span>
+              <input type="number" value={kerf} onChange={e => setKerf(Number(e.target.value))} style={{ background: 'transparent', border: 'none', color: '#E2AC00', fontWeight: 'bold', width: '30px', textAlign: 'center', outline: 'none' }} />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={handleCalcular} className="flex items-center gap-2 bg-[#E2AC00] text-[#0D2137] px-6 py-2 rounded-lg font-bold hover:bg-[#ffc107] transition-all">
-              <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /> OTIMIZAR
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button onClick={() => setShowImportModal(true)} className="btn btn-outline" style={{ height: '40px' }}>
+              <FileText className="w-4 h-4" /> Importar
             </button>
-            <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10"><FileText className="w-5 h-5" /> Importar</button>
-            <button className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"><Save className="w-5 h-5" /> Salvar</button>
+            <button onClick={handleCalcular} className="btn btn-primary" style={{ height: '40px', padding: '0 1.5rem' }}>
+              <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> OTIMIZAR
+            </button>
+            <button className="btn btn-outline" style={{ height: '40px', background: 'rgba(255,255,255,0.03)' }}>
+              <Save className="w-4 h-4" /> Salvar
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="w-[400px] bg-[#11233a] border-r border-white/10 overflow-y-auto p-6 space-y-8">
+        {/* MAIN BODY */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* LEFT SIDEBAR (Inputs) */}
+          <div style={{ 
+            width: '380px', 
+            background: 'rgba(0,0,0,0.2)', 
+            borderRight: '1px solid var(--border)', 
+            overflowY: 'auto', 
+            padding: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2rem'
+          }}>
             <section>
-              <div className="flex justify-between mb-4"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Materiais</h3><button onClick={() => addGrupo({ sku: 'MDF-BP', nome: 'MDF Branco' })} className="text-[#E2AC00]"><Plus className="w-5 h-5" /></button></div>
-              {grupos.map((g, idx) => (
-                <div key={g.id} onClick={() => setActiveGrupoIdx(idx)} className={`p-4 rounded-xl border mb-2 cursor-pointer ${activeGrupoIdx === idx ? 'bg-[#E2AC00]/10 border-[#E2AC00]' : 'bg-black/20 border-white/5'}`}>
-                  <div className="font-bold flex justify-between">{g.nomeMaterial} <Trash2 onClick={() => setGrupos(grupos.filter(x => x.id !== g.id))} className="w-4 h-4 text-red-400" /></div>
-                  <div className="text-xs text-slate-400">{g.larguraChapaMm}x{g.alturaChapaMm}mm | {g.sku}</div>
-                </div>
-              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Materiais</h3>
+                <button onClick={() => addGrupo({ sku: 'CHP-MDF-18', nome: 'MDF 18mm' })} className="btn" style={{ padding: '4px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--primary-text)' }}><Plus size={16} /></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {grupos.map((g, idx) => (
+                  <div key={g.id} onClick={() => setActiveGrupoIdx(idx)} className="card glass" style={{ 
+                    padding: '0.75rem 1rem', 
+                    cursor: 'pointer',
+                    borderColor: activeGrupoIdx === idx ? 'var(--primary)' : 'var(--border)',
+                    background: activeGrupoIdx === idx ? 'rgba(212, 175, 55, 0.05)' : 'var(--surface)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{g.nomeMaterial}</span>
+                      <Trash2 onClick={(e) => { e.stopPropagation(); setGrupos(grupos.filter(x => x.id !== g.id)); }} className="w-4 h-4 text-red-500 hover:scale-110" />
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{g.larguraChapaMm} x {g.alturaChapaMm}mm | {g.sku}</div>
+                  </div>
+                ))}
+              </div>
             </section>
+
             {activeGrupo && (
-              <section>
-                <div className="flex justify-between mb-4"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Peças</h3><button onClick={() => addPeca(activeGrupo.id)} className="bg-[#E2AC00] text-[#0D2137] px-2 py-1 rounded text-[10px] font-bold">ADD PEÇA</button></div>
-                <div className="space-y-2">
+              <section className="animate-fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Peças ({pecas.filter(p => p.grupoMaterialId === activeGrupo.id).length})</h3>
+                  <button onClick={() => addPeca(activeGrupo.id)} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.65rem' }}>ADD PEÇA</button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {pecas.filter(p => p.grupoMaterialId === activeGrupo.id).map(p => (
-                    <div key={p.id} className="p-3 rounded-lg bg-black/20 border border-white/5 flex gap-2 items-center">
-                      <input value={p.descricao} onChange={e => updatePeca(p.id, { descricao: e.target.value })} className="bg-transparent text-xs flex-1 outline-none" />
-                      <input type="number" value={p.larguraMm} onChange={e => updatePeca(p.id, { larguraMm: Number(e.target.value) })} className="bg-black/30 w-12 text-center text-[10px] rounded py-1" />
-                      <input type="number" value={p.alturaMm} onChange={e => updatePeca(p.id, { alturaMm: Number(e.target.value) })} className="bg-black/30 w-12 text-center text-[10px] rounded py-1" />
-                      <input type="number" value={p.quantidade} onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} className="bg-black/30 w-8 text-center text-[10px] rounded py-1" />
+                    <div key={p.id} className="card glass" style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(0,0,0,0.1)' }}>
+                      <input value={p.descricao} onChange={e => updatePeca(p.id, { descricao: e.target.value })} className="input-base" style={{ fontSize: '0.75rem', flex: 1, padding: '4px 8px' }} />
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        <input type="number" value={p.larguraMm} onChange={e => updatePeca(p.id, { larguraMm: Number(e.target.value) })} className="input-base" style={{ width: '45px', textAlign: 'center', padding: '4px 0', fontSize: '0.75rem' }} />
+                        <span style={{ color: 'var(--text-muted)', alignSelf: 'center' }}>×</span>
+                        <input type="number" value={p.alturaMm} onChange={e => updatePeca(p.id, { alturaMm: Number(e.target.value) })} className="input-base" style={{ width: '45px', textAlign: 'center', padding: '4px 0', fontSize: '0.75rem' }} />
+                      </div>
+                      <input type="number" value={p.quantidade} onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} className="input-base" style={{ width: '35px', textAlign: 'center', padding: '4px 0', fontSize: '0.75rem', color: '#E2AC00', fontWeight: 'bold' }} />
                     </div>
                   ))}
                 </div>
@@ -231,53 +288,92 @@ const CuttingPlanPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex-1 bg-black/40 flex flex-col">
-            <div className="flex bg-[#162a45] h-12 overflow-x-auto">
+          {/* CENTER CANVAS (Preview) */}
+          <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: '40px', overflowX: 'auto' }}>
               {activeResultadoGrupo?.superficies.map((s, idx) => (
-                <button key={s.id} onClick={() => setActiveChapaIdx(idx)} className={`px-4 text-xs font-bold uppercase ${activeChapaIdx === idx ? 'bg-[#0D2137] text-[#E2AC00] border-t-2 border-[#E2AC00]' : 'text-slate-400'}`}>
+                <button 
+                  key={s.id} 
+                  onClick={() => setActiveChapaIdx(idx)} 
+                  style={{ 
+                    padding: '0 1rem', 
+                    fontSize: '0.7rem', 
+                    fontWeight: '800', 
+                    border: 'none', 
+                    cursor: 'pointer',
+                    background: activeChapaIdx === idx ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                    color: activeChapaIdx === idx ? 'var(--primary)' : 'var(--text-muted)',
+                    borderBottom: activeChapaIdx === idx ? '2px solid var(--primary)' : 'none',
+                    whiteSpace: 'nowrap'
+                  }}>
                   {s.tipo === 'retalho' ? 'Retalho' : `Chapa ${idx + 1}`} ({s.aproveitamentoPct.toFixed(0)}%)
                 </button>
               ))}
             </div>
-            <div className="flex-1 relative flex items-center justify-center p-8">
-              {activeSuperficie ? <PlanoCorteVisual superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} /> : <div className="opacity-20 text-center"><Scissors className="w-20 h-20 mx-auto mb-4" /> CALCULANDO...</div>}
+            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+              {activeSuperficie ? (
+                <PlanoCorteVisual superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} />
+              ) : (
+                <div style={{ opacity: 0.1, textAlign: 'center' }}>
+                  <Scissors size={120} style={{ margin: '0 auto 1.5rem' }} />
+                  <p style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '0.2em' }}>OTIMIZAÇÃO PENDENTE</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="w-[320px] bg-[#0D2137] border-l border-white/10 p-6 flex flex-col">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Executivo</h3>
-            <div className="flex-1 space-y-6">
-              <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                <div className="text-[10px] text-slate-500 font-bold uppercase">Aproveitamento</div>
-                <div className="text-3xl font-black text-[#E2AC00]">{resultado?.aproveitamentoGeral.toFixed(1) || '0'}%</div>
+          {/* RIGHT SIDEBAR (Summary) */}
+          <div style={{ width: '320px', background: 'var(--surface)', borderLeft: '1px solid var(--border)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Executivo</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="card glass" style={{ padding: '1.25rem', borderLeft: '4px solid var(--success)' }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Aproveitamento</div>
+                <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--success)' }}>{resultado?.aproveitamentoGeral.toFixed(1) || '0'}%</div>
               </div>
-              <div className="bg-[#E2AC00] text-[#0D2137] p-4 rounded-2xl">
-                <div className="text-[10px] font-black uppercase opacity-70">Investimento</div>
-                <div className="text-2xl font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(resultado?.custoTotalMaterial || 0)}</div>
+
+              <div className="card glass" style={{ padding: '1.25rem', borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent)' }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Material Necessário</div>
+                <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--primary)' }}>{resultado?.grupos.reduce((acc, g) => acc + g.superficies.length, 0) || '0'} <span style={{ fontSize: '0.8rem' }}>CHAPAS</span></div>
               </div>
             </div>
-            <div className="pt-6 space-y-2">
-              <button onClick={() => window.print()} className="w-full flex items-center justify-center gap-2 bg-white/5 h-12 rounded-xl hover:bg-white/10 text-sm font-bold"><Printer className="w-4 h-4" /> Etiquetas</button>
-              <button onClick={handleExportCSV} className="w-full flex items-center justify-center gap-2 bg-white/5 h-12 rounded-xl hover:bg-white/10 text-sm font-bold"><Download className="w-4 h-4" /> CSV</button>
+
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button onClick={() => window.print()} className="btn btn-outline" style={{ width: '100%', height: '48px' }}>
+                <Printer className="w-5 h-5" /> Imprimir Etiquetas
+              </button>
+              <button onClick={handleExportCSV} className="btn btn-outline" style={{ width: '100%', height: '48px' }}>
+                <Download className="w-5 h-5" /> Exportar CSV (Corte)
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* MODAL IMPORT */}
       {showImportModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#11233a] border border-white/10 rounded-2xl w-full max-w-xl">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center"><h2 className="text-lg font-bold">Importar Orçamento</h2><button onClick={() => setShowImportModal(false)}>X</button></div>
-            <div className="p-6 space-y-2 max-h-[400px] overflow-y-auto">
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+          <div className="modal-content animate-pop-in" style={{ width: '500px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Importar do Orçamento</h2>
+              <button onClick={() => setShowImportModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto' }}>
               {orcamentos.map(o => (
-                <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="p-4 bg-white/5 border border-white/5 hover:border-[#E2AC00] rounded-xl cursor-pointer">
-                  <div className="font-bold text-[#E2AC00]">#{o.numero}</div>
-                  <div className="text-xs">{o.cliente_nome}</div>
+                <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="card glass hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '800', color: 'var(--primary)' }}>#{o.numero}</span>
+                    <span className="badge">{o.status}</span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>{o.cliente_nome}</div>
                 </div>
               ))}
+              {orcamentos.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Nenhum orçamento aprovado encontrado.</p>}
             </div>
           </div>
         </div>
       )}
+
       <style>{`
         @media print {
           body > * { display: none !important; }
@@ -288,14 +384,15 @@ const CuttingPlanPage: React.FC = () => {
           .etiqueta-dimensoes { font-size: 16pt; font-weight: 900; margin: 2mm 0; }
         }
       `}</style>
+      
       <div className="hidden print-only">
         <div className="print-etiquetas">
           {resultado?.grupos.flatMap(g => g.superficies.flatMap(s => s.pecasPositionadas.map(p => (
             <div key={p.numeroEtiqueta} className="etiqueta">
               <div className="etiqueta-header"><span>D'LUXURY ERP</span><span>🏷️ {String(p.numeroEtiqueta).padStart(3, '0')}</span></div>
-              <div className="font-bold text-xs truncate">{p.descricao}</div>
+              <div style={{ fontWeight: 'bold' }}>{p.descricao}</div>
               <div className="etiqueta-dimensoes">{p.largura} × {p.altura} mm</div>
-              <div className="text-[8px] mt-auto uppercase">{p.ambiente} | {g.sku}</div>
+              <div style={{ fontSize: '8px', textTransform: 'uppercase' }}>{p.ambiente} | {g.sku}</div>
             </div>
           ))))}
         </div>
