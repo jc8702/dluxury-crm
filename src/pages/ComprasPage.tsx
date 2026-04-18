@@ -239,6 +239,12 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   const [fornecedores, setFornecedores] = useState<any[]>([]);
   const [materiais, setMateriais] = useState<any[]>([]);
 
+  const [newItem, setNewItem] = useState({
+    material_id: '',
+    quantidade: 1,
+    preco: 0
+  });
+
   useEffect(() => {
     api.estoque.fornecedores.list().then(setFornecedores);
     api.estoque.list().then(setMateriais);
@@ -246,6 +252,37 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
         api.compras.getPedido(pedido.id).then(res => setFormData(res));
     }
   }, [pedido]);
+
+  const addItem = () => {
+    const mat = materiais.find(m => m.id === newItem.material_id);
+    if (!mat) return;
+
+    const itemObj = {
+      material_id: mat.id,
+      sku: mat.sku,
+      descricao: mat.nome,
+      unidade: mat.unidade_compra || 'un',
+      quantidade_pedida: Number(newItem.quantidade),
+      preco_unitario: Number(newItem.preco || mat.preco_custo || 0),
+      subtotal: Number(newItem.quantidade) * Number(newItem.preco || mat.preco_custo || 0)
+    };
+
+    const newItens = [...(formData.itens || []), itemObj];
+    const newTotal = newItens.reduce((acc, i) => acc + i.subtotal, 0) + (Number(formData.frete) || 0);
+
+    setFormData({ 
+        ...formData, 
+        itens: newItens,
+        valor_total: newTotal
+    });
+    setNewItem({ material_id: '', quantidade: 1, preco: 0 });
+  };
+
+  const removeItem = (index: number) => {
+    const newItens = formData.itens.filter((_: any, i: number) => i !== index);
+    const newTotal = newItens.reduce((acc: number, i: any) => acc + i.subtotal, 0) + (Number(formData.frete) || 0);
+    setFormData({ ...formData, itens: newItens, valor_total: newTotal });
+  };
 
   const handleSave = async () => {
     try {
@@ -300,7 +337,52 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
 
         {/* Itens do Pedido */}
         <div style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ fontSize: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Itens do Pedido</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+             <h3 style={{ fontSize: '1rem', margin: 0 }}>Itens do Pedido</h3>
+             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Material</label>
+                  <select 
+                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '200px' }}
+                    value={newItem.material_id}
+                    onChange={e => {
+                      const m = materiais.find(mat => mat.id === e.target.value);
+                      setNewItem({ ...newItem, material_id: e.target.value, preco: m?.preco_custo || 0 });
+                    }}
+                  >
+                    <option value="">Escolher material...</option>
+                    {materiais.map(m => <option key={m.id} value={m.id}>{m.nome} ({m.sku})</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Qtd</label>
+                  <input 
+                    type="number" 
+                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '60px' }}
+                    value={newItem.quantidade}
+                    onChange={e => setNewItem({ ...newItem, quantidade: Number(e.target.value) })}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>V. Unit.</label>
+                  <input 
+                    type="number" 
+                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '90px' }}
+                    value={newItem.preco}
+                    onChange={e => setNewItem({ ...newItem, preco: Number(e.target.value) })}
+                  />
+                </div>
+                <button 
+                  className="btn-primary" 
+                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
+                  onClick={addItem}
+                  disabled={!newItem.material_id}
+                >
+                  <Plus size={16} /> Add
+                </button>
+             </div>
+          </div>
+
           <div className="card" style={{ padding: 0 }}>
              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                 <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
@@ -309,22 +391,45 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                     <th style={{ textAlign: 'center', padding: '0.75rem' }}>Qtd</th>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>Unitário</th>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>Subtotal</th>
+                    <th style={{ textAlign: 'center', padding: '0.75rem' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {formData.itens?.length === 0 ? (
-                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Adicione itens ao pedido</td></tr>
+                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Adicione itens ao pedido</td></tr>
                   ) : (
                     formData.itens?.map((itm: any, idx: number) => (
                       <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
-                        <td style={{ padding: '0.75rem' }}>{itm.descricao}</td>
-                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>{itm.quantidade_pedida}</td>
+                        <td style={{ padding: '0.75rem' }}>
+                            <div style={{ fontWeight: '600' }}>{itm.descricao}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{itm.sku}</div>
+                        </td>
+                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>{itm.quantidade_pedida} {itm.unidade}</td>
                         <td style={{ padding: '0.75rem', textAlign: 'right' }}>R$ {Number(itm.preco_unitario).toFixed(2)}</td>
-                        <td style={{ padding: '0.75rem', textAlign: 'right' }}>R$ {Number(itm.subtotal).toFixed(2)}</td>
+                        <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '700' }}>R$ {Number(itm.subtotal).toFixed(2)}</td>
+                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                            <button 
+                                onClick={() => removeItem(idx)}
+                                style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', opacity: 0.7 }}
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
+                {formData.itens?.length > 0 && (
+                  <tfoot style={{ background: 'rgba(255,b255,b255,0.01)', borderTop: '2px solid var(--border)' }}>
+                    <tr>
+                        <td colSpan={3} style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '600' }}>TOTAL DO PEDIDO:</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '800', color: 'var(--primary)', fontSize: '1rem' }}>
+                            R$ {Number(formData.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td></td>
+                    </tr>
+                  </tfoot>
+                )}
              </table>
           </div>
         </div>

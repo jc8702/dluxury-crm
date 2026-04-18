@@ -28,28 +28,64 @@ export async function handleCompras(req: any, res: any) {
         const seq = (parseInt(count[0].count) + 1).toString().padStart(3, '0');
         const numero = `PC-${ano}-${seq}`;
 
+        const totalItens = (f.itens || []).reduce((acc: number, item: any) => acc + (item.quantidade_pedida * item.preco_unitario), 0);
+        const valorTotal = totalItens + (Number(f.frete) || 0);
+
         const result = await sql`
           INSERT INTO pedidos_compra (numero, fornecedor_id, status, data_previsao_entrega, valor_total, frete, observacoes, origem)
-          VALUES (${numero}, ${f.fornecedor_id}, 'rascunho', ${f.data_previsao_entrega || null}, ${f.valor_total || 0}, ${f.frete || 0}, ${f.observacoes}, ${f.origem || 'manual'})
+          VALUES (${numero}, ${f.fornecedor_id}, 'rascunho', ${f.data_previsao_entrega || null}, ${valorTotal}, ${f.frete || 0}, ${f.observacoes}, ${f.origem || 'manual'})
           RETURNING *
         `;
-        return res.status(201).json({ success: true, data: result[0] });
+        const pedido = result[0];
+
+        // Inserir itens se existirem
+        if (f.itens && f.itens.length > 0) {
+          for (const item of f.itens) {
+            await sql`
+              INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal)
+              VALUES (${pedido.id}, ${item.material_id}, ${item.sku}, ${item.descricao}, ${item.quantidade_pedida}, ${item.unidade}, ${item.preco_unitario}, ${item.quantidade_pedida * item.preco_unitario})
+            `;
+          }
+        }
+
+        return res.status(201).json({ success: true, data: pedido });
       }
 
       if (method === 'PATCH' || method === 'PUT') {
         const f = req.body;
+        
+        let valorTotal = f.valor_total;
+        if (f.itens) {
+            const totalItens = f.itens.reduce((acc: number, item: any) => acc + (item.quantidade_pedida * item.preco_unitario), 0);
+            valorTotal = totalItens + (Number(f.frete) || Number(f.valor_total) - (Number(f.itens_sum_old) || 0)); // Simplificação manual se necessário
+            // Para ser robusto, recalculamos sempre se itens forem enviados
+            valorTotal = totalItens + (Number(f.frete) || 0);
+        }
+
         const result = await sql`
           UPDATE pedidos_compra SET
             fornecedor_id = COALESCE(${f.fornecedor_id}, fornecedor_id),
             status = COALESCE(${f.status}, status),
             data_previsao_entrega = COALESCE(${f.data_previsao_entrega}, data_previsao_entrega),
             data_recebimento = COALESCE(${f.data_recebimento}, data_recebimento),
-            valor_total = COALESCE(${f.valor_total}, valor_total),
+            valor_total = COALESCE(${valorTotal}, valor_total),
             frete = COALESCE(${f.frete}, frete),
             observacoes = COALESCE(${f.observacoes}, observacoes),
             atualizado_em = NOW()
           WHERE id = ${id} RETURNING *
         `;
+
+        // Se enviou itens, sobrescrevemos (simples demais, mas funcional para CRUD rápido)
+        if (f.itens) {
+          await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id}`;
+          for (const item of f.itens) {
+            await sql`
+              INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal)
+              VALUES (${id}, ${item.material_id}, ${item.sku}, ${item.descricao}, ${item.quantidade_pedida}, ${item.unidade}, ${item.preco_unitario}, ${item.quantidade_pedida * item.preco_unitario})
+            `;
+          }
+        }
+
         return res.status(200).json({ success: true, data: result[0] });
       }
     }
