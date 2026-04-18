@@ -48,89 +48,97 @@ async function gerarNotificacoesAutomaticas() {
   let criadas = 0;
 
   // 1. Materiais com estoque crítico
-  const materiais = await sql`
-    SELECT id, nome, sku, estoque_atual, estoque_minimo 
-    FROM materiais 
-    WHERE estoque_atual <= estoque_minimo AND ativo = true
-  `;
-  for (const m of materiais) {
-    const exists = await sql`
-      SELECT id FROM notificacoes 
-      WHERE lida = false AND tipo = 'estoque_critico' AND referencia_id = ${m.id}
+  try {
+    const materiais = await sql`
+      SELECT id, nome, sku, estoque_atual, estoque_minimo 
+      FROM materiais 
+      WHERE estoque_atual <= estoque_minimo AND ativo = true
     `;
-    if (!exists.length) {
-      await sql`
-        INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-        VALUES ('estoque_critico', 'Estoque crítico: ' || ${m.sku}, ${`${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`}, ${m.estoque_atual <= 0 ? 'critica' : 'alta'}, 'material', ${m.id}, '/estoque')
+    for (const m of materiais) {
+      const exists = await sql`
+        SELECT id FROM notificacoes 
+        WHERE lida = false AND tipo = 'estoque_critico' AND referencia_id = ${m.id}
       `;
-      criadas++;
+      if (!exists.length) {
+        await sql`
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
+          VALUES ('estoque_critico', 'Estoque crítico: ' || ${m.sku}, ${`${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`}, ${m.estoque_atual <= 0 ? 'critica' : 'alta'}, 'material', ${m.id}, '/estoque')
+        `;
+        criadas++;
+      }
     }
-  }
+  } catch (e) { console.error('Erro ao gerar notificações de estoque:', e); }
 
   // 2. Projetos com entrega próxima (3 dias)
-  const projetos = await sql`
-    SELECT id, ambiente, created_at, prazo_entrega
-    FROM projects
-    WHERE status NOT IN ('concluded', 'concluido', 'cancelado')
-    AND prazo_entrega IS NOT NULL
-    AND (prazo_entrega::date - CURRENT_DATE) BETWEEN 0 AND 3
-  `;
-  for (const p of projetos) {
-    const exists = await sql`
-      SELECT id FROM notificacoes 
-      WHERE lida = false AND tipo = 'prazo_projeto' AND referencia_id = ${p.id}
+  try {
+    const projetos = await sql`
+      SELECT id, ambiente, created_at, prazo_entrega
+      FROM projects
+      WHERE status NOT IN ('concluded', 'concluido', 'cancelado')
+      AND prazo_entrega IS NOT NULL
+      AND (prazo_entrega::date - CURRENT_DATE) BETWEEN 0 AND 3
     `;
-    if (!exists.length) {
-      await sql`
-        INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-        VALUES ('prazo_projeto', 'Entrega Próxima: ' || ${p.ambiente}, 'Entrega prevista para os próximos dias.', 'alta', 'projeto', ${p.id}, '/projetos')
+    for (const p of projetos) {
+      const exists = await sql`
+        SELECT id FROM notificacoes 
+        WHERE lida = false AND tipo = 'prazo_projeto' AND referencia_id = ${p.id}
       `;
-      criadas++;
+      if (!exists.length) {
+        await sql`
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
+          VALUES ('prazo_projeto', 'Entrega Próxima: ' || ${p.ambiente}, 'Entrega prevista para os próximos dias.', 'alta', 'projeto', ${p.id}, '/projetos')
+        `;
+        criadas++;
+      }
     }
-  }
+  } catch (e) { console.error('Erro ao gerar notificações de projetos:', e); }
 
   // 3. Orçamentos sem resposta (7 dias)
-  const orcamentos = await sql`
-    SELECT o.id, o.numero, c.nome as cliente
-    FROM orcamentos o
-    JOIN clients c ON o.cliente_id::text = c.id::text
-    WHERE o.status = 'enviado'
-    AND o.atualizado_em < NOW() - INTERVAL '7 days'
-  `;
-  for (const o of orcamentos) {
-    const exists = await sql`
-      SELECT id FROM notificacoes 
-      WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id}
+  try {
+    const orcamentos = await sql`
+      SELECT o.id, o.numero, c.nome as cliente
+      FROM orcamentos o
+      JOIN clients c ON o.cliente_id::text = c.id::text
+      WHERE o.status = 'enviado'
+      AND o.atualizado_em < NOW() - INTERVAL '7 days'
     `;
-    if (!exists.length) {
-      await sql`
-        INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-        VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'orcamento', ${o.id}, '/orcamentos')
+    for (const o of orcamentos) {
+      const exists = await sql`
+        SELECT id FROM notificacoes 
+        WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id}
       `;
-      criadas++;
+      if (!exists.length) {
+        await sql`
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
+          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'orcamento', ${o.id}, '/orcamentos')
+        `;
+        criadas++;
+      }
     }
-  }
+  } catch (e) { console.error('Erro ao gerar notificações de orçamentos:', e); }
 
   // 4. Garantias pendentes (3 dias)
-  const garantias = await sql`
-    SELECT id, numero, titulo
-    FROM chamados_garantia
-    WHERE status IN ('aberto', 'agendado')
-    AND criado_em < NOW() - INTERVAL '3 days'
-  `;
-  for (const g of garantias) {
-    const exists = await sql`
-      SELECT id FROM notificacoes 
-      WHERE lida = false AND tipo = 'garantia_pendente' AND referencia_id = ${g.id}
+  try {
+    const garantias = await sql`
+      SELECT id, numero, titulo
+      FROM chamados_garantia
+      WHERE status IN ('aberto', 'agendado')
+      AND criado_em < NOW() - INTERVAL '3 days'
     `;
-    if (!exists.length) {
-      await sql`
-        INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-        VALUES ('garantia_pendente', 'Garantia Pendente: ' || ${g.numero}, ${`Chamado "${g.titulo}" aguarda atendimento há 3 dias.`}, 'alta', 'chamado', ${g.id}, '/pos-venda')
+    for (const g of garantias) {
+      const exists = await sql`
+        SELECT id FROM notificacoes 
+        WHERE lida = false AND tipo = 'garantia_pendente' AND referencia_id = ${g.id}
       `;
-      criadas++;
+      if (!exists.length) {
+        await sql`
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
+          VALUES ('garantia_pendente', 'Garantia Pendente: ' || ${g.numero}, ${`Chamado "${g.titulo}" aguarda atendimento há 3 dias.`}, 'alta', 'chamado', ${g.id}, '/pos-venda')
+        `;
+        criadas++;
+      }
     }
-  }
+  } catch (e) { console.error('Erro ao gerar notificações de garantia:', e); }
 
   return { criadas };
 }

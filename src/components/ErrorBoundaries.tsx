@@ -49,13 +49,32 @@ class ErrorBoundary extends Component<Props, State> {
           }}>
             {this.state.error?.toString()}
           </pre>
-          <button 
-            onClick={() => window.location.reload()}
-            className="btn btn-primary"
-            style={{ marginTop: '1.5rem' }}
-          >
-            Recarregar Aplicativo
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+            <button 
+              onClick={() => window.location.reload()}
+              className="btn btn-secondary"
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              Tentar Novamente
+            </button>
+            <button 
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/';
+              }}
+              style={{ 
+                padding: '0.75rem 1.5rem', 
+                borderRadius: '8px', 
+                cursor: 'pointer',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                fontWeight: 'bold'
+              }}
+            >
+              Reset Total (Limpar Cache)
+            </button>
+          </div>
         </div>
       );
     }
