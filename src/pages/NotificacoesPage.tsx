@@ -6,7 +6,7 @@ import {
   Settings, RefreshCw
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { Notificacao } from '../api-lib/types';
+import type { Notificacao } from '../api-lib/types';
 
 const NotificacoesPage: React.FC = () => {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);

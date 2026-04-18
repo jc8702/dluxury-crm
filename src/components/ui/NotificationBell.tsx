@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Info, AlertTriangle, AlertCircle, ShoppingCart, Calendar, FileText, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
-import { Notificacao } from '../../api-lib/types';
+import type { Notificacao } from '../../api-lib/types';
 
 const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<Notificacao[]>([]);

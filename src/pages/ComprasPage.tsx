@@ -6,7 +6,7 @@ import {
   Printer, ArrowRight
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { PedidoCompra, Material } from '../api-lib/types';
+import type { PedidoCompra, Material } from '../api-lib/types';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);

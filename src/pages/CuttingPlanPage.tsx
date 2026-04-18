@@ -5,14 +5,15 @@ import {
   Maximize2
 } from 'lucide-react';
 import { api } from '../lib/api';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Layout/Header';
-import { 
-  calcularPlanoCorte, 
+import Sidebar from '../components/layout/Sidebar';
+import Header from '../components/layout/Header';
+import type { 
   PecaInput, 
   GrupoMaterial, 
   ResultadoPlano
 } from '../utils/planodeCorte';
+import type { Superficie } from '../utils/planodeCorte';
+import { calcularPlanoCorte } from '../utils/planodeCorte';
 import PlanoCorteVisual from '../components/production/PlanoCorteVisual';
 
 const CuttingPlanPage: React.FC = () => {
