@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings2, Plus, Zap, Box, Ruler, Loader2, Save } from 'lucide-react';
+import { Settings2, Plus, Zap, Box, Ruler, Loader2, Save, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
@@ -57,7 +57,38 @@ const EngineeringPage: React.FC = () => {
     setFormData({ 
       id: null, nome: '', codigo_modelo: '', descricao: '',
       largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
-      horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
+      horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0,
+      regras_calculo: []
+    });
+  };
+
+  const [skus, setSkus] = useState<any[]>([]);
+  useEffect(() => {
+    api.skus.list().then(setSkus).catch(console.error);
+  }, []);
+
+  const addComponent = () => {
+    const newComponent = {
+      id: crypto.randomUUID(),
+      componente_nome: 'NOVO COMPONENTE',
+      formula_largura: 'L',
+      formula_altura: 'A',
+      formula_perda: '1.10',
+      quantidade: 1,
+      sku_id: skus[0]?.id || '',
+      tipo_regra: 'AREA' // AREA, PERIMETRO, FIXO
+    };
+    setFormData({ ...formData, regras_calculo: [...(formData.regras_calculo || []), newComponent] });
+  };
+
+  const removeComponent = (id: string) => {
+    setFormData({ ...formData, regras_calculo: formData.regras_calculo.filter((c: any) => c.id !== id) });
+  };
+
+  const updateComponent = (id: string, updates: any) => {
+    setFormData({ 
+      ...formData, 
+      regras_calculo: formData.regras_calculo.map((c: any) => c.id === id ? { ...c, ...updates } : c) 
     });
   };
 
@@ -161,9 +192,72 @@ const EngineeringPage: React.FC = () => {
              </div>
           </div>
 
-          <div>
-            <label className="label">Descrição Técnica</label>
-            <textarea className="input-base w-full" style={{ minHeight: '80px' }} placeholder="Detalhes de construção..." value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} />
+          <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--primary)', fontWeight: 'bold' }}>Regras de Construção (BOM)</h4>
+              <button type="button" onClick={addComponent} className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <Plus size={16} /> Add Peça
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxH: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+              {(formData.regras_calculo || []).map((comp: any) => (
+                <div key={comp.id} style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <input 
+                      className="input-base w-full" 
+                      placeholder="Nome da Peça" 
+                      value={comp.componente_nome} 
+                      onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })} 
+                    />
+                    <select 
+                      className="input-base w-full" 
+                      value={comp.sku_id} 
+                      onChange={e => updateComponent(comp.id, { sku_id: e.target.value })}
+                    >
+                      <option value="">Selecione Material</option>
+                      {skus.map(s => <option key={s.id} value={s.id}>{s.sku} - {s.nome}</option>)}
+                    </select>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                       <input type="number" className="input-base w-full" placeholder="Qtd" title="Quantidade de peças" value={comp.quantidade} onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })} />
+                    </div>
+                    <select 
+                      className="input-base w-full" 
+                      style={{ fontSize: '0.8rem' }}
+                      value={comp.sentido_veio || 'longitudinal'} 
+                      onChange={e => updateComponent(comp.id, { sentido_veio: e.target.value })}
+                      title="Sentido do Veio"
+                    >
+                      <option value="longitudinal">Longitudinal</option>
+                      <option value="transversal">Transversal</option>
+                      <option value="sem_sentido">Sem Sentido</option>
+                    </select>
+                    <button type="button" onClick={() => removeComponent(comp.id)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', textAlign: 'center' }}><X size={18} /></button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block' }}>Fórmula Largura (L)</label>
+                      <input className="input-base w-full" style={{ fontSize: '0.8rem' }} value={comp.formula_largura} onChange={e => updateComponent(comp.id, { formula_largura: e.target.value })} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block' }}>Fórmula Altura (A)</label>
+                      <input className="input-base w-full" style={{ fontSize: '0.8rem' }} value={comp.formula_altura} onChange={e => updateComponent(comp.id, { formula_altura: e.target.value })} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block' }}>Fator Perda</label>
+                      <input className="input-base w-full" style={{ fontSize: '0.8rem' }} value={comp.formula_perda} onChange={e => updateComponent(comp.id, { formula_perda: e.target.value })} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block' }}>Desc. Fita (mm)</label>
+                      <input type="number" required className="input-base w-full" style={{ fontSize: '0.8rem' }} value={comp.desconto_fita_mm || 0} onChange={e => updateComponent(comp.id, { desconto_fita_mm: Number(e.target.value) })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!formData.regras_calculo || formData.regras_calculo.length === 0) && (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem' }}>Nenhuma regra definida para este módulo.</p>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline flex-1">Cancelar</button>

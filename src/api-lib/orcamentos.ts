@@ -122,10 +122,27 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
       return res.status(201).json({ success: true, data: result ? result[0] : null });
     }
     if (req.method === 'PATCH') {
+      const f = req.body;
+      let result;
       if (type === 'config') {
-        const result = await sql`UPDATE configuracoes_precificacao SET fator_perda_padrao = ${req.body.fator_perda_padrao}, markup_padrao = ${req.body.markup_padrao}, aliquota_imposto = ${req.body.aliquota_imposto}, mo_producao_pct_padrao = ${req.body.mo_producao_pct_padrao}, mo_instalacao_pct_padrao = ${req.body.mo_instalacao_pct_padrao}, margem_minima_alerta = ${req.body.margem_minima_alerta}, atualizado_em = NOW() RETURNING *`;
-        return res.status(200).json({ success: true, data: result[0] });
+        result = await sql`UPDATE configuracoes_precificacao SET 
+          fator_perda_padrao = COALESCE(${f.fator_perda_padrao}, fator_perda_padrao), 
+          markup_padrao = COALESCE(${f.markup_padrao}, markup_padrao), 
+          aliquota_imposto = COALESCE(${f.aliquota_imposto}, aliquota_imposto), 
+          mo_producao_pct_padrao = COALESCE(${f.mo_producao_pct_padrao}, mo_producao_pct_padrao), 
+          mo_instalacao_pct_padrao = COALESCE(${f.mo_instalacao_pct_padrao}, mo_instalacao_pct_padrao), 
+          margem_minima_alerta = COALESCE(${f.margem_minima_alerta}, margem_minima_alerta),
+          espessura_chapa_padrao = COALESCE(${f.espessura_chapa_padrao}, espessura_chapa_padrao),
+          recuo_fundo_padrao = COALESCE(${f.recuo_fundo_padrao}, recuo_fundo_padrao),
+          atualizado_em = NOW() 
+        RETURNING *`;
       }
+      if (type === 'ambiente' && id) result = await sql`UPDATE orcamento_ambientes SET nome = COALESCE(${f.nome}, nome), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} RETURNING *`;
+      if (type === 'movel' && id) result = await sql`UPDATE orcamento_moveis SET nome = COALESCE(${f.nome}, nome), tipo_movel = COALESCE(${f.tipo_movel}, tipo_movel), largura_total_cm = COALESCE(${f.largura_total_cm}, largura_total_cm), altura_total_cm = COALESCE(${f.altura_total_cm}, altura_total_cm), profundidade_total_cm = COALESCE(${f.profundidade_total_cm}, profundidade_total_cm), erp_product_id = COALESCE(${f.erp_product_id}, erp_product_id), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} RETURNING *`;
+      if (type === 'peca' && id) result = await sql`UPDATE orcamento_pecas SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), descricao_peca = COALESCE(${f.descricao_peca}, descricao_peca), largura_cm = COALESCE(${f.largura_cm}, largura_cm), altura_cm = COALESCE(${f.altura_cm}, altura_cm), quantidade = COALESCE(${f.quantidade}, quantidade), m2_unitario = COALESCE(${f.m2_unitario}, m2_unitario), m2_total = COALESCE(${f.m2_total}, m2_total), fator_perda_pct = COALESCE(${f.fator_perda_pct}, fator_perda_pct), m2_com_perda = COALESCE(${f.m2_com_perda}, m2_com_perda), preco_custo_m2 = COALESCE(${f.preco_custo_m2}, preco_custo_m2), custo_total_peca = COALESCE(${f.custo_total_peca}, custo_total_peca), sentido_veio = COALESCE(${f.sentido_veio}, sentido_veio), desconto_fita_mm = COALESCE(${f.desconto_fita_mm}, desconto_fita_mm) WHERE id = ${id} RETURNING *`;
+      if (type === 'ferragem' && id) result = await sql`UPDATE orcamento_ferragens SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), quantidade = COALESCE(${f.quantidade}, quantidade), preco_custo_unitario = COALESCE(${f.preco_custo_unitario}, preco_custo_unitario), custo_total = COALESCE(${f.custo_total}, custo_total) WHERE id = ${id} RETURNING *`;
+      
+      return res.status(200).json({ success: true, data: result ? result[0] : null });
     }
     if (req.method === 'DELETE') {
       if (type === 'ambiente') await sql`DELETE FROM orcamento_ambientes WHERE id = ${id}`;

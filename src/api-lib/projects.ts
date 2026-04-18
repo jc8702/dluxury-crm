@@ -144,12 +144,14 @@ export async function handleEngineering(req: any, res: any) {
         INSERT INTO erp_product_bom (
           nome, codigo_modelo, descricao, 
           largura_padrao, altura_padrao, profundidade_padrao, 
-          horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao
+          horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao,
+          regras_calculo
         ) 
         VALUES (
           ${nome}, ${codigo_modelo}, ${descricao},
           ${Number(largura_padrao) || 0}, ${Number(altura_padrao) || 0}, ${Number(profundidade_padrao) || 0},
-          ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(preco_material_m3_padrao) || 0}
+          ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(preco_material_m3_padrao) || 0},
+          ${JSON.stringify(req.body.regras_calculo || [])}::jsonb
         ) 
         ON CONFLICT (codigo_modelo) 
         DO UPDATE SET 
@@ -160,7 +162,8 @@ export async function handleEngineering(req: any, res: any) {
           profundidade_padrao = EXCLUDED.profundidade_padrao,
           horas_mo_padrao = EXCLUDED.horas_mo_padrao,
           valor_hora_padrao = EXCLUDED.valor_hora_padrao,
-          preco_material_m3_padrao = EXCLUDED.preco_material_m3_padrao
+          preco_material_m3_padrao = EXCLUDED.preco_material_m3_padrao,
+          regras_calculo = EXCLUDED.regras_calculo
         RETURNING *
       `;
       return res.status(201).json({ success: true, data: result });
@@ -180,6 +183,7 @@ export async function handleEngineering(req: any, res: any) {
           horas_mo_padrao = COALESCE(${f.horas_mo_padrao}, horas_mo_padrao),
           valor_hora_padrao = COALESCE(${f.valor_hora_padrao}, valor_hora_padrao),
           preco_material_m3_padrao = COALESCE(${f.preco_material_m3_padrao}, preco_material_m3_padrao),
+          regras_calculo = COALESCE(${f.regras_calculo ? JSON.stringify(f.regras_calculo) : null}::jsonb, regras_calculo),
           atualizado_em = NOW()
         WHERE id = ${id}
         RETURNING *

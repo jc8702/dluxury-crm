@@ -12,8 +12,16 @@ const MovelModal: React.FC<MovelModalProps> = ({ onClose, onSave }) => {
     largura_total_cm: 0,
     altura_total_cm: 0,
     profundidade_total_cm: 0,
-    observacoes: ''
+    observacoes: '',
+    erp_product_id: null as string | null
   });
+
+  const [modules, setModules] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    import('../../../lib/api').then(({ api }) => {
+      api.engineering.list().then(setModules).catch(console.error);
+    });
+  }, []);
 
   const handleSave = () => {
     if (!formData.nome.trim()) return;
@@ -48,6 +56,28 @@ const MovelModal: React.FC<MovelModalProps> = ({ onClose, onSave }) => {
         <h3 style={{ marginBottom: '1.5rem', color: '#d4af37', fontSize: '1.25rem' }}>Novo Móvel no Ambiente</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={labelStyle}>Módulo de Engenharia (Opcional)</label>
+            <select 
+              style={inputStyle} 
+              value={formData.erp_product_id || ''} 
+              onChange={e => {
+                const mod = modules.find(m => m.id === e.target.value);
+                setFormData({
+                  ...formData, 
+                  erp_product_id: e.target.value,
+                  nome: mod ? mod.nome : formData.nome,
+                  largura_total_cm: mod ? Number(mod.largura_padrao) : formData.largura_total_cm,
+                  altura_total_cm: mod ? Number(mod.altura_padrao) : formData.altura_total_cm,
+                  profundidade_total_cm: mod ? Number(mod.profundidade_padrao) : formData.profundidade_total_cm
+                });
+              }}
+            >
+              <option value="">-- Selecione um Módulo --</option>
+              {modules.map(m => <option key={m.id} value={m.id}>{m.codigo_modelo} - {m.nome}</option>)}
+            </select>
+          </div>
+
           <div style={{ gridColumn: 'span 2' }}>
             <label style={labelStyle}>Nome do Móvel</label>
             <input 

@@ -1,6 +1,20 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppContext } from '../../../context/AppContext';
 import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
+import { 
+  X, 
+  Trash2, 
+  ChevronRight, 
+  Search, 
+  FileText, 
+  Package, 
+  Truck, 
+  Calendar, 
+  Settings, 
+  Plus, 
+  Zap,
+  Info
+} from 'lucide-react';
 import { api } from '../../../lib/api';
 import { 
   calcularM2Peca, 
@@ -10,6 +24,8 @@ import {
   calcularImposto, 
   calcularMargemReal 
 } from '../../../utils/precificacao';
+import { create, all } from 'mathjs';
+const math = create(all);
 import AmbienteModal from './AmbienteModal';
 import MovelModal from './MovelModal';
 
@@ -108,6 +124,78 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
     await loadTree();
   };
 
+  const handleRecalcularBOM = async () => {
+    if (!selectedMovelId || !activeMovel?.erp_product_id) return;
+    if (!confirm('Isto irá sobrescrever as peças atuais com base no modelo de engenharia. Continuar?')) return;
+    
+    setLoading(true);
+    try {
+      const modules = await api.engineering.list();
+      const module = modules.find((m: any) => m.id === activeMovel.erp_product_id);
+      if (!module || !module.regras_calculo) throw new Error('Modelo não encontrado ou sem regras.');
+
+      const context = {
+        L: Number(activeMovel.largura_total_cm) * 10, // Converter cm para mm para precisão
+        A: Number(activeMovel.altura_total_cm) * 10,
+        P: Number(activeMovel.profundidade_total_cm) * 10,
+        ESP: Number(config?.espessura_chapa_padrao || 15),
+        REC: Number(config?.recuo_fundo_padrao || 10)
+      };
+
+      // Limpar peças atuais do móvel
+      if (activeMovel.pecas) {
+        for (const p of activeMovel.pecas) {
+          await api.orcamentoTecnico.deleteEntity('peca', p.id);
+        }
+      }
+
+      // Gerar novas peças
+      for (const regra of module.regras_calculo) {
+        const largura_mm = math.evaluate(regra.formula_largura, context);
+        const altura_mm = math.evaluate(regra.formula_altura, context);
+        const qtd = Number(regra.quantidade) || 1;
+
+        // Desconto manual de fita se existir (vindo da regra ou config)
+        const desconto = Number(regra.desconto_fita_mm || 0);
+        const largura_final_cm = (largura_mm - desconto) / 10;
+        const altura_final_cm = (altura_mm - desconto) / 10;
+
+        const m2_unit = (largura_final_cm / 100) * (altura_final_cm / 100);
+        const m2_total = m2_unit * qtd;
+        const lossFactor = 1 + (Number(regra.formula_perda || 1.10) - 1);
+        const m2_loss = m2_total * lossFactor;
+
+        // Buscar preço do material
+        const mat = materiais.find(m => m.id === regra.sku_id);
+        const costM2 = Number(mat?.preco_custo || 0);
+
+        await api.orcamentoTecnico.addEntity('peca', 'movel_id', selectedMovelId, {
+          material_id: regra.sku_id,
+          sku: mat?.sku || 'SKU',
+          descricao_peca: `${regra.componente_nome} [${regra.formula_largura} x ${regra.formula_altura}]`,
+          largura_cm: largura_final_cm,
+          altura_cm: altura_final_cm,
+          quantidade: qtd,
+          m2_unitario: m2_unit,
+          m2_total: m2_total,
+          fator_perda_pct: (lossFactor - 1) * 100,
+          m2_com_perda: m2_loss,
+          preco_custo_m2: costM2,
+          custo_total_peca: m2_loss * costM2,
+          sentido_veio: regra.sentido_veio || 'longitudinal',
+          desconto_fita_mm: desconto
+        });
+      }
+      
+      alert('BOM recalculado com sucesso!');
+      await loadTree();
+    } catch (err: any) {
+      alert(`Erro no recálculo: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // -- Calculations --
   const totals = useMemo(() => {
     let custoPecas = 0;
@@ -163,7 +251,19 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
      marginBottom: '1rem',
      textTransform: 'uppercase',
      display: 'flex',
-     justifyContent: 'space-between'
+     justifyContent: 'space-between',
+     alignItems: 'center'
+  };
+ 
+  const inputConfigStyle: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '4px',
+    color: 'white',
+    padding: '0.25rem',
+    width: '60px',
+    textAlign: 'center',
+    fontSize: '0.8rem'
   };
 
   if (loading && tree.ambientes.length === 0) {
@@ -279,7 +379,18 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 style={{ fontSize: '1rem', margin: 0 }}>Peças (Chapas)</h3>
-                    <button onClick={handleAddPeca} className="btn" style={{ fontSize: '0.75rem', padding: '0.3rem 0.8rem', border: '1px solid #d4af37', color: '#d4af37' }}>+ Adicionar Peça</button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {activeMovel?.erp_product_id && (
+                        <button 
+                          onClick={handleRecalcularBOM} 
+                          title="Recalcular peças usando regras de engenharia"
+                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.8rem', background: 'rgba(212,175,55,0.1)', border: '1px solid #d4af37', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          <Zap size={14} /> RECALCULAR BOM
+                        </button>
+                      )}
+                      <button onClick={handleAddPeca} className="btn" style={{ fontSize: '0.75rem', padding: '0.3rem 0.8rem', border: '1px solid #d4af37', color: '#d4af37' }}>+ Adicionar Peça</button>
+                    </div>
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
@@ -289,6 +400,8 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                         <th style={{ padding: '0.5rem', width: '80px' }}>L (cm)</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>A (cm)</th>
                         <th style={{ padding: '0.5rem', width: '60px' }}>QTD</th>
+                        <th style={{ padding: '0.5rem', width: '80px' }}>VEIO</th>
+                        <th style={{ padding: '0.5rem', width: '80px' }}>DESC. FITA(mm)</th>
                         <th style={{ padding: '0.5rem', textAlign: 'right' }}>CUSTO R$</th>
                         <th style={{ padding: '0.5rem', width: '40px' }}></th>
                       </tr>
@@ -331,6 +444,57 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                               }}
                             />
                           </td>
+                          <td style={{ padding: '0.5rem' }}>
+                            <input 
+                              type="number" 
+                              style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+                              value={p.altura_cm}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const m2 = calcularM2Peca(p.largura_cm, val);
+                                const m2Loss = aplicarPerdaCorte(m2, p.fator_perda_pct);
+                                const cost = custoPeca(m2Loss * p.quantidade, p.preco_custo_m2);
+                                handleUpdatePeca(p.id, { altura_cm: val, m2_unitario: m2, m2_total: m2 * p.quantidade, m2_com_perda: m2Loss * p.quantidade, custo_total_peca: cost });
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '0.5rem' }}>
+                            <input 
+                              type="number" 
+                              style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+                              value={p.quantidade}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const m2_total = p.m2_unitario * val;
+                                const m2Loss_total = aplicarPerdaCorte(m2_total, p.fator_perda_pct);
+                                const cost = custoPeca(m2Loss_total, p.preco_custo_m2);
+                                handleUpdatePeca(p.id, { quantidade: val, m2_total, m2_com_perda: m2Loss_total, custo_total_peca: cost });
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '0.5rem' }}>
+                            <select 
+                              style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.7rem', width: '100%' }}
+                              value={p.sentido_veio || 'longitudinal'}
+                              onChange={(e) => handleUpdatePeca(p.id, { sentido_veio: e.target.value })}
+                            >
+                              <option value="longitudinal" style={{background: '#1a1a2e'}}>Long</option>
+                              <option value="transversal" style={{background: '#1a1a2e'}}>Trans</option>
+                              <option value="sem_sentido" style={{background: '#1a1a2e'}}>Nenhum</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '0.5rem' }}>
+                            <input 
+                              type="number" 
+                              required
+                              style={{ background: 'transparent', border: 'none', color: '#d4af37', width: '100%', textAlign: 'center' }}
+                              value={p.desconto_fita_mm || 0}
+                              onBlur={(e) => {
+                                const val = Number(e.target.value);
+                                handleUpdatePeca(p.id, { desconto_fita_mm: val });
+                              }}
+                            />
+                          </td>
                           {/* ... Outros campos seguindo a mesma lógica de cálculo em tempo real ... */}
                           {/* Simplificando para o primeiro commit */}
                           <td colSpan={3} style={{ textAlign: 'right', fontWeight: 'bold', color: '#d4af37' }}>{formatCurrency(p.custo_total_peca)}</td>
@@ -367,10 +531,30 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                     <span style={{ fontSize: '0.85rem' }}>Peças:</span>
                     <span style={{ fontWeight: 'bold' }}>{formatCurrency(totals.custoPecas)}</span>
                  </div>
-                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.85rem' }}>Ferragens:</span>
-                    <span style={{ fontWeight: 'bold' }}>{formatCurrency(totals.custoFerragens)}</span>
-                 </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                     <span style={{ fontSize: '0.85rem' }}>Ferragens:</span>
+                     <span style={{ fontWeight: 'bold' }}>{formatCurrency(totals.custoFerragens)}</span>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Espessura Chapa (ms):</span>
+                        <input 
+                          type="number" 
+                          style={inputConfigStyle} 
+                          value={config?.espessura_chapa_padrao || 15} 
+                          onChange={(e) => api.orcamentoTecnico.updateConfig({ espessura_chapa_padrao: Number(e.target.value) }).then(loadTree)}
+                        />
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recuo Fundo (ms):</span>
+                        <input 
+                          type="number" 
+                          style={inputConfigStyle} 
+                          value={config?.recuo_fundo_padrao || 10}
+                          onChange={(e) => api.orcamentoTecnico.updateConfig({ recuo_fundo_padrao: Number(e.target.value) }).then(loadTree)}
+                        />
+                     </div>
+                  </div>
               </div>
 
               <div style={cardStyle}>
