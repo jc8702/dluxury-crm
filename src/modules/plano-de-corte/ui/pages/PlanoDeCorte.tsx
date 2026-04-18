@@ -14,9 +14,9 @@ import {
   Package,
   Cpu
 } from 'lucide-react';
-import { parseCSV, downloadCSVTemplate } from '../../../application/usecases/csvHandler';
+import { parseCSV, downloadCSVTemplate } from '../../application/usecases/csvHandler';
 import { StressTester } from '../components/StressTester';
-import { generateLabelsPDF } from '../../../application/usecases/labelGenerator';
+import { generateLabelsPDF } from '../../application/usecases/labelGenerator';
 
 const PlanoDeCortePage: React.FC = () => {
   const { 

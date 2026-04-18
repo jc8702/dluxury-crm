@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChapaMaterial, PecaCorte } from '../../../domain/entities/CuttingPlan';
+import { ChapaMaterial, PecaCorte } from '../../domain/entities/CuttingPlan';
 import { Plus, Trash2, Edit3, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 
 interface Props {
