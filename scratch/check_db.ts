@@ -1,4 +1,4 @@
-import { sql } from './src/api-lib/_db.js';
+import { sql } from '../src/api-lib/_db.js';
 
 async function checkSchema() {
   try {
@@ -18,9 +18,9 @@ async function checkSchema() {
     };
 
     await checkTable('billings');
-    await checkTable('fornecedores');
-    await checkTable('engineering_modules');
-    await checkTable('erp_materials');
+    await checkTable('planos_de_corte');
+    await checkTable('erp_chapas');
+    await checkTable('erp_skus_engenharia');
     await checkTable('orcamentos');
 
   } catch (e) {

@@ -111,6 +111,14 @@ export default async function handler(req: any, res: any) {
       const { handlePlanoCorte } = await import('../src/api-lib/planocorte.js');
       return await handlePlanoCorte(req, res);
     }
+    if (cleanUrl.startsWith('/api/chapas')) {
+      const { handleChapas } = await import('../src/api-lib/planocorte.js');
+      return await handleChapas(req, res);
+    }
+    if (cleanUrl.startsWith('/api/engenharia/skus')) {
+      const { handleEngenhariaSKUs } = await import('../src/api-lib/planocorte.js');
+      return await handleEngenhariaSKUs(req, res);
+    }
 
     if (cleanUrl.startsWith('/api/init-db')) {
       const { runInitDB } = await import('../src/api-lib/_init.js');
