@@ -1,16 +1,14 @@
 import { neon } from '@neondatabase/serverless';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const dbUrl = process.env.DATABASE_URL || '';
+const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 
 // Exportação simples e direta para evitar problemas de Proxy em ambiente Serverless
 export const sql = dbUrl ? neon(dbUrl) : ((strings: any) => {
   throw new Error('DATABASE_URL não configurada no ambiente.');
 }) as any;
-
-
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 
 export const extractAndVerifyToken = (req: any) => {
   try {
