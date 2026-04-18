@@ -37,11 +37,11 @@ const CuttingPlanPage: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         if (id) {
-          const res = await api.get(`/api/plano-corte?action=buscar_plano_completo&id=${id}`);
-          if (res.success) {
-            setPlano(res.data);
-            setGrupos(res.data.grupos || []);
-            setPecas(res.data.pecas || []);
+          const res = await api.planoCorte.get(id);
+          if (res) {
+            setPlano(res);
+            setGrupos(res.grupos || []);
+            setPecas(res.pecas || []);
           }
         } else {
           setPlano({ nome: 'Novo Plano de Corte', status: 'rascunho' });

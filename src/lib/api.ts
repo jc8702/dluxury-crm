@@ -171,6 +171,12 @@ export const api = {
     purchaseSuggestion: () => apiCall<any>('ai-copilot', 'POST', { skill: 'purchase-suggestion' }),
     detectAnomalies: () => apiCall<any>('ai-copilot', 'POST', { skill: 'detect-anomalies' }),
   },
+  planoCorte: {
+    list: () => apiCall<any[]>('plano-corte?action=listar_planos_corte'),
+    get: (id: string) => apiCall<any>(`plano-corte?action=buscar_plano_completo&id=${id}`),
+    save: (data: any) => apiCall<any>('plano-corte?action=salvar_resultado_corte', 'POST', data),
+    create: (data: any) => apiCall<any>('plano-corte?action=criar_plano', 'POST', data),
+  },
   cuttingPlan: {
     list: () => apiCall<any[]>('production?type=cutting_plan_list'),
     save: (data: any) => apiCall<any>('production?type=cutting_plan', 'POST', data),
