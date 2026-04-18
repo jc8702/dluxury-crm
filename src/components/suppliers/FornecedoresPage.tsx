@@ -7,7 +7,7 @@ import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2, X, Save } from
 import FornecedorFormModal from './components/FornecedorFormModal';
 
 const FornecedoresPage: React.FC = () => {
-  const { fornecedores, removeFornecedor } = useAppContext();
+  const { fornecedores, removeFornecedor, reloadData } = useAppContext();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedFornecedor, setSelectedFornecedor] = useState<Fornecedor | null>(null);
@@ -114,7 +114,7 @@ const FornecedoresPage: React.FC = () => {
         <FornecedorFormModal 
           fornecedor={selectedFornecedor}
           onClose={() => setShowModal(false)}
-          onSuccess={() => {}} 
+          onSuccess={() => { reloadData(); }} 
         />
       )}
     </div>

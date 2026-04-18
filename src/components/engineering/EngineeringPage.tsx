@@ -9,8 +9,8 @@ const EngineeringPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({ 
-    nome: '', codigo_modelo: '', descricao: '',
+  const [formData, setFormData] = useState<any>({ 
+    id: null, nome: '', codigo_modelo: '', descricao: '',
     largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
     horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
   });
@@ -35,13 +35,15 @@ const EngineeringPage: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.engineering.create(formData);
+      if (formData.id) {
+        // Agora usamos o endpoint de PATCH para edições explícitas
+        await api.engineering.update?.(formData.id, formData);
+      } else {
+        await api.engineering.create(formData);
+      }
+      
       setIsModalOpen(false);
-      setFormData({ 
-        nome: '', codigo_modelo: '', descricao: '',
-        largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
-        horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
-      });
+      resetForm();
       await fetchProducts();
     } catch (err: any) {
       console.error('Failed to save product:', err);
@@ -49,6 +51,14 @@ const EngineeringPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({ 
+      id: null, nome: '', codigo_modelo: '', descricao: '',
+      largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
+      horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
+    });
   };
 
   return (
@@ -108,7 +118,7 @@ const EngineeringPage: React.FC = () => {
           </p>
       </section>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo Módulo de Engenharia">
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title={formData.id ? "Editar Módulo de Engenharia" : "Cadastrar Novo Módulo de Engenharia"}>
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>

@@ -118,6 +118,8 @@ export const api = {
   engineering: {
     list: () => apiCall<any[]>('engineering'),
     create: (data: any) => apiCall<any>('engineering', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`engineering?id=${id}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`engineering?id=${id}`, 'DELETE'),
   },
   skus: {
     list: () => apiCall<any[]>('skus'),

@@ -896,11 +896,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addFornecedor = async (data: any) => {
     const saved = await api.estoque.fornecedores.create(data);
     setFornecedores(prev => [...prev, saved]);
+    return saved;
   };
 
   const updateFornecedor = async (id: string, data: any) => {
     const saved = await api.estoque.fornecedores.update(id, data);
     setFornecedores(prev => prev.map(f => f.id === id ? saved : f));
+    return saved;
   };
 
   const removeFornecedor = async (id: string) => {

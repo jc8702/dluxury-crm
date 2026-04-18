@@ -99,6 +99,14 @@ export async function handleEngineering(req: any, res: any) {
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS largura_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS altura_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS profundidade_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS horas_mo_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao NUMERIC DEFAULT 150`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS atualizado_em TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
     
     // Force Null em colunas legadas (hotfix industrial v6)
     try {
@@ -156,6 +164,33 @@ export async function handleEngineering(req: any, res: any) {
         RETURNING *
       `;
       return res.status(201).json({ success: true, data: result });
+    }
+
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      const { id } = req.query;
+      const f = req.body;
+      const [result] = await sql`
+        UPDATE erp_product_bom SET
+          nome = COALESCE(${f.nome}, nome),
+          codigo_modelo = COALESCE(${f.codigo_modelo}, codigo_modelo),
+          descricao = COALESCE(${f.descricao}, descricao),
+          largura_padrao = COALESCE(${f.largura_padrao}, largura_padrao),
+          altura_padrao = COALESCE(${f.altura_padrao}, altura_padrao),
+          profundidade_padrao = COALESCE(${f.profundidade_padrao}, profundidade_padrao),
+          horas_mo_padrao = COALESCE(${f.horas_mo_padrao}, horas_mo_padrao),
+          valor_hora_padrao = COALESCE(${f.valor_hora_padrao}, valor_hora_padrao),
+          preco_material_m3_padrao = COALESCE(${f.preco_material_m3_padrao}, preco_material_m3_padrao),
+          atualizado_em = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      return res.status(200).json({ success: true, data: result });
+    }
+
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      await sql`DELETE FROM erp_product_bom WHERE id = ${id}`;
+      return res.status(200).json({ success: true });
     }
     
     return res.status(405).end();
