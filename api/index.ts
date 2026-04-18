@@ -2,7 +2,10 @@ import { runInitDB } from '../src/api-lib/_init.js';
 import { handleAuth, handleUsers } from '../src/api-lib/auth.js';
 import { handleClients, handleKanban, handleGoals } from '../src/api-lib/crm.js';
 import { handleEstoque } from '../src/api-lib/estoque.js';
-// ... (Modo de Reativação Gradual - Fase 2)
+import { handleBillings } from '../src/api-lib/financeiro.js';
+import { handleOrcamentos, handleOrcamentoTecnico, handleCondicoesPagamento } from '../src/api-lib/orcamentos.js';
+import { handleProjects, handleReports, handleEngineering, handleSKUs, handleSimulations } from '../src/api-lib/projects.js';
+// ... (Modo de Reativação Gradual - Fase 3)
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,7 +19,7 @@ export default async function handler(req: any, res: any) {
 
   // ROTA DE DIAGNÓSTICO
   if (cleanUrl.endsWith('/ping')) {
-    return res.status(200).json({ success: true, message: 'pong (MODO DIAGNÓSTICO: CORE_CRM_LOADED)' });
+    return res.status(200).json({ success: true, message: 'pong (MODO DIAGNÓSTICO: GESTAO_LOADED)' });
   }
 
   try {
@@ -28,6 +31,17 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/kanban')) return await handleKanban(req, res);
     if (cleanUrl.startsWith('/api/users')) return await handleUsers(req, res);
 
+    // Rotas Gestão
+    if (cleanUrl.startsWith('/api/orcamentos')) return await handleOrcamentos(req, res);
+    if (cleanUrl.startsWith('/api/orcamento-tecnico')) return await handleOrcamentoTecnico(req, res);
+    if (cleanUrl.startsWith('/api/condicoes-pagamento')) return await handleCondicoesPagamento(req, res);
+    if (cleanUrl.startsWith('/api/projects')) return await handleProjects(req, res);
+    if (cleanUrl.startsWith('/api/billings')) return await handleBillings(req, res);
+    if (cleanUrl.startsWith('/api/engineering')) return await handleEngineering(req, res);
+    if (cleanUrl.startsWith('/api/skus')) return await handleSKUs(req, res);
+    if (cleanUrl.startsWith('/api/reports')) return await handleReports(req, res);
+    if (cleanUrl.startsWith('/api/simulations')) return await handleSimulations(req, res);
+
     if (cleanUrl.startsWith('/api/init-db')) {
       await runInitDB();
       return res.status(200).json({ success: true, message: 'Banco de dados inicializado com sucesso' });
@@ -35,11 +49,11 @@ export default async function handler(req: any, res: any) {
 
     return res.status(503).json({ 
       success: false, 
-      error: 'Módulos Industriais em reativação',
-      details: 'O Core CRM (Clientes/Estoque) foi reativado. Tentando agora o Industrial.'
+      error: 'Módulos Industriais Advanced em reativação',
+      details: 'A camada de Gestão (Orçamentos/Projetos) foi reativada. Finalizando com o Industrial.'
     });
   } catch (err: any) {
     console.error('API Error:', err.message);
-    return res.status(500).json({ success: false, error: 'Erro nos módulos Core CRM', details: err.message });
+    return res.status(500).json({ success: false, error: 'Erro nos módulos de Gestão', details: err.message });
   }
 }
