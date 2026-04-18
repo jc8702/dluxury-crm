@@ -41,7 +41,7 @@ const Estimates: React.FC = () => {
     }
     try {
       const data = await api.estoque.list({ q });
-      setSkuResults(data);
+      setSkuResults(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Error searching SKU", e);
     }
@@ -95,7 +95,7 @@ const Estimates: React.FC = () => {
     try {
       setLoading(true);
       const data = await api.orcamentos.list();
-      setOrcamentosList(data);
+      setOrcamentosList(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Error loading history", e);
     } finally {
@@ -169,11 +169,15 @@ const Estimates: React.FC = () => {
       const saved = localStorage.getItem(`draft_estimate_${selectedProject}`);
       if (saved) {
         try {
-          const { items: savedItems, margin, prazo, pagamento } = JSON.parse(saved);
-          setItems(savedItems);
-          setMarginPercent(margin || 30);
-          setPrazoEntrega(prazo || '45 DIAS ÚTEIS');
-          setFormaPagamento(pagamento || '50% DE ENTRADA + 50% NA ENTREGA');
+          const parsed = JSON.parse(saved);
+          if (parsed && Array.isArray(parsed.items)) {
+            setItems(parsed.items);
+            setMarginPercent(parsed.margin || 30);
+            setPrazoEntrega(parsed.prazo || '45 DIAS ÚTEIS');
+            setFormaPagamento(parsed.pagamento || '50% DE ENTRADA + 50% NA ENTREGA');
+          } else {
+            setItems([]);
+          }
         } catch (e) { console.error("Error loading draft", e); }
       } else {
         setItems([]);
@@ -310,7 +314,7 @@ const Estimates: React.FC = () => {
     doc.setFontSize(16);
     doc.setTextColor(212, 175, 55);
     doc.setFont("helvetica", "bold");
-    const totalStr = formatCurrency(totalFinal);
+    const totalStr = formatCurrency(total);
     const textWidth = doc.getTextWidth(totalStr);
     doc.text(totalStr, 196 - textWidth, finalY + 15);
 
@@ -339,7 +343,12 @@ const Estimates: React.FC = () => {
     doc.text("D'Luxury Ambientes - Qualidade e Sofisticação em Móveis Planejados", 105, 285, { align: 'center' });
     doc.text("Este documento é apenas uma estimativa comercial.", 105, 290, { align: 'center' });
 
-    doc.save(`Orcamento_DLuxury_${client?.nome?.replace(/\s+/g, '_') || 'Avulso'}.pdf`);
+    doc.save(`Orcamento_DLuxury_${clientName?.replace(/\s+/g, '_') || 'Avulso'}.pdf`);
+  };
+
+  const handleGeneratePDF = async () => {
+    const client = clients.find(c => c.id === selectedClient);
+    generatePDF_Export(items, client?.nome || 'CLIENTE', editingId ? 'REVISÃO' : 'RASCUNHO', totalFinal, `Prazo: ${prazoEntrega}. Pagamento: ${formaPagamento}`);
   };
 
   const inputStyle: React.CSSProperties = { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '0.75rem', color: 'white', fontSize: '0.95rem', width: '100%', outline: 'none' };
