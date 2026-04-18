@@ -25,6 +25,11 @@ export default async function handler(req: any, res: any) {
   const url = req.url || '';
   const cleanUrl = url.split('?')[0];
 
+  // ROTA DE DIAGNÓSTICO (PING)
+  if (cleanUrl.endsWith('/ping')) {
+    return res.status(200).json({ success: true, message: 'pong', timestamp: new Date().toISOString() });
+  }
+
   try {
     if (cleanUrl.startsWith('/api/auth')) return await handleAuth(req, res);
     if (cleanUrl.startsWith('/api/clients')) return await handleClients(req, res);

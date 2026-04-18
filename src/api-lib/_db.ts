@@ -5,10 +5,19 @@ import bcrypt from 'bcryptjs';
 const dbUrl = process.env.DATABASE_URL || '';
 const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 
-// Exportação simples e direta para evitar problemas de Proxy em ambiente Serverless
-export const sql = dbUrl ? neon(dbUrl) : ((strings: any) => {
-  throw new Error('DATABASE_URL não configurada no ambiente.');
-}) as any;
+// Inicialização Lazy Total: O driver só é carregado no momento exato da query.
+// Isso evita que erros na URL derrubem o servidor globalmente.
+let _neonInstance: any = null;
+
+export const sql = (strings: any, ...values: any[]) => {
+  if (!dbUrl) {
+    throw new Error('DATABASE_URL ausente no ambiente Vercel.');
+  }
+  if (!_neonInstance) {
+    _neonInstance = neon(dbUrl);
+  }
+  return _neonInstance(strings, ...values);
+};
 
 export const extractAndVerifyToken = (req: any) => {
   try {
