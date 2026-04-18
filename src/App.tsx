@@ -120,25 +120,27 @@ function AppContent() {
   }
 
   return (
-    <>
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main style={{
         flex: 1,
-        padding: '2rem 2.5rem',
-        overflowY: 'auto',
         height: '100vh',
+        overflowY: 'auto',
         background: 'var(--background-gradient)',
         position: 'relative'
       }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {renderContent()}
-          </div>
+        <div style={{ 
+          maxWidth: '1400px', 
+          margin: '0 auto', 
+          padding: '2rem 2.5rem',
+          minHeight: '100%'
+        }}>
+          {renderContent()}
         </div>
       </main>
       <CopilotAssistant />
       <ThemeToggle />
-    </>
+    </div>
   );
 }
 

@@ -51,6 +51,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       top: 0,
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 100,
+      overflowY: 'auto',
+      maxHeight: '100vh',
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'var(--border-strong) transparent',
     }}>
       <div className="sidebar-header" style={{ marginBottom: '2rem', padding: '0.5rem 0.5rem', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
