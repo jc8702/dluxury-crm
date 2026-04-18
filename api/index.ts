@@ -1,6 +1,8 @@
 import { runInitDB } from '../src/api-lib/_init.js';
-// import { handleAuth, handleUsers } from '../src/api-lib/auth.js';
-// ... (Modo de Reativação Gradual)
+import { handleAuth, handleUsers } from '../src/api-lib/auth.js';
+import { handleClients, handleKanban, handleGoals } from '../src/api-lib/crm.js';
+import { handleEstoque } from '../src/api-lib/estoque.js';
+// ... (Modo de Reativação Gradual - Fase 2)
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,10 +16,18 @@ export default async function handler(req: any, res: any) {
 
   // ROTA DE DIAGNÓSTICO
   if (cleanUrl.endsWith('/ping')) {
-    return res.status(200).json({ success: true, message: 'pong (MODO DIAGNÓSTICO: DB_INIT_LOADED)' });
+    return res.status(200).json({ success: true, message: 'pong (MODO DIAGNÓSTICO: CORE_CRM_LOADED)' });
   }
 
   try {
+    // Rotas Core
+    if (cleanUrl.startsWith('/api/auth')) return await handleAuth(req, res);
+    if (cleanUrl.startsWith('/api/clients')) return await handleClients(req, res);
+    if (cleanUrl.startsWith('/api/estoque')) return await handleEstoque(req, res);
+    if (cleanUrl.startsWith('/api/goals')) return await handleGoals(req, res);
+    if (cleanUrl.startsWith('/api/kanban')) return await handleKanban(req, res);
+    if (cleanUrl.startsWith('/api/users')) return await handleUsers(req, res);
+
     if (cleanUrl.startsWith('/api/init-db')) {
       await runInitDB();
       return res.status(200).json({ success: true, message: 'Banco de dados inicializado com sucesso' });
@@ -25,11 +35,11 @@ export default async function handler(req: any, res: any) {
 
     return res.status(503).json({ 
       success: false, 
-      error: 'Módulos em reativação',
-      details: 'A base do sistema (DB) foi reativada. Tentando agora o restante.'
+      error: 'Módulos Industriais em reativação',
+      details: 'O Core CRM (Clientes/Estoque) foi reativado. Tentando agora o Industrial.'
     });
   } catch (err: any) {
-    console.error('API Init Error:', err.message);
-    return res.status(500).json({ success: false, error: 'Erro fatal na base da API', details: err.message });
+    console.error('API Error:', err.message);
+    return res.status(500).json({ success: false, error: 'Erro nos módulos Core CRM', details: err.message });
   }
 }
