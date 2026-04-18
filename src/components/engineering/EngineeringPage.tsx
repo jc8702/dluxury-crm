@@ -9,7 +9,11 @@ const EngineeringPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({ nome: '', codigo_modelo: '', descricao: '' });
+  const [formData, setFormData] = useState({ 
+    nome: '', codigo_modelo: '', descricao: '',
+    largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
+    horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -33,7 +37,11 @@ const EngineeringPage: React.FC = () => {
     try {
       await api.engineering.create(formData);
       setIsModalOpen(false);
-      setFormData({ nome: '', codigo_modelo: '', descricao: '' });
+      setFormData({ 
+        nome: '', codigo_modelo: '', descricao: '',
+        largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
+        horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0
+      });
       await fetchProducts();
     } catch (err: any) {
       console.error('Failed to save product:', err);
@@ -79,7 +87,9 @@ const EngineeringPage: React.FC = () => {
                 <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{p.descricao}</td>
                 <td style={{ padding: '1rem', fontSize: '0.75rem' }}>{new Date(p.created_at).toLocaleDateString()}</td>
                 <td style={{ padding: '1rem' }}>
-                  <button className="btn btn-outline btn-sm">Editar</button>
+                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button onClick={() => { setFormData(p); setIsModalOpen(true); }} className="btn btn-outline btn-sm">Editar</button>
+                   </div>
                 </td>
               </>
             )}
@@ -100,35 +110,50 @@ const EngineeringPage: React.FC = () => {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo Módulo de Engenharia">
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div>
-            <label className="label">Nome do Módulo</label>
-            <input 
-              required
-              className="input-base w-full" 
-              placeholder="Ex: Armário Superior Cozinha"
-              value={formData.nome}
-              onChange={e => setFormData({...formData, nome: e.target.value})}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label className="label">Nome do Módulo</label>
+              <input required className="input-base w-full" placeholder="Ex: Armário Superior" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} />
+            </div>
+            <div>
+              <label className="label">Código do Modelo</label>
+              <input required className="input-base w-full" placeholder="Ex: MOD-ARMS-01" value={formData.codigo_modelo} onChange={e => setFormData({...formData, codigo_modelo: e.target.value})} />
+            </div>
           </div>
-          <div>
-            <label className="label">Código do Modelo</label>
-            <input 
-              required
-              className="input-base w-full" 
-              placeholder="Ex: MOD-ARMS-01"
-              value={formData.codigo_modelo}
-              onChange={e => setFormData({...formData, codigo_modelo: e.target.value})}
-            />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+             <div>
+                <label className="label">Largura (cm)</label>
+                <input type="number" className="input-base w-full" value={formData.largura_padrao} onChange={e => setFormData({...formData, largura_padrao: Number(e.target.value)})} />
+             </div>
+             <div>
+                <label className="label">Altura (cm)</label>
+                <input type="number" className="input-base w-full" value={formData.altura_padrao} onChange={e => setFormData({...formData, altura_padrao: Number(e.target.value)})} />
+             </div>
+             <div>
+                <label className="label">Profundidade (cm)</label>
+                <input type="number" className="input-base w-full" value={formData.profundidade_padrao} onChange={e => setFormData({...formData, profundidade_padrao: Number(e.target.value)})} />
+             </div>
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+             <div>
+                <label className="label">Horas MO</label>
+                <input type="number" className="input-base w-full" value={formData.horas_mo_padrao} onChange={e => setFormData({...formData, horas_mo_padrao: Number(e.target.value)})} />
+             </div>
+             <div>
+                <label className="label">Valor/Hora (R$)</label>
+                <input type="number" className="input-base w-full" value={formData.valor_hora_padrao} onChange={e => setFormData({...formData, valor_hora_padrao: Number(e.target.value)})} />
+             </div>
+             <div>
+                <label className="label">Mat/m³ (R$)</label>
+                <input type="number" className="input-base w-full" value={formData.preco_material_m3_padrao} onChange={e => setFormData({...formData, preco_material_m3_padrao: Number(e.target.value)})} />
+             </div>
+          </div>
+
           <div>
-            <label className="label">Decrição Técnica</label>
-            <textarea 
-              className="input-base w-full" 
-              style={{ minHeight: '100px' }}
-              placeholder="Detalhes sobre a construção e limitações do módulo"
-              value={formData.descricao}
-              onChange={e => setFormData({...formData, descricao: e.target.value})}
-            />
+            <label className="label">Descrição Técnica</label>
+            <textarea className="input-base w-full" style={{ minHeight: '80px' }} placeholder="Detalhes de construção..." value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} />
           </div>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline flex-1">Cancelar</button>

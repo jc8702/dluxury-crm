@@ -52,9 +52,12 @@ const Estimates: React.FC = () => {
       ...newItem,
       name: mat.nome,
       woodType: mat.categoria_nome || 'Geral',
-      woodPrice: Number(mat.preco_custo) || 0,
-      laborHours: 2, // Default sugestivo
-      laborRate: 150 // Default sugestivo
+      width: Number(mat.largura_padrao) || 0,
+      height: Number(mat.altura_padrao) || 0,
+      depth: Number(mat.profundidade_padrao) || 0,
+      laborHours: Number(mat.horas_mo_padrao) || 2,
+      laborRate: Number(mat.valor_hora_padrao) || 150,
+      woodPrice: Number(mat.preco_material_m3_padrao) || Number(mat.preco_custo) || 0
     });
     setSkuResults([]);
     setSkuSearch(mat.sku);

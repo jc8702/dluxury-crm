@@ -76,7 +76,7 @@ export async function handleEstoque(req: any, res: any) {
       const { q } = req.query;
       if (q) {
         const mats = await sql`SELECT m.id, m.sku, m.nome, c.nome as categoria_nome, m.preco_custo FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true AND (m.sku ILIKE ${'%' + q + '%'} OR m.nome ILIKE ${'%' + q + '%'}) LIMIT 10`;
-        const mods = await sql`SELECT id, codigo_modelo as sku, nome, 'Módulo de Engenharia' as categoria_nome, 0 as preco_custo FROM erp_product_bom WHERE codigo_modelo ILIKE ${'%' + q + '%'} OR nome ILIKE ${'%' + q + '%'} LIMIT 10`;
+        const mods = await sql`SELECT id, codigo_modelo as sku, nome, 'Módulo de Engenharia' as categoria_nome, 0 as preco_custo, largura_padrao, altura_padrao, profundidade_padrao, horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao FROM erp_product_bom WHERE codigo_modelo ILIKE ${'%' + q + '%'} OR nome ILIKE ${'%' + q + '%'} LIMIT 10`;
         return res.status(200).json({ success: true, data: [...mats, ...mods] });
       }
       const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true ORDER BY m.nome ASC`;

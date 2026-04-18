@@ -86,19 +86,37 @@ export async function handleEngineering(req: any, res: any) {
     }
     
     if (req.method === 'POST') {
-      const { nome, codigo_modelo, descricao } = req.body;
+      const { 
+        nome, codigo_modelo, descricao,
+        largura_padrao, altura_padrao, profundidade_padrao,
+        horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao 
+      } = req.body;
       
       if (!nome || !codigo_modelo) {
         return res.status(400).json({ success: false, error: 'Nome e Código são obrigatórios' });
       }
 
       const [result] = await sql`
-        INSERT INTO erp_product_bom (nome, codigo_modelo, descricao) 
-        VALUES (${nome}, ${codigo_modelo}, ${descricao}) 
+        INSERT INTO erp_product_bom (
+          nome, codigo_modelo, descricao, 
+          largura_padrao, altura_padrao, profundidade_padrao, 
+          horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao
+        ) 
+        VALUES (
+          ${nome}, ${codigo_modelo}, ${descricao},
+          ${Number(largura_padrao) || 0}, ${Number(altura_padrao) || 0}, ${Number(profundidade_padrao) || 0},
+          ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(preco_material_m3_padrao) || 0}
+        ) 
         ON CONFLICT (codigo_modelo) 
         DO UPDATE SET 
           nome = EXCLUDED.nome, 
-          descricao = EXCLUDED.descricao
+          descricao = EXCLUDED.descricao,
+          largura_padrao = EXCLUDED.largura_padrao,
+          altura_padrao = EXCLUDED.altura_padrao,
+          profundidade_padrao = EXCLUDED.profundidade_padrao,
+          horas_mo_padrao = EXCLUDED.horas_mo_padrao,
+          valor_hora_padrao = EXCLUDED.valor_hora_padrao,
+          preco_material_m3_padrao = EXCLUDED.preco_material_m3_padrao
         RETURNING *
       `;
       return res.status(201).json({ success: true, data: result });

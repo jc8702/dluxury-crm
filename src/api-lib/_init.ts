@@ -266,6 +266,12 @@ export async function runInitDB() {
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
   await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS largura_padrao DECIMAL(10,2) DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS altura_padrao DECIMAL(10,2) DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS profundidade_padrao DECIMAL(10,2) DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS horas_mo_padrao DECIMAL(10,2) DEFAULT 0`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao DECIMAL(10,2) DEFAULT 150`.catch(() => {});
+  await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao DECIMAL(12,2) DEFAULT 0`.catch(() => {});
   
   // Force Null em colunas legadas que bloqueiam o salvamento
   try {
