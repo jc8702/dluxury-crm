@@ -1,239 +1,286 @@
 import React, { useState, useEffect } from 'react';
-import { Scissors, Plus, Trash2, Calculator, Download, Package } from 'lucide-react';
+import { 
+  Scissors, Plus, Save, Trash2, Maximize, ZoomIn, ZoomOut, 
+  Printer, FileText, Download, Layout, Layers, RefreshCcw,
+  Maximize2
+} from 'lucide-react';
 import { api } from '../lib/api';
-import { calcularPlanoCorte } from '../utils/planodeCorte';
-import type { ResultadoCorte, PecaPositionada } from '../utils/planodeCorte';
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Layout/Header';
+import { 
+  calcularPlanoCorte, 
+  PecaInput, 
+  GrupoMaterial, 
+  ResultadoPlano
+} from '../utils/planodeCorte';
 import PlanoCorteVisual from '../components/production/PlanoCorteVisual';
 
-interface PecaInput {
-  id: string;
-  descricao: string;
-  largura: number;
-  altura: number;
-  quantidade: number;
-  virarFibra: boolean;
-  ambiente: string;
-}
-
 const CuttingPlanPage: React.FC = () => {
-  const [pecas, setPecas] = useState<PecaInput[]>([
-    { id: '1', descricao: 'Lateral Esquerda', largura: 2200, altura: 600, quantidade: 2, virarFibra: false, ambiente: 'Cozinha' },
-    { id: '2', descricao: 'Tampo Superior', largura: 1800, altura: 600, quantidade: 1, virarFibra: false, ambiente: 'Cozinha' }
-  ]);
-  
-  const [config, setConfig] = useState({
-    sku: 'MDF-BRANCO-18',
-    larguraChapa: 2750,
-    alturaChapa: 1830,
-    kerf: 3
-  });
-
-  const [resultado, setResultado] = useState<ResultadoCorte | null>(null);
-  const [chapaAtiva, setChapaAtiva] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [plano, setPlano] = useState<any>(null);
+  const [grupos, setGrupos] = useState<GrupoMaterial[]>([]);
+  const [pecas, setPecas] = useState<PecaInput[]>([]);
+  const [resultado, setResultado] = useState<ResultadoPlano | null>(null);
+  const [activeGrupoIdx, setActiveGrupoIdx] = useState(0);
+  const [activeChapaIdx, setActiveChapaIdx] = useState(0);
+  const [highlightPecaId, setHighlightPecaId] = useState<string | null>(null);
+  const [kerf, setKerf] = useState(3);
+  const [iteracoes] = useState(3);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [orcamentos, setOrcamentos] = useState<any[]>([]);
 
-  const adicionarPeca = () => {
-    const nova: PecaInput = {
-      id: Math.random().toString(36).substr(2, 9),
-      descricao: '',
-      largura: 0,
-      altura: 0,
-      quantidade: 1,
-      virarFibra: false,
-      ambiente: ''
+  useEffect(() => {
+    const loadPlano = async () => {
+      setLoading(true);
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        if (id) {
+          const res = await api.get(`/api/plano-corte?action=buscar_plano_completo&id=${id}`);
+          if (res.success) {
+            setPlano(res.data);
+            setGrupos(res.data.grupos || []);
+            setPecas(res.data.pecas || []);
+          }
+        } else {
+          setPlano({ nome: 'Novo Plano de Corte', status: 'rascunho' });
+        }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
-    setPecas([...pecas, nova]);
-  };
+    loadPlano();
+  }, []);
 
-  const removerPeca = (id: string) => {
-    setPecas(pecas.filter(p => p.id !== id));
-  };
-
-  const handlePecaChange = (id: string, field: keyof PecaInput, value: any) => {
-    setPecas(pecas.map(p => p.id === id ? { ...p, [field]: value } : p));
-  };
+  useEffect(() => {
+    if (showImportModal) {
+      api.get('/api/orcamentos?status=aprovado').then(res => {
+        if (res.success) setOrcamentos(res.data);
+      });
+    }
+  }, [showImportModal]);
 
   const handleCalcular = () => {
+    if (grupos.length === 0 || pecas.length === 0) return;
     setLoading(true);
-    try {
-      const res = calcularPlanoCorte(
-        pecas.map(p => ({ ...p, id: p.id })), // Mapear para o formato do algoritmo
-        { largura: config.larguraChapa, altura: config.alturaChapa, kerf: config.kerf }
-      );
+    setTimeout(() => {
+      const res = calcularPlanoCorte(pecas, grupos, iteracoes);
       setResultado(res);
-      setChapaAtiva(1);
-    } catch (err) {
-      alert('Erro ao calcular: verifique se as peças cabem na chapa.');
-    } finally {
       setLoading(false);
-    }
+    }, 300);
   };
 
+  const addGrupo = (material: any) => {
+    setGrupos([...grupos, {
+      id: Math.random().toString(36).substring(7),
+      materialId: material.id || '',
+      sku: material.sku,
+      nomeMaterial: material.nome,
+      larguraChapaMm: 2750,
+      alturaChapaMm: 1830,
+      espessuraMm: 18,
+      precoChapa: 0,
+      chapasAdicionaisManual: 0,
+      retalhosDisponiveis: [],
+      kerfMm: kerf
+    }]);
+  };
+
+  const addPeca = (grupoId: string) => {
+    setPecas([...pecas, {
+      id: Math.random().toString(36).substring(7),
+      descricao: `Peça ${pecas.length + 1}`,
+      larguraMm: 0, alturaMm: 0, quantidade: 1, podeRotacionar: true,
+      grupoMaterialId: grupoId
+    }]);
+  };
+
+  const updatePeca = (id: string, data: Partial<PecaInput>) => {
+    setPecas(pecas.map(p => p.id === id ? { ...p, ...data } : p));
+  };
+
+  const handleImportOrcamento = async (orcId: string) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/orcamento-tecnico?orcamento_id=${orcId}`);
+      if (res.success && res.data) {
+        const novosGrupos = [...grupos];
+        const novasPecas = [...pecas];
+        for (const item of res.data) {
+          let grupo = novosGrupos.find(g => g.nomeMaterial === item.material || g.sku === item.material);
+          if (!grupo) {
+            grupo = {
+              id: Math.random().toString(36).substring(7),
+              materialId: item.material_id || '',
+              sku: item.material || 'CHP-MDF-PADRAO',
+              nomeMaterial: item.material || 'Material a Definir',
+              larguraChapaMm: 2750, alturaChapaMm: 1830, espessuraMm: 18, precoChapa: 0,
+              chapasAdicionaisManual: 0, retalhosDisponiveis: [], kerfMm: kerf
+            };
+            novosGrupos.push(grupo);
+          }
+          novasPecas.push({
+            id: Math.random().toString(36).substring(7),
+            descricao: item.descricao,
+            larguraMm: parseFloat(item.largura_cm) * 10,
+            alturaMm: parseFloat(item.altura_cm) * 10,
+            quantidade: item.quantidade,
+            podeRotacionar: true,
+            ambiente: item.ambiente,
+            movel: item.tipo,
+            grupoMaterialId: grupo.id
+          });
+        }
+        setGrupos(novosGrupos);
+        setPecas(novasPecas);
+        setShowImportModal(false);
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  const handleExportCSV = () => {
+    if (!resultado) return;
+    const headers = ['Etiqueta', 'Descrição', 'L (mm)', 'A (mm)', 'Qtd', 'Material', 'Ambiente', 'Chapa'];
+    const rows = resultado.grupos.flatMap(g => 
+      g.superficies.flatMap(s => 
+        s.pecasPositionadas.map(p => [
+          p.numeroEtiqueta, p.descricao, p.largura, p.altura, 1, g.sku, p.ambiente, s.id
+        ])
+      )
+    );
+    const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `plano_corte_${plano?.nome}.csv`;
+    link.click();
+  };
+
+  const activeGrupo = grupos[activeGrupoIdx];
+  const activeResultadoGrupo = resultado?.grupos.find(g => g.grupoId === activeGrupo?.id);
+  const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 280px', gap: '1.5rem', height: 'calc(100vh - 100px)', overflow: 'hidden' }}>
-      
-      {/* Coluna Esquerda: Configuração */}
-      <div className="card" style={{ overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <header>
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
-            <Scissors size={20} /> Configuração
-          </h3>
-        </header>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label className="label">Material (SKU)</label>
-            <select className="input-base w-full" value={config.sku} onChange={e => setConfig({...config, sku: e.target.value})}>
-              <option value="MDF-BRANCO-18">MDF Branco Polar 18mm</option>
-              <option value="MDF-GRAFITE-15">MDF Grafite 15mm</option>
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <div>
-              <label className="label">Largura Chapa</label>
-              <input type="number" className="input-base w-full" value={config.larguraChapa} onChange={e => setConfig({...config, larguraChapa: Number(e.target.value)})} />
-            </div>
-            <div>
-              <label className="label">Altura Chapa</label>
-              <input type="number" className="input-base w-full" value={config.alturaChapa} onChange={e => setConfig({...config, alturaChapa: Number(e.target.value)})} />
+    <div className="flex h-screen bg-[#0D2137] text-white overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header title="Plano de Corte Industrial" subtitle={plano?.nome || 'Rascunho'} />
+        <div className="px-6 py-3 bg-[#162a45] border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <input 
+              value={plano?.nome || ''} 
+              onChange={e => setPlano({ ...plano, nome: e.target.value })}
+              className="bg-transparent border-b border-white/20 focus:border-[#E2AC00] outline-none px-2 py-1 font-semibold text-lg w-64"
+            />
+            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg">
+              <span className="text-xs text-slate-400">Kerf (mm):</span>
+              <input type="number" value={kerf} onChange={e => setKerf(Number(e.target.value))} className="bg-transparent w-12 text-center text-[#E2AC00] font-bold outline-none" />
             </div>
           </div>
-          <div>
-            <label className="label">Serra (Kerf) mm</label>
-            <input type="number" className="input-base w-full" value={config.kerf} onChange={e => setConfig({...config, kerf: Number(e.target.value)})} />
-          </div>
-        </section>
-
-        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <label className="label" style={{ marginBottom: 0 }}>Lista de Peças</label>
-            <button onClick={adicionarPeca} className="btn-sm" style={{ background: 'rgba(212, 175, 55, 0.1)', color: 'var(--primary)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-               <Plus size={14} /> Adicionar
+          <div className="flex items-center gap-3">
+            <button onClick={handleCalcular} className="flex items-center gap-2 bg-[#E2AC00] text-[#0D2137] px-6 py-2 rounded-lg font-bold hover:bg-[#ffc107] transition-all">
+              <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /> OTIMIZAR
             </button>
+            <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10"><FileText className="w-5 h-5" /> Importar</button>
+            <button className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"><Save className="w-5 h-5" /> Salvar</button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {pecas.map(p => (
-              <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid #333' }}>
-                <input 
-                  placeholder="Descrição da peça" 
-                  className="input-base w-full" 
-                  style={{ marginBottom: '0.5rem', fontSize: '0.75rem' }} 
-                  value={p.descricao} 
-                  onChange={e => handlePecaChange(p.id, 'descricao', e.target.value)}
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.25rem' }}>
-                  <input type="number" placeholder="L" className="input-base w-full" style={{ fontSize: '0.7rem' }} value={p.largura} onChange={e => handlePecaChange(p.id, 'largura', Number(e.target.value))} />
-                  <input type="number" placeholder="H" className="input-base w-full" style={{ fontSize: '0.7rem' }} value={p.altura} onChange={e => handlePecaChange(p.id, 'altura', Number(e.target.value))} />
-                  <input type="number" placeholder="Qtd" className="input-base w-full" style={{ fontSize: '0.7rem' }} value={p.quantidade} onChange={e => handlePecaChange(p.id, 'quantidade', Number(e.target.value))} />
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-[400px] bg-[#11233a] border-r border-white/10 overflow-y-auto p-6 space-y-8">
+            <section>
+              <div className="flex justify-between mb-4"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Materiais</h3><button onClick={() => addGrupo({ sku: 'MDF-BP', nome: 'MDF Branco' })} className="text-[#E2AC00]"><Plus className="w-5 h-5" /></button></div>
+              {grupos.map((g, idx) => (
+                <div key={g.id} onClick={() => setActiveGrupoIdx(idx)} className={`p-4 rounded-xl border mb-2 cursor-pointer ${activeGrupoIdx === idx ? 'bg-[#E2AC00]/10 border-[#E2AC00]' : 'bg-black/20 border-white/5'}`}>
+                  <div className="font-bold flex justify-between">{g.nomeMaterial} <Trash2 onClick={() => setGrupos(grupos.filter(x => x.id !== g.id))} className="w-4 h-4 text-red-400" /></div>
+                  <div className="text-xs text-slate-400">{g.larguraChapaMm}x{g.alturaChapaMm}mm | {g.sku}</div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                   <label style={{ fontSize: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <input type="checkbox" checked={p.virarFibra} onChange={e => handlePecaChange(p.id, 'virarFibra', e.target.checked)} /> Girar?
-                   </label>
-                   <button onClick={() => removerPeca(p.id)} style={{ all: 'unset', cursor: 'pointer', color: '#ff4444' }}><Trash2 size={14} /></button>
+              ))}
+            </section>
+            {activeGrupo && (
+              <section>
+                <div className="flex justify-between mb-4"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Peças</h3><button onClick={() => addPeca(activeGrupo.id)} className="bg-[#E2AC00] text-[#0D2137] px-2 py-1 rounded text-[10px] font-bold">ADD PEÇA</button></div>
+                <div className="space-y-2">
+                  {pecas.filter(p => p.grupoMaterialId === activeGrupo.id).map(p => (
+                    <div key={p.id} className="p-3 rounded-lg bg-black/20 border border-white/5 flex gap-2 items-center">
+                      <input value={p.descricao} onChange={e => updatePeca(p.id, { descricao: e.target.value })} className="bg-transparent text-xs flex-1 outline-none" />
+                      <input type="number" value={p.larguraMm} onChange={e => updatePeca(p.id, { larguraMm: Number(e.target.value) })} className="bg-black/30 w-12 text-center text-[10px] rounded py-1" />
+                      <input type="number" value={p.alturaMm} onChange={e => updatePeca(p.id, { alturaMm: Number(e.target.value) })} className="bg-black/30 w-12 text-center text-[10px] rounded py-1" />
+                      <input type="number" value={p.quantidade} onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} className="bg-black/30 w-8 text-center text-[10px] rounded py-1" />
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              </section>
+            )}
           </div>
-        </section>
 
-        <button onClick={handleCalcular} className="btn btn-primary w-full" disabled={loading}>
-          {loading ? 'Calculando...' : 'CALCULAR PLANO'}
-        </button>
-      </div>
-
-      {/* Coluna Central: Visualização */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem' }}>
-        {resultado ? (
-          <>
-            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-              {Array.from({ length: resultado.totalChapas }).map((_, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setChapaAtiva(i + 1)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    border: '1px solid',
-                    borderColor: chapaAtiva === i + 1 ? 'var(--primary)' : '#333',
-                    background: chapaAtiva === i + 1 ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    color: chapaAtiva === i + 1 ? 'var(--primary)' : '#888',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Chapa {i + 1}
+          <div className="flex-1 bg-black/40 flex flex-col">
+            <div className="flex bg-[#162a45] h-12 overflow-x-auto">
+              {activeResultadoGrupo?.superficies.map((s, idx) => (
+                <button key={s.id} onClick={() => setActiveChapaIdx(idx)} className={`px-4 text-xs font-bold uppercase ${activeChapaIdx === idx ? 'bg-[#0D2137] text-[#E2AC00] border-t-2 border-[#E2AC00]' : 'text-slate-400'}`}>
+                  {s.tipo === 'retalho' ? 'Retalho' : `Chapa ${idx + 1}`} ({s.aproveitamentoPct.toFixed(0)}%)
                 </button>
               ))}
             </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <PlanoCorteVisual 
-                pecas={resultado.pecasPositionadas}
-                chapaLargura={config.larguraChapa}
-                chapaAltura={config.alturaChapa}
-                chapaAtiva={chapaAtiva}
-              />
+            <div className="flex-1 relative flex items-center justify-center p-8">
+              {activeSuperficie ? <PlanoCorteVisual superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} /> : <div className="opacity-20 text-center"><Scissors className="w-20 h-20 mx-auto mb-4" /> CALCULANDO...</div>}
             </div>
-          </>
-        ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#555', gap: '1rem' }}>
-             <Calculator size={48} />
-             <p>Preencha os dados e clique em calcular para visualizar o plano.</p>
           </div>
-        )}
+
+          <div className="w-[320px] bg-[#0D2137] border-l border-white/10 p-6 flex flex-col">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Executivo</h3>
+            <div className="flex-1 space-y-6">
+              <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
+                <div className="text-[10px] text-slate-500 font-bold uppercase">Aproveitamento</div>
+                <div className="text-3xl font-black text-[#E2AC00]">{resultado?.aproveitamentoGeral.toFixed(1) || '0'}%</div>
+              </div>
+              <div className="bg-[#E2AC00] text-[#0D2137] p-4 rounded-2xl">
+                <div className="text-[10px] font-black uppercase opacity-70">Investimento</div>
+                <div className="text-2xl font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(resultado?.custoTotalMaterial || 0)}</div>
+              </div>
+            </div>
+            <div className="pt-6 space-y-2">
+              <button onClick={() => window.print()} className="w-full flex items-center justify-center gap-2 bg-white/5 h-12 rounded-xl hover:bg-white/10 text-sm font-bold"><Printer className="w-4 h-4" /> Etiquetas</button>
+              <button onClick={handleExportCSV} className="w-full flex items-center justify-center gap-2 bg-white/5 h-12 rounded-xl hover:bg-white/10 text-sm font-bold"><Download className="w-4 h-4" /> CSV</button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Coluna Direita: Resumo */}
-      <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <section>
-          <h4 style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.75rem', letterSpacing: '0.1em' }}>RESULTADO DO CORTE</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>Total de chapas:</span>
-                <span style={{ fontWeight: 'bold' }}>{resultado?.totalChapas || 0}</span>
-             </div>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>Aproveitamento:</span>
-                <span style={{ fontWeight: 'bold', color: '#10b981' }}>{resultado?.aproveitamentoPct.toFixed(1) || 0}%</span>
-             </div>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>Área útil:</span>
-                <span>{resultado?.areaUtilM2.toFixed(2) || 0} m²</span>
-             </div>
+      {showImportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#11233a] border border-white/10 rounded-2xl w-full max-w-xl">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center"><h2 className="text-lg font-bold">Importar Orçamento</h2><button onClick={() => setShowImportModal(false)}>X</button></div>
+            <div className="p-6 space-y-2 max-h-[400px] overflow-y-auto">
+              {orcamentos.map(o => (
+                <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="p-4 bg-white/5 border border-white/5 hover:border-[#E2AC00] rounded-xl cursor-pointer">
+                  <div className="font-bold text-[#E2AC00]">#{o.numero}</div>
+                  <div className="text-xs">{o.cliente_nome}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        </section>
-
-        <section>
-          <h4 style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.75rem', letterSpacing: '0.1em' }}>CUSTO ESTIMADO</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>Custo p/ chapa:</span>
-                <span>R$ 380,00</span>
-             </div>
-             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', marginTop: '0.5rem' }}>
-                <span style={{ fontWeight: 'bold' }}>Total Mat:</span>
-                <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>R$ {((resultado?.totalChapas || 0) * 380).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-             </div>
-          </div>
-        </section>
-
-        <section style={{ flex: 1 }}>
-          <h4 style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.75rem', letterSpacing: '0.1em' }}>SOBRAS ({">"}20cm)</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '200px', overflowY: 'auto' }}>
-             {resultado?.sobras.filter(s => s.largura > 200 && s.altura > 200).map((s, i) => (
-               <div key={i} style={{ fontSize: '0.7rem', padding: '0.4rem', background: '#1a1a1a', borderRadius: '4px', border: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{s.largura} x {s.altura}mm</span>
-                  <span style={{ color: '#888' }}>Chapa {s.chapa}</span>
-               </div>
-             ))}
-             {(!resultado || resultado.sobras.length === 0) && <p style={{ fontSize: '0.75rem', color: '#444' }}>Nenhuma sobra significativa.</p>}
-          </div>
-        </section>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-           <button className="btn btn-outline btn-sm w-full"><Download size={14} /> Exportar PDF</button>
-           <button className="btn btn-primary btn-sm w-full"><Package size={14} /> Enviar p/ Produção</button>
+        </div>
+      )}
+      <style>{`
+        @media print {
+          body > * { display: none !important; }
+          .print-only { display: block !important; }
+          .print-etiquetas { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; padding: 10mm; }
+          .etiqueta { width: 95mm; height: 45mm; border: 1px solid #ddd; padding: 4mm; color: #000; font-family: sans-serif; }
+          .etiqueta-header { display: flex; justify-content: space-between; font-size: 8pt; border-bottom: 1px solid #eee; margin-bottom: 2mm; }
+          .etiqueta-dimensoes { font-size: 16pt; font-weight: 900; margin: 2mm 0; }
+        }
+      `}</style>
+      <div className="hidden print-only">
+        <div className="print-etiquetas">
+          {resultado?.grupos.flatMap(g => g.superficies.flatMap(s => s.pecasPositionadas.map(p => (
+            <div key={p.numeroEtiqueta} className="etiqueta">
+              <div className="etiqueta-header"><span>D'LUXURY ERP</span><span>🏷️ {String(p.numeroEtiqueta).padStart(3, '0')}</span></div>
+              <div className="font-bold text-xs truncate">{p.descricao}</div>
+              <div className="etiqueta-dimensoes">{p.largura} × {p.altura} mm</div>
+              <div className="text-[8px] mt-auto uppercase">{p.ambiente} | {g.sku}</div>
+            </div>
+          ))))}
         </div>
       </div>
     </div>

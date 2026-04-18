@@ -12,6 +12,7 @@ import { handleCompras } from '../src/api-lib/compras.js';
 import { handleAprovacao } from '../src/api-lib/aprovacao.js';
 import { handleAgenda } from '../src/api-lib/agenda.js';
 import { handleNotificacoes } from '../src/api-lib/notificacoes.js';
+import { handlePlanoCorte } from '../src/api-lib/planocorte.js';
 
 export default async function handler(req: any, res: any) {
   // CORS Setup
@@ -54,6 +55,7 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/aprovacao')) return await handleAprovacao(req, res);
     if (cleanUrl.startsWith('/api/agenda')) return await handleAgenda(req, res);
     if (cleanUrl.startsWith('/api/notificacoes')) return await handleNotificacoes(req, res);
+    if (cleanUrl.startsWith('/api/plano-corte')) return await handlePlanoCorte(req, res);
     
     if (cleanUrl.startsWith('/api/init-db')) {
       await runInitDB();

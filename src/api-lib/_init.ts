@@ -287,52 +287,89 @@ export async function runInitDB() {
     `;
   } catch (e) {}
 
-  // [MODULO 1] PLANO DE CORTE
+  // [PLANO DE CORTE — REFATORAÇÃO INDUSTRIAL]
   await sql`
-    CREATE TABLE IF NOT EXISTS planos_corte (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      projeto_id UUID REFERENCES projects(id),
-      orcamento_id UUID REFERENCES orcamentos(id),
-      nome TEXT NOT NULL,
-      material_id UUID,
-      sku TEXT NOT NULL,
-      largura_chapa_mm NUMERIC(8,2) NOT NULL DEFAULT 2750,
-      altura_chapa_mm NUMERIC(8,2) NOT NULL DEFAULT 1830,
-      espessura_mm NUMERIC(5,2) NOT NULL DEFAULT 18,
-      total_chapas_necessarias INTEGER,
-      aproveitamento_pct NUMERIC(5,2),
-      area_util_m2 NUMERIC(10,4),
-      area_desperdicio_m2 NUMERIC(10,4),
-      status TEXT DEFAULT 'rascunho',
-      criado_em TIMESTAMPTZ DEFAULT NOW(),
-      atualizado_em TIMESTAMPTZ DEFAULT NOW()
-    )`.catch(() => {});
+    ALTER TABLE planos_corte
+    ADD COLUMN IF NOT EXISTS algoritmo TEXT DEFAULT 'maxrects_bssf',
+    ADD COLUMN IF NOT EXISTS iteracoes_otimizacao INTEGER DEFAULT 3,
+    ADD COLUMN IF NOT EXISTS kerf_mm NUMERIC(4,2) DEFAULT 3.0,
+    ADD COLUMN IF NOT EXISTS incluir_retalhos BOOLEAN DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS total_pecas INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS total_retalhos_usados INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS custo_total_material NUMERIC(10,2) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS tempo_calculo_ms INTEGER,
+    ADD COLUMN IF NOT EXISTS versao INTEGER DEFAULT 1
+  `.catch(() => {});
 
   await sql`
-    CREATE TABLE IF NOT EXISTS plano_corte_pecas (
+    CREATE TABLE IF NOT EXISTS plano_grupos_material (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       plano_id UUID REFERENCES planos_corte(id) ON DELETE CASCADE,
-      descricao TEXT NOT NULL,
-      largura_mm NUMERIC(8,2) NOT NULL,
-      altura_mm NUMERIC(8,2) NOT NULL,
-      quantidade INTEGER NOT NULL DEFAULT 1,
-      virar_fibra BOOLEAN DEFAULT FALSE,
-      ambiente TEXT,
-      movel TEXT,
+      material_id UUID REFERENCES materiais(id),
+      sku TEXT NOT NULL,
+      nome_material TEXT NOT NULL,
+      largura_chapa_mm NUMERIC(8,2) NOT NULL,
+      altura_chapa_mm NUMERIC(8,2) NOT NULL,
+      espessura_mm NUMERIC(5,2) NOT NULL,
+      preco_chapa NUMERIC(10,2) NOT NULL DEFAULT 0,
+      chapas_inteiras_necessarias INTEGER DEFAULT 0,
+      chapas_manuais_adicionadas INTEGER DEFAULT 0,
+      retalhos_usados INTEGER DEFAULT 0,
+      aproveitamento_pct NUMERIC(5,2),
+      custo_grupo NUMERIC(10,2) DEFAULT 0,
+      ordem INTEGER DEFAULT 0,
       criado_em TIMESTAMPTZ DEFAULT NOW()
     )`.catch(() => {});
 
   await sql`
-    CREATE TABLE IF NOT EXISTS plano_corte_resultado (
+    CREATE TABLE IF NOT EXISTS retalhos_estoque (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      material_id UUID REFERENCES materiais(id),
+      sku TEXT NOT NULL,
+      largura_mm NUMERIC(8,2) NOT NULL,
+      altura_mm NUMERIC(8,2) NOT NULL,
+      espessura_mm NUMERIC(5,2) NOT NULL,
+      origem TEXT,
+      projeto_origem_id UUID REFERENCES projects(id),
+      disponivel BOOLEAN DEFAULT TRUE,
+      localizacao TEXT,
+      criado_em TIMESTAMPTZ DEFAULT NOW()
+    )`.catch(() => {});
+
+  await sql`
+    ALTER TABLE plano_corte_pecas
+    ADD COLUMN IF NOT EXISTS grupo_material_id UUID REFERENCES plano_grupos_material(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS pode_rotacionar BOOLEAN DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS prioridade INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS cor_etiqueta TEXT,
+    ADD COLUMN IF NOT EXISTS observacao TEXT
+  `.catch(() => {});
+
+  await sql`
+    ALTER TABLE plano_corte_resultado
+    ADD COLUMN IF NOT EXISTS grupo_material_id UUID REFERENCES plano_grupos_material(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS e_retalho BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS retalho_id UUID REFERENCES retalhos_estoque(id),
+    ADD COLUMN IF NOT EXISTS numero_chapa_no_grupo INTEGER,
+    ADD COLUMN IF NOT EXISTS area_m2 NUMERIC(10,6),
+    ADD COLUMN IF NOT EXISTS custo_proporcional NUMERIC(10,2)
+  `.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS plano_sobras (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       plano_id UUID REFERENCES planos_corte(id) ON DELETE CASCADE,
+      grupo_material_id UUID REFERENCES plano_grupos_material(id) ON DELETE CASCADE,
       numero_chapa INTEGER NOT NULL,
-      peca_id UUID REFERENCES plano_corte_pecas(id),
-      pos_x_mm NUMERIC(8,2),
-      pos_y_mm NUMERIC(8,2),
-      rotacionada BOOLEAN DEFAULT FALSE,
-      largura_final_mm NUMERIC(8,2),
-      altura_final_mm NUMERIC(8,2)
+      pos_x_mm NUMERIC(8,2) NOT NULL,
+      pos_y_mm NUMERIC(8,2) NOT NULL,
+      largura_mm NUMERIC(8,2) NOT NULL,
+      altura_mm NUMERIC(8,2) NOT NULL,
+      area_m2 NUMERIC(10,6),
+      aproveitavel BOOLEAN DEFAULT FALSE,
+      convertida_em_retalho BOOLEAN DEFAULT FALSE,
+      retalho_id UUID REFERENCES retalhos_estoque(id),
+      criado_em TIMESTAMPTZ DEFAULT NOW()
     )`.catch(() => {});
 
   // [MODULO 3] POS-VENDA E GARANTIA

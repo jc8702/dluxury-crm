@@ -1,192 +1,414 @@
-interface Peca {
+/**
+ * D'LUXURY INDUSTRIAL - CORE ENGINE
+ * Algoritmo MaxRects BSSF (Best Short Side Fit)
+ * Otimização de Plano de Corte de Nível Industrial
+ */
+
+export interface PecaInput {
   id: string;
   descricao: string;
-  largura: number;  // mm
-  altura: number;   // mm
+  larguraMm: number;
+  alturaMm: number;
   quantidade: number;
-  virarFibra: boolean;
+  podeRotacionar: boolean;
   ambiente?: string;
+  movel?: string;
+  corEtiqueta?: string;
+  grupoMaterialId: string;
 }
 
-interface Chapa {
-  largura: number;
-  altura: number;
-  kerf: number;
+export interface ChapaSurface {
+  id: string;
+  tipo: 'inteira' | 'retalho';
+  larguraMm: number;
+  alturaMm: number;
+  retalhoId?: string;
+  custo: number;
 }
 
-interface Espaco {
-  x: number;
-  y: number;
-  largura: number;
-  altura: number;
+export interface RetalhoEstoque {
+  id: string;
+  larguraMm: number;
+  alturaMm: number;
+  sku: string;
+  materialId: string;
+}
+
+export interface GrupoMaterial {
+  id: string;
+  materialId: string;
+  sku: string;
+  nomeMaterial: string;
+  larguraChapaMm: number;
+  alturaChapaMm: number;
+  espessuraMm: number;
+  precoChapa: number;
+  chapasAdicionaisManual: number;
+  retalhosDisponiveis: RetalhoEstoque[];
+  kerfMm: number;
 }
 
 export interface PecaPositionada {
   pecaId: string;
   descricao: string;
-  chapa: number;
+  ambiente?: string;
+  movel?: string;
+  superficieId: string;
+  grupoMaterialId: string;
   x: number;
   y: number;
   largura: number;
   altura: number;
   rotacionada: boolean;
-  ambiente?: string;
+  corEtiqueta: string;
+  numeroEtiqueta: number;
+  areaMm2: number;
+  custoProporcional: number;
 }
 
-export interface ResultadoCorte {
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface Superficie {
+  id: string;
+  tipo: 'inteira' | 'retalho';
+  largura: number;
+  altura: number;
+  espacosLivres: Rect[];
   pecasPositionadas: PecaPositionada[];
-  totalChapas: number;
   aproveitamentoPct: number;
-  areaUtilM2: number;
-  areaDesperdicioM2: number;
-  sobras: Array<{ chapa: number; x: number; y: number; largura: number; altura: number }>;
+  custoTotal: number;
+  retalhoId?: string;
+}
+
+export interface Sobra {
+  id: string;
+  superficieId: string;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+  aproveitavel: boolean;
+}
+
+export interface ResultadoGrupo {
+  grupoId: string;
+  sku: string;
+  superficies: Superficie[];
+  totalChapasInteiras: number;
+  totalRetalhosUsados: number;
+  aproveitamentoMedio: number;
+  sobrasAproveitaveis: Sobra[];
+  custoTotal: number;
+}
+
+export interface ResultadoPlano {
+  grupos: ResultadoGrupo[];
+  totalPecasPositionadas: number;
+  totalChapasInteiras: number;
+  totalRetalhosUsados: number;
+  aproveitamentoGeral: number;
+  custoTotalMaterial: number;
+  sobrasGeradas: Sobra[];
+  tempoCalculoMs: number;
+  pecasNaoEncaixadas: PecaInput[];
 }
 
 export function calcularPlanoCorte(
-  pecasInput: Peca[],
-  chapaInput: Chapa
-): ResultadoCorte {
-  // 1. Expandir peças pela quantidade
-  const pecasParaProcessar: any[] = [];
-  pecasInput.forEach(p => {
-    for (let i = 0; i < p.quantidade; i++) {
-      pecasParaProcessar.push({ ...p, area: p.largura * p.altura });
-    }
-  });
+  pecas: PecaInput[],
+  grupos: GrupoMaterial[],
+  iteracoes: number = 3
+): ResultadoPlano {
+  const inicio = Date.now();
+  const resultadosGrupos: ResultadoGrupo[] = [];
+  let totalPecasEncaixadas = 0;
+  const pecasNaoEncaixadas: PecaInput[] = [];
 
-  // 2. Ordenar por área (Maior para Menor)
-  pecasParaProcessar.sort((a, b) => b.area - a.area);
+  for (const grupo of grupos) {
+    const pecasDoGrupo = pecas.filter(p => p.grupoMaterialId === grupo.id);
+    const pecasExpandidas = expandirPorQuantidade(pecasDoGrupo);
 
-  const chapas: Array<{ espacos: Espaco[] }> = [];
-  const pecasPositionadas: PecaPositionada[] = [];
-  const kerf = chapaInput.kerf || 3;
+    let melhorResultado: ResultadoGrupo | null = null;
+    let melhorAproveitamento = -1;
 
-  const adicionarChapa = () => {
-    chapas.push({
-      espacos: [{ x: 0, y: 0, largura: chapaInput.largura, altura: chapaInput.altura }]
-    });
-    return chapas.length - 1;
-  };
+    for (let i = 0; i < iteracoes; i++) {
+      const pecasOrdem = i === 0 
+        ? [...pecasExpandidas].sort((a, b) => (b.larguraMm * b.alturaMm) - (a.larguraMm * a.alturaMm))
+        : embaralharPecas(pecasExpandidas);
 
-  adicionarChapa(); // Iniciar primeira chapa
-
-  pecasParaProcessar.forEach(peca => {
-    let placed = false;
-
-    for (let c = 0; c < chapas.length; c++) {
-      const chapa = chapas[c];
+      const resultado = processarGrupo(pecasOrdem, grupo);
       
-      for (let i = 0; i < chapa.espacos.length; i++) {
-        const espaco = chapa.espacos[i];
-        
-        // Tentativas: Normal e Rotacionada (se permitido)
-        const orientations = peca.virarFibra ? [{ w: peca.largura, h: peca.altura, rot: false }] : [
-          { w: peca.largura, h: peca.altura, rot: false },
-          { w: peca.altura, h: peca.largura, rot: true }
-        ];
-
-        for (const orient of orientations) {
-          if (orient.w <= espaco.largura && orient.h <= espaco.altura) {
-            // Cabe!
-            pecasPositionadas.push({
-              pecaId: peca.id,
-              descricao: peca.descricao,
-              chapa: c + 1,
-              x: espaco.x,
-              y: espaco.y,
-              largura: orient.w,
-              altura: orient.h,
-              rotacionada: orient.rot,
-              ambiente: peca.ambiente
-            });
-
-            // Remover o espaço usado
-            chapa.espacos.splice(i, 1);
-
-            // Gerar novos espaços (Guillotine Split)
-            // Split horizontal ou vertical? Vamos preferir o corte que gera o maior retângulo contínuo
-            const dw = espaco.largura - orient.w;
-            const dh = espaco.altura - orient.h;
-
-            if (dw > dh) {
-              // Split vertical primeiro
-              if (dw > 0) chapa.espacos.push({ x: espaco.x + orient.w + kerf, y: espaco.y, largura: dw - kerf, altura: espaco.altura });
-              if (dh > 0) chapa.espacos.push({ x: espaco.x, y: espaco.y + orient.h + kerf, largura: orient.w, altura: dh - kerf });
-            } else {
-              // Split horizontal primeiro
-              if (dh > 0) chapa.espacos.push({ x: espaco.x, y: espaco.y + orient.h + kerf, largura: espaco.largura, altura: dh - kerf });
-              if (dw > 0) chapa.espacos.push({ x: espaco.x + orient.w + kerf, y: espaco.y, largura: dw - kerf, altura: orient.h });
-            }
-
-            // Ordenar espaços por área para favorecer encaixes futuros
-            chapa.espacos.sort((a, b) => (a.largura * a.altura) - (b.largura * b.altura));
-            
-            placed = true;
-            break;
-          }
-        }
-        if (placed) break;
-      }
-      if (placed) break;
-    }
-
-    if (!placed) {
-      // Não coube em nenhuma chapa atual, criar nova
-      const novaChapaIdx = adicionarChapa();
-      const chapa = chapas[novaChapaIdx];
-      const espaco = chapa.espacos[0]; // Primeira chapa sempre tem um espaço cheio
-
-      // Tentar de novo na nova chapa (sabemos que cabe se largura/altura < chapa)
-      // Nota: pecas > chapa devem ser tratadas como erro na UI
-      const w = peca.largura;
-      const h = peca.altura;
-
-      pecasPositionadas.push({
-        pecaId: peca.id,
-        descricao: peca.descricao,
-        chapa: novaChapaIdx + 1,
-        x: espaco.x,
-        y: espaco.y,
-        largura: w,
-        altura: h,
-        rotacionada: false,
-        ambiente: peca.ambiente
-      });
-
-      chapa.espacos.splice(0, 1);
-      const dw = espaco.largura - w;
-      const dh = espaco.altura - h;
-
-      if (dw > dh) {
-        if (dw > 0) chapa.espacos.push({ x: espaco.x + w + kerf, y: espaco.y, largura: dw - kerf, altura: espaco.altura });
-        if (dh > 0) chapa.espacos.push({ x: espaco.x, y: espaco.y + h + kerf, largura: w, altura: dh - kerf });
-      } else {
-        if (dh > 0) chapa.espacos.push({ x: espaco.x, y: espaco.y + h + kerf, largura: espaco.largura, altura: dh - kerf });
-        if (dw > 0) chapa.espacos.push({ x: espaco.x + w + kerf, y: espaco.y, largura: dw - kerf, altura: h });
+      if (resultado.aproveitamentoMedio > melhorAproveitamento) {
+        melhorAproveitamento = resultado.aproveitamentoMedio;
+        melhorResultado = resultado;
       }
     }
-  });
 
-  // Cálculos finais
-  const areaChapaM2 = (chapaInput.largura * chapaInput.altura) / 1000000;
-  const areaTotalChapasM2 = chapas.length * areaChapaM2;
-  const areaUtilM2 = pecasPositionadas.reduce((sum, p) => sum + (p.largura * p.altura), 0) / 1000000;
+    if (melhorResultado) {
+      resultadosGrupos.push(melhorResultado);
+      totalPecasEncaixadas += melhorResultado.superficies.reduce((acc, s) => acc + s.pecasPositionadas.length, 0);
+    }
+  }
+
+  const sobrasGeradas = resultadosGrupos.flatMap(g => g.sobrasAproveitaveis);
   
-  const sobras: any[] = [];
-  chapas.forEach((c, idx) => {
-    c.espacos.forEach(e => {
-      if (e.largura > 100 && e.altura > 100) { // Considerar sobras apenas maiores que 10cm
-        sobras.push({ chapa: idx + 1, ...e });
-      }
+  // Numerar etiquetas sequencialmente
+  let etiquetaSeq = 1;
+  resultadosGrupos.forEach(g => {
+    g.superficies.forEach(s => {
+      s.pecasPositionadas.forEach(p => {
+        p.numeroEtiqueta = etiquetaSeq++;
+      });
     });
   });
+
+  const totalChapas = resultadosGrupos.reduce((acc, g) => acc + g.totalChapasInteiras, 0);
+  const totalRetalhos = resultadosGrupos.reduce((acc, g) => acc + g.totalRetalhosUsados, 0);
+  const custoTotal = resultadosGrupos.reduce((acc, g) => acc + g.custoTotal, 0);
+  const aproveitamentoGeral = resultadosGrupos.length > 0 
+    ? resultadosGrupos.reduce((acc, g) => acc + g.aproveitamentoMedio, 0) / resultadosGrupos.length
+    : 0;
 
   return {
-    pecasPositionadas,
-    totalChapas: chapas.length,
-    areaUtilM2,
-    areaDesperdicioM2: areaTotalChapasM2 - areaUtilM2,
-    aproveitamentoPct: (areaUtilM2 / areaTotalChapasM2) * 100,
-    sobras
+    grupos: resultadosGrupos,
+    totalPecasPositionadas: totalPecasEncaixadas,
+    totalChapasInteiras: totalChapas,
+    totalRetalhosUsados: totalRetalhos,
+    aproveitamentoGeral,
+    custoTotalMaterial: custoTotal,
+    sobrasGeradas,
+    tempoCalculoMs: Date.now() - inicio,
+    pecasNaoEncaixadas
   };
+}
+
+function processarGrupo(pecas: PecaInput[], grupo: GrupoMaterial): ResultadoGrupo {
+  const superficies: Superficie[] = [];
+  const pecasRestantes = [...pecas];
+
+  // 1. Tentar encaixar em retalhos primeiro
+  for (const retalho of grupo.retalhosDisponiveis) {
+    if (pecasRestantes.length === 0) break;
+    
+    const s = criarSuperficie(retalho.id, 'retalho', retalho.larguraMm, retalho.alturaMm, 0, retalho.id);
+    encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
+    
+    if (s.pecasPositionadas.length > 0) {
+      superficies.push(s);
+      // Remover peças encaixadas
+      s.pecasPositionadas.forEach(p => {
+        const idx = pecasRestantes.findIndex(r => r.id === p.pecaId);
+        if (idx !== -1) pecasRestantes.splice(idx, 1);
+      });
+    }
+  }
+
+  // 2. Usar chapas inteiras para o restante
+  while (pecasRestantes.length > 0) {
+    const s = criarSuperficie(`inteira-${superficies.length + 1}`, 'inteira', grupo.larguraChapaMm, grupo.alturaChapaMm, grupo.precoChapa);
+    const encaixouAlguma = encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
+    
+    if (!encaixouAlguma) {
+      // Peça não cabe nem em chapa vazia? Erro de input, mas vamos pular para não travar
+      console.warn('Peça muito grande para a chapa:', pecasRestantes[0]);
+      pecasRestantes.shift();
+      continue;
+    }
+
+    superficies.push(s);
+    s.pecasPositionadas.forEach(p => {
+      const idx = pecasRestantes.findIndex(r => r.id === p.pecaId);
+      if (idx !== -1) pecasRestantes.splice(idx, 1);
+    });
+  }
+
+  // Chapas manuais extras
+  for (let i = 0; i < grupo.chapasAdicionaisManual; i++) {
+    superficies.push(criarSuperficie(`extra-${i}`, 'inteira', grupo.larguraChapaMm, grupo.alturaChapaMm, grupo.precoChapa));
+  }
+
+  const totalChapas = superficies.filter(s => s.tipo === 'inteira').length;
+  const totalRetalhos = superficies.filter(s => s.tipo === 'retalho').length;
+  const custoTotal = superficies.reduce((acc, s) => acc + s.custoTotal, 0);
+  const aproveitamentoMedio = superficies.length > 0
+    ? superficies.reduce((acc, s) => acc + s.aproveitamentoPct, 0) / superficies.length
+    : 0;
+
+  const sobras: Sobra[] = superficies.flatMap(s => 
+    s.espacosLivres
+      .filter(r => r.width >= 200 || r.height >= 200)
+      .map(r => ({
+        id: Math.random().toString(36).substring(7),
+        superficieId: s.id,
+        x: r.x,
+        y: r.y,
+        largura: r.width,
+        altura: r.height,
+        aproveitavel: true
+      }))
+  );
+
+  return {
+    grupoId: grupo.id,
+    sku: grupo.sku,
+    superficies,
+    totalChapasInteiras: totalChapas,
+    totalRetalhosUsados: totalRetalhos,
+    aproveitamentoMedio,
+    sobrasAproveitaveis: sobras,
+    custoTotal
+  };
+}
+
+function criarSuperficie(id: string, tipo: 'inteira' | 'retalho', w: number, h: number, custo: number, retalhoId?: string): Superficie {
+  return {
+    id,
+    tipo,
+    largura: w,
+    altura: h,
+    espacosLivres: [{ x: 0, y: 0, width: w, height: h }],
+    pecasPositionadas: [],
+    aproveitamentoPct: 0,
+    custoTotal: custo,
+    retalhoId
+  };
+}
+
+function expandirPorQuantidade(pecas: PecaInput[]): PecaInput[] {
+  return pecas.flatMap(p => Array(p.quantidade).fill(null).map((_, i) => ({ ...p, id: `${p.id}_${i}` })));
+}
+
+function embaralharPecas(pecas: PecaInput[]): PecaInput[] {
+  const result = [...pecas];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/**
+ * Lógica MaxRects BSSF Core
+ */
+function encaixarNaSuperficie(pecas: PecaInput[], superficie: Superficie, kerf: number, grupoId: string): boolean {
+  let encaixouAlguma = false;
+
+  for (const peca of pecas) {
+    let bestFit: { rect: Rect; rot: boolean; score: number } | null = null;
+
+    for (const freeRect of superficie.espacosLivres) {
+      // Normal
+      if (peca.larguraMm <= freeRect.width && peca.alturaMm <= freeRect.height) {
+        const score = Math.min(freeRect.width - peca.larguraMm, freeRect.height - peca.alturaMm);
+        if (!bestFit || score < bestFit.score) {
+          bestFit = { rect: freeRect, rot: false, score };
+        }
+      }
+      // Rotacionada
+      if (peca.podeRotacionar && peca.alturaMm <= freeRect.width && peca.larguraMm <= freeRect.height) {
+        const score = Math.min(freeRect.width - peca.alturaMm, freeRect.height - peca.larguraMm);
+        if (!bestFit || score < bestFit.score) {
+          bestFit = { rect: freeRect, rot: true, score };
+        }
+      }
+    }
+
+    if (bestFit) {
+      const w = bestFit.rot ? peca.alturaMm : peca.larguraMm;
+      const h = bestFit.rot ? peca.larguraMm : peca.alturaMm;
+
+      const posPeca: PecaPositionada = {
+        pecaId: peca.id.split('_')[0],
+        descricao: peca.descricao,
+        ambiente: peca.ambiente,
+        movel: peca.movel,
+        superficieId: superficie.id,
+        grupoMaterialId: grupoId,
+        x: bestFit.rect.x,
+        y: bestFit.rect.y,
+        largura: w,
+        altura: h,
+        rotacionada: bestFit.rot,
+        corEtiqueta: peca.corEtiqueta || '#6B7280',
+        numeroEtiqueta: 0,
+        areaMm2: w * h,
+        custoProporcional: 0 // Calculado post-process
+      };
+
+      superficie.pecasPositionadas.push(posPeca);
+      dividirEspacos(superficie, posPeca, kerf);
+      encaixouAlguma = true;
+    }
+  }
+
+  // Calcular aproveitamento
+  const areaPecas = superficie.pecasPositionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
+  superficie.aproveitamentoPct = (areaPecas / (superficie.largura * superficie.altura)) * 100;
+
+  return encaixouAlguma;
+}
+
+function dividirEspacos(superficie: Superficie, peca: PecaPositionada, kerf: number) {
+  const newFreeRects: Rect[] = [];
+  const pecaRect = { x: peca.x, y: peca.y, width: peca.largura + kerf, height: peca.altura + kerf };
+
+  for (const freeRect of superficie.espacosLivres) {
+    if (!intersect(freeRect, pecaRect)) {
+      newFreeRects.push(freeRect);
+      continue;
+    }
+
+    // Split
+    if (pecaRect.x < freeRect.x + freeRect.width && pecaRect.x + pecaRect.width > freeRect.x) {
+      // Top
+      if (pecaRect.y > freeRect.y && pecaRect.y < freeRect.y + freeRect.height) {
+        newFreeRects.push({ x: freeRect.x, y: freeRect.y, width: freeRect.width, height: pecaRect.y - freeRect.y });
+      }
+      // Bottom
+      if (pecaRect.y + pecaRect.height < freeRect.y + freeRect.height) {
+        newFreeRects.push({ x: freeRect.x, y: pecaRect.y + pecaRect.height, width: freeRect.width, height: freeRect.y + freeRect.height - (pecaRect.y + pecaRect.height) });
+      }
+    }
+    if (pecaRect.y < freeRect.y + freeRect.height && pecaRect.y + pecaRect.height > freeRect.y) {
+      // Left
+      if (pecaRect.x > freeRect.x && pecaRect.x < freeRect.x + freeRect.width) {
+        newFreeRects.push({ x: freeRect.x, y: freeRect.y, width: pecaRect.x - freeRect.x, height: freeRect.height });
+      }
+      // Right
+      if (pecaRect.x + pecaRect.width < freeRect.x + freeRect.width) {
+        newFreeRects.push({ x: pecaRect.x + pecaRect.width, y: freeRect.y, width: freeRect.x + freeRect.width - (pecaRect.x + pecaRect.width), height: freeRect.height });
+      }
+    }
+  }
+
+  // Limpar retângulos redundantes
+  superficie.espacosLivres = limparRedundancias(newFreeRects);
+}
+
+function intersect(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function limparRedundancias(rects: Rect[]): Rect[] {
+  const result: Rect[] = [];
+  for (let i = 0; i < rects.length; i++) {
+    let keep = true;
+    for (let j = 0; j < rects.length; j++) {
+      if (i === j) continue;
+      if (contais(rects[j], rects[i])) {
+        keep = false;
+        break;
+      }
+    }
+    if (keep) result.push(rects[i]);
+  }
+  return result;
+}
+
+function contais(a: Rect, b: Rect): boolean {
+  return a.x <= b.x && a.y <= b.y && a.x + a.width >= b.x + b.width && a.y + a.height >= b.y + b.height;
 }
