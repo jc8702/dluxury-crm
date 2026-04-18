@@ -395,7 +395,7 @@ export async function runInitDB() {
       fotos_urls TEXT[],
       criado_em TIMESTAMPTZ DEFAULT NOW(),
       atualizado_em TIMESTAMPTZ DEFAULT NOW()
-    )`.catch(() => {});
+    )`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS historico_chamado (
@@ -405,7 +405,7 @@ export async function runInitDB() {
       status_novo TEXT,
       observacao TEXT,
       criado_em TIMESTAMPTZ DEFAULT NOW()
-    )`.catch(() => {});
+    )`;
 
   // 16. Purchasing Tables
   await sql`
