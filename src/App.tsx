@@ -16,11 +16,12 @@ import InventoryPage from './pages/InventoryPage';
 import SuppliersPage from './pages/SuppliersPage';
 import FinancePage from './pages/FinancePage';
 import EngineeringPage from './pages/EngineeringPage';
-import SKUsPage from './pages/SKUsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import CuttingPlanPage from './pages/CuttingPlanPage';
+import PosVendaPage from './pages/PosVendaPage';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales';
 
 function App() {
   return (
@@ -102,6 +103,10 @@ function AppContent() {
         return <ReportsPage />;
       case 'finance':
         return <FinancePage />;
+      case 'cutting_plan':
+        return <CuttingPlanPage />;
+      case 'after_sales':
+        return <PosVendaPage />;
       case 'settings':
         return <SettingsPage />;
       default:

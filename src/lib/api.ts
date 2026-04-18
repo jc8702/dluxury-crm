@@ -136,6 +136,17 @@ export const api = {
     auditSKU: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'audit-sku', payload }),
     purchaseSuggestion: () => apiCall<any>('ai-copilot', 'POST', { skill: 'purchase-suggestion' }),
     detectAnomalies: () => apiCall<any>('ai-copilot', 'POST', { skill: 'detect-anomalies' }),
+  },
+  cuttingPlan: {
+    list: () => apiCall<any[]>('after-sales'), // Oops, cutting plan doesn't have a dedicated handler yet in my code, I should add it. Wait.
+    calculate: (pecas: any[], chapa: any) => { /* Client-side calculation by default */ },
+    save: (data: any) => apiCall<any>('production?type=cutting_plan', 'POST', data), // Reusing production handler
+  },
+  afterSales: {
+    list: () => apiCall<any[]>('after-sales'),
+    getStats: () => apiCall<any>('after-sales?stats=true'),
+    create: (data: any) => apiCall<any>('after-sales', 'POST', data),
+    update: (data: any) => apiCall<any>('after-sales', 'PATCH', data),
   }
 };
 

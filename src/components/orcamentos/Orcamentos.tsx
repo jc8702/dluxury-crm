@@ -3,6 +3,16 @@ import { useAppContext } from '../../context/AppContext';
 import { api } from '../../lib/api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { 
+  FileText, Plus, Search, Filter, 
+  Trash2, Edit2, ChevronRight, X, 
+  Save, Download, Calculator, Hammer,
+  MessageSquare, FileDown
+} from 'lucide-react';
+import Modal from '../ui/Modal';
+import DataTable from '../ui/DataTable';
+import PropostaTemplate from './PropostaTemplate';
+import { gerarPropostaPDF, enviarWhatsAppProposta } from '../../utils/gerarPropostaPDF';
 
 interface EstimateItem {
   id: string;

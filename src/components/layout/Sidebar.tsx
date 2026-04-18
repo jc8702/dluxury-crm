@@ -1,7 +1,14 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings';
+import { 
+  LayoutDashboard, Users, FileText, ClipboardList, 
+  Hammer, Scissors, Calendar, Package, 
+  Truck, Settings2, DraftingCompass, BarChart3, 
+  DollarSign, Settings, HeartHandshake, LogOut 
+} from 'lucide-react';
+
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -11,20 +18,22 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { user, logout } = useAppContext();
   
-  const menuItems: { id: Tab; label: string; icon: string; roles: string[] }[] = [
-    { id: 'dashboard', label: 'Painel Geral', icon: '📊', roles: ['admin', 'vendedor'] },
-    { id: 'clients', label: 'Clientes', icon: '👤', roles: ['admin', 'vendedor'] },
-    { id: 'estimates', label: 'Orçamentos', icon: '📄', roles: ['admin', 'vendedor'] },
-    { id: 'projects', label: 'Projetos', icon: '📋', roles: ['admin', 'vendedor'] },
-    { id: 'production', label: 'Produção', icon: '🔨', roles: ['admin', 'marceneiro'] },
-    { id: 'visits', label: 'Visitas', icon: '🗓️', roles: ['admin', 'vendedor'] },
-    { id: 'inventory', label: 'Estoque', icon: '📦', roles: ['admin', 'marceneiro'] },
-    { id: 'suppliers', label: 'Fornecedores', icon: '🚚', roles: ['admin'] },
-    { id: 'engineering', label: 'Engenharia', icon: '📐', roles: ['admin'] },
-    { id: 'skus', label: 'Peças / SKUs', icon: '🧩', roles: ['admin'] },
-    { id: 'reports', label: 'Relatórios', icon: '📊', roles: ['admin'] },
-    { id: 'finance', label: 'Financeiro', icon: '💰', roles: ['admin'] },
-    { id: 'settings', label: 'Configurações', icon: '⚙️', roles: ['admin'] },
+  const menuItems: { id: Tab; label: string; icon: React.ReactNode; roles: string[] }[] = [
+    { id: 'dashboard', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'clients', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'estimates', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'projects', label: 'Projetos', icon: <ClipboardList size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'production', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'cutting_plan', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'visits', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'after_sales', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'inventory', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'suppliers', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'] },
+    { id: 'engineering', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'] },
+    { id: 'skus', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'] },
+    { id: 'reports', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'] },
+    { id: 'finance', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'] },
+    { id: 'settings', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'] },
   ];
 
   const visibleMenuItems = menuItems.filter(item => user && item.roles.includes(user.role));

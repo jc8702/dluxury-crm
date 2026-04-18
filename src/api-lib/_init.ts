@@ -287,10 +287,87 @@ export async function runInitDB() {
     `;
   } catch (e) {}
 
-  try {
-    await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_codigo_modelo_unique UNIQUE (codigo_modelo)`;
-  } catch (e) {}
+  // [MODULO 1] PLANO DE CORTE
+  await sql`
+    CREATE TABLE IF NOT EXISTS planos_corte (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      projeto_id UUID REFERENCES projetos(id),
+      orcamento_id UUID REFERENCES orcamentos(id),
+      nome TEXT NOT NULL,
+      material_id UUID,
+      sku TEXT NOT NULL,
+      largura_chapa_mm NUMERIC(8,2) NOT NULL DEFAULT 2750,
+      altura_chapa_mm NUMERIC(8,2) NOT NULL DEFAULT 1830,
+      espessura_mm NUMERIC(5,2) NOT NULL DEFAULT 18,
+      total_chapas_necessarias INTEGER,
+      aproveitamento_pct NUMERIC(5,2),
+      area_util_m2 NUMERIC(10,4),
+      area_desperdicio_m2 NUMERIC(10,4),
+      status TEXT DEFAULT 'rascunho',
+      criado_em TIMESTAMPTZ DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+    )`.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS plano_corte_pecas (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      plano_id UUID REFERENCES planos_corte(id) ON DELETE CASCADE,
+      descricao TEXT NOT NULL,
+      largura_mm NUMERIC(8,2) NOT NULL,
+      altura_mm NUMERIC(8,2) NOT NULL,
+      quantidade INTEGER NOT NULL DEFAULT 1,
+      virar_fibra BOOLEAN DEFAULT FALSE,
+      ambiente TEXT,
+      movel TEXT,
+      criado_em TIMESTAMPTZ DEFAULT NOW()
+    )`.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS plano_corte_resultado (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      plano_id UUID REFERENCES planos_corte(id) ON DELETE CASCADE,
+      numero_chapa INTEGER NOT NULL,
+      peca_id UUID REFERENCES plano_corte_pecas(id),
+      pos_x_mm NUMERIC(8,2),
+      pos_y_mm NUMERIC(8,2),
+      rotacionada BOOLEAN DEFAULT FALSE,
+      largura_final_mm NUMERIC(8,2),
+      altura_final_mm NUMERIC(8,2)
+    )`.catch(() => {});
+
+  // [MODULO 3] POS-VENDA E GARANTIA
+  await sql`
+    CREATE TABLE IF NOT EXISTS chamados_garantia (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      projeto_id UUID REFERENCES projetos(id),
+      cliente_id UUID REFERENCES clientes(id),
+      numero TEXT UNIQUE NOT NULL,
+      titulo TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      prioridade TEXT DEFAULT 'normal',
+      status TEXT DEFAULT 'aberto',
+      data_abertura TIMESTAMPTZ DEFAULT NOW(),
+      data_agendamento TIMESTAMPTZ,
+      data_resolucao TIMESTAMPTZ,
+      responsavel TEXT,
+      custo_atendimento NUMERIC(10,2) DEFAULT 0,
+      dentro_garantia BOOLEAN DEFAULT TRUE,
+      solucao_aplicada TEXT,
+      fotos_urls TEXT[],
+      criado_em TIMESTAMPTZ DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+    )`.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS historico_chamado (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      chamado_id UUID REFERENCES chamados_garantia(id) ON DELETE CASCADE,
+      status_anterior TEXT,
+      status_novo TEXT,
+      observacao TEXT,
+      criado_em TIMESTAMPTZ DEFAULT NOW()
+    )`.catch(() => {});
 
   return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy and MES support' };
 }
-

@@ -15,6 +15,7 @@
     "ai": "^6.0.167",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
+    "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",

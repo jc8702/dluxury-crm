@@ -7,6 +7,7 @@ import { handleOrcamentos, handleOrcamentoTecnico, handleCondicoesPagamento } fr
 import { handleAICopilot } from '../src/api-lib/copilot.js';
 import { handleProjects, handleReports, handleEngineering, handleSKUs, handleSimulations } from '../src/api-lib/projects.js';
 import { handleProduction } from '../src/api-lib/production.js';
+import { handleAfterSales } from '../src/api-lib/after_sales.js';
 
 export default async function handler(req: any, res: any) {
   // CORS Setup
@@ -41,6 +42,7 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/projects')) return await handleProjects(req, res);
     if (cleanUrl.startsWith('/api/production')) return await handleProduction(req, res);
     if (cleanUrl.startsWith('/api/simulations')) return await handleSimulations(req, res);
+    if (cleanUrl.startsWith('/api/after-sales')) return await handleAfterSales(req, res);
     if (cleanUrl.startsWith('/api/users')) return await handleUsers(req, res);
     
     if (cleanUrl.startsWith('/api/init-db')) {
