@@ -2,13 +2,20 @@ import { neon } from '@neondatabase/serverless';
 
 const dbUrl = process.env.DATABASE_URL || '';
 
-if (!dbUrl && typeof window === 'undefined') {
-  console.warn('⚠️ ATENÇÃO: DATABASE_URL não encontrada. Banco de dados desativado.');
-}
+// Criamos uma função proxy para o sql para evitar o crash no import top-level
+// O neon() do @neondatabase/serverless retorna uma função de query.
+let _sqlInstance: any = null;
 
-// O neon() aceita a string vazia mas vai falhar na query, 
-// o que é melhor que quebrar o import de todo o servidor.
-export const sql = neon(dbUrl);
+export const sql = (strings: any, ...values: any[]) => {
+  if (!dbUrl) {
+    console.error('❌ ERRO CRÍTICO: DATABASE_URL não está configurada na Vercel.');
+    throw new Error('Configuração de Banco de Dados ausente.');
+  }
+  if (!_sqlInstance) {
+    _sqlInstance = neon(dbUrl);
+  }
+  return _sqlInstance(strings, ...values);
+};
 
 
 import jwt from 'jsonwebtoken';

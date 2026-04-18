@@ -39,8 +39,8 @@ export async function handlePlanoCorte(req: any, res: any) {
       case 'salvar_resultado_corte':
         const { plano_id: pid, grupos: gruposResult, resultados: resPos, sobras: sobRes, KPIs } = req.body;
         
-        // Atômico: Limpar resultados anteriores e salvar novos
-        await sql.begin(async (sql) => {
+        // Operação Atômica simulada (Individual devido ao driver serverless básico)
+        try {
           await sql`DELETE FROM plano_corte_resultado WHERE plano_id = ${pid}`;
           await sql`DELETE FROM plano_sobras WHERE plano_id = ${pid}`;
 
@@ -69,7 +69,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             `;
           }
 
-          // Inserir resultados de posicionamento (Individual devido a limitações do driver serverless)
+          // Inserir resultados de posicionamento (Individual)
           for (const p of resPos) {
             await sql`
               INSERT INTO plano_corte_resultado 
@@ -86,7 +86,10 @@ export async function handlePlanoCorte(req: any, res: any) {
               VALUES (${pid}, ${s.grupo_material_id}, ${s.numero_chapa}, ${s.pos_x_mm}, ${s.pos_y_mm}, ${s.largura_mm}, ${s.altura_mm}, ${s.area_m2}, ${s.aproveitavel})
             `;
           }
-        });
+        } catch (e) {
+            console.error('Erro ao salvar resultado:', e);
+            throw e;
+        }
         return res.status(200).json({ success: true });
 
       // --- GRUPOS ---
