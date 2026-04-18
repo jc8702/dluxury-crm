@@ -1,5 +1,5 @@
 import React from 'react';
-import { PecaPositionada } from '../../utils/planodeCorte';
+import type { PecaPositionada } from '../../utils/planodeCorte';
 
 interface PlanoCorteVisualProps {
   pecas: PecaPositionada[];

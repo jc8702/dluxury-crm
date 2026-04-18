@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Scissors, Plus, Trash2, Calculator, Info, FileText, ShareRow, Download, Package } from 'lucide-react';
+import { Scissors, Plus, Trash2, Calculator, Download, Package } from 'lucide-react';
 import { api } from '../lib/api';
-import { calcularPlanoCorte, ResultadoCorte, PecaPositionada } from '../utils/planodeCorte';
+import { calcularPlanoCorte } from '../utils/planodeCorte';
+import type { ResultadoCorte, PecaPositionada } from '../utils/planodeCorte';
 import PlanoCorteVisual from '../components/production/PlanoCorteVisual';
 
 interface PecaInput {
