@@ -1,4 +1,4 @@
-import { PlanoDeCorte } from '../../domain/entities/CuttingPlan';
+import type { PlanoDeCorte } from '../../domain/entities/CuttingPlan';
 
 const API_BASE = '/api/plano-corte';
 

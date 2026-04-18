@@ -17,6 +17,9 @@ import {
 import { parseCSV, downloadCSVTemplate } from '../../application/usecases/csvHandler';
 import { StressTester } from '../components/StressTester';
 import { generateLabelsPDF } from '../../application/usecases/labelGenerator';
+import { planoDeCorteRepository } from '../../infrastructure/api/planoDeCorteRepository';
+import type { ChapaMaterial } from '../../domain/entities/CuttingPlan';
+import '../planoDeCorte.css';
 
 const PlanoDeCortePage: React.FC = () => {
   const { 
@@ -87,22 +90,17 @@ const PlanoDeCortePage: React.FC = () => {
     const sku = prompt('Digite o SKU de Engenharia: (Ex: KIT-COZINHA-LUX-01)');
     if (!sku) return;
     
-    setLoading(true);
     try {
       const results = await planoDeCorteRepository.buscarEngenharia(sku);
       if (results.length > 0) {
         const eng = results[0];
-        
-        // 1. Agrupar peças por material_ref
         const grupos: Record<string, any[]> = {};
         eng.componentes.forEach((c: any) => {
           if (!grupos[c.material_ref]) grupos[c.material_ref] = [];
           grupos[c.material_ref].push(c);
         });
 
-        // 2. Para cada grupo, buscar dados da chapa no estoque
         const novosMateriais: ChapaMaterial[] = [];
-        
         for (const matSku in grupos) {
           const chapasDisponiveis = await planoDeCorteRepository.buscarChapas(matSku);
           const chapaInfo = chapasDisponiveis.find(c => c.sku === matSku) || {
@@ -142,130 +140,107 @@ const PlanoDeCortePage: React.FC = () => {
         alert('SKU de engenharia não encontrado.');
       }
     } catch (e) {
-      console.error(e);
       alert('Erro na busca de engenharia.');
-    } finally {
-      setLoading(false);
     }
   };
 
+  const styles = {
+    container: { height: '100vh', display: 'flex', flexDirection: 'column' as const, background: 'var(--background)' },
+    header: { height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', background: 'var(--surface)', borderBottom: '1px solid var(--border)', zIndex: 10 },
+    main: { flex: 1, display: 'flex', overflow: 'hidden' },
+    sidebar: { width: '450px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' as const, background: 'var(--sidebar-bg)' },
+    content: { flex: 1, background: 'rgba(0,0,0,0.2)', overflow: 'auto', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', padding: '2rem' },
+    rightPanel: { width: '320px', borderLeft: '1px solid var(--border)', background: 'var(--surface)', padding: '1.5rem' },
+    title: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+    actions: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+    badge: { fontSize: '0.6rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'var(--badge-bg)', color: 'var(--text-muted)', fontWeight: 'bold' }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#0D1117] text-[#C9D1D9]">
+    <div className="animate-fade-in plano-corte-page" style={styles.container}>
       {/* Header */}
-      <header className="h-16 border-b border-[#21262D] px-6 flex items-center justify-between bg-[#161B22] shadow-sm z-20">
-        <div className="flex items-center gap-4">
-          <div className="bg-[#E2AC00] p-2 rounded-lg">
-            <Maximize2 className="text-black" size={20} />
+      <header className="plano-corte-header" style={styles.header}>
+        <div style={styles.title}>
+          <div style={{ background: 'var(--primary)', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Maximize2 className="text-inverse" size={20} style={{ color: 'var(--primary-text)' }} />
           </div>
           <div>
-            <h1 className="text-white font-bold leading-tight">Plano de Corte Industrial</h1>
-            <div className="flex items-center gap-2 text-[10px] text-[#8B949E] uppercase tracking-widest font-bold">
+            <h1 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>Plano de Corte Industrial</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <span>D'Luxury ERP</span>
               <ChevronRight size={10} />
-              <span>Otimizador v2.0</span>
+              <span style={{ color: 'var(--primary)' }}>Otimizador v2.0</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImportCSV} 
-            accept=".csv" 
-            className="hidden" 
-          />
-          <div className="flex flex-col gap-1">
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold border border-[#2D333B] rounded-lg hover:bg-[#21262D] transition-all text-[#8B949E] hover:text-white"
-            >
-              <FileUp size={16} /> IMPORTAR CSV
-            </button>
-            <button 
-              onClick={downloadCSVTemplate}
-              className="text-[9px] text-[#8B949E] hover:text-[#E2AC00] text-right pr-1"
-            >
-              Baixar Template CSV
-            </button>
-          </div>
-          <button 
-            onClick={handleImportEngenharia}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold border border-[#2D333B] rounded-lg hover:bg-[#21262D] transition-all text-[#8B949E] hover:text-white"
-          >
-            <FolderOpen size={16} /> DO ENGENHARIA
+        <div className="plano-corte-actions" style={styles.actions}>
+          <input type="file" ref={fileInputRef} onChange={handleImportCSV} accept=".csv" style={{ display: 'none' }} />
+          
+          <button onClick={() => fileInputRef.current?.click()} className="btn btn-outline" style={{ padding: '0.5rem 0.75rem' }}>
+            <FileUp size={16} /> <span style={{fontSize: '0.75rem'}}>CVS</span>
           </button>
-          <div className="w-[1px] h-6 bg-[#2D333B] mx-2" />
+          
+          <button onClick={handleImportEngenharia} className="btn btn-outline" style={{ padding: '0.5rem 0.75rem' }}>
+            <FolderOpen size={16} /> <span style={{fontSize: '0.75rem'}}>ENGENHARIA</span>
+          </button>
+
+          <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 8px' }} />
+
           {resultado && (
-            <button 
-              onClick={handleAprovarProducao}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-green-600/10 text-green-400 border border-green-500/30 font-bold rounded-lg hover:bg-green-600/20 transition-all disabled:opacity-50"
-            >
-              <Package size={18} /> APROVAR PRODUÇÃO
+            <button onClick={handleAprovarProducao} disabled={loading} className="btn badge" style={{ background: 'var(--success)', color: 'white', padding: '0.5rem 1rem' }}>
+              <Package size={16} /> APROVAR PRODUÇÃO
             </button>
           )}
-          <button 
-            onClick={salvar}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-[#1C2128] text-[#E2AC00] border border-[#E2AC00]/30 font-bold rounded-lg hover:bg-[#E2AC00]/10 transition-all disabled:opacity-50"
-          >
-            <Save size={18} /> SALVAR RESULTADO
+
+          <button onClick={salvar} disabled={loading} className="btn btn-outline">
+            <Save size={18} /> SALVAR
           </button>
-          <button 
-            onClick={otimizar}
-            disabled={calculando}
-            className="flex items-center gap-2 px-8 py-2 bg-[#E2AC00] text-black font-extrabold rounded-lg hover:bg-[#FFC400] shadow-[0_0_15px_rgba(226,172,0,0.3)] transition-all disabled:opacity-50"
-          >
+
+          <button onClick={otimizar} disabled={calculando} className="btn btn-primary" style={{ minWidth: '160px' }}>
             {calculando ? <Cpu className="animate-spin" size={18} /> : <Play fill="currentColor" size={18} />}
             OTIMIZAR AGORA
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar: Inputs */}
-        <div className="w-[450px] border-r border-[#21262D] flex flex-col bg-[#161B22]">
-          <div className="p-6 border-b border-[#21262D]">
-            <label className="text-xs font-bold text-[#8B949E] uppercase mb-2 block">Materiais e Peças</label>
-            <div className="relative">
+      <main className="plano-corte-main" style={styles.main}>
+        {/* Left Sidebar */}
+        <aside className="plano-corte-sidebar" style={styles.sidebar}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+            <label className="label-base" style={{ marginBottom: '1rem' }}>Materiais e Peças</label>
+            <div style={{ position: 'relative' }}>
               <input 
                 type="text"
-                placeholder="Buscar material no estoque (SKU ou Nome)..."
+                placeholder="Buscar material no estoque..."
                 value={searchStock}
                 onChange={(e) => handleSearchStock(e.target.value)}
-                className="w-full bg-[#0D1117] border border-[#2D333B] rounded-xl px-4 py-3 text-sm focus:border-[#E2AC00] focus:ring-1 focus:ring-[#E2AC00] transition-all"
+                className="input"
               />
               {stockResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1C2128] border border-[#2D333B] rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: 'var(--surface-overlay)', border: '1px solid var(--border-strong)', borderRadius: '12px', zIndex: 100, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
                   {stockResults.map(s => (
-                    <div 
-                      key={s.id} 
-                      onClick={() => selectChapa(s)}
-                      className="p-3 hover:bg-[#2D333B] cursor-pointer flex justify-between items-center border-b border-[#21262D] last:border-0"
-                    >
+                    <div key={s.id} onClick={() => selectChapa(s)} style={{ padding: '12px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hover-scale">
                       <div>
-                        <div className="text-white font-bold text-sm">{s.sku}</div>
-                        <div className="text-[#8B949E] text-[10px]">{s.nome}</div>
+                        <div style={{ fontWeight: '700', fontSize: '0.85rem' }}>{s.sku}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{s.nome}</div>
                       </div>
-                      <div className="text-[#E2AC00] text-xs font-bold">{s.largura_mm}x{s.altura_mm}</div>
+                      <div style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '0.75rem' }}>{s.largura_mm}x{s.altura_mm}</div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div className="mt-3 flex gap-2">
-                <button 
-                    onClick={() => selectChapa({ sku: 'MANUAL', nome: 'Material Customizado', largura_mm: 2750, altura_mm: 1840, espessura_mm: 18 })}
-                    className="flex-1 bg-transparent border border-[#2D333B] text-[#C9D1D9] text-[10px] font-bold py-2 rounded-lg hover:border-[#8B949E]"
-                >
-                    + CONFIGURAÇÃO MANUAL
-                </button>
-            </div>
+            <button 
+              onClick={() => selectChapa({ sku: 'MANUAL', nome: 'Material Customizado', largura_mm: 2750, altura_mm: 1840, espessura_mm: 18 })}
+              className="btn btn-outline"
+              style={{ width: '100%', marginTop: '1rem', fontSize: '0.7rem' }}
+            >
+              + CONFIGURAÇÃO MANUAL
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-[#21262D]">
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
             <StressTester onInject={(mats) => setPlano(prev => ({ ...prev, materiais: [...(prev.materiais || []), ...mats] }))} />
             {plano.materiais?.map((mat, idx) => (
               <MaterialCard 
@@ -276,89 +251,87 @@ const PlanoDeCortePage: React.FC = () => {
               />
             ))}
             {(!plano.materiais || plano.materiais.length === 0) && (
-              <div className="h-full flex flex-col items-center justify-center text-center p-10">
-                <div className="w-16 h-16 bg-[#21262D] rounded-full flex items-center justify-center mb-4">
-                  <Package className="text-[#8B949E]" size={32} />
-                </div>
-                <h3 className="text-white font-bold mb-2">Inicie seu Plano de Corte</h3>
-                <p className="text-[#8B949E] text-sm leading-relaxed">
-                  Adicione chapas do estoque ou configure manualmente para começar a incluir peças.
-                </p>
+              <div style={{ height: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', opacity: 0.5 }}>
+                <Package size={48} style={{ color: 'var(--border-strong)', marginBottom: '1rem' }} />
+                <h4 style={{ margin: 0 }}>Vazio</h4>
+                <p style={{ fontSize: '0.8rem' }}>Adicione materiais para começar.</p>
               </div>
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* Center: Visualization */}
-        <div className="flex-1 bg-[#090C10] p-10 overflow-auto scrollbar-none flex flex-col items-center">
+        {/* Canvas Area */}
+        <section className="plano-corte-content" style={styles.content}>
           {resultado ? (
             <ResultadoCanvas resultado={resultado} />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-              <Layers size={64} className="mb-6 text-[#8B949E]" />
-              <h2 className="text-2xl font-light text-white mb-2">Aguardando Otimização</h2>
-              <p className="text-[#8B949E]">Configure os materiais e peças à esquerda e clique em <b>OTIMIZAR AGORA</b></p>
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.15 }}>
+              <Layers size={80} style={{ marginBottom: '1.5rem' }} />
+              <h2 style={{ fontWeight: '200', fontSize: '2rem' }}>Aguardando Otimização</h2>
+              <p>Configure materiais e peças e clique em <b>OTIMIZAR</b></p>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Right Sidebar: KPIs */}
-        <div className="w-80 border-l border-[#21262D] bg-[#161B22] p-6">
-          <h3 className="text-xs font-bold text-[#8B949E] uppercase tracking-widest mb-6 flex items-center gap-2">
-            <BarChart3 size={14} /> Estatísticas Gerais
+        {/* Right Info Panel */}
+        <aside className="plano-corte-right-panel" style={styles.rightPanel}>
+          <h3 style={{ fontSize: '0.75rem', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <BarChart3 size={14} /> Estatísticas
           </h3>
 
-          <div className="space-y-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
-              <span className="text-[#8B949E] text-[10px] block mb-2 font-bold">APROVEITAMENTO GERAL</span>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-3 bg-[#0D1117] rounded-full overflow-hidden border border-[#2D333B]">
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>APROVEITAMENTO GERAL</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ flex: 1, height: '8px', background: 'var(--input-bg)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div 
-                    className={`h-full transition-all duration-1000 ${
-                        (resultado?.aproveitamento_percentual || 0) >= 80 ? 'bg-green-500' : 
-                        (resultado?.aproveitamento_percentual || 0) >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${resultado?.aproveitamento_percentual || 0}%` }}
+                    style={{ 
+                      height: '100%', 
+                      width: `${resultado?.aproveitamento_percentual || 0}%`,
+                      background: (resultado?.aproveitamento_percentual || 0) >= 80 ? 'var(--success)' : (resultado?.aproveitamento_percentual || 0) >= 60 ? 'var(--warning)' : 'var(--danger)',
+                      transition: 'width 1s ease'
+                    }} 
                   />
                 </div>
-                <span className="text-white font-mono font-bold">{Math.round(resultado?.aproveitamento_percentual || 0)}%</span>
+                <span style={{ fontWeight: '800', color: 'var(--primary)' }}>{Math.round(resultado?.aproveitamento_percentual || 0)}%</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#0D1117] border border-[#2D333B] p-4 rounded-xl">
-                <span className="text-[#8B949E] text-[10px] block mb-1">TOTAL CHAPAS</span>
-                <span className="text-2xl font-bold text-white">{resultado?.chapas_necessarias || 0}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="card" style={{ padding: '0.75rem' }}>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>CHAPAS</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>{resultado?.chapas_necessarias || 0}</span>
               </div>
-              <div className="bg-[#0D1117] border border-[#2D333B] p-4 rounded-xl">
-                <span className="text-[#8B949E] text-[10px] block mb-1">ÁREA ÚTIL</span>
-                <span className="text-2xl font-bold text-white">{Math.round((resultado?.layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0) || 0) / 1000000)}m²</span>
+              <div className="card" style={{ padding: '0.75rem' }}>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>ÁREA ÚTIL</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>{Math.round((resultado?.layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0) || 0) / 1000000)}m²</span>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#21262D]">
-              <div className="flex justify-between items-center text-xs mb-3">
-                <span className="text-[#8B949E]">Tempo de Cálculo:</span>
-                <span className="text-[#C9D1D9] font-mono">{resultado?.tempo_calculo_ms.toFixed(0)} ms</span>
+            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Cálculo:</span>
+                <span style={{ fontWeight: '700' }}>{resultado?.tempo_calculo_ms.toFixed(0)} ms</span>
               </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-[#8B949E]">Status:</span>
-                <span className={`font-bold ${resultado ? 'text-green-500' : 'text-yellow-500'}`}>
-                    {calculando ? 'Calculando...' : resultado ? 'Otimizado' : 'Aguardando'}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Status:</span>
+                <span style={{ fontWeight: '800', color: resultado ? 'var(--success)' : 'var(--warning)' }}>
+                  {calculando ? 'Processando...' : resultado ? 'Otimizado' : 'Aguardando'}
                 </span>
               </div>
             </div>
-            
+
             {resultado && (
-                <button 
-                    onClick={() => generateLabelsPDF(resultado)}
-                    className="w-full mt-10 bg-transparent border border-[#E2AC00] text-[#E2AC00] py-4 rounded-xl font-bold hover:bg-[#E2AC00] hover:text-black transition-all uppercase tracking-widest text-xs"
-                >
-                    Imprimir Etiquetas
-                </button>
+              <button onClick={() => generateLabelsPDF(resultado)} className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }}>
+                IMPRIMIR ETIQUETAS
+              </button>
             )}
+            
+            <button onClick={downloadCSVTemplate} style={{ color: 'var(--text-muted)', fontSize: '0.6rem', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+              Baixar Template CSV
+            </button>
           </div>
-        </div>
+        </aside>
       </main>
     </div>
   );

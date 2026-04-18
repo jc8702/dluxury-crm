@@ -1,136 +1,182 @@
-import React, { useState } from 'react';
-import { ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
-import { ZoomIn, ZoomOut, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import type { ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
+import { ZoomIn, ZoomOut, Maximize, ChevronLeft, ChevronRight, Printer, Download, MousePointer2 } from 'lucide-react';
 
-interface Props {
+interface ResultadoCanvasProps {
   resultado: ResultadoOtimizacao;
 }
 
-export const ResultadoCanvas: React.FC<Props> = ({ resultado }) => {
-  const [currentChapa, setCurrentChapa] = useState(0);
+export const ResultadoCanvas: React.FC<ResultadoCanvasProps> = ({ resultado }) => {
+  const [activeLayoutIdx, setActiveLayoutIdx] = useState(0);
   const [zoom, setZoom] = useState(1);
-  
-  const layout = resultado.layouts[currentChapa];
-  if (!layout) return null;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Encontrar dimensões para o SVG (baseado em peças ou chapa fixa se for material unificado)
-  // Como o LayoutChapa não tem W/H direto, vamos assumir que ele segue o material
-  // Para fins visuais, vamos pegar o limite máximo das peças se não tivermos a chapa
-  const maxW = Math.max(...layout.pecas_posicionadas.map(p => p.x + p.largura), 2750);
-  const maxH = Math.max(...layout.pecas_posicionadas.map(p => p.y + p.altura), 1830);
+  const activeLayout = resultado.layouts[activeLayoutIdx];
 
-  // Escala para caber no container (ex: 800px largura)
-  const containerW = 800;
-  const scale = (containerW / maxW) * zoom;
+  useEffect(() => {
+    drawLayout();
+    window.addEventListener('resize', drawLayout);
+    return () => window.removeEventListener('resize', drawLayout);
+  }, [activeLayout, zoom, resultado]);
+
+  const drawLayout = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !activeLayout) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Dimensões do canvas baseadas no container
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+    const padding = 60;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    ctx.scale(dpr, dpr);
+
+    // Limpar
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Calcular escala para caber na tela
+    const scaleX = (rect.width - padding * 2) / activeLayout.largura_original_mm;
+    const scaleY = (rect.height - padding * 2) / activeLayout.altura_original_mm;
+    const baseScale = Math.min(scaleX, scaleY) * zoom;
+
+    const offsetX = (rect.width - activeLayout.largura_original_mm * baseScale) / 2;
+    const offsetY = (rect.height - activeLayout.altura_original_mm * baseScale) / 2;
+
+    // Desenhar a chapa (fundo)
+    ctx.fillStyle = '#1A1D23'; // Cor da chapa
+    ctx.fillRect(offsetX, offsetY, activeLayout.largura_original_mm * baseScale, activeLayout.altura_original_mm * baseScale);
+    
+    // Borda da chapa
+    ctx.strokeStyle = 'var(--border-strong)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX, offsetY, activeLayout.layouts_pecas.length > 0 ? activeLayout.largura_original_mm * baseScale : activeLayout.largura_original_mm * baseScale, activeLayout.altura_original_mm * baseScale);
+
+    // Desenhar peças
+    activeLayout.layouts_pecas.forEach((p, idx) => {
+      ctx.fillStyle = (idx % 2 === 0) ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.15)';
+      ctx.strokeStyle = 'var(--primary)';
+      ctx.lineWidth = 1;
+
+      const px = offsetX + p.x * baseScale;
+      const py = offsetY + p.y * baseScale;
+      const pw = p.largura * baseScale;
+      const ph = p.altura * baseScale;
+
+      ctx.fillRect(px, py, pw, ph);
+      ctx.strokeRect(px, py, pw, ph);
+
+      // Texto da peça (se couber)
+      if (pw > 30 && ph > 20) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `bold ${Math.max(8, 10 * baseScale)}px Inter`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${p.largura}x${p.altura}`, px + pw / 2, py + ph / 2 + 5);
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = `${Math.max(6, 8 * baseScale)}px Inter`;
+        ctx.fillText(p.nome_peca.substring(0, 15), px + pw / 2, py + ph / 2 - 10);
+      }
+    });
+
+    // Desenhar sobras (áreas vazias aproveitáveis)
+    // Aqui poderíamos adicionar lógica para realçar retalhos gerados
+  };
+
+  const styles = {
+    wrapper: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' as const },
+    toolbar: { padding: '1rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    canvasContainer: { flex: 1, background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative' as const },
+    pagination: { position: 'absolute' as const, bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--surface-overlay)', padding: '0.75rem 1.5rem', borderRadius: '30px', border: '1px solid var(--border-strong)', backdropFilter: 'blur(8px)', zIndex: 10 }
+  };
 
   return (
-    <div className="bg-[#0D1117] border border-[#2D333B] rounded-xl overflow-hidden shadow-2xl">
-      {/* Toolbar */}
-      <div className="p-4 bg-[#1C2128] border-b border-[#2D333B] flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-[#0D1117] rounded-lg p-1 border border-[#2D333B]">
-            <button 
-              onClick={() => setCurrentChapa(Math.max(0, currentChapa - 1))}
-              disabled={currentChapa === 0}
-              className="p-1 text-[#8B949E] hover:text-white disabled:opacity-30"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <span className="px-3 text-white text-sm font-medium">
-              Chapa {currentChapa + 1} de {resultado.layouts.length}
-            </span>
-            <button 
-              onClick={() => setCurrentChapa(Math.min(resultado.layouts.length - 1, currentChapa + 1))}
-              disabled={currentChapa === resultado.layouts.length - 1}
-              className="p-1 text-[#8B949E] hover:text-white disabled:opacity-30"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-          <span className="text-[#8B949E] text-xs font-mono">{layout.chapa_sku}</span>
+    <div style={styles.wrapper} className="animate-fade-in">
+      {/* Toolbar Superior */}
+      <div style={styles.toolbar}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="btn btn-outline" style={{ padding: '8px' }} title="Aproximar">
+            <ZoomIn size={18} />
+          </button>
+          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="btn btn-outline" style={{ padding: '8px' }} title="Afastar">
+            <ZoomOut size={18} />
+          </button>
+          <button onClick={() => setZoom(1)} className="btn btn-outline" style={{ padding: '8px' }} title="Resetar Zoom">
+            <Maximize size={18} />
+          </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => setZoom(z => Math.max(0.5, z - 0.2))} className="p-2 text-[#8B949E] hover:text-white hover:bg-[#2D333B] rounded-lg"><ZoomOut size={18}/></button>
-          <span className="text-[#8B949E] text-xs w-10 text-center">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom(z => Math.min(3, z + 0.2))} className="p-2 text-[#8B949E] hover:text-white hover:bg-[#2D333B] rounded-lg"><ZoomIn size={18}/></button>
-          <button onClick={() => setZoom(1)} className="p-2 text-[#8B949E] hover:text-white hover:bg-[#2D333B] rounded-lg"><Maximize2 size={18}/></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block', fontWeight: '800' }}>IDENTIFICAÇÃO DA CHAPA</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)' }}>{activeLayout?.sku_chapa || 'MDF-GERERICO'}</span>
+          </div>
+          <div style={{ width: '1px', height: '24px', background: 'var(--border)' }} />
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block', fontWeight: '800' }}>APROVEITAMENTO</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--success)' }}>{activeLayout?.aproveitamento_percentual.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-outline" style={{ padding: '8px 16px', gap: '8px', fontSize: '0.75rem' }}>
+            <Printer size={16} /> Mapa de Corte
+          </button>
         </div>
       </div>
 
-      {/* Canvas Area */}
-      <div className="relative p-10 overflow-auto flex justify-center bg-[#090C10] min-h-[500px]">
-        <svg 
-          width={maxW * scale} 
-          height={maxH * scale} 
-          viewBox={`0 0 ${maxW} ${maxH}`}
-          className="shadow-2xl bg-white/5 rounded-sm"
-        >
-          {/* Fundo da Chapa */}
-          <rect x={0} y={0} width={maxW} height={maxH} fill="#1C2128" stroke="#2D333B" strokeWidth={2} />
+      {/* Área do Canvas */}
+      <div style={styles.canvasContainer} ref={containerRef}>
+        <canvas 
+          ref={canvasRef} 
+          style={{ cursor: 'grab', display: 'block' }}
+        />
+
+        {/* Paginação de Chapas */}
+        <div style={styles.pagination}>
+          <button 
+            disabled={activeLayoutIdx === 0} 
+            onClick={() => setActiveLayoutIdx(i => i - 1)}
+            style={{ padding: '4px', border: 'none', background: 'none', color: activeLayoutIdx === 0 ? 'var(--text-muted)' : 'var(--primary)', cursor: 'pointer' }}
+          >
+            <ChevronLeft size={24} />
+          </button>
           
-          {/* Peças Posicionadas */}
-          {layout.pecas_posicionadas.map((peca, idx) => {
-            const h = (idx * 137) % 360; // Cor dinâmica por peça
-            return (
-              <g key={peca.peca_id} className="group cursor-pointer">
-                <rect 
-                  x={peca.x} 
-                  y={peca.y} 
-                  width={peca.largura} 
-                  height={peca.altura} 
-                  fill={`hsla(${h}, 70%, 50%, 0.3)`}
-                  stroke={`hsla(${h}, 70%, 50%, 0.8)`}
-                  strokeWidth={1}
-                  className="transition-all group-hover:fill-opacity-50"
-                />
-                {peca.largura > 100 && peca.altura > 50 && (
-                  <text 
-                    x={peca.x + 5} 
-                    y={peca.y + 15} 
-                    fill="white" 
-                    fontSize="10" 
-                    className="select-none font-bold"
-                    style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
-                  >
-                    {peca.nome}
-                  </text>
-                )}
-                {/* Dimensões se o zoom for suficiente ou no hover? (hover visual) */}
-                <rect 
-                  x={peca.x} y={peca.y} width={peca.largura} height={peca.altura} 
-                  fill="transparent" 
-                  className="group-hover:stroke-[#E2AC00] group-hover:stroke-2"
-                />
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* Estatísticas da Chapa Atual */}
-      <div className="p-4 bg-[#1C2128] border-t border-[#2D333B] grid grid-cols-3 gap-8">
-        <div>
-          <span className="text-[#8B949E] text-[10px] uppercase font-bold tracking-widest block mb-1">Aproveitamento</span>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-[#0D1117] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#E2AC00]" 
-                style={{ width: `${(layout.area_aproveitada_mm2 / (maxW * maxH)) * 100}%` }}
-              />
-            </div>
-            <span className="text-white font-bold text-sm">
-              {Math.round((layout.area_aproveitada_mm2 / (maxW * maxH)) * 100)}%
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '900' }}>
+            <span style={{ color: 'var(--primary)' }}>{activeLayoutIdx + 1}</span>
+            <span style={{ color: 'var(--text-muted)' }}>/</span>
+            <span>{resultado.layouts.length}</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: '4px', letterSpacing: '0.05em' }}>CHAPAS</span>
           </div>
+
+          <button 
+            disabled={activeLayoutIdx === resultado.layouts.length - 1} 
+            onClick={() => setActiveLayoutIdx(i => i + 1)}
+            style={{ padding: '4px', border: 'none', background: 'none', color: activeLayoutIdx === resultado.layouts.length - 1 ? 'var(--text-muted)' : 'var(--primary)', cursor: 'pointer' }}
+          >
+            <ChevronRight size={24} />
+          </button>
         </div>
-        <div>
-          <span className="text-[#8B949E] text-[10px] uppercase font-bold tracking-widest block mb-1">Peças</span>
-          <span className="text-white font-bold text-sm">{layout.pecas_posicionadas.length} un</span>
-        </div>
-        <div>
-          <span className="text-[#8B949E] text-[10px] uppercase font-bold tracking-widest block mb-1">Desperdício</span>
-          <span className="text-[#F85149] font-bold text-sm">{Math.round(layout.area_desperdicada_mm2 / 1000000)} m²</span>
+
+        {/* Legenda Flutuante */}
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.65rem', pointerEvents: 'none' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: '8px', height: '8px', background: 'var(--primary)', borderRadius: '2px' }} />
+              <span>Peças a Cortar</span>
+           </div>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '8px', height: '8px', background: '#1A1D23', border: '1px solid var(--border)', borderRadius: '2px' }} />
+              <span>Chapa / Sobra</span>
+           </div>
         </div>
       </div>
     </div>

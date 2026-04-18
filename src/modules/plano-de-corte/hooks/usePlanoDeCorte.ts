@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PlanoDeCorte, ChapaMaterial, ResultadoOtimizacao } from '../domain/entities/CuttingPlan';
+import type { PlanoDeCorte, ChapaMaterial, ResultadoOtimizacao } from '../domain/entities/CuttingPlan';
 import { planoDeCorteRepository } from '../infrastructure/api/planoDeCorteRepository';
 
 const LOCAL_STORAGE_KEY = 'dluxury_plano_corte_draft';

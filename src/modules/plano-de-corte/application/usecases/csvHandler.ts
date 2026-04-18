@@ -1,4 +1,4 @@
-import { ChapaMaterial, PecaCorte } from '../../domain/entities/CuttingPlan';
+import type { ChapaMaterial } from '../../domain/entities/CuttingPlan';
 
 export function parseCSV(csvText: string): ChapaMaterial[] {
   const lines = csvText.split('\n').filter(l => l.trim() && !l.startsWith('sku_chapa'));

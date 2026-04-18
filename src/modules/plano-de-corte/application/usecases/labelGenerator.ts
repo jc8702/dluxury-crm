@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import { ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
+import type { ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
 
 export async function generateLabelsPDF(resultado: ResultadoOtimizacao) {
   const doc = new jsPDF({

@@ -1,160 +1,135 @@
 import React, { useState } from 'react';
-import { ChapaMaterial, PecaCorte } from '../../domain/entities/CuttingPlan';
-import { Plus, Trash2, Edit3, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import type { ChapaMaterial, PecaCorte as Peca } from '../../domain/entities/CuttingPlan';
+import { Trash2, Plus, Scissors, ChevronDown, ChevronUp, Layers, Square, Box } from 'lucide-react';
 
-interface Props {
+interface MaterialCardProps {
   material: ChapaMaterial;
-  onUpdate: (updated: ChapaMaterial) => void;
+  onUpdate: (material: Partial<ChapaMaterial>) => void;
   onRemove: () => void;
 }
 
-export const MaterialCard: React.FC<Props> = ({ material, onUpdate, onRemove }) => {
+export const MaterialCard: React.FC<MaterialCardProps> = ({ material, onUpdate, onRemove }) => {
   const [expanded, setExpanded] = useState(true);
 
   const addPeca = () => {
-    const nome = prompt('Nome da Peça (Ex: Lateral Gaveta)');
-    if (!nome) return;
-
-    const nova: PecaCorte = {
+    const novaPeca: Peca = {
       id: Math.random().toString(36).substr(2, 9),
-      nome,
-      largura_mm: 100,
-      altura_mm: 100,
+      nome: `Peça ${material.pecas.length + 1}`,
+      largura_mm: 500,
+      altura_mm: 400,
       quantidade: 1,
       rotacionavel: true
     };
-
-    onUpdate({
-      ...material,
-      pecas: [...material.pecas, nova]
-    });
+    onUpdate({ pecas: [...material.pecas, novaPeca] });
   };
 
-  const updatePeca = (id: string, field: keyof PecaCorte, value: any) => {
-    onUpdate({
-      ...material,
-      pecas: material.pecas.map(p => p.id === id ? { ...p, [field]: value } : p)
-    });
+  const updatePeca = (id: string, upd: Partial<Peca>) => {
+    const pecas = material.pecas.map(p => p.id === id ? { ...p, ...upd } : p);
+    onUpdate({ pecas });
   };
 
   const removePeca = (id: string) => {
-    onUpdate({
-      ...material,
-      pecas: material.pecas.filter(p => p.id !== id)
-    });
+    onUpdate({ pecas: material.pecas.filter(p => p.id !== id) });
   };
 
-  const duplicatePeca = (peca: PecaCorte) => {
-    const nova = { ...peca, id: Math.random().toString(36).substr(2, 9), nome: `${peca.nome} (Cópia)` };
-    onUpdate({
-      ...material,
-      pecas: [...material.pecas, nova]
-    });
+  const styles = {
+    card: { marginBottom: '1rem', border: '1px solid var(--border)', overflow: 'hidden', borderRadius: '12px' },
+    header: { padding: '1rem', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: expanded ? '1px solid var(--border)' : 'none' },
+    content: { padding: '1rem', background: 'var(--background)' },
+    titleInfo: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+    pecaRow: { display: 'grid', gridTemplateColumns: '1fr 60px 60px 40px 30px', gap: '8px', alignItems: 'center', marginBottom: '8px', padding: '0.5rem', borderRadius: '8px', background: 'var(--surface)', border: '1px solid transparent' }
   };
 
   return (
-    <div className="bg-[#1A1D23] border border-[#2D333B] rounded-xl overflow-hidden mb-4 shadow-lg transition-all duration-300 hover:border-[#E2AC00]/30">
-      {/* Header */}
-      <div className="p-4 flex items-center justify-between bg-[#1C2128] border-b border-[#2D333B]">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#E2AC00]/10 rounded-lg flex items-center justify-center text-[#E2AC00]">
-            <span className="font-bold text-sm">MDF</span>
+    <div style={styles.card} className="card shadow-sm animate-fade-in">
+      <div style={styles.header} onClick={() => setExpanded(!expanded)}>
+        <div style={styles.titleInfo}>
+          <div style={{ padding: '6px', borderRadius: '6px', background: 'rgba(212,175,55,0.1)' }}>
+            <Box size={18} style={{ color: 'var(--primary)' }} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-white font-bold">{material.sku}</span>
-              <span className="text-[#8B949E] text-sm">| {material.nome}</span>
-            </div>
-            <div className="text-[#8B949E] text-xs">
-              {material.largura_mm}x{material.altura_mm}mm | esp: {material.espessura_mm}mm
-            </div>
+            <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{material.sku}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{material.largura_mm}x{material.altura_mm}x{material.espessura_mm}mm</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setExpanded(!expanded)}
-            className="p-2 text-[#8B949E] hover:text-white hover:bg-[#2D333B] rounded-lg transition-colors"
-          >
-            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="badge" style={{ fontSize: '0.65rem' }}>{material.pecas.length} peças</span>
+          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="btn btn-outline" style={{ padding: '4px', border: 'none', color: 'var(--danger)' }}>
+            <Trash2 size={16} />
           </button>
-          <button 
-            onClick={onRemove}
-            className="p-2 text-[#F85149] hover:bg-[#F85149]/10 rounded-lg transition-colors"
-          >
-            <Trash2 size={18} />
-          </button>
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
       </div>
 
-      {/* Body */}
       {expanded && (
-        <div className="p-4 bg-[#0D1117]">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-[#C9D1D9] text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-              Peças ({material.pecas.length})
-            </h4>
-            <button 
-              onClick={addPeca}
-              className="flex items-center gap-1 text-[10px] bg-[#E2AC00] text-black font-bold px-2 py-1 rounded hover:bg-[#FFC400] transition-colors"
-            >
-              <Plus size={12} /> ADICIONAR PEÇA
+        <div style={styles.content}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label className="label-base" style={{ fontSize: '0.6rem' }}>LARGURA (mm)</label>
+              <input type="number" value={material.largura_mm} onChange={e => onUpdate({ largura_mm: Number(e.target.value) })} className="input" style={{ padding: '6px' }} />
+            </div>
+            <div>
+              <label className="label-base" style={{ fontSize: '0.6rem' }}>ALTURA (mm)</label>
+              <input type="number" value={material.altura_mm} onChange={e => onUpdate({ altura_mm: Number(e.target.value) })} className="input" style={{ padding: '6px' }} />
+            </div>
+            <div>
+              <label className="label-base" style={{ fontSize: '0.6rem' }}>ESPESSURA</label>
+              <input type="number" value={material.espessura_mm} onChange={e => onUpdate({ espessura_mm: Number(e.target.value) })} className="input" style={{ padding: '6px', color: 'var(--primary)', fontWeight: 'bold' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: '900', color: 'var(--text-muted)' }}>
+              <Scissors size={14} /> LISTA DE PEÇAS
+            </div>
+            <button onClick={addPeca} className="btn badge" style={{ background: 'var(--primary)', color: 'var(--primary-text)', cursor: 'pointer' }}>
+              + PEÇA
             </button>
           </div>
 
-          <div className="space-y-2">
-            {material.pecas.map((peca) => (
-              <div key={peca.id} className="flex items-center gap-3 p-3 bg-[#1C2128] border border-[#2D333B] rounded-lg group hover:border-[#E2AC00]/20 transition-all">
-                <div className="flex-1">
-                  <input 
-                    type="text"
-                    value={peca.nome}
-                    onChange={(e) => updatePeca(peca.id, 'nome', e.target.value)}
-                    className="bg-transparent border-none text-white text-sm focus:ring-0 w-full p-0 font-medium"
-                    placeholder="Nome da peça"
-                  />
-                </div>
-                
-                <div className="flex items-center gap-4 text-xs">
-                  <div className="flex flex-col">
-                    <span className="text-[#8B949E] text-[10px]">LARGURA</span>
-                    <input 
-                      type="number"
-                      value={peca.largura_mm}
-                      onChange={(e) => updatePeca(peca.id, 'largura_mm', Number(e.target.value))}
-                      className="bg-[#0D1117] border border-[#2D333B] rounded p-1 text-white w-20 focus:border-[#E2AC00]"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[#8B949E] text-[10px]">ALTURA</span>
-                    <input 
-                      type="number"
-                      value={peca.altura_mm}
-                      onChange={(e) => updatePeca(peca.id, 'altura_mm', Number(e.target.value))}
-                      className="bg-[#0D1117] border border-[#2D333B] rounded p-1 text-white w-20 focus:border-[#E2AC00]"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[#8B949E] text-[10px]">QTD</span>
-                    <input 
-                      type="number"
-                      value={peca.quantidade}
-                      onChange={(e) => updatePeca(peca.id, 'quantidade', Number(e.target.value))}
-                      className="bg-[#0D1117] border border-[#2D333B] rounded p-1 text-white w-14 focus:border-[#E2AC00]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => duplicatePeca(peca)} className="p-1.5 text-[#8B949E] hover:text-[#E2AC00] rounded"><Copy size={14}/></button>
-                  <button onClick={() => removePeca(peca.id)} className="p-1.5 text-[#8B949E] hover:text-[#F85149] rounded"><Trash2 size={14}/></button>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...styles.pecaRow, background: 'transparent', border: 'none', height: '15px' }}>
+              <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: '900' }}>DESCRIÇÃO</span>
+              <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textAlign: 'center' }}>LARG.</span>
+              <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textAlign: 'center' }}>ALT.</span>
+              <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textAlign: 'center' }}>QTD.</span>
+              <span />
+            </div>
+            {material.pecas.map(p => (
+              <div key={p.id} style={styles.pecaRow} className="hover-scale">
+                <input 
+                  value={p.nome} 
+                  onChange={e => updatePeca(p.id, { nome: e.target.value })} 
+                  className="input" 
+                  style={{ border: 'none', background: 'transparent', padding: 0, fontWeight: '600', fontSize: '0.75rem' }} 
+                />
+                <input 
+                  type="number" 
+                  value={p.largura_mm} 
+                  onChange={e => updatePeca(p.id, { largura_mm: Number(e.target.value) })} 
+                  className="input" 
+                  style={{ border: 'none', background: 'rgba(255,255,255,0.03)', padding: '2px', textAlign: 'center', fontSize: '0.75rem' }} 
+                />
+                <input 
+                  type="number" 
+                  value={p.altura_mm} 
+                  onChange={e => updatePeca(p.id, { altura_mm: Number(e.target.value) })} 
+                  className="input" 
+                  style={{ border: 'none', background: 'rgba(255,255,255,0.03)', padding: '2px', textAlign: 'center', fontSize: '0.75rem' }} 
+                />
+                <input 
+                  type="number" 
+                  value={p.quantidade} 
+                  onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} 
+                  className="input" 
+                  style={{ border: 'none', background: 'transparent', padding: 0, textAlign: 'center', fontWeight: '800', color: 'var(--primary)', fontSize: '0.75rem' }} 
+                />
+                <button onClick={() => removePeca(p.id)} style={{ border: 'none', background: 'transparent', color: 'var(--danger)', opacity: 0.4, cursor: 'pointer' }} className="hover-scale">
+                  <Trash2 size={12} />
+                </button>
               </div>
             ))}
-            {material.pecas.length === 0 && (
-              <div className="text-center p-8 border-2 border-dashed border-[#2D333B] rounded-lg">
-                <span className="text-[#8B949E] text-sm">Nenhuma peça adicionada para este material.</span>
-              </div>
-            )}
           </div>
         </div>
       )}

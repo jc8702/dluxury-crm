@@ -2,7 +2,13 @@
  * WEB WORKER: ALGORITMO DE OTIMIZAÇÃO GUILLOTINE BFD
  */
 
-import { ChapaMaterial, PecaCorte, ResultadoOtimizacao, LayoutChapa, PecaPosicionada } from '../../domain/entities/CuttingPlan';
+import type {
+  ChapaMaterial,
+  PecaCorte,
+  ResultadoOtimizacao,
+  LayoutChapa,
+  PecaPosicionada,
+} from '../../domain/entities/CuttingPlan';
 
 self.onmessage = (e: MessageEvent) => {
   const { materiais, kerf_mm } = e.data;
