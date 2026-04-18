@@ -117,45 +117,41 @@ function AppContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardPage />;
+        return <ErrorBoundary moduleName="Dashboard"><DashboardPage /></ErrorBoundary>;
       case 'clients':
-        return <ClientsPage />;
+        return <ErrorBoundary moduleName="Clientes"><ClientsPage /></ErrorBoundary>;
       case 'estimates':
-        return <OrcamentosPage />;
+        return <ErrorBoundary moduleName="Orçamentos"><OrcamentosPage /></ErrorBoundary>;
       case 'projects':
-        return <ProjectsPage />;
+        return <ErrorBoundary moduleName="Projetos"><ProjectsPage /></ErrorBoundary>;
       case 'production':
-        return <ProductionPage />;
+        return <ErrorBoundary moduleName="Produção"><ProductionPage /></ErrorBoundary>;
       case 'visits':
-        return <VisitsPage />;
+        return <ErrorBoundary moduleName="Visitas"><VisitsPage /></ErrorBoundary>;
       case 'inventory':
-        return (
-          <ErrorBoundary moduleName="Estoque">
-            <InventoryPage />
-          </ErrorBoundary>
-        );
+        return <ErrorBoundary moduleName="Estoque"><InventoryPage /></ErrorBoundary>;
       case 'suppliers':
-        return <SuppliersPage />;
+        return <ErrorBoundary moduleName="Fornecedores"><SuppliersPage /></ErrorBoundary>;
       case 'engineering':
-        return <EngineeringPage />;
+        return <ErrorBoundary moduleName="Engenharia"><EngineeringPage /></ErrorBoundary>;
       case 'skus':
-        return <SKUsPage />;
+        return <ErrorBoundary moduleName="Catálogo SKUs"><SKUsPage /></ErrorBoundary>;
       case 'reports':
-        return <ReportsPage />;
+        return <ErrorBoundary moduleName="Relatórios"><ReportsPage /></ErrorBoundary>;
       case 'finance':
-        return <FinancePage />;
+        return <ErrorBoundary moduleName="Financeiro"><FinancePage /></ErrorBoundary>;
       case 'cutting_plan':
-        return <CuttingPlanPage />;
+        return <ErrorBoundary moduleName="Plano de Corte"><CuttingPlanPage /></ErrorBoundary>;
       case 'after_sales':
-        return <PosVendaPage />;
+        return <ErrorBoundary moduleName="Pós-Venda"><PosVendaPage /></ErrorBoundary>;
       case 'purchasing':
-        return <ComprasPage />;
+        return <ErrorBoundary moduleName="Compras"><ComprasPage /></ErrorBoundary>;
       case 'calendar':
-        return <CalendarioPage />;
+        return <ErrorBoundary moduleName="Calendário"><CalendarioPage /></ErrorBoundary>;
       case 'notifications':
-        return <NotificacoesPage />;
+        return <ErrorBoundary moduleName="Notificações"><NotificacoesPage /></ErrorBoundary>;
       case 'settings':
-        return <SettingsPage />;
+        return <ErrorBoundary moduleName="Configurações"><SettingsPage /></ErrorBoundary>;
       default:
         return null;
     }

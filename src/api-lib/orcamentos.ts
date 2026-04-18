@@ -40,7 +40,26 @@ export async function handleOrcamentos(req: any, res: any) {
       
       const num = `PRO-${dataStr}-REV${revNum}-${clientSuffix}`;
 
-      const orc = await sql`INSERT INTO orcamentos (cliente_id, projeto_id, numero, status, valor_base, taxa_mensal, condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos) VALUES (${f.cliente_id}, ${f.projeto_id || null}, ${num}, ${f.status || 'rascunho'}, ${f.valor_base}, ${f.taxa_mensal}, ${f.condicao_pagamento_id}, ${f.valor_final}, ${f.prazo_entrega_dias}, ${f.prazo_tipo || 'padrao'}, ${f.adicional_urgencia_pct}, ${f.observacoes}, ${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : '[]'}::jsonb) RETURNING *`;
+      const orc = await sql`
+        INSERT INTO orcamentos (
+          cliente_id, projeto_id, numero, status, valor_base, taxa_mensal, 
+          condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, 
+          adicional_urgencia_pct, observacoes, materiais_consumidos
+        ) VALUES (
+          ${f.cliente_id}, 
+          ${f.projeto_id || null}, 
+          ${num}, 
+          ${f.status || 'rascunho'}, 
+          ${Number(f.valor_base) || 0}, 
+          ${Number(f.taxa_mensal) || 0}, 
+          ${f.condicao_pagamento_id || null}, 
+          ${Number(f.valor_final) || 0}, 
+          ${Number(f.prazo_entrega_dias) || 45}, 
+          ${f.prazo_tipo || 'uteis'}, 
+          ${Number(f.adicional_urgencia_pct) || 0}, 
+          ${f.observacoes || ''}, 
+          ${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : '[]'}::jsonb
+        ) RETURNING *`;
       const orcId = orc[0].id;
       
       if (Array.isArray(f.itens)) {

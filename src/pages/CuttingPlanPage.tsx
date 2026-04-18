@@ -102,41 +102,59 @@ const CuttingPlanPage: React.FC = () => {
   const handleImportOrcamento = async (orcId: string) => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/orcamento-tecnico?orcamento_id=${orcId}`);
-      if (res.success && res.data) {
+      const tree = await api.orcamentoTecnico.getTree(orcId);
+      if (tree && Array.isArray(tree)) {
         const novosGrupos = [...grupos];
         const novasPecas = [...pecas];
-        for (const item of res.data) {
-          let grupo = novosGrupos.find(g => g.nomeMaterial === item.material || g.sku === item.material);
-          if (!grupo) {
-            grupo = {
-              id: Math.random().toString(36).substring(7),
-              materialId: item.material_id || '',
-              sku: item.material || 'CHP-MDF-PADRAO',
-              nomeMaterial: item.material || 'Material a Definir',
-              larguraChapaMm: 2750, alturaChapaMm: 1830, espessuraMm: 18, precoChapa: 0,
-              chapasAdicionaisManual: 0, retalhosDisponiveis: [], kerfMm: kerf
-            };
-            novosGrupos.push(grupo);
-          }
-          novasPecas.push({
-            id: Math.random().toString(36).substring(7),
-            descricao: item.descricao,
-            larguraMm: parseFloat(item.largura_cm) * 10,
-            alturaMm: parseFloat(item.altura_cm) * 10,
-            quantidade: item.quantidade,
-            podeRotacionar: true,
-            ambiente: item.ambiente,
-            movel: item.tipo,
-            grupoMaterialId: grupo.id
+
+        tree.forEach(ambiente => {
+          ambiente.moveis?.forEach((movel: any) => {
+            movel.pecas?.forEach((peca: any) => {
+              // Encontra ou cria o grupo de material
+              let grupo = novosGrupos.find(g => g.materialId === peca.material_id || g.sku === peca.sku);
+              if (!grupo) {
+                grupo = {
+                  id: Math.random().toString(36).substring(7),
+                  materialId: peca.material_id || '',
+                  sku: peca.sku || 'CHP-MDF-PADRAO',
+                  nomeMaterial: peca.descricao_material || 'Material a Definir',
+                  larguraChapaMm: 2750, 
+                  alturaChapaMm: 1830, 
+                  espessuraMm: 15, // Padrão
+                  precoChapa: 0,
+                  chapasAdicionaisManual: 0, 
+                  retalhosDisponiveis: [], 
+                  kerfMm: kerf
+                };
+                novosGrupos.push(grupo);
+              }
+
+              // Adiciona a peça com as dimensões e referências corretas
+              novasPecas.push({
+                id: Math.random().toString(36).substring(7),
+                descricao: peca.descricao_peca || 'Peça sem nome',
+                larguraMm: Number(peca.largura_cm) * 10,
+                alturaMm: Number(peca.altura_cm) * 10,
+                quantidade: Number(peca.quantidade),
+                podeRotacionar: peca.sentido_veio !== 'longitudinal' && peca.sentido_veio !== 'transversal',
+                ambiente: ambiente.nome,
+                movel: movel.nome,
+                grupoMaterialId: grupo.id
+              });
+            });
           });
-        }
+        });
+
         setGrupos(novosGrupos);
         setPecas(novasPecas);
         setShowImportModal(false);
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    } catch (e) { 
+      console.error("Erro ao importar orçamento", e);
+      alert("Falha ao importar orçamento. Verifique o console.");
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleExportCSV = () => {

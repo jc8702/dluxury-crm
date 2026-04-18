@@ -1,4 +1,5 @@
-import React, {有效, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 import { CheckSquare, ArrowLeft, ArrowRight, Edit2, Play, CheckCircle2, Trash2, Plus, X } from 'lucide-react';
 
@@ -31,11 +32,10 @@ const ProductionPanel: React.FC = () => {
 
   const fetchOPs = async () => {
     try {
-      const res = await fetch('/api/production');
-      const json = await res.json();
-      if (json.success) setOps(json.data);
+      const data = await api.production.list();
+      setOps(data || []);
     } catch (e) {
-      console.error('Erro ao buscar Ordens de Produção');
+      console.error('Erro ao buscar Ordens de Produção', e);
     } finally {
       setLoading(false);
     }
@@ -68,34 +68,25 @@ const ProductionPanel: React.FC = () => {
     if (novoStatus === op.status) return;
 
     try {
-      const res = await fetch('/api/production', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ op_id: op.op_id, status: novoStatus })
-      });
-      const json = await res.json();
-      if (json.success) {
-        setOps(prev => prev.map(o => o.op_id === op.op_id ? json.data : o));
+      const updated = await api.production.updateStatus(op.op_id, novoStatus);
+      if (updated) {
+        setOps(prev => prev.map(o => o.op_id === op.op_id ? updated : o));
       }
-    } catch (e) {
-      console.error('Erro ao atualizar status da OP');
+    } catch (e: any) {
+      console.error('Erro ao atualizar status da OP', e);
+      alert("Erro ao atualizar status: " + e.message);
     }
   };
 
   const saveOPDetails = async (updatedOP: OrdemProducao) => {
     try {
-      const res = await fetch('/api/production?id=details', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedOP)
-      });
-      const json = await res.json();
-      if (json.success) {
-        setOps(prev => prev.map(o => o.op_id === updatedOP.op_id ? json.data : o));
+      const saved = await api.production.updateDetails(updatedOP);
+      if (saved) {
+        setOps(prev => prev.map(o => o.op_id === updatedOP.op_id ? saved : o));
         setEditingOP(null);
       }
-    } catch (e) {
-      alert("Erro ao salvar detalhes");
+    } catch (e: any) {
+      alert("Erro ao salvar detalhes: " + e.message);
     }
   };
 

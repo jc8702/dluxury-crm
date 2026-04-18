@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { sql } from './src/api-lib/_db.js';
 
 async function checkSchema() {

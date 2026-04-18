@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { api } from '../../lib/api';
 
 interface Metrics {
   totalOPs: number;
@@ -16,11 +17,10 @@ const ProductionDashboard: React.FC = () => {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('/api/production/metrics');
-      const json = await res.json();
-      if (json.success) setMetrics(json.data);
+      const data = await api.production.getMetrics();
+      setMetrics(data);
     } catch (e) {
-      console.error('Erro ao buscar métricas de produção');
+      console.error('Erro ao buscar métricas de produção', e);
     } finally {
       setLoading(false);
     }

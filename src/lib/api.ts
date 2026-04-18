@@ -22,6 +22,10 @@ export async function apiCall<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  if (import.meta.env.DEV) {
+    console.log(`[API REQUEST] ${method} ${url}`, body);
+  }
+
   const res = await fetch(url, {
     method,
     headers,
@@ -30,14 +34,23 @@ export async function apiCall<T>(
 
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
+    console.error(`[API ERROR] ${method} ${url}:`, json);
     throw new Error(json.error || json.message || `HTTP ${res.status}`);
   }
 
   const json: any = await res.json();
   
+  // Log de auditoria para ambiente dev
+  if (import.meta.env.DEV) {
+    console.log(`[API RESPONSE] ${method} ${action}:`, json);
+  }
+
   // Se a resposta seguir o padrão { success, data }, retornamos apenas o data
-  if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
-    return json.data;
+  if (json && typeof json === 'object' && 'success' in json) {
+    if (json.success === false) {
+      throw new Error(json.error || json.message || 'Erro desconhecido na API');
+    }
+    return json.data === undefined ? json : json.data;
   }
 
   return json;
@@ -124,6 +137,12 @@ export const api = {
   skus: {
     list: () => apiCall<any[]>('skus'),
     create: (data: any) => apiCall<any>('skus', 'POST', data),
+  },
+  production: {
+    list: () => apiCall<any[]>('production'),
+    updateStatus: (op_id: string, status: string) => apiCall<any>('production', 'PATCH', { op_id, status }),
+    updateDetails: (data: any) => apiCall<any>('production?id=details', 'PATCH', data),
+    getMetrics: () => apiCall<any>('production/metrics'),
   },
   reports: {
     get: (type: string, projectId?: string) => apiCall<any[]>(`reports?type=${type}${projectId ? `&projectId=${projectId}` : ''}`),

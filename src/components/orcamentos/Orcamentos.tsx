@@ -73,6 +73,18 @@ const Estimates: React.FC = () => {
     setSkuSearch(mat.sku);
   };
 
+  const loadHistory = async () => {
+    try {
+      setLoading(true);
+      const data = await api.orcamentos.list();
+      setOrcamentosList(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      console.error("Erro ao carregar histórico", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadForEdit = async (orcId: string) => {
     try {
       setLoading(true);
