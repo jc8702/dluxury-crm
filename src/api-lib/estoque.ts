@@ -50,7 +50,7 @@ export async function handleEstoque(req: any, res: any) {
       }
       if (method === 'DELETE') {
         const { user } = extractAndVerifyToken(req);
-        if (user?.role !== 'admin') return res.status(403).json({ success: false, error: 'Acesso negado' });
+        if (!user) return res.status(401).json({ success: false, error: 'Não autorizado' });
         await sql`UPDATE fornecedores SET ativo = false WHERE id = ${id}`;
         return res.status(200).json({ success: true });
       }

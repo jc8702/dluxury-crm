@@ -103,6 +103,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                     </div>
                   )}
 
+                  {/* Detalhes específicos de Visita */}
+                  {(item as any).visitDate && (
+                    <div style={{ fontSize: '0.7rem', color: '#d4af37', marginTop: '0.4rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      🗓️ {new Date((item as any).visitDate).toLocaleDateString('pt-BR')} {(item as any).visitTime && ` às ${(item as any).visitTime}`}
+                    </div>
+                  )}
+
+                  {(item as any).visitType && (
+                    <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.2rem' }}>
+                      { (item as any).visitType }
+                    </div>
+                  )}
+
                   {item.visitFormat && (
                     <div style={{ 
                       fontSize: '0.6rem', 
@@ -125,6 +138,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                           {b}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Valor do Item (Projeto) */}
+                  {(item as any).value > 0 && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 'bold', 
+                      color: '#d4af37',
+                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                      paddingTop: '0.5rem'
+                    }}>
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((item as any).value)}
                     </div>
                   )}
 

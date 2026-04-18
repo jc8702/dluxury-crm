@@ -688,6 +688,21 @@ const Estimates: React.FC = () => {
                         </button>
                         <button 
                           onClick={async () => {
+                            if (confirm(`Deseja realmente excluir o orçamento ${orc.numero}?`)) {
+                              try {
+                                await api.orcamentos.delete(orc.id);
+                                loadHistory();
+                              } catch (e) {
+                                alert("Erro ao excluir orçamento.");
+                              }
+                            }
+                          }}
+                          style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          🗑️ Excluir
+                        </button>
+                        <button 
+                          onClick={async () => {
                             const detail = await api.orcamentos.get(orc.id);
                             // Simula o estado para o PDF generator
                             const docItems = detail.itens.map((it: any) => ({

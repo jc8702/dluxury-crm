@@ -70,7 +70,18 @@ export async function handleKanban(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM kanban_items ORDER BY updated_at DESC`;
+      const result = await sql`
+        SELECT 
+          k.*,
+          o.valor_final as valor_orcamento_atual
+        FROM kanban_items k
+        LEFT JOIN (
+          SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+          FROM orcamentos
+          ORDER BY projeto_id, criado_em DESC
+        ) o ON k.id::text = o.projeto_id::text
+        ORDER BY k.updated_at DESC
+      `;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {

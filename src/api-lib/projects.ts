@@ -8,7 +8,43 @@ export async function handleProjects(req: any, res: any) {
     if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
       const { client_id, status } = req.query;
-      const result = client_id ? await sql`SELECT * FROM projects WHERE client_id = ${client_id} ORDER BY created_at DESC` : status ? await sql`SELECT * FROM projects WHERE status = ${status} ORDER BY created_at DESC` : await sql`SELECT * FROM projects ORDER BY updated_at DESC`;
+      
+      const query = client_id 
+        ? sql`
+            SELECT p.*, o.valor_final as valor_orcamento_atual
+            FROM projects p
+            LEFT JOIN (
+              SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+              FROM orcamentos
+              ORDER BY projeto_id, criado_em DESC
+            ) o ON p.id::text = o.projeto_id::text
+            WHERE p.client_id = ${client_id}
+            ORDER BY p.created_at DESC
+          `
+        : status 
+          ? sql`
+              SELECT p.*, o.valor_final as valor_orcamento_atual
+              FROM projects p
+              LEFT JOIN (
+                SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+                FROM orcamentos
+                ORDER BY projeto_id, criado_em DESC
+              ) o ON p.id::text = o.projeto_id::text
+              WHERE p.status = ${status}
+              ORDER BY p.created_at DESC
+            `
+          : sql`
+              SELECT p.*, o.valor_final as valor_orcamento_atual
+              FROM projects p
+              LEFT JOIN (
+                SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+                FROM orcamentos
+                ORDER BY projeto_id, criado_em DESC
+              ) o ON p.id::text = o.projeto_id::text
+              ORDER BY p.updated_at DESC
+            `;
+
+      const result = await query;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {

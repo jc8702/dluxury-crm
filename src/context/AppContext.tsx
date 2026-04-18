@@ -595,7 +595,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         clientName: p.subtitle || '',
         ambiente: p.title || '',
         descricao: p.description || p.observations || '',
-        valorEstimado: p.value,
+        valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : p.value,
         status: mapLegacyStatus(p.status),
         observacoes: p.observations || '',
       })));
@@ -906,6 +906,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const removeFornecedor = async (id: string) => {
     await api.estoque.fornecedores.delete(id);
     setFornecedores(prev => prev.filter(f => f.id !== id));
+    await reloadData();
   };
 
   // ─── ORCAMENTO CRUD ────────────────────────────────────

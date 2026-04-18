@@ -29,7 +29,11 @@ const FornecedoresPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Excluir este fornecedor?')) {
-      await removeFornecedor(id);
+      try {
+        await removeFornecedor(id);
+      } catch (e: any) {
+        alert("Erro ao excluir fornecedor: " + (e.message || "Acesso negado"));
+      }
     }
   };
 
