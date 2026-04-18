@@ -81,6 +81,40 @@ export const api = {
     update: (id: string, data: any) => apiCall<any>(`projects?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`projects?id=${id}`, 'DELETE'),
   },
+  compras: {
+    listPedidos: () => apiCall<any[]>('compras?type=pedidos'),
+    getPedido: (id: string) => apiCall<any>(`compras?type=pedidos&id=${id}`),
+    createPedido: (data: any) => apiCall<any>('compras?type=pedidos', 'POST', data),
+    updatePedido: (id: string, data: any) => apiCall<any>(`compras?type=pedidos&id=${id}`, 'PATCH', data),
+    addItem: (data: any) => apiCall<any>('compras?type=itens', 'POST', data),
+    removeItem: (id: string) => apiCall<any>(`compras?type=itens&id=${id}`, 'DELETE'),
+    registrarRecebimento: (data: any) => apiCall<any>('compras?type=recebimento', 'POST', data),
+    getSugestoes: () => apiCall<any[]>('compras?type=sugestao'),
+    getHistoricoPrecos: (materialId: string) => apiCall<any[]>(`compras?type=historico_precos&material_id=${materialId}`),
+  },
+  aprovacao: {
+    gerarLink: (orcamentoId: string) => apiCall<any>('aprovacao?action=gerar', 'POST', { orcamento_id: orcamentoId }),
+    getPublico: (token: string) => apiCall<any>(`aprovacao?token=${token}`),
+    aprovar: (token: string, data: { nome: string }) => apiCall<any>(`aprovacao?token=${token}&action=aprovar`, 'POST', data),
+    recusar: (token: string, data: { motivo: string }) => apiCall<any>(`aprovacao?token=${token}&action=recusar`, 'POST', data),
+  },
+  agenda: {
+    list: (params: any = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return apiCall<any[]>(`agenda?${qs}`);
+    },
+    create: (data: any) => apiCall<any>('agenda', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`agenda?id=${id}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`agenda?id=${id}`, 'DELETE'),
+    syncVisitas: () => apiCall<any>('agenda?action=sincronizar', 'POST'),
+  },
+  notificacoes: {
+    list: (unreadOnly = false) => apiCall<any[]>(`notificacoes?unread=${unreadOnly}`),
+    getCount: () => apiCall<number>('notificacoes?action=contar'),
+    markRead: (id: string) => apiCall<any>(`notificacoes?id=${id}`, 'PUT'),
+    markAllRead: () => apiCall<any>('notificacoes?action=marcar-todas', 'PUT'),
+    generate: () => apiCall<any>('notificacoes?action=gerar', 'POST'),
+  },
   engineering: {
     list: () => apiCall<any[]>('engineering'),
     create: (data: any) => apiCall<any>('engineering', 'POST', data),
@@ -138,9 +172,8 @@ export const api = {
     detectAnomalies: () => apiCall<any>('ai-copilot', 'POST', { skill: 'detect-anomalies' }),
   },
   cuttingPlan: {
-    list: () => apiCall<any[]>('after-sales'), // Oops, cutting plan doesn't have a dedicated handler yet in my code, I should add it. Wait.
-    calculate: (pecas: any[], chapa: any) => { /* Client-side calculation by default */ },
-    save: (data: any) => apiCall<any>('production?type=cutting_plan', 'POST', data), // Reusing production handler
+    list: () => apiCall<any[]>('production?type=cutting_plan_list'),
+    save: (data: any) => apiCall<any>('production?type=cutting_plan', 'POST', data),
   },
   afterSales: {
     list: () => apiCall<any[]>('after-sales'),

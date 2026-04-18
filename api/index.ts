@@ -8,6 +8,10 @@ import { handleAICopilot } from '../src/api-lib/copilot.js';
 import { handleProjects, handleReports, handleEngineering, handleSKUs, handleSimulations } from '../src/api-lib/projects.js';
 import { handleProduction } from '../src/api-lib/production.js';
 import { handleAfterSales } from '../src/api-lib/after_sales.js';
+import { handleCompras } from '../src/api-lib/compras.js';
+import { handleAprovacao } from '../src/api-lib/aprovacao.js';
+import { handleAgenda } from '../src/api-lib/agenda.js';
+import { handleNotificacoes } from '../src/api-lib/notificacoes.js';
 
 export default async function handler(req: any, res: any) {
   // CORS Setup
@@ -44,6 +48,12 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/simulations')) return await handleSimulations(req, res);
     if (cleanUrl.startsWith('/api/after-sales')) return await handleAfterSales(req, res);
     if (cleanUrl.startsWith('/api/users')) return await handleUsers(req, res);
+    
+    // Novas rotas ERP
+    if (cleanUrl.startsWith('/api/compras')) return await handleCompras(req, res);
+    if (cleanUrl.startsWith('/api/aprovacao')) return await handleAprovacao(req, res);
+    if (cleanUrl.startsWith('/api/agenda')) return await handleAgenda(req, res);
+    if (cleanUrl.startsWith('/api/notificacoes')) return await handleNotificacoes(req, res);
     
     if (cleanUrl.startsWith('/api/init-db')) {
       await runInitDB();

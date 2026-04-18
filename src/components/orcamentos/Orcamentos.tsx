@@ -7,7 +7,7 @@ import {
   FileText, Plus, Search, Filter, 
   Trash2, Edit2, ChevronRight, X, 
   Save, Download, Calculator, Hammer,
-  MessageSquare, FileDown
+  MessageSquare, FileDown, Send, CheckCircle2, Link as LinkIcon
 } from 'lucide-react';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
@@ -104,21 +104,26 @@ const Estimates: React.FC = () => {
     }
   };
 
-  const loadHistory = async () => {
-    try {
-      setLoading(true);
-      const data = await api.orcamentos.list();
-      setOrcamentosList(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error("Error loading history", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
+  useEffect(() => {
     loadHistory();
   }, []);
+
+  const handleGenerateLink = async (orcId: string) => {
+    try {
+      const res = await api.aprovacao.gerarLink(orcId);
+      await loadHistory();
+      
+      const link = res.url_aprovacao;
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(link);
+        alert(`Link de aprovação gerado e copiado para a área de transferência!\n\n${link}`);
+      } else {
+        alert(`Link geratedo:\n${link}`);
+      }
+    } catch (e: any) {
+      alert("Erro ao gerar link: " + e.message);
+    }
+  };
 
   const saveBudget = async () => {
     if (!selectedClient) {
@@ -679,13 +684,56 @@ const Estimates: React.FC = () => {
                       }}>{orc.status}</span>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button 
                           onClick={() => loadForEdit(orc.id)}
-                          style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                          title="Editar"
+                          style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
                         >
-                          ✏️ Editar
+                          <Edit2 size={16} />
                         </button>
+                        
+                        {!orc.token_aprovacao ? (
+                           <button 
+                             onClick={() => handleGenerateLink(orc.id)}
+                             title="Gerar Link de Aprovação"
+                             style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.2)', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
+                           >
+                             <Send size={16} />
+                           </button>
+                        ) : (
+                           <button 
+                             onClick={() => handleGenerateLink(orc.id)}
+                             title="Copiar Link Existente"
+                             style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
+                           >
+                             <LinkIcon size={16} />
+                           </button>
+                        )}
+
+                        <button 
+                          onClick={async () => {
+                            const detail = await api.orcamentos.get(orc.id);
+                            const docItems = detail.itens.map((it: any) => ({
+                              id: it.id,
+                              name: it.descricao,
+                              quantity: it.quantity || it.quantidade,
+                              width: it.largura_cm,
+                              height: it.altura_cm,
+                              depth: it.profundidade_cm,
+                              woodType: it.material,
+                              woodPrice: it.valor_unitario / 2,
+                              laborHours: 0,
+                              laborRate: 0
+                            }));
+                            generatePDF_Export(docItems, orc.cliente_nome, orc.numero, orc.valor_final, orc.observacoes);
+                          }}
+                          title="PDF"
+                          style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,b255,255,0.1)', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          <FileDown size={16} />
+                        </button>
+
                         <button 
                           onClick={async () => {
                             if (confirm(`Deseja realmente excluir o orçamento ${orc.numero}?`)) {
@@ -697,32 +745,10 @@ const Estimates: React.FC = () => {
                               }
                             }
                           }}
-                          style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                          title="Excluir"
+                          style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
                         >
-                          🗑️ Excluir
-                        </button>
-                        <button 
-                          onClick={async () => {
-                            const detail = await api.orcamentos.get(orc.id);
-                            // Simula o estado para o PDF generator
-                            const docItems = detail.itens.map((it: any) => ({
-                              id: it.id,
-                              name: it.descricao,
-                              quantity: it.quantidade,
-                              width: it.largura_cm,
-                              height: it.altura_cm,
-                              depth: it.profundidade_cm,
-                              woodType: it.material,
-                              woodPrice: it.valor_unitario / 2,
-                              laborHours: 0,
-                              laborRate: 0
-                            }));
-                            // Chamada manual do PDF core
-                            generatePDF_Export(docItems, orc.cliente_nome, orc.numero, orc.valor_final, orc.observacoes);
-                          }}
-                          style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
-                        >
-                          📄 PDF
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>

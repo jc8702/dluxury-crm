@@ -5,10 +5,11 @@ import {
   LayoutDashboard, Users, FileText, ClipboardList, 
   Hammer, Scissors, Calendar, Package, 
   Truck, Settings2, DraftingCompass, BarChart3, 
-  DollarSign, Settings, HeartHandshake, LogOut 
+  DollarSign, Settings, HeartHandshake, LogOut, 
+  ShoppingCart, CalendarDays, Bell
 } from 'lucide-react';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales' | 'purchasing' | 'calendar' | 'notifications';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -26,9 +27,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'production', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'] },
     { id: 'cutting_plan', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'] },
     { id: 'visits', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'calendar', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
     { id: 'after_sales', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'] },
     { id: 'inventory', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'] },
     { id: 'suppliers', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'] },
+    { id: 'purchasing', label: 'Compras', icon: <ShoppingCart size={20} />, roles: ['admin'] },
+    { id: 'notifications', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
     { id: 'engineering', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'] },
     { id: 'skus', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'] },
     { id: 'reports', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'] },

@@ -69,7 +69,7 @@ export interface Orcamento {
   cliente_id: string;
   projeto_id?: string;
   numero: string;
-  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'em_producao' | 'concluido';
+  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'em_producao' | 'concluido' | 'revisao_solicitada';
   valor_base: number;
   taxa_mensal: number;
   condicao_pagamento_id?: string;
@@ -79,6 +79,13 @@ export interface Orcamento {
   adicional_urgencia_pct?: number;
   observacoes?: string;
   materiais_consumidos?: any;
+  token_aprovacao?: string;
+  url_aprovacao?: string;
+  aprovado_em?: string;
+  aprovado_ip?: string;
+  aprovado_nome?: string;
+  recusado_em?: string;
+  motivo_recusa?: string;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -141,4 +148,77 @@ export interface ERPSubfamily {
   nome: string;
   familia_id: string;
   ativo: boolean;
+}
+
+export interface PedidoCompra {
+  id: string;
+  numero: string;
+  fornecedor_id: string;
+  status: 'rascunho' | 'enviado' | 'confirmado' | 'parcialmente_recebido' | 'recebido' | 'cancelado';
+  data_pedido: string;
+  data_previsao_entrega?: string;
+  data_recebimento?: string;
+  valor_total: number;
+  frete: number;
+  observacoes?: string;
+  origem: 'manual' | 'sugestao_estoque';
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface ItemPedidoCompra {
+  id: string;
+  pedido_id: string;
+  material_id: string;
+  sku: string;
+  descricao: string;
+  quantidade_pedida: number;
+  quantidade_recebida: number;
+  unidade: string;
+  preco_unitario: number;
+  subtotal: number;
+  status_item: 'pendente' | 'parcial' | 'recebido';
+}
+
+export interface RecebimentoCompra {
+  id: string;
+  pedido_id: string;
+  item_id: string;
+  quantidade_recebida: number;
+  data_recebimento: string;
+  nota_fiscal?: string;
+  observacao?: string;
+}
+
+export interface EventoAgenda {
+  id: string;
+  titulo: string;
+  tipo: 'visita_comercial' | 'medicao' | 'entrega' | 'instalacao' | 'garantia' | 'reuniao' | 'outro';
+  data_inicio: string;
+  data_fim?: string;
+  dia_inteiro: boolean;
+  cliente_id?: string;
+  projeto_id?: string;
+  visita_id?: string;
+  chamado_id?: string;
+  responsavel: string;
+  local?: string;
+  observacoes?: string;
+  status: 'agendado' | 'confirmado' | 'realizado' | 'cancelado';
+  cor?: string;
+  criado_em?: string;
+}
+
+export interface Notificacao {
+  id: string;
+  tipo: 'estoque_critico' | 'prazo_projeto' | 'orcamento_sem_resposta' | 'garantia_pendente' | 'compra_atrasada' | 'meta_mensal';
+  titulo: string;
+  mensagem: string;
+  prioridade: 'info' | 'normal' | 'alta' | 'critica';
+  lida: boolean;
+  data_leitura?: string;
+  referencia_tipo?: 'orcamento' | 'projeto' | 'material' | 'chamado';
+  referencia_id?: string;
+  url_destino?: string;
+  criado_em?: string;
 }

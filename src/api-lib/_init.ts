@@ -369,5 +369,100 @@ export async function runInitDB() {
       criado_em TIMESTAMPTZ DEFAULT NOW()
     )`.catch(() => {});
 
-  return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy and MES support' };
+  // 16. Purchasing Tables
+  await sql`
+    CREATE TABLE IF NOT EXISTS pedidos_compra (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      numero TEXT UNIQUE NOT NULL,
+      fornecedor_id UUID REFERENCES fornecedores(id),
+      status TEXT DEFAULT 'rascunho',
+      data_pedido TIMESTAMPTZ DEFAULT NOW(),
+      data_previsao_entrega TIMESTAMPTZ,
+      data_recebimento TIMESTAMPTZ,
+      valor_total NUMERIC(10,2) DEFAULT 0,
+      frete NUMERIC(10,2) DEFAULT 0,
+      observacoes TEXT,
+      origem TEXT DEFAULT 'manual',
+      criado_em TIMESTAMPTZ DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+    )
+  `.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS pedido_compra_itens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      pedido_id UUID REFERENCES pedidos_compra(id) ON DELETE CASCADE,
+      material_id UUID REFERENCES materiais(id),
+      sku TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      quantidade_pedida NUMERIC(10,4) NOT NULL,
+      quantidade_recebida NUMERIC(10,4) DEFAULT 0,
+      unidade TEXT NOT NULL,
+      preco_unitario NUMERIC(10,2) NOT NULL,
+      subtotal NUMERIC(10,2),
+      status_item TEXT DEFAULT 'pendente'
+    )
+  `.catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS recebimentos_compra (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      pedido_id UUID REFERENCES pedidos_compra(id),
+      item_id UUID REFERENCES pedido_compra_itens(id),
+      quantidade_recebida NUMERIC(10,4) NOT NULL,
+      data_recebimento TIMESTAMPTZ DEFAULT NOW(),
+      nota_fiscal TEXT,
+      observacao TEXT
+    )
+  `.catch(() => {});
+
+  // 17. Digital Approval Migrations
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS token_aprovacao TEXT UNIQUE`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS url_aprovacao TEXT`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS aprovado_em TIMESTAMPTZ`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS aprovado_ip TEXT`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS aprovado_nome TEXT`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS recusado_em TIMESTAMPTZ`.catch(() => {});
+  await sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS motivo_recusa TEXT`.catch(() => {});
+
+  // 18. Calendar Table
+  await sql`
+    CREATE TABLE IF NOT EXISTS eventos_agenda (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      titulo TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      data_inicio TIMESTAMPTZ NOT NULL,
+      data_fim TIMESTAMPTZ,
+      dia_inteiro BOOLEAN DEFAULT FALSE,
+      cliente_id UUID REFERENCES clients(id),
+      projeto_id UUID REFERENCES projects(id),
+      visita_id UUID REFERENCES kanban_items(id), -- Linked to visit kanban item
+      chamado_id UUID REFERENCES chamados_garantia(id),
+      responsavel TEXT NOT NULL,
+      local TEXT,
+      observacoes TEXT,
+      status TEXT DEFAULT 'agendado',
+      cor TEXT,
+      criado_em TIMESTAMPTZ DEFAULT NOW()
+    )
+  `.catch(() => {});
+
+  // 19. Notifications Table
+  await sql`
+    CREATE TABLE IF NOT EXISTS notificacoes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tipo TEXT NOT NULL,
+      titulo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      prioridade TEXT DEFAULT 'normal',
+      lida BOOLEAN DEFAULT FALSE,
+      data_leitura TIMESTAMPTZ,
+      referencia_tipo TEXT,
+      referencia_id UUID,
+      url_destino TEXT,
+      criado_em TIMESTAMPTZ DEFAULT NOW()
+    )
+  `.catch(() => {});
+
+  return { success: true, message: 'D\'Luxury CRM database initialized with industrial taxonomy, MES support and new ERP modules' };
 }

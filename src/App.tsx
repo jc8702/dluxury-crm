@@ -4,6 +4,8 @@ import { AppProvider, useAppContext } from './context/AppContext';
 import CopilotAssistant from './components/ai/CopilotAssistant';
 import Login from './components/auth/Login';
 import ErrorBoundary from './components/ErrorBoundaries';
+import NotificationBell from './components/ui/NotificationBell';
+import { api } from './lib/api';
 
 // Importando da nova camada de Pages
 import DashboardPage from './pages/DashboardPage';
@@ -21,8 +23,12 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import CuttingPlanPage from './pages/CuttingPlanPage';
 import PosVendaPage from './pages/PosVendaPage';
+import ComprasPage from './pages/ComprasPage';
+import CalendarioPage from './pages/CalendarioPage';
+import NotificacoesPage from './pages/NotificacoesPage';
+import AprovacaoPage from './pages/AprovacaoPage';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales' | 'purchasing' | 'calendar' | 'notifications';
 
 function App() {
   return (
@@ -61,10 +67,17 @@ function ThemeToggle() {
 function AppContent() {
   const { user, setUser } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [isPublicRoute, setIsPublicRoute] = useState(false);
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/aprovar/')) {
+      setIsPublicRoute(true);
+    }
+  }, []);
 
   // Bypass temporário de Login para acesso direto
   useEffect(() => {
-    if (!user) {
+    if (!user && !isPublicRoute) {
       setUser({
         id: 'bypass-id',
         name: 'Acesso Direto (Admin)',
@@ -72,7 +85,13 @@ function AppContent() {
         role: 'admin'
       });
     }
-  }, [user, setUser]);
+  }, [user, setUser, isPublicRoute]);
+
+  useEffect(() => {
+    if (user) {
+      api.notificacoes.generate().catch(console.error);
+    }
+  }, [user]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -108,12 +127,23 @@ function AppContent() {
         return <CuttingPlanPage />;
       case 'after_sales':
         return <PosVendaPage />;
+      case 'purchasing':
+        return <ComprasPage />;
+      case 'calendar':
+        return <CalendarioPage />;
+      case 'notifications':
+        return <NotificacoesPage />;
       case 'settings':
         return <SettingsPage />;
       default:
         return null;
     }
   };
+
+  if (isPublicRoute) {
+    const token = window.location.pathname.split('/aprovar/')[1];
+    return <AprovacaoPage token={token} />;
+  }
 
   if (!user) {
     return <Login />;
@@ -129,11 +159,28 @@ function AppContent() {
         background: 'var(--background-gradient)',
         position: 'relative'
       }}>
+        {/* Topbar with NotificationBell */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: '1rem 2.5rem 0',
+          pointerEvents: 'none',
+          height: '60px',
+          alignItems: 'center'
+        }}>
+          <div style={{ pointerEvents: 'auto' }}>
+            <NotificationBell />
+          </div>
+        </div>
+
         <div style={{ 
           maxWidth: '1400px', 
           margin: '0 auto', 
-          padding: '2rem 2.5rem',
-          minHeight: '100%'
+          padding: '0 2.5rem 2rem',
+          minHeight: 'calc(100% - 60px)'
         }}>
           {renderContent()}
         </div>

@@ -11,6 +11,8 @@ export interface KanbanItem {
   visitFormat?: string;
   description?: string;
   badges?: string[];
+  phone?: string;
+  city?: string;
 }
 
 interface KanbanBoardProps {
@@ -97,6 +99,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                   </div>
                   {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
                   
+                  {(item.phone || item.city) && (
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
+                      {item.phone && <span>📞 {item.phone}</span>}
+                      {item.city && <span>📍 {item.city}</span>}
+                    </div>
+                  )}
+
                   {item.dateTime && (
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       📅 {new Date(item.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
