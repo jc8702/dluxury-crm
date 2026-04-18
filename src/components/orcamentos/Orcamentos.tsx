@@ -545,8 +545,13 @@ const Estimates: React.FC = () => {
               {skuResults.length > 0 && (
                 <div style={{ background: '#1a1a1a', borderRadius: '8px', marginTop: '0.5rem', border: '1px solid var(--border)' }}>
                   {skuResults.map(res => (
-                    <div key={res.id} onClick={() => selectSKU(res)} style={{ padding: '0.75rem', borderBottom: '1px solid #333', cursor: 'pointer', fontSize: '0.85rem' }}>
-                      <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{res.sku}</span> - {res.nome}
+                    <div key={res.id} onClick={() => selectSKU(res)} style={{ padding: '0.75rem', borderBottom: '1px solid #333', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{res.sku}</span> - {res.nome}
+                      </div>
+                      <span style={{ fontSize: '0.65rem', background: res.categoria_nome === 'Módulo de Engenharia' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', color: res.categoria_nome === 'Módulo de Engenharia' ? '#3b82f6' : '#10b981', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                        {res.categoria_nome?.toUpperCase()}
+                      </span>
                     </div>
                   ))}
                 </div>
