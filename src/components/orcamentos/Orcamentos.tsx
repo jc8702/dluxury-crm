@@ -449,6 +449,14 @@ const Estimates: React.FC = () => {
               🗑️ Limpar Rascunho
             </button>
           )}
+          <button onClick={() => setShowItemForm(true)}
+            style={{
+              marginLeft: 'auto', background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
+              border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '800',
+              display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}>
+            ➕ Adicionar Móvel / Item
+          </button>
         </div>
       </div>
 
