@@ -69,19 +69,21 @@ export async function handlePlanoCorte(req: any, res: any) {
             `;
           }
 
-          // Inserir resultados de posicionamento (Bulk)
-          if (resPos.length > 0) {
+          // Inserir resultados de posicionamento (Individual devido a limitações do driver serverless)
+          for (const p of resPos) {
             await sql`
               INSERT INTO plano_corte_resultado 
-              ${sql(resPos, 'plano_id', 'grupo_material_id', 'numero_chapa', 'peca_id', 'pos_x_mm', 'pos_y_mm', 'largura_final_mm', 'altura_final_mm', 'rotacionada', 'e_retalho', 'retalho_id', 'area_m2', 'custo_proporcional')}
+              (plano_id, grupo_material_id, numero_chapa, peca_id, pos_x_mm, pos_y_mm, largura_final_mm, altura_final_mm, rotacionada, e_retalho, retalho_id, area_m2, custo_proporcional)
+              VALUES (${pid}, ${p.grupo_material_id}, ${p.numero_chapa}, ${p.peca_id}, ${p.pos_x_mm}, ${p.pos_y_mm}, ${p.largura_final_mm}, ${p.altura_final_mm}, ${p.rotacionada}, ${p.e_retalho}, ${p.retalho_id}, ${p.area_m2}, ${p.custo_proporcional})
             `;
           }
 
-          // Inserir sobras (Bulk)
-          if (sobRes.length > 0) {
+          // Inserir sobras (Individual)
+          for (const s of sobRes) {
             await sql`
               INSERT INTO plano_sobras
-              ${sql(sobRes, 'plano_id', 'grupo_material_id', 'numero_chapa', 'pos_x_mm', 'pos_y_mm', 'largura_mm', 'altura_mm', 'area_m2', 'aproveitavel')}
+              (plano_id, grupo_material_id, numero_chapa, pos_x_mm, pos_y_mm, largura_mm, altura_mm, area_m2, aproveitavel)
+              VALUES (${pid}, ${s.grupo_material_id}, ${s.numero_chapa}, ${s.pos_x_mm}, ${s.pos_y_mm}, ${s.largura_mm}, ${s.altura_mm}, ${s.area_m2}, ${s.aproveitavel})
             `;
           }
         });
@@ -132,11 +134,15 @@ export async function handlePlanoCorte(req: any, res: any) {
       case 'salvar_sobras_como_retalho':
         const { sobras } = req.body;
         if (sobras.length > 0) {
-          const inserted = await sql`
-            INSERT INTO retalhos_estoque (material_id, sku, largura_mm, altura_mm, espessura_mm, origem)
-            VALUES ${sql(sobras.map((s: any) => [s.material_id, s.sku, s.largura_mm, s.altura_mm, s.espessura_mm, s.origem]))}
-            RETURNING *
-          `;
+          const inserted: any[] = [];
+          for (const s of sobras) {
+            const [retalho] = await sql`
+              INSERT INTO retalhos_estoque (material_id, sku, largura_mm, altura_mm, espessura_mm, origem)
+              VALUES (${s.material_id}, ${s.sku}, ${s.largura_mm}, ${s.altura_mm}, ${s.espessura_mm}, ${s.origem})
+              RETURNING *
+            `;
+            inserted.push(retalho);
+          }
           // Marcar sobras como convertidas
           const ids = sobras.map((s: any) => s.sobra_id).filter(Boolean);
           if (ids.length > 0) {

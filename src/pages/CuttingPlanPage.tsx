@@ -162,10 +162,8 @@ const CuttingPlanPage: React.FC = () => {
   const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
 
   return (
-    <div className="flex h-screen bg-[#0D2137] text-white overflow-hidden">
-      <Sidebar />
+    <div className="flex flex-col h-full bg-[#0D2137] text-white overflow-hidden p-0">
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header title="Plano de Corte Industrial" subtitle={plano?.nome || 'Rascunho'} />
         <div className="px-6 py-3 bg-[#162a45] border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <input 

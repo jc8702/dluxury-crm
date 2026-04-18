@@ -88,6 +88,27 @@ function AppContent() {
   }, [user, setUser, isPublicRoute]);
 
   useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#/', '');
+      if (hash && hash !== activeTab) {
+        setActiveTab(hash as any);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Initial check
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab) {
+      window.location.hash = `#/${activeTab}`;
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (user) {
       api.notificacoes.generate().catch(console.error);
     }

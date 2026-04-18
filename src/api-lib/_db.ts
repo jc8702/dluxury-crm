@@ -1,11 +1,13 @@
 import { neon } from '@neondatabase/serverless';
 
-const dbUrl = process.env.DATABASE_URL;
+const dbUrl = process.env.DATABASE_URL || '';
 
-if (!dbUrl) {
-  throw new Error('DATABASE_URL is missing in environment variables');
+if (!dbUrl && typeof window === 'undefined') {
+  console.warn('⚠️ ATENÇÃO: DATABASE_URL não encontrada. Banco de dados desativado.');
 }
 
+// O neon() aceita a string vazia mas vai falhar na query, 
+// o que é melhor que quebrar o import de todo o servidor.
 export const sql = neon(dbUrl);
 
 
