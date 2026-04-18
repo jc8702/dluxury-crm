@@ -90,6 +90,96 @@ const CuttingPlanPage: React.FC = () => {
     }, 500);
   };
 
+  const handleSave = async () => {
+    if (!resultado) {
+      alert('Realize o cálculo antes de salvar.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let currentPlanoId = plano.id;
+
+      // 1. Se for um plano novo, cria primeiro no banco
+      if (!currentPlanoId) {
+        const createRes = await api.planoCorte.create({
+          nome: plano.nome,
+          status: 'calculado',
+          // Outros campos se necessário
+        });
+        
+        if (createRes.success && createRes.data) {
+          currentPlanoId = createRes.data.id;
+          setPlano(createRes.data);
+          // Atualiza URL para refletir o ID criado
+          navigate(`/plano-corte?id=${currentPlanoId}`, { replace: true });
+        } else {
+          throw new Error('Falha ao registrar novo plano no banco.');
+        }
+      }
+
+      const payload = {
+        plano_id: currentPlanoId,
+        grupos: resultado.grupos.map(g => ({
+          id: g.grupoId,
+          totalChapas: g.totalChapasInteiras,
+          totalRetalhos: g.totalRetalhosUsados,
+          aproveitamento: g.aproveitamentoMedio,
+          custoTotal: g.custoTotal
+        })),
+        resultados: resultado.grupos.flatMap(g => 
+          g.superficies.flatMap(s => 
+            s.pecasPositionadas.map(p => ({
+              grupo_material_id: g.grupoId,
+              numero_chapa: s.id.includes('inteira') ? parseInt(s.id.split('-')[1]) : 0,
+              peca_id: p.pecaId,
+              pos_x_mm: p.x,
+              pos_y_mm: p.y,
+              largura_final_mm: p.largura,
+              altura_final_mm: p.altura,
+              rotacionada: p.rotacionada,
+              e_retalho: s.tipo === 'retalho',
+              retalho_id: s.retalhoId,
+              area_m2: p.areaMm2 / 1000000,
+              custo_proporcional: p.custoProporcional
+            }))
+          )
+        ),
+        sobras: resultado.sobrasGeradas.map(s => ({
+          grupo_material_id: s.superficieId,
+          numero_chapa: s.superficieId.includes('inteira') ? parseInt(s.superficieId.split('-')[1]) : 0,
+          pos_x_mm: s.x,
+          pos_y_mm: s.y,
+          largura_mm: s.largura,
+          altura_mm: s.altura,
+          area_m2: (s.largura * s.altura) / 1000000,
+          aproveitavel: s.aproveitavel
+        })),
+        KPIs: {
+          totalPecas: resultado.totalPecasPositionadas,
+          totalChapas: resultado.totalChapasInteiras,
+          totalRetalhos: resultado.totalRetalhosUsados,
+          aproveitamento: resultado.aproveitamentoGeral,
+          custoTotal: resultado.custoTotalMaterial,
+          tempoCalculo: resultado.tempoCalculoMs
+        }
+      };
+
+      const res = await api.planoCorte.save(payload);
+      if (res.success) {
+        alert('Plano de corte salvo com sucesso!');
+        setPlano((prev: any) => ({ ...prev, status: 'calculado' }));
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (err: any) {
+      console.error('Erro ao salvar plano:', err);
+      alert('Erro ao salvar: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addGrupoManual = (options: { nome: string, sku: string, espessura: number, tipo: string }) => {
     const novoGrupo: GrupoMaterial = {
       id: Math.random().toString(36).substring(7),
@@ -265,7 +355,9 @@ const CuttingPlanPage: React.FC = () => {
           <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }}>
             {loading ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} OTIMIZAR
           </button>
-          <button className="btn btn-outline"><Save size={18} /> Salvar</button>
+          <button onClick={handleSave} className="btn btn-outline" disabled={loading}>
+            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Resultado'}
+          </button>
         </div>
       </div>
 

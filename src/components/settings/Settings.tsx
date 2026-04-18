@@ -215,6 +215,7 @@ const Settings: React.FC = () => {
       </div>
 
       <TechnicalPricingSection />
+      <NotificationSettingsSection />
 
       {showUserModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
@@ -288,6 +289,48 @@ const CondicaoModal: React.FC<{ show: boolean, onClose: () => void, onSave: (e: 
             <button type="button" onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+
+// ─── SEÇÃO DE CONFIGURAÇÕES DE NOTIFICAÇÕES ────────────────
+const NotificationSettingsSection: React.FC = () => {
+  const alerts = [
+    { title: '📉 Estoque Crítico', desc: 'Avisa quando materiais atingem o nível mínimo.', type: 'estoque' },
+    { title: '⏰ Prazos de Projetos', desc: 'Alerta sobre entregas previstas para os próximos 3 dias.', type: 'projeto' },
+    { title: '💰 Cobranças Vencidas', desc: 'Identifica faturas que passaram da data de vencimento.', type: 'financeiro' },
+    { title: '📝 Orçamentos s/ Retorno', desc: 'Avisa sobre orçamentos enviados há mais de 7 dias.', type: 'comercial' },
+    { title: '🛠️ Garantias Pendentes', desc: 'Alerta sobre chamados técnicos abertos há mais de 3 dias.', type: 'pos-venda' },
+  ];
+
+  return (
+    <div className="card glass" style={{ marginTop: '2rem' }}>
+      <h3 style={{ fontSize: '1.25rem', color: '#d4af37', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        🔔 Automação de Alertas e Notificações
+      </h3>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+        O sistema monitora os seguintes eventos automaticamente e gera notificações no sino superior para todos os administradores.
+      </p>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+        {alerts.map(a => (
+          <div key={a.type} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{a.title}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{a.desc}</div>
+            <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>Ativo</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+          <strong>Nota:</strong> No momento, as regras de alerta são globais. Para solicitar alterações nos limites (ex: 7 dias para orçamentos), entre em contato com o suporte técnico.
+        </p>
       </div>
     </div>
   );

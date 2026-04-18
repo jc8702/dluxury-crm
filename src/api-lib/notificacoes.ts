@@ -46,7 +46,7 @@ export async function handleNotificacoes(req: any, res: any) {
   }
 }
 
-async function gerarNotificacoesAutomaticas() {
+export async function gerarNotificacoesAutomaticas() {
   let criadas = 0;
 
   // 1. Materiais com estoque crítico
@@ -141,6 +141,29 @@ async function gerarNotificacoesAutomaticas() {
       }
     }
   } catch (e) { console.error('Erro ao gerar notificações de garantia:', e); }
+
+  // 5. Cobranças vencidas
+  try {
+    const cobrancas = await sql`
+      SELECT id, nf, pedido, valor, due_date, cliente
+      FROM billings
+      WHERE status NOT IN ('PAGO', 'pago', 'concluido')
+      AND due_date < CURRENT_DATE
+    `;
+    for (const c of cobrancas) {
+      const exists = await sql`
+        SELECT id FROM notificacoes 
+        WHERE lida = false AND tipo = 'cobranca_vencida' AND referencia_id = ${c.id}
+      `;
+      if (!exists.length) {
+        await sql`
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
+          VALUES ('cobranca_vencida', 'Pagamento Vencido: ' || ${c.nf || c.pedido || 'N/A'}, ${`O pagamento de ${c.cliente || 'cliente'} no valor de R$ ${c.valor} venceu em ${new Date(c.due_date).toLocaleDateString()}.`}, 'critica', 'financeiro', ${c.id}, '/financeiro')
+        `;
+        criadas++;
+      }
+    }
+  } catch (e) { console.error('Erro ao gerar notificações de cobrança:', e); }
 
   return { criadas };
 }
