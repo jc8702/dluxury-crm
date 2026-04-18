@@ -10,13 +10,10 @@ export default async function handler(req: any, res: any) {
   const url = req.url || '';
   const cleanUrl = url.split('?')[0];
 
-  // ROTA DE DIAGNÓSTICO (PING)
-  if (cleanUrl.endsWith('/ping')) {
-    return res.status(200).json({ success: true, message: 'pong (DYNAMIC_ROUTING_ACTIVE)', timestamp: new Date().toISOString() });
-  }
+  console.log(`[ROUTER] Request: ${req.method} ${cleanUrl}`);
 
   try {
-    // Roteamento Dinâmico (Lazy Loading) para evitar crashes na inicialização da Vercel
+    // Roteamento Dinâmico (Lazy Loading)
     if (cleanUrl.startsWith('/api/auth')) {
       const { handleAuth } = await import('../src/api-lib/auth.js');
       return await handleAuth(req, res);
@@ -117,10 +114,15 @@ export default async function handler(req: any, res: any) {
 
     if (cleanUrl.startsWith('/api/init-db')) {
       const { runInitDB } = await import('../src/api-lib/_init.js');
-      await runInitDB();
-      return res.status(200).json({ success: true, message: 'Banco de dados inicializado com sucesso' });
+      const result = await runInitDB();
+      return res.status(200).json(result);
     }
 
+    if (cleanUrl.startsWith('/api/ping')) {
+      return res.status(200).json({ success: true, message: 'pong' });
+    }
+
+    console.warn(`[ROUTER] 404 - No route matched for: ${cleanUrl}`);
     return res.status(404).json({ success: false, error: 'Rota da API não encontrada', path: cleanUrl });
   } catch (err: any) {
     console.error('API Router Error:', err.message);

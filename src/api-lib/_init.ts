@@ -139,8 +139,8 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS orcamentos (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      cliente_id UUID REFERENCES clients(id),
-      projeto_id UUID REFERENCES projects(id),
+      cliente_id TEXT, -- Flexível (TEXT ou UUID)
+      projeto_id TEXT, -- Flexível (TEXT ou UUID)
       numero TEXT UNIQUE,
       status TEXT DEFAULT 'rascunho',
       valor_base DECIMAL(12,2),
@@ -213,8 +213,8 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS chamados_garantia (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      projeto_id UUID REFERENCES projects(id),
-      cliente_id UUID REFERENCES clients(id),
+      projeto_id TEXT, -- Alterado para TEXT para compatibilidade
+      cliente_id TEXT, -- Alterado para TEXT para compatibilidade
       numero TEXT UNIQUE NOT NULL,
       titulo TEXT NOT NULL,
       descricao TEXT NOT NULL,
@@ -256,7 +256,7 @@ export async function runInitDB() {
       lida BOOLEAN DEFAULT FALSE,
       data_leitura TIMESTAMPTZ,
       referencia_tipo TEXT,
-      referencia_id UUID,
+      referencia_id TEXT, -- Alterado para TEXT (Flexível)
       url_destino TEXT,
       criado_em TIMESTAMPTZ DEFAULT NOW()
     )
@@ -271,9 +271,9 @@ export async function runInitDB() {
       data_inicio TIMESTAMPTZ NOT NULL,
       data_fim TIMESTAMPTZ,
       dia_inteiro BOOLEAN DEFAULT FALSE,
-      cliente_id UUID REFERENCES clients(id),
-      projeto_id UUID REFERENCES projects(id),
-      visita_id UUID REFERENCES kanban_items(id),
+      cliente_id TEXT, -- Flexível
+      projeto_id TEXT, -- Flexível
+      visita_id TEXT, -- Flexível
       chamado_id UUID REFERENCES chamados_garantia(id),
       responsavel TEXT NOT NULL,
       local TEXT,

@@ -8,8 +8,12 @@ const NotificationBell: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const lastErrorTimeRef = useRef<number>(0);
 
   const fetchNotifications = async () => {
+    // Throttle de 5 minutos em caso de erro persistente para evitar flickering
+    if (Date.now() - lastErrorTimeRef.current < 300000) return;
+
     try {
       const [list, count] = await Promise.all([
         api.notificacoes.list(true),
@@ -18,7 +22,8 @@ const NotificationBell: React.FC = () => {
       setNotifications(list);
       setUnreadCount(count);
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
+      console.error('Erro ao buscar notificações (Silenciado p/ estabilidade):', error);
+      lastErrorTimeRef.current = Date.now();
     }
   };
 
