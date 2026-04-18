@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
+import { NotificacoesBadge } from './NotificacoesBadge';
 
 import { 
   LayoutDashboard, Users, FileText, ClipboardList, 
@@ -9,35 +11,34 @@ import {
   ShoppingCart, CalendarDays, Bell
 } from 'lucide-react';
 
-type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales' | 'purchasing' | 'calendar' | 'notifications';
+type Tab = 'dashboard' | 'clients' | 'estimates' | 'projects' | 'production' | 'visits' | 'inventory' | 'suppliers' | 'finance' | 'engineering' | 'skus' | 'reports' | 'settings' | 'cutting_plan' | 'after_sales' | 'purchasing' | 'calendar' | 'notifications' | 'compras' | 'painel' | 'pecas' | 'plano-de-corte' | 'pos-venda';
 
-interface SidebarProps {
-  activeTab: Tab;
-  setActiveTab: (tab: Tab) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+const Sidebar: React.FC = () => {
   const { user, logout } = useAppContext();
+  const location = useLocation();
   
-  const menuItems: { id: Tab; label: string; icon: React.ReactNode; roles: string[] }[] = [
-    { id: 'dashboard', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'clients', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'estimates', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'projects', label: 'Projetos', icon: <ClipboardList size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'production', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'] },
-    { id: 'cutting_plan', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'] },
-    { id: 'visits', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'calendar', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
-    { id: 'after_sales', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'] },
-    { id: 'inventory', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'] },
-    { id: 'suppliers', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'] },
-    { id: 'purchasing', label: 'Compras', icon: <ShoppingCart size={20} />, roles: ['admin'] },
-    { id: 'notifications', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
-    { id: 'engineering', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'] },
-    { id: 'skus', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'] },
-    { id: 'reports', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'] },
-    { id: 'finance', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'] },
-    { id: 'settings', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'] },
+  // Mapeamento de rotas para IDs de aba (para compatibilidade de estilos)
+  const currentPath = location.pathname.replace('/', '') || 'painel';
+
+  const menuItems: { id: string; path: string; label: string; icon: React.ReactNode; roles: string[] }[] = [
+    { id: 'dashboard', path: 'painel', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'clients', path: 'clientes', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'estimates', path: 'orcamentos', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'projects', path: 'projetos', label: 'Projetos', icon: <ClipboardList size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'visits', path: 'visitas', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'calendar', path: 'calendario', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
+    { id: 'after_sales', path: 'pos-venda', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'] },
+    { id: 'inventory', path: 'estoque', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'] },
+    { id: 'suppliers', path: 'fornecedores', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'] },
+    { id: 'purchasing', path: 'compras', label: 'Compras', icon: <ShoppingCart size={20} />, roles: ['admin'] },
+    { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'] },
+    { id: 'engineering', path: 'engenharia', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'] },
+    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'] },
+    { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'] },
+    { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'] },
+    { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'] },
   ];
 
   const visibleMenuItems = menuItems.filter(item => user && item.roles.includes(user.role));
@@ -72,13 +73,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
         {visibleMenuItems.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive = currentPath === item.path;
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              to={item.path}
               style={{
-                all: 'unset',
+                textDecoration: 'none',
                 padding: '0.7rem 0.85rem',
                 borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
@@ -91,13 +92,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
                 fontWeight: isActive ? '700' : '500',
                 fontSize: '0.875rem',
                 overflow: 'hidden',
+                position: 'relative'
               }}
-              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--sidebar-hover-bg)'; }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
               <span style={{ fontSize: '1.15rem', lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
-              <span className="sidebar-label" style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
-            </button>
+              <span className="sidebar-label" style={{ whiteSpace: 'nowrap', flex: 1 }}>{item.label}</span>
+              {item.id === 'notifications' && <NotificacoesBadge />}
+            </Link>
           );
         })}
       </nav>
@@ -145,4 +146,3 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 };
 
 export default Sidebar;
-
