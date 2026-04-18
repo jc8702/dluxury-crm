@@ -1,4 +1,4 @@
-import { sql } from './_init.js';
+import { sql } from './_db.js';
 
 export async function handleAfterSales(req: any, res: any) {
   try {
@@ -20,8 +20,8 @@ export async function handleAfterSales(req: any, res: any) {
       const chamados = await sql`
         SELECT c.*, cl.nome as cliente_nome, p.ambiente as projeto_ambiente
         FROM chamados_garantia c
-        JOIN clientes cl ON c.cliente_id = cl.id
-        LEFT JOIN projetos p ON c.projeto_id = p.id
+        JOIN clients cl ON c.cliente_id = cl.id
+        LEFT JOIN projects p ON c.projeto_id = p.id
         ORDER BY c.data_abertura DESC
       `;
       return res.status(200).json({ success: true, data: chamados });
