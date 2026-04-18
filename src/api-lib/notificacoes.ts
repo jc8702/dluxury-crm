@@ -10,6 +10,8 @@ export async function handleNotificacoes(req: any, res: any) {
 
     if (method === 'GET') {
       if (req.url.includes('contar')) {
+        // Gera notificações antes de contar (centralizado no server)
+        await gerarNotificacoesAutomaticas().catch(console.error);
         const count = await sql`SELECT count(*) FROM notificacoes WHERE lida = false`;
         return res.status(200).json({ success: true, data: parseInt(count[0].count) });
       }

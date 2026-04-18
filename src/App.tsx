@@ -68,11 +68,15 @@ function AppContent() {
   const { user, setUser } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isPublicRoute, setIsPublicRoute] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (window.location.pathname.startsWith('/aprovar/')) {
       setIsPublicRoute(true);
     }
+    // Marcar como inicializado após verificação inicial de rota pública
+    const timer = setTimeout(() => setIsInitialized(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // Bypass temporário de Login para acesso direto
@@ -88,6 +92,8 @@ function AppContent() {
   }, [user, setUser, isPublicRoute]);
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '');
       if (hash && hash !== activeTab) {
@@ -100,19 +106,16 @@ function AppContent() {
     handleHashChange();
 
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [activeTab]);
+  }, [activeTab, isInitialized]);
 
   useEffect(() => {
-    if (activeTab) {
+    if (activeTab && isInitialized) {
       window.location.hash = `#/${activeTab}`;
     }
-  }, [activeTab]);
+  }, [activeTab, isInitialized]);
 
-  useEffect(() => {
-    if (user) {
-      api.notificacoes.generate().catch(console.error);
-    }
-  }, [user]);
+  // Geração de notificações removida do frontend para evitar loops pesados
+  // Agora é processada server-side via endpoint de contagem/listagem
 
   const renderContent = () => {
     switch (activeTab) {

@@ -5,31 +5,37 @@ import type { Notificacao } from '../../api-lib/types';
 
 const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<Notificacao[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const lastErrorTimeRef = useRef<number>(0);
 
   const fetchNotifications = async () => {
-    // Throttle de 5 minutos em caso de erro persistente para evitar flickering
+    if (loading) return;
+    // Throttle de 5 minutos em caso de erro persistente para evitar flickering/tela preta
     if (Date.now() - lastErrorTimeRef.current < 300000) return;
 
     try {
+      setLoading(true);
       const [list, count] = await Promise.all([
-        api.notificacoes.list(true),
-        api.notificacoes.getCount()
+        api.notificacoes.list(unreadCount > 0).catch(() => []),
+        api.notificacoes.getCount().catch(() => 0)
       ]);
-      setNotifications(list);
-      setUnreadCount(count);
+      
+      setNotifications(Array.isArray(list) ? list : []);
+      setUnreadCount(typeof count === 'number' ? count : 0);
     } catch (error) {
-      console.error('Erro ao buscar notificações (Silenciado p/ estabilidade):', error);
+      console.error('[NotificationBell] Falha silenciada para estabilidade:', error);
       lastErrorTimeRef.current = Date.now();
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Atualiza a cada minuto
+    const interval = setInterval(fetchNotifications, 60000); // Polling a cada 60s (seguro)
     return () => clearInterval(interval);
   }, []);
 
