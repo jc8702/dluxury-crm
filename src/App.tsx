@@ -16,6 +16,7 @@ import InventoryPage from './pages/InventoryPage';
 import SuppliersPage from './pages/SuppliersPage';
 import FinancePage from './pages/FinancePage';
 import EngineeringPage from './pages/EngineeringPage';
+import SKUsPage from './pages/SKUsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import CuttingPlanPage from './pages/CuttingPlanPage';

@@ -291,7 +291,7 @@ export async function runInitDB() {
   await sql`
     CREATE TABLE IF NOT EXISTS planos_corte (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      projeto_id UUID REFERENCES projetos(id),
+      projeto_id UUID REFERENCES projects(id),
       orcamento_id UUID REFERENCES orcamentos(id),
       nome TEXT NOT NULL,
       material_id UUID,
@@ -339,8 +339,8 @@ export async function runInitDB() {
   await sql`
     CREATE TABLE IF NOT EXISTS chamados_garantia (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      projeto_id UUID REFERENCES projetos(id),
-      cliente_id UUID REFERENCES clientes(id),
+      projeto_id UUID REFERENCES projects(id),
+      cliente_id UUID REFERENCES clients(id),
       numero TEXT UNIQUE NOT NULL,
       titulo TEXT NOT NULL,
       descricao TEXT NOT NULL,
