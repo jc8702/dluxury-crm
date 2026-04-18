@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChapaMaterial, PecaCorte } from '../../domain/entities/CuttingPlan';
+import { ChapaMaterial, PecaCorte } from '../../../domain/entities/CuttingPlan';
 import { Zap, Activity } from 'lucide-react';
 
 interface Props {

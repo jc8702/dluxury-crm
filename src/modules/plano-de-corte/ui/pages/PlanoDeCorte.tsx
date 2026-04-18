@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { usePlanoDeCorte } from '../hooks/usePlanoDeCorte';
-import { MaterialCard } from '../ui/components/MaterialCard';
-import { ResultadoCanvas } from '../ui/components/ResultadoCanvas';
+import { usePlanoDeCorte } from '../../hooks/usePlanoDeCorte';
+import { MaterialCard } from '../components/MaterialCard';
+import { ResultadoCanvas } from '../components/ResultadoCanvas';
 import { 
   Play, 
   Save, 
@@ -14,9 +14,9 @@ import {
   Package,
   Cpu
 } from 'lucide-react';
-import { parseCSV, downloadCSVTemplate } from '../application/usecases/csvHandler';
-import { StressTester } from '../ui/components/StressTester';
-import { generateLabelsPDF } from '../application/usecases/labelGenerator';
+import { parseCSV, downloadCSVTemplate } from '../../../application/usecases/csvHandler';
+import { StressTester } from '../components/StressTester';
+import { generateLabelsPDF } from '../../../application/usecases/labelGenerator';
 
 const PlanoDeCortePage: React.FC = () => {
   const { 

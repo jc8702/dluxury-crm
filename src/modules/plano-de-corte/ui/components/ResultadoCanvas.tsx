@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ResultadoOtimizacao } from '../domain/entities/CuttingPlan';
+import { ResultadoOtimizacao } from '../../../domain/entities/CuttingPlan';
 import { ZoomIn, ZoomOut, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
