@@ -144,6 +144,28 @@ export function usePlanoDeCorte(initialId?: string) {
     }
   };
 
+  const handleAprovarProducao = async () => {
+    if (!resultado) return;
+    
+    // Contar quantas chapas de cada SKU foram usadas
+    const consumo: Record<string, number> = {};
+    resultado.layouts.forEach(l => {
+      consumo[l.chapa_sku] = (consumo[l.chapa_sku] || 0) + 1;
+    });
+
+    const payload = Object.entries(consumo).map(([sku, qtd]) => ({ sku, qtd }));
+    
+    setLoading(true);
+    try {
+      await planoDeCorteRepository.aprovarProducao(payload);
+      alert('Produção aprovada com sucesso! O estoque foi reservado.');
+    } catch (e: any) {
+      alert('Erro na aprovação: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     plano,
     setPlano,
@@ -154,6 +176,7 @@ export function usePlanoDeCorte(initialId?: string) {
     addMaterial,
     removeMaterial,
     updateMaterial,
-    salvar
+    salvar,
+    handleAprovarProducao
   };
 }

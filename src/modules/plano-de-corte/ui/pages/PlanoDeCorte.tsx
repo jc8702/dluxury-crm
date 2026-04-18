@@ -15,6 +15,8 @@ import {
   Cpu
 } from 'lucide-react';
 import { parseCSV, downloadCSVTemplate } from '../application/usecases/csvHandler';
+import { StressTester } from '../ui/components/StressTester';
+import { generateLabelsPDF } from '../application/usecases/labelGenerator';
 
 const PlanoDeCortePage: React.FC = () => {
   const { 
@@ -27,7 +29,8 @@ const PlanoDeCortePage: React.FC = () => {
     addMaterial, 
     removeMaterial, 
     updateMaterial, 
-    salvar 
+    salvar,
+    handleAprovarProducao
   } = usePlanoDeCorte();
 
   const [searchStock, setSearchStock] = useState('');
@@ -81,29 +84,68 @@ const PlanoDeCortePage: React.FC = () => {
   };
 
   const handleImportEngenharia = async () => {
-    const sku = prompt('Digite o SKU de Engenharia:');
+    const sku = prompt('Digite o SKU de Engenharia: (Ex: KIT-COZINHA-LUX-01)');
     if (!sku) return;
     
+    setLoading(true);
     try {
       const results = await planoDeCorteRepository.buscarEngenharia(sku);
       if (results.length > 0) {
         const eng = results[0];
-        // Note: Aqui mapeamos os componentes da engenharia para nossa estrutura
-        if (confirm(`Encontrado: ${eng.nome}. Importar ${eng.componentes.length} peças?`)) {
-            const materiaisMapeados: any[] = [];
-            // Lógica de agrupamento por material vinda da engenharia...
-            // Por enquanto, simplificamos jogando no plano
-            setPlano(prev => ({
-                ...prev,
-                sku_engenharia: eng.sku,
-                materiais: [...(prev.materiais || []), ...eng.componentes]
-            }));
+        
+        // 1. Agrupar peças por material_ref
+        const grupos: Record<string, any[]> = {};
+        eng.componentes.forEach((c: any) => {
+          if (!grupos[c.material_ref]) grupos[c.material_ref] = [];
+          grupos[c.material_ref].push(c);
+        });
+
+        // 2. Para cada grupo, buscar dados da chapa no estoque
+        const novosMateriais: ChapaMaterial[] = [];
+        
+        for (const matSku in grupos) {
+          const chapasDisponiveis = await planoDeCorteRepository.buscarChapas(matSku);
+          const chapaInfo = chapasDisponiveis.find(c => c.sku === matSku) || {
+            sku: matSku,
+            nome: `Material: ${matSku}`,
+            largura_mm: 2750,
+            altura_mm: 1830,
+            espessura_mm: 18
+          };
+
+          novosMateriais.push({
+            id: Math.random().toString(36).substr(2, 9),
+            sku: chapaInfo.sku,
+            nome: chapaInfo.nome,
+            largura_mm: Number(chapaInfo.largura_mm),
+            altura_mm: Number(chapaInfo.altura_mm),
+            espessura_mm: Number(chapaInfo.espessura_mm),
+            pecas: grupos[matSku].map(p => ({
+              id: Math.random().toString(36).substr(2, 9),
+              nome: p.nome,
+              largura_mm: Number(p.largura_mm),
+              altura_mm: Number(p.altura_mm),
+              quantidade: Number(p.quantidade),
+              rotacionavel: true
+            }))
+          });
+        }
+
+        if (confirm(`Encontrado: ${eng.nome}. Importar ${novosMateriais.length} materiais e ${eng.componentes.length} peças?`)) {
+          setPlano(prev => ({
+            ...prev,
+            sku_engenharia: eng.sku,
+            materiais: [...(prev.materiais || []), ...novosMateriais]
+          }));
         }
       } else {
         alert('SKU de engenharia não encontrado.');
       }
     } catch (e) {
+      console.error(e);
       alert('Erro na busca de engenharia.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,12 +175,20 @@ const PlanoDeCortePage: React.FC = () => {
             accept=".csv" 
             className="hidden" 
           />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold border border-[#2D333B] rounded-lg hover:bg-[#21262D] transition-all text-[#8B949E] hover:text-white"
-          >
-            <FileUp size={16} /> IMPORTAR CSV
-          </button>
+          <div className="flex flex-col gap-1">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold border border-[#2D333B] rounded-lg hover:bg-[#21262D] transition-all text-[#8B949E] hover:text-white"
+            >
+              <FileUp size={16} /> IMPORTAR CSV
+            </button>
+            <button 
+              onClick={downloadCSVTemplate}
+              className="text-[9px] text-[#8B949E] hover:text-[#E2AC00] text-right pr-1"
+            >
+              Baixar Template CSV
+            </button>
+          </div>
           <button 
             onClick={handleImportEngenharia}
             className="flex items-center gap-2 px-4 py-2 text-sm font-bold border border-[#2D333B] rounded-lg hover:bg-[#21262D] transition-all text-[#8B949E] hover:text-white"
@@ -146,6 +196,15 @@ const PlanoDeCortePage: React.FC = () => {
             <FolderOpen size={16} /> DO ENGENHARIA
           </button>
           <div className="w-[1px] h-6 bg-[#2D333B] mx-2" />
+          {resultado && (
+            <button 
+              onClick={handleAprovarProducao}
+              disabled={loading}
+              className="flex items-center gap-2 px-6 py-2 bg-green-600/10 text-green-400 border border-green-500/30 font-bold rounded-lg hover:bg-green-600/20 transition-all disabled:opacity-50"
+            >
+              <Package size={18} /> APROVAR PRODUÇÃO
+            </button>
+          )}
           <button 
             onClick={salvar}
             disabled={loading}
@@ -207,6 +266,7 @@ const PlanoDeCortePage: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-[#21262D]">
+            <StressTester onInject={(mats) => setPlano(prev => ({ ...prev, materiais: [...(prev.materiais || []), ...mats] }))} />
             {plano.materiais?.map((mat, idx) => (
               <MaterialCard 
                 key={mat.id} 
@@ -290,7 +350,10 @@ const PlanoDeCortePage: React.FC = () => {
             </div>
             
             {resultado && (
-                <button className="w-full mt-10 bg-transparent border border-[#E2AC00] text-[#E2AC00] py-4 rounded-xl font-bold hover:bg-[#E2AC00] hover:text-black transition-all uppercase tracking-widest text-xs">
+                <button 
+                    onClick={() => generateLabelsPDF(resultado)}
+                    className="w-full mt-10 bg-transparent border border-[#E2AC00] text-[#E2AC00] py-4 rounded-xl font-bold hover:bg-[#E2AC00] hover:text-black transition-all uppercase tracking-widest text-xs"
+                >
                     Imprimir Etiquetas
                 </button>
             )}

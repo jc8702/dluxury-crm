@@ -36,6 +36,16 @@ export const planoDeCorteRepository = {
     if (!data.success) throw new Error(data.error);
   },
 
+  async aprovarProducao(materiaisConsumidos: { sku: string, qtd: number }[]): Promise<void> {
+    const res = await fetch(`${API_BASE}?action=aprovar_producao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ materiais_consumidos: materiaisConsumidos })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+  },
+
   async buscarChapas(termo: string): Promise<any[]> {
     const res = await fetch(`/api/chapas?q=${encodeURIComponent(termo)}`);
     const data = await res.json();
