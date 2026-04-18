@@ -218,7 +218,7 @@ const CuttingPlanPage: React.FC = () => {
         </section>
 
         <section style={{ flex: 1 }}>
-          <h4 style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.75rem', letterSpacing: '0.1em' }}>SOBRAS (>20cm)</h4>
+          <h4 style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.75rem', letterSpacing: '0.1em' }}>SOBRAS ({">"}20cm)</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '200px', overflowY: 'auto' }}>
              {resultado?.sobras.filter(s => s.largura > 200 && s.altura > 200).map((s, i) => (
                <div key={i} style={{ fontSize: '0.7rem', padding: '0.4rem', background: '#1a1a1a', borderRadius: '4px', border: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
