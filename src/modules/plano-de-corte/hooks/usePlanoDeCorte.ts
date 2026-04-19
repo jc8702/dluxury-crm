@@ -197,10 +197,60 @@ export function usePlanoDeCorte(initialId?: string) {
       const next = maxNum + 1;
       const finalOpId = `OP-${String(next).padStart(4, '0')}`;
 
+      // Normalize metadata: build materiais and lista de pecas detalhada para a OP
+      const materiaisForOP = (metadata?.materiais || []).map((m: any) => ({
+        descricao: m.nome || m.sku || 'Material',
+        sku: m.sku || null,
+        largura_mm: m.largura_mm || null,
+        altura_mm: m.altura_mm || null,
+        espessura_mm: m.espessura_mm || null,
+        pecas: (m.pecas || []).map((p: any) => ({ nome: p.nome, largura_mm: p.largura_mm || p.largura, altura_mm: p.altura_mm || p.altura, quantidade: Number(p.quantidade || 1) })),
+      }));
+
+      // Extrair peças detalhadas de várias possíveis estruturas no resultado
+      const pecasForOP: any[] = [];
+      try {
+        const res = metadata?.resultado || {};
+        // 1) peças em root do resultado
+        if (Array.isArray(res.pecas)) {
+          for (const p of res.pecas) {
+            pecasForOP.push({ nome: p.nome || p.nome_peca || 'PEÇA', largura: p.largura || p.largura_mm || 0, altura: p.altura || p.altura_mm || 0, quantidade: Number(p.quantidade || 1), origem: 'resultado.pecas' });
+          }
+        }
+
+        // 2) percorrer layouts e extrair peças posicionadas ou layouts_pecas
+        const layouts = Array.isArray(res.layouts) ? res.layouts : (Array.isArray(res) ? res : []);
+        for (const l of layouts) {
+          const candidates = l?.pecas_posicionadas || l?.layouts_pecas || l?.pecas || l?.pieces || [];
+          if (!Array.isArray(candidates)) continue;
+          for (const p of candidates) {
+            const nome = p.nome_peca || p.nome || p.descricao || p.label || 'PEÇA';
+            const largura = p.largura || p.largura_mm || p.width || p.width_mm || 0;
+            const altura = p.altura || p.altura_mm || p.height || p.height_mm || 0;
+            const quantidade = Number(p.quantidade || p.qtd || p.qty || 1);
+            pecasForOP.push({ nome, largura, altura, quantidade, chapa_sku: l?.chapa_sku || l?.sku_chapa || l?.chapa || null, origem: 'layout' });
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao extrair peças para OP:', e);
+      }
+
+      const payload = {
+        op_id: finalOpId,
+        produto,
+        pecas,
+        metadata: {
+          plano_id: metadata?.plano_id || null,
+          materiais: materiaisForOP,
+          pecas: pecasForOP,
+          resultado: metadata?.resultado || null
+        }
+      };
+
       const res = await fetch('/api/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ op_id: finalOpId, produto, pecas, metadata })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
