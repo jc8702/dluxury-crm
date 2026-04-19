@@ -20,6 +20,8 @@ import { generateLabelsPDF } from '../../application/usecases/labelGenerator';
 import { planoDeCorteRepository } from '../../infrastructure/api/planoDeCorteRepository';
 import type { ChapaMaterial } from '../../domain/entities/CuttingPlan';
 import '../planoDeCorte.css';
+import MaterialModal from '../components/MaterialModal';
+import EngineeringImportModal from '../components/EngineeringImportModal';
 
 const PlanoDeCortePage: React.FC = () => {
   const { 
@@ -38,6 +40,8 @@ const PlanoDeCortePage: React.FC = () => {
 
   const [searchStock, setSearchStock] = useState('');
   const [stockResults, setStockResults] = useState<any[]>([]);
+  const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [isEngImportOpen, setIsEngImportOpen] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const normalizeSku = (value: string) => value.trim().toUpperCase();
@@ -111,115 +115,8 @@ const PlanoDeCortePage: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleImportEngenharia = async () => {
-    const sku = prompt('Digite o SKU de Engenharia: (Ex: KIT-COZINHA-LUX-01)');
-    if (!sku) return;
-    
-    try {
-      const searchedSku = normalizeSku(sku);
-      const industrialResults = await planoDeCorteRepository.buscarEngenharia(searchedSku);
-      const engIndustrial =
-        industrialResults.find((item: any) => normalizeSku(item.sku || '') === searchedSku) ||
-        industrialResults[0];
-
-      let eng = engIndustrial;
-      let componentes: any[] = Array.isArray(engIndustrial?.componentes) ? engIndustrial.componentes : [];
-
-      if (!eng || componentes.length === 0) {
-        const [engenhariaGeral, skus] = await Promise.all([
-          planoDeCorteRepository.buscarEngenhariaGeral(searchedSku),
-          planoDeCorteRepository.listarSkusBasicos(),
-        ]);
-        const foundGeral =
-          engenhariaGeral.find((item: any) => normalizeSku(item.codigo_modelo || '') === searchedSku) ||
-          engenhariaGeral[0];
-
-        if (foundGeral) {
-          const skuById = new Map((skus || []).map((item: any) => [String(item.id), String(item.sku || 'MANUAL')]));
-          const dims = {
-            L: Number(foundGeral.largura_padrao || 600),
-            A: Number(foundGeral.altura_padrao || 700),
-            P: Number(foundGeral.profundidade_padrao || 500),
-          };
-          const regras = Array.isArray(foundGeral.regras_calculo) ? foundGeral.regras_calculo : [];
-          const mapped = regras.map((regra: any, idx: number) => ({
-            nome: regra.componente_nome || `Componente ${idx + 1}`,
-            material_ref: skuById.get(String(regra.sku_id || '')) || regra.material_ref || 'MANUAL',
-            largura_mm: evalFormulaMm(regra.formula_largura, dims, dims.L),
-            altura_mm: evalFormulaMm(regra.formula_altura, dims, dims.A),
-            quantidade: Number(regra.quantidade || 1),
-          }));
-          eng = { sku: foundGeral.codigo_modelo, nome: foundGeral.nome, componentes: mapped };
-          componentes = mapped;
-        }
-      }
-
-      if (!eng) {
-        alert('SKU de engenharia não encontrado.');
-        return;
-      }
-
-      const engSku = normalizeSku(eng.sku || searchedSku);
-      if (engSku !== searchedSku && !confirm(`Encontrado SKU próximo: ${eng.sku}. Deseja importar mesmo assim?`)) {
-        return;
-      }
-
-      const grupos: Record<string, any[]> = {};
-
-        componentes.forEach((c: any) => {
-          if (!grupos[c.material_ref]) grupos[c.material_ref] = [];
-          grupos[c.material_ref].push(c);
-        });
-
-        if (componentes.length === 0) {
-          alert('SKU encontrado, mas sem componentes para plano de corte.');
-          return;
-        }
-
-        const novosMateriais: ChapaMaterial[] = [];
-        for (const matSku in grupos) {
-          const chapasDisponiveis = await planoDeCorteRepository.buscarChapas(matSku);
-          const chapaInfo = chapasDisponiveis.find(c => normalizeSku(c.sku || '') === normalizeSku(matSku)) || {
-            sku: matSku,
-            nome: `Material: ${matSku}`,
-            tipo_material: 'MDF',
-            cor: 'Branco',
-            largura_mm: 2750,
-            altura_mm: 1830,
-            espessura_mm: 18
-          };
-
-          novosMateriais.push({
-            id: Math.random().toString(36).substr(2, 9),
-            sku: chapaInfo.sku,
-            nome: chapaInfo.nome,
-            tipo_material: chapaInfo.tipo_material || chapaInfo.tipo || 'MDF',
-            cor: chapaInfo.cor || 'Branco',
-            largura_mm: Number(chapaInfo.largura_mm),
-            altura_mm: Number(chapaInfo.altura_mm),
-            espessura_mm: Number(chapaInfo.espessura_mm),
-            pecas: grupos[matSku].map(p => ({
-              id: Math.random().toString(36).substr(2, 9),
-              nome: p.nome,
-              largura_mm: Number(p.largura_mm),
-              altura_mm: Number(p.altura_mm),
-              quantidade: Number(p.quantidade),
-              rotacionavel: true
-            }))
-          });
-        }
-
-      if (confirm(`Encontrado: ${eng.nome}. Importar ${novosMateriais.length} materiais e ${componentes.length} peças?`)) {
-        setPlano(prev => ({
-          ...prev,
-          sku_engenharia: eng.sku,
-          materiais: [...(prev.materiais || []), ...novosMateriais]
-        }));
-      }
-    } catch (e) {
-      alert('Erro na busca de engenharia.');
-    }
-  };
+  // agora usamos modal para importar engenharia
+  const handleImportEngenharia = () => setIsEngImportOpen(true);
 
   const styles = {
     container: { height: '100vh', display: 'flex', flexDirection: 'column' as const, background: 'var(--background)' },
@@ -261,6 +158,15 @@ const PlanoDeCortePage: React.FC = () => {
           <button onClick={handleImportEngenharia} className="btn btn-outline" style={{ padding: '0.5rem 0.75rem' }}>
             <FolderOpen size={16} /> <span style={{fontSize: '0.75rem'}}>ENGENHARIA</span>
           </button>
+          <EngineeringImportModal
+            isOpen={isEngImportOpen}
+            onClose={() => setIsEngImportOpen(false)}
+            onImported={(skuEng, materiais, componentesCount) => {
+              if (!materiais || materiais.length === 0) return alert('Nenhum material importado.');
+              if (!confirm(`Importar ${materiais.length} materiais e ${componentesCount} peças do SKU ${skuEng}?`)) return;
+              setPlano(prev => ({ ...prev, sku_engenharia: skuEng, materiais: [...(prev.materiais || []), ...materiais] }));
+            }}
+          />
 
           <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 8px' }} />
 
@@ -314,25 +220,19 @@ const PlanoDeCortePage: React.FC = () => {
               </div>
             )}
             <button 
-              onClick={() => {
-                const tipo = prompt('Tipo do material (ex: MDF, MDP, Compensado):', 'MDF') || 'MDF';
-                const cor = prompt('Cor/acabamento (ex: Branco, Carvalho, Preto):', 'Branco') || 'Branco';
-                const espessura = Number(prompt('Espessura (mm):', '18') || '18');
-                selectChapa({
-                  sku: `MANUAL-${tipo.toUpperCase()}-${espessura}`,
-                  nome: `${tipo} ${cor}`,
-                  tipo_material: tipo,
-                  cor,
-                  largura_mm: 2750,
-                  altura_mm: 1840,
-                  espessura_mm: espessura,
-                });
-              }}
+              onClick={() => setIsMaterialModalOpen(true)}
               className="btn btn-outline"
               style={{ width: '100%', marginTop: '1rem', fontSize: '0.7rem' }}
             >
               + CONFIGURAÇÃO MANUAL
             </button>
+            <MaterialModal
+              isOpen={isMaterialModalOpen}
+              onClose={() => setIsMaterialModalOpen(false)}
+              onSave={(mat) => {
+                addMaterial(mat);
+              }}
+            />
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
