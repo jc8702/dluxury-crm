@@ -143,6 +143,7 @@ export const api = {
     updateStatus: (op_id: string, status: string) => apiCall<any>('production', 'PATCH', { op_id, status }),
     updateDetails: (data: any) => apiCall<any>('production?id=details', 'PATCH', data),
     getMetrics: () => apiCall<any>('production/metrics'),
+    delete: (op_id: string) => apiCall<any>(`production?op_id=${encodeURIComponent(op_id)}`, 'DELETE'),
   },
   reports: {
     get: (type: string, projectId?: string) => apiCall<any[]>(`reports?type=${type}${projectId ? `&projectId=${projectId}` : ''}`),

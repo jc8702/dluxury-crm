@@ -30,6 +30,7 @@ export async function handleProduction(req: any, res: any) {
     if (method === 'POST') return await createOP(req, res);
     if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res);
     if (method === 'PATCH') return await updateOPStatus(req, res);
+    if (method === 'DELETE') return await deleteOP(req, res);
     
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
@@ -79,15 +80,23 @@ async function listOPs(res: any) {
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
 async function createOP(req: any, res: any) {
-  const { op_id, produto, pecas, metadata } = req.body;
+  const { op_id, produto, pecas, metadata, checklist } = req.body;
 
   if (!op_id || !produto) {
     return res.status(400).json({ success: false, error: 'Dados insuficientes para criar OP' });
   }
 
+  const defaultChecklist = [
+    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'CORTE', completed: false },
+    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FITA DE BORDA', completed: false },
+    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FURAÇÕES', completed: false }
+  ];
+
+  const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
+
   const [novaOP] = await sql`
-    INSERT INTO ordens_producao (op_id, produto, pecas, metadata)
-    VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})})
+    INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist)
+    VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)})
     RETURNING *
   `;
 
@@ -101,22 +110,54 @@ async function createOP(req: any, res: any) {
  * Atualiza detalhes da OP (checklist, produto, pecas)
  */
 async function updateOPDetails(req: any, res: any) {
-  const { op_id, produto, pecas, checklist } = req.body;
+  const { op_id, produto, pecas, checklist, metadata } = req.body;
+
+  // Merge update: update fields that are provided. Keep existing otherwise.
+  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
+  if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
+
+  const newProduto = produto !== undefined ? produto : existing.produto;
+  const newPecas = pecas !== undefined ? pecas : existing.pecas;
+  const newChecklist = checklist !== undefined ? JSON.stringify(checklist || []) : existing.checklist;
+  const newMetadata = metadata !== undefined ? JSON.stringify(metadata) : existing.metadata;
 
   const [atualizada] = await sql`
     UPDATE ordens_producao 
-    SET produto = ${produto},
-        pecas = ${pecas},
-        checklist = ${JSON.stringify(checklist || [])},
+    SET produto = ${newProduto},
+        pecas = ${newPecas},
+        checklist = ${newChecklist},
+        metadata = ${newMetadata},
         updated_at = CURRENT_TIMESTAMP
     WHERE op_id = ${op_id}
     RETURNING *
   `;
 
-  // Se mudou peças, recalcula previsões
+  // If changed peças, recalcula previsões
   await syncQueueForecasting();
 
+  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch (e) {}
+
   return res.status(200).json({ success: true, data: atualizada });
+}
+
+/**
+ * Exclui uma OP e remove o card do kanban se existir
+ */
+async function deleteOP(req: any, res: any) {
+  const { op_id } = req.query || req.body || {};
+  if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
+
+  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
+  if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
+
+  await sql`DELETE FROM ordens_producao WHERE op_id = ${op_id}`;
+
+  // Try to remove kanban item(s) referencing this OP
+  await sql`DELETE FROM kanban_items WHERE observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
+
+  try { window.dispatchEvent(new CustomEvent('op_deleted', { detail: { op_id } })); } catch (e) {}
+
+  return res.status(200).json({ success: true, data: { op_id } });
 }
 
 /**
@@ -131,6 +172,33 @@ async function updateOPStatus(req: any, res: any) {
 
   let data_inicio = op.data_inicio;
   let data_fim = op.data_fim;
+
+  // Defensive validation: do not allow advancing if checklist or piece-level checks are incomplete
+  if (status && status !== op.status) {
+    // Load checklist and metadata
+    const checklist = Array.isArray(op.checklist) ? op.checklist : (op.checklist ? JSON.parse(op.checklist) : []);
+    const metadata = op.metadata ? (typeof op.metadata === 'string' ? JSON.parse(op.metadata) : op.metadata) : {};
+
+    const checklistComplete = checklist.length === 0 || checklist.every((i: any) => i.completed);
+    // piece-level checks: expect metadata.pecas as array with optional operator_checked boolean
+    let piecesComplete = true;
+    try {
+      const pecas = Array.isArray(metadata.pecas) ? metadata.pecas : [];
+      for (const p of pecas) {
+        if (p && p.operator_checked === false) { piecesComplete = false; break; }
+      }
+    } catch (e) {}
+
+    // If attempting to advance to next productive stage (not allowing revert to PENDENTE), block if incomplete
+    const fluxo: string[] = ["PENDENTE", "CORTE", "MONTAGEM", "FINALIZADA"];
+    const idxFrom = fluxo.indexOf(op.status);
+    const idxTo = fluxo.indexOf(status);
+    if (idxTo > idxFrom) {
+      if (!checklistComplete || !piecesComplete) {
+        return res.status(400).json({ success: false, error: 'Não é possível avançar: checklist e/ou peças pendentes' });
+      }
+    }
+  }
 
   // Se começou agora (moveu de PENDENTE para qualquer etapa produtiva)
   if (!data_inicio && status !== "PENDENTE") {
