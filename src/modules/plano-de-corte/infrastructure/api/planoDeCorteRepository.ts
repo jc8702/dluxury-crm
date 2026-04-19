@@ -49,11 +49,51 @@ export const planoDeCorteRepository = {
   async buscarChapas(termo: string): Promise<any[]> {
     const res = await fetch(`/api/chapas?q=${encodeURIComponent(termo)}`);
     const data = await res.json();
-    return data.success ? data.data : [];
+    const primary = data.success ? data.data : [];
+    if (primary.length > 0) return primary;
+
+    const fallbackRes = await fetch('/api/skus');
+    const fallbackData = await fallbackRes.json();
+    const list = fallbackData.success ? fallbackData.data : [];
+    const term = termo.trim().toLowerCase();
+    return list
+      .filter((item: any) =>
+        String(item.sku || '').toLowerCase().includes(term) ||
+        String(item.nome || '').toLowerCase().includes(term),
+      )
+      .slice(0, 20)
+      .map((item: any) => ({
+        id: item.id,
+        sku: item.sku,
+        nome: item.nome,
+        largura_mm: 2750,
+        altura_mm: 1830,
+        espessura_mm: 18,
+        tipo_material: 'MDF',
+        cor: 'Branco',
+        preco_unitario: Number(item.preco_base || 0),
+      }));
   },
 
   async buscarEngenharia(termo: string): Promise<any[]> {
     const res = await fetch(`/api/engenharia/skus?q=${encodeURIComponent(termo)}`);
+    const data = await res.json();
+    return data.success ? data.data : [];
+  },
+
+  async buscarEngenhariaGeral(termo: string): Promise<any[]> {
+    const res = await fetch('/api/engineering');
+    const data = await res.json();
+    const list = data.success ? data.data : [];
+    const term = termo.trim().toLowerCase();
+    return list.filter((item: any) =>
+      String(item.codigo_modelo || '').toLowerCase().includes(term) ||
+      String(item.nome || '').toLowerCase().includes(term),
+    );
+  },
+
+  async listarSkusBasicos(): Promise<any[]> {
+    const res = await fetch('/api/skus');
     const data = await res.json();
     return data.success ? data.data : [];
   }

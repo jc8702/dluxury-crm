@@ -2,6 +2,8 @@ export interface ChapaMaterial {
   id: string;
   sku: string;           // ex: "CHP-MDF-18MM"
   nome: string;          // ex: "MDF 18mm Branco"
+  tipo_material?: string;
+  cor?: string;
   altura_mm: number;     // ex: 1830
   largura_mm: number;    // ex: 2750
   espessura_mm: number;  // ex: 18
@@ -46,6 +48,8 @@ export interface ResultadoOtimizacao {
 export interface LayoutChapa {
   chapa_sku: string;
   indice_chapa: number;
+  largura_original_mm?: number;
+  altura_original_mm?: number;
   pecas_posicionadas: PecaPosicionada[];
   area_aproveitada_mm2: number;
   area_desperdicada_mm2: number;

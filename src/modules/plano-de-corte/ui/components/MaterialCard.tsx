@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ChapaMaterial, PecaCorte as Peca } from '../../domain/entities/CuttingPlan';
-import { Trash2, Plus, Scissors, ChevronDown, ChevronUp, Layers, Square, Box } from 'lucide-react';
+import { Trash2, Scissors, ChevronDown, ChevronUp, Box } from 'lucide-react';
 
 interface MaterialCardProps {
   material: ChapaMaterial;
@@ -50,6 +50,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({ material, onUpdate, 
           <div>
             <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>{material.sku}</div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{material.largura_mm}x{material.altura_mm}x{material.espessura_mm}mm</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{material.tipo_material || 'MDF'} • {material.cor || 'Branco'}</div>
           </div>
         </div>
         
@@ -64,7 +65,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({ material, onUpdate, 
 
       {expanded && (
         <div style={styles.content}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
               <label className="label-base" style={{ fontSize: '0.6rem' }}>LARGURA (mm)</label>
               <input type="number" value={material.largura_mm} onChange={e => onUpdate({ largura_mm: Number(e.target.value) })} className="input" style={{ padding: '6px' }} />
@@ -76,6 +77,23 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({ material, onUpdate, 
             <div>
               <label className="label-base" style={{ fontSize: '0.6rem' }}>ESPESSURA</label>
               <input type="number" value={material.espessura_mm} onChange={e => onUpdate({ espessura_mm: Number(e.target.value) })} className="input" style={{ padding: '6px', color: 'var(--primary)', fontWeight: 'bold' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label className="label-base" style={{ fontSize: '0.6rem' }}>TIPO MATERIAL</label>
+              <select value={material.tipo_material || 'MDF'} onChange={e => onUpdate({ tipo_material: e.target.value })} className="input" style={{ padding: '6px' }}>
+                <option value="MDF">MDF</option>
+                <option value="MDP">MDP</option>
+                <option value="COMPENSADO">Compensado</option>
+                <option value="LAMINADO">Laminado</option>
+                <option value="OUTRO">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label className="label-base" style={{ fontSize: '0.6rem' }}>COR / ACABAMENTO</label>
+              <input value={material.cor || ''} onChange={e => onUpdate({ cor: e.target.value })} className="input" style={{ padding: '6px' }} placeholder="Branco, Carvalho, Preto..." />
             </div>
           </div>
 

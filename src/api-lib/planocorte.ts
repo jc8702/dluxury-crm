@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia } from '../db/schema/planos-de-corte.js';
-import { eq, like, or } from 'drizzle-orm';
+import { eq, ilike, or } from 'drizzle-orm';
 
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
@@ -88,11 +88,12 @@ export async function handlePlanoCorte(req: any, res: any) {
 export async function handleChapas(req: any, res: any) {
   const { q } = req.query || {};
   try {
-    if (q) {
-      const term = `%${q}%`;
+    const termText = String(q || '').trim();
+    if (termText) {
+      const term = `%${termText}%`;
       const results = await db.select()
         .from(erpChapas)
-        .where(or(like(erpChapas.sku, term), like(erpChapas.nome, term)));
+        .where(or(ilike(erpChapas.sku, term), ilike(erpChapas.nome, term)));
       return res.status(200).json({ success: true, data: results });
     }
     const all = await db.select().from(erpChapas);
@@ -106,11 +107,12 @@ export async function handleChapas(req: any, res: any) {
 export async function handleEngenhariaSKUs(req: any, res: any) {
   const { q } = req.query || {};
   try {
-    if (q) {
-      const term = `%${q}%`;
+    const termText = String(q || '').trim();
+    if (termText) {
+      const term = `%${termText}%`;
       const results = await db.select()
         .from(erpSkusEngenharia)
-        .where(or(like(erpSkusEngenharia.sku, term), like(erpSkusEngenharia.nome, term)));
+        .where(or(ilike(erpSkusEngenharia.sku, term), ilike(erpSkusEngenharia.nome, term)));
       return res.status(200).json({ success: true, data: results });
     }
     const all = await db.select().from(erpSkusEngenharia).limit(20);

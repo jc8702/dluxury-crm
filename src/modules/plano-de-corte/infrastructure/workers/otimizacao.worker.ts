@@ -67,6 +67,8 @@ function otimizar(materiais: ChapaMaterial[], kerf: number): ResultadoOtimizacao
           chapasEscalonadas.push({
             chapa_sku: mat.sku,
             indice_chapa: chapasAtuais.length,
+            largura_original_mm: mat.largura_mm,
+            altura_original_mm: mat.altura_mm,
             pecas_posicionadas: [res],
             area_aproveitada_mm2: 0,
             area_desperdicada_mm2: 0

@@ -115,10 +115,10 @@ export function usePlanoDeCorte(initialId?: string) {
     }
   };
 
-  const updateMaterial = (index: number, updated: ChapaMaterial) => {
+  const updateMaterial = (index: number, updated: Partial<ChapaMaterial>) => {
     setPlano(prev => ({
       ...prev,
-      materiais: prev.materiais?.map((m, i) => i === index ? updated : m)
+      materiais: prev.materiais?.map((m, i) => (i === index ? { ...m, ...updated } : m))
     }));
   };
 

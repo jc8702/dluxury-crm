@@ -40,11 +40,34 @@ const PlanoDeCortePage: React.FC = () => {
   const [stockResults, setStockResults] = useState<any[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const normalizeSku = (value: string) => value.trim().toUpperCase();
+
+  const evalFormulaMm = (formula: unknown, dims: { L: number; A: number; P: number }, fallback: number) => {
+    const source = String(formula || fallback);
+    const safe = source.replace(/[^0-9+\-*/().LAPlap\s]/g, '');
+    if (!safe) return fallback;
+    try {
+      const expr = safe
+        .replace(/\bL\b/gi, String(dims.L))
+        .replace(/\bA\b/gi, String(dims.A))
+        .replace(/\bP\b/gi, String(dims.P));
+      const value = Number(Function(`"use strict"; return (${expr});`)());
+      if (!Number.isFinite(value)) return fallback;
+      return Math.max(1, Math.round(value));
+    } catch {
+      return fallback;
+    }
+  };
+
   const handleSearchStock = async (term: string) => {
     setSearchStock(term);
     if (term.length > 2) {
-      const results = await planoDeCorteRepository.buscarChapas(term);
-      setStockResults(results);
+      try {
+        const results = await planoDeCorteRepository.buscarChapas(term);
+        setStockResults(results);
+      } catch {
+        setStockResults([]);
+      }
     } else {
       setStockResults([]);
     }
@@ -55,6 +78,8 @@ const PlanoDeCortePage: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       sku: chapa.sku,
       nome: chapa.nome,
+      tipo_material: chapa.tipo_material || chapa.tipo || 'MDF',
+      cor: chapa.cor || 'Branco',
       largura_mm: Number(chapa.largura_mm),
       altura_mm: Number(chapa.altura_mm),
       espessura_mm: Number(chapa.espessura_mm),
@@ -91,21 +116,74 @@ const PlanoDeCortePage: React.FC = () => {
     if (!sku) return;
     
     try {
-      const results = await planoDeCorteRepository.buscarEngenharia(sku);
-      if (results.length > 0) {
-        const eng = results[0];
-        const grupos: Record<string, any[]> = {};
-        eng.componentes.forEach((c: any) => {
+      const searchedSku = normalizeSku(sku);
+      const industrialResults = await planoDeCorteRepository.buscarEngenharia(searchedSku);
+      const engIndustrial =
+        industrialResults.find((item: any) => normalizeSku(item.sku || '') === searchedSku) ||
+        industrialResults[0];
+
+      let eng = engIndustrial;
+      let componentes: any[] = Array.isArray(engIndustrial?.componentes) ? engIndustrial.componentes : [];
+
+      if (!eng || componentes.length === 0) {
+        const [engenhariaGeral, skus] = await Promise.all([
+          planoDeCorteRepository.buscarEngenhariaGeral(searchedSku),
+          planoDeCorteRepository.listarSkusBasicos(),
+        ]);
+        const foundGeral =
+          engenhariaGeral.find((item: any) => normalizeSku(item.codigo_modelo || '') === searchedSku) ||
+          engenhariaGeral[0];
+
+        if (foundGeral) {
+          const skuById = new Map((skus || []).map((item: any) => [String(item.id), String(item.sku || 'MANUAL')]));
+          const dims = {
+            L: Number(foundGeral.largura_padrao || 600),
+            A: Number(foundGeral.altura_padrao || 700),
+            P: Number(foundGeral.profundidade_padrao || 500),
+          };
+          const regras = Array.isArray(foundGeral.regras_calculo) ? foundGeral.regras_calculo : [];
+          const mapped = regras.map((regra: any, idx: number) => ({
+            nome: regra.componente_nome || `Componente ${idx + 1}`,
+            material_ref: skuById.get(String(regra.sku_id || '')) || regra.material_ref || 'MANUAL',
+            largura_mm: evalFormulaMm(regra.formula_largura, dims, dims.L),
+            altura_mm: evalFormulaMm(regra.formula_altura, dims, dims.A),
+            quantidade: Number(regra.quantidade || 1),
+          }));
+          eng = { sku: foundGeral.codigo_modelo, nome: foundGeral.nome, componentes: mapped };
+          componentes = mapped;
+        }
+      }
+
+      if (!eng) {
+        alert('SKU de engenharia não encontrado.');
+        return;
+      }
+
+      const engSku = normalizeSku(eng.sku || searchedSku);
+      if (engSku !== searchedSku && !confirm(`Encontrado SKU próximo: ${eng.sku}. Deseja importar mesmo assim?`)) {
+        return;
+      }
+
+      const grupos: Record<string, any[]> = {};
+
+        componentes.forEach((c: any) => {
           if (!grupos[c.material_ref]) grupos[c.material_ref] = [];
           grupos[c.material_ref].push(c);
         });
 
+        if (componentes.length === 0) {
+          alert('SKU encontrado, mas sem componentes para plano de corte.');
+          return;
+        }
+
         const novosMateriais: ChapaMaterial[] = [];
         for (const matSku in grupos) {
           const chapasDisponiveis = await planoDeCorteRepository.buscarChapas(matSku);
-          const chapaInfo = chapasDisponiveis.find(c => c.sku === matSku) || {
+          const chapaInfo = chapasDisponiveis.find(c => normalizeSku(c.sku || '') === normalizeSku(matSku)) || {
             sku: matSku,
             nome: `Material: ${matSku}`,
+            tipo_material: 'MDF',
+            cor: 'Branco',
             largura_mm: 2750,
             altura_mm: 1830,
             espessura_mm: 18
@@ -115,6 +193,8 @@ const PlanoDeCortePage: React.FC = () => {
             id: Math.random().toString(36).substr(2, 9),
             sku: chapaInfo.sku,
             nome: chapaInfo.nome,
+            tipo_material: chapaInfo.tipo_material || chapaInfo.tipo || 'MDF',
+            cor: chapaInfo.cor || 'Branco',
             largura_mm: Number(chapaInfo.largura_mm),
             altura_mm: Number(chapaInfo.altura_mm),
             espessura_mm: Number(chapaInfo.espessura_mm),
@@ -129,15 +209,12 @@ const PlanoDeCortePage: React.FC = () => {
           });
         }
 
-        if (confirm(`Encontrado: ${eng.nome}. Importar ${novosMateriais.length} materiais e ${eng.componentes.length} peças?`)) {
-          setPlano(prev => ({
-            ...prev,
-            sku_engenharia: eng.sku,
-            materiais: [...(prev.materiais || []), ...novosMateriais]
-          }));
-        }
-      } else {
-        alert('SKU de engenharia não encontrado.');
+      if (confirm(`Encontrado: ${eng.nome}. Importar ${novosMateriais.length} materiais e ${componentes.length} peças?`)) {
+        setPlano(prev => ({
+          ...prev,
+          sku_engenharia: eng.sku,
+          materiais: [...(prev.materiais || []), ...novosMateriais]
+        }));
       }
     } catch (e) {
       alert('Erro na busca de engenharia.');
@@ -231,8 +308,26 @@ const PlanoDeCortePage: React.FC = () => {
                 </div>
               )}
             </div>
+            {searchStock.length > 2 && stockResults.length === 0 && (
+              <div style={{ marginTop: '8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                Nenhum material encontrado no estoque para "{searchStock}".
+              </div>
+            )}
             <button 
-              onClick={() => selectChapa({ sku: 'MANUAL', nome: 'Material Customizado', largura_mm: 2750, altura_mm: 1840, espessura_mm: 18 })}
+              onClick={() => {
+                const tipo = prompt('Tipo do material (ex: MDF, MDP, Compensado):', 'MDF') || 'MDF';
+                const cor = prompt('Cor/acabamento (ex: Branco, Carvalho, Preto):', 'Branco') || 'Branco';
+                const espessura = Number(prompt('Espessura (mm):', '18') || '18');
+                selectChapa({
+                  sku: `MANUAL-${tipo.toUpperCase()}-${espessura}`,
+                  nome: `${tipo} ${cor}`,
+                  tipo_material: tipo,
+                  cor,
+                  largura_mm: 2750,
+                  altura_mm: 1840,
+                  espessura_mm: espessura,
+                });
+              }}
               className="btn btn-outline"
               style={{ width: '100%', marginTop: '1rem', fontSize: '0.7rem' }}
             >
@@ -304,7 +399,7 @@ const PlanoDeCortePage: React.FC = () => {
               </div>
               <div className="card" style={{ padding: '0.75rem' }}>
                 <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>ÁREA ÚTIL</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>{Math.round((resultado?.layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0) || 0) / 1000000)}m²</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>{((resultado?.layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0) || 0) / 1000000).toFixed(2)}m²</span>
               </div>
             </div>
 

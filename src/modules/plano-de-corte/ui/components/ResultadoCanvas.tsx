@@ -43,6 +43,17 @@ export const ResultadoCanvas: React.FC<ResultadoCanvasProps> = ({ resultado }) =
     return (usedArea / totalArea) * 100;
   };
 
+  const exportarMapa = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    const layout = activeLayout as any;
+    const sku = layout?.chapa_sku || layout?.sku_chapa || 'mapa-corte';
+    link.href = canvas.toDataURL('image/png');
+    link.download = `mapa-corte-${sku}-${activeLayoutIdx + 1}.png`;
+    link.click();
+  };
+
   useEffect(() => {
     drawLayout();
     window.addEventListener('resize', drawLayout);
@@ -128,7 +139,7 @@ export const ResultadoCanvas: React.FC<ResultadoCanvasProps> = ({ resultado }) =
   const styles = {
     wrapper: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' as const },
     toolbar: { padding: '1rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    canvasContainer: { flex: 1, background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative' as const },
+    canvasContainer: { flex: 1, background: 'var(--background)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative' as const },
     pagination: { position: 'absolute' as const, bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--surface-overlay)', padding: '0.75rem 1.5rem', borderRadius: '30px', border: '1px solid var(--border-strong)', backdropFilter: 'blur(8px)', zIndex: 10 }
   };
 
@@ -161,7 +172,7 @@ export const ResultadoCanvas: React.FC<ResultadoCanvasProps> = ({ resultado }) =
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className="btn btn-outline" style={{ padding: '8px 16px', gap: '8px', fontSize: '0.75rem' }}>
+          <button onClick={exportarMapa} className="btn btn-outline" style={{ padding: '8px 16px', gap: '8px', fontSize: '0.75rem' }}>
             <Printer size={16} /> Mapa de Corte
           </button>
         </div>
