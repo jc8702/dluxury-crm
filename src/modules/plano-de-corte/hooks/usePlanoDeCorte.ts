@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { PlanoDeCorte, ChapaMaterial, ResultadoOtimizacao } from '../domain/entities/CuttingPlan';
 import { planoDeCorteRepository } from '../infrastructure/api/planoDeCorteRepository';
+import { api } from '../../../lib/api';
 
 const LOCAL_STORAGE_KEY = 'dluxury_plano_corte_draft';
 
@@ -159,10 +160,42 @@ export function usePlanoDeCorte(initialId?: string) {
     try {
       await planoDeCorteRepository.aprovarProducao(payload);
       alert('Produção aprovada com sucesso! O estoque foi reservado.');
+      // Criar Ordem de Produção no módulo de produção
+      try {
+        const ops = await api.production.list();
+        const nextIndex = (Array.isArray(ops) ? ops.length : 0) + 1;
+        const opId = `OP-${String(nextIndex).padStart(4, '0')}`;
+        const produto = plano.nome_plano || `Plano de Corte ${opId}`;
+        const totalPecas = resultado.layouts.reduce((acc: number, l: any) => acc + (l.pecas_posicionadas ? l.pecas_posicionadas.length : (l.layouts_pecas ? l.layouts_pecas.length : 0)), 0);
+        const metadata = { plano_id: plano.id || null, materiais: plano.materiais || [], resultado };
+        await apiCallCreateOP(opId, produto, totalPecas, metadata);
+      } catch (e) {
+        console.error('Erro ao criar OP automaticamente:', e);
+      }
     } catch (e: any) {
       alert('Erro na aprovação: ' + e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const apiCallCreateOP = async (op_id: string, produto: string, pecas: number, metadata: any) => {
+    // chama endpoint /api/production (POST)
+    try {
+      await api.production.list(); // ensure api available
+      const res = await fetch('/api/production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ op_id, produto, pecas, metadata })
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'Erro ao criar OP');
+      }
+      return true;
+    } catch (err) {
+      console.error('apiCallCreateOP error', err);
+      return false;
     }
   };
 
