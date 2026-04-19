@@ -311,7 +311,7 @@ const PlanoDeCortePage: React.FC = () => {
             <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Cálculo:</span>
-                <span style={{ fontWeight: '700' }}>{resultado?.tempo_calculo_ms.toFixed(0)} ms</span>
+                <span style={{ fontWeight: '700' }}>{Number(resultado?.tempo_calculo_ms || 0).toFixed(0)} ms</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Status:</span>
