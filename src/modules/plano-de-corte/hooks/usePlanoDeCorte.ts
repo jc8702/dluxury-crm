@@ -214,7 +214,8 @@ export function usePlanoDeCorte(initialId?: string) {
           title: finalOpId,
           subtitle: produto,
           label: `${pecas} peças`,
-          status: 'Aguardando',
+          // usar status PENDENTE para alinhar com o filtro do módulo de Produção
+          status: 'PENDENTE',
           type: 'production',
           observations: JSON.stringify({ op_id: finalOpId, plano_id: metadata?.plano_id || null }),
           date_time: new Date().toISOString()

@@ -44,7 +44,13 @@ const ProductionPanel: React.FC = () => {
   useEffect(() => {
     fetchOPs();
     const interval = setInterval(fetchOPs, 10000);
+
+    // Recarrega OPs imediatamente quando uma OP é criada por outro módulo
+    const onOpCreated = () => fetchOPs();
+    window.addEventListener('op_created', onOpCreated as any);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    window.removeEventListener('op_created', onOpCreated as any);
   }, []);
 
   const updateStatus = async (op: OrdemProducao, direcao: 'avancar' | 'voltar') => {
