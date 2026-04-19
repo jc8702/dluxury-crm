@@ -182,16 +182,32 @@ export function usePlanoDeCorte(initialId?: string) {
   const apiCallCreateOP = async (op_id: string, produto: string, pecas: number, metadata: any) => {
     // chama endpoint /api/production (POST)
     try {
-      await api.production.list(); // ensure api available
+      // Build a robust op_id: attempt to compute next number based on existing ops
+      const existing = await api.production.list().catch(() => []);
+      let maxNum = 0;
+      if (Array.isArray(existing)) {
+        for (const o of existing) {
+          const m = String(o.op_id || '').match(/OP-(\d+)/i);
+          if (m) {
+            const n = Number(m[1]);
+            if (Number.isFinite(n) && n > maxNum) maxNum = n;
+          }
+        }
+      }
+      const next = maxNum + 1;
+      const finalOpId = `OP-${String(next).padStart(4, '0')}`;
+
       const res = await fetch('/api/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ op_id, produto, pecas, metadata })
+        body: JSON.stringify({ op_id: finalOpId, produto, pecas, metadata })
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error || 'Erro ao criar OP');
       }
+      // Notify other parts of the UI to refresh production lists (kanban)
+      try { window.dispatchEvent(new CustomEvent('op_created', { detail: { op_id: op_id } })); } catch (e) {}
       return true;
     } catch (err) {
       console.error('apiCallCreateOP error', err);
