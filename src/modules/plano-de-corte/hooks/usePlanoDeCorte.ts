@@ -207,7 +207,21 @@ export function usePlanoDeCorte(initialId?: string) {
         throw new Error(j.error || 'Erro ao criar OP');
       }
       // Notify other parts of the UI to refresh production lists (kanban)
-      try { window.dispatchEvent(new CustomEvent('op_created', { detail: { op_id: op_id } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('op_created', { detail: { op_id: finalOpId } })); } catch (e) {}
+      // Also create a kanban card to surface the OP in the global Kanban (Aguardando)
+      try {
+        await api.kanban.create({
+          title: finalOpId,
+          subtitle: produto,
+          label: `${pecas} peças`,
+          status: 'Aguardando',
+          type: 'production',
+          observations: JSON.stringify({ op_id: finalOpId, plano_id: metadata?.plano_id || null }),
+          date_time: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Falha ao criar card no kanban:', e);
+      }
       return true;
     } catch (err) {
       console.error('apiCallCreateOP error', err);
