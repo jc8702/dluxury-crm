@@ -531,7 +531,7 @@ const CuttingPlanPage: React.FC = () => {
 
       {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
       {showMaterialModal && (
-        <div className="modal-overlay" onClick={() => setShowMaterialModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowMaterialModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowMaterialModal(false); }} tabIndex={-1}>
           <div className="modal-content animate-pop-in" style={{ width: '800px', display: 'flex', gap: '2rem' }} onClick={e => e.stopPropagation()}>
             {/* Esquerda: Cadastro do Estoque */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', borderRight: '1px solid var(--border)', paddingRight: '2rem' }}>
@@ -602,7 +602,7 @@ const CuttingPlanPage: React.FC = () => {
 
       {/* MODAL: IMPORTAR ORÇAMENTO */}
       {showImportModal && (
-        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
           <div className="modal-content animate-pop-in" style={{ width: '500px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar do Orçamento</h2>

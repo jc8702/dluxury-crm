@@ -71,7 +71,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1100 }}>
+    <div className="modal-overlay" style={{ zIndex: 1100 }} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
       <div className="modal-content animate-pop-in" style={{ maxWidth: '500px', width: '90%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>

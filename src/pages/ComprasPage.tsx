@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import { 
   Plus, Search, Filter, ShoppingCart, 
   Trash2, Eye, CheckCircle2, AlertCircle, 
@@ -253,6 +254,13 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
     }
   }, [pedido]);
 
+  // Close modal on ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const addItem = () => {
     const mat = materiais.find(m => m.id === newItem.material_id);
     if (!mat) return;
@@ -297,17 +305,31 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
     }
   };
 
+  const handleDeletePedido = useCallback(async () => {
+    if (!pedido?.id) return alert('Pedido não salvo ainda');
+    if (!confirm('Deseja excluir este Pedido de Compra?')) return;
+    try {
+      await fetch(`/api/compras?id=${encodeURIComponent(pedido.id)}&type=pedidos`, { method: 'DELETE' });
+      onSave();
+    } catch (e: any) {
+      alert('Erro ao excluir pedido: ' + e.message);
+    }
+  }, [pedido, onSave]);
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '900px', width: '95%' }}>
+    <div className="modal-overlay" onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
+      <div className="modal-content" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <ShoppingCart className="text-primary" /> 
             {pedido ? `Pedido ${pedido.numero}` : 'Novo Pedido de Compra'}
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <ArrowRight size={24} />
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={handleDeletePedido} className="btn btn-danger">Excluir</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <ArrowRight size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -340,20 +362,20 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
              <h3 style={{ fontSize: '1rem', margin: 0 }}>Itens do Pedido</h3>
              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Material</label>
-                  <select 
-                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '200px' }}
-                    value={newItem.material_id}
-                    onChange={e => {
-                      const m = materiais.find(mat => mat.id === e.target.value);
-                      setNewItem({ ...newItem, material_id: e.target.value, preco: m?.preco_custo || 0 });
-                    }}
-                  >
-                    <option value="">Escolher material...</option>
-                    {materiais.map(m => <option key={m.id} value={m.id}>{m.nome} ({m.sku})</option>)}
-                  </select>
-                </div>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                   <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Material</label>
+                   <div style={{ width: 300 }}>
+                     <SearchableSelect
+                       items={materiais.map(m => ({ id: m.id, label: m.nome, sku: m.sku, _meta: m.fornecedor_principal }))}
+                       value={newItem.material_id}
+                       placeholder="Buscar por descrição ou SKU"
+                       onChange={(id) => {
+                         const m = materiais.find(mat => mat.id === id);
+                         setNewItem({ ...newItem, material_id: id, preco: m?.preco_custo || 0 });
+                       }}
+                     />
+                   </div>
+                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Qtd</label>
                   <input 

@@ -114,7 +114,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1100 }}>
+    <div className="modal-overlay" style={{ zIndex: 1100 }} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
       <div className="modal-content animate-pop-in" style={{ maxWidth: '820px', width: '95%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
           <div>

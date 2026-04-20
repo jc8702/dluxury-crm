@@ -65,7 +65,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1200 }}>
+    <div className="modal-overlay" style={{ zIndex: 1200 }} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
       <div className="modal-content animate-pop-in" style={{ maxWidth: '600px', width: '90%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
