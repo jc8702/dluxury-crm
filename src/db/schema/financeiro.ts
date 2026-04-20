@@ -92,7 +92,6 @@ export const titulosPagar = pgTable('titulos_pagar', {
 
   valor_original: numeric('valor_original', { precision: 15, scale: 2 }).notNull(),
   valor_liquido: numeric('valor_liquido', { precision: 15, scale: 2 }).notNull(),
-  valor_// ... (rest of the fields will be kept as is in the real edit)
   valor_juros: numeric('valor_juros', { precision: 15, scale: 2 }).default('0'),
   valor_multa: numeric('valor_multa', { precision: 15, scale: 2 }).default('0'),
   valor_desconto: numeric('valor_desconto', { precision: 15, scale: 2 }).default('0'),

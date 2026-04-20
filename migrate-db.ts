@@ -1,4 +1,4 @@
-import { sql } from './api/lib/_db.js';
+import { sql } from './src/api-lib/_db.ts';
 import dotenv from 'dotenv';
 dotenv.config();
 
