@@ -20,6 +20,14 @@ export async function handleCompras(req: any, res: any) {
         return res.status(200).json({ success: true, data: result });
       }
 
+      if (method === 'DELETE') {
+        // Deletar pedido e seus itens
+        if (!id) return res.status(400).json({ success: false, error: 'id é obrigatório para deletar pedido' });
+        await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id}`;
+        await sql`DELETE FROM pedidos_compra WHERE id = ${id}`;
+        return res.status(200).json({ success: true });
+      }
+
       if (method === 'POST') {
         const f = req.body;
         // Gerar Número PC-ANO-SEQ
