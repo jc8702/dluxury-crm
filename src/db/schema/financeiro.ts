@@ -160,6 +160,21 @@ export const formasPagamento = pgTable('formas_pagamento', {
 });
 
 // ──────────────────────────────────────────
+// CONDIÇÕES DE PAGAMENTO (Parcelamento/Entrada)
+// ──────────────────────────────────────────
+
+export const condicoesPagamento = pgTable('condicoes_pagamento', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  nome: varchar('nome', { length: 150 }).notNull(),
+  descricao: text('descricao'),
+  parcelas: integer('parcelas').notNull().default(1),
+  entrada_percentual: numeric('entrada_percentual', { precision: 5, scale: 2 }).default('0'),
+  juros_percentual: numeric('juros_percentual', { precision: 5, scale: 2 }).default('0'),
+  ativo: boolean('ativo').default(true),
+  criado_em: timestamp('criado_em').defaultNow(),
+});
+
+// ──────────────────────────────────────────
 // CONTAS RECORRENTES
 // ──────────────────────────────────────────
 

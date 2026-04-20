@@ -194,6 +194,16 @@ export const api = {
       create: (data: any) => apiCall<any>('financeiro/contas-internas', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/contas-internas', 'PUT', data),
     },
+    formasPagamento: {
+      list: () => apiCall<any[]>('financeiro/formas-pagamento'),
+      create: (data: any) => apiCall<any>('financeiro/formas-pagamento', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/formas-pagamento', 'PUT', data),
+    },
+    condicoesPagamento: {
+      list: () => apiCall<any[]>('financeiro/condicoes-pagamento'),
+      create: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'PUT', data),
+    },
     titulosReceber: {
       list: () => apiCall<any[]>('financeiro/titulos-receber'),
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
