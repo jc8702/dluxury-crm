@@ -1,322 +1,293 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { 
+  FiArrowLeft, 
+  FiCheck, 
   FiUser, 
-  FiDollarSign, 
   FiCalendar, 
-  FiCreditCard, 
-  FiCheckCircle, 
-  FiChevronRight, 
-  FiChevronLeft,
-  FiArrowLeft
+  FiDollarSign, 
+  FiCreditCard,
+  FiArrowRight,
+  FiLoader
 } from 'react-icons/fi';
 
 export default function FinanceiroTitulosReceberWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  // Data
   const [clients, setClients] = useState<any[]>([]);
-  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
-
-  // Form
-  const [clienteId, setClienteId] = useState('');
-  const [valorTotal, setValorTotal] = useState('');
-  const [condicaoId, setCondicaoId] = useState('');
-  const [classeId, setClasseId] = useState('');
-  const [dataEmissao, setDataEmissao] = useState(new Date().toISOString().slice(0,10));
-  const [vencimento, setVencimento] = useState(new Date().toISOString().slice(0,10));
-  const [numeroDoc, setNumeroDoc] = useState('');
-  
+  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
 
+  const [formData, setFormData] = useState({
+    cliente_id: '',
+    classe_financeira_id: '',
+    valor_total: 0,
+    data_base: new Date().toISOString().split('T')[0],
+    condicao_pagamento_id: '',
+    numero_titulo: `REC-${Date.now().toString().slice(-6)}`,
+    descricao: ''
+  });
+
   useEffect(() => {
-    const loadBasics = async () => {
-      try {
-        const [cls, cnd, fin] = await Promise.all([
-          api.clients.list(),
-          api.financeiro.condicoesPagamento.list(),
-          api.financeiro.classes.list()
-        ]);
-        setClients(cls || []);
-        setCondicoes(cnd || []);
-        // Filtrar apenas classes de RECEITA (natureza = 'receita')
-        setClasses((fin || []).filter((c: any) => c.natureza === 'receita'));
-      } catch (e) {
-        console.error('Erro ao carregar dados básicos', e);
-      }
+    const loadOpts = async () => {
+      const cls = await api.clients.list();
+      setClients(cls || []);
+      const cf = await api.financeiro.classesFinanceiras.list();
+      setClasses(cf || []);
+      const cp = await api.financeiro.condicoesPagamento.list();
+      setCondicoes(cp || []);
     };
-    loadBasics();
+    loadOpts();
   }, []);
 
-  const next = () => setStep((s) => Math.min(4, s + 1));
-  const prev = () => setStep((s) => Math.max(1, s - 1));
+  const handleNext = async () => {
+    if (step === 3) {
+      setLoading(true);
+      try {
+        const res = await api.financeiro.titulosReceber.preview({
+          valor_total: formData.valor_total,
+          condicao_pagamento_id: formData.condicao_pagamento_id,
+          data_base: formData.data_base
+        });
+        setPreview(res.parcelas || []);
+        setStep(4);
+      } catch (err: any) {
+        alert('Erro ao calcular parcelas');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setStep(step + 1);
+    }
+  };
 
-  const doPreview = async () => {
-    if (!valorTotal || !condicaoId) return;
+  const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await api.apiCall<any>('financeiro/titulos-receber/preview', 'POST', {
-        condicao_pagamento_id: condicaoId,
-        valor_original: Number(valorTotal),
-        data_vencimento: vencimento
+      await api.financeiro.titulosReceber.create({
+        ...formData,
+        parcelas: preview
       });
-      setPreview(res.parcelas || []);
-    } catch (e) {
-      console.error(e);
-      alert('Erro ao gerar preview');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const submit = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        cliente_id: clienteId,
-        valor_original: Number(valorTotal),
-        condicao_pagamento_id: condicaoId,
-        classe_financeira_id: classeId,
-        data_emissao: dataEmissao,
-        data_vencimento: vencimento,
-        numero_titulo: numeroDoc || `REC-${Date.now().toString().slice(-6)}`,
-        status: 'pendente'
-      };
-      await api.financeiro.titulosReceber.create(payload);
+      alert('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-receber';
-    } catch (e: any) {
-      alert(e.message || 'Erro ao gerar títulos');
+    } catch (err: any) {
+      alert('Erro ao salvar títulos');
     } finally {
       setLoading(false);
     }
   };
 
-  const steps = [
-    { n: 1, title: 'Cliente', icon: FiUser },
-    { n: 2, title: 'Valores', icon: FiDollarSign },
-    { n: 3, title: 'Condições', icon: FiCreditCard },
-    { n: 4, title: 'Revisão', icon: FiCheckCircle },
-  ];
+  const renderStep1 = () => (
+    <div className="animate-fade-in">
+      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Identificação</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          <label className="label-base">Cliente / Origem</label>
+          <select 
+            className="input-base" 
+            value={formData.cliente_id}
+            onChange={e => setFormData({...formData, cliente_id: e.target.value})}
+          >
+            <option value="">Selecione um cliente...</option>
+            {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label-base">Classe Financeira</label>
+          <select 
+            className="input-base"
+            value={formData.classe_financeira_id}
+            onChange={e => setFormData({...formData, classe_financeira_id: e.target.value})}
+          >
+            <option value="">Selecione uma categoria...</option>
+            {classes.filter(c => c.tipo === 'receita').map(c => (
+              <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label-base">Número do Documento / Título</label>
+          <input 
+            type="text" 
+            className="input-base" 
+            value={formData.numero_titulo}
+            onChange={e => setFormData({...formData, numero_titulo: e.target.value})}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="animate-fade-in">
+      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Valores e Datas</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          <label className="label-base">Valor Total do Recebimento</label>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>R$</span>
+            <input 
+              type="number" 
+              className="input-base" 
+              style={{ paddingLeft: '2.5rem' }}
+              value={formData.valor_total}
+              onChange={e => setFormData({...formData, valor_total: Number(e.target.value)})}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="label-base">Data Base de Vencimento</label>
+          <input 
+            type="date" 
+            className="input-base"
+            value={formData.data_base}
+            onChange={e => setFormData({...formData, data_base: e.target.value})}
+          />
+        </div>
+        <div>
+          <label className="label-base">Descrição / Observação</label>
+          <textarea 
+            className="input-base" 
+            rows={3}
+            value={formData.descricao}
+            onChange={e => setFormData({...formData, descricao: e.target.value})}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="animate-fade-in">
+      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Condição de Pagamento</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+        {condicoes.map(c => (
+          <div 
+            key={c.id} 
+            className={`card hover-scale ${formData.condicao_pagamento_id === c.id ? 'animate-pulse-primary' : ''}`}
+            style={{ 
+              cursor: 'pointer', 
+              borderColor: formData.condicao_pagamento_id === c.id ? 'var(--primary)' : 'var(--border)',
+              background: formData.condicao_pagamento_id === c.id ? 'var(--input-bg-focus)' : 'var(--surface)'
+            }}
+            onClick={() => setFormData({...formData, condicao_pagamento_id: c.id})}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{c.nome}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{c.descricao}</div>
+              </div>
+              {formData.condicao_pagamento_id === c.id && <FiCheck style={{ color: 'var(--primary)' }} />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="animate-fade-in">
+      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Confirmar Parcelamento</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {preview.map((p, i) => (
+          <div key={i} className="card" style={{ padding: '1rem', background: 'var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>PARCELA {p.numero_parcela}</div>
+              <div style={{ fontWeight: 600 }}>{new Date(p.data_vencimento).toLocaleDateString()}</div>
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>R$ {p.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+          </div>
+        ))}
+        <div style={{ marginTop: '1.5rem', padding: '1rem', borderTop: '2px dashed var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontWeight: 700 }}>TOTAL</span>
+          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)' }}>
+            R$ {formData.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-white p-6">
-      {/* Botão Voltar */}
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <button 
+        className="btn btn-outline" 
+        style={{ marginBottom: '2rem' }}
         onClick={() => window.location.hash = '#/financeiro/titulos-receber'}
-        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
       >
-        <FiArrowLeft /> Voltar para Listagem
+        <FiArrowLeft /> VOLTAR PARA LISTAGEM
       </button>
 
-      <div className="max-w-3xl mx-auto">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-black tracking-tight mb-2">Novo Recebimento</h1>
-          <p className="text-gray-400">Siga os passos para lançar títulos no contas a receber</p>
-        </header>
-
-        {/* Stepper Premium */}
-        <div className="flex justify-between mb-12 relative">
-          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2 z-0" />
-          {steps.map((s) => (
-            <div key={s.n} className="relative z-10 flex flex-col items-center">
-              <div 
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  step >= s.n ? 'bg-[#E2AC00] text-black shadow-[0_0_20px_rgba(226,172,0,0.3)]' : 'bg-[#161B22] text-gray-500 border border-white/5'
-                }`}
-              >
-                <s.icon className="text-xl" />
+      <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
+        {/* Stepper */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: '15px', left: 0, right: 0, height: '2px', background: 'var(--border)', zIndex: 0 }} />
+          {[1, 2, 3, 4].map(s => (
+            <div key={s} style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ 
+                width: '32px', height: '32px', borderRadius: '50%', 
+                background: step >= s ? 'var(--primary)' : 'var(--surface)',
+                color: step >= s ? 'var(--primary-text)' : 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, border: '2px solid', 
+                borderColor: step >= s ? 'var(--primary)' : 'var(--border)'
+              }}>
+                {step > s ? <FiCheck /> : s}
               </div>
-              <span className={`mt-2 text-xs font-bold uppercase tracking-wider ${step >= s.n ? 'text-[#E2AC00]' : 'text-gray-500'}`}>
-                {s.title}
-              </span>
             </div>
           ))}
         </div>
 
-        <div className="bg-[#161B22] border border-white/5 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
-          {step === 1 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiUser className="text-[#E2AC00]" /> Selecione o Cliente
-              </h3>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Cliente</label>
-                <select 
-                  value={clienteId} 
-                  onChange={e => setClienteId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                >
-                  <option value="">Selecione um cliente...</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Categoria Financeira (Receita)</label>
-                <select 
-                  value={classeId} 
-                  onChange={e => setClasseId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                >
-                  <option value="">Selecione uma categoria...</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>)}
-                </select>
-              </div>
-            </div>
+        {/* Form Content */}
+        <div style={{ minHeight: '300px' }}>
+          {step === 1 && renderStep1()}
+          {step === 2 && renderStep2()}
+          {step === 3 && renderStep3()}
+          {step === 4 && renderStep4()}
+        </div>
+
+        {/* Actions */}
+        <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
+          <button 
+            className="btn btn-outline" 
+            disabled={step === 1 || loading}
+            onClick={() => setStep(step - 1)}
+          >
+            ANTERIOR
+          </button>
+          
+          {step < 4 ? (
+            <button 
+              className="btn btn-primary" 
+              disabled={loading || !formData.cliente_id}
+              onClick={handleNext}
+            >
+              {loading ? <FiLoader className="animate-spin" /> : <>PRÓXIMO <FiArrowRight /></>}
+            </button>
+          ) : (
+            <button 
+              className="btn btn-primary" 
+              style={{ background: 'var(--success)' }}
+              disabled={loading}
+              onClick={handleSave}
+            >
+              {loading ? <FiLoader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
+            </button>
           )}
-
-          {step === 2 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiDollarSign className="text-[#E2AC00]" /> Detalhes do Valor
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-2">Valor Total</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
-                    <input 
-                      type="number"
-                      value={valorTotal} 
-                      onChange={e => setValorTotal(e.target.value)}
-                      placeholder="0,00"
-                      className="w-full bg-[#0D1117] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white text-2xl font-bold focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Data de Emissão</label>
-                  <input 
-                    type="date" 
-                    value={dataEmissao} 
-                    onChange={e => setDataEmissao(e.target.value)}
-                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Referência / Nº Doc</label>
-                  <input 
-                    type="text" 
-                    value={numeroDoc}
-                    onChange={e => setNumeroDoc(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiCreditCard className="text-[#E2AC00]" /> Condição de Recebimento
-              </h3>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Condição de Pagamento</label>
-                <select 
-                  value={condicaoId} 
-                  onChange={e => setCondicaoId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                >
-                  <option value="">Selecione a condição...</option>
-                  {condicoes.map(c => <option key={c.id} value={c.id}>{c.nome} ({c.parcelas}x)</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Vencimento da 1ª Parcela (ou Parcela única)</label>
-                <input 
-                  type="date" 
-                  value={vencimento} 
-                  onChange={e => setVencimento(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiCheckCircle className="text-[#E2AC00]" /> Revisão e Geração
-              </h3>
-              
-              <div className="bg-[#0D1117] rounded-2xl p-6 border border-white/5 space-y-4">
-                <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-400">Cliente:</span>
-                    <span className="font-bold">{clients.find(c => c.id === clienteId)?.nome || '---'}</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-400">Valor Total:</span>
-                    <span className="font-bold text-[#E2AC00]">R$ {Number(valorTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-400">Categoria:</span>
-                    <span className="font-bold">{classes.find(c => c.id === classeId)?.nome || '---'}</span>
-                </div>
-              </div>
-
-              {!preview.length && (
-                <button 
-                  onClick={doPreview}
-                  disabled={!condicaoId || loading}
-                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all disabled:opacity-20"
-                >
-                  {loading ? 'CALCULANDO...' : 'SIMULAR PARCELAS'}
-                </button>
-              )}
-
-              {preview.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Plano de Parcelamento</h4>
-                  <div className="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                    {preview.map((p, i) => (
-                      <div key={i} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                        <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-full bg-[#E2AC00]/20 text-[#E2AC00] flex items-center justify-center text-xs font-bold">{p.parcela}</span>
-                          <span className="text-sm font-medium">{new Date(p.vencimento).toLocaleDateString()}</span>
-                        </div>
-                        <span className="font-bold text-sm">R$ {Number(p.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Navegação */}
-          <div className="mt-12 flex justify-between gap-4">
-            {step > 1 ? (
-              <button 
-                onClick={prev}
-                className="flex items-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-bold transition-all"
-              >
-                <FiChevronLeft /> VOLTAR
-              </button>
-            ) : <div />}
-            
-            {step < 4 ? (
-              <button 
-                onClick={next}
-                disabled={step === 1 && !clienteId}
-                className="flex items-center gap-2 px-8 py-4 bg-[#E2AC00] hover:bg-[#F5BC00] text-black rounded-2xl font-bold transition-all shadow-lg hover:shadow-[#E2AC00]/30 disabled:opacity-20 ml-auto"
-              >
-                PRÓXIMO <FiChevronRight />
-              </button>
-            ) : (
-              <button 
-                onClick={submit}
-                disabled={loading}
-                className="flex items-center gap-2 px-12 py-4 bg-[#22C55E] hover:bg-[#28D668] text-white rounded-2xl font-extrabold transition-all shadow-lg hover:shadow-[#22C55E]/30 disabled:opacity-20 ml-auto"
-              >
-                {loading ? 'PROCESSANDO...' : 'FINALIZAR E GERAR TÍTULOS'}
-              </button>
-            )}
-          </div>
         </div>
       </div>
+
+      <style>{`
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-pulse-primary { animation: pulsePrimary 2s infinite; }
+        @keyframes pulsePrimary {
+          0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+      `}</style>
     </div>
   );
 }
