@@ -22,9 +22,9 @@ export default async function handler(req: any, res: any) {
       const { handleClients } = await import('../src/api-lib/crm.js');
       return await handleClients(req, res);
     }
-    if (cleanUrl.startsWith('/api/billings')) {
-      const { handleBillings } = await import('../src/api-lib/financeiro.js');
-      return await handleBillings(req, res);
+    if (cleanUrl.startsWith('/api/financeiro')) {
+      const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
+      return await handleFinanceiro(req, res);
     }
     if (cleanUrl.startsWith('/api/estoque')) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');

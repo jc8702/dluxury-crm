@@ -65,11 +65,9 @@ export async function handleCompras(req: any, res: any) {
         let valorTotal = f.valor_total;
         if (f.itens) {
             const totalItens = f.itens.reduce((acc: number, item: any) => acc + (item.quantidade_pedida * item.preco_unitario), 0);
-            valorTotal = totalItens + (Number(f.frete) || Number(f.valor_total) - (Number(f.itens_sum_old) || 0)); // Simplificação manual se necessário
-            // Para ser robusto, recalculamos sempre se itens forem enviados
             valorTotal = totalItens + (Number(f.frete) || 0);
         }
-
+        
         const result = await sql`
           UPDATE pedidos_compra SET
             fornecedor_id = COALESCE(${f.fornecedor_id}, fornecedor_id),
@@ -82,8 +80,46 @@ export async function handleCompras(req: any, res: any) {
             atualizado_em = NOW()
           WHERE id = ${id} RETURNING *
         `;
+        const pedido = result[0];
 
-        // Se enviou itens, sobrescrevemos (simples demais, mas funcional para CRUD rápido)
+        // Geração automática de títulos a pagar ao confirmar o pedido
+        if (f.status === 'confirmado') {
+          const existing = await sql`SELECT id FROM titulos_pagar WHERE pedido_compra_id = ${id}`;
+          if (existing.length === 0) {
+            // Tenta pegar condição de pagamento do pedido ou assume 1 parcela
+            const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null}`)[0];
+            const totalParcelas = cond?.parcelas || 1;
+            const valorParcela = Number(pedido.valor_total) / totalParcelas;
+            const dataEmissao = new Date();
+            
+            // Busca valores padrão para evitar erro de FK
+            const defClasse = (await sql`SELECT id FROM classes_financeiras WHERE codigo = '2.1.1' LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras LIMIT 1`)[0]?.id;
+            const defForma = (await sql`SELECT id FROM formas_pagamento LIMIT 1`)[0]?.id;
+            const defConta = (await sql`SELECT id FROM contas_internas LIMIT 1`)[0]?.id;
+
+            for (let i = 1; i <= totalParcelas; i++) {
+              const vencimento = new Date();
+              vencimento.setMonth(vencimento.getMonth() + (i - 1));
+              
+              await sql`
+                INSERT INTO titulos_pagar (
+                  numero_titulo, fornecedor_id, pedido_compra_id,
+                  valor_original, valor_liquido, valor_aberto,
+                  data_emissao, data_vencimento, data_competencia,
+                  classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+                  status, parcela, total_parcelas
+                ) VALUES (
+                  ${`PAG-AUTO-${pedido.numero}-${i}`}, ${pedido.fornecedor_id}, ${id},
+                  ${valorParcela}, ${valorParcela}, ${valorParcela},
+                  ${dataEmissao}, ${vencimento}, ${dataEmissao},
+                  ${defClasse}, ${defForma}, ${defConta},
+                  'aberto', ${i}, ${totalParcelas}
+                )`;
+            }
+          }
+        }
+
+        // Se enviou itens, sobrescrevemos
         if (f.itens) {
           await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id}`;
           for (const item of f.itens) {
@@ -94,8 +130,9 @@ export async function handleCompras(req: any, res: any) {
           }
         }
 
-        return res.status(200).json({ success: true, data: result[0] });
+        return res.status(200).json({ success: true, data: pedido });
       }
+
     }
 
     if (type === 'itens') {

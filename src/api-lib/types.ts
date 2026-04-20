@@ -45,6 +45,91 @@ export interface Billing {
   created_at?: string;
 }
 
+export interface ClasseFinanceira {
+  id: string;
+  codigo: string;
+  nome: string;
+  tipo: 'sintetica' | 'analitica';
+  natureza: 'credora' | 'devedora';
+  pai_id?: string;
+  ativa: boolean;
+  dt_limite?: string;
+  permite_lancamento: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface ContaInterna {
+  id: string;
+  nome: string;
+  tipo: string;
+  banco_codigo?: string;
+  agencia?: string;
+  conta?: string;
+  saldo_inicial: number;
+  saldo_atual: number;
+  data_saldo_inicial?: string;
+  ativa: boolean;
+  criado_em?: string;
+}
+
+export interface TituloReceber {
+  id: string;
+  numero_titulo: string;
+  cliente_id: string;
+  projeto_id?: string;
+  orcamento_id?: string;
+  valor_original: number;
+  valor_liquido: number;
+  valor_juros: number;
+  valor_multa: number;
+  valor_desconto: number;
+  valor_aberto: number;
+  data_emissao: string;
+  data_vencimento: string;
+  data_competencia: string;
+  data_pagamento?: string;
+  classe_financeira_id: string;
+  centro_custo_id?: string;
+  forma_recebimento_id: string;
+  status: string;
+  parcela: number;
+  total_parcelas: number;
+  observacoes?: string;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface TituloPagar {
+  id: string;
+  numero_titulo: string;
+  fornecedor_id: string;
+  nota_fiscal?: string;
+  pedido_compra_id?: string;
+  valor_original: number;
+  valor_liquido: number;
+  valor_juros: number;
+  valor_multa: number;
+  valor_desconto: number;
+  valor_aberto: number;
+  data_emissao: string;
+  data_vencimento: string;
+  data_competencia: string;
+  data_pagamento?: string;
+  classe_financeira_id: string;
+  centro_custo_id?: string;
+  forma_pagamento_id: string;
+  conta_bancaria_id: string;
+  status: string;
+  parcela: number;
+  total_parcelas: number;
+  tipo_despesa?: string;
+  observacoes?: string;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+
 export interface Material {
   id: string;
   sku: string;

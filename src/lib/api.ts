@@ -204,24 +204,49 @@ export const api = {
       create: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'PUT', data),
     },
-    titulosReceber: {
+titulosReceber: {
       list: (params: any = {}) => {
         const qs = new URLSearchParams(params).toString();
         return apiCall<any>(`financeiro/titulos-receber${qs ? `?${qs}` : ''}`);
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/titulos-receber', 'PUT', data),
-      baixar: (data: any) => apiCall<any>('financeiro/titulos-receber/baixar', 'POST', data),
+      delete: (id: string) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'DELETE'),
+      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber/${id}/baixar`, 'POST', data),
     },
     titulosPagar: {
-      list: () => apiCall<any[]>('financeiro/titulos-pagar'),
+      list: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/titulos-pagar${qs ? `?${qs}` : ''}`);
+      },
       create: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'PUT', data),
+      delete: (id: string) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'DELETE'),
+      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar/${id}/baixar`, 'POST', data),
     },
     tesouraria: {
       list: () => apiCall<any[]>('financeiro/tesouraria'),
-      movimento: (data: any) => apiCall<any>('financeiro/tesouraria', 'POST', data),
-    }
+      transferencia: (data: any) => apiCall<any>('financeiro/tesouraria/transferencia', 'POST', data),
+      movimento: (data: any) => apiCall<any>('financeiro/tesouraria/movimento', 'POST', data),
+    },
+    fluxoCaixa: {
+      get: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/fluxo-caixa${qs ? `?${qs}` : ''}`);
+      }
+    },
+    relatorios: {
+      dre: () => apiCall<any>('financeiro/relatorios?type=dre'),
+      aging: () => apiCall<any>('financeiro/relatorios?type=aging'),
+      dashboard: () => apiCall<any>('financeiro/relatorios?type=dashboard'),
+    },
+    contasRecorrentes: {
+      list: () => apiCall<any[]>('financeiro/contas-recorrentes'),
+      create: (data: any) => apiCall<any>('financeiro/contas-recorrentes', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/contas-recorrentes', 'PUT', data),
+      delete: (id: string) => apiCall<any>(`financeiro/contas-recorrentes?id=${id}`, 'DELETE'),
+      gerarMes: (mes: number, ano: number) => apiCall<any>(`financeiro/contas-recorrentes/gerar-mes?mes=${mes}&ano=${ano}`, 'POST'),
+    },
   },
   estoqueCategorias: {
     list: () => apiCall<any[]>('estoque?type=categories'),

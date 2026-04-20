@@ -88,9 +88,11 @@ export const titulosPagar = pgTable('titulos_pagar', {
   fornecedor_id: uuid('fornecedor_id').notNull(),
   nota_fiscal: varchar('nota_fiscal', { length: 100 }),
   pedido_compra_id: uuid('pedido_compra_id'),
+  condicao_pagamento_id: uuid('condicao_pagamento_id').references(() => condicoesPagamento.id),
 
   valor_original: numeric('valor_original', { precision: 15, scale: 2 }).notNull(),
   valor_liquido: numeric('valor_liquido', { precision: 15, scale: 2 }).notNull(),
+  valor_// ... (rest of the fields will be kept as is in the real edit)
   valor_juros: numeric('valor_juros', { precision: 15, scale: 2 }).default('0'),
   valor_multa: numeric('valor_multa', { precision: 15, scale: 2 }).default('0'),
   valor_desconto: numeric('valor_desconto', { precision: 15, scale: 2 }).default('0'),
@@ -114,6 +116,10 @@ export const titulosPagar = pgTable('titulos_pagar', {
 
   criado_em: timestamp('criado_em').defaultNow(),
   atualizado_em: timestamp('atualizado_em').defaultNow(),
+  criado_por: uuid('criado_por'),
+  atualizado_por: uuid('atualizado_por'),
+  deletado: boolean('deletado').default(false),
+  excluido_em: timestamp('excluido_em'),
 });
 
 // ──────────────────────────────────────────

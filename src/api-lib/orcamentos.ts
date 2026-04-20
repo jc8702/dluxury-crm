@@ -92,6 +92,43 @@ export async function handleOrcamentos(req: any, res: any) {
             await reserveStockForProject(pItem[0].id);
           }
         }
+
+        // Geração automática de títulos financeiros (Sincronização com Financeiro)
+        const currentOrc = orc[0];
+        if (currentOrc.condicao_pagamento_id) {
+          // Evitar duplicidade: verificar se já existem títulos para este orçamento
+          const existing = await sql`SELECT id FROM titulos_receber WHERE orcamento_id = ${id}`;
+          if (existing.length === 0) {
+            const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id}`)[0];
+            if (cond) {
+              const totalParcelas = cond.n_parcelas || 1; // Note: schema in migration used 'parcelas', in handleCondicoesPagamento 'n_parcelas'
+              const valorTotal = Number(currentOrc.valor_final) || 0;
+              const valorParcela = valorTotal / totalParcelas;
+              const dataEmissao = new Date();
+              
+              for (let i = 1; i <= totalParcelas; i++) {
+                const vencimento = new Date();
+                vencimento.setMonth(vencimento.getMonth() + (i - 1));
+                
+                await sql`
+                  INSERT INTO titulos_receber (
+                    numero_titulo, cliente_id, projeto_id, orcamento_id,
+                    valor_original, valor_liquido, valor_aberto,
+                    data_emissao, data_vencimento, data_competencia,
+                    classe_financeira_id, forma_recebimento_id,
+                    status, parcela, total_parcelas
+                  ) VALUES (
+                    ${`REC-AUTO-${currentOrc.numero}-${i}`}, ${currentOrc.cliente_id}, ${currentOrc.projeto_id || null}, ${id},
+                    ${valorParcela}, ${valorParcela}, ${valorParcela},
+                    ${dataEmissao}, ${vencimento}, ${dataEmissao},
+                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.1' LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras LIMIT 1`)[0].id}, 
+                    ${(await sql`SELECT id FROM formas_pagamento LIMIT 1`)[0].id},
+                    'aberto', ${i}, ${totalParcelas}
+                  )`;
+              }
+            }
+          }
+        }
       }
       return res.status(200).json({ success: true, data: { ...orc[0], itens: f.itens } });
     }

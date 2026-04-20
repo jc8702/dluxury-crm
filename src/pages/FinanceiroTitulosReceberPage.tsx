@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import Modal from '../components/ui/Modal';
 
 export default function FinanceiroTitulosReceberPage() {
   const [rows, setRows] = useState<any[]>([]);
@@ -8,29 +9,30 @@ export default function FinanceiroTitulosReceberPage() {
   const [total, setTotal] = useState(0);
   const [clientsMap, setClientsMap] = useState<Record<string,string>>({});
   const [loading, setLoading] = useState(false);
+  const [baixaModal, setBaixaModal] = useState<any>(null);
+  const [contas, setContas] = useState<any[]>([]);
 
   const load = async (p = 1) => {
     setLoading(true);
     try {
       const res = await api.financeiro.titulosReceber.list({ page: p, perPage });
-      // compatibilidade: suporta { rows, page, perPage, total } ou array
       let dataRows: any[] = [];
       if (Array.isArray(res)) {
         dataRows = res;
         setTotal(res.length);
       } else {
         dataRows = res.rows || [];
-        setPage(res.page || 1);
-        setPerPage(res.perPage || 20);
         setTotal(res.total || 0);
       }
       setRows(dataRows);
 
-      // buscar clientes para mapear nomes (opcional)
       const clients = await api.clients.list();
       const map: Record<string,string> = {};
       (clients || []).forEach((c: any) => { map[c.id] = c.nome || c.name || `${c.id}`; });
       setClientsMap(map);
+      
+      const cts = await api.financeiro.contasInternas.list();
+      setContas(cts || []);
     } catch (err: any) {
       alert(err.message || 'Erro ao carregar títulos');
     } finally {
@@ -40,23 +42,37 @@ export default function FinanceiroTitulosReceberPage() {
 
   useEffect(() => { load(page); }, [page]);
 
+  const doBaixar = (titulo: any) => {
+    setBaixaModal(titulo);
+  };
+
+  const confirmarBaixa = async () => {
+    try {
+      const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
+      if (!contaId) throw new Error('Selecione uma conta');
+      
+      await api.financeiro.titulosReceber.baixar(baixaModal.id, {
+        valor_baixa: baixaModal.valor_aberto,
+        conta_interna_id: contaId,
+        data_baixa: new Date()
+      });
+      alert('Baixa registrada com sucesso!');
+      setBaixaModal(null);
+      load(page);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao registrar baixa');
+    }
+  };
+
   const doDelete = async (id: string) => {
     if (!confirm('Confirma exclusão (soft-delete) do título?')) return;
-    await api.financeiro.titulosReceber.list; // ensure API available
     try {
-      await apiCallDelete(id);
+      await api.financeiro.titulosReceber.delete(id);
       alert('Título excluído');
       load(page);
     } catch (err: any) {
       alert(err.message || 'Erro ao excluir');
     }
-  };
-
-  const apiCallDelete = async (id: string) => {
-    const url = `/api/financeiro/titulos-receber?id=${id}`;
-    const res = await fetch(url, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Falha API');
-    return await res.json();
   };
 
   return (
@@ -86,7 +102,10 @@ export default function FinanceiroTitulosReceberPage() {
               <td style={{ padding: '8px 4px', textAlign: 'right' }}>{Number(r.valor_original).toFixed(2)}</td>
               <td style={{ padding: '8px 4px' }}>{new Date(r.data_vencimento).toLocaleDateString()}</td>
               <td style={{ padding: '8px 4px' }}>{r.status}</td>
-              <td style={{ padding: '8px 4px' }}><button onClick={() => doDelete(r.id)}>Excluir</button></td>
+              <td style={{ padding: '8px 4px' }}>
+                <button onClick={() => doBaixar(r)} disabled={r.status === 'pago'}>Baixar</button>
+                <button onClick={() => doDelete(r.id)}>Excluir</button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -99,7 +118,28 @@ export default function FinanceiroTitulosReceberPage() {
       <div style={{ marginTop: 12 }}>
         <span>Total: {total}</span>
       </div>
-      </>)}
+      </>
+      )}
+      
+      <Modal isOpen={!!baixaModal} onClose={() => setBaixaModal(null)} title="Registrar Recebimento">
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          <p>Valor: <strong>R$ {baixaModal?.valor_aberto}</strong></p>
+          <p>Vencimento: {baixaModal ? new Date(baixaModal.data_vencimento).toLocaleDateString() : ''}</p>
+          
+          <label>Conta para Recebimento</label>
+          <select id="conta-interna-id" className="input-base w-full">
+            <option value="">Selecione...</option>
+            {contas.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.nome} (Saldo: {Number(c.saldo_atual).toFixed(2)})</option>
+            ))}
+          </select>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setBaixaModal(null)}>Cancelar</button>
+            <button className="btn btn-primary" onClick={confirmarBaixa}>Confirmar Recebimento</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
