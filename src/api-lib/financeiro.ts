@@ -272,6 +272,23 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
     });
   }
 
+  if (req.method === 'POST' && req.url.includes('preview')) {
+    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
+    if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
+    
+    const parcelas = [];
+    const valorParcela = Number(valor_original) / cond.parcelas;
+    const baseDate = new Date(data_vencimento || new Date());
+    
+    for (let i = 1; i <= cond.parcelas; i++) {
+        const venc = new Date(baseDate);
+        venc.setMonth(venc.getMonth() + (i - 1));
+        parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+    }
+    return res.status(200).json({ success: true, data: { parcelas } });
+  }
+
   return res.status(405).end();
 }
 
@@ -398,6 +415,23 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
         warning: saldoWarning ? 'Saldo insuficiente na conta, mas o pagamento foi processado.' : undefined
       });
     });
+  }
+
+  if (req.method === 'POST' && req.url.includes('preview')) {
+    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
+    if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
+    
+    const parcelas = [];
+    const valorParcela = Number(valor_original) / cond.parcelas;
+    const baseDate = new Date(data_vencimento || new Date());
+    
+    for (let i = 1; i <= cond.parcelas; i++) {
+        const venc = new Date(baseDate);
+        venc.setMonth(venc.getMonth() + (i - 1));
+        parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+    }
+    return res.status(200).json({ success: true, data: { parcelas } });
   }
 
   return res.status(405).end();

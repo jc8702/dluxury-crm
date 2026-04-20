@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { 
-  FiUser, 
+  FiTruck, 
   FiDollarSign, 
   FiCalendar, 
   FiCreditCard, 
   FiCheckCircle, 
   FiChevronRight, 
   FiChevronLeft,
-  FiArrowLeft
+  FiArrowLeft,
+  FiBriefcase
 } from 'react-icons/fi';
 
-export default function FinanceiroTitulosReceberWizard() {
+export default function FinanceiroTitulosPagarWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
   // Data
-  const [clients, setClients] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [condicoes, setCondicoes] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
 
   // Form
-  const [clienteId, setClienteId] = useState('');
+  const [fornecedorId, setFornecedorId] = useState('');
   const [valorTotal, setValorTotal] = useState('');
   const [condicaoId, setCondicaoId] = useState('');
   const [classeId, setClasseId] = useState('');
@@ -34,15 +35,15 @@ export default function FinanceiroTitulosReceberWizard() {
   useEffect(() => {
     const loadBasics = async () => {
       try {
-        const [cls, cnd, fin] = await Promise.all([
-          api.clients.list(),
+        const [sup, cnd, fin] = await Promise.all([
+          api.suppliers.list(),
           api.financeiro.condicoesPagamento.list(),
           api.financeiro.classes.list()
         ]);
-        setClients(cls || []);
+        setSuppliers(sup || []);
         setCondicoes(cnd || []);
-        // Filtrar apenas classes de RECEITA (natureza = 'receita')
-        setClasses((fin || []).filter((c: any) => c.natureza === 'receita'));
+        // Filtrar apenas classes de DESPESA ou CUSTO (natureza = 'despesa')
+        setClasses((fin || []).filter((c: any) => c.natureza === 'despesa'));
       } catch (e) {
         console.error('Erro ao carregar dados básicos', e);
       }
@@ -57,7 +58,7 @@ export default function FinanceiroTitulosReceberWizard() {
     if (!valorTotal || !condicaoId) return;
     setLoading(true);
     try {
-      const res = await api.apiCall<any>('financeiro/titulos-receber/preview', 'POST', {
+      const res = await api.apiCall<any>('financeiro/titulos-pagar/preview', 'POST', {
         condicao_pagamento_id: condicaoId,
         valor_original: Number(valorTotal),
         data_vencimento: vencimento
@@ -75,17 +76,17 @@ export default function FinanceiroTitulosReceberWizard() {
     setLoading(true);
     try {
       const payload = {
-        cliente_id: clienteId,
+        fornecedor_id: fornecedorId,
         valor_original: Number(valorTotal),
         condicao_pagamento_id: condicaoId,
         classe_financeira_id: classeId,
         data_emissao: dataEmissao,
         data_vencimento: vencimento,
-        numero_titulo: numeroDoc || `REC-${Date.now().toString().slice(-6)}`,
+        numero_titulo: numeroDoc || `PAG-${Date.now().toString().slice(-6)}`,
         status: 'pendente'
       };
-      await api.financeiro.titulosReceber.create(payload);
-      window.location.hash = '#/financeiro/titulos-receber';
+      await api.financeiro.titulosPagar.create(payload);
+      window.location.hash = '#/financeiro/titulos-pagar';
     } catch (e: any) {
       alert(e.message || 'Erro ao gerar títulos');
     } finally {
@@ -94,7 +95,7 @@ export default function FinanceiroTitulosReceberWizard() {
   };
 
   const steps = [
-    { n: 1, title: 'Cliente', icon: FiUser },
+    { n: 1, title: 'Fornecedor', icon: FiTruck },
     { n: 2, title: 'Valores', icon: FiDollarSign },
     { n: 3, title: 'Condições', icon: FiCreditCard },
     { n: 4, title: 'Revisão', icon: FiCheckCircle },
@@ -102,9 +103,8 @@ export default function FinanceiroTitulosReceberWizard() {
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white p-6">
-      {/* Botão Voltar */}
       <button 
-        onClick={() => window.location.hash = '#/financeiro/titulos-receber'}
+        onClick={() => window.location.hash = '#/financeiro/titulos-pagar'}
         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
       >
         <FiArrowLeft /> Voltar para Listagem
@@ -112,23 +112,22 @@ export default function FinanceiroTitulosReceberWizard() {
 
       <div className="max-w-3xl mx-auto">
         <header className="text-center mb-12">
-          <h1 className="text-4xl font-black tracking-tight mb-2">Novo Recebimento</h1>
-          <p className="text-gray-400">Siga os passos para lançar títulos no contas a receber</p>
+          <h1 className="text-4xl font-black tracking-tight mb-2">Novo Pagamento</h1>
+          <p className="text-gray-400">Lance suas obrigações financeiras e gere parcelas automaticamente</p>
         </header>
 
-        {/* Stepper Premium */}
         <div className="flex justify-between mb-12 relative">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2 z-0" />
           {steps.map((s) => (
             <div key={s.n} className="relative z-10 flex flex-col items-center">
               <div 
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  step >= s.n ? 'bg-[#E2AC00] text-black shadow-[0_0_20px_rgba(226,172,0,0.3)]' : 'bg-[#161B22] text-gray-500 border border-white/5'
+                  step >= s.n ? 'bg-[#EF4444] text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'bg-[#161B22] text-gray-500 border border-white/5'
                 }`}
               >
                 <s.icon className="text-xl" />
               </div>
-              <span className={`mt-2 text-xs font-bold uppercase tracking-wider ${step >= s.n ? 'text-[#E2AC00]' : 'text-gray-500'}`}>
+              <span className={`mt-2 text-xs font-bold uppercase tracking-wider ${step >= s.n ? 'text-[#EF4444]' : 'text-gray-500'}`}>
                 {s.title}
               </span>
             </div>
@@ -139,25 +138,25 @@ export default function FinanceiroTitulosReceberWizard() {
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiUser className="text-[#E2AC00]" /> Selecione o Cliente
+                <FiTruck className="text-[#EF4444]" /> Selecione o Fornecedor
               </h3>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Cliente</label>
+                <label className="block text-sm text-gray-400 mb-2">Fornecedor</label>
                 <select 
-                  value={clienteId} 
-                  onChange={e => setClienteId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                  value={fornecedorId} 
+                  onChange={e => setFornecedorId(e.target.value)}
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                 >
-                  <option value="">Selecione um cliente...</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name}</option>)}
+                  <option value="">Selecione um fornecedor...</option>
+                  {suppliers.map(s => <option key={s.id} value={s.id}>{s.nome || s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Categoria Financeira (Receita)</label>
+                <label className="block text-sm text-gray-400 mb-2">Categoria Financeira (Despesa)</label>
                 <select 
                   value={classeId} 
                   onChange={e => setClasseId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                 >
                   <option value="">Selecione uma categoria...</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>)}
@@ -169,11 +168,11 @@ export default function FinanceiroTitulosReceberWizard() {
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiDollarSign className="text-[#E2AC00]" /> Detalhes do Valor
+                <FiDollarSign className="text-[#EF4444]" /> Detalhes do Valor
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-2">Valor Total</label>
+                  <label className="block text-sm text-gray-400 mb-2">Valor Total da Fatura</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
                     <input 
@@ -181,7 +180,7 @@ export default function FinanceiroTitulosReceberWizard() {
                       value={valorTotal} 
                       onChange={e => setValorTotal(e.target.value)}
                       placeholder="0,00"
-                      className="w-full bg-[#0D1117] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white text-2xl font-bold focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                      className="w-full bg-[#0D1117] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white text-2xl font-bold focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -191,17 +190,17 @@ export default function FinanceiroTitulosReceberWizard() {
                     type="date" 
                     value={dataEmissao} 
                     onChange={e => setDataEmissao(e.target.value)}
-                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Referência / Nº Doc</label>
+                  <label className="block text-sm text-gray-400 mb-2">Número da NF / Referência</label>
                   <input 
                     type="text" 
                     value={numeroDoc}
                     onChange={e => setNumeroDoc(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                    placeholder="Ex: NF-12345"
+                    className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -211,26 +210,26 @@ export default function FinanceiroTitulosReceberWizard() {
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiCreditCard className="text-[#E2AC00]" /> Condição de Recebimento
+                <FiCreditCard className="text-[#EF4444]" /> Condição de Pagamento
               </h3>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Condição de Pagamento</label>
+                <label className="block text-sm text-gray-400 mb-2">Vezes / Intervalo</label>
                 <select 
                   value={condicaoId} 
                   onChange={e => setCondicaoId(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                 >
                   <option value="">Selecione a condição...</option>
                   {condicoes.map(c => <option key={c.id} value={c.id}>{c.nome} ({c.parcelas}x)</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Vencimento da 1ª Parcela (ou Parcela única)</label>
+                <label className="block text-sm text-gray-400 mb-2">Vencimento da 1ª Parcela</label>
                 <input 
                   type="date" 
                   value={vencimento} 
                   onChange={e => setVencimento(e.target.value)}
-                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#E2AC00] outline-none transition-all"
+                  className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-[#EF4444] outline-none transition-all"
                 />
               </div>
             </div>
@@ -239,17 +238,17 @@ export default function FinanceiroTitulosReceberWizard() {
           {step === 4 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-xl font-bold flex items-center gap-2">
-                <FiCheckCircle className="text-[#E2AC00]" /> Revisão e Geração
+                <FiCheckCircle className="text-green-500" /> Revisão do Lançamento
               </h3>
               
-              <div className="bg-[#0D1117] rounded-2xl p-6 border border-white/5 space-y-4">
+              <div className="bg-[#0D1117] rounded-2xl p-6 border border-white/5 space-y-4 shadow-inner">
                 <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-400">Cliente:</span>
-                    <span className="font-bold">{clients.find(c => c.id === clienteId)?.nome || '---'}</span>
+                    <span className="text-gray-400">Fornecedor:</span>
+                    <span className="font-bold">{suppliers.find(s => s.id === fornecedorId)?.nome || '---'}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-gray-400">Valor Total:</span>
-                    <span className="font-bold text-[#E2AC00]">R$ {Number(valorTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-[#F87171]">R$ {Number(valorTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-gray-400">Categoria:</span>
@@ -261,23 +260,23 @@ export default function FinanceiroTitulosReceberWizard() {
                 <button 
                   onClick={doPreview}
                   disabled={!condicaoId || loading}
-                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all disabled:opacity-20"
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/5"
                 >
-                  {loading ? 'CALCULANDO...' : 'SIMULAR PARCELAS'}
+                  {loading ? 'CALCULANDO...' : 'VERIFICAR PARCELAS'}
                 </button>
               )}
 
               {preview.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Plano de Parcelamento</h4>
+                  <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Cronograma de Saída</h4>
                   <div className="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                     {preview.map((p, i) => (
-                      <div key={i} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                      <div key={i} className="flex justify-between items-center bg-white/[0.02] p-4 rounded-xl border border-white/5">
                         <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-full bg-[#E2AC00]/20 text-[#E2AC00] flex items-center justify-center text-xs font-bold">{p.parcela}</span>
+                          <span className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center text-[10px] font-black">{p.parcela}</span>
                           <span className="text-sm font-medium">{new Date(p.vencimento).toLocaleDateString()}</span>
                         </div>
-                        <span className="font-bold text-sm">R$ {Number(p.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="font-bold text-sm text-gray-200">R$ {Number(p.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                     ))}
                   </div>
@@ -300,8 +299,8 @@ export default function FinanceiroTitulosReceberWizard() {
             {step < 4 ? (
               <button 
                 onClick={next}
-                disabled={step === 1 && !clienteId}
-                className="flex items-center gap-2 px-8 py-4 bg-[#E2AC00] hover:bg-[#F5BC00] text-black rounded-2xl font-bold transition-all shadow-lg hover:shadow-[#E2AC00]/30 disabled:opacity-20 ml-auto"
+                disabled={(step === 1 && !fornecedorId) || (step === 2 && !valorTotal)}
+                className="flex items-center gap-2 px-8 py-4 bg-[#EF4444] hover:bg-[#FF5555] text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-[#EF4444]/30 disabled:opacity-20 ml-auto"
               >
                 PRÓXIMO <FiChevronRight />
               </button>
@@ -309,9 +308,9 @@ export default function FinanceiroTitulosReceberWizard() {
               <button 
                 onClick={submit}
                 disabled={loading}
-                className="flex items-center gap-2 px-12 py-4 bg-[#22C55E] hover:bg-[#28D668] text-white rounded-2xl font-extrabold transition-all shadow-lg hover:shadow-[#22C55E]/30 disabled:opacity-20 ml-auto"
+                className="flex items-center gap-2 px-12 py-4 bg-[#EF4444] hover:bg-red-500 text-white rounded-2xl font-extrabold transition-all shadow-lg hover:shadow-[#EF4444]/40 disabled:opacity-20 ml-auto"
               >
-                {loading ? 'PROCESSANDO...' : 'FINALIZAR E GERAR TÍTULOS'}
+                {loading ? 'PROCESSANDO...' : 'CONFIRMAR E GERAR PAGAMENTOS'}
               </button>
             )}
           </div>

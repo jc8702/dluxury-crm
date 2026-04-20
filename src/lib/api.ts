@@ -204,7 +204,7 @@ export const api = {
       create: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'PUT', data),
     },
-titulosReceber: {
+    titulosReceber: {
       list: (params: any = {}) => {
         const qs = new URLSearchParams(params).toString();
         return apiCall<any>(`financeiro/titulos-receber${qs ? `?${qs}` : ''}`);
@@ -276,4 +276,3 @@ titulosReceber: {
     update: (data: any) => apiCall<any>('after-sales', 'PATCH', data),
   }
 };
-
