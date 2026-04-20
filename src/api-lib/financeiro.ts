@@ -5,10 +5,13 @@ export async function handleFinanceiro(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
 
-    const url = req.url || '';
+    const fullUrl = req.url || '';
+    const url = fullUrl.split('?')[0]; // Limpa query params
     const paths = url.split('/').filter(p => p && p !== 'api' && p !== 'financeiro');
     const resource = paths[0];
     const id = paths[1];
+
+    console.log(`[FINANCEIRO] Route: ${req.method} ${fullUrl} -> Resource: ${resource}, ID: ${id}`);
 
     if (resource === 'classes') {
       return await handleClasses(req, res, id);
