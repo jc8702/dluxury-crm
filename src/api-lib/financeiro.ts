@@ -32,10 +32,10 @@ export async function handleFinanceiro(req: any, res: any) {
       return await handleTesouraria(req, res, id);
     }
     if (resource === 'fluxo-caixa') {
-      return await handleFluxoCaixa(req, res, id);
+      return await handleFluxoCaixa(req, res);
     }
     if (resource === 'relatorios') {
-      return await handleRelatorios(req, res, id);
+      return await handleRelatorios(req, res);
     }
     if (resource === 'contas-recorrentes') {
       return await handleContasRecorrentes(req, res, id);

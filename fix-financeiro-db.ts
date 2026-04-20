@@ -15,32 +15,23 @@ async function runFix() {
   const sqlContent = fs.readFileSync(sqlPath, 'utf8');
   
   console.log('Executando comandos SQL no Neon...');
-  try {
-    // Como o arquivo tem BEGIN/COMMIT, executamos como uma única query se o driver permitir, 
-    // ou limpamos os marcadores de transação para evitar conflitos se o driver já abrir uma.
-    // O driver Neon permite multi-statements em alguns contextos.
-    await sql.unsafe(sqlContent);
-    console.log('--- Migração Financeira Concluída com Sucesso! ---');
-  } catch (e) {
-    console.error('Erro ao executar SQL:', e.message);
-    
-    // Fallback: Tentar executar linha por linha se falhar (removendo comentários e vazios)
-    console.log('Tentando fallback: Execução fragmentada...');
+  
+  const commands = sqlContent
+    .split(';')
+    .map(c => c.trim())
+    .filter(c => c && !c.startsWith('--') && c.toUpperCase() !== 'BEGIN' && c.toUpperCase() !== 'COMMIT');
+
+  for (const cmd of commands) {
     try {
-        const commands = sqlContent
-            .split(';')
-            .map(c => c.trim())
-            .filter(c => c && !c.startsWith('--') && c.toUpperCase() !== 'BEGIN' && c.toUpperCase() !== 'COMMIT');
-        
-        for (const cmd of commands) {
-            console.log(`Executando: ${cmd.substring(0, 50)}...`);
-            await sql.unsafe(cmd);
-        }
-        console.log('--- Migração Financeira Concluída (via Fallback)! ---');
-    } catch (e2) {
-        console.error('Falha total no fallback:', e2.message);
+      console.log(`Executando (${cmd.length} chars): ${cmd.substring(0, 50)}...`);
+      // O driver neon @neondatabase/serverless aceita strings simples como única chamada
+      await (sql as any)(cmd);
+    } catch (e) {
+      console.error(`Erro ao executar comando: ${e.message}`);
     }
   }
+  
+  console.log('--- Processo de correção finalizado. ---');
   process.exit(0);
 }
 
