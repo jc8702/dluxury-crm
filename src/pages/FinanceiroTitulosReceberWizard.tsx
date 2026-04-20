@@ -8,7 +8,8 @@ import {
   FiDollarSign, 
   FiCreditCard,
   FiArrowRight,
-  FiLoader
+  FiLoader,
+  FiInfo
 } from 'react-icons/fi';
 
 export default function FinanceiroTitulosReceberWizard() {
@@ -31,12 +32,17 @@ export default function FinanceiroTitulosReceberWizard() {
 
   useEffect(() => {
     const loadOpts = async () => {
-      const cls = await api.clients.list();
-      setClients(cls || []);
-      const cf = await api.financeiro.classesFinanceiras.list();
-      setClasses(cf || []);
-      const cp = await api.financeiro.condicoesPagamento.list();
-      setCondicoes(cp || []);
+      try {
+        const cls = await api.clients.list();
+        setClients(cls || []);
+        const cf = await api.financeiro.classesFinanceiras.list();
+        // Garantindo que filtramos apenas classes que permitem lançamento
+        setClasses(cf || []);
+        const cp = await api.financeiro.condicoesPagamento.list();
+        setCondicoes(cp || []);
+      } catch (err) {
+        console.error('Erro ao carregar opções', err);
+      }
     };
     loadOpts();
   }, []);
@@ -90,7 +96,7 @@ export default function FinanceiroTitulosReceberWizard() {
             onChange={e => setFormData({...formData, cliente_id: e.target.value})}
           >
             <option value="">Selecione um cliente...</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name}</option>)}
+            {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name || c.razao_social}</option>)}
           </select>
         </div>
         <div>
@@ -101,18 +107,28 @@ export default function FinanceiroTitulosReceberWizard() {
             onChange={e => setFormData({...formData, classe_financeira_id: e.target.value})}
           >
             <option value="">Selecione uma categoria...</option>
-            {classes.filter(c => c.tipo === 'receita').map(c => (
-              <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>
-            ))}
+            {classes
+              .filter(c => c.tipo.toLowerCase() === 'receita' && c.permite_lancamento)
+              .map(c => (
+                <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>
+              ))
+            }
           </select>
+          {classes.filter(c => c.tipo.toLowerCase() === 'receita').length === 0 && (
+            <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Nenhuma classe de receita carregada.</p>
+          )}
         </div>
         <div>
-          <label className="label-base">Número do Documento / Título</label>
+          <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Número do Documento / Título
+            <FiInfo title="Gerado automaticamente, mas você pode alterar para o número da Nota Fiscal ou Recibo." />
+          </label>
           <input 
             type="text" 
             className="input-base" 
             value={formData.numero_titulo}
             onChange={e => setFormData({...formData, numero_titulo: e.target.value})}
+            placeholder="Ex: NF-12345"
           />
         </div>
       </div>
@@ -152,6 +168,7 @@ export default function FinanceiroTitulosReceberWizard() {
             rows={3}
             value={formData.descricao}
             onChange={e => setFormData({...formData, descricao: e.target.value})}
+            style={{ textTransform: 'none' }}
           />
         </div>
       </div>
@@ -165,17 +182,18 @@ export default function FinanceiroTitulosReceberWizard() {
         {condicoes.map(c => (
           <div 
             key={c.id} 
-            className={`card hover-scale ${formData.condicao_pagamento_id === c.id ? 'animate-pulse-primary' : ''}`}
+            className="card"
             style={{ 
               cursor: 'pointer', 
               borderColor: formData.condicao_pagamento_id === c.id ? 'var(--primary)' : 'var(--border)',
-              background: formData.condicao_pagamento_id === c.id ? 'var(--input-bg-focus)' : 'var(--surface)'
+              background: formData.condicao_pagamento_id === c.id ? 'var(--input-bg-focus)' : 'var(--surface)',
+              transition: 'all 0.2s ease'
             }}
             onClick={() => setFormData({...formData, condicao_pagamento_id: c.id})}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{c.nome}</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: formData.condicao_pagamento_id === c.id ? 'var(--primary)' : 'var(--text)' }}>{c.nome}</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{c.descricao}</div>
               </div>
               {formData.condicao_pagamento_id === c.id && <FiCheck style={{ color: 'var(--primary)' }} />}
@@ -260,7 +278,7 @@ export default function FinanceiroTitulosReceberWizard() {
           {step < 4 ? (
             <button 
               className="btn btn-primary" 
-              disabled={loading || !formData.cliente_id}
+              disabled={loading || !formData.cliente_id || !formData.classe_financeira_id}
               onClick={handleNext}
             >
               {loading ? <FiLoader className="animate-spin" /> : <>PRÓXIMO <FiArrowRight /></>}
@@ -281,12 +299,6 @@ export default function FinanceiroTitulosReceberWizard() {
       <style>{`
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-pulse-primary { animation: pulsePrimary 2s infinite; }
-        @keyframes pulsePrimary {
-          0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
-        }
       `}</style>
     </div>
   );

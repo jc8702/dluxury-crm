@@ -8,7 +8,8 @@ import {
   FiDollarSign, 
   FiCreditCard,
   FiArrowRight,
-  FiLoader
+  FiLoader,
+  FiInfo
 } from 'react-icons/fi';
 
 export default function FinanceiroTitulosPagarWizard() {
@@ -105,18 +106,28 @@ export default function FinanceiroTitulosPagarWizard() {
             onChange={e => setFormData({...formData, classe_financeira_id: e.target.value})}
           >
             <option value="">Selecione uma categoria...</option>
-            {classes.filter(c => c.tipo === 'despesa').map(c => (
-              <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>
-            ))}
+            {classes
+              .filter(c => c.tipo.toLowerCase() === 'despesa' && c.permite_lancamento)
+              .map(c => (
+                <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>
+              ))
+            }
           </select>
+          {classes.filter(c => c.tipo.toLowerCase() === 'despesa').length === 0 && (
+            <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Nenhuma classe de despesa carregada.</p>
+          )}
         </div>
         <div>
-          <label className="label-base">Número da Duplicata / Título</label>
+          <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Número da Duplicata / Título
+            <FiInfo title="Gerado automaticamente, mas você pode alterar para o número da Nota Fiscal ou Recibo." />
+          </label>
           <input 
             type="text" 
             className="input-base" 
             value={formData.numero_titulo}
             onChange={e => setFormData({...formData, numero_titulo: e.target.value})}
+            placeholder="Ex: NF-12345"
           />
         </div>
       </div>
@@ -156,6 +167,7 @@ export default function FinanceiroTitulosPagarWizard() {
             rows={3}
             value={formData.descricao}
             onChange={e => setFormData({...formData, descricao: e.target.value})}
+            style={{ textTransform: 'none' }}
           />
         </div>
       </div>
@@ -169,11 +181,12 @@ export default function FinanceiroTitulosPagarWizard() {
         {condicoes.map(c => (
           <div 
             key={c.id} 
-            className="card hover-scale"
+            className="card"
             style={{ 
               cursor: 'pointer', 
               borderColor: formData.condicao_pagamento_id === c.id ? 'var(--danger)' : 'var(--border)',
-              background: formData.condicao_pagamento_id === c.id ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface)'
+              background: formData.condicao_pagamento_id === c.id ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface)',
+              transition: 'all 0.2s ease'
             }}
             onClick={() => setFormData({...formData, condicao_pagamento_id: c.id})}
           >
@@ -265,7 +278,7 @@ export default function FinanceiroTitulosPagarWizard() {
             <button 
               className="btn btn-primary" 
               style={{ background: 'var(--danger)' }}
-              disabled={loading || !formData.fornecedor_id}
+              disabled={loading || !formData.fornecedor_id || !formData.classe_financeira_id}
               onClick={handleNext}
             >
               {loading ? <FiLoader className="animate-spin" /> : <>PRÓXIMO <FiArrowRight /></>}
