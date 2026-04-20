@@ -1,38 +1,40 @@
 import 'dotenv/config';
-import { sql } from './src/api-lib/_db.ts';
+import { neon } from '@neondatabase/serverless';
 import fs from 'fs';
 import path from 'path';
 
 async function runFix() {
+  const dbUrl = process.env.DATABASE_URL || '';
   const sqlPath = path.join(process.cwd(), 'migrations', '20260420_create_financeiro.sql');
-  console.log(`Lendo arquivo SQL: ${sqlPath}`);
-  
-  if (!fs.existsSync(sqlPath)) {
-    console.error('Arquivo não encontrado!');
-    process.exit(1);
-  }
-
   const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+  const sql = neon(dbUrl);
   
-  console.log('Executando comandos SQL no Neon...');
-  
-  const commands = sqlContent
+  // Remove comentários (linha a linha)
+  const lines = sqlContent.split('\n');
+  const cleanSql = lines
+    .filter(line => !line.trim().startsWith('--'))
+    .join('\n');
+    
+  // Dividimos por ;
+  const commands = cleanSql
     .split(';')
     .map(c => c.trim())
-    .filter(c => c && !c.startsWith('--') && c.toUpperCase() !== 'BEGIN' && c.toUpperCase() !== 'COMMIT');
+    .filter(c => c && c.toUpperCase() !== 'BEGIN' && c.toUpperCase() !== 'COMMIT');
 
-  for (const cmd of commands) {
+  console.log(`Iniciando execução de ${commands.length} comandos.`);
+  
+  for (let i = 0; i < commands.length; i++) {
+    const cmd = commands[i];
     try {
-      console.log(`Executando (${cmd.length} chars): ${cmd.substring(0, 50)}...`);
-      // O driver neon @neondatabase/serverless aceita strings simples como única chamada
-      await (sql as any)(cmd);
+      console.log(`[${i+1}/${commands.length}] Executando: ${cmd.substring(0, 50)}...`);
+      // O cliente neon requer .query() para strings normais (não template literals)
+      await (sql as any).query(cmd);
+      console.log('OK');
     } catch (e) {
-      console.error(`Erro ao executar comando: ${e.message}`);
+      console.error(`ERRO no comando ${i+1}: ${e.message}`);
     }
   }
-  
-  console.log('--- Processo de correção finalizado. ---');
   process.exit(0);
 }
 
-runFix();
+runFix().catch(console.error);
