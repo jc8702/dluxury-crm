@@ -18,6 +18,7 @@ const EngineeringPage = lazy(() => import('./pages/EngineeringPage'));
 const SKUsPage = lazy(() => import('./pages/SKUsPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const FinancePage = lazy(() => import('./pages/FinancePage'));
+const FinanceClassesPage = lazy(() => import('./pages/FinanceiroClassesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const NotificacoesPage = lazy(() => import('./pages/NotificacoesPage'));
 const ComprasPage = lazy(() => import('./pages/ComprasPage'));
@@ -152,6 +153,7 @@ export default function App() {
                   <Route path="pecas" element={<SKUsPage />} />
                   <Route path="relatorios" element={<ReportsPage />} />
                   <Route path="financeiro" element={<FinancePage />} />
+                  <Route path="financeiro/classes" element={<FinanceClassesPage />} />
                   <Route path="configuracoes" element={<SettingsPage />} />
                   <Route path="notificacoes" element={<NotificacoesPage />} />
                   <Route path="compras" element={<ComprasPage />} />

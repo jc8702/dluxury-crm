@@ -182,6 +182,34 @@ export const api = {
     updateEntity: (type: string, id: string, data: any) => apiCall<any>(`orcamento-tecnico?type=${type}&id=${id}`, 'PATCH', data),
     deleteEntity: (type: string, id: string) => apiCall<any>(`orcamento-tecnico?type=${type}&id=${id}`, 'DELETE'),
   },
+  financeiro: {
+    classes: {
+      list: () => apiCall<any[]>('financeiro/classes'),
+      create: (data: any) => apiCall<any>('financeiro/classes', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/classes', 'PUT', data),
+      delete: (id: string) => apiCall<any>(`financeiro/classes?id=${id}`, 'DELETE'),
+    },
+    contasInternas: {
+      list: () => apiCall<any[]>('financeiro/contas-internas'),
+      create: (data: any) => apiCall<any>('financeiro/contas-internas', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/contas-internas', 'PUT', data),
+    },
+    titulosReceber: {
+      list: () => apiCall<any[]>('financeiro/titulos-receber'),
+      create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/titulos-receber', 'PUT', data),
+      baixar: (data: any) => apiCall<any>('financeiro/titulos-receber/baixar', 'POST', data),
+    },
+    titulosPagar: {
+      list: () => apiCall<any[]>('financeiro/titulos-pagar'),
+      create: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'POST', data),
+      update: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'PUT', data),
+    },
+    tesouraria: {
+      list: () => apiCall<any[]>('financeiro/tesouraria'),
+      movimento: (data: any) => apiCall<any>('financeiro/tesouraria', 'POST', data),
+    }
+  },
   estoqueCategorias: {
     list: () => apiCall<any[]>('estoque?type=categories'),
     create: (data: any) => apiCall<any>('estoque?type=categories', 'POST', data),
