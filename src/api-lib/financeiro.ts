@@ -11,9 +11,9 @@ export async function handleFinanceiro(req: any, res: any) {
     const resource = paths[0];
     let id = paths[1];
 
-    // Se o ID não estiver no path, tenta pegar do body (comum no frontend)
-    if (!id && req.body && req.body.id) {
-      id = req.body.id;
+    // Se o ID não estiver no path, tenta pegar da query string ou do body
+    if (!id) {
+      id = req.query?.id || req.body?.id;
     }
 
     console.log(`[FINANCEIRO] Route: ${req.method} ${fullUrl} -> Resource: ${resource}, ID: ${id}`);
