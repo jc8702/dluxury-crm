@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
+import { useEscClose } from '../../hooks/useEscClose';
 import PropostaTemplate from './PropostaTemplate';
 import { gerarPropostaPDF, enviarWhatsAppProposta } from '../../utils/gerarPropostaPDF';
 
@@ -119,6 +120,11 @@ const Estimates: React.FC = () => {
   useEffect(() => {
     loadHistory();
   }, []);
+
+  // close modals with ESC
+  useEscClose(() => { if (showItemForm) setShowItemForm(false); });
+  useEscClose(() => { if (showUserModal) setShowUserModal(false); });
+  useEscClose(() => { if (showCondModal) setShowCondModal(false); });
 
   const handleGenerateLink = async (orcId: string) => {
     try {
@@ -564,8 +570,8 @@ const Estimates: React.FC = () => {
 
       {/* Modal adicionar móvel */}
       {showItemForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemForm(false)} tabIndex={-1}>
+          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '500px', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color: 'white', marginBottom: '1.5rem' }}>Adicionar Móvel</h3>
             
             {/* SKU Search */}

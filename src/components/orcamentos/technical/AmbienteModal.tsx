@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscClose } from '../../../hooks/useEscClose';
 
 interface AmbienteModalProps {
   onClose: () => void;
@@ -32,9 +33,11 @@ const AmbienteModal: React.FC<AmbienteModalProps> = ({ onClose, onSave }) => {
     marginBottom: '1rem'
   };
 
+  useEscClose(onClose);
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
-      <div style={{ background: 'var(--surface)', padding: '2.5rem', borderRadius: '16px', width: '450px', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }} onClick={onClose} tabIndex={-1}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', padding: '2.5rem', borderRadius: '16px', width: '450px', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
         <h3 style={{ marginBottom: '1.5rem', color: '#d4af37', fontSize: '1.25rem' }}>Adicionar Novo Ambiente</h3>
         
         <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>NOME DO AMBIENTE</label>

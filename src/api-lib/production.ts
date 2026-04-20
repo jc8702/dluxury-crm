@@ -143,7 +143,7 @@ async function updateOPDetails(req: any, res: any) {
 /**
  * Exclui uma OP e remove o card do kanban se existir
  */
-async function deleteOP(req: any, res: any) {
+  async function deleteOP(req: any, res: any) {
   const { op_id } = req.query || req.body || {};
   if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
 
@@ -153,7 +153,8 @@ async function deleteOP(req: any, res: any) {
   await sql`DELETE FROM ordens_producao WHERE op_id = ${op_id}`;
 
   // Try to remove kanban item(s) referencing this OP
-  await sql`DELETE FROM kanban_items WHERE observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
+  // Prefer explicit op_id field (if present), fallback to searching observations text
+  await sql`DELETE FROM kanban_items WHERE op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
 
   try { window.dispatchEvent(new CustomEvent('op_deleted', { detail: { op_id } })); } catch (e) {}
 

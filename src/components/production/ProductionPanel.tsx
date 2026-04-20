@@ -203,18 +203,34 @@ const ProductionPanel: React.FC = () => {
               </button>
             )}
           </div>
-          {col.id !== "FINALIZADA" && (
-            <button 
-              onClick={() => updateStatus(op, 'avancar')}
-              style={{ 
-                background: progress === 100 || total === 0 ? 'linear-gradient(135deg, #d4af37, #b49050)' : 'rgba(255,255,255,0.05)', 
-                color: progress === 100 || total === 0 ? '#1a1a2e' : 'var(--text-muted)', 
-                border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800', cursor: 'pointer' 
-              }}
-            >
-              AVANÇAR →
-            </button>
-          )}
+          {col.id !== "FINALIZADA" && (() => {
+            // Determine if advancing is allowed (checklist + piece-level)
+            const checklistArr = op.checklist || [];
+            const checklistCompleteLocal = checklistArr.length === 0 || checklistArr.every(i => i.completed);
+            let piecesCompleteLocal = true;
+            try {
+              const meta: any = (op as any).metadata || {};
+              const pecas = Array.isArray(meta.pecas) ? meta.pecas : [];
+              for (const pp of pecas) { if (pp && pp.operator_checked === false) { piecesCompleteLocal = false; break; } }
+            } catch (e) { piecesCompleteLocal = true; }
+
+            const canAdvance = checklistCompleteLocal && piecesCompleteLocal;
+            return (
+              <button
+                onClick={() => canAdvance ? updateStatus(op, 'avancar') : alert('⚠️ Checklist ou peças pendentes! Conclua todas as tarefas antes de avançar.')}
+                disabled={!canAdvance}
+                title={!canAdvance ? 'Checklist ou peças pendentes' : 'Avançar OP'}
+                style={{
+                  background: canAdvance ? 'linear-gradient(135deg, #d4af37, #b49050)' : 'rgba(255,255,255,0.05)',
+                  color: canAdvance ? '#1a1a2e' : 'var(--text-muted)',
+                  border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800',
+                  cursor: canAdvance ? 'pointer' : 'not-allowed', opacity: canAdvance ? 1 : 0.6
+                }}
+              >
+                AVANÇAR →
+              </button>
+            );
+          })()}
         </div>
       </div>
     );
@@ -342,13 +358,29 @@ const ProductionPanel: React.FC = () => {
                   {((editingOP as any).metadata?.pecas || []).map((p: any, i: number) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="checkbox" checked={!!p.operator_checked} onChange={(e) => {
-                          const newMeta = { ...(editingOP as any).metadata };
-                          const newPecas = Array.isArray(newMeta.pecas) ? [...newMeta.pecas] : [];
-                          newPecas[i] = { ...newPecas[i], operator_checked: e.target.checked };
-                          newMeta.pecas = newPecas;
-                          setEditingOP({ ...editingOP, metadata: newMeta } as any);
-                        }} />
+                          <input type="checkbox" checked={!!p.operator_checked} onChange={async (e) => {
+                            const checked = e.target.checked;
+                            const newMeta = { ...(editingOP as any).metadata };
+                            const newPecas = Array.isArray(newMeta.pecas) ? [...newMeta.pecas] : [];
+                            newPecas[i] = { ...newPecas[i], operator_checked: checked };
+                            newMeta.pecas = newPecas;
+
+                            // Update local editing state immediately for responsiveness
+                            const nextEditing = { ...editingOP, metadata: newMeta } as any;
+                            setEditingOP(nextEditing);
+
+                            // Persist change to backend (non-blocking UI)
+                            try {
+                              const saved = await api.production.updateDetails({ op_id: nextEditing.op_id, metadata: nextEditing.metadata });
+                              // Update list of OPs in the panel so AVANÇAR sees up-to-date data
+                              setOps(prev => prev.map(o => o.op_id === saved.op_id ? saved : o));
+                              // Keep editing modal open but refresh editingOP with saved data
+                              setEditingOP(saved as any);
+                            } catch (err: any) {
+                              console.error('Erro salvando metadata da OP:', err);
+                              alert('Erro ao salvar conferência da peça: ' + (err.message || err));
+                            }
+                          }} />
                         <div style={{ fontSize: '0.9rem' }}>{p.nome}</div>
                       </div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{p.largura}x{p.altura}</div>

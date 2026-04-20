@@ -3,6 +3,7 @@ import { Settings2, Plus, Zap, Box, Ruler, Loader2, Save, X } from 'lucide-react
 import { api } from '../../lib/api';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
+import SearchableSelect from '../ui/SearchableSelect';
 
 const EngineeringPage: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -210,14 +211,14 @@ const EngineeringPage: React.FC = () => {
                       value={comp.componente_nome} 
                       onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })} 
                     />
-                    <select 
-                      className="input-base w-full" 
-                      value={comp.sku_id} 
-                      onChange={e => updateComponent(comp.id, { sku_id: e.target.value })}
-                    >
-                      <option value="">Selecione Material</option>
-                      {skus.map(s => <option key={s.id} value={s.id}>{s.sku} - {s.nome}</option>)}
-                    </select>
+                    <div>
+                      <SearchableSelect
+                        items={skus.map((s: any) => ({ id: s.id, label: s.nome || s.sku, sku: s.sku }))}
+                        value={comp.sku_id}
+                        placeholder="Selecione Material"
+                        onChange={(id) => updateComponent(comp.id, { sku_id: id })}
+                      />
+                    </div>
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                        <input type="number" className="input-base w-full" placeholder="Qtd" title="Quantidade de peças" value={comp.quantidade} onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })} />
                     </div>

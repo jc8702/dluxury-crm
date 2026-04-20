@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
 import { 
@@ -16,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { api } from '../../../lib/api';
+import SearchableSelect from '../../ui/SearchableSelect';
 import { 
   calcularM2Peca, 
   aplicarPerdaCorte, 
@@ -270,8 +272,10 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
     return <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>Carregando Compositor...</div>;
   }
 
+  useEscClose(onClose);
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background)', zIndex: 1000, display: 'flex', flexDirection: 'column' }} onClick={onClose} tabIndex={-1}>
       {/* Header */}
       <header style={{ padding: '1rem 2rem', background: '#0a0d14', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -417,18 +421,17 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                              />
                           </td>
                           <td style={{ padding: '0.5rem' }}>
-                            <select 
-                              style={{ background: 'transparent', border: 'none', color: '#d4af37', width: '100%' }}
-                              value={p.material_id}
-                              onChange={(e) => {
-                                const mat = materiais.find(m => m.id === e.target.value);
-                                handleUpdatePeca(p.id, { material_id: mat?.id, sku: mat?.sku });
-                              }}
-                            >
-                              {materiais.filter(m => m.categoria_nome?.toLowerCase().includes('chapa')).map(m => (
-                                <option key={m.id} value={m.id} style={{background: '#1a1a2e'}}>{m.sku} - {m.nome}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                items={materiais.filter(m => m.categoria_nome?.toLowerCase().includes('chapa')).map(m => ({ id: m.id, label: m.nome, sku: m.sku }))}
+                                value={p.material_id}
+                                placeholder="Buscar chapa por SKU ou descrição"
+                                onChange={(id) => {
+                                  const mat = materiais.find(m => m.id === id);
+                                  handleUpdatePeca(p.id, { material_id: mat?.id, sku: mat?.sku });
+                                }}
+                              />
+                            </div>
                           </td>
                           <td style={{ padding: '0.5rem' }}>
                             <input 

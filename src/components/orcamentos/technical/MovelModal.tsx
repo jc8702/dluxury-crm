@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEscClose } from '../../../hooks/useEscClose';
 
 interface MovelModalProps {
   onClose: () => void;
@@ -50,9 +51,11 @@ const MovelModal: React.FC<MovelModalProps> = ({ onClose, onSave }) => {
     textTransform: 'uppercase'
   };
 
+  useEscClose(onClose);
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
-      <div style={{ background: 'var(--surface)', padding: '2.5rem', borderRadius: '16px', width: '500px', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }} onClick={onClose} tabIndex={-1}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', padding: '2.5rem', borderRadius: '16px', width: '500px', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
         <h3 style={{ marginBottom: '1.5rem', color: '#d4af37', fontSize: '1.25rem' }}>Novo Móvel no Ambiente</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

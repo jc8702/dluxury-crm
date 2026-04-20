@@ -317,7 +317,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   }, [pedido, onSave]);
 
   return (
-    <div className="modal-overlay" onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
+    <div className="modal-overlay" onClick={onClose} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
       <div className="modal-content" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
