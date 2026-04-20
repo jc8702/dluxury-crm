@@ -9,7 +9,12 @@ export async function handleFinanceiro(req: any, res: any) {
     const url = fullUrl.split('?')[0]; // Limpa query params
     const paths = url.split('/').filter(p => p && p !== 'api' && p !== 'financeiro');
     const resource = paths[0];
-    const id = paths[1];
+    let id = paths[1];
+
+    // Se o ID não estiver no path, tenta pegar do body (comum no frontend)
+    if (!id && req.body && req.body.id) {
+      id = req.body.id;
+    }
 
     console.log(`[FINANCEIRO] Route: ${req.method} ${fullUrl} -> Resource: ${resource}, ID: ${id}`);
 
@@ -51,7 +56,7 @@ export async function handleFinanceiro(req: any, res: any) {
 
 async function handleClasses(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT * FROM classes_financeiras ORDER BY codigo ASC`;
+    const result = await sql`SELECT * FROM classes_financeiras WHERE deletado = false ORDER BY codigo ASC`;
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -62,7 +67,7 @@ async function handleClasses(req: any, res: any, id?: string) {
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE classes_financeiras SET 
@@ -78,7 +83,7 @@ async function handleClasses(req: any, res: any, id?: string) {
     return res.status(200).json({ success: true, data: result[0] });
   }
   if (req.method === 'DELETE' && id) {
-    await sql`DELETE FROM classes_financeiras WHERE id = ${id}`;
+    await sql`UPDATE classes_financeiras SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
     return res.status(200).json({ success: true });
   }
   return res.status(405).end();
@@ -86,7 +91,7 @@ async function handleClasses(req: any, res: any, id?: string) {
 
 async function handleContasInternas(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT * FROM contas_internas ORDER BY nome ASC`;
+    const result = await sql`SELECT * FROM contas_internas WHERE deletado = false ORDER BY nome ASC`;
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -97,7 +102,7 @@ async function handleContasInternas(req: any, res: any, id?: string) {
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE contas_internas SET 
@@ -112,7 +117,7 @@ async function handleContasInternas(req: any, res: any, id?: string) {
     return res.status(200).json({ success: true, data: result[0] });
   }
   if (req.method === 'DELETE' && id) {
-    await sql`DELETE FROM contas_internas WHERE id = ${id}`;
+    await sql`UPDATE contas_internas SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
     return res.status(200).json({ success: true });
   }
   return res.status(405).end();
@@ -120,7 +125,7 @@ async function handleContasInternas(req: any, res: any, id?: string) {
 
 async function handleFormasPagamento(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT * FROM formas_pagamento ORDER BY nome ASC`;
+    const result = await sql`SELECT * FROM formas_pagamento WHERE deletado = false ORDER BY nome ASC`;
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -131,7 +136,7 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE formas_pagamento SET 
@@ -144,7 +149,7 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
     return res.status(200).json({ success: true, data: result[0] });
   }
   if (req.method === 'DELETE' && id) {
-    await sql`DELETE FROM formas_pagamento WHERE id = ${id}`;
+    await sql`UPDATE formas_pagamento SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
     return res.status(200).json({ success: true });
   }
   return res.status(405).end();
@@ -217,7 +222,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
     return res.status(201).json({ success: true, data: result[0] });
   }
 
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE titulos_receber SET 
@@ -269,7 +274,6 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
 
   return res.status(405).end();
 }
-
 
 async function handleTitulosPagar(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
@@ -337,7 +341,7 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
     return res.status(201).json({ success: true, data: result[0] });
   }
 
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE titulos_pagar SET 
@@ -531,7 +535,7 @@ async function handleRelatorios(req: any, res: any) {
 
 async function handleContasRecorrentes(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT * FROM contas_recorrentes ORDER BY dia_vencimento ASC`;
+    const result = await sql`SELECT * FROM contas_recorrentes WHERE deletado = false ORDER BY dia_vencimento ASC`;
     return res.status(200).json({ success: true, data: result });
   }
 
@@ -544,7 +548,7 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
     return res.status(201).json({ success: true, data: result[0] });
   }
 
-  if (req.method === 'PATCH' && id) {
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
     const result = await sql`
       UPDATE contas_recorrentes SET 
@@ -558,7 +562,7 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'DELETE' && id) {
-    await sql`DELETE FROM contas_recorrentes WHERE id = ${id}`;
+    await sql`UPDATE contas_recorrentes SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
     return res.status(200).json({ success: true });
   }
 

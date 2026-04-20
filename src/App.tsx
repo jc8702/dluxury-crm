@@ -24,6 +24,7 @@ const FinanceFormasPage = lazy(() => import('./pages/FinanceiroFormasPage'));
 const FinanceCondicoesPage = lazy(() => import('./pages/FinanceiroCondicoesPage'));
 const FinanceTitulosReceberPage = lazy(() => import('./pages/FinanceiroTitulosReceberPage'));
 const FinanceTitulosReceberWizard = lazy(() => import('./pages/FinanceiroTitulosReceberWizard'));
+const FinanceTitulosPagarPage = lazy(() => import('./pages/FinanceiroTitulosPagarPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const NotificacoesPage = lazy(() => import('./pages/NotificacoesPage'));
 const ComprasPage = lazy(() => import('./pages/ComprasPage'));
@@ -164,6 +165,7 @@ export default function App() {
                   <Route path="financeiro/condicoes" element={<FinanceCondicoesPage />} />
                   <Route path="financeiro/titulos-receber" element={<FinanceTitulosReceberPage />} />
                   <Route path="financeiro/titulos-receber/wizard" element={<FinanceTitulosReceberWizard />} />
+                  <Route path="financeiro/titulos-pagar" element={<FinanceTitulosPagarPage />} />
                   <Route path="configuracoes" element={<SettingsPage />} />
                   <Route path="notificacoes" element={<NotificacoesPage />} />
                   <Route path="compras" element={<ComprasPage />} />
