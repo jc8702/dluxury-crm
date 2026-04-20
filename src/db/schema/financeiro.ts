@@ -46,6 +46,7 @@ export const titulosReceber = pgTable('titulos_receber', {
   cliente_id: uuid('cliente_id').notNull(),
   projeto_id: uuid('projeto_id'),
   orcamento_id: uuid('orcamento_id'),
+  condicao_pagamento_id: uuid('condicao_pagamento_id').references(() => condicoesPagamento.id),
 
   valor_original: numeric('valor_original', { precision: 15, scale: 2 }).notNull(),
   valor_liquido: numeric('valor_liquido', { precision: 15, scale: 2 }).notNull(),
@@ -70,6 +71,11 @@ export const titulosReceber = pgTable('titulos_receber', {
 
   criado_em: timestamp('criado_em').defaultNow(),
   atualizado_em: timestamp('atualizado_em').defaultNow(),
+  // Auditoria / soft-delete
+  criado_por: uuid('criado_por'),
+  atualizado_por: uuid('atualizado_por'),
+  deletado: boolean('deletado').default(false),
+  excluido_em: timestamp('excluido_em'),
 });
 
 // ──────────────────────────────────────────
@@ -144,6 +150,8 @@ export const baixas = pgTable('baixas', {
   conta_interna_id: uuid('conta_interna_id').references(() => contasInternas.id).notNull(),
   observacoes: text('observacoes'),
   criado_em: timestamp('criado_em').defaultNow(),
+  criado_por: uuid('criado_por'),
+  atualizado_por: uuid('atualizado_por'),
 });
 
 // ──────────────────────────────────────────
@@ -189,5 +197,14 @@ export const contasRecorrentes = pgTable('contas_recorrentes', {
   forma_pagamento_id: uuid('forma_pagamento_id').references(() => formasPagamento.id),
   conta_bancaria_id: uuid('conta_bancaria_id').references(() => contasInternas.id),
   ativa: boolean('ativa').default(true),
+  criado_em: timestamp('criado_em').defaultNow(),
+});
+
+// Contadores para numeração de documentos e sequências por entidade
+export const counters = pgTable('counters', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  entidade: varchar('entidade', { length: 100 }).notNull(),
+  chave: varchar('chave', { length: 100 }),
+  seq: integer('seq').default(0),
   criado_em: timestamp('criado_em').defaultNow(),
 });

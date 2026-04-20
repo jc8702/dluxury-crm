@@ -205,7 +205,10 @@ export const api = {
       update: (data: any) => apiCall<any>('financeiro/condicoes-pagamento', 'PUT', data),
     },
     titulosReceber: {
-      list: () => apiCall<any[]>('financeiro/titulos-receber'),
+      list: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/titulos-receber${qs ? `?${qs}` : ''}`);
+      },
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/titulos-receber', 'PUT', data),
       baixar: (data: any) => apiCall<any>('financeiro/titulos-receber/baixar', 'POST', data),

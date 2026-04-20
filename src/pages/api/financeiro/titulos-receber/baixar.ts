@@ -9,6 +9,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const p = req.body; // { titulo_id, valor_baixa, valor_juros, valor_multa, valor_desconto, data_baixa, conta_interna_id }
 
+    // Tentativa simples de identificar usuário a partir do header x-user-id ou Authorization (fallback 'bypass-id')
+    const userIdHeader = (req.headers && (req.headers['x-user-id'] as string)) || '';
+    let userId = userIdHeader || '';
+    try {
+      const auth = (req.headers && (req.headers['authorization'] as string)) || '';
+      if (!userId && auth && auth.startsWith('Bearer ')) {
+        const token = auth.slice(7);
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          userId = payload.sub || payload.uid || payload.id || userId;
+        }
+      }
+    } catch (e) {}
+    if (!userId) userId = 'bypass-id';
+
     // Transacional: criar baixa, reduzir valor_aberto, atualizar data_pagamento/status, atualizar saldo da conta
     await db.transaction(async (tx) => {
       const [titulo] = await tx.select().from(titulosReceber).where(eq(titulosReceber.id, p.titulo_id)).limit(1);
@@ -19,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const multa = Number(p.valor_multa || 0);
       const desconto = Number(p.valor_desconto || 0);
 
-      const [insertedBaixa] = await tx.insert(baixas).values({
+       const [insertedBaixa] = await tx.insert(baixas).values({
         tipo: 'recebimento',
         titulo_id: p.titulo_id,
         valor_baixa: valorBaixa,
@@ -29,14 +45,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         data_baixa: p.data_baixa || new Date().toISOString(),
         conta_interna_id: p.conta_interna_id,
         observacoes: p.observacoes || null,
+        criado_por: userId,
+        atualizado_por: userId,
       }).returning();
 
       const novoValorAberto = Number(titulo.valor_aberto) - valorBaixa;
-      await tx.update(titulosReceber).set({
-        valor_aberto: novoValorAberto < 0 ? 0 : novoValorAberto,
-        data_pagamento: p.data_baixa || new Date().toISOString(),
-        status: novoValorAberto <= 0 ? 'pago' : 'pago_parcial',
-      }).where(eq(titulosReceber.id, p.titulo_id));
+       await tx.update(titulosReceber).set({
+         valor_aberto: novoValorAberto < 0 ? 0 : novoValorAberto,
+         data_pagamento: p.data_baixa || new Date().toISOString(),
+         status: novoValorAberto <= 0 ? 'pago' : 'pago_parcial',
+         atualizado_por: userId,
+       }).where(eq(titulosReceber.id, p.titulo_id));
 
       // Atualizar saldo da conta
       if (p.conta_interna_id) {
