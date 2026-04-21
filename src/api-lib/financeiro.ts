@@ -161,7 +161,7 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
 
 async function handleTitulosReceber(req: any, res: any, id?: string) {
   if (req.method === 'POST' && req.url.includes('preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    const { valor_total, condicao_pagamento_id, data_base } = req.body;
     
     // Verificamos se há condição de pagamento ou se é manual
     if (condicao_pagamento_id) {
@@ -169,8 +169,8 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
         if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
         
         const parcelas = [];
-        const valorParcela = Number(valor_original) / Number(cond.parcelas);
-        const baseDate = new Date(data_vencimento || new Date());
+        const valorParcela = Number(valor_total) / Number(cond.parcelas);
+        const baseDate = new Date(data_base || new Date());
         
         for (let i = 1; i <= cond.parcelas; i++) {
             const venc = new Date(baseDate);
@@ -216,13 +216,13 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
 
 async function handleTitulosPagar(req: any, res: any, id?: string) {
   if (req.method === 'POST' && req.url.includes('preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    const { valor_total, condicao_pagamento_id, data_base } = req.body;
     if (condicao_pagamento_id) {
         const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
         if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
         const parcelas = [];
-        const valorParcela = Number(valor_original) / Number(cond.parcelas);
-        const baseDate = new Date(data_vencimento || new Date());
+        const valorParcela = Number(valor_total) / Number(cond.parcelas);
+        const baseDate = new Date(data_base || new Date());
         for (let i = 1; i <= cond.parcelas; i++) {
             const venc = new Date(baseDate);
             venc.setMonth(venc.getMonth() + (i - 1));
