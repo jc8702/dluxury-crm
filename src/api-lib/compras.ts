@@ -16,6 +16,10 @@ export async function handleCompras(req: any, res: any) {
           const itens = await sql`SELECT * FROM pedido_compra_itens WHERE pedido_id = ${id} ORDER BY id ASC`;
           return res.status(200).json({ success: true, data: { ...pedido, itens } });
         }
+        if (req.query.fornecedor_id) {
+          const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' ORDER BY p.criado_em DESC`;
+          return res.status(200).json({ success: true, data: result });
+        }
         const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id ORDER BY p.criado_em DESC`;
         return res.status(200).json({ success: true, data: result });
       }

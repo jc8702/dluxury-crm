@@ -78,7 +78,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
+      const { action } = req.query;
       const p = req.body;
+
+      // --- LOGICA DE PREVIEW (SIMULACAO) ---
+      if (action === 'preview') {
+        const { valor_total, condicao_pagamento_id, data_base } = p;
+        if (!condicao_pagamento_id || !valor_total) {
+          return res.status(400).json({ error: 'Dados insuficientes para preview' });
+        }
+
+        const [cond] = await db.select().from(condicoesPagamento).where(eq(condicoesPagamento.id, condicao_pagamento_id)).limit(1);
+        if (!cond) return res.status(400).json({ error: 'Condição não encontrada' });
+
+        const nParcelas = Number(cond.parcelas || 1);
+        const entradaPct = Number(cond.entrada_percentual || 0) / 100;
+        const vTotal = Number(valor_total);
+        const vEntrada = Number((vTotal * entradaPct).toFixed(2));
+        const vRestante = Number((vTotal - vEntrada).toFixed(2));
+        const vParcelaBase = Number((vRestante / (nParcelas || 1)).toFixed(2));
+        
+        const previewParcelas = [];
+        const dtBase = data_base ? new Date(data_base) : new Date();
+
+        for (let i = 0; i < nParcelas; i++) {
+          const venc = new Date(dtBase.getTime());
+          venc.setDate(dtBase.getDate() + i * 30);
+          
+          let valorFinalParcela = vParcelaBase;
+          if (i === nParcelas - 1) {
+            const somaVerif = vEntrada + (vParcelaBase * nParcelas);
+            const diff = Number((vTotal - somaVerif).toFixed(2));
+            valorFinalParcela = Number((vParcelaBase + diff).toFixed(2));
+          }
+
+          previewParcelas.push({
+            numero_parcela: i + 1,
+            valor: i === 0 && vEntrada > 0 ? vEntrada : valorFinalParcela,
+            data_vencimento: venc.toISOString()
+          });
+        }
+        return res.status(200).json({ parcelas: previewParcelas });
+      }
 
       // Se uma condição de pagamento for informada, vamos gerar parcelas automaticamente
       if (p.condicao_pagamento_id && p.valor_original) {

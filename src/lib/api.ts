@@ -96,6 +96,7 @@ export const api = {
   },
   compras: {
     listPedidos: () => apiCall<any[]>('compras?type=pedidos'),
+    listBySupplier: (fornecedorId: string) => apiCall<any[]>(`compras?type=pedidos&fornecedor_id=${fornecedorId}`),
     getPedido: (id: string) => apiCall<any>(`compras?type=pedidos&id=${id}`),
     createPedido: (data: any) => apiCall<any>('compras?type=pedidos', 'POST', data),
     updatePedido: (id: string, data: any) => apiCall<any>(`compras?type=pedidos&id=${id}`, 'PATCH', data),
@@ -216,6 +217,7 @@ export const api = {
         return apiCall<any>(`financeiro/titulos-receber${qs ? `?${qs}` : ''}`);
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
+      preview: (data: any) => apiCall<any>('financeiro/titulos-receber?action=preview', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/titulos-receber', 'PUT', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'DELETE'),
       baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber/${id}/baixar`, 'POST', data),
@@ -226,6 +228,7 @@ export const api = {
         return apiCall<any>(`financeiro/titulos-pagar${qs ? `?${qs}` : ''}`);
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'POST', data),
+      preview: (data: any) => apiCall<any>('financeiro/titulos-pagar?action=preview', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'PUT', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'DELETE'),
       baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar/${id}/baixar`, 'POST', data),

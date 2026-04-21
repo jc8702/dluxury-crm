@@ -15,13 +15,17 @@ import {
 export default function FinanceiroTitulosPagarWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [loadingOCs, setLoadingOCs] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [condicoes, setCondicoes] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
+  const [pedidos, setPedidos] = useState<any[]>([]);
+  const [hasOC, setHasOC] = useState<'none' | 'sim' | 'nao'>('none');
 
   const [formData, setFormData] = useState({
     fornecedor_id: '',
+    pedido_compra_id: '',
     classe_financeira_id: '',
     valor_total: 0,
     data_base: new Date().toISOString().split('T')[0],
@@ -45,12 +49,53 @@ export default function FinanceiroTitulosPagarWizard() {
         const cp = await api.financeiro.condicoesPagamento.list();
         console.log('[WIZARD PAGAR] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
+        
+        // Auto-selecionar 'À Vista' se existir
+        const aVista = cp.find((c: any) => c.nome.toLowerCase().includes('vista'));
+        if (aVista) {
+          setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
+        }
       } catch (err) {
         console.error('[WIZARD PAGAR ERROR] Erro crítico:', err);
       }
     };
     loadOpts();
   }, []);
+
+  // Monitorar seleção de fornecedor para carregar OCs
+  useEffect(() => {
+    const loadOCs = async () => {
+      if (!formData.fornecedor_id) {
+        setPedidos([]);
+        return;
+      }
+      setLoadingOCs(true);
+      try {
+        const ocs = await api.compras.listBySupplier(formData.fornecedor_id);
+        // Filtrar apenas OCs pendentes de pagamento (status rascunho ou enviado)
+        setPedidos(ocs.filter((o: any) => o.status !== 'recebido' && o.status !== 'confirmado') || []);
+      } catch (err) {
+        console.error('Erro ao carregar OCs:', err);
+      } finally {
+        setLoadingOCs(false);
+      }
+    };
+    loadOCs();
+  }, [formData.fornecedor_id]);
+
+  const handleOCSelection = (pedidoId: string) => {
+    const pedido = pedidos.find(p => p.id === pedidoId);
+    if (pedido) {
+      setFormData({
+        ...formData,
+        pedido_compra_id: pedido.id,
+        valor_total: Number(pedido.valor_total),
+        condicao_pagamento_id: pedido.condicao_pagamento_id || formData.condicao_pagamento_id,
+        numero_titulo: pedido.numero ? `FAT-${pedido.numero}` : formData.numero_titulo,
+        descricao: `Referente à Ordem de Compra ${pedido.numero}`
+      });
+    }
+  };
 
   const handleNext = async () => {
     if (step === 3) {
@@ -104,6 +149,58 @@ export default function FinanceiroTitulosPagarWizard() {
             {suppliers.map(s => <option key={s.id} value={s.id}>{s.nome || s.name}</option>)}
           </select>
         </div>
+
+        {formData.fornecedor_id && (
+          <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-hover)' }}>
+            <label className="label-base">Possui Ordem de Compra (OC)?</label>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+              <button 
+                className={`btn ${hasOC === 'sim' ? 'btn-primary' : 'btn-outline'}`}
+                style={hasOC === 'sim' ? { background: 'var(--danger)' } : {}}
+                onClick={() => setHasOC('sim')}
+              >
+                SIM
+              </button>
+              <button 
+                className={`btn ${hasOC === 'nao' ? 'btn-primary' : 'btn-outline'}`}
+                style={hasOC === 'nao' ? { background: 'var(--danger)' } : {}}
+                onClick={() => {
+                  setHasOC('nao');
+                  setFormData({ ...formData, pedido_compra_id: '', valor_total: 0 });
+                }}
+              >
+                NÃO
+              </button>
+            </div>
+
+            {hasOC === 'sim' && (
+              <div style={{ marginTop: '1rem' }} className="animate-fade-in">
+                <label className="label-base">Selecionar Ordem de Compra</label>
+                {loadingOCs ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem' }}>
+                    <FiLoader className="animate-spin" /> Carregando OCs...
+                  </div>
+                ) : pedidos.length > 0 ? (
+                  <select 
+                    className="input-base"
+                    value={formData.pedido_compra_id}
+                    onChange={e => handleOCSelection(e.target.value)}
+                  >
+                    <option value="">Selecione a OC...</option>
+                    {pedidos.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.numero} - R$ {Number(p.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Nenhuma OC pendente encontrada para este fornecedor.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <div>
           <label className="label-base">Classe Financeira</label>
           <select 

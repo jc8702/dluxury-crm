@@ -45,6 +45,12 @@ export default function FinanceiroTitulosReceberWizard() {
         const cp = await api.financeiro.condicoesPagamento.list();
         console.log('[WIZARD] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
+
+        // Auto-selecionar 'À Vista' se existir
+        const aVista = cp.find((c: any) => c.nome.toLowerCase().includes('vista'));
+        if (aVista) {
+          setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
+        }
       } catch (err) {
         console.error('[WIZARD ERROR] Erro crítico ao carregar opções:', err);
       }
