@@ -22,6 +22,8 @@ export default function FinanceiroTitulosPagarWizard() {
   const [preview, setPreview] = useState<any[]>([]);
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [hasOC, setHasOC] = useState<'none' | 'sim' | 'nao'>('none');
+  const [formasPagamento, setFormasPagamento] = useState<any[]>([]);
+  const [contasInternas, setContasInternas] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     fornecedor_id: '',
@@ -30,6 +32,8 @@ export default function FinanceiroTitulosPagarWizard() {
     valor_total: 0,
     data_base: new Date().toISOString().split('T')[0],
     condicao_pagamento_id: '',
+    forma_pagamento_id: '',
+    conta_bancaria_id: '',
     numero_titulo: `PAG-${Date.now().toString().slice(-6)}`,
     descricao: ''
   });
@@ -49,12 +53,23 @@ export default function FinanceiroTitulosPagarWizard() {
         const cp = await api.financeiro.condicoesPagamento.list();
         console.log('[WIZARD PAGAR] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
+
+        const fp = await api.financeiro.formasPagamento.list();
+        setFormasPagamento(fp || []);
+
+        const ci = await api.financeiro.contasInternas.list();
+        setContasInternas(ci || []);
         
         // Auto-selecionar 'À Vista' se existir
         const aVista = cp.find((c: any) => c.nome.toLowerCase().includes('vista'));
         if (aVista) {
           setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
         }
+
+        // Auto-selecionar primeira conta e forma se houver
+        if (ci.length > 0) setFormData(prev => ({ ...prev, conta_bancaria_id: ci[0].id }));
+        if (fp.length > 0) setFormData(prev => ({ ...prev, forma_pagamento_id: fp[0].id }));
+
       } catch (err) {
         console.error('[WIZARD PAGAR ERROR] Erro crítico:', err);
       }
@@ -254,6 +269,32 @@ export default function FinanceiroTitulosPagarWizard() {
             />
           </div>
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label className="label-base">Pagar por qual Conta?</label>
+            <select 
+              className="input-base"
+              value={formData.conta_bancaria_id}
+              onChange={e => setFormData({...formData, conta_bancaria_id: e.target.value})}
+            >
+              <option value="">Selecione a conta...</option>
+              {contasInternas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label-base">Meio de Pagamento</label>
+            <select 
+              className="input-base"
+              value={formData.forma_pagamento_id}
+              onChange={e => setFormData({...formData, forma_pagamento_id: e.target.value})}
+            >
+              <option value="">Selecione o meio...</option>
+              {formasPagamento.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div>
           <label className="label-base">Data de Emissão / Competência</label>
           <input 

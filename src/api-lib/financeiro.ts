@@ -568,8 +568,8 @@ async function handleCondicoesPagamento(req: any, res: any, id?: string) {
   if (req.method === 'POST') {
     const f = req.body;
     const result = await sql`
-      INSERT INTO condicoes_pagamento (nome, descricao, parcelas, ativa)
-      VALUES (${f.nome}, ${f.descricao || null}, ${Number(f.parcelas) || 1}, ${f.ativa ?? true})
+      INSERT INTO condicoes_pagamento (nome, descricao, parcelas, ativo, entrada_percentual, juros_percentual)
+      VALUES (${f.nome}, ${f.descricao || null}, ${Number(f.parcelas) || 1}, ${f.ativo ?? true}, ${Number(f.entrada_percentual) || 0}, ${Number(f.juros_percentual) || 0})
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
@@ -580,7 +580,9 @@ async function handleCondicoesPagamento(req: any, res: any, id?: string) {
         nome = COALESCE(${f.nome}, nome),
         descricao = COALESCE(${f.descricao}, descricao),
         parcelas = COALESCE(${Number(f.parcelas)}, parcelas),
-        ativa = COALESCE(${f.ativa}, ativa),
+        ativo = COALESCE(${f.ativo}, ativo),
+        entrada_percentual = COALESCE(${Number(f.entrada_percentual)}, entrada_percentual),
+        juros_percentual = COALESCE(${Number(f.juros_percentual)}, juros_percentual),
         atualizado_em = NOW()
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });

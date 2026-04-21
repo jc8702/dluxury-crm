@@ -17,8 +17,8 @@ export default function FinanceiroTitulosReceberWizard() {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
-  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
+  const [formasRecebimento, setFormasRecebimento] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -26,6 +26,7 @@ export default function FinanceiroTitulosReceberWizard() {
     valor_total: 0,
     data_base: new Date().toISOString().split('T')[0],
     condicao_pagamento_id: '',
+    forma_recebimento_id: '',
     numero_titulo: `REC-${Date.now().toString().slice(-6)}`,
     descricao: ''
   });
@@ -46,11 +47,18 @@ export default function FinanceiroTitulosReceberWizard() {
         console.log('[WIZARD] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
 
+        const fr = await api.financeiro.formasPagamento.list();
+        setFormasRecebimento(fr || []);
+
         // Auto-selecionar 'À Vista' se existir
         const aVista = cp.find((c: any) => c.nome.toLowerCase().includes('vista'));
         if (aVista) {
           setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
         }
+
+        // Auto-selecionar primeira forma se houver
+        if (fr.length > 0) setFormData(prev => ({ ...prev, forma_recebimento_id: fr[0].id }));
+
       } catch (err) {
         console.error('[WIZARD ERROR] Erro crítico ao carregar opções:', err);
       }
@@ -151,7 +159,7 @@ export default function FinanceiroTitulosReceberWizard() {
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Valores e Datas</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div>
-          <label className="label-base">Valor Total do Recebimento</label>
+          <label className="label-base">Valor Total Esperado</label>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>R$</span>
             <input 
@@ -163,6 +171,19 @@ export default function FinanceiroTitulosReceberWizard() {
             />
           </div>
         </div>
+
+        <div>
+          <label className="label-base">Forma de Recebimento</label>
+          <select 
+            className="input-base"
+            value={formData.forma_recebimento_id}
+            onChange={e => setFormData({...formData, forma_recebimento_id: e.target.value})}
+          >
+            <option value="">Selecione a forma...</option>
+            {formasRecebimento.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+          </select>
+        </div>
+
         <div>
           <label className="label-base">Data Base de Vencimento</label>
           <input 
