@@ -160,7 +160,7 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
 }
 
 async function handleTitulosReceber(req: any, res: any, id?: string) {
-  if (req.method === 'POST' && req.url.includes('preview')) {
+  if (req.method === 'POST' && (req.url.includes('preview') || req.query?.action === 'preview')) {
     const { valor_total, condicao_pagamento_id, data_base } = req.body;
     
     // Verificamos se há condição de pagamento ou se é manual
@@ -177,6 +177,11 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
             venc.setMonth(venc.getMonth() + (i - 1));
             parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
         }
+        return res.status(200).json({ success: true, data: { parcelas } });
+    }
+    return res.status(400).json({ success: false, error: 'Parâmetros inválidos para preview' });
+  }
+
         return res.status(200).json({ success: true, data: { parcelas } });
     }
 
