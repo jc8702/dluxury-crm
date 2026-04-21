@@ -33,15 +33,20 @@ export default function FinanceiroTitulosReceberWizard() {
   useEffect(() => {
     const loadOpts = async () => {
       try {
+        console.log('[WIZARD] Carregando opções de recebimento...');
         const cls = await api.clients.list();
+        console.log('[WIZARD] Clientes carregados:', cls?.length);
         setClients(cls || []);
+
         const cf = await api.financeiro.classesFinanceiras.list();
-        // Garantindo que filtramos apenas classes que permitem lançamento
+        console.log('[WIZARD] Classes financeiras carregadas:', cf?.length);
         setClasses(cf || []);
+
         const cp = await api.financeiro.condicoesPagamento.list();
+        console.log('[WIZARD] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
       } catch (err) {
-        console.error('Erro ao carregar opções', err);
+        console.error('[WIZARD ERROR] Erro crítico ao carregar opções:', err);
       }
     };
     loadOpts();

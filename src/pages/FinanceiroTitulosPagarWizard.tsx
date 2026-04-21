@@ -33,14 +33,20 @@ export default function FinanceiroTitulosPagarWizard() {
   useEffect(() => {
     const loadOpts = async () => {
       try {
+        console.log('[WIZARD PAGAR] Carregando opções...');
         const sup = await api.suppliers.list();
+        console.log('[WIZARD PAGAR] Fornecedores carregados:', sup?.length);
         setSuppliers(sup || []);
+
         const cf = await api.financeiro.classesFinanceiras.list();
+        console.log('[WIZARD PAGAR] Classes carregadas:', cf?.length);
         setClasses(cf || []);
+
         const cp = await api.financeiro.condicoesPagamento.list();
+        console.log('[WIZARD PAGAR] Condições carregadas:', cp?.length);
         setCondicoes(cp || []);
       } catch (err) {
-        console.error('Erro ao carregar opções', err);
+        console.error('[WIZARD PAGAR ERROR] Erro crítico:', err);
       }
     };
     loadOpts();
