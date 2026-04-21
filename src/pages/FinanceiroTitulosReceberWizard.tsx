@@ -63,11 +63,11 @@ export default function FinanceiroTitulosReceberWizard() {
       setLoading(true);
       try {
         const res = await api.financeiro.titulosReceber.preview({
-          valor_total: formData.valor_total,
+          valor_original: formData.valor_total,
           condicao_pagamento_id: formData.condicao_pagamento_id,
-          data_base: formData.data_base
+          data_vencimento: formData.data_base
         });
-        setPreview(res.parcelas || []);
+        setPreview(res.data?.parcelas || res.parcelas || []);
         setStep(4);
       } catch (err: any) {
         alert('Erro ao calcular parcelas');

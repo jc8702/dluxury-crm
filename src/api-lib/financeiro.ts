@@ -171,7 +171,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
         for (let i = 1; i <= cond.parcelas; i++) {
             const venc = new Date(baseDate);
             venc.setMonth(venc.getMonth() + (i - 1));
-            parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+            parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
         }
         return res.status(200).json({ success: true, data: { parcelas } });
     }
@@ -247,7 +247,7 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
         for (let i = 1; i <= cond.parcelas; i++) {
             const venc = new Date(baseDate);
             venc.setMonth(venc.getMonth() + (i - 1));
-            parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+            parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
         }
         return res.status(200).json({ success: true, data: { parcelas } });
     }
@@ -569,7 +569,7 @@ async function handleCondicoesPagamento(req: any, res: any, id?: string) {
     const f = req.body;
     const result = await sql`
       INSERT INTO condicoes_pagamento (nome, descricao, parcelas, ativa)
-      VALUES (${f.nome}, ${f.descricao || null}, ${f.parcelas || 1}, ${f.ativa ?? true})
+      VALUES (${f.nome}, ${f.descricao || null}, ${Number(f.parcelas) || 1}, ${f.ativa ?? true})
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
@@ -579,7 +579,7 @@ async function handleCondicoesPagamento(req: any, res: any, id?: string) {
       UPDATE condicoes_pagamento SET 
         nome = COALESCE(${f.nome}, nome),
         descricao = COALESCE(${f.descricao}, descricao),
-        parcelas = COALESCE(${f.parcelas}, parcelas),
+        parcelas = COALESCE(${Number(f.parcelas)}, parcelas),
         ativa = COALESCE(${f.ativa}, ativa),
         atualizado_em = NOW()
       WHERE id = ${id} RETURNING *`;
