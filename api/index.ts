@@ -44,8 +44,8 @@ export default async function handler(req: any, res: any) {
       return await handleAIParser(req, res);
     }
     if (cleanUrl.startsWith('/api/condicoes-pagamento')) {
-      const { handleCondicoesPagamento } = await import('../src/api-lib/orcamentos.js');
-      return await handleCondicoesPagamento(req, res);
+      const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
+      return await handleFinanceiro(req, res);
     }
     if (cleanUrl.startsWith('/api/goals')) {
       const { handleGoals } = await import('../src/api-lib/crm.js');

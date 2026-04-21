@@ -45,8 +45,9 @@ export async function handleFinanceiro(req: any, res: any) {
     if (resource === 'contas-recorrentes') {
       return await handleContasRecorrentes(req, res, id);
     }
-
-
+    if (resource === 'condicoes-pagamento') {
+      return await handleCondicoesPagamento(req, res, id);
+    }
 
     return res.status(404).json({ success: false, error: 'Recurso financeiro não encontrado' });
   } catch (err: any) {
@@ -191,13 +192,13 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
             numero_titulo, cliente_id, projeto_id, orcamento_id,
             valor_original, valor_liquido, valor_aberto,
             data_emissao, data_vencimento, data_competencia,
-            classe_financeira_id, forma_recebimento_id,
+            classe_financeira_id, condicao_pagamento_id, forma_recebimento_id,
             status, parcela, total_parcelas, observacoes
           ) VALUES (
             ${`REC-${Date.now()}-${i}`}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null},
             ${valorParcela}, ${valorParcela}, ${valorParcela},
             ${dataEmissao}, ${vencimento}, ${dataEmissao},
-            ${f.classe_financeira_id}, ${f.forma_recebimento_id},
+            ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_recebimento_id},
             'aberto', ${i}, ${totalParcelas}, ${f.observacoes || ''}
           ) RETURNING *`;
         titulos.push(t[0]);
@@ -210,13 +211,13 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
         numero_titulo, cliente_id, projeto_id, orcamento_id,
         valor_original, valor_liquido, valor_aberto,
         data_emissao, data_vencimento, data_competencia,
-        classe_financeira_id, forma_recebimento_id,
+        classe_financeira_id, condicao_pagamento_id, forma_recebimento_id,
         status, parcela, total_parcelas, observacoes
       ) VALUES (
         ${f.numero_titulo}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null},
         ${f.valor_original}, ${f.valor_liquido}, ${f.valor_aberto},
         ${f.data_emissao}, ${f.data_vencimento}, ${f.data_competencia},
-        ${f.classe_financeira_id}, ${f.forma_recebimento_id},
+        ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_recebimento_id},
         ${f.status || 'aberto'}, ${f.parcela || 1}, ${f.total_parcelas || 1}, ${f.observacoes || ''}
       ) RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
@@ -327,13 +328,13 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
             numero_titulo, fornecedor_id, nota_fiscal, pedido_compra_id,
             valor_original, valor_liquido, valor_aberto,
             data_emissao, data_vencimento, data_competencia,
-            classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+            classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id,
             status, parcela, total_parcelas, observacoes
           ) VALUES (
             ${`PAG-${Date.now()}-${i}`}, ${f.fornecedor_id}, ${f.nota_fiscal || null}, ${f.pedido_compra_id || null},
             ${valorParcela}, ${valorParcela}, ${valorParcela},
             ${dataEmissao}, ${vencimento}, ${dataEmissao},
-            ${f.classe_financeira_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
+            ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
             'aberto', ${i}, ${totalParcelas}, ${f.observacoes || ''}
           ) RETURNING *`;
         titulos.push(t[0]);
@@ -346,13 +347,13 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
         numero_titulo, fornecedor_id, nota_fiscal, pedido_compra_id,
         valor_original, valor_liquido, valor_aberto,
         data_emissao, data_vencimento, data_competencia,
-        classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+        classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id,
         status, parcela, total_parcelas, observacoes
       ) VALUES (
         ${f.numero_titulo}, ${f.fornecedor_id}, ${f.nota_fiscal || null}, ${f.pedido_compra_id || null},
         ${f.valor_original}, ${f.valor_liquido}, ${f.valor_aberto},
         ${f.data_emissao}, ${f.data_vencimento}, ${f.data_competencia},
-        ${f.classe_financeira_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
+        ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
         ${f.status || 'aberto'}, ${f.parcela || 1}, ${f.total_parcelas || 1}, ${f.observacoes || ''}
       ) RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
@@ -633,3 +634,34 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
   return res.status(405).end();
 }
 
+async function handleCondicoesPagamento(req: any, res: any, id?: string) {
+  if (req.method === 'GET') {
+    const result = await sql`SELECT * FROM condicoes_pagamento WHERE deletado = false ORDER BY nome ASC`;
+    return res.status(200).json({ success: true, data: result });
+  }
+  if (req.method === 'POST') {
+    const f = req.body;
+    const result = await sql`
+      INSERT INTO condicoes_pagamento (nome, descricao, parcelas, ativa)
+      VALUES (${f.nome}, ${f.descricao || null}, ${f.parcelas || 1}, ${f.ativa ?? true})
+      RETURNING *`;
+    return res.status(201).json({ success: true, data: result[0] });
+  }
+  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
+    const f = req.body;
+    const result = await sql`
+      UPDATE condicoes_pagamento SET 
+        nome = COALESCE(${f.nome}, nome),
+        descricao = COALESCE(${f.descricao}, descricao),
+        parcelas = COALESCE(${f.parcelas}, parcelas),
+        ativa = COALESCE(${f.ativa}, ativa),
+        atualizado_em = NOW()
+      WHERE id = ${id} RETURNING *`;
+    return res.status(200).json({ success: true, data: result[0] });
+  }
+  if (req.method === 'DELETE' && id) {
+    await sql`UPDATE condicoes_pagamento SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
+    return res.status(200).json({ success: true });
+  }
+  return res.status(405).end();
+}
