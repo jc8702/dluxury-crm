@@ -160,283 +160,110 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
 }
 
 async function handleTitulosReceber(req: any, res: any, id?: string) {
+  if (req.method === 'POST' && req.url.includes('preview')) {
+    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    
+    // Verificamos se há condição de pagamento ou se é manual
+    if (condicao_pagamento_id) {
+        const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
+        if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
+        
+        const parcelas = [];
+        const valorParcela = Number(valor_original) / Number(cond.parcelas);
+        const baseDate = new Date(data_vencimento || new Date());
+        
+        for (let i = 1; i <= cond.parcelas; i++) {
+            const venc = new Date(baseDate);
+            venc.setMonth(venc.getMonth() + (i - 1));
+            parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+        }
+        return res.status(200).json({ success: true, data: { parcelas } });
+    }
+
+    return res.status(400).json({ success: false, error: 'Parâmetros inválidos para preview' });
+  }
+
+  if (req.method === 'POST' && id && req.url.includes('baixar')) {
+    const f = req.body;
+    return await sql.begin(async (tx) => {
+      const titulo = (await tx`SELECT * FROM titulos_receber WHERE id = ${id}`)[0];
+      if (!titulo) throw new Error('Título não encontrado');
+      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
+      await tx`INSERT INTO baixas (tipo, titulo_id, valor_baixa, data_baixa, conta_interna_id, observacoes) VALUES ('recebimento', ${id}, ${valorBaixa}, ${f.data_baixa || new Date()}, ${f.conta_interna_id}, ${f.observacoes || ''})`;
+      const novoValorAberto = Number(titulo.valor_aberto) - valorBaixa;
+      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
+      await tx`UPDATE titulos_receber SET valor_aberto = ${novoValorAberto}, status = ${novoStatus}, data_pagamento = ${novoStatus === 'pago' ? new Date() : null} WHERE id = ${id}`;
+      await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa} WHERE id = ${f.conta_interna_id}`;
+      return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso' });
+    });
+  }
+
   if (req.method === 'GET') {
     const { cliente_id, status, data_inicio, data_fim } = req.query;
     let query = sql`SELECT * FROM titulos_receber WHERE deletado = false`;
-    
     if (cliente_id) query = sql`${query} AND cliente_id = ${cliente_id}`;
     if (status) query = sql`${query} AND status = ${status}`;
     if (data_inicio && data_fim) query = sql`${query} AND data_vencimento BETWEEN ${data_inicio} AND ${data_fim}`;
-    
     const result = await query;
     return res.status(200).json({ success: true, data: result });
   }
 
   if (req.method === 'POST') {
     const f = req.body;
-    
-    // Se houver condição de pagamento, geramos as parcelas
-    if (f.condicao_pagamento_id) {
-      const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id}`)[0];
-      if (!cond) return res.status(400).json({ success: false, error: 'Condição de pagamento não encontrada' });
-
-      const totalParcelas = cond.parcelas;
-      const valorTotal = Number(f.valor_original);
-      const valorParcela = valorTotal / totalParcelas;
-      const dataEmissao = new Date();
-      
-      const titulos = [];
-      for (let i = 1; i <= totalParcelas; i++) {
-        const vencimento = new Date();
-        vencimento.setMonth(vencimento.getMonth() + (i - 1));
-        
-        const t = await sql`
-          INSERT INTO titulos_receber (
-            numero_titulo, cliente_id, projeto_id, orcamento_id,
-            valor_original, valor_liquido, valor_aberto,
-            data_emissao, data_vencimento, data_competencia,
-            classe_financeira_id, condicao_pagamento_id, forma_recebimento_id,
-            status, parcela, total_parcelas, observacoes
-          ) VALUES (
-            ${`REC-${Date.now()}-${i}`}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null},
-            ${valorParcela}, ${valorParcela}, ${valorParcela},
-            ${dataEmissao}, ${vencimento}, ${dataEmissao},
-            ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_recebimento_id},
-            'aberto', ${i}, ${totalParcelas}, ${f.observacoes || ''}
-          ) RETURNING *`;
-        titulos.push(t[0]);
-      }
-      return res.status(201).json({ success: true, data: titulos });
-    }
-
-    const result = await sql`
-      INSERT INTO titulos_receber (
-        numero_titulo, cliente_id, projeto_id, orcamento_id,
-        valor_original, valor_liquido, valor_aberto,
-        data_emissao, data_vencimento, data_competencia,
-        classe_financeira_id, condicao_pagamento_id, forma_recebimento_id,
-        status, parcela, total_parcelas, observacoes
-      ) VALUES (
-        ${f.numero_titulo}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null},
-        ${f.valor_original}, ${f.valor_liquido}, ${f.valor_aberto},
-        ${f.data_emissao}, ${f.data_vencimento}, ${f.data_competencia},
-        ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_recebimento_id},
-        ${f.status || 'aberto'}, ${f.parcela || 1}, ${f.total_parcelas || 1}, ${f.observacoes || ''}
-      ) RETURNING *`;
-    return res.status(201).json({ success: true, data: result[0] });
-  }
-
-  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
-    const f = req.body;
-    const result = await sql`
-      UPDATE titulos_receber SET 
-        valor_aberto = COALESCE(${f.valor_aberto}, valor_aberto),
-        status = COALESCE(${f.status}, status),
-        data_pagamento = COALESCE(${f.data_pagamento}, data_pagamento),
-        atualizado_em = NOW()
-      WHERE id = ${id} RETURNING *`;
-    return res.status(200).json({ success: true, data: result[0] });
-  }
-
-  if (req.method === 'DELETE' && id) {
-    await sql`UPDATE titulos_receber SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
-    return res.status(200).json({ success: true });
-  }
-
-  if (req.method === 'POST' && id && req.url.includes('baixar')) {
-    const f = req.body;
-    
-    return await sql.begin(async (tx) => {
-      const titulo = (await tx`SELECT * FROM titulos_receber WHERE id = ${id}`)[0];
-      if (!titulo) throw new Error('Título não encontrado');
-
-      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
-      
-      // 1. Registrar Baixa
-      await tx`
-        INSERT INTO baixas (tipo, titulo_id, valor_baixa, data_baixa, conta_interna_id, observacoes)
-        VALUES ('recebimento', ${id}, ${valorBaixa}, ${f.data_baixa || new Date()}, ${f.conta_interna_id}, ${f.observacoes || ''})`;
-
-      // 2. Atualizar Título
-      const novoValorAberto = Number(titulo.valor_aberto) - valorBaixa;
-      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-      await tx`
-        UPDATE titulos_receber SET 
-          valor_aberto = ${novoValorAberto}, 
-          status = ${novoStatus}, 
-          data_pagamento = ${novoStatus === 'pago' ? new Date() : null}
-        WHERE id = ${id}`;
-
-      // 3. Atualizar Saldo da Conta
-      await tx`
-        UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa}
-        WHERE id = ${f.conta_interna_id}`;
-
-      return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso' });
-    });
-  }
-
-  if (req.method === 'POST' && req.url.includes('preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
-    const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
-    if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-    
-    const parcelas = [];
-    const valorParcela = Number(valor_original) / cond.parcelas;
-    const baseDate = new Date(data_vencimento || new Date());
-    
-    for (let i = 1; i <= cond.parcelas; i++) {
-        const venc = new Date(baseDate);
-        venc.setMonth(venc.getMonth() + (i - 1));
-        parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
-    }
-    return res.status(200).json({ success: true, data: { parcelas } });
-  }
 
   return res.status(405).end();
 }
 
 async function handleTitulosPagar(req: any, res: any, id?: string) {
+  if (req.method === 'POST' && req.url.includes('preview')) {
+    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
+    if (condicao_pagamento_id) {
+        const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
+        if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
+        const parcelas = [];
+        const valorParcela = Number(valor_original) / Number(cond.parcelas);
+        const baseDate = new Date(data_vencimento || new Date());
+        for (let i = 1; i <= cond.parcelas; i++) {
+            const venc = new Date(baseDate);
+            venc.setMonth(venc.getMonth() + (i - 1));
+            parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
+        }
+        return res.status(200).json({ success: true, data: { parcelas } });
+    }
+    return res.status(400).json({ success: false, error: 'Parâmetros inválidos para preview' });
+  }
+
+  if (req.method === 'POST' && id && req.url.includes('baixar')) {
+    const f = req.body;
+    return await sql.begin(async (tx) => {
+      const titulo = (await tx`SELECT * FROM titulos_pagar WHERE id = ${id}`)[0];
+      if (!titulo) throw new Error('Título não encontrado');
+      const conta = (await tx`SELECT * FROM contas_internas WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`)[0];
+      if (!conta) throw new Error('Conta bancária não encontrada');
+      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
+      let saldoWarning = false;
+      if (Number(conta.saldo_atual) < valorBaixa) { saldoWarning = true; }
+      await tx`INSERT INTO baixas (tipo, titulo_id, valor_baixa, data_baixa, conta_interna_id, observacoes) VALUES ('pagamento', ${id}, ${valorBaixa}, ${f.data_baixa || new Date()}, ${f.conta_interna_id || titulo.conta_bancaria_id}, ${f.observacoes || ''})`;
+      const novoValorAberto = Number(titulo.valor_aberto) - valorBaixa;
+      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
+      await tx`UPDATE titulos_pagar SET valor_aberto = ${novoValorAberto}, status = ${novoStatus}, data_pagamento = ${novoStatus === 'pago' ? new Date() : null} WHERE id = ${id}`;
+      await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`;
+      return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso', warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined });
+    });
+  }
+
   if (req.method === 'GET') {
     const { fornecedor_id, status, data_inicio, data_fim } = req.query;
     let query = sql`SELECT * FROM titulos_pagar WHERE deletado = false`;
-    
     if (fornecedor_id) query = sql`${query} AND fornecedor_id = ${fornecedor_id}`;
     if (status) query = sql`${query} AND status = ${status}`;
     if (data_inicio && data_fim) query = sql`${query} AND data_vencimento BETWEEN ${data_inicio} AND ${data_fim}`;
-    
     const result = await query;
     return res.status(200).json({ success: true, data: result });
   }
 
   if (req.method === 'POST') {
     const f = req.body;
-    
-    if (f.condicao_pagamento_id) {
-      const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id}`)[0];
-      if (!cond) return res.status(400).json({ success: false, error: 'Condição de pagamento não encontrada' });
-
-      const totalParcelas = cond.parcelas;
-      const valorTotal = Number(f.valor_original);
-      const valorParcela = valorTotal / totalParcelas;
-      const dataEmissao = new Date();
-      
-      const titulos = [];
-      for (let i = 1; i <= totalParcelas; i++) {
-        const vencimento = new Date();
-        vencimento.setMonth(vencimento.getMonth() + (i - 1));
-        
-        const t = await sql`
-          INSERT INTO titulos_pagar (
-            numero_titulo, fornecedor_id, nota_fiscal, pedido_compra_id,
-            valor_original, valor_liquido, valor_aberto,
-            data_emissao, data_vencimento, data_competencia,
-            classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id,
-            status, parcela, total_parcelas, observacoes
-          ) VALUES (
-            ${`PAG-${Date.now()}-${i}`}, ${f.fornecedor_id}, ${f.nota_fiscal || null}, ${f.pedido_compra_id || null},
-            ${valorParcela}, ${valorParcela}, ${valorParcela},
-            ${dataEmissao}, ${vencimento}, ${dataEmissao},
-            ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
-            'aberto', ${i}, ${totalParcelas}, ${f.observacoes || ''}
-          ) RETURNING *`;
-        titulos.push(t[0]);
-      }
-      return res.status(201).json({ success: true, data: titulos });
-    }
-
-    const result = await sql`
-      INSERT INTO titulos_pagar (
-        numero_titulo, fornecedor_id, nota_fiscal, pedido_compra_id,
-        valor_original, valor_liquido, valor_aberto,
-        data_emissao, data_vencimento, data_competencia,
-        classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id,
-        status, parcela, total_parcelas, observacoes
-      ) VALUES (
-        ${f.numero_titulo}, ${f.fornecedor_id}, ${f.nota_fiscal || null}, ${f.pedido_compra_id || null},
-        ${f.valor_original}, ${f.valor_liquido}, ${f.valor_aberto},
-        ${f.data_emissao}, ${f.data_vencimento}, ${f.data_competencia},
-        ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id},
-        ${f.status || 'aberto'}, ${f.parcela || 1}, ${f.total_parcelas || 1}, ${f.observacoes || ''}
-      ) RETURNING *`;
-    return res.status(201).json({ success: true, data: result[0] });
-  }
-
-  if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
-    const f = req.body;
-    const result = await sql`
-      UPDATE titulos_pagar SET 
-        valor_aberto = COALESCE(${f.valor_aberto}, valor_aberto),
-        status = COALESCE(${f.status}, status),
-        data_pagamento = COALESCE(${f.data_pagamento}, data_pagamento),
-        atualizado_em = NOW()
-      WHERE id = ${id} RETURNING *`;
-    return res.status(200).json({ success: true, data: result[0] });
-  }
-
-  if (req.method === 'DELETE' && id) {
-    await sql`UPDATE titulos_pagar SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
-    return res.status(200).json({ success: true });
-  }
-
-  if (req.method === 'POST' && id && req.url.includes('baixar')) {
-    const f = req.body;
-    
-    return await sql.begin(async (tx) => {
-      const titulo = (await tx`SELECT * FROM titulos_pagar WHERE id = ${id}`)[0];
-      if (!titulo) throw new Error('Título não encontrado');
-
-      const conta = (await tx`SELECT * FROM contas_internas WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`)[0];
-      if (!conta) throw new Error('Conta bancária não encontrada');
-
-      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
-      
-      let saldoWarning = false;
-      if (Number(conta.saldo_atual) < valorBaixa) {
-        saldoWarning = true;
-      }
-      
-      await tx`
-        INSERT INTO baixas (tipo, titulo_id, valor_baixa, data_baixa, conta_interna_id, observacoes)
-        VALUES ('pagamento', ${id}, ${valorBaixa}, ${f.data_baixa || new Date()}, ${f.conta_interna_id || titulo.conta_bancaria_id}, ${f.observacoes || ''})`;
-
-      const novoValorAberto = Number(titulo.valor_aberto) - valorBaixa;
-      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-      await tx`
-        UPDATE titulos_pagar SET 
-          valor_aberto = ${novoValorAberto}, 
-          status = ${novoStatus}, 
-          data_pagamento = ${novoStatus === 'pago' ? new Date() : null}
-        WHERE id = ${id}`;
-
-      await tx`
-        UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa}
-        WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`;
-
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Baixa realizada com sucesso',
-        warning: saldoWarning ? 'Saldo insuficiente na conta, mas o pagamento foi processado.' : undefined
-      });
-    });
-  }
-
-  if (req.method === 'POST' && req.url.includes('preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
-    const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
-    if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-    
-    const parcelas = [];
-    const valorParcela = Number(valor_original) / cond.parcelas;
-    const baseDate = new Date(data_vencimento || new Date());
-    
-    for (let i = 1; i <= cond.parcelas; i++) {
-        const venc = new Date(baseDate);
-        venc.setMonth(venc.getMonth() + (i - 1));
-        parcelas.push({ parcela: i, valor: valorParcela, vencimento: venc });
-    }
-    return res.status(200).json({ success: true, data: { parcelas } });
-  }
 
   return res.status(405).end();
 }
