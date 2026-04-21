@@ -48,6 +48,9 @@ export async function handleFinanceiro(req: any, res: any) {
     if (resource === 'condicoes-pagamento') {
       return await handleCondicoesPagamento(req, res, id);
     }
+    if (resource === 'test') {
+      return await handleDiagnostic(req, res);
+    }
 
     return res.status(404).json({ success: false, error: 'Recurso financeiro não encontrado' });
   } catch (err: any) {
@@ -632,6 +635,51 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
   }
 
   return res.status(405).end();
+}
+
+async function handleDiagnostic(req: any, res: any) {
+  const steps: string[] = [];
+  try {
+    steps.push('1. Verificando conexão com o DB...');
+    const dbTime = await sql`SELECT NOW()`;
+    steps.push(`   - Sucesso: ${dbTime[0].now}`);
+
+    steps.push('2. Verificando estrutura de Condições de Pagamento...');
+    const condCols = await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'condicoes_pagamento'`;
+    const colNames = condCols.map((c: any) => c.column_name);
+    steps.push(`   - Colunas: ${colNames.join(', ')}`);
+    
+    if (!colNames.includes('parcelas')) throw new Error('Coluna "parcelas" ausente!');
+    if (!colNames.includes('deletado')) throw new Error('Coluna "deletado" ausente!');
+
+    steps.push('3. Verificando dados de Condições...');
+    const conds = await sql`SELECT * FROM condicoes_pagamento WHERE deletado = false LIMIT 1`;
+    if (conds.length === 0) {
+      steps.push('   - Nenhuma condição ativa. Criando uma temporária...');
+      await sql`INSERT INTO condicoes_pagamento (nome, parcelas) VALUES ('Teste Automático', 12)`;
+    }
+    steps.push('   - Sucesso: Condições disponíveis.');
+
+    steps.push('4. Testando cálculo de parcelas (Simulado)...');
+    const testCond = (await sql`SELECT * FROM condicoes_pagamento WHERE deletado = false LIMIT 1`)[0];
+    const valorOriginal = 1000;
+    const nParcelas = testCond.parcelas;
+    const valorParcela = valorOriginal / nParcelas;
+    steps.push(`   - Mock: R$ ${valorOriginal} em ${nParcelas}x = R$ ${valorParcela.toFixed(2)}/cada`);
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'DIAGNÓSTICO CONCLUÍDO COM SUCESSO',
+      steps 
+    });
+  } catch (e: any) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'FALHA NO DIAGNÓSTICO', 
+      error: e.message,
+      steps 
+    });
+  }
 }
 
 async function handleCondicoesPagamento(req: any, res: any, id?: string) {
