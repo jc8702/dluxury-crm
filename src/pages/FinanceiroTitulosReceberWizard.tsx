@@ -18,6 +18,7 @@ export default function FinanceiroTitulosReceberWizard() {
   const [clients, setClients] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
+  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [formasRecebimento, setFormasRecebimento] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
@@ -91,8 +92,14 @@ export default function FinanceiroTitulosReceberWizard() {
     setLoading(true);
     try {
       await api.financeiro.titulosReceber.create({
-        ...formData,
-        parcelas: preview
+        cliente_id: formData.cliente_id,
+        classe_financeira_id: formData.classe_financeira_id,
+        valor_original: formData.valor_total,
+        data_vencimento: formData.data_base,
+        condicao_pagamento_id: formData.condicao_pagamento_id,
+        forma_recebimento_id: formData.forma_recebimento_id,
+        numero_titulo: formData.numero_titulo,
+        observacoes: formData.descricao || null,
       });
       alert('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-receber';
