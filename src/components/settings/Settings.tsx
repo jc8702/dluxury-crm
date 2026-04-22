@@ -167,51 +167,24 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="card glass" style={{ marginTop: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.25rem', color: '#d4af37' }}>💰 Configurações Financeiras</h3>
-          <button onClick={() => { setEditingCondId(null); setNewCond({nome:'', n_parcelas:1}); setShowCondModal(true); }} className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
-            + Nova Condição de Pagamento
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <h3 style={{ fontSize: '1.25rem', color: '#d4af37', marginBottom: '1.5rem' }}>💰 Padrões de Orçamento</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem' }}>
           <div>
-            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>Condições de Pagamento</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {condicoesPagamento.map(c => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px' }}>
-                  <div>
-                    <p style={{ fontWeight: '600' }}>{c.nome}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.n_parcelas} parcela(s)</p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => { setEditingCondId(c.id); setNewCond({nome: c.nome, n_parcelas: c.n_parcelas}); setShowCondModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>✎</button>
-                    <button onClick={() => { if(confirm('Excluir?')) removeCondicaoPagamento(c.id); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>×</button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Taxa Financeira Padrão (%)</label>
+            <input type="number" step="0.1" style={inputStyle} defaultValue={0.0} />
           </div>
-
           <div>
-            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>Padrões de Orçamento</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Taxa Mensal Padrão (%)</label>
-                <input type="number" step="0.1" style={inputStyle} defaultValue={3.0} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Prazo Padrão de Entrega (Dias Úteis)</label>
-                <input type="number" style={inputStyle} defaultValue={45} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Adicional de Urgência (%)</label>
-                <input type="number" style={inputStyle} defaultValue={15} />
-              </div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>* Estes valores serão usados como base para novos orçamentos.</p>
-            </div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Prazo Padrão de Entrega (Dias Úteis)</label>
+            <input type="number" style={inputStyle} defaultValue={45} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Adicional de Urgência (%)</label>
+            <input type="number" style={inputStyle} defaultValue={15} />
           </div>
         </div>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '1rem' }}>
+          * O parcelamento e as taxas agora são definidos manualmente em cada transação (Pagar, Receber e Orçamentos).
+        </p>
       </div>
 
       <TechnicalPricingSection />
