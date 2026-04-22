@@ -95,6 +95,78 @@ async function handleClasses(req: any, res: any, id?: string) {
 
 async function handleContasInternas(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
+    if (req.url.includes('/extrato')) {
+      if (!id) return res.status(400).json({ success: false, error: 'ID da conta é obrigatório' });
+      
+      const conta = (await sql`SELECT * FROM contas_internas WHERE id = ${id}`)[0];
+      if (!conta) return res.status(404).json({ success: false, error: 'Conta não encontrada' });
+
+      // Consolidar todas as movimentações
+      // 1. Baixas de Recebimento (Entradas)
+      // 2. Baixas de Pagamento (Saídas)
+      // 3. Movimentações de Tesouraria (Entradas, Saídas, Transferências)
+      const movimentos = await sql`
+        SELECT * FROM (
+          -- Baixas de títulos (recebimentos e pagamentos)
+          SELECT 
+            id, 
+            data_baixa as data, 
+            valor_baixa as valor, 
+            tipo, 
+            observacoes as descricao,
+            'baixa' as origem
+          FROM baixas 
+          WHERE conta_interna_id = ${id} AND deletado = false
+
+          UNION ALL
+
+          -- Movimentações diretas de tesouraria (entradas/saídas)
+          SELECT 
+            id, 
+            data_movimento as data, 
+            CASE WHEN tipo = 'entrada' THEN valor ELSE -valor END as valor,
+            tipo,
+            descricao,
+            'tesouraria' as origem
+          FROM movimentacoes_tesouraria
+          WHERE (conta_origem_id = ${id} OR conta_destino_id = ${id}) AND deletado = false
+        ) as extrato
+        ORDER BY data ASC
+      `;
+
+      // Calcular saldo progressivo
+      let saldoAtual = Number(conta.saldo_inicial || 0);
+      const extratoComSaldo = movimentos.map((m: any) => {
+        const valorNum = Number(m.valor);
+        // Regra de sinal baseada no tipo se for tesouraria ou baixa
+        let realValor = valorNum;
+        
+        // Se for tesouraria e a conta for origem, é saída (negativo)
+        // Se for tesouraria e a conta for destino, é entrada (positivo)
+        // (Isso já está pré-tratado no CASE da query acima para tesouraria, 
+        // mas para baixas precisamos garantir o sinal)
+        if (m.origem === 'baixa') {
+            realValor = m.tipo === 'recebimento' ? Math.abs(valorNum) : -Math.abs(valorNum);
+        }
+
+        saldoAtual += realValor;
+        return {
+          ...m,
+          valor: realValor,
+          saldo_momento: saldoAtual
+        };
+      });
+
+      return res.status(200).json({ 
+        success: true, 
+        data: {
+          conta,
+          saldo_inicial: Number(conta.saldo_inicial || 0),
+          extrato: extratoComSaldo.reverse() // Mais recente primeiro para exibição
+        } 
+      });
+    }
+
     const result = await sql`SELECT * FROM contas_internas WHERE deletado = false ORDER BY nome ASC`;
     return res.status(200).json({ success: true, data: result });
   }

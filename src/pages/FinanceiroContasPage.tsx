@@ -109,29 +109,63 @@ const FinanceiroContasPage: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`Extrato`}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ flex: 1 }}>
-            <h4>Movimentações</h4>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {extrato?.movimentacoes?.map((m: any) => (
-                <div key={m.id} style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontWeight: '700' }}>{m.descricao}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{new Date(m.data_movimento).toLocaleDateString()} — R$ {Number(m.valor).toFixed(2)}</div>
-                </div>
-              ))}
+      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`Extrato Detalhado: ${extrato?.conta?.nome || ''}`} width="900px">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>Saldo Inicial</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>R$ {Number(extrato?.saldo_inicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>Saldo Atual</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--primary)' }}>R$ {Number(extrato?.conta?.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <button className="btn btn-outline" onClick={() => window.print()} style={{ fontSize: '0.8rem' }}>Imprimir PDF</button>
             </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <h4>Baixas</h4>
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {extrato?.baixas?.map((b: any) => (
-                <div key={b.id} style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontWeight: '700' }}>Baixa — R$ {Number(b.valor_baixa).toFixed(2)}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{new Date(b.data_baixa).toLocaleDateString()} — {b.observacoes}</div>
-                </div>
-              ))}
-            </div>
+
+          <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--surface)', zSelf: 10 }}>
+                <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)', fontSize: '0.85rem' }}>
+                  <th style={{ padding: '0.75rem' }}>Data</th>
+                  <th style={{ padding: '0.75rem' }}>Descrição</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'right' }}>Valor</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'right' }}>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {extrato?.extrato?.map((m: any) => {
+                  const isPositive = Number(m.valor) > 0;
+                  return (
+                    <tr key={m.id} style={{ borderBottom: '1px solid var(--border)', fontSize: '0.9rem' }}>
+                      <td style={{ padding: '0.75rem', opacity: 0.8 }}>{new Date(m.data).toLocaleDateString('pt-BR')}</td>
+                      <td style={{ padding: '0.75rem' }}>
+                        <div style={{ fontWeight: 500 }}>{m.descricao || (m.tipo === 'recebimento' ? 'Recebimento de Título' : 'Pagamento de Título')}</div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5, textTransform: 'uppercase' }}>{m.origem} • {m.tipo}</div>
+                      </td>
+                      <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 600, color: isPositive ? '#10b981' : '#ef4444' }}>
+                        {isPositive ? '+' : ''} {Number(m.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 600 }}>
+                        R$ {Number(m.saldo_momento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(!extrato?.extrato || extrato.extrato.length === 0) && (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', opacity: 0.5 }}>Nenhuma movimentação encontrada para esta conta.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" onClick={() => setShowExtrato(false)}>Fechar Extrato</button>
           </div>
         </div>
       </Modal>
