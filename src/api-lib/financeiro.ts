@@ -192,7 +192,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
   if (req.method === 'GET') {
     const { cliente_id, status, data_inicio, data_fim } = req.query;
     let query = sql`SELECT * FROM titulos_receber WHERE deletado = false`;
-    if (cliente_id) query = sql`${query} AND cliente_id = ${cliente_id}`;
+    if (cliente_id) query = sql`${query} AND cliente_id = ${Number(cliente_id)}`;
     if (status) query = sql`${query} AND status = ${status}`;
     if (data_inicio && data_fim) query = sql`${query} AND data_vencimento BETWEEN ${data_inicio} AND ${data_fim}`;
     const result = await query;
@@ -202,6 +202,11 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
   if (req.method === 'POST') {
     const f = req.body;
     const numTotal = Number(f.total_parcelas) || 1;
+    // cliente_id é integer na tabela clients — garantir conversão correta
+    const clienteId = Number(f.cliente_id);
+    if (!clienteId || isNaN(clienteId)) {
+      return res.status(400).json({ success: false, error: 'cliente_id inválido' });
+    }
     const titulos = [];
     for (let i = 1; i <= numTotal; i++) {
       const venc = new Date(f.data_vencimento || new Date());
@@ -215,7 +220,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
           status, parcela, total_parcelas, observacoes
         ) VALUES (
           ${i === 1 ? (f.numero_titulo || `REC-${Date.now()}`) : `REC-${Date.now()}-${i}`}, 
-          ${f.cliente_id}, 
+          ${clienteId}, 
           ${f.projeto_id || null}, 
           ${f.orcamento_id || null}, 
           ${Number(f.valor_original)/numTotal}, 
