@@ -206,7 +206,32 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
     for (let i = 1; i <= numTotal; i++) {
       const venc = new Date(f.data_vencimento || new Date());
       venc.setMonth(venc.getMonth() + (i - 1));
-      const t = await sql`INSERT INTO titulos_receber (numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes) VALUES (${i === 1 ? (f.numero_titulo || `REC-${Date.now()}`) : `REC-${Date.now()}-${i}`}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, ${f.forma_recebimento_id}, 'aberto', ${i}, ${numTotal}, ${f.observacoes || ''}) RETURNING *`;
+      const t = await sql`
+        INSERT INTO titulos_receber (
+          numero_titulo, cliente_id, projeto_id, orcamento_id, 
+          valor_original, valor_liquido, valor_aberto, 
+          data_emissao, data_vencimento, data_competencia, 
+          classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
+          status, parcela, total_parcelas, observacoes
+        ) VALUES (
+          ${i === 1 ? (f.numero_titulo || `REC-${Date.now()}`) : `REC-${Date.now()}-${i}`}, 
+          ${f.cliente_id}, 
+          ${f.projeto_id || null}, 
+          ${f.orcamento_id || null}, 
+          ${Number(f.valor_original)/numTotal}, 
+          ${Number(f.valor_original)/numTotal}, 
+          ${Number(f.valor_original)/numTotal}, 
+          NOW(), 
+          ${venc}, 
+          ${venc}, 
+          ${f.classe_financeira_id}, 
+          NULL, 
+          ${f.forma_recebimento_id}, 
+          'aberto', 
+          ${i}, 
+          ${numTotal}, 
+          ${f.observacoes || ''}
+        ) RETURNING *`;
       titulos.push(t[0]);
     }
     return res.status(201).json({ success: true, data: titulos });
@@ -277,7 +302,31 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
     for (let i = 1; i <= numTotal; i++) {
       const venc = new Date(f.data_vencimento || new Date());
       venc.setMonth(venc.getMonth() + (i - 1));
-      const t = await sql`INSERT INTO titulos_pagar (numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas) VALUES (${i === 1 ? (f.numero_titulo || `PAG-${Date.now()}`) : `PAG-${Date.now()}-${i}`}, ${f.fornecedor_id}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id}, 'aberto', ${i}, ${numTotal}) RETURNING *`;
+      const t = await sql`
+        INSERT INTO titulos_pagar (
+          numero_titulo, fornecedor_id, pedido_compra_id,
+          valor_original, valor_liquido, valor_aberto, 
+          data_emissao, data_vencimento, data_competencia, 
+          classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, 
+          conta_bancaria_id, status, parcela, total_parcelas
+        ) VALUES (
+          ${i === 1 ? (f.numero_titulo || `PAG-${Date.now()}`) : `PAG-${Date.now()}-${i}`}, 
+          ${f.fornecedor_id},
+          ${f.pedido_compra_id || null},
+          ${Number(f.valor_original)/numTotal}, 
+          ${Number(f.valor_original)/numTotal}, 
+          ${Number(f.valor_original)/numTotal}, 
+          NOW(), 
+          ${venc}, 
+          ${venc}, 
+          ${f.classe_financeira_id}, 
+          NULL, 
+          ${f.forma_pagamento_id}, 
+          ${f.conta_bancaria_id}, 
+          'aberto', 
+          ${i}, 
+          ${numTotal}
+        ) RETURNING *`;
       titulos.push(t[0]);
     }
     return res.status(201).json({ success: true, data: titulos });
