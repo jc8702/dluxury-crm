@@ -161,21 +161,17 @@ async function handleFormasPagamento(req: any, res: any, id?: string) {
 
 async function handleTitulosReceber(req: any, res: any, id?: string) {
   if (req.method === 'POST' && (req.url.includes('preview') || req.query?.action === 'preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
-    if (condicao_pagamento_id) {
-        const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
-        if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-        const parcelas = [];
-        const valorParcela = Number(valor_original) / Number(cond.parcelas);
-        const baseDate = new Date(data_vencimento || new Date());
-        for (let i = 1; i <= cond.parcelas; i++) {
-            const venc = new Date(baseDate);
-            venc.setMonth(venc.getMonth() + (i - 1));
-            parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
-        }
-        return res.status(200).json({ success: true, data: { parcelas } });
+    const { valor_original, total_parcelas, data_vencimento } = req.body;
+    const numParcelas = Number(total_parcelas) || 1;
+    const parcelas = [];
+    const valorParcela = Number(valor_original) / numParcelas;
+    const baseDate = new Date(data_vencimento || new Date());
+    for (let i = 1; i <= numParcelas; i++) {
+        const venc = new Date(baseDate);
+        venc.setMonth(venc.getMonth() + (i - 1));
+        parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
     }
-    return res.status(400).json({ success: false, error: 'Parâmetros inválidos para preview' });
+    return res.status(200).json({ success: true, data: { parcelas } });
   }
 
   if (req.method === 'POST' && id && req.url.includes('baixar')) {
@@ -205,20 +201,15 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
 
   if (req.method === 'POST') {
     const f = req.body;
-    if (f.condicao_pagamento_id) {
-      const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id}`)[0];
-      if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-      const titulos = [];
-      for (let i = 1; i <= cond.parcelas; i++) {
-        const venc = new Date(f.data_vencimento || new Date());
-        venc.setMonth(venc.getMonth() + (i - 1));
-        const t = await sql`INSERT INTO titulos_receber (numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes) VALUES (${`REC-${Date.now()}-${i}`}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null}, ${Number(f.valor_original)/cond.parcelas}, ${Number(f.valor_original)/cond.parcelas}, ${Number(f.valor_original)/cond.parcelas}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_recebimento_id}, 'aberto', ${i}, ${cond.parcelas}, ${f.observacoes || ''}) RETURNING *`;
-        titulos.push(t[0]);
-      }
-      return res.status(201).json({ success: true, data: titulos });
+    const numTotal = Number(f.total_parcelas) || 1;
+    const titulos = [];
+    for (let i = 1; i <= numTotal; i++) {
+      const venc = new Date(f.data_vencimento || new Date());
+      venc.setMonth(venc.getMonth() + (i - 1));
+      const t = await sql`INSERT INTO titulos_receber (numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes) VALUES (${i === 1 ? (f.numero_titulo || `REC-${Date.now()}`) : `REC-${Date.now()}-${i}`}, ${f.cliente_id}, ${f.projeto_id || null}, ${f.orcamento_id || null}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, ${f.forma_recebimento_id}, 'aberto', ${i}, ${numTotal}, ${f.observacoes || ''}) RETURNING *`;
+      titulos.push(t[0]);
     }
-    const result = await sql`INSERT INTO titulos_receber (numero_titulo, cliente_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, status, parcela, total_parcelas) VALUES (${f.numero_titulo || `REC-${Date.now()}`}, ${f.cliente_id}, ${f.valor_original}, ${f.valor_original}, ${f.valor_original}, NOW(), ${f.data_vencimento}, ${f.data_vencimento}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, 'aberto', 1, 1) RETURNING *`;
-    return res.status(201).json({ success: true, data: result[0] });
+    return res.status(201).json({ success: true, data: titulos });
   }
 
   if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
@@ -237,21 +228,17 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
 
 async function handleTitulosPagar(req: any, res: any, id?: string) {
   if (req.method === 'POST' && (req.url.includes('preview') || req.query?.action === 'preview')) {
-    const { valor_original, condicao_pagamento_id, data_vencimento } = req.body;
-    if (condicao_pagamento_id) {
-        const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${condicao_pagamento_id}`)[0];
-        if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-        const parcelas = [];
-        const valorParcela = Number(valor_original) / Number(cond.parcelas);
-        const baseDate = new Date(data_vencimento || new Date());
-        for (let i = 1; i <= cond.parcelas; i++) {
-            const venc = new Date(baseDate);
-            venc.setMonth(venc.getMonth() + (i - 1));
-            parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
-        }
-        return res.status(200).json({ success: true, data: { parcelas } });
+    const { valor_original, total_parcelas, data_vencimento } = req.body;
+    const numParcelas = Number(total_parcelas) || 1;
+    const parcelas = [];
+    const valorParcela = Number(valor_original) / numParcelas;
+    const baseDate = new Date(data_vencimento || new Date());
+    for (let i = 1; i <= numParcelas; i++) {
+        const venc = new Date(baseDate);
+        venc.setMonth(venc.getMonth() + (i - 1));
+        parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
     }
-    return res.status(400).json({ success: false, error: 'Parâmetros inválidos para preview' });
+    return res.status(200).json({ success: true, data: { parcelas } });
   }
 
   if (req.method === 'POST' && id && req.url.includes('baixar')) {
@@ -285,20 +272,15 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
 
   if (req.method === 'POST') {
     const f = req.body;
-    if (f.condicao_pagamento_id) {
-        const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id}`)[0];
-        if (!cond) return res.status(400).json({ success: false, error: 'Condição não encontrada' });
-        const titulos = [];
-        for (let i = 1; i <= cond.parcelas; i++) {
-          const venc = new Date(f.data_vencimento || new Date());
-          venc.setMonth(venc.getMonth() + (i - 1));
-          const t = await sql`INSERT INTO titulos_pagar (numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas) VALUES (${`PAG-${Date.now()}-${i}`}, ${f.fornecedor_id}, ${Number(f.valor_original)/cond.parcelas}, ${Number(f.valor_original)/cond.parcelas}, ${Number(f.valor_original)/cond.parcelas}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id}, 'aberto', ${i}, ${cond.parcelas}) RETURNING *`;
-          titulos.push(t[0]);
-        }
-        return res.status(201).json({ success: true, data: titulos });
+    const numTotal = Number(f.total_parcelas) || 1;
+    const titulos = [];
+    for (let i = 1; i <= numTotal; i++) {
+      const venc = new Date(f.data_vencimento || new Date());
+      venc.setMonth(venc.getMonth() + (i - 1));
+      const t = await sql`INSERT INTO titulos_pagar (numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas) VALUES (${i === 1 ? (f.numero_titulo || `PAG-${Date.now()}`) : `PAG-${Date.now()}-${i}`}, ${f.fornecedor_id}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, ${Number(f.valor_original)/numTotal}, NOW(), ${venc}, ${venc}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id}, 'aberto', ${i}, ${numTotal}) RETURNING *`;
+      titulos.push(t[0]);
     }
-    const result = await sql`INSERT INTO titulos_pagar (numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas) VALUES (${f.numero_titulo || `PAG-${Date.now()}`}, ${f.fornecedor_id}, ${f.valor_original}, ${f.valor_original}, ${f.valor_original}, NOW(), ${f.data_vencimento}, ${f.data_vencimento}, ${f.classe_financeira_id}, ${f.condicao_pagamento_id || null}, ${f.forma_pagamento_id}, ${f.conta_bancaria_id}, 'aberto', 1, 1) RETURNING *`;
-    return res.status(201).json({ success: true, data: result[0] });
+    return res.status(201).json({ success: true, data: titulos });
   }
 
   if ((req.method === 'PATCH' || req.method === 'PUT') && id) {

@@ -17,9 +17,9 @@ export default function FinanceiroTitulosReceberWizard() {
   const [clients, setClients] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
-  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [formasRecebimento, setFormasRecebimento] = useState<any[]>([]);
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
+  const [totalParcelas, setTotalParcelas] = useState(1);
 
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -39,19 +39,15 @@ export default function FinanceiroTitulosReceberWizard() {
   useEffect(() => {
     const loadOpts = async () => {
       try {
-        const [cls, cf, cp, fr] = await Promise.all([
+        const [cls, cf, fr] = await Promise.all([
           api.clients.list(),
           api.financeiro.classesFinanceiras.list(),
-          api.financeiro.condicoesPagamento.list(),
           api.financeiro.formasPagamento.list(),
         ]);
         setClients(cls || []);
         setClasses(cf || []);
-        setCondicoes(cp || []);
         setFormasRecebimento(fr || []);
 
-        const aVista = (cp || []).find((c: any) => c.nome.toLowerCase().includes('vista'));
-        if (aVista) setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
         if (fr && fr.length > 0) setFormData(prev => ({ ...prev, forma_recebimento_id: fr[0].id }));
       } catch (err) {
         console.error('[WIZARD RECEBER ERROR]', err);
@@ -66,7 +62,7 @@ export default function FinanceiroTitulosReceberWizard() {
       try {
         const res = await api.financeiro.titulosReceber.preview({
           valor_original: valorComTaxa,
-          condicao_pagamento_id: formData.condicao_pagamento_id,
+          total_parcelas: totalParcelas,
           data_vencimento: formData.data_base
         });
         setPreview(res.data?.parcelas || res.parcelas || []);
@@ -88,8 +84,8 @@ export default function FinanceiroTitulosReceberWizard() {
         cliente_id: formData.cliente_id,
         classe_financeira_id: formData.classe_financeira_id,
         valor_original: valorComTaxa,
+        total_parcelas: totalParcelas,
         data_vencimento: formData.data_base,
-        condicao_pagamento_id: formData.condicao_pagamento_id,
         forma_recebimento_id: formData.forma_recebimento_id,
         numero_titulo: formData.numero_titulo,
         observacoes: formData.descricao || null,
@@ -124,9 +120,6 @@ export default function FinanceiroTitulosReceberWizard() {
             {classes.filter(c => c.tipo.toLowerCase() === 'receita' && c.permite_lancamento)
               .map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>)}
           </select>
-          {classes.filter(c => c.tipo.toLowerCase() === 'receita').length === 0 && (
-            <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.25rem' }}>Nenhuma classe de receita carregada.</p>
-          )}
         </div>
         <div>
           <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -141,7 +134,7 @@ export default function FinanceiroTitulosReceberWizard() {
     </div>
   );
 
-  // ─── PASSO 2: Valores + Forma + Condição ──────────────────────────────────
+  // ─── PASSO 2: Valores + Forma + Parcelas ──────────────────────────────────
   const renderStep2 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Valores e Recebimento</h3>
@@ -190,15 +183,18 @@ export default function FinanceiroTitulosReceberWizard() {
                 <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
                   R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                {taxaFinanceira > 0 && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    + R$ {(valorComTaxa - formData.valor_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em taxas
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
+
+        {/* Parcelas Manual */}
+        <div>
+          <label className="label-base">Quantidade de Parcelas</label>
+          <input type="number" className="input-base" min={1} max={60}
+            value={totalParcelas}
+            onChange={e => setTotalParcelas(Number(e.target.value))} />
+        </div>
 
         {/* Data + Observação */}
         <div>
@@ -211,31 +207,6 @@ export default function FinanceiroTitulosReceberWizard() {
           <textarea className="input-base" rows={2} value={formData.descricao}
             onChange={e => setFormData({ ...formData, descricao: e.target.value })}
             style={{ textTransform: 'none' }} />
-        </div>
-
-        {/* Condição de Pagamento */}
-        <div>
-          <label className="label-base" style={{ marginBottom: '0.75rem', display: 'block' }}>Condição de Pagamento</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem' }}>
-            {condicoes.map(c => (
-              <div key={c.id} className="card"
-                style={{
-                  cursor: 'pointer', padding: '0.85rem 1rem',
-                  borderColor: formData.condicao_pagamento_id === c.id ? 'var(--primary)' : 'var(--border)',
-                  background: formData.condicao_pagamento_id === c.id ? 'var(--input-bg-focus)' : 'var(--surface)',
-                  transition: 'all 0.18s ease'
-                }}
-                onClick={() => setFormData({ ...formData, condicao_pagamento_id: c.id })}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, color: formData.condicao_pagamento_id === c.id ? 'var(--primary)' : 'var(--text)' }}>{c.nome}</div>
-                    {c.descricao && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{c.descricao}</div>}
-                  </div>
-                  {formData.condicao_pagamento_id === c.id && <FiCheck style={{ color: 'var(--primary)' }} />}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -262,7 +233,7 @@ export default function FinanceiroTitulosReceberWizard() {
             <div style={{ fontWeight: 700 }}>TOTAL A RECEBER</div>
             {taxaFinanceira > 0 && (
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Inclui {taxaFinanceira}% de custo financeiro ({formaSelecionada?.nome})
+                Inclui {taxaFinanceira}% de custo financeiro
               </div>
             )}
           </div>

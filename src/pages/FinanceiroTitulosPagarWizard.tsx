@@ -18,13 +18,13 @@ export default function FinanceiroTitulosPagarWizard() {
   const [loadingOCs, setLoadingOCs] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
-  const [condicoes, setCondicoes] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [hasOC, setHasOC] = useState<'none' | 'sim' | 'nao'>('none');
   const [formasPagamento, setFormasPagamento] = useState<any[]>([]);
   const [contasInternas, setContasInternas] = useState<any[]>([]);
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
+  const [totalParcelas, setTotalParcelas] = useState(1);
 
   const [formData, setFormData] = useState({
     fornecedor_id: '',
@@ -49,21 +49,17 @@ export default function FinanceiroTitulosPagarWizard() {
   useEffect(() => {
     const loadOpts = async () => {
       try {
-        const [sup, cf, cp, fp, ci] = await Promise.all([
+        const [sup, cf, fp, ci] = await Promise.all([
           api.suppliers.list(),
           api.financeiro.classesFinanceiras.list(),
-          api.financeiro.condicoesPagamento.list(),
           api.financeiro.formasPagamento.list(),
           api.financeiro.contasInternas.list(),
         ]);
         setSuppliers(sup || []);
         setClasses(cf || []);
-        setCondicoes(cp || []);
         setFormasPagamento(fp || []);
         setContasInternas(ci || []);
 
-        const aVista = (cp || []).find((c: any) => c.nome.toLowerCase().includes('vista'));
-        if (aVista) setFormData(prev => ({ ...prev, condicao_pagamento_id: aVista.id }));
         if (ci && ci.length > 0) setFormData(prev => ({ ...prev, conta_bancaria_id: ci[0].id }));
         if (fp && fp.length > 0) setFormData(prev => ({ ...prev, forma_pagamento_id: fp[0].id }));
       } catch (err) {
@@ -96,7 +92,6 @@ export default function FinanceiroTitulosPagarWizard() {
         ...formData,
         pedido_compra_id: pedido.id,
         valor_base: Number(pedido.valor_total),
-        condicao_pagamento_id: pedido.condicao_pagamento_id || formData.condicao_pagamento_id,
         numero_titulo: pedido.numero ? `FAT-${pedido.numero}` : formData.numero_titulo,
         descricao: `Referente à Ordem de Compra ${pedido.numero}`
       });
@@ -105,12 +100,11 @@ export default function FinanceiroTitulosPagarWizard() {
 
   const handleNext = async () => {
     if (step === 2) {
-      // Passo 2 → 3: calcular preview com valor já com taxa
       setLoading(true);
       try {
         const res = await api.financeiro.titulosPagar.preview({
           valor_original: valorComTaxa,
-          condicao_pagamento_id: formData.condicao_pagamento_id,
+          total_parcelas: totalParcelas,
           data_vencimento: formData.data_base
         });
         setPreview(res.data?.parcelas || res.parcelas || []);
@@ -133,8 +127,8 @@ export default function FinanceiroTitulosPagarWizard() {
         pedido_compra_id: formData.pedido_compra_id || null,
         classe_financeira_id: formData.classe_financeira_id,
         valor_original: valorComTaxa,
+        total_parcelas: totalParcelas,
         data_vencimento: formData.data_base,
-        condicao_pagamento_id: formData.condicao_pagamento_id,
         forma_pagamento_id: formData.forma_pagamento_id,
         conta_bancaria_id: formData.conta_bancaria_id,
         numero_titulo: formData.numero_titulo,
@@ -222,7 +216,7 @@ export default function FinanceiroTitulosPagarWizard() {
     </div>
   );
 
-  // ─── PASSO 2: Valores + Pagamento + Condição ─────────────────────────────
+  // ─── PASSO 2: Valores + Pagamento + Parcelas ─────────────────────────────
   const renderStep2 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Valores e Pagamento</h3>
@@ -242,7 +236,7 @@ export default function FinanceiroTitulosPagarWizard() {
         {/* Conta + Meio */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
-            <label className="label-base">Pagar por qual Conta?</label>
+            <label className="label-base">Contas Internas</label>
             <select className="input-base" value={formData.conta_bancaria_id}
               onChange={e => setFormData({ ...formData, conta_bancaria_id: e.target.value })}>
               <option value="">Selecione a conta...</option>
@@ -281,15 +275,18 @@ export default function FinanceiroTitulosPagarWizard() {
                 <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
                   R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                {taxaFinanceira > 0 && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    + R$ {(valorComTaxa - formData.valor_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em taxas
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
+
+        {/* Parcelas Manual */}
+        <div>
+          <label className="label-base">Quantidade de Parcelas</label>
+          <input type="number" className="input-base" min={1} max={60}
+            value={totalParcelas}
+            onChange={e => setTotalParcelas(Number(e.target.value))} />
+        </div>
 
         {/* Data + Observação */}
         <div>
@@ -302,31 +299,6 @@ export default function FinanceiroTitulosPagarWizard() {
           <textarea className="input-base" rows={2} value={formData.descricao}
             onChange={e => setFormData({ ...formData, descricao: e.target.value })}
             style={{ textTransform: 'none' }} />
-        </div>
-
-        {/* Condição de Pagamento (parcelamento) */}
-        <div>
-          <label className="label-base" style={{ marginBottom: '0.75rem', display: 'block' }}>Condição de Pagamento</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem' }}>
-            {condicoes.map(c => (
-              <div key={c.id} className="card"
-                style={{
-                  cursor: 'pointer', padding: '0.85rem 1rem',
-                  borderColor: formData.condicao_pagamento_id === c.id ? 'var(--danger)' : 'var(--border)',
-                  background: formData.condicao_pagamento_id === c.id ? 'rgba(239,68,68,0.05)' : 'var(--surface)',
-                  transition: 'all 0.18s ease'
-                }}
-                onClick={() => setFormData({ ...formData, condicao_pagamento_id: c.id })}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, color: formData.condicao_pagamento_id === c.id ? 'var(--danger)' : 'var(--text)' }}>{c.nome}</div>
-                    {c.descricao && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{c.descricao}</div>}
-                  </div>
-                  {formData.condicao_pagamento_id === c.id && <FiCheck style={{ color: 'var(--danger)' }} />}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -353,7 +325,7 @@ export default function FinanceiroTitulosPagarWizard() {
             <div style={{ fontWeight: 700 }}>MONTANTE TOTAL A PAGAR</div>
             {taxaFinanceira > 0 && (
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Inclui {taxaFinanceira}% de custo financeiro ({formaSelecionada?.nome})
+                Inclui {taxaFinanceira}% de custo financeiro
               </div>
             )}
           </div>
