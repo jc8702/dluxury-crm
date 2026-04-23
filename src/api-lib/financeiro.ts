@@ -1,5 +1,32 @@
 import { sql, validateAuth } from './_db.js';
 
+async function bootstrapFinanceiro() {
+  try {
+    // Títulos Receber
+    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(() => {});
+    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
+    
+    // Títulos Pagar
+    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(() => {});
+    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
+
+    // Baixas e Movimentações (Conferência)
+    await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(() => {});
+    await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(() => {});
+    await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(() => {});
+    await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(() => {});
+    
+    // Classes
+    await sql`ALTER TABLE classes_financeiras ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
+  } catch (e) {
+    console.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
+  }
+}
+
 async function checkPeriodoFechado(data: string | Date | undefined) {
   if (!data) return false;
   const d = new Date(data);
@@ -16,6 +43,9 @@ export async function handleFinanceiro(req: any, res: any) {
   try {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+
+    // Garantir infraestrutura do banco antes de processar
+    await bootstrapFinanceiro();
 
     const fullUrl = req.url || '';
     const url = fullUrl.split('?')[0]; // Limpa query params
