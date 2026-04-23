@@ -100,9 +100,9 @@ function TreeNode({
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ 
             fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '999px',
-            background: node.tipo === 'receita' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            color: node.tipo === 'receita' ? 'var(--success)' : 'var(--danger)'
-          }}>{node.tipo.toUpperCase()}</span>
+            background: (node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            color: (node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'var(--success)' : 'var(--danger)'
+          }}>{(node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'RECEITA' : 'DESPESA'}</span>
           
           {!node.ativa && (
             <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '999px', background: 'rgba(156,163,175,0.2)', color: 'var(--text-muted)', fontWeight: 700 }}>INATIVA</span>
@@ -181,8 +181,11 @@ export default function FinanceiroClassesPage() {
     await load();
   };
 
-  const receitas = classes.filter(c => c.tipo === 'receita').length;
-  const despesas = classes.filter(c => c.tipo === 'despesa').length;
+  const isReceita = (c: ClasseFinanceira) => c.tipo === 'receita' || c.natureza === 'credora' || c.codigo?.startsWith('1');
+  const isDespesa = (c: ClasseFinanceira) => c.tipo === 'despesa' || c.natureza === 'devedora' || c.codigo?.startsWith('2');
+
+  const receitasCount = classes.filter(isReceita).length;
+  const despesasCount = classes.filter(isDespesa).length;
 
   return (
     <div className="page-container anim-fade-in">
@@ -210,8 +213,8 @@ export default function FinanceiroClassesPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
         {[
           { label: 'Total de Classes', value: classes.length, color: 'var(--primary)' },
-          { label: 'Classes de Receita', value: receitas, color: 'var(--success)' },
-          { label: 'Classes de Despesa', value: despesas, color: 'var(--danger)' },
+          { label: 'Classes de Receita', value: receitasCount, color: 'var(--success)' },
+          { label: 'Classes de Despesa', value: despesasCount, color: 'var(--danger)' },
         ].map((stat, i) => (
           <div key={i} className="card glass" style={{ padding: '1rem', textAlign: 'center', borderTop: `3px solid ${stat.color}` }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{stat.label}</div>
@@ -236,17 +239,17 @@ export default function FinanceiroClassesPage() {
           <>
             {/* Receitas */}
             <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--border)' }}>
-              RECEITAS ({tree.filter(n => n.tipo === 'receita').length} categorias)
+              RECEITAS ({tree.filter(isReceita).length} categorias)
             </div>
-            {tree.filter(n => n.tipo === 'receita').map(node => (
+            {tree.filter(isReceita).map(node => (
               <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
             ))}
 
             {/* Despesas */}
             <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-              DESPESAS ({tree.filter(n => n.tipo === 'despesa').length} categorias)
+              DESPESAS ({tree.filter(isDespesa).length} categorias)
             </div>
-            {tree.filter(n => n.tipo === 'despesa').map(node => (
+            {tree.filter(isDespesa).map(node => (
               <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
             ))}
           </>
