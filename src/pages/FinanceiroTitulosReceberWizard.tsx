@@ -251,7 +251,7 @@ export default function FinanceiroTitulosReceberWizard() {
                       setFormData({ ...formData, rateios: newR });
                     }}>
                     <option value="">Selecione...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.nome || p.name}</option>)}
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.ambiente} - {p.client_name}</option>)}
                   </select>
                 </div>
                 <div>
