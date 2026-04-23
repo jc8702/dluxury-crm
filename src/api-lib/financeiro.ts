@@ -1064,6 +1064,39 @@ async function handleRelatorios(req: any, res: any) {
 
 
 async function handleContasRecorrentes(req: any, res: any, id?: string) {
+  // ── GERAR TÍTULOS DO MÊS (deve ser verificado antes do POST genérico) ──
+  if (req.method === 'POST' && (id === 'gerar-mes' || (req.url || '').includes('gerar-mes'))) {
+    const { mes, ano } = req.query;
+    const mesInt = parseInt(mes || String(new Date().getMonth() + 1));
+    const anoInt = parseInt(ano || String(new Date().getFullYear()));
+
+    const contas = await sql`SELECT * FROM contas_recorrentes WHERE ativa = true AND deletado = false`;
+    const titulosGerados = [];
+
+    for (const conta of contas) {
+      const dataVencimento = new Date(anoInt, mesInt - 1, conta.dia_vencimento);
+      const numeroTitulo = `REC-${String(conta.id).substring(0, 8)}-${mesInt}/${anoInt}`;
+      const descricaoTitulo = conta.descricao || `Recorrente dia ${conta.dia_vencimento}`;
+
+      const result = await sql`
+        INSERT INTO titulos_pagar (
+          numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
+          data_emissao, data_vencimento, data_competencia,
+          classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+          status, parcela, total_parcelas, tipo_despesa, observacoes
+        ) VALUES (
+          ${numeroTitulo}, ${conta.fornecedor_id || null},
+          ${conta.valor}, ${conta.valor}, ${conta.valor},
+          NOW(), ${dataVencimento}, ${dataVencimento},
+          ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null}, ${conta.conta_bancaria_id || null},
+          'aberto', 1, 1, 'fixa', ${descricaoTitulo}
+        ) RETURNING *`;
+      titulosGerados.push(result[0]);
+    }
+
+    return res.status(201).json({ success: true, message: `${titulosGerados.length} título(s) gerado(s)`, data: titulosGerados });
+  }
+
   if (req.method === 'GET') {
     const result = await sql`SELECT * FROM contas_recorrentes WHERE deletado = false ORDER BY dia_vencimento ASC`;
     return res.status(200).json({ success: true, data: result });
@@ -1071,9 +1104,12 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
 
   if (req.method === 'POST') {
     const f = req.body;
+    if (!f.descricao || !String(f.descricao).trim()) {
+      return res.status(400).json({ success: false, error: 'O campo "Descrição" é obrigatório.' });
+    }
     const result = await sql`
       INSERT INTO contas_recorrentes (descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, ativa)
-      VALUES (${f.descricao}, ${f.tipo}, ${f.valor}, ${f.dia_vencimento}, ${f.classe_financeira_id}, ${f.fornecedor_id || null}, ${f.forma_pagamento_id || null}, ${f.conta_bancaria_id || null}, ${f.ativa ?? true})
+      VALUES (${f.descricao.trim()}, ${f.tipo || 'pagar'}, ${f.valor}, ${f.dia_vencimento || 1}, ${f.classe_financeira_id || null}, ${f.fornecedor_id || null}, ${f.forma_pagamento_id || null}, ${f.conta_bancaria_id || null}, ${f.ativa ?? true})
       RETURNING *`;
     return res.status(201).json({ success: true, data: result[0] });
   }
@@ -1082,11 +1118,11 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
     const f = req.body;
     const result = await sql`
       UPDATE contas_recorrentes SET 
-        descricao = COALESCE(${f.descricao}, descricao),
-        tipo = COALESCE(${f.tipo}, tipo),
-        valor = COALESCE(${f.valor}, valor),
-        dia_vencimento = COALESCE(${f.dia_vencimento}, dia_vencimento),
-        ativa = COALESCE(${f.ativa}, ativa)
+        descricao = COALESCE(${f.descricao || null}, descricao),
+        tipo = COALESCE(${f.tipo || null}, tipo),
+        valor = COALESCE(${f.valor || null}, valor),
+        dia_vencimento = COALESCE(${f.dia_vencimento || null}, dia_vencimento),
+        ativa = COALESCE(${f.ativa ?? null}, ativa)
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });
   }
@@ -1094,36 +1130,6 @@ async function handleContasRecorrentes(req: any, res: any, id?: string) {
   if (req.method === 'DELETE' && id) {
     await sql`UPDATE contas_recorrentes SET deletado = true, excluido_em = NOW() WHERE id = ${id}`;
     return res.status(200).json({ success: true });
-  }
-
-  if (req.method === 'POST' && req.url.includes('gerar-mes')) {
-    const { mes, ano } = req.query;
-    const mesInt = parseInt(mes || new Date().getMonth() + 1);
-    const anoInt = parseInt(ano || new Date().getFullYear());
-
-    const contas = await sql`SELECT * FROM contas_recorrentes WHERE ativa = true`;
-    const titulosGerados = [];
-
-    for (const conta of contas) {
-      const dataVencimento = new Date(anoInt, mesInt - 1, conta.dia_vencimento);
-      
-      const result = await sql`
-        INSERT INTO titulos_pagar (
-          numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
-          data_emissao, data_vencimento, data_competencia,
-          classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
-          status, parcela, total_parcelas, tipo_despesa
-        ) VALUES (
-          ${`REC-${conta.id.substring(0,8)}-${mesInt}/${anoInt}`}, ${conta.fornecedor_id},
-          ${conta.valor}, ${conta.valor}, ${conta.valor},
-          NOW(), ${dataVencimento}, ${dataVencimento},
-          ${conta.classe_financeira_id}, ${conta.forma_pagamento_id}, ${conta.conta_bancaria_id},
-          'aberto', 1, 1, 'fixa'
-        ) RETURNING *`;
-      titulosGerados.push(result[0]);
-    }
-
-    return res.status(201).json({ success: true, message: `${titulosGerados.length} títulos gerados`, data: titulosGerados });
   }
 
   return res.status(405).end();

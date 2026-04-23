@@ -43,7 +43,8 @@ export default function FinanceiroTitulosPagarWizard() {
   });
 
   // Valor total com taxa aplicada
-  const valorComTaxa = formData.valor_base * (1 + taxaFinanceira / 100);
+  const valorCustoFinanceiro = formData.valor_base * (taxaFinanceira / 100);
+  const valorComTaxa = formData.valor_base + valorCustoFinanceiro;
 
   // Forma selecionada
   const formaSelecionada = formasPagamento.find(f => f.id === formData.forma_pagamento_id);
