@@ -25,6 +25,7 @@ export default function FinanceiroTitulosPagarWizard() {
   const [contasInternas, setContasInternas] = useState<any[]>([]);
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState(1);
+  const [projects, setProjects] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     fornecedor_id: '',
@@ -58,11 +59,13 @@ export default function FinanceiroTitulosPagarWizard() {
           api.financeiro.classesFinanceiras.list(),
           api.financeiro.formasPagamento.list(),
           api.financeiro.contasInternas.list(),
+          api.projects.list(),
         ]);
         setSuppliers(sup || []);
         setClasses(cf || []);
         setFormasPagamento(fp || []);
         setContasInternas(ci || []);
+        setProjects(prj || []);
 
         if (ci && ci.length > 0) setFormData(prev => ({ ...prev, conta_bancaria_id: ci[0].id }));
         if (fp && fp.length > 0) setFormData(prev => ({ ...prev, forma_pagamento_id: fp[0].id }));

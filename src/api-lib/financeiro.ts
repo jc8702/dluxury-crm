@@ -363,9 +363,9 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
     }
     const numTotal = Number(f.total_parcelas) || 1;
     // cliente_id é integer na tabela clients — garantir conversão correta
-    const clienteId = Number(f.cliente_id);
-    if (!clienteId || isNaN(clienteId)) {
-      return res.status(400).json({ success: false, error: 'cliente_id inválido' });
+    const clienteId = f.cliente_id;
+    if (!clienteId) {
+      return res.status(400).json({ success: false, error: 'cliente_id é obrigatório' });
     }
     const valorTaxaTotal = Number(f.valor_custo_financeiro) || 0;
     const taxaPerc = Number(f.taxa_financeira) || 0;
@@ -773,6 +773,7 @@ async function handleRelatorios(req: any, res: any) {
       JOIN titulos_receber t ON t.classe_financeira_id = cf.id
       WHERE t.${sql.unsafe(campoData)} BETWEEN ${start} AND ${end} 
         AND t.status != 'cancelado' AND t.deletado = false
+        AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
       GROUP BY cf.codigo, cf.nome, cf.pai_id
       ORDER BY cf.codigo
     `;
@@ -786,6 +787,7 @@ async function handleRelatorios(req: any, res: any) {
       JOIN titulos_pagar t ON t.classe_financeira_id = cf.id
       WHERE t.${sql.unsafe(campoData)} BETWEEN ${start} AND ${end} 
         AND t.status != 'cancelado' AND t.deletado = false
+        AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
       GROUP BY cf.codigo, cf.nome, cf.pai_id
       ORDER BY cf.codigo
     `;
@@ -862,7 +864,7 @@ async function handleRelatorios(req: any, res: any) {
         c.nome as cliente_nome
       FROM titulos_receber t
       LEFT JOIN clients c ON c.id::text = t.cliente_id::text
-      WHERE t.status IN ('aberto', 'pago_parcial') AND t.data_vencimento < NOW()
+      WHERE t.status IN ('aberto', 'pago_parcial') AND t.deletado = false
       ORDER BY t.data_vencimento ASC`;
     
     return res.status(200).json({ 
@@ -927,12 +929,13 @@ async function handleRelatorios(req: any, res: any) {
     // Histórico de Faturamento (3 meses)
     const faturamentoMes = await sql`
       SELECT 
-        TO_CHAR(data_competencia, 'MM/YYYY') as mes,
+        TO_CHAR(COALESCE(data_competencia, data_vencimento), 'MM/YYYY') as mes,
         SUM(valor_original::numeric) as total
       FROM titulos_receber
-      WHERE data_competencia >= NOW() - INTERVAL '3 months'
-      GROUP BY TO_CHAR(data_competencia, 'MM/YYYY')
-      ORDER BY MIN(data_competencia)
+      WHERE COALESCE(data_competencia, data_vencimento) >= NOW() - INTERVAL '3 months'
+        AND status != 'cancelado' AND deletado = false
+      GROUP BY TO_CHAR(COALESCE(data_competencia, data_vencimento), 'MM/YYYY')
+      ORDER BY MIN(COALESCE(data_competencia, data_vencimento))
     `;
 
     // Despesas por Classe (Top 5)
@@ -1016,6 +1019,22 @@ async function handleRelatorios(req: any, res: any) {
         proximos_vencimentos: proximosVencimentos.map((v: any) => ({ ...v, valor: Number(v.valor) })),
       }
     });
+  }
+
+  if (type === 'capital_giro') {
+    // Retorna histórico dos últimos 6 meses para o gráfico
+    const evolucao = await sql`
+      SELECT 
+        TO_CHAR(d.month, 'MM/YYYY') as label,
+        COALESCE((SELECT SUM(valor_aberto::numeric) FROM titulos_receber WHERE status != 'cancelado' AND deletado = false AND data_vencimento <= d.month + INTERVAL '1 month - 1 day'), 0) -
+        COALESCE((SELECT SUM(valor_aberto::numeric) FROM titulos_pagar WHERE status != 'cancelado' AND deletado = false AND data_vencimento <= d.month + INTERVAL '1 month - 1 day'), 0) as capital
+      FROM generate_series(
+        DATE_TRUNC('month', NOW() - INTERVAL '5 months'),
+        DATE_TRUNC('month', NOW()),
+        '1 month'::interval
+      ) d(month)
+    `;
+    return res.status(200).json({ success: true, data: evolucao });
   }
 
   if (type === 'rentabilidade') {
