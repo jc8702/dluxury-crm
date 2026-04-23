@@ -5,11 +5,12 @@ import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone } from 'rea
 export default function FinanceiroAgingPage() {
   const [data, setData] = useState<{ summary: any[], details: any[] }>({ summary: [], details: [] });
   const [loading, setLoading] = useState(false);
+  const [modo, setModo] = useState<'receber' | 'pagar'>('receber');
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.financeiro.reports.aging();
+      const res = await api.financeiro.reports.aging({ modo });
       setData(res.data || { summary: [], details: [] });
     } catch (err) {
       console.error(err);
@@ -20,7 +21,7 @@ export default function FinanceiroAgingPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [modo]);
 
   const faixasPrioridade = ['Acima de 90 Dias', '61-90 Dias', '31-60 Dias', '0-30 Dias', 'A Vencer'];
   const summarySorted = [...data.summary].sort((a, b) => 
@@ -31,12 +32,33 @@ export default function FinanceiroAgingPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <FiAlertCircle style={{ color: 'var(--warning)' }} />
-          Aging / Inadimplência
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
+      <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <FiAlertCircle style={{ color: modo === 'receber' ? 'var(--warning)' : 'var(--danger)' }} />
+            Aging / {modo === 'receber' ? 'Inadimplência' : 'Dívidas'}
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
+        </div>
+
+        <div style={{ display: 'flex', background: 'var(--surface-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => setModo('receber')}
+            style={{ 
+              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
+              background: modo === 'receber' ? 'var(--primary)' : 'transparent',
+              color: modo === 'receber' ? 'white' : 'var(--text-muted)',
+              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s'
+            }}>RECEBER</button>
+          <button 
+            onClick={() => setModo('pagar')}
+            style={{ 
+              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
+              background: modo === 'pagar' ? 'var(--primary)' : 'transparent',
+              color: modo === 'pagar' ? 'white' : 'var(--text-muted)',
+              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s'
+            }}>PAGAR</button>
+        </div>
       </div>
 
       {/* Grid de Faixas */}
@@ -75,7 +97,7 @@ export default function FinanceiroAgingPage() {
           <table>
             <thead>
               <tr>
-                <th>Cliente</th>
+                <th>{modo === 'receber' ? 'Cliente' : 'Fornecedor'}</th>
                 <th>Título</th>
                 <th>Vencimento</th>
                 <th>Atraso</th>
@@ -99,8 +121,8 @@ export default function FinanceiroAgingPage() {
                             <FiUser />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 700 }}>{t.cliente_nome || 'Cliente não identificado'}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ID: {t.cliente_id}</div>
+                            <div style={{ fontWeight: 700 }}>{t.entidade_nome || (modo === 'receber' ? 'Cliente' : 'Fornecedor') + ' não identificado'}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ID: {t.cliente_id || t.fornecedor_id}</div>
                           </div>
                         </div>
                       </td>

@@ -801,7 +801,7 @@ async function handleRelatorios(req: any, res: any) {
         SUM(t.valor_original::numeric) as valor
       FROM classes_financeiras cf
       JOIN titulos_receber t ON t.classe_financeira_id = cf.id
-      WHERE t.${sql.unsafe(campoData)} BETWEEN ${start} AND ${end} 
+      WHERE COALESCE(t.${sql.unsafe(campoData)}, t.data_vencimento) BETWEEN ${start} AND ${end} 
         AND t.status != 'cancelado' AND t.deletado = false
         AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
       GROUP BY cf.codigo, cf.nome, cf.pai_id
@@ -815,7 +815,7 @@ async function handleRelatorios(req: any, res: any) {
         SUM(t.valor_original::numeric) as valor
       FROM classes_financeiras cf
       JOIN titulos_pagar t ON t.classe_financeira_id = cf.id
-      WHERE t.${sql.unsafe(campoData)} BETWEEN ${start} AND ${end} 
+      WHERE COALESCE(t.${sql.unsafe(campoData)}, t.data_vencimento) BETWEEN ${start} AND ${end} 
         AND t.status != 'cancelado' AND t.deletado = false
         AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
       GROUP BY cf.codigo, cf.nome, cf.pai_id
@@ -873,27 +873,33 @@ async function handleRelatorios(req: any, res: any) {
   }
 
   if (type === 'aging') {
+    const { modo } = req.query; // 'receber' ou 'pagar'
+    const table = modo === 'pagar' ? 'titulos_pagar' : 'titulos_receber';
+    const joinTable = modo === 'pagar' ? 'fornecedores' : 'clients';
+    const joinAlias = modo === 'pagar' ? 'f' : 'c';
+    const nameColumn = modo === 'pagar' ? 'f.nome' : 'c.nome';
+
     const summary = await sql`
       SELECT 
         CASE 
-          WHEN data_vencimento > NOW() THEN 'A Vencer'
-          WHEN data_vencimento > NOW() - INTERVAL '30 days' THEN '0-30 Dias'
-          WHEN data_vencimento > NOW() - INTERVAL '60 days' THEN '31-60 Dias'
-          WHEN data_vencimento > NOW() - INTERVAL '90 days' THEN '61-90 Dias'
+          WHEN data_vencimento > CURRENT_DATE THEN 'A Vencer'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '30 days' THEN '0-30 Dias'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '60 days' THEN '31-60 Dias'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '90 days' THEN '61-90 Dias'
           ELSE 'Acima de 90 Dias'
         END as faixa,
         SUM(valor_aberto::numeric) as total,
         COUNT(*) as qtd_titulos
-      FROM titulos_receber
-      WHERE status IN ('aberto', 'pago_parcial')
+      FROM ${sql.unsafe(table)}
+      WHERE status IN ('aberto', 'pago_parcial') AND deletado = false
       GROUP BY faixa`;
 
     const details = await sql`
       SELECT 
         t.*, 
-        c.nome as cliente_nome
-      FROM titulos_receber t
-      LEFT JOIN clients c ON c.id::text = t.cliente_id::text
+        ${sql.unsafe(nameColumn)} as entidade_nome
+      FROM ${sql.unsafe(table)} t
+      LEFT JOIN ${sql.unsafe(joinTable)} ${sql.unsafe(joinAlias)} ON ${sql.unsafe(joinAlias)}.id::text = t.${sql.unsafe(modo === 'pagar' ? 'fornecedor_id' : 'cliente_id')}::text
       WHERE t.status IN ('aberto', 'pago_parcial') AND t.deletado = false
       ORDER BY t.data_vencimento ASC`;
     
