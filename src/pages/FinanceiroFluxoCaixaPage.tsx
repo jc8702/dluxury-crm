@@ -227,7 +227,7 @@ export default function FinanceiroFluxoCaixaPage() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: p.label === selectedPeriod.label ? 'var(--primary)' : 'inherit', marginBottom: '0.25rem' }}>{selectedPeriod.label}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.25rem' }}>{selectedPeriod.label}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{new Date(selectedPeriod.inicio).toLocaleDateString()} até {new Date(selectedPeriod.fim).toLocaleDateString()}</div>
                    </div>
 
