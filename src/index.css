@@ -149,6 +149,7 @@ body {
   overflow-x: hidden;
   line-height: 1.6;
   transition: background 0.3s ease, color 0.3s ease;
+  text-transform: uppercase; /* Forçar caixa alta global */
 }
 
 #root {
@@ -294,13 +295,11 @@ select.input-base {
   border-color: var(--danger) !important;
 }
 
-/* Uppercase for text inputs (excluding email) */
-input[type="text"],
-input[type="search"],
-input:not([type]),
-input:not([type="number"]):not([type="date"]):not([type="password"]):not([type="email"]):not([type="checkbox"]):not([type="radio"]),
+/* Uppercase for text inputs (always) */
+input,
+select,
 textarea {
-  text-transform: uppercase;
+  text-transform: uppercase !important;
 }
 
 input::placeholder,

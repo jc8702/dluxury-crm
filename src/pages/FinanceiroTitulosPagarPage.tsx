@@ -8,8 +8,13 @@ import {
   FiTrash2, 
   FiArrowUpRight, 
   FiCalendar,
-  FiTruck
+  FiTruck,
+  FiChevronDown,
+  FiChevronRight,
+  FiEdit2, FiPrinter, FiRefreshCw, FiFileText,
+  FiSquare, FiCheckSquare, FiLayers
 } from 'react-icons/fi';
+import ReciboModal from '../components/ReciboModal';
 
 export default function FinanceiroTitulosPagarPage() {
   const [rows, setRows] = useState<any[]>([]);
@@ -19,7 +24,14 @@ export default function FinanceiroTitulosPagarPage() {
   const [suppliersMap, setSuppliersMap] = useState<Record<string,string>>({});
   const [loading, setLoading] = useState(false);
   const [baixaModal, setBaixaModal] = useState<any>(null);
+  const [reciboModal, setReciboModal] = useState<any>(null);
   const [contas, setContas] = useState<any[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loteModal, setLoteModal] = useState(false);
+  const [loteData, setLoteData] = useState({ conta_interna_id: '', data_baixa: new Date().toISOString().split('T')[0], observacoes: '' });
+  const [loteLoading, setLoteLoading] = useState(false);
+  const [editModal, setEditModal] = useState<any>(null);
 
   const [stats, setStats] = useState({
     totalAberto: 0,
@@ -107,6 +119,60 @@ export default function FinanceiroTitulosPagarPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllAbertos = () => {
+    const ids = rows.filter(r => r.status === 'aberto').map((r: any) => r.id);
+    setSelectedIds(new Set(ids));
+  };
+
+  const handleBaixaLote = async () => {
+    if (!loteData.conta_interna_id) { alert('Selecione a conta de pagamento'); return; }
+    if (selectedIds.size === 0) { alert('Nenhum título selecionado'); return; }
+    setLoteLoading(true);
+    let ok = 0, fail = 0;
+    for (const id of selectedIds) {
+      try {
+        await api.financeiro.titulosPagar.baixar(id, {
+          conta_interna_id: loteData.conta_interna_id,
+          data_baixa: loteData.data_baixa,
+          observacoes: loteData.observacoes || 'Baixa em lote',
+        });
+        ok++;
+      } catch { fail++; }
+    }
+    setLoteLoading(false);
+    setLoteModal(false);
+    setSelectedIds(new Set());
+    alert(`${ok} títulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
+    load(page);
+  };
+
+
+  const saveEdit = async () => {
+    try {
+      await api.financeiro.titulosPagar.update(editModal.id, {
+        numero_titulo: editModal.numero_titulo,
+        valor_original: editModal.valor_original,
+        data_vencimento: editModal.data_vencimento,
+        taxa_financeira: editModal.taxa_financeira,
+        valor_custo_financeiro: editModal.valor_custo_financeiro,
+        status: editModal.status
+      });
+      setEditModal(null);
+      load(page);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar alterações');
+    }
+  };
+
   const getStatusStyle = (status: string, vencimento: string) => {
     if (status === 'pago') return { background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' };
     if (new Date(vencimento) < new Date()) return { background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' };
@@ -124,7 +190,28 @@ export default function FinanceiroTitulosPagarPage() {
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Gestão de obrigações e fluxo de saída</p>
         </div>
-        <div>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {selectedIds.size > 0 && (
+            <button 
+              className="btn btn-primary"
+              style={{ background: '#f59e0b', fontSize: '0.85rem' }}
+              onClick={() => setLoteModal(true)}
+            >
+              <FiLayers /> PAGAR {selectedIds.size} EM LOTE
+            </button>
+          )}
+          <button 
+            className="btn btn-outline"
+            style={{ fontSize: '0.8rem' }}
+            onClick={selectAllAbertos}
+          >
+            <FiCheckSquare /> SELECIONAR ABERTOS
+          </button>
+          {selectedIds.size > 0 && (
+            <button className="btn btn-outline" style={{ fontSize: '0.8rem' }} onClick={() => setSelectedIds(new Set())}>
+              Limpar Seleção ({selectedIds.size})
+            </button>
+          )}
           <button 
             className="btn btn-primary"
             style={{ height: '48px', padding: '0 1.5rem', borderRadius: 'var(--radius-md)', background: 'var(--danger)' }}
@@ -182,54 +269,122 @@ export default function FinanceiroTitulosPagarPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => (
-                  <tr key={r.id}>
-                    <td style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--danger)' }}>{r.numero_titulo}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justify: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
-                          {(suppliersMap[r.fornecedor_id] || 'F').charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontWeight: 500 }}>{suppliersMap[r.fornecedor_id] || 'Não identificado'}</span>
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text)' }}>
-                      R$ {Number(r.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                        <FiCalendar style={{ opacity: 0.5 }} />
-                        {new Date(r.data_vencimento).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge" style={getStatusStyle(r.status, r.data_vencimento)}>
-                        {r.status === 'pago' ? 'PAGO' : (new Date(r.data_vencimento) < new Date() ? 'ATRASADO' : 'PENDENTE')}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                        <button 
-                          className="btn btn-outline" 
-                          style={{ padding: '0.5rem', width: '36px', height: '36px' }}
-                          title="Pagar Título"
-                          disabled={r.status === 'pago'}
-                          onClick={() => setBaixaModal(r)}
-                        >
-                          <FiArrowUpRight />
-                        </button>
-                        <button 
-                          className="btn btn-outline" 
-                          style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--danger)' }}
-                          title="Excluir"
-                          onClick={() => doDelete(r.id)}
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                Object.entries(
+                  rows.reduce((acc: any, r) => {
+                    const sid = r.fornecedor_id || 'unknown';
+                    if (!acc[sid]) acc[sid] = [];
+                    acc[sid].push(r);
+                    return acc;
+                  }, {})
+                ).map(([sid, groupRows]: [string, any]) => {
+                  const isExpanded = expandedGroups[sid];
+                  const supplierName = suppliersMap[sid] || 'NÃO IDENTIFICADO';
+                  const totalGroup = groupRows.reduce((sum: number, r: any) => sum + Number(r.valor_original), 0);
+                  
+                  return (
+                    <React.Fragment key={sid}>
+                      {/* Group Header Row */}
+                      <tr 
+                        onClick={() => setExpandedGroups(prev => ({ ...prev, [sid]: !prev[sid] }))}
+                        style={{ background: 'rgba(255,255,255,0.03)', cursor: 'pointer', borderLeft: '4px solid var(--danger)' }}
+                      >
+                        <td colSpan={2} style={{ fontWeight: 800, color: 'var(--text)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
+                              {supplierName.charAt(0).toUpperCase()}
+                            </div>
+                            {supplierName}
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '0.5rem' }}>
+                              ({groupRows.length} títulos)
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--danger)' }}>
+                          R$ {totalGroup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td colSpan={3}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '1rem' }}>
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                              title="Excluir árvore de títulos"
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if(confirm(`DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE FORNECEDOR?`)) {
+                                  api.financeiro.titulosPagar.deleteBatch(sid).then(() => {
+                                    loadData();
+                                  });
+                                }
+                              }}
+                            >
+                              <FiTrash2 /> EXCLUIR TUDO
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Detail Rows */}
+                      {isExpanded && groupRows.map((r: any) => (
+                        <tr key={r.id} style={{ background: 'transparent' }}>
+                          <td style={{ paddingLeft: '3rem', fontFamily: 'monospace', fontWeight: 700, color: 'var(--danger)' }}>{r.numero_titulo}</td>
+                          <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Individual</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text)' }}>
+                            R$ {Number(r.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                              <FiCalendar style={{ opacity: 0.5 }} />
+                              {new Date(r.data_vencimento).toLocaleDateString()}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="badge" style={getStatusStyle(r.status, r.data_vencimento)}>
+                              {r.status === 'pago' ? 'PAGO' : (new Date(r.data_vencimento) < new Date() ? 'ATRASADO' : 'PENDENTE')}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.5rem', width: '36px', height: '36px' }}
+                                title="Editar"
+                                onClick={(e) => { e.stopPropagation(); setEditModal(r); }}
+                              >
+                                <FiEdit2 />
+                              </button>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.5rem', width: '36px', height: '36px' }}
+                                title="Pagar Título"
+                                disabled={r.status === 'pago'}
+                                onClick={(e) => { e.stopPropagation(); setBaixaModal(r); }}
+                              >
+                                <FiArrowUpRight />
+                              </button>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--danger)' }}
+                                title="Excluir"
+                                onClick={(e) => { e.stopPropagation(); doDelete(r.id); }}
+                              >
+                                <FiTrash2 />
+                              </button>
+                              <button 
+                                className="btn btn-outline" 
+                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--primary)' }}
+                                title="Ver Recibo"
+                                onClick={(e) => { e.stopPropagation(); setReciboModal(r); }}
+                              >
+                                <FiPrinter />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -248,24 +403,196 @@ export default function FinanceiroTitulosPagarPage() {
       {/* Modal Pagamento */}
       <Modal isOpen={!!baixaModal} onClose={() => setBaixaModal(null)} title="Registrar Pagamento">
         <div style={{ minWidth: '400px' }}>
-          <div style={{ background: 'var(--surface-hover)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', borderLeft: '4px solid var(--danger)' }}>
-             <div className="label-base">Valor do Título</div>
-             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--danger)' }}>R$ {Number(baixaModal?.valor_aberto).toFixed(2)}</div>
+          {(() => {
+            const hoje = new Date();
+            const venc = new Date(baixaModal?.data_vencimento);
+            const atraso = Math.max(0, Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24)));
+            const valorAberto = Number(baixaModal?.valor_aberto || 0);
+            
+            // Lógica de Automação (Senior ERP Style)
+            const multaPerc = atraso > 0 ? 0.02 : 0; // 2% multa
+            const jurosDiarioPerc = 0.00033; // ~1% ao mês
+            const valorMulta = valorAberto * multaPerc;
+            const valorJuros = valorAberto * jurosDiarioPerc * atraso;
+            const valorTotal = valorAberto + valorMulta + valorJuros;
+
+            return (
+              <>
+                <div style={{ background: 'var(--surface-hover)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', borderLeft: '4px solid var(--danger)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span className="label-base" style={{ margin: 0 }}>Valor Original</span>
+                    <span style={{ fontWeight: 600 }}>R$ {valorAberto.toFixed(2)}</span>
+                  </div>
+                  {atraso > 0 && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                        <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Multa (2% - {atraso} dias)</span>
+                        <span style={{ fontWeight: 600 }}>+ R$ {valorMulta.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                        <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Juros (1%/mês)</span>
+                        <span style={{ fontWeight: 600 }}>+ R$ {valorJuros.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+                  <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>VALOR TOTAL</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--danger)' }}>R$ {valorTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="label-base">Conta Bancária / Débito</label>
+                  <select id="conta-interna-id" className="input-base">
+                    <option value="">Selecione uma conta...</option>
+                    {contas.map(c => (
+                      <option key={c.id} value={c.id}>{c.nome} (Saldo: R$ {Number(c.saldo_atual).toFixed(2)})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                  <button className="btn btn-outline" onClick={() => setBaixaModal(null)}>CANCELAR</button>
+                  <button className="btn btn-primary" style={{ background: 'var(--danger)' }} onClick={async () => {
+                    try {
+                      const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
+                      if (!contaId) throw new Error('Selecione uma conta');
+                      
+                      await api.financeiro.titulosPagar.baixar(baixaModal.id, {
+                        valor_baixa: valorTotal,
+                        valor_original_baixa: valorAberto,
+                        valor_multa: valorMulta,
+                        valor_juros: valorJuros,
+                        conta_interna_id: contaId,
+                        data_baixa: new Date()
+                      });
+                      setBaixaModal(null);
+                      load(page);
+                    } catch (err: any) {
+                      alert(err.message || 'Erro ao registrar pagamento');
+                    }
+                  }}>CONFIRMAR PAGAMENTO</button>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </Modal>
+
+      {/* Modal Edição Individual */}
+      <Modal isOpen={!!editModal} onClose={() => setEditModal(null)} title="Editar Título" width="600px">
+        <div style={{ padding: '0.5rem' }}>
+          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label className="label-base" style={{ wordBreak: 'break-word' }}>Número do Título</label>
+              <input 
+                type="text" 
+                className="input-base" 
+                value={editModal?.numero_titulo || ''} 
+                onChange={e => setEditModal({...editModal, numero_titulo: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="label-base">Status</label>
+              <select 
+                className="input-base" 
+                value={editModal?.status || ''} 
+                onChange={e => setEditModal({...editModal, status: e.target.value})}
+              >
+                <option value="aberto">ABERTO / PENDENTE</option>
+                <option value="pago">PAGO</option>
+                <option value="cancelado">CANCELADO</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label className="label-base" style={{ wordBreak: 'break-word' }}>Valor Original (R$)</label>
+              <input 
+                type="number" 
+                className="input-base" 
+                value={editModal?.valor_original || 0} 
+                onChange={e => setEditModal({...editModal, valor_original: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="label-base" style={{ wordBreak: 'break-word' }}>Data de Vencimento</label>
+              <input 
+                type="date" 
+                className="input-base" 
+                value={editModal?.data_vencimento ? new Date(editModal.data_vencimento).toISOString().split('T')[0] : ''} 
+                onChange={e => setEditModal({...editModal, data_vencimento: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label className="label-base" style={{ wordBreak: 'break-word' }}>Taxa Finan. (%)</label>
+              <input 
+                type="number" 
+                className="input-base" 
+                value={editModal?.taxa_financeira || 0} 
+                onChange={e => setEditModal({...editModal, taxa_financeira: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="label-base" style={{ wordBreak: 'break-word' }}>Custo Finan. (R$)</label>
+              <input 
+                type="number" 
+                className="input-base" 
+                value={editModal?.valor_custo_financeiro || 0} 
+                onChange={e => setEditModal({...editModal, valor_custo_financeiro: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+            <button className="btn btn-outline" onClick={() => setEditModal(null)}>CANCELAR</button>
+            <button className="btn btn-primary" style={{ background: 'var(--danger)' }} onClick={saveEdit}>SALVAR ALTERAÇÕES</button>
+          </div>
+        </div>
+      </Modal>
+
+      <ReciboModal 
+        isOpen={!!reciboModal} 
+        onClose={() => setReciboModal(null)} 
+        titulo={reciboModal} 
+        tipo="pagar" 
+        beneficiarioOuPagador={reciboModal ? suppliersMap[reciboModal.fornecedor_id] || 'Fornecedor' : ''} 
+      />
+
+      {/* Modal de Pagamento em Lote */}
+      <Modal isOpen={loteModal} onClose={() => setLoteModal(false)} title={`Pagar em Lote (${selectedIds.size} títulos selecionados)`}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ padding: '0.75rem', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--warning)' }}>
+            ⚠️ Todos os {selectedIds.size} títulos serão baixados pelo valor em aberto atual.
           </div>
           
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label className="label-base">Conta Bancária / Débito</label>
-            <select id="conta-interna-id" className="input-base">
-              <option value="">Selecione uma conta...</option>
-              {contas.map(c => (
-                <option key={c.id} value={c.id}>{c.nome} (Saldo: R$ {Number(c.saldo_atual).toFixed(2)})</option>
-              ))}
+          <div>
+            <label className="label-base">Conta de Pagamento *</label>
+            <select className="input-base" value={loteData.conta_interna_id} onChange={e => setLoteData(d => ({ ...d, conta_interna_id: e.target.value }))}>
+              <option value="">Selecione a conta...</option>
+              {contas.map((c: any) => <option key={c.id} value={c.id}>{c.nome} — R$ {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</option>)}
             </select>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-            <button className="btn btn-outline" onClick={() => setBaixaModal(null)}>CANCELAR</button>
-            <button className="btn btn-primary" style={{ background: 'var(--danger)' }} onClick={confirmarBaixa}>CONFIRMAR PAGAMENTO</button>
+          <div>
+            <label className="label-base">Data do Pagamento</label>
+            <input type="date" className="input-base" value={loteData.data_baixa} onChange={e => setLoteData(d => ({ ...d, data_baixa: e.target.value }))} />
+          </div>
+
+          <div>
+            <label className="label-base">Observação</label>
+            <input type="text" className="input-base" placeholder="Pagamento em lote..." value={loteData.observacoes} onChange={e => setLoteData(d => ({ ...d, observacoes: e.target.value }))} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button className="btn btn-outline" onClick={() => setLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" style={{ background: '#f59e0b' }} onClick={handleBaixaLote} disabled={loteLoading}>
+              {loteLoading ? '⏳ Processando...' : `CONFIRMAR PAGAMENTO DE ${selectedIds.size} TÍTULOS`}
+            </button>
           </div>
         </div>
       </Modal>

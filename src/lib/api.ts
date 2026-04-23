@@ -199,7 +199,9 @@ export const api = {
     contasInternas: {
       list: () => apiCall<any[]>('financeiro/contas-internas'),
       create: (data: any) => apiCall<any>('financeiro/contas-internas', 'POST', data),
-      update: (data: any) => apiCall<any>('financeiro/contas-internas', 'PUT', data),
+      update: (data: any) => apiCall<any>(`financeiro/contas-internas?id=${data.id}`, 'PUT', data),
+      delete: (id: string) => apiCall<any>(`financeiro/contas-internas?id=${id}`, 'DELETE'),
+      extrato: (id: string) => apiCall<any>(`financeiro/contas-internas/${id}/extrato`),
     },
     formasPagamento: {
       list: () => apiCall<any[]>('financeiro/formas-pagamento'),
@@ -218,8 +220,9 @@ export const api = {
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
       preview: (data: any) => apiCall<any>('financeiro/titulos-receber?action=preview', 'POST', data),
-      update: (data: any) => apiCall<any>('financeiro/titulos-receber', 'PUT', data),
+      update: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'PATCH', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'DELETE'),
+      deleteBatch: (cliente_id: string) => apiCall<any>(`financeiro/titulos-receber?action=delete_group&cliente_id=${cliente_id}`, 'DELETE'),
       baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber/${id}/baixar`, 'POST', data),
     },
     titulosPagar: {
@@ -229,9 +232,17 @@ export const api = {
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'POST', data),
       preview: (data: any) => apiCall<any>('financeiro/titulos-pagar?action=preview', 'POST', data),
-      update: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'PUT', data),
+      update: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'PATCH', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'DELETE'),
-      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar/${id}/baixar`, 'POST', data),
+      deleteBatch: (fornecedor_id: string) => apiCall<any>(`financeiro/titulos-pagar?action=delete_group&fornecedor_id=${fornecedor_id}`, 'DELETE'),
+      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar?id=${id}&action=baixar`, 'POST', data),
+    },
+    conferencia: {
+      toggle: (data: any) => apiCall<any>('financeiro/conferencia', 'POST', data),
+    },
+    fechamentos: {
+      list: () => apiCall<any[]>('financeiro/fechamentos'),
+      save: (data: any) => apiCall<any>('financeiro/fechamentos', 'POST', data),
     },
     tesouraria: {
       list: () => apiCall<any[]>('financeiro/tesouraria'),
@@ -245,9 +256,18 @@ export const api = {
       }
     },
     relatorios: {
-      dre: () => apiCall<any>('financeiro/relatorios?type=dre'),
+      dre: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/relatorios?type=dre${qs ? `&${qs}` : ''}`);
+      },
       aging: () => apiCall<any>('financeiro/relatorios?type=aging'),
       dashboard: () => apiCall<any>('financeiro/relatorios?type=dashboard'),
+      projetado: (days = 30) => apiCall<any>(`financeiro/relatorios?type=projetado&days=${days}`),
+      rentabilidade: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/relatorios?type=rentabilidade${qs ? `&${qs}` : ''}`);
+      },
+      capitalGiro: () => apiCall<any>('financeiro/relatorios?type=capital_giro'),
     },
     contasRecorrentes: {
       list: () => apiCall<any[]>('financeiro/contas-recorrentes'),
@@ -256,6 +276,7 @@ export const api = {
       delete: (id: string) => apiCall<any>(`financeiro/contas-recorrentes?id=${id}`, 'DELETE'),
       gerarMes: (mes: number, ano: number) => apiCall<any>(`financeiro/contas-recorrentes/gerar-mes?mes=${mes}&ano=${ano}`, 'POST'),
     },
+
   },
   estoqueCategorias: {
     list: () => apiCall<any[]>('estoque?type=categories'),

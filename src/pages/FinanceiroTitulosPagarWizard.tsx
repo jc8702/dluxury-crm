@@ -36,7 +36,10 @@ export default function FinanceiroTitulosPagarWizard() {
     forma_pagamento_id: '',
     conta_bancaria_id: '',
     numero_titulo: `PAG-${Date.now().toString().slice(-6)}`,
-    descricao: ''
+    descricao: '',
+    recorrencia_meses: 1,
+    showRateio: false,
+    rateios: [] as any[]
   });
 
   // Valor total com taxa aplicada
@@ -128,11 +131,15 @@ export default function FinanceiroTitulosPagarWizard() {
         classe_financeira_id: formData.classe_financeira_id,
         valor_original: valorComTaxa,
         total_parcelas: totalParcelas,
+        recorrencia_meses: formData.recorrencia_meses || 1,
         data_vencimento: formData.data_base,
         forma_pagamento_id: formData.forma_pagamento_id,
         conta_bancaria_id: formData.conta_bancaria_id,
         numero_titulo: formData.numero_titulo,
         observacoes: formData.descricao || null,
+        taxa_financeira: taxaFinanceira,
+        valor_custo_financeiro: valorCustoFinanceiro,
+        rateio: formData.showRateio ? formData.rateios : []
       });
       alert('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-pagar';
@@ -253,47 +260,118 @@ export default function FinanceiroTitulosPagarWizard() {
           </div>
         </div>
 
-        {/* Taxa Financeira – aparece apenas para Boleto, Cartão, Cheque */}
-        {exibeTaxa && (
-          <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--warning, #f59e0b)', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--warning, #f59e0b)', fontWeight: 700, fontSize: '0.9rem' }}>
-              <FiAlertCircle /> Custo Financeiro ({formaSelecionada?.nome})
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-              <div>
-                <label className="label-base">Taxa %</label>
-                <div style={{ position: 'relative' }}>
-                  <input type="number" className="input-base" min={0} max={100} step={0.01}
-                    value={taxaFinanceira}
-                    onChange={e => setTaxaFinanceira(Number(e.target.value))}
-                    style={{ paddingRight: '2.5rem' }} />
-                  <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>%</span>
-                </div>
+        {/* Taxa Financeira – Sempre disponível para ajuste manual */}
+        <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--warning, #f59e0b)', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--warning, #f59e0b)', fontWeight: 700, fontSize: '0.9rem' }}>
+            <FiAlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+            <div>
+              <label className="label-base">Taxa (%)</label>
+              <div style={{ position: 'relative' }}>
+                <input type="number" className="input-base" min={0} max={100} step={0.01}
+                  value={taxaFinanceira}
+                  onChange={e => setTaxaFinanceira(Number(e.target.value))}
+                  style={{ paddingRight: '2.5rem' }} />
+                <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>%</span>
               </div>
-              <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Valor Total com Taxa</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
-                  R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
+            </div>
+            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>VALOR TOTAL COM TAXAS</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
+                R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Parcelas Manual */}
-        <div>
-          <label className="label-base">Quantidade de Parcelas</label>
-          <input type="number" className="input-base" min={1} max={60}
-            value={totalParcelas}
-            onChange={e => setTotalParcelas(Number(e.target.value))} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label className="label-base">Quantidade de Parcelas</label>
+            <input type="number" className="input-base" min={1} max={60}
+              value={totalParcelas}
+              onChange={e => setTotalParcelas(Number(e.target.value))} />
+          </div>
+          <div>
+            <label className="label-base">Repetir por X meses (Recorrência)</label>
+            <input type="number" className="input-base" min={1} max={36}
+              value={formData.recorrencia_meses || 1}
+              onChange={e => setFormData({ ...formData, recorrencia_meses: Number(e.target.value) })} />
+          </div>
         </div>
 
         {/* Data + Observação */}
-        <div>
-          <label className="label-base">Data de Emissão / Competência</label>
-          <input type="date" className="input-base" value={formData.data_base}
-            onChange={e => setFormData({ ...formData, data_base: e.target.value })} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label className="label-base">Data de Emissão / Competência</label>
+            <input type="date" className="input-base" value={formData.data_base}
+              onChange={e => setFormData({ ...formData, data_base: e.target.value })} />
+          </div>
+          <div>
+             <label className="label-base">Rateio por Projeto? (Opcional)</label>
+             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}
+               onClick={() => setFormData({ ...formData, showRateio: !formData.showRateio })}>
+               {formData.showRateio ? 'REMOVER RATEIO' : 'ADICIONAR RATEIO'}
+             </button>
+          </div>
         </div>
+
+        {formData.showRateio && (
+          <div className="animate-fade-in" style={{ padding: '1.25rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               DISTRIBUIÇÃO POR PROJETO
+               <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+                 onClick={() => {
+                   const r = formData.rateios || [];
+                   setFormData({ ...formData, rateios: [...r, { projeto_id: '', classe_id: formData.classe_financeira_id, valor: 0 }] });
+                 }}>+ ADICIONAR LINHA</button>
+            </div>
+            {(formData.rateios || []).map((r: any, idx: number) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
+                <div>
+                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Projeto</label>
+                  <select className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+                    value={r.projeto_id} onChange={e => {
+                      const newR = [...formData.rateios];
+                      newR[idx].projeto_id = e.target.value;
+                      setFormData({ ...formData, rateios: newR });
+                    }}>
+                    <option value="">Selecione...</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.nome || p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Classe</label>
+                  <select className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+                    value={r.classe_id} onChange={e => {
+                      const newR = [...formData.rateios];
+                      newR[idx].classe_id = e.target.value;
+                      setFormData({ ...formData, rateios: newR });
+                    }}>
+                    <option value="">Mesma do Título</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Valor (R$)</label>
+                  <input type="number" className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+                    value={r.valor} onChange={e => {
+                      const newR = [...formData.rateios];
+                      newR[idx].valor = Number(e.target.value);
+                      setFormData({ ...formData, rateios: newR });
+                    }} />
+                </div>
+                <button className="btn btn-outline" style={{ height: '36px', padding: 0, color: 'var(--danger)' }}
+                  onClick={() => {
+                    const newR = formData.rateios.filter((_: any, i: number) => i !== idx);
+                    setFormData({ ...formData, rateios: newR });
+                  }}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div>
           <label className="label-base">Observações Internas</label>
           <textarea className="input-base" rows={2} value={formData.descricao}
@@ -314,6 +392,11 @@ export default function FinanceiroTitulosPagarWizard() {
             <div>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--danger)', marginBottom: '0.2rem' }}>PARCELA {p.numero_parcela}</div>
               <div style={{ fontWeight: 600 }}>{new Date(p.data_vencimento).toLocaleDateString('pt-BR')}</div>
+              {taxaFinanceira > 0 && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  Base: R$ {(formData.valor_base / totalParcelas).toFixed(2)} + {taxaFinanceira}% taxa
+                </div>
+              )}
             </div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>
               R$ {Number(p.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

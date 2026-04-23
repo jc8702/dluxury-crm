@@ -19,12 +19,16 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   if (!_neonInstance) {
     _neonInstance = neon(dbUrl);
   }
+
+  // Normalizar todos os valores string para CAIXA ALTA
+  const transformedValues = values.map(v => (typeof v === 'string' ? v.toUpperCase() : v));
+
   // Se strings for um array, é um tagged template literal
   if (Array.isArray(strings)) {
-    return _neonInstance(strings, ...values);
+    return _neonInstance(strings, ...transformedValues);
   }
   // Suporte para chamadas brutas via string (legado/scripts)
-  return _neonInstance(strings);
+  return _neonInstance(typeof strings === 'string' ? strings.toUpperCase() : strings);
 };
 
 // Atribuição de propriedades dinâmicas

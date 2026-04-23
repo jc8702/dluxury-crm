@@ -67,6 +67,8 @@ export const titulosReceber = pgTable('titulos_receber', {
   status: varchar('status', { length: 30 }).notNull(),
   parcela: integer('parcela').notNull(),
   total_parcelas: integer('total_parcelas').notNull(),
+  taxa_financeira: numeric('taxa_financeira', { precision: 5, scale: 2 }).default('0'),
+  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default('0'),
   observacoes: text('observacoes'),
 
   criado_em: timestamp('criado_em').defaultNow(),
@@ -110,6 +112,8 @@ export const titulosPagar = pgTable('titulos_pagar', {
   status: varchar('status', { length: 30 }).notNull(),
   parcela: integer('parcela').notNull(),
   total_parcelas: integer('total_parcelas').notNull(),
+  taxa_financeira: numeric('taxa_financeira', { precision: 5, scale: 2 }).default('0'),
+  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default('0'),
   tipo_despesa: varchar('tipo_despesa', { length: 30 }),
   observacoes: text('observacoes'),
 
