@@ -36,7 +36,7 @@ export type ProductionStep = 'corte' | 'furacao' | 'montagem' | 'pintura' | 'aca
 export type Project = {
   id: string;
   clientId: string;
-  clientName?: string; // denormalizado para exibição
+  clientName?: string;
   ambiente: string;
   descricao?: string;
   valorEstimado?: number;
@@ -46,6 +46,9 @@ export type Project = {
   etapaProducao?: ProductionStep;
   responsavel?: string;
   observacoes?: string;
+  visitaId?: string;
+  orcamentoId?: string;
+  ordem_producao_id?: string;
   created_at?: string;
   updated_at?: string;
 };

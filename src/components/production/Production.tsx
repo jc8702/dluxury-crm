@@ -17,13 +17,12 @@ const PRODUCTION_STEPS: { id: ProductionStep; label: string; icon: string }[] = 
 const Production: React.FC = () => {
   const { projects, updateProject } = useAppContext();
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'em_producao' | 'aprovado' | 'pronto_entrega'>('em_producao');
+  const [filter, setFilter] = useState<'all' | 'em_producao' | 'aprovado' | 'pronto_entrega'>('all');
   const [viewType, setViewType] = useState<'list' | 'kanban'>('kanban');
 
-  // Projects in production-related statuses
+  // Projects in production-related statuses - mostra todos os projetos em produção
   const productionProjects = (projects || []).filter(p => {
-    if (filter === 'all') return ['aprovado', 'em_producao', 'pronto_entrega'].includes(p.status);
-    return p.status === filter;
+    return ['aprovado', 'em_producao', 'pronto_entrega'].includes(p.status);
   });
 
   const getStepIndex = (step?: ProductionStep): number => {
@@ -265,9 +264,9 @@ return (
                       })}
                     </div>
 
-                    {/* Ações */}
-                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                      {project.status === 'aprovado' && (
+{/* Ações */}
+                      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+{(project.status === 'aprovado' || (project.status === 'em_producao' && !project.ordem_producao_id)) && (
                         <button onClick={async () => {
                           if (!confirm('Criar Ordem de Produção para este projeto?')) return;
                           try {
@@ -286,8 +285,8 @@ return (
                             });
                             const data = await res.json();
                             if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
-                            await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte' });
-                            alert(`OP ${opId} criada! Projeto movido para "Em Produção".`);
+                            await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte', ordem_producao_id: opId });
+                            alert(`OP ${opId} criada!`);
                           } catch(e: any) {
                             alert('Erro ao criar OP: ' + e.message);
                           }
