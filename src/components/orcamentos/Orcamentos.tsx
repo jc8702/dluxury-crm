@@ -13,6 +13,7 @@ import { useEscClose } from '../../hooks/useEscClose';
 interface EstimateItem {
   id: string;
   name: string;
+  sku: string;
   quantity: number;
   woodType: string;
   width: number;
@@ -21,6 +22,7 @@ interface EstimateItem {
   laborHours: number;
   laborRate: number;
   woodPrice: number;
+  precoEngenharia: number;
 }
 
 const Estimates: React.FC = () => {
@@ -50,7 +52,7 @@ const Estimates: React.FC = () => {
       return;
     }
     try {
-      const data = await api.estoque.list({ q });
+      const data = await api.engineering.list({ q });
       setSkuResults(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Error searching SKU", e);
@@ -58,19 +60,26 @@ const Estimates: React.FC = () => {
   };
 
   const selectSKU = (mat: any) => {
+    const precoBase = Number(mat.preco_material_m3_padrao) || 0;
+    const horasMO = Number(mat.horas_mo_padrao) || 0;
+    const valorHora = Number(mat.valor_hora_padrao) || 0;
+    const precoEngenharia = precoBase + (horasMO * valorHora);
+    
     setNewItem({
       ...newItem,
-      name: mat.nome,
+      name: mat.nome || mat.codigo_modelo,
+      sku: mat.codigo_modelo,
       woodType: mat.categoria_nome || 'Geral',
       width: Number(mat.largura_padrao) || 0,
       height: Number(mat.altura_padrao) || 0,
       depth: Number(mat.profundidade_padrao) || 0,
-      laborHours: Number(mat.horas_mo_padrao) || 2,
-      laborRate: Number(mat.valor_hora_padrao) || 150,
-      woodPrice: Number(mat.preco_material_m3_padrao) || Number(mat.preco_custo) || 0
+      laborHours: horasMO,
+      laborRate: valorHora,
+      woodPrice: precoBase,
+      precoEngenharia: precoEngenharia
     });
     setSkuResults([]);
-    setSkuSearch(mat.sku);
+    setSkuSearch(mat.codigo_modelo);
   };
 
   const loadHistory = async () => {
@@ -190,26 +199,32 @@ const Estimates: React.FC = () => {
     }
   };
 
-  const [newItem, setNewItem] = useState({
-    name: '', quantity: 1, woodType: 'MDF 15mm',
-    width: 100, height: 100, depth: 40,
-    laborHours: 4, laborRate: 50, woodPrice: 150
+const [newItem, setNewItem] = useState({
+    name: '', sku: '', quantity: 1, woodType: 'MDF 15mm',
+    width: 0, height: 0, depth: 0,
+    laborHours: 0, laborRate: 0, woodPrice: 0, precoEngenharia: 0
   });
 
   const woodTypes = ['MDF 15mm', 'MDF 18mm', 'MDF 25mm', 'MDP 15mm', 'MDP 18mm', 'Compensado 15mm', 'Compensado 18mm', 'Madeira Maciça', 'Natulac', 'Freijó', 'Imbuia', 'Fórmica', 'Laminado'];
 
   const addItem = () => {
-    const volumeM3 = (newItem.width * newItem.height * newItem.depth) / 1000000;
-    const item: EstimateItem = { ...newItem, id: Date.now().toString(), woodPrice: newItem.woodPrice * volumeM3 };
+    if (!newItem.sku) {
+      alert("Selecione um SKU de engenharia.");
+      return;
+    }
+    if (newItem.quantity < 1) {
+      alert("Quantidade deve ser pelo menos 1.");
+      return;
+    }
+    const item: EstimateItem = { ...newItem, id: Date.now().toString() };
     setItems([...items, item]); setShowItemForm(false);
-    setNewItem({ name: '', quantity: 1, woodType: 'MDF 15mm', width: 100, height: 100, depth: 40, laborHours: 4, laborRate: 50, woodPrice: 150 });
+    setNewItem({ name: '', sku: '', quantity: 1, woodType: 'MDF 15mm', width: 0, height: 0, depth: 0, laborHours: 0, laborRate: 0, woodPrice: 0, precoEngenharia: 0 });
   };
 
   const removeItem = (id: string) => setItems(items.filter(i => i.id !== id));
 
-  const subtotalMaterial = items.reduce((acc, item) => acc + item.woodPrice * item.quantity, 0);
-  const subtotalMO = items.reduce((acc, item) => acc + item.laborHours * item.laborRate * item.quantity, 0);
-  const subtotalCusto = subtotalMaterial + subtotalMO;
+  const subtotalEngenharia = items.reduce((acc, item) => acc + (item.precoEngenharia || 0) * item.quantity, 0);
+  const subtotalCusto = subtotalEngenharia;
   const valorMargem = subtotalCusto * (marginPercent / 100);
   const totalBase = subtotalCusto + valorMargem;
   
@@ -376,9 +391,12 @@ const Estimates: React.FC = () => {
             <tbody>
               {items.map(item => (
                 <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '0.75rem' }}>{item.name}</td>
+                  <td style={{ padding: '0.75rem' }}>
+                    <div style={{ fontWeight: 'bold', color: '#d4af37' }}>{item.sku || item.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.name}</div>
+                  </td>
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.quantity}</td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>{formatCurrency((item.woodPrice + (item.laborHours * item.laborRate)) * (1 + marginPercent/100) * item.quantity)}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>{formatCurrency((item.precoEngenharia || 0) * (1 + marginPercent/100) * item.quantity)}</td>
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                     <button onClick={() => removeItem(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
                   </td>
@@ -445,22 +463,56 @@ const Estimates: React.FC = () => {
       {/* Item Form Modal */}
       {showItemForm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemForm(false)}>
-          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '450px', border: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color: 'white', marginBottom: '1rem' }}>Adicionar Móvel</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-               <input style={inputStyle} placeholder="Nome do Móvel" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} />
-               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <input type="number" style={inputStyle} value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: Number(e.target.value)})} />
-                  <select style={selectStyle} value={newItem.woodType} onChange={e => setNewItem({...newItem, woodType: e.target.value})}>
-                     {woodTypes.map(w => <option key={w} value={w}>{w}</option>)}
-                  </select>
-               </div>
-               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                  <input type="number" style={inputStyle} placeholder="L" value={newItem.width} onChange={e => setNewItem({...newItem, width: Number(e.target.value)})} />
-                  <input type="number" style={inputStyle} placeholder="H" value={newItem.height} onChange={e => setNewItem({...newItem, height: Number(e.target.value)})} />
-                  <input type="number" style={inputStyle} placeholder="P" value={newItem.depth} onChange={e => setNewItem({...newItem, depth: Number(e.target.value)})} />
-               </div>
-               <button onClick={addItem} className="btn btn-primary" style={{ background: 'var(--primary)', color: '#1a1a2e', fontWeight: 'bold' }}>ADICIONAR</button>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>SKU (Engenharia)</label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    style={{...inputStyle, paddingLeft: '2.5rem'}} 
+                    placeholder="Buscar por código SKU..." 
+                    value={skuSearch} 
+                    onChange={e => searchSKU(e.target.value)} 
+                  />
+                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                </div>
+                {skuResults.length > 0 && (
+                  <div style={{ position: 'absolute', background: '#1a1a2e', border: '1px solid #d4af37', borderRadius: '8px', maxHeight: '200px', overflow: 'auto', width: 'calc(100% - 4rem)', zIndex: 1001, marginTop: '4px' }}>
+                    {skuResults.slice(0, 10).map((mat: any) => (
+                      <div key={mat.id} onClick={() => selectSKU(mat)} style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{mat.codigo_modelo}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{mat.nome}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Quantidade</label>
+                  <input type="number" min={1} style={inputStyle} value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: Number(e.target.value)})} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  {newItem.sku && (
+                    <div style={{ padding: '0.75rem', background: 'rgba(212,175,55,0.1)', borderRadius: '8px', flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Valor Unit.</div>
+                      <div style={{ color: '#d4af37', fontWeight: 'bold', fontSize: '1.1rem' }}>{formatCurrency(newItem.precoEngenharia * (1 + marginPercent/100))}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {newItem.sku && (
+                <div style={{ padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Detalhes do SKU</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
+                    <div><span style={{ color: 'var(--text-muted)' }}>Nome:</span> {newItem.name}</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>Dims:</span> {newItem.width}x{newItem.height}x{newItem.depth}cm</div>
+                    <div><span style={{ color: 'var(--text-muted)' }}>Material:</span> {newItem.woodType}</div>
+                  </div>
+                </div>
+              )}
+              <button onClick={addItem} disabled={!newItem.sku || newItem.quantity < 1} className="btn btn-primary" style={{ background: 'var(--primary)', color: '#1a1a2e', fontWeight: 'bold', opacity: (!newItem.sku || newItem.quantity < 1) ? 0.6 : 1 }}>ADICIONAR</button>
             </div>
           </div>
         </div>

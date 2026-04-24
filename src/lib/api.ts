@@ -133,7 +133,7 @@ export const api = {
     generate: () => apiCall<any>('notificacoes?action=gerar', 'POST'),
   },
   engineering: {
-    list: () => apiCall<any[]>('engineering'),
+    list: (params?: { q?: string }) => apiCall<any[]>('engineering' + (params?.q ? `?q=${params.q}` : '')),
     create: (data: any) => apiCall<any>('engineering', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`engineering?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`engineering?id=${id}`, 'DELETE'),

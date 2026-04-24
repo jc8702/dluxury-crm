@@ -125,7 +125,13 @@ export async function handleEngineering(req: any, res: any) {
     try { await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`; } catch(e){}
 
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;
+      const term = req.query.q as string;
+      let result;
+      if (term) {
+        result = await sql`SELECT * FROM erp_product_bom WHERE nome ILIKE ${'%' + term + '%'} OR codigo_modelo ILIKE ${'%' + term + '%'} ORDER BY created_at DESC`;
+      } else {
+        result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;
+      }
       return res.status(200).json({ success: true, data: result });
     }
     
