@@ -989,62 +989,60 @@ async function handleRelatorios(req: any, res: any) {
     const { modo, historico } = req.query;
     const isPagar = modo === 'pagar';
     const showHistory = historico === 'true';
-    const table = isPagar ? 'titulos_pagar' : 'titulos_receber';
-    const joinTable = isPagar ? 'fornecedores' : 'clients';
-    const joinAlias = isPagar ? 'f' : 'c';
-    const nameColumn = isPagar ? 'f.nome' : 'c.nome';
-    const entityColumn = isPagar ? 'fornecedor_id' : 'cliente_id';
-
-    let whereClause = '';
-    if (showHistory) {
-      whereClause = 't.status NOT IN (\'pago\', \'cancelado\') AND t.deletado = false AND t.data_vencimento < CURRENT_DATE';
+    
+    let details;
+    if (isPagar && showHistory) {
+      details = await sql`
+        SELECT t.*, COALESCE(f.nome, 'N/A') as entidade_nome
+        FROM titulos_pagar t
+        LEFT JOIN fornecedores f ON f.id::text = t.fornecedor_id::text
+        WHERE t.status = 'pago' AND t.deletado = false AND t.data_vencimento < CURRENT_DATE
+        ORDER BY t.data_vencimento DESC LIMIT 100
+      `;
+    } else if (isPagar) {
+      details = await sql`
+        SELECT t.*, COALESCE(f.nome, 'N/A') as entidade_nome
+        FROM titulos_pagar t
+        LEFT JOIN fornecedores f ON f.id::text = t.fornecedor_id::text
+        WHERE t.status NOT IN ('pago', 'cancelado') AND t.deletado = false
+        ORDER BY t.data_vencimento ASC
+      `;
+    } else if (showHistory) {
+      details = await sql`
+        SELECT t.*, COALESCE(c.nome, 'N/A') as entidade_nome
+        FROM titulos_receber t
+        LEFT JOIN clients c ON c.id::text = t.cliente_id::text
+        WHERE t.status = 'pago' AND t.deletado = false AND t.data_vencimento < CURRENT_DATE
+        ORDER BY t.data_vencimento DESC LIMIT 100
+      `;
     } else {
-      whereClause = 't.status NOT IN (\'pago\', \'cancelado\') AND t.deletado = false';
+      details = await sql`
+        SELECT t.*, COALESCE(c.nome, 'N/A') as entidade_nome
+        FROM titulos_receber t
+        LEFT JOIN clients c ON c.id::text = t.cliente_id::text
+        WHERE t.status NOT IN ('pago', 'cancelado') AND t.deletado = false
+        ORDER BY t.data_vencimento ASC
+      `;
     }
 
-    const summary = await sql`
-      SELECT
-        CASE
-          WHEN data_vencimento > CURRENT_DATE THEN 'A VENCER'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '30 days' THEN '0-30 DIAS'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '60 days' THEN '31-60 DIAS'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '90 days' THEN '61-90 DIAS'
-          ELSE 'ACIMA DE 90 DIAS'
-        END as faixa,
-        SUM(valor_aberto::numeric) as total,
-        COUNT(*) as qtd_titulos
-      FROM ${sql(table)} t
-      WHERE ${sql(whereClause.replace(/t\./g, ''))}
-      GROUP BY faixa
-    `.catch(() => []);
+    const summary = [
+      { faixa: 'A Vencer', total: 0, qtd_titulos: 0 },
+      { faixa: '0-30 Dias', total: 0, qtd_titulos: 0 },
+      { faixa: '31-60 Dias', total: 0, qtd_titulos: 0 },
+      { faixa: '61-90 Dias', total: 0, qtd_titulos: 0 },
+      { faixa: 'Acima de 90 Dias', total: 0, qtd_titulos: 0 },
+    ];
 
-    const summaryNormalized = (Array.isArray(summary) ? summary : []).map((item: any) => {
-      const faixa = String(item?.faixa || '').toUpperCase();
-      const normalizedFaixa = faixa.includes('A VENCER')
-        ? 'A Vencer'
-        : faixa.includes('0-30')
-          ? '0-30 Dias'
-          : faixa.includes('31-60')
-            ? '31-60 Dias'
-            : faixa.includes('61-90')
-              ? '61-90 Dias'
-              : 'Acima de 90 Dias';
-      return { ...item, faixa: normalizedFaixa };
+    (Array.isArray(details) ? details : []).forEach((t: any) => {
+      const dias = Math.floor((new Date().getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
+      const idx = dias <= 0 ? 0 : dias <= 30 ? 1 : dias <= 60 ? 2 : dias <= 90 ? 3 : 4;
+      summary[idx].total += Number(t.valor_aberto || 0);
+      summary[idx].qtd_titulos += 1;
     });
-
-    const details = await sql`
-      SELECT
-        t.*,
-        COALESCE(${sql(nameColumn)}, 'N/A') as entidade_nome
-      FROM ${sql(table)} t
-      LEFT JOIN ${sql(joinTable)} ${sql(joinAlias)} ON ${sql(joinAlias)}.id::text = t.${sql(entityColumn)}::text
-      WHERE ${sql(whereClause.replace(/t\./g, ''))}
-      ORDER BY t.data_vencimento ASC
-    `.catch(() => []);
 
     return res.status(200).json({ 
       success: true, 
-      data: { summary: summaryNormalized, details: Array.isArray(details) ? details : [] } 
+      data: { summary, details: Array.isArray(details) ? details : [] } 
     });
   }
 
