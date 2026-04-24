@@ -30,12 +30,16 @@ const Production: React.FC = () => {
     return PRODUCTION_STEPS.findIndex(s => s.id === step);
   };
 
-  const handleStepClick = async (project: Project, step: ProductionStep) => {
+const handleStepClick = async (project: Project, step: ProductionStep) => {
+    // Verificar se deve avançar ou voltar
     const stepIndex = PRODUCTION_STEPS.findIndex(s => s.id === step);
     const currentIndex = getStepIndex(project.etapaProducao);
 
-    // Can only advance to next step or go back
-    if (stepIndex <= currentIndex) return;
+    // Pode avançar para próximo passo ou volver para anterior
+    if (stepIndex !== currentIndex && stepIndex !== currentIndex - 1 && stepIndex !== currentIndex + 1) return;
+    
+    // Se tentando avanzar mas não é o próximo
+    if (stepIndex > currentIndex + 1) return;
 
     const updates: Partial<Project> = {
       etapaProducao: step,
@@ -217,17 +221,18 @@ const Production: React.FC = () => {
                         const isCurrent = idx === currentStepIdx;
                         const isNext = idx === currentStepIdx + 1;
 
-                        return (
+return (
                           <button key={step.id}
-                            onClick={() => isNext ? handleStepClick(project, step.id) : undefined}
+                            onClick={() => handleStepClick(project, step.id)}
+                            disabled={idx > currentStepIdx + 1}
                             style={{
                               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
                               padding: '1rem 0.5rem', borderRadius: '12px',
-                              cursor: isNext ? 'pointer' : 'default',
+                              cursor: idx <= currentStepIdx + 1 ? 'pointer' : 'not-allowed',
                               transition: 'all 0.3s',
-                              border: isCurrent ? '2px solid #d4af37' : isNext ? '2px dashed rgba(212,175,55,0.4)' : '1px solid var(--border)',
+                              border: isCurrent ? '2px solid #d4af37' : '1px solid var(--border)',
                               background: isDone ? 'rgba(16, 185, 129, 0.1)' : isNext ? 'rgba(212,175,55,0.05)' : 'transparent',
-                              opacity: isDone || isNext ? 1 : 0.4,
+                              opacity: idx <= currentStepIdx + 1 ? 1 : 0.4,
                             }}>
                             <span style={{ fontSize: '1.5rem' }}>{isDone ? '✅' : step.icon}</span>
                             <span style={{

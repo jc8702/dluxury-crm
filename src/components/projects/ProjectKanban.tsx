@@ -39,8 +39,40 @@ const ProjectKanban: React.FC = () => {
     'Área Gourmet', 'Varanda', 'Sala de Jantar', 'Outro'
   ];
 
-  const handleMove = (id: string, newStatus: string) => {
-    updateProject(id, { status: newStatus as ProjectStatus });
+const handleMove = (id: string, newStatus: string) => {
+    // Ao mover para aprovado ou em_producao, criar OP automaticamente
+    if (newStatus === 'aprovado' || newStatus === 'em_producao') {
+      handleMoveWithOP(id, newStatus);
+    } else {
+      updateProject(id, { status: newStatus as ProjectStatus });
+    }
+  };
+
+  const handleMoveWithOP = async (id: string, newStatus: string) => {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+    
+    try {
+      // Atualizar status do projeto
+      await updateProject(id, { status: newStatus as ProjectStatus });
+      
+      // Criar OP automaticamente
+      const opId = `OP-${project.id?.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+      await api.production.create({
+        op_id: opId,
+        produto: project.ambiente || 'Produto',
+        pecas: 1,
+        projeto_id: project.id,
+        visita_id: project.visitaId || null,
+        orcamento_id: project.orcamentoId || null
+      });
+      
+      alert(`Projeto movido para "${newStatus}" e OP ${opId} criada automaticamente!`);
+    } catch (e: any) {
+      console.error('Erro ao criar OP:', e);
+      // Ainda assim move o projeto
+      alert(`Projeto movido para "${newStatus}" (mas houve erro ao criar OP automática)`);
+    }
   };
 
 const handleSubmit = async (e: React.FormEvent) => {
