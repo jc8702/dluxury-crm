@@ -123,6 +123,22 @@ export default async function handler(req: any, res: any) {
       const { handleEngenhariaSKUs } = await import('../src/api-lib/planocorte.js');
       return await handleEngenhariaSKUs(req, res);
     }
+    if (cleanUrl.startsWith('/api/billings') || cleanUrl.startsWith('/api/financeiro') && cleanUrl.includes('type=dRE')) {
+      const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
+      return await handleFinanceiro(req, res);
+    }
+    if (cleanUrl.startsWith('/api/goals')) {
+      const { handleGoals } = await import('../src/api-lib/crm.js');
+      return await handleGoals(req, res);
+    }
+    if (cleanUrl.startsWith('/api/forn')) {
+      const { handleEstoque } = await import('../src/api-lib/estoque.js');
+      return await handleEstoque(req, res);
+    }
+    if (cleanUrl.startsWith('/api/condicoes-pagamento')) {
+      const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
+      return await handleFinanceiro(req, res);
+    }
 
     if (cleanUrl.startsWith('/api/init-db')) {
       const { runInitDB } = await import('../src/api-lib/_init.js');
