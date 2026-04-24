@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, Views, withDragAndDrop } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { withDragAndDrop } from 'react-big-calendar/lib/addons/dragAndDrop';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -7,7 +8,7 @@ import getDay from 'date-fns/getDay';
 import ptBR from 'date-fns/locale/pt-BR';
 import { 
   Plus, RefreshCw, ChevronLeft, ChevronRight, 
-  Calendar as CalendarIcon, X
+  Calendar as CalendarIcon, X, Check, AlertTriangle
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
