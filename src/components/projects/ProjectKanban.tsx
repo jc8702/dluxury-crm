@@ -54,7 +54,13 @@ const handleMove = (id: string, newStatus: string) => {
     
     try {
       // Atualizar status do projeto
-      await updateProject(id, { status: newStatus as ProjectStatus });
+      // Se movendo para aprovado, setar etapaProducao inicial
+      const updateData: any = { status: newStatus as ProjectStatus };
+      if (newStatus === 'aprovado' || newStatus === 'em_producao') {
+        updateData.etapaProducao = 'corte';
+      }
+      
+      await updateProject(id, updateData);
       
       // Criar OP automaticamente
       const opId = `OP-${project.id?.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
@@ -71,6 +77,7 @@ const handleMove = (id: string, newStatus: string) => {
     } catch (e: any) {
       console.error('Erro ao criar OP:', e);
       // Ainda assim move o projeto
+      await updateProject(id, { status: newStatus as ProjectStatus });
       alert(`Projeto movido para "${newStatus}" (mas houve erro ao criar OP automática)`);
     }
   };

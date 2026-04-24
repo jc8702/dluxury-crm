@@ -24,6 +24,9 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
@@ -82,28 +85,38 @@ async function listOPs(res: any) {
 async function createOP(req: any, res: any) {
   const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id } = req.body;
 
+  console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, orcamento_id });
+
   if (!op_id || !produto) {
+    console.error('[CREATE_OP] Missing required fields:', { op_id, produto });
     return res.status(400).json({ success: false, error: 'Dados insuficientes para criar OP' });
   }
 
-  const defaultChecklist = [
-    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'CORTE', completed: false },
-    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FITA DE BORDA', completed: false },
-    { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FURAÇÕES', completed: false }
-  ];
+  try {
+    const defaultChecklist = [
+      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'CORTE', completed: false },
+      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FITA DE BORDA', completed: false },
+      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FURAÇÕES', completed: false }
+    ];
 
-  const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
+    const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
-  const [novaOP] = await sql`
-    INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id)
-    VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
-    RETURNING *
-  `;
+    const [novaOP] = await sql`
+      INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id)
+      VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
+      RETURNING *
+    `;
 
-  // Atualizar fila
-  await syncQueueForecasting();
+    console.log('[CREATE_OP] Created:', novaOP);
 
-  return res.status(201).json({ success: true, data: novaOP });
+    // Atualizar fila
+    await syncQueueForecasting();
+
+    return res.status(201).json({ success: true, data: novaOP });
+  } catch (err: any) {
+    console.error('[CREATE_OP] Error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 }
 
 /**

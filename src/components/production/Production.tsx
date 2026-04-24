@@ -54,6 +54,22 @@ const handleStepClick = async (project: Project, step: ProductionStep) => {
     }
 
     await updateProject(project.id, updates);
+    
+    // Sync com OP no Kanban
+    const opStatusMap: Record<string, string> = {
+      'corte': 'PENDENTE', 'furacao': 'CORTE', 'montagem': 'MONTAGEM',
+      'pintura': 'MONTAGEM', 'acabamento': 'MONTAGEM', 'entrega': 'FINALIZADA'
+    };
+    try {
+      const allOps = await api.production.list();
+      const relatedOp = allOps?.find((o: any) => o.projeto_id === project.id);
+      if (relatedOp) {
+        const newOpStatus = opStatusMap[step] || 'PENDENTE';
+        if (relatedOp.status !== newOpStatus) {
+          await api.production.updateStatus(relatedOp.op_id, newOpStatus);
+        }
+      }
+    } catch(e) {}
   };
 
   const handleMarkReady = async (project: Project) => {
