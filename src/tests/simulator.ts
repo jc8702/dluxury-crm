@@ -1,5 +1,9 @@
 
-import { INITIAL_PRODUCTS } from '../services/dataService';
+import { INITIAL_PRODUCTS } from '../services/reportService';
+
+const INITIAL_PRODUCTS = [
+  { id: '1', nome: 'Produto Teste', minSemBureau: 300 }
+];
 
 /**
  * CORE LOGIC TEST SUITE (QA PHASE 5)

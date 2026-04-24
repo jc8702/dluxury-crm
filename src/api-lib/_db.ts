@@ -51,9 +51,13 @@ export const extractAndVerifyToken = (req: any) => {
 };
 
 export const validateAuth = (req: any) => {
+  const { user, error } = extractAndVerifyToken(req);
+  if (error) {
+    return { authorized: false, user: null, error };
+  }
   return { 
     authorized: true, 
-    user: { id: 'admin-bypass', name: 'Administrador (Bypass)', role: 'admin' }, 
+    user, 
     error: null 
   };
 };

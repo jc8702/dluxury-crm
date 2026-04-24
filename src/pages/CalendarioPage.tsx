@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizers, Views } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
@@ -13,6 +13,7 @@ import {
 import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
 import ModalEvento from '../components/agenda/ModalEvento';
+import { useEscClose } from '../hooks/useEscClose';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
@@ -88,16 +89,7 @@ const CalendarioPage: React.FC = () => {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showModal) {
-        setShowModal(false);
-        setSelectedEvent(null);
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [showModal]);
+  useEscClose(() => { setShowModal(false); setSelectedEvent(null); }, showModal);
 
   const fetchEvents = async () => {
     setLoading(true);

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, MapPin, User, FileText, CheckCircle, Clock, Trash2, Tag } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
+import { useEscClose } from '../../hooks/useEscClose';
 
 interface ModalEventoProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface ModalEventoProps {
 }
 
 const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, eventToEdit }) => {
+  useEscClose(isOpen ? onClose : () => {});
   const { clients, projects } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
