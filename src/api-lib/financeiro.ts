@@ -1,7 +1,33 @@
 import { sql, validateAuth } from './_db.js';
+import { z } from 'zod';
 
-async function bootstrapFinanceiro() {
-  try {
+const TituloSchema = z.object({
+  valor_original: z.number().min(0.01, "Valor deve ser maior que zero"),
+  data_vencimento: z.string().or(z.date()),
+  classe_financeira_id: z.string().uuid("Classe financeira inválida"),
+  total_parcelas: z.number().int().min(1).max(120).default(1),
+  observacoes: z.string().optional().nullable(),
+  numero_titulo: z.string().optional().nullable(),
+  projeto_id: z.string().uuid().optional().nullable(),
+  orcamento_id: z.string().uuid().optional().nullable(),
+});
+
+const BaixaSchema = z.object({
+  valor_baixa: z.number().min(0.01, "Valor da baixa deve ser maior que zero"),
+  data_baixa: z.string().or(z.date()).default(() => new Date()),
+  conta_interna_id: z.string().uuid("Conta bancária inválida"),
+  valor_juros: z.number().min(0).default(0),
+  valor_multa: z.number().min(0).default(0),
+  valor_desconto: z.number().min(0).default(0),
+  observacoes: z.string().optional().nullable(),
+});
+
+let bootstrapFinanceiroPromise: Promise<void> | null = null;
+
+export async function bootstrapFinanceiro() {
+  if (!bootstrapFinanceiroPromise) {
+    bootstrapFinanceiroPromise = (async () => {
+      try {
     // Títulos Receber
     await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(() => {});
@@ -22,9 +48,13 @@ async function bootstrapFinanceiro() {
     
     // Classes
     await sql`ALTER TABLE classes_financeiras ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
-  } catch (e) {
-    console.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
+      } catch (e) {
+        console.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
+      }
+    })();
   }
+
+  return bootstrapFinanceiroPromise;
 }
 
 async function checkPeriodoFechado(data: string | Date | undefined) {
@@ -39,6 +69,13 @@ async function checkPeriodoFechado(data: string | Date | undefined) {
   return fechado.length > 0;
 }
 
+async function validateClassePermiteLancamento(id: string) {
+  const classe = (await sql`SELECT permite_lancamento FROM classes_financeiras WHERE id = ${id}`)[0];
+  if (!classe) throw new Error('Classe financeira não encontrada');
+  if (classe.permite_lancamento === false) throw new Error('Esta é uma classe sintética (Pai). Escolha uma classe analítica para o lançamento.');
+  return true;
+}
+
 export async function handleFinanceiro(req: any, res: any) {
   try {
     const { authorized, error } = validateAuth(req);
@@ -49,7 +86,7 @@ export async function handleFinanceiro(req: any, res: any) {
 
     const fullUrl = req.url || '';
     const url = fullUrl.split('?')[0]; // Limpa query params
-    const paths = url.split('/').filter(p => p && p !== 'api' && p !== 'financeiro');
+    const paths = url.split('/').filter((p: string) => p && p !== 'api' && p !== 'financeiro');
     const resource = paths[0];
     let id = paths[1];
 
@@ -341,27 +378,42 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'POST' && id && req.url.includes('baixar')) {
-    const f = req.body;
-    return await sql.begin(async (tx) => {
-      if (await checkPeriodoFechado(f.data_baixa || new Date())) {
-        throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
-      }
-      const titulo = (await tx`SELECT * FROM titulos_receber WHERE id = ${id}`)[0];
-      if (!titulo) throw new Error('Título não encontrado');
-      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
-      
-      await tx`INSERT INTO baixas (
-        tipo, titulo_id, valor_baixa, valor_original_baixa, valor_multa, valor_juros, data_baixa, conta_interna_id, observacoes
-      ) VALUES (
-        'recebimento', ${id}, ${valorBaixa}, ${f.valor_original_baixa || valorBaixa}, ${f.valor_multa || 0}, ${f.valor_juros || 0}, ${f.data_baixa || new Date()}, ${f.conta_interna_id}, ${f.observacoes || ''}
-      )`;
+    try {
+      const validated = BaixaSchema.parse(req.body);
+      return await sql.begin(async (tx) => {
+        if (await checkPeriodoFechado(validated.data_baixa)) {
+          throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
+        }
+        const titulo = (await tx`SELECT * FROM titulos_receber WHERE id = ${id} AND deletado = false`)[0];
+        if (!titulo) throw new Error('Título não encontrado ou excluído');
+        if (titulo.status === 'pago') throw new Error('Este título já está totalmente pago');
 
-      const novoValorAberto = Number(titulo.valor_aberto) - (Number(f.valor_original_baixa) || valorBaixa);
-      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-      await tx`UPDATE titulos_receber SET valor_aberto = ${Math.max(0, novoValorAberto)}, status = ${novoStatus}, data_pagamento = ${novoStatus === 'pago' ? new Date() : null} WHERE id = ${id}`;
-      await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa} WHERE id = ${f.conta_interna_id}`;
-      return res.status(200).json({ success: true, message: 'Recebimento realizado com sucesso' });
-    });
+        const valorBaixa = validated.valor_baixa;
+        const valorOriginalAmortizado = req.body.valor_original_baixa || valorBaixa; // Valor sem juros/multa
+        
+        await tx`INSERT INTO baixas (
+          tipo, titulo_receber_id, valor_baixa, valor_original_baixa, valor_multa, valor_juros, valor_desconto, data_baixa, conta_interna_id, observacoes
+        ) VALUES (
+          'recebimento', ${id}, ${valorBaixa}, ${valorOriginalAmortizado}, ${validated.valor_multa}, ${validated.valor_juros}, ${validated.valor_desconto}, ${validated.data_baixa}, ${validated.conta_interna_id}, ${validated.observacoes || ''}
+        )`;
+
+        const novoValorAberto = Math.max(0, Number(titulo.valor_aberto) - valorOriginalAmortizado);
+        const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
+        
+        await tx`UPDATE titulos_receber SET 
+          valor_aberto = ${novoValorAberto}, 
+          status = ${novoStatus}, 
+          data_pagamento = ${novoStatus === 'pago' ? new Date() : null},
+          atualizado_em = NOW()
+        WHERE id = ${id}`;
+        
+        await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa} WHERE id = ${validated.conta_interna_id}`;
+        
+        return res.status(200).json({ success: true, message: 'Recebimento realizado com sucesso' });
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
   }
 
   if (req.method === 'GET') {
@@ -387,60 +439,66 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'POST') {
-    const f = req.body;
-    if (await checkPeriodoFechado(f.data_vencimento || new Date())) {
-      return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
-    }
-    const numTotal = Number(f.total_parcelas) || 1;
-    // cliente_id é integer na tabela clients — garantir conversão correta
-    const clienteId = f.cliente_id;
-    if (!clienteId) {
-      return res.status(400).json({ success: false, error: 'cliente_id é obrigatório' });
-    }
-    const valorTaxaTotal = Number(f.valor_custo_financeiro) || 0;
-    const taxaPerc = Number(f.taxa_financeira) || 0;
-    const mesesRecorrencia = Number(f.recorrencia_meses) || 1;
-    const titulos: any[] = [];
-    
-    for (let m = 0; m < mesesRecorrencia; m++) {
-      for (let i = 1; i <= numTotal; i++) {
-        const venc = new Date(f.data_vencimento || new Date());
-        venc.setMonth(venc.getMonth() + (i - 1) + m);
-        const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
-        const t = await sql`
-          INSERT INTO titulos_receber (
-            numero_titulo, cliente_id, projeto_id, orcamento_id, 
-            valor_original, valor_liquido, valor_aberto, 
-            data_emissao, data_vencimento, data_competencia, 
-            classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
-            status, parcela, total_parcelas, observacoes,
-            taxa_financeira, valor_custo_financeiro, rateio
-          ) VALUES (
-            ${(f.numero_titulo || `REC-${Date.now()}`) + suffix + (numTotal > 1 ? `-P${i}` : '')}, 
-            ${clienteId}, 
-            ${f.projeto_id || null}, 
-            ${f.orcamento_id || null}, 
-            ${Number(f.valor_original)/numTotal}, 
-            ${Number(f.valor_original)/numTotal}, 
-            ${Number(f.valor_original)/numTotal}, 
-            NOW(), 
-            ${venc}, 
-            ${venc}, 
-            ${f.classe_financeira_id}, 
-            NULL, 
-            ${f.forma_recebimento_id}, 
-            'aberto', 
-            ${i}, 
-            ${numTotal}, 
-            ${f.observacoes || ''},
-            ${taxaPerc},
-            ${valorTaxaTotal / numTotal},
-            ${JSON.stringify(f.rateio || [])}
-          ) RETURNING *`;
-        titulos.push(t[0]);
+    try {
+      const f = TituloSchema.parse(req.body);
+      const cliente_id = req.body.cliente_id;
+      if (!cliente_id) throw new Error('cliente_id é obrigatório');
+
+      await validateClassePermiteLancamento(f.classe_financeira_id);
+
+      if (await checkPeriodoFechado(f.data_vencimento)) {
+        return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
       }
+
+      return await sql.begin(async (tx) => {
+        const titulos: any[] = [];
+        const mesesRecorrencia = Number(req.body.recorrencia_meses) || 1;
+        const valorTaxaTotal = Number(req.body.valor_custo_financeiro) || 0;
+        const taxaPerc = Number(req.body.taxa_financeira) || 0;
+
+        for (let m = 0; m < mesesRecorrencia; m++) {
+          for (let i = 1; i <= f.total_parcelas; i++) {
+            const venc = new Date(f.data_vencimento);
+            venc.setMonth(venc.getMonth() + (i - 1) + m);
+            const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
+            const t = await tx`
+              INSERT INTO titulos_receber (
+                numero_titulo, cliente_id, projeto_id, orcamento_id, 
+                valor_original, valor_liquido, valor_aberto, 
+                data_emissao, data_vencimento, data_competencia, 
+                classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
+                status, parcela, total_parcelas, observacoes,
+                taxa_financeira, valor_custo_financeiro, rateio
+              ) VALUES (
+                ${(f.numero_titulo || `REC-${Date.now()}`) + suffix + (f.total_parcelas > 1 ? `-P${i}` : '')}, 
+                ${cliente_id}, 
+                ${f.projeto_id || null}, 
+                ${f.orcamento_id || null}, 
+                ${f.valor_original / f.total_parcelas}, 
+                ${f.valor_original / f.total_parcelas}, 
+                ${f.valor_original / f.total_parcelas}, 
+                NOW(), 
+                ${venc}, 
+                ${venc}, 
+                ${f.classe_financeira_id}, 
+                NULL, 
+                ${req.body.forma_recebimento_id}, 
+                'aberto', 
+                ${i}, 
+                ${f.total_parcelas}, 
+                ${f.observacoes || ''},
+                ${taxaPerc},
+                ${valorTaxaTotal / f.total_parcelas},
+                ${JSON.stringify(req.body.rateio || [])}
+              ) RETURNING *`;
+            titulos.push(t[0]);
+          }
+        }
+        return res.status(201).json({ success: true, data: titulos });
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
     }
-    return res.status(201).json({ success: true, data: titulos });
   }
 
   if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
@@ -484,29 +542,49 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'POST' && id && req.url.includes('baixar')) {
-    const f = req.body;
-    return await sql.begin(async (tx) => {
-      if (await checkPeriodoFechado(f.data_baixa || new Date())) {
-        throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
-      }
-      const titulo = (await tx`SELECT * FROM titulos_pagar WHERE id = ${id}`)[0];
-      if (!titulo) throw new Error('Título não encontrado');
-      const conta = (await tx`SELECT * FROM contas_internas WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`)[0];
-      if (!conta) throw new Error('Conta bancária não encontrada');
-      const valorBaixa = Number(f.valor_baixa) || titulo.valor_aberto;
-      let saldoWarning = false;
-      if (Number(conta.saldo_atual) < valorBaixa) { saldoWarning = true; }
-      await tx`INSERT INTO baixas (
-        tipo, titulo_id, valor_baixa, valor_original_baixa, valor_multa, valor_juros, data_baixa, conta_interna_id, observacoes
-      ) VALUES (
-        'pagamento', ${id}, ${valorBaixa}, ${f.valor_original_baixa || valorBaixa}, ${f.valor_multa || 0}, ${f.valor_juros || 0}, ${f.data_baixa || new Date()}, ${f.conta_interna_id || titulo.conta_bancaria_id}, ${f.observacoes || ''}
-      )`;
-      const novoValorAberto = Number(titulo.valor_aberto) - (Number(f.valor_original_baixa) || valorBaixa);
-      const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-      await tx`UPDATE titulos_pagar SET valor_aberto = ${Math.max(0, novoValorAberto)}, status = ${novoStatus}, data_pagamento = ${novoStatus === 'pago' ? new Date() : null} WHERE id = ${id}`;
-      await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${f.conta_interna_id || titulo.conta_bancaria_id}`;
-      return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso', warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined });
-    });
+    try {
+      const validated = BaixaSchema.parse(req.body);
+      return await sql.begin(async (tx) => {
+        if (await checkPeriodoFechado(validated.data_baixa)) {
+          throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
+        }
+        const titulo = (await tx`SELECT * FROM titulos_pagar WHERE id = ${id} AND deletado = false`)[0];
+        if (!titulo) throw new Error('Título não encontrado ou excluído');
+        if (titulo.status === 'pago') throw new Error('Este título já está totalmente pago');
+
+        const contaId = validated.conta_interna_id || titulo.conta_bancaria_id;
+        const conta = (await tx`SELECT * FROM contas_internas WHERE id = ${contaId}`)[0];
+        if (!conta) throw new Error('Conta bancária não encontrada');
+
+        const valorBaixa = validated.valor_baixa;
+        const valorOriginalAmortizado = req.body.valor_original_baixa || valorBaixa;
+
+        let saldoWarning = false;
+        if (Number(conta.saldo_atual) < valorBaixa) { saldoWarning = true; }
+
+        await tx`INSERT INTO baixas (
+          tipo, titulo_pagar_id, valor_baixa, valor_original_baixa, valor_multa, valor_juros, valor_desconto, data_baixa, conta_interna_id, observacoes
+        ) VALUES (
+          'pagamento', ${id}, ${valorBaixa}, ${valorOriginalAmortizado}, ${validated.valor_multa}, ${validated.valor_juros}, ${validated.valor_desconto}, ${validated.data_baixa}, ${contaId}, ${validated.observacoes || ''}
+        )`;
+
+        const novoValorAberto = Math.max(0, Number(titulo.valor_aberto) - valorOriginalAmortizado);
+        const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
+        
+        await tx`UPDATE titulos_pagar SET 
+          valor_aberto = ${novoValorAberto}, 
+          status = ${novoStatus}, 
+          data_pagamento = ${novoStatus === 'pago' ? new Date() : null},
+          atualizado_em = NOW()
+        WHERE id = ${id}`;
+
+        await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${contaId}`;
+        
+        return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso', warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined });
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
   }
 
   if (req.method === 'GET') {
@@ -532,54 +610,65 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'POST') {
-    const f = req.body;
-    if (await checkPeriodoFechado(f.data_vencimento || new Date())) {
-      return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
-    }
-    const numTotal = Number(f.total_parcelas) || 1;
-    const mesesRecorrencia = Number(f.recorrencia_meses) || 1;
-    const valorTaxaTotal = Number(f.valor_custo_financeiro) || 0;
-    const taxaPerc = Number(f.taxa_financeira) || 0;
-    const titulos = [];
+    try {
+      const f = TituloSchema.parse(req.body);
+      const fornecedor_id = req.body.fornecedor_id;
+      if (!fornecedor_id) throw new Error('fornecedor_id é obrigatório');
 
-    for (let m = 0; m < mesesRecorrencia; m++) {
-      for (let i = 1; i <= numTotal; i++) {
-        const venc = new Date(f.data_vencimento || new Date());
-        venc.setMonth(venc.getMonth() + (i - 1) + m);
-        const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
-        const t = await sql`
-          INSERT INTO titulos_pagar (
-            numero_titulo, fornecedor_id, pedido_compra_id,
-            valor_original, valor_liquido, valor_aberto, 
-            data_emissao, data_vencimento, data_competencia, 
-            classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, 
-            conta_bancaria_id, status, parcela, total_parcelas,
-            taxa_financeira, valor_custo_financeiro, rateio
-          ) VALUES (
-            ${(f.numero_titulo || `PAG-${Date.now()}`) + suffix + (numTotal > 1 ? `-P${i}` : '')}, 
-            ${f.fornecedor_id},
-            ${f.pedido_compra_id || null},
-            ${Number(f.valor_original)/numTotal}, 
-            ${Number(f.valor_original)/numTotal}, 
-            ${Number(f.valor_original)/numTotal}, 
-            NOW(), 
-            ${venc}, 
-            ${venc}, 
-            ${f.classe_financeira_id}, 
-            NULL, 
-            ${f.forma_pagamento_id}, 
-            ${f.conta_bancaria_id}, 
-            'aberto', 
-            ${i}, 
-            ${numTotal}, 
-            ${taxaPerc},
-            ${valorTaxaTotal / numTotal},
-            ${JSON.stringify(f.rateio || [])}
-          ) RETURNING *`;
-        titulos.push(t[0]);
+      await validateClassePermiteLancamento(f.classe_financeira_id);
+
+      if (await checkPeriodoFechado(f.data_vencimento)) {
+        return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
       }
+
+      return await sql.begin(async (tx) => {
+        const titulos = [];
+        const mesesRecorrencia = Number(req.body.recorrencia_meses) || 1;
+        const valorTaxaTotal = Number(req.body.valor_custo_financeiro) || 0;
+        const taxaPerc = Number(req.body.taxa_financeira) || 0;
+
+        for (let m = 0; m < mesesRecorrencia; m++) {
+          for (let i = 1; i <= f.total_parcelas; i++) {
+            const venc = new Date(f.data_vencimento);
+            venc.setMonth(venc.getMonth() + (i - 1) + m);
+            const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
+            const t = await tx`
+              INSERT INTO titulos_pagar (
+                numero_titulo, fornecedor_id, pedido_compra_id,
+                valor_original, valor_liquido, valor_aberto, 
+                data_emissao, data_vencimento, data_competencia, 
+                classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, 
+                conta_bancaria_id, status, parcela, total_parcelas,
+                taxa_financeira, valor_custo_financeiro, rateio
+              ) VALUES (
+                ${(f.numero_titulo || `PAG-${Date.now()}`) + suffix + (f.total_parcelas > 1 ? `-P${i}` : '')}, 
+                ${fornecedor_id},
+                ${req.body.pedido_compra_id || null},
+                ${f.valor_original / f.total_parcelas}, 
+                ${f.valor_original / f.total_parcelas}, 
+                ${f.valor_original / f.total_parcelas}, 
+                NOW(), 
+                ${venc}, 
+                ${venc}, 
+                ${f.classe_financeira_id}, 
+                NULL, 
+                ${req.body.forma_pagamento_id}, 
+                ${req.body.conta_bancaria_id}, 
+                'aberto', 
+                ${i}, 
+                ${f.total_parcelas}, 
+                ${taxaPerc},
+                ${valorTaxaTotal / f.total_parcelas},
+                ${JSON.stringify(req.body.rateio || [])}
+              ) RETURNING *`;
+            titulos.push(t[0]);
+          }
+        }
+        return res.status(201).json({ success: true, data: titulos });
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
     }
-    return res.status(201).json({ success: true, data: titulos });
   }
 
   if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
@@ -614,65 +703,76 @@ async function handleTesouraria(req: any, res: any, id?: string) {
   }
 
   if (req.method === 'POST') {
-    const f = req.body;
     const action = req.query?.action || (req.url?.includes('transferencia') ? 'transferencia' : 'lancamento');
 
-    return await sql.begin(async (tx) => {
-      if (await checkPeriodoFechado(f.data_movimento || new Date())) {
-        throw new Error('Não é possível realizar movimentações em um período financeiro fechado.');
-      }
-      if (action === 'transferencia') {
-        if (!f.conta_origem_id || !f.conta_destino_id) 
-          throw new Error('Origem e destino são obrigatórios para transferência');
-        if (Number(f.valor) <= 0)
-          throw new Error('Valor deve ser maior que zero');
+    try {
+      return await sql.begin(async (tx) => {
+        if (action === 'transferencia') {
+          const { conta_origem_id, conta_destino_id, valor, data_movimento, descricao } = req.body;
+          
+          if (!conta_origem_id || !conta_destino_id) throw new Error('Origem e destino são obrigatórios');
+          if (Number(valor) <= 0) throw new Error('Valor deve ser maior que zero');
 
-        const origem = (await tx`SELECT saldo_atual FROM contas_internas WHERE id = ${f.conta_origem_id}`)[0];
-        if (!origem) throw new Error('Conta de origem não encontrada');
-        if (Number(origem.saldo_atual) < Number(f.valor)) 
-          throw new Error(`Saldo insuficiente na conta de origem (disponível: R$ ${Number(origem.saldo_atual).toFixed(2)})`);
+          if (await checkPeriodoFechado(data_movimento || new Date())) {
+            throw new Error('Não é possível realizar movimentações em um período financeiro fechado.');
+          }
 
-        await tx`
-          INSERT INTO movimentacoes_tesouraria 
-            (tipo, conta_origem_id, conta_destino_id, valor, data_movimento, descricao)
-          VALUES 
-            ('transferencia', ${f.conta_origem_id}, ${f.conta_destino_id}, ${Number(f.valor)}, 
-             ${f.data_movimento ? new Date(f.data_movimento) : new Date()}, 
-             ${f.descricao || 'Transferência entre contas'})`;
-        
-        await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${Number(f.valor)} WHERE id = ${f.conta_origem_id}`;
-        await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${Number(f.valor)} WHERE id = ${f.conta_destino_id}`;
+          const origem = (await tx`SELECT saldo_atual FROM contas_internas WHERE id = ${conta_origem_id} FOR UPDATE`)[0];
+          if (!origem) throw new Error('Conta de origem não encontrada');
+          if (Number(origem.saldo_atual) < Number(valor)) {
+            throw new Error(`Saldo insuficiente na conta de origem (disponível: R$ ${Number(origem.saldo_atual).toFixed(2)})`);
+          }
 
-        const origemAtual  = (await tx`SELECT nome, saldo_atual FROM contas_internas WHERE id = ${f.conta_origem_id}`)[0];
-        const destinoAtual = (await tx`SELECT nome, saldo_atual FROM contas_internas WHERE id = ${f.conta_destino_id}`)[0];
-        return res.status(201).json({ 
-          success: true, 
-          message: 'Transferência realizada com sucesso',
-          data: { origem: origemAtual, destino: destinoAtual }
-        });
+          await tx`
+            INSERT INTO movimentacoes_tesouraria 
+              (tipo, conta_origem_id, conta_destino_id, valor, data_movimento, descricao)
+            VALUES 
+              ('transferencia', ${conta_origem_id}, ${conta_destino_id}, ${Number(valor)}, 
+               ${data_movimento ? new Date(data_movimento) : new Date()}, 
+               ${descricao || 'Transferência entre contas'})`;
+          
+          await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${Number(valor)} WHERE id = ${conta_origem_id}`;
+          await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${Number(valor)} WHERE id = ${conta_destino_id}`;
 
-      } else {
-        // Lançamento avulso (entrada ou saída direta)
-        const isEntrada = f.tipo === 'entrada';
-        const valor = Math.abs(Number(f.valor));
-        
-        await tx`
-          INSERT INTO movimentacoes_tesouraria 
-            (tipo, conta_origem_id, conta_destino_id, valor, data_movimento, classe_financeira_id, descricao)
-          VALUES 
-            (${f.tipo}, 
-             ${isEntrada ? null : f.conta_interna_id}, 
-             ${isEntrada ? f.conta_interna_id : null}, 
-             ${valor}, 
-             ${f.data_movimento ? new Date(f.data_movimento) : new Date()}, 
-             ${f.classe_financeira_id || null}, 
-             ${f.descricao || ''})`;
-        
-        const ajuste = isEntrada ? valor : -valor;
-        await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${ajuste} WHERE id = ${f.conta_interna_id}`;
-        return res.status(201).json({ success: true, message: 'Lançamento realizado com sucesso' });
-      }
-    });
+          return res.status(201).json({ success: true, message: 'Transferência realizada com sucesso' });
+
+        } else {
+          // Lançamento avulso (entrada ou saída direta)
+          const { tipo, conta_interna_id, valor, data_movimento, classe_financeira_id, descricao } = req.body;
+          const isEntrada = tipo === 'entrada';
+          const valorNum = Math.abs(Number(valor));
+          
+          if (!conta_interna_id) throw new Error('Conta interna é obrigatória');
+          if (valorNum <= 0) throw new Error('Valor deve ser maior que zero');
+
+          if (classe_financeira_id) {
+            await validateClassePermiteLancamento(classe_financeira_id);
+          }
+
+          if (await checkPeriodoFechado(data_movimento || new Date())) {
+            throw new Error('Não é possível realizar movimentações em um período financeiro fechado.');
+          }
+
+          await tx`
+            INSERT INTO movimentacoes_tesouraria 
+              (tipo, conta_origem_id, conta_destino_id, valor, data_movimento, classe_financeira_id, descricao)
+            VALUES 
+              (${tipo}, 
+               ${isEntrada ? null : conta_interna_id}, 
+               ${isEntrada ? conta_interna_id : null}, 
+               ${valorNum}, 
+               ${data_movimento ? new Date(data_movimento) : new Date()}, 
+               ${classe_financeira_id || null}, 
+               ${descricao || ''})`;
+          
+          const ajuste = isEntrada ? valorNum : -valorNum;
+          await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${ajuste} WHERE id = ${conta_interna_id}`;
+          return res.status(201).json({ success: true, message: 'Lançamento realizado com sucesso' });
+        }
+      });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
   }
   return res.status(405).end();
 }
@@ -693,31 +793,21 @@ async function handleFluxoCaixa(req: any, res: any) {
     // Receitas e despesas detalhadas por data (regime de caixa: usa data_vencimento como proxy se data_pagamento null)
     const receitasRaw = await sql`
       SELECT 
-        CASE WHEN ${regime} = 'caixa' THEN 
-          COALESCE(data_pagamento, data_vencimento) 
-        ELSE data_competencia END::date as data_ref,
+        CASE WHEN ${regime} = 'caixa' THEN COALESCE(data_pagamento, data_vencimento) ELSE data_competencia END::date as data_ref,
         valor_aberto::numeric as valor,
         numero_titulo, status, cliente_id
       FROM titulos_receber 
       WHERE deletado = false AND status NOT IN ('cancelado', 'pago')
-      AND CASE WHEN ${regime} = 'caixa' THEN 
-        COALESCE(data_pagamento, data_vencimento)
-      ELSE data_competencia END >= NOW()
       ORDER BY data_ref
     `;
 
     const despesasRaw = await sql`
       SELECT 
-        CASE WHEN ${regime} = 'caixa' THEN 
-          COALESCE(data_pagamento, data_vencimento) 
-        ELSE data_competencia END::date as data_ref,
+        CASE WHEN ${regime} = 'caixa' THEN COALESCE(data_pagamento, data_vencimento) ELSE data_competencia END::date as data_ref,
         valor_aberto::numeric as valor,
         numero_titulo, status, fornecedor_id
       FROM titulos_pagar 
       WHERE deletado = false AND status NOT IN ('cancelado', 'pago')
-      AND CASE WHEN ${regime} = 'caixa' THEN 
-        COALESCE(data_pagamento, data_vencimento)
-      ELSE data_competencia END >= NOW()
       ORDER BY data_ref
     `;
 
@@ -752,10 +842,13 @@ async function handleFluxoCaixa(req: any, res: any) {
 
       const rec = receitasRaw.filter((r: any) => {
         const d = r.data_ref instanceof Date ? r.data_ref.toISOString().split('T')[0] : String(r.data_ref).split('T')[0];
+        // O primeiro período engloba tudo o que está para trás (vencidos)
+        if (i === 0) return d <= fimStr;
         return d >= inicioStr && d <= fimStr;
       });
       const pag = despesasRaw.filter((r: any) => {
         const d = r.data_ref instanceof Date ? r.data_ref.toISOString().split('T')[0] : String(r.data_ref).split('T')[0];
+        if (i === 0) return d <= fimStr;
         return d >= inicioStr && d <= fimStr;
       });
 
@@ -789,47 +882,56 @@ async function handleRelatorios(req: any, res: any) {
   const { type } = req.query;
 
   if (type === 'dre') {
-    const { data_inicio, data_fim, regime = 'competencia' } = req.query;
-    const start = data_inicio ? new Date(data_inicio as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const end = data_fim ? new Date(data_fim as string) : new Date();
-    const campoData = regime === 'caixa' ? 'data_pagamento' : 'data_competencia';
+    const { data_inicio, data_fim, regime = 'caixa' } = req.query;
+    const startDate = data_inicio ? new Date(data_inicio as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endDate = data_fim ? new Date(data_fim as string) : new Date();
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
 
-    // Receitas por classe
-    const receitas = await sql`
-      SELECT 
-        cf.codigo, cf.nome, cf.pai_id,
+    const start = startDate.toISOString().split('T')[0];
+    const end = endDate.toISOString().split('T')[0];
+    const isCaixa = regime === 'caixa';
+    const dateExpr = isCaixa ? 'COALESCE(t.data_pagamento, t.data_vencimento)' : 'COALESCE(t.data_competencia, t.data_vencimento)';
+    const statusExpr = isCaixa ? "AND t.status = 'pago'" : '';
+
+    const receitas = await sql(`
+      SELECT
+        COALESCE(cf.codigo, '9.9') as codigo,
+        COALESCE(cf.nome, 'OUTRAS RECEITAS (NÃO CLASSIFICADAS)') as nome,
+        cf.pai_id,
         SUM(t.valor_original::numeric) as valor
-      FROM classes_financeiras cf
-      JOIN titulos_receber t ON t.classe_financeira_id = cf.id
-      WHERE COALESCE(t.${sql.unsafe(campoData)}, t.data_vencimento) BETWEEN ${start} AND ${end} 
+      FROM titulos_receber t
+      LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+      WHERE (${dateExpr})::date BETWEEN '${start}'::date AND '${end}'::date
         AND t.status != 'cancelado' AND t.deletado = false
-        AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
+        ${statusExpr}
       GROUP BY cf.codigo, cf.nome, cf.pai_id
       ORDER BY cf.codigo
-    `;
+    `);
 
-    // Despesas por classe
-    const despesas = await sql`
-      SELECT 
-        cf.codigo, cf.nome, cf.pai_id,
+    const despesas = await sql(`
+      SELECT
+        COALESCE(cf.codigo, '9.9') as codigo,
+        COALESCE(cf.nome, 'OUTRAS DESPESAS (NÃO CLASSIFICADAS)') as nome,
+        cf.pai_id,
         SUM(t.valor_original::numeric) as valor
-      FROM classes_financeiras cf
-      JOIN titulos_pagar t ON t.classe_financeira_id = cf.id
-      WHERE COALESCE(t.${sql.unsafe(campoData)}, t.data_vencimento) BETWEEN ${start} AND ${end} 
+      FROM titulos_pagar t
+      LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+      WHERE (${dateExpr})::date BETWEEN '${start}'::date AND '${end}'::date
         AND t.status != 'cancelado' AND t.deletado = false
-        AND ((${regime} = 'caixa' AND t.status = 'pago') OR (${regime} = 'competencia'))
+        ${statusExpr}
       GROUP BY cf.codigo, cf.nome, cf.pai_id
       ORDER BY cf.codigo
-    `;
+    `);
 
     // Montar estrutura DRE Senior
     const totalReceitas = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
     const totalDespesas = despesas.reduce((s: number, r: any) => s + Number(r.valor), 0);
 
-    // Categorizar despesas por código de classe
-    const custosDiretos = despesas.filter((d: any) => d.codigo?.startsWith('2.1') || d.codigo?.startsWith('2.2'));
-    const despesasOp = despesas.filter((d: any) => d.codigo?.startsWith('2.3') || d.codigo?.startsWith('2.4') || d.codigo?.startsWith('2.5'));
-    const despesasAdmin = despesas.filter((d: any) => d.codigo?.startsWith('2.6'));
+    // Categorizar despesas por código de classe (mais flexível)
+    const custosDiretos = despesas.filter((d: any) => d.codigo?.startsWith('2.1') || d.codigo?.startsWith('2.2') || d.codigo?.startsWith('2.4'));
+    const despesasOp = despesas.filter((d: any) => d.codigo?.startsWith('2.3') || d.codigo?.startsWith('2.5'));
+    const despesasAdmin = despesas.filter((d: any) => d.codigo?.startsWith('2.6') || d.codigo === '9.9');
     const despesasFinanceiras = despesas.filter((d: any) => d.codigo?.startsWith('1.3.2'));
     const receitasFinanceiras = receitas.filter((r: any) => r.codigo?.startsWith('1.3.2'));
 
@@ -848,7 +950,7 @@ async function handleRelatorios(req: any, res: any) {
     return res.status(200).json({ 
       success: true, 
       data: {
-        periodo: { inicio: start, fim: end, regime },
+        periodo: { inicio: startDate, fim: endDate, regime },
         receita_bruta: receitaBruta,
         receita_liquida: receitaLiquida,
         lucro_bruto: lucroBruto,
@@ -873,39 +975,57 @@ async function handleRelatorios(req: any, res: any) {
   }
 
   if (type === 'aging') {
-    const { modo } = req.query; // 'receber' ou 'pagar'
-    const table = modo === 'pagar' ? 'titulos_pagar' : 'titulos_receber';
-    const joinTable = modo === 'pagar' ? 'fornecedores' : 'clients';
-    const joinAlias = modo === 'pagar' ? 'f' : 'c';
-    const nameColumn = modo === 'pagar' ? 'f.nome' : 'c.nome';
+    const { modo } = req.query;
+    const isPagar = modo === 'pagar';
+    const table = isPagar ? 'titulos_pagar' : 'titulos_receber';
+    const joinTable = isPagar ? 'fornecedores' : 'clients';
+    const joinAlias = isPagar ? 'f' : 'c';
+    const nameColumn = isPagar ? 'f.nome' : 'c.nome';
+    const entityColumn = isPagar ? 'fornecedor_id' : 'cliente_id';
 
-    const summary = await sql`
-      SELECT 
-        CASE 
-          WHEN data_vencimento > CURRENT_DATE THEN 'A Vencer'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '30 days' THEN '0-30 Dias'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '60 days' THEN '31-60 Dias'
-          WHEN data_vencimento > CURRENT_DATE - INTERVAL '90 days' THEN '61-90 Dias'
-          ELSE 'Acima de 90 Dias'
+    const summary = await sql(`
+      SELECT
+        CASE
+          WHEN data_vencimento > CURRENT_DATE THEN 'A VENCER'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '30 days' THEN '0-30 DIAS'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '60 days' THEN '31-60 DIAS'
+          WHEN data_vencimento > CURRENT_DATE - INTERVAL '90 days' THEN '61-90 DIAS'
+          ELSE 'ACIMA DE 90 DIAS'
         END as faixa,
         SUM(valor_aberto::numeric) as total,
         COUNT(*) as qtd_titulos
-      FROM ${sql.unsafe(table)}
-      WHERE status IN ('aberto', 'pago_parcial') AND deletado = false
-      GROUP BY faixa`;
+      FROM ${table}
+      WHERE status NOT IN ('pago', 'cancelado') AND deletado = false
+      GROUP BY faixa
+    `);
 
-    const details = await sql`
-      SELECT 
-        t.*, 
-        ${sql.unsafe(nameColumn)} as entidade_nome
-      FROM ${sql.unsafe(table)} t
-      LEFT JOIN ${sql.unsafe(joinTable)} ${sql.unsafe(joinAlias)} ON ${sql.unsafe(joinAlias)}.id::text = t.${sql.unsafe(modo === 'pagar' ? 'fornecedor_id' : 'cliente_id')}::text
-      WHERE t.status IN ('aberto', 'pago_parcial') AND t.deletado = false
-      ORDER BY t.data_vencimento ASC`;
-    
+    const summaryNormalized = summary.map((item: any) => {
+      const faixa = String(item.faixa || '').toUpperCase();
+      const normalizedFaixa = faixa.includes('A VENCER')
+        ? 'A Vencer'
+        : faixa.includes('0-30')
+          ? '0-30 Dias'
+          : faixa.includes('31-60')
+            ? '31-60 Dias'
+            : faixa.includes('61-90')
+              ? '61-90 Dias'
+              : 'Acima de 90 Dias';
+      return { ...item, faixa: normalizedFaixa };
+    });
+
+    const details = await sql(`
+      SELECT
+        t.*,
+        COALESCE(${nameColumn}, 'N/A') as entidade_nome
+      FROM ${table} t
+      LEFT JOIN ${joinTable} ${joinAlias} ON ${joinAlias}.id::text = t.${entityColumn}::text
+      WHERE t.status NOT IN ('pago', 'cancelado') AND t.deletado = false
+      ORDER BY t.data_vencimento ASC
+    `);
+
     return res.status(200).json({ 
       success: true, 
-      data: { summary, details } 
+      data: { summary: summaryNormalized, details } 
     });
   }
 
@@ -917,14 +1037,14 @@ async function handleRelatorios(req: any, res: any) {
     const recs = await sql`
       SELECT data_vencimento::date as data, SUM(valor_aberto::numeric) as valor 
       FROM titulos_receber 
-      WHERE status != 'pago' AND data_vencimento BETWEEN NOW() AND NOW() + ${days} * INTERVAL '1 day'
+      WHERE status != 'pago' AND deletado = false AND data_vencimento BETWEEN NOW() AND NOW() + ${days} * INTERVAL '1 day'
       GROUP BY data_vencimento::date
     `;
 
     const pags = await sql`
       SELECT data_vencimento::date as data, SUM(valor_aberto::numeric) as valor 
       FROM titulos_pagar 
-      WHERE status != 'pago' AND data_vencimento BETWEEN NOW() AND NOW() + ${days} * INTERVAL '1 day'
+      WHERE status != 'pago' AND deletado = false AND data_vencimento BETWEEN NOW() AND NOW() + ${days} * INTERVAL '1 day'
       GROUP BY data_vencimento::date
     `;
 
@@ -956,11 +1076,11 @@ async function handleRelatorios(req: any, res: any) {
 
   if (type === 'dashboard') {
     const saldos = await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false`;
-    const rec30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND data_vencimento <= NOW() + INTERVAL '30 days'`;
-    const pag30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status != 'pago' AND data_vencimento <= NOW() + INTERVAL '30 days'`;
+    const rec30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days'`;
+    const pag30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days'`;
     
     // Inadimplência (Vencidos há mais de 5 dias)
-    const vencidosRec = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND data_vencimento < (NOW() - INTERVAL '5 days')`;
+    const vencidosRec = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento < (NOW() - INTERVAL '5 days')`;
     
     // Histórico de Faturamento (3 meses)
     const faturamentoMes = await sql`
@@ -981,7 +1101,7 @@ async function handleRelatorios(req: any, res: any) {
         SUM(t.valor_original::numeric) as total
       FROM titulos_pagar t
       JOIN classes_financeiras c ON t.classe_financeira_id = c.id
-      WHERE t.data_competencia >= DATE_TRUNC('month', NOW())
+      WHERE t.data_competencia >= DATE_TRUNC('month', NOW()) AND t.deletado = false
       GROUP BY c.nome
       ORDER BY total DESC
       LIMIT 5
@@ -1118,38 +1238,164 @@ async function handleRelatorios(req: any, res: any) {
 }
 
 
+async function handleFechamentos(req: any, res: any, id?: string) {
+  if (req.method === 'GET') {
+    const result = await sql`SELECT * FROM fechamentos_financeiros ORDER BY ano DESC, mes DESC, data_fechamento DESC NULLS LAST`;
+    return res.status(200).json({ success: true, data: result });
+  }
+
+  if (req.method === 'POST') {
+    const f = req.body || {};
+    const mes = Number(f.mes);
+    const ano = Number(f.ano);
+
+    if (!mes || !ano) {
+      return res.status(400).json({ success: false, error: 'Mês e ano são obrigatórios' });
+    }
+
+    const existing = f.id
+      ? (await sql`SELECT * FROM fechamentos_financeiros WHERE id = ${f.id}`)[0]
+      : (await sql`SELECT * FROM fechamentos_financeiros WHERE mes = ${mes} AND ano = ${ano} LIMIT 1`)[0];
+
+    const dataFechamento = f.status === 'fechado' ? new Date() : existing?.data_fechamento || null;
+
+    if (existing) {
+      const result = await sql`
+        UPDATE fechamentos_financeiros SET
+          mes = ${mes},
+          ano = ${ano},
+          status = ${f.status || existing.status || 'fechado'},
+          observacoes = ${f.observacoes || existing.observacoes || null},
+          data_fechamento = ${dataFechamento},
+          atualizado_em = NOW()
+        WHERE id = ${existing.id}
+        RETURNING *
+      `;
+      return res.status(200).json({ success: true, data: result[0] });
+    }
+
+    const result = await sql`
+      INSERT INTO fechamentos_financeiros (mes, ano, status, observacoes, data_fechamento)
+      VALUES (${mes}, ${ano}, ${f.status || 'fechado'}, ${f.observacoes || null}, ${dataFechamento})
+      RETURNING *
+    `;
+    return res.status(201).json({ success: true, data: result[0] });
+  }
+
+  return res.status(405).end();
+}
+
+async function handleConferencia(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).end();
+  }
+
+  const body = req.body || {};
+  const conferido = !!body.conferido;
+  const conferidoEm = conferido ? new Date() : null;
+  const origem = String(body.origem || '').toLowerCase();
+  const id = body.id ? String(body.id) : '';
+  const numeroTitulo = String(body.numero_titulo || body.numeroTitulo || '').trim();
+
+  return await sql.begin(async (tx) => {
+    if (id && origem === 'baixa') {
+      await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE id = ${id}`;
+      return res.status(200).json({ success: true, data: { id, origem, conferido } });
+    }
+
+    if (id && origem === 'tesouraria') {
+      await tx`UPDATE movimentacoes_tesouraria SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE id = ${id}`;
+      return res.status(200).json({ success: true, data: { id, origem, conferido } });
+    }
+
+    if (numeroTitulo) {
+      const tituloReceber = (await tx`SELECT id FROM titulos_receber WHERE numero_titulo = ${numeroTitulo} LIMIT 1`)[0];
+      if (tituloReceber) {
+        await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_receber_id = ${tituloReceber.id}`;
+        return res.status(200).json({ success: true, data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' } });
+      }
+
+      const tituloPagar = (await tx`SELECT id FROM titulos_pagar WHERE numero_titulo = ${numeroTitulo} LIMIT 1`)[0];
+      if (tituloPagar) {
+        await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_pagar_id = ${tituloPagar.id}`;
+        return res.status(200).json({ success: true, data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' } });
+      }
+    }
+
+    return res.status(400).json({ success: false, error: 'Dados insuficientes para conferência' });
+  });
+}
+
+
 async function handleContasRecorrentes(req: any, res: any, id?: string) {
-  // ── GERAR TÍTULOS DO MÊS (deve ser verificado antes do POST genérico) ──
+  // ── GERAR TÍTULOS DO MÊS ──
   if (req.method === 'POST' && (id === 'gerar-mes' || (req.url || '').includes('gerar-mes'))) {
     const { mes, ano } = req.query;
     const mesInt = parseInt(mes || String(new Date().getMonth() + 1));
     const anoInt = parseInt(ano || String(new Date().getFullYear()));
 
-    const contas = await sql`SELECT * FROM contas_recorrentes WHERE ativa = true AND deletado = false`;
-    const titulosGerados = [];
+    return await sql.begin(async (tx) => {
+      const contas = await tx`SELECT * FROM contas_recorrentes WHERE ativa = true AND deletado = false`;
+      const titulosGerados = [];
 
-    for (const conta of contas) {
-      const dataVencimento = new Date(anoInt, mesInt - 1, conta.dia_vencimento);
-      const numeroTitulo = `REC-${String(conta.id).substring(0, 8)}-${mesInt}/${anoInt}`;
-      const descricaoTitulo = conta.descricao || `Recorrente dia ${conta.dia_vencimento}`;
+      for (const conta of contas) {
+        const tipo = conta.tipo || 'pagar';
+        const tabela = tipo === 'receber' ? 'titulos_receber' : 'titulos_pagar';
+        const prefixo = tipo === 'receber' ? 'REC' : 'PAG';
+        
+        // Usa o ID completo para evitar qualquer chance de colisão e verifica inclusive deletados 
+        // para evitar erro de constraint UNIQUE do Postgres
+        const numeroTitulo = `${prefixo}-${conta.id}-${mesInt}/${anoInt}`;
+        
+        const queryJaExiste = tipo === 'receber' 
+          ? tx`SELECT id FROM titulos_receber WHERE numero_titulo = ${numeroTitulo}`
+          : tx`SELECT id FROM titulos_pagar WHERE numero_titulo = ${numeroTitulo}`;
+        
+        const jaExiste = await queryJaExiste;
+        if (jaExiste.length > 0) continue;
 
-      const result = await sql`
-        INSERT INTO titulos_pagar (
-          numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
-          data_emissao, data_vencimento, data_competencia,
-          classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
-          status, parcela, total_parcelas, tipo_despesa, observacoes
-        ) VALUES (
-          ${numeroTitulo}, ${conta.fornecedor_id || null},
-          ${conta.valor}, ${conta.valor}, ${conta.valor},
-          NOW(), ${dataVencimento}, ${dataVencimento},
-          ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null}, ${conta.conta_bancaria_id || null},
-          'aberto', 1, 1, 'fixa', ${descricaoTitulo}
-        ) RETURNING *`;
-      titulosGerados.push(result[0]);
-    }
+        const dataVencimento = new Date(anoInt, mesInt - 1, conta.dia_vencimento);
+        const descricaoTitulo = conta.descricao || `Recorrente dia ${conta.dia_vencimento}`;
 
-    return res.status(201).json({ success: true, message: `${titulosGerados.length} título(s) gerado(s)`, data: titulosGerados });
+        let result;
+        if (tipo === 'receber') {
+          result = await tx`
+            INSERT INTO titulos_receber (
+              numero_titulo, cliente_id, valor_original, valor_liquido, valor_aberto,
+              data_emissao, data_vencimento, data_competencia,
+              classe_financeira_id, forma_recebimento_id,
+              status, parcela, total_parcelas, observacoes
+            ) VALUES (
+              ${numeroTitulo}, ${conta.cliente_id || null},
+              ${conta.valor}, ${conta.valor}, ${conta.valor},
+              NOW(), ${dataVencimento}, ${dataVencimento},
+              ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null},
+              'aberto', 1, 1, ${descricaoTitulo}
+            ) RETURNING *`;
+        } else {
+          result = await tx`
+            INSERT INTO titulos_pagar (
+              numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
+              data_emissao, data_vencimento, data_competencia,
+              classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+              status, parcela, total_parcelas, observacoes
+            ) VALUES (
+              ${numeroTitulo}, ${conta.fornecedor_id || null},
+              ${conta.valor}, ${conta.valor}, ${conta.valor},
+              NOW(), ${dataVencimento}, ${dataVencimento},
+              ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null}, ${conta.conta_bancaria_id || null},
+              'aberto', 1, 1, ${descricaoTitulo}
+            ) RETURNING *`;
+        }
+        titulosGerados.push(result[0]);
+      }
+
+      return res.status(201).json({ 
+        success: true, 
+        message: `${titulosGerados.length} título(s) gerado(s)`, 
+        data: titulosGerados 
+      });
+    });
   }
 
   if (req.method === 'GET') {

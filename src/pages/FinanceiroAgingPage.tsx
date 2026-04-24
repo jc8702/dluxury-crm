@@ -10,8 +10,8 @@ export default function FinanceiroAgingPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.financeiro.reports.aging({ modo });
-      setData(res.data || { summary: [], details: [] });
+      const res = await api.financeiro.relatorios.aging({ modo });
+      setData(res?.data || res || { summary: [], details: [] });
     } catch (err) {
       console.error(err);
     } finally {

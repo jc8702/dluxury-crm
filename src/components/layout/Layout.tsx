@@ -1,15 +1,12 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import CopilotAssistant from '../ai/CopilotAssistant';
-import { useAppContext } from '../../context/AppContext';
+import DluxChat from '../ai/DluxChat';
 
 export default function Layout() {
-  const { user } = useAppContext();
-
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <Sidebar activeTab="dashboard" setActiveTab={() => {}} />
+      <Sidebar />
       <main style={{
         flex: 1,
         height: '100vh',
@@ -29,7 +26,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
-      <CopilotAssistant />
+      <DluxChat />
     </div>
   );
 }

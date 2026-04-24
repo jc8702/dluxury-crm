@@ -30,7 +30,7 @@ const Login: React.FC = () => {
     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', alignItems: 'center', justifyContent: 'center' }}>
       <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src="/logo.png" alt="D'Luxury" style={{ width: '80px', height: '80px', borderRadius: '12px', marginBottom: '1rem', objectFit: 'contain' }} />
+          <img src="/logo.png" alt="D'Luxury" style={{ width: '120px', height: '120px', marginBottom: '1.5rem', objectFit: 'contain' }} />
           <h1 style={{ color: 'var(--primary)', fontSize: '1.5rem', fontWeight: 'bold' }}>D'LUXURY</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.1em' }}>MÓVEIS SOB MEDIDA</p>
         </div>

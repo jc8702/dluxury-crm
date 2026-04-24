@@ -115,10 +115,13 @@ export const api = {
   agenda: {
     list: (params: any = {}) => {
       const qs = new URLSearchParams(params).toString();
-      return apiCall<any[]>(`agenda?${qs}`);
+      return apiCall<any[]>(`agenda${qs ? `?${qs}` : ''}`);
     },
+    listKanban: () => apiCall<any>('agenda?action=kanban'),
     create: (data: any) => apiCall<any>('agenda', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`agenda?id=${id}`, 'PATCH', data),
+    move: (id: string, status: string) => apiCall<any>(`agenda?id=${id}&action=mover`, 'PATCH', { status_visita: status }),
+    realize: (id: string, resultado: string) => apiCall<any>(`agenda?id=${id}&action=realizar`, 'PATCH', { resultado_visita: resultado }),
     delete: (id: string) => apiCall<any>(`agenda?id=${id}`, 'DELETE'),
     syncVisitas: () => apiCall<any>('agenda?action=sincronizar', 'POST'),
   },
@@ -260,7 +263,10 @@ export const api = {
         const qs = new URLSearchParams(params).toString();
         return apiCall<any>(`financeiro/relatorios?type=dre${qs ? `&${qs}` : ''}`);
       },
-      aging: () => apiCall<any>('financeiro/relatorios?type=aging'),
+      aging: (params: any = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiCall<any>(`financeiro/relatorios?type=aging${qs ? `&${qs}` : ''}`);
+      },
       dashboard: () => apiCall<any>('financeiro/relatorios?type=dashboard'),
       projetado: (days = 30) => apiCall<any>(`financeiro/relatorios?type=projetado&days=${days}`),
       rentabilidade: (params: any = {}) => {
@@ -283,11 +289,15 @@ export const api = {
     create: (data: any) => apiCall<any>('estoque?type=categories', 'POST', data),
   },
   ai: {
-    chat: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'chat', payload }),
+    chat: (payload: any) => apiCall<any>('ai/chat', 'POST', payload),
     generateBOM: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-bom', payload }),
     auditSKU: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'audit-sku', payload }),
     purchaseSuggestion: () => apiCall<any>('ai-copilot', 'POST', { skill: 'purchase-suggestion' }),
     detectAnomalies: () => apiCall<any>('ai-copilot', 'POST', { skill: 'detect-anomalies' }),
+    analyzeProposal: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'analyze-proposal', payload }),
+    translate: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'translate', payload }),
+    generatePDF: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-pdf', payload }),
+    forecastDemand: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
   },
   planoCorte: {
     list: () => apiCall<any[]>('plano-corte?action=listar_planos_corte'),

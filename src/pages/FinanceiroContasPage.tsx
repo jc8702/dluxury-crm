@@ -47,6 +47,8 @@ const FinanceiroContasPage: React.FC = () => {
     observacoes: '' 
   });
 
+  const normalizeList = (value: any) => (Array.isArray(value) ? value : value?.data || []);
+
   const fetchContas = async () => { 
     setLoading(true); 
     try { 
@@ -63,7 +65,7 @@ const FinanceiroContasPage: React.FC = () => {
   const fetchFechamentos = async () => {
     try {
       const res = await api.financeiro.fechamentos.list();
-      setFechamentos(res.data);
+      setFechamentos(normalizeList(res));
     } catch (e) { console.error(e); }
   };
 
@@ -710,20 +712,27 @@ const FinanceiroContasPage: React.FC = () => {
                 <tbody>
                   {fechamentos.map(f => (
                     <tr key={f.id}>
-                      <td style={{ fontWeight: 600 }}>{new Date(2000, f.mes-1).toLocaleString('pt-BR', {month: 'long'})} / {f.ano}</td>
-                      <td>
-                        <span className="badge" style={{ background: f.status === 'fechado' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: f.status === 'fechado' ? '#ef4444' : '#22c55e' }}>
-                          {f.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: '0.8rem' }}>{new Date(f.data_fechamento).toLocaleDateString('pt-BR')}</td>
-                      <td>
-                        <button className="btn btn-ghost" style={{ padding: '4px 8px', color: '#22c55e' }} onClick={() => {
-                          if (window.confirm('Deseja realmente reabrir este período?')) {
-                             api.financeiro.fechamentos.save({ ...f, status: 'aberto' }).then(fetchFechamentos);
-                          }
-                        }}>Reabrir</button>
-                      </td>
+                      {(() => {
+                        const status = String(f.status || '').toLowerCase();
+                        return (
+                          <>
+                            <td style={{ fontWeight: 600 }}>{new Date(2000, f.mes-1).toLocaleString('pt-BR', {month: 'long'})} / {f.ano}</td>
+                            <td>
+                              <span className="badge" style={{ background: status === 'fechado' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: status === 'fechado' ? '#ef4444' : '#22c55e' }}>
+                                {String(f.status || '').toUpperCase()}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.8rem' }}>{new Date(f.data_fechamento).toLocaleDateString('pt-BR')}</td>
+                            <td>
+                              <button className="btn btn-ghost" style={{ padding: '4px 8px', color: '#22c55e' }} onClick={() => {
+                                if (window.confirm('Deseja realmente reabrir este período?')) {
+                                   api.financeiro.fechamentos.save({ ...f, status: 'aberto' }).then(fetchFechamentos);
+                                }
+                              }}>Reabrir</button>
+                            </td>
+                          </>
+                        );
+                      })()}
                     </tr>
                   ))}
                   {fechamentos.length === 0 && (

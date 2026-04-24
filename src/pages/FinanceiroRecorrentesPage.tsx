@@ -34,21 +34,23 @@ export default function FinanceiroRecorrentesPage() {
   const [gerarMes, setGerarMes] = useState(new Date().getMonth() + 1);
   const [gerarAno, setGerarAno] = useState(new Date().getFullYear());
 
+  const normalizeList = (value: any) => (Array.isArray(value) ? value : value?.data || []);
+
   const load = async () => {
     setLoading(true);
     try {
-      const [recs, cls, forns, cts, fms] = await Promise.all([
+      const [recsRes, clsRes, fornsRes, ctsRes, fmsRes] = await Promise.all([
         api.financeiro.contasRecorrentes.list(),
-        api.financeiro.classes.list(),
+        api.financeiro.classesFinanceiras.list(),
         api.suppliers.list(),
         api.financeiro.contasInternas.list(),
         api.financeiro.formasPagamento.list()
       ]);
-      setRows(recs || []);
-      setClasses(cls || []);
-      setFornecedores(forns || []);
-      setContas(cts || []);
-      setFormas(fms || []);
+      setRows(normalizeList(recsRes));
+      setClasses(normalizeList(clsRes));
+      setFornecedores(normalizeList(fornsRes));
+      setContas(normalizeList(ctsRes));
+      setFormas(normalizeList(fmsRes));
     } catch (err) {
       console.error(err);
     } finally {

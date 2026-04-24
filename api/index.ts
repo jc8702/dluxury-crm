@@ -34,6 +34,10 @@ export default async function handler(req: any, res: any) {
       const { handleOrcamentos } = await import('../src/api-lib/orcamentos.js');
       return await handleOrcamentos(req, res);
     }
+    if (cleanUrl.startsWith('/api/ai/chat')) {
+      const { handleAIChat } = await import('../src/api-lib/ai-chat.js');
+      return await handleAIChat(req, res);
+    }
     if (cleanUrl.startsWith('/api/ai-copilot')) {
       const { handleAICopilot } = await import('../src/api-lib/copilot.js');
       return await handleAICopilot(req, res);

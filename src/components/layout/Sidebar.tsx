@@ -63,7 +63,7 @@ const Sidebar: React.FC = () => {
     }}>
       <div className="sidebar-header" style={{ marginBottom: '2rem', padding: '0.5rem 0.5rem', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img src="/logo.png" alt="D'Luxury" style={{ width: '48px', minWidth: '48px', height: '48px', minHeight: '48px', objectFit: 'contain', flexShrink: 0, borderRadius: '10px' }} />
+          <img src="/logo.png" alt="D'Luxury" style={{ width: '60px', minWidth: '60px', height: '60px', minHeight: '60px', objectFit: 'contain', flexShrink: 0 }} />
           <div className="sidebar-label" style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
             <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--primary)', lineHeight: '1', letterSpacing: '0.02em' }}>D'LUXURY</span>
             <span style={{ fontSize: '0.6rem', fontWeight: '500', color: 'var(--text-muted)', letterSpacing: '0.06em', lineHeight: '1' }}>MÓVEIS SOB MEDIDA</span>

@@ -9,10 +9,9 @@ const google = createGoogleGenerativeAI({
   apiKey: aiApiKey,
 });
 
-// Cadeia de modelos Super Atualizada para Fallback
-const modelFlash = google('gemini-1.5-flash');
-const modelPro = google('gemini-1.5-pro');
-const modelLegacy = google('gemini-1.5-flash');
+// Modelos Gemini GRÁTIS (free tier)
+const modelFlash = google('gemini-2.0-flash');
+const modelPro = google('gemini-2.0-flash');
 
 async function listAvailableModels(key: string) {
   try {
@@ -109,6 +108,71 @@ async function detectAnomalies() {
     });
     return object;
   } catch(e) { return { anomalias: [] }; }
+}
+
+async function analyzeProposal(payload: any) {
+  const cliente = payload.cliente || '';
+  const itens = payload.itens || [];
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        viability_score: z.number().min(0).max(100),
+        pontos_fortes: z.array(z.string()),
+        pontos_fracos: z.array(z.string()),
+        risco_factor: z.enum(['baixo', 'medio', 'alto']),
+        sugestao_preco: z.number(),
+        observacoes: z.string()
+      }),
+      prompt: `Analise esta proposta comercial:\n\nCliente: ${cliente}\nItens: ${JSON.stringify(itens)}\n\nConsidere: margens, complexidade, prazo e histórico do cliente.`
+    });
+    return object;
+  } catch(e) { return { viability_score: 50, pontos_fortes: [], pontos_fracos: [], risco_factor: 'medio', sugestao_preco: 0, observacoes: 'Erro na análise' }; }
+}
+
+async function translateDescription(payload: any) {
+  const { text, targetLang } = payload;
+  try {
+    const { text: translated } = await generateText({
+      model: modelFlash,
+      prompt: `Traduza para ${targetLang || 'inglês'}: ${text}`
+    });
+    return { original: text, translated, lang: targetLang };
+  } catch(e) { return { original: text, translated: text, lang: targetLang }; }
+}
+
+async function generateProposalPDF(payload: any) {
+  const { cliente, itens, total, validade } = payload;
+  try {
+    const { text } = await generateText({
+      model: modelPro,
+      prompt: `Gere um orçamento profissional em formato markdown para:\n\nCliente: ${cliente}\nItens: ${JSON.stringify(itens)}\nTotal: R$ ${total}\nValidade: ${validade}\n\nInclua: cabeçalho, descrição dos serviços, valores, condições.`
+    });
+    return { markdown: text, generated_at: new Date().toISOString() };
+  } catch(e) { return { markdown: 'Erro ao gerar PDF', generated_at: new Date().toISOString() }; }
+}
+
+async function forecastDemand(payload: any) {
+  const historico = await sql`
+    SELECT DATE_TRUNC('month', criado_em) as mes, SUM(valor_total) as receita
+    FROM titulos_receber 
+    WHERE criado_em > NOW() - INTERVAL '12 months' AND status = 'recebido'
+    GROUP BY DATE_TRUNC('month', criado_em)
+    ORDER BY mes
+  `;
+  try {
+    const { object } = await generateObject({
+      model: modelPro,
+      schema: z.object({
+        previsao_proximo_mes: z.number(),
+        tendencia: z.enum(['crescente', 'estavel', 'decrescente']),
+        sazonalidade: z.array(z.object({ mes: z.string(), fator: z.number() })),
+        recomendacoes: z.array(z.string())
+      }),
+      prompt: `Analise o histórico de vendas e faça previsão de demanda:\n\nHistórico: ${JSON.stringify(historico)}\n\nUse análise de série temporal simples.`
+    });
+    return object;
+  } catch(e) { return { previsao_proximo_mes: 0, tendencia: 'estavel', sazonalidade: [], recomendacoes: [] }; }
 }
 
 // ===============================
@@ -418,51 +482,34 @@ async function handleListByFamilia(entities: Entities) {
 
 async function processUserMessage(message: string, history: any[] = []) {
   try {
-    let intent = await parseIntent(message, history);
+    console.log("API Key presente:", !!aiApiKey, aiApiKey ? aiApiKey.substring(0, 10) + "..." : "NÃO");
     
-    const cleanDesc = (text: string) => {
-      return text
-        .replace(/^(cadastra|cadastrar|crie|cria|adiciona|adicionar|incluir|inclua|por favor|para mim|agora)[:\s]*/i, '')
-        .trim();
+    const contextChat = history.length > 0 
+      ? `\n\nHistórico:\n${history.map(h => `${h.role === 'user' ? 'Usuário' : 'IA'}: ${h.content}`).join('\n')}` 
+      : '';
+    
+    const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND criado_em > NOW() - INTERVAL '30 days'`;
+    const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
+    const clientes = await sql`SELECT nome FROM clientes ORDER BY nome LIMIT 5`;
+    const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY criado_em DESC LIMIT 5`;
+    
+    const dados = {
+      vendasMes: vendas[0]?.total || 0,
+      estoqueBaixo: estoque,
+      clientes: clientes,
+      ordensProducao: ops
     };
 
-    const msgLow = message.toLowerCase();
+    const { text } = await generateText({
+      model: modelFlash,
+      prompt: `Você é um assistente de ERP. Responda: "${message}". Dados: ${JSON.stringify(dados)}`
+    });
 
-    // FALLBACK ROBUSTO: Se o NLU vacilar, as keywords de marcenaria assumem
-    if (intent.type === "UNKNOWN" || intent.type === "SEARCH_SKU") {
-      if (msgLow.match(/\d+\s*x\s*\d+/) || msgLow.includes("gaveteiro") || msgLow.includes("armário") || msgLow.includes("balcão")) {
-        intent.type = "SUGGEST_BOM";
-      } else if (msgLow.includes("parafuso") || msgLow.includes("prego") || msgLow.includes("bucha") || msgLow.includes("fix-")) {
-        if (msgLow.includes("cadastra") || msgLow.includes("cria")) {
-          intent = { type: "SUGGEST_CREATE_SKU", entities: { familia: "Parafuso", descricao: cleanDesc(message), unidade: "CENTO" } };
-        } else {
-          intent.type = "SEARCH_SKU";
-        }
-      } else if (msgLow.includes("comprar") || msgLow.includes("estoque") || msgLow.includes("crítico")) {
-        intent.type = "ANALYZE_STOCK";
-      }
-
-      // NOVO: Fallback específico para Ordens de Produção (bypass NLU se for comando direto)
-      if (msgLow.includes("gerar op") || msgLow.includes("gerar ordem de produção") || msgLow.includes("confirmar projeto")) {
-        intent.type = "CONFIRM_ACTION";
-      }
-    }
-
-    if (intent.entities?.descricao) intent.entities.descricao = cleanDesc(intent.entities.descricao);
-
-    switch (intent.type) {
-      case "SUGGEST_CREATE_SKU": return await handleSuggestCreateSKU(intent.entities);
-      case "CONFIRM_ACTION": return await handleConfirmAction(history);
-      case "SUGGEST_BOM": return await handleSuggestBOM(intent.entities, message);
-      case "ANALYZE_STOCK": return await handleAnalyzeStock();
-      case "GET_LAST_SKU": return await handleGetLast();
-      case "SEARCH_SKU": return await handleSearch(intent.entities);
-      case "LIST_BY_FAMILIA": return await handleListByFamilia(intent.entities);
-      default: return { message: "Sou seu Copiloto Industrial. Posso sugerir cadastros, calcular materiais (BOM) ou analisar seu estoque. Como posso acelerar seu trabalho agora?" };
-    }
+    return { message: text };
+    
   } catch (error) {
-    console.error("Erro crítico no agente NLU:", error);
-    return { message: "Erro de processamento central da inteligência." };
+    console.error("Erro Copilot:", error);
+    return { message: "Desculpe, houve um erro. Tente novamente." };
   }
 }
 
@@ -495,6 +542,18 @@ export async function handleAICopilot(req: any, res: any) {
         return res.status(200).json({ success: true, data: result });
       case 'detect-anomalies': 
         result = await detectAnomalies();
+        return res.status(200).json({ success: true, data: result });
+      case 'analyze-proposal': 
+        result = await analyzeProposal(payload);
+        return res.status(200).json({ success: true, data: result });
+      case 'translate': 
+        result = await translateDescription(payload);
+        return res.status(200).json({ success: true, data: result });
+      case 'generate-pdf': 
+        result = await generateProposalPDF(payload);
+        return res.status(200).json({ success: true, data: result });
+      case 'forecast-demand': 
+        result = await forecastDemand(payload);
         return res.status(200).json({ success: true, data: result });
       default: 
         return res.status(400).json({ success: false, error: 'Skill de IA não reconhecida' });

@@ -183,28 +183,31 @@ export default function FinanceiroFluxoCaixaPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {periodos.map((p, i) => (
-                    <tr 
-                      key={i} 
-                      onClick={() => setSelectedPeriod(p)}
-                      style={{ 
-                        cursor: 'pointer', 
-                        transition: '0.2s',
-                        background: selectedPeriod?.label === p.label ? 'var(--primary)08' : 'transparent',
-                        borderLeft: selectedPeriod?.label === p.label ? '4px solid var(--primary)' : '4px solid transparent'
-                      }}
-                      onMouseEnter={e => !selectedPeriod?.label && (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                      onMouseLeave={e => !selectedPeriod?.label && (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 700 }}>{p.label}</td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{fmt(p.saldo_anterior)}</td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--success)', fontWeight: 700, fontFamily: 'monospace' }}>+{fmt(p.receitas)}</td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--danger)', fontWeight: 700, fontFamily: 'monospace' }}>-{fmt(p.despesas)}</td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontSize: '0.9rem', fontWeight: 900, color: p.saldo_projetado >= 0 ? 'var(--success)' : 'var(--danger)', fontFamily: 'monospace' }}>
-                         {fmt(p.saldo_projetado)}
-                      </td>
-                    </tr>
-                  ))}
+                  {periodos.map((p, i) => {
+                    const isSelected = selectedPeriod?.label === p.label;
+                    return (
+                      <tr 
+                        key={i} 
+                        onClick={() => setSelectedPeriod(p)}
+                        className={isSelected ? 'selected-row' : ''}
+                        style={{ 
+                          cursor: 'pointer', 
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                          borderLeft: isSelected ? '4px solid var(--primary)' : '4px solid transparent',
+                          borderBottom: '1px solid rgba(255,255,255,0.05)'
+                        }}
+                      >
+                        <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', fontWeight: 700 }}>{p.label}</td>
+                        <td style={{ padding: '1.25rem 1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{fmt(p.saldo_anterior)}</td>
+                        <td style={{ padding: '1.25rem 1rem', textAlign: 'right', fontSize: '0.85rem', color: '#10b981', fontWeight: 700, fontFamily: 'monospace' }}>+{fmt(p.receitas)}</td>
+                        <td style={{ padding: '1.25rem 1rem', textAlign: 'right', fontSize: '0.85rem', color: '#ef4444', fontWeight: 700, fontFamily: 'monospace' }}>-{fmt(p.despesas)}</td>
+                        <td style={{ padding: '1.25rem 1rem', textAlign: 'right', fontSize: '0.95rem', fontWeight: 900, color: p.saldo_projetado >= 0 ? '#10b981' : '#ef4444', fontFamily: 'monospace' }}>
+                           {fmt(p.saldo_projetado)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

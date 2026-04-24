@@ -1,251 +1,143 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import Modal from '../ui/Modal';
 import { useAppContext } from '../../context/AppContext';
+import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {
-  const { visits, projects, clients, updateKanbanStatus, addKanbanItem, updateKanbanItem } = useAppContext();
+  const { events, visits, loadEvents, updateKanbanStatus } = useAppContext();
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    city: '',
-    visitDate: '',
-    visitTime: '',
-    visitType: '📐 Medição',
-    projectId: '',
-    observations: '',
-    status: 'a-agendar'
-  });
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [
-    { id: 'a-agendar', title: '📋 A Agendar' },
-    { id: 'confirmada', title: '✅ Confirmada' },
-    { id: 'realizada', title: '🏠 Realizada' },
-    { id: 'follow-up', title: '📞 Follow-up' },
+    { id: 'agendado', title: '📋 AGENDADO' },
+    { id: 'realizado', title: '🏠 REALIZADO' },
+    { id: 'follow_up', title: '📞 FOLLOW-UP' },
   ];
 
-  const visitTypes = [
-    { value: '📐 Medição', label: '📐 Medição' },
-    { value: '🎨 Apresentação de Projeto', label: '🎨 Apresentação de Projeto' },
-    { value: '📦 Entrega', label: '📦 Entrega' },
-    { value: '🔧 Instalação', label: '🔧 Instalação' },
-    { value: '🤝 Pós-venda', label: '🤝 Pós-venda' },
-  ];
-
-  const handleMove = (id: string, newStatus: string) => {
-    updateKanbanStatus('visit', id, newStatus);
+  const fetchVisits = async () => {
+    setLoading(true);
+    await loadEvents();
+    setLoading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // 1. Verificar se o cliente já existe, senão faz pré-cadastro
-    const existingClient = clients.find(c => c.nome.toLowerCase() === formData.title.toLowerCase());
-    
-    if (!existingClient && !editingItem) {
-        // Pré-cadastro automático
-        try {
-            const newClientData = {
-                nome: formData.title,
-                telefone: formData.phone || '',
-                cidade: formData.city || '',
-                origem: 'outro' as const,
-                observacoes: 'Gerado automaticamente via agendamento de visita.',
-                status: 'ativo' as const
-            };
-            await useAppContext().addClient(newClientData);
-        } catch (err) {
-            console.error('Falha no pré-cadastro de cliente:', err);
-        }
+  const handleMove = async (id: string, newStatus: string) => {
+    try {
+      setLoading(true);
+      await updateKanbanStatus(id, newStatus);
+    } catch (err) {
+      alert('Erro ao mover visita');
+    } finally {
+      setLoading(false);
     }
-
-    const dataToSave = { ...formData, type: 'visit' as const };
-
-    if (editingItem) {
-      await updateKanbanItem(editingItem.id, dataToSave);
-    } else {
-      await addKanbanItem(dataToSave);
-    }
-
-    closeModal();
   };
 
   const handleEdit = (item: any) => {
-    setEditingItem(item);
-    setFormData({
-      title: item.title,
-      contactName: item.contactName || '',
-      email: item.email || '',
-      phone: item.phone || '',
-      city: item.city || '',
-      visitDate: item.visitDate || '',
-      visitTime: item.visitTime || '',
-      visitType: item.visitType || '📐 Medição',
-      projectId: item.projectId || '',
-      observations: item.observations || item.description || '',
-      status: item.status
-    });
+    // Buscar o objeto completo (original) para edição
+    const fullItem = events.find(e => e.id === item.id);
+    setSelectedItem(fullItem);
     setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingItem(null);
-    setFormData({
-      title: '', contactName: '', email: '', phone: '', city: '',
-      visitDate: '', visitTime: '', visitType: '📐 Medição',
-      projectId: '', observations: '', status: 'a-agendar'
-    });
-  };
-
-  const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    color: 'white',
-    fontSize: '0.95rem',
-    width: '100%',
-    outline: 'none',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: '0.4rem',
-    display: 'block'
-  };
-
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
   };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Agenda de Visitas</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Medições, entregas, instalações e pós-venda.</p>
-        </div>
-        <button className="btn" onClick={() => { setEditingItem(null); setIsModalOpen(true); }}
-          style={{
-            background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-            fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
+      
+      {/* Header Estilizado */}
+      <header style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        paddingBottom: '1rem',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ 
+            padding: '1rem', 
+            background: 'var(--icon-bg)', 
+            borderRadius: 'var(--radius-md)', 
+            color: 'var(--icon-color)',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-          + Agendar Visita
-        </button>
+            <Users size={28} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0, letterSpacing: '-0.02em' }}>
+              GESTÃO DE <span style={{ color: 'var(--primary)' }}>VISITAS</span>
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500', marginTop: '0.25rem' }}>
+              FLUXO COMERCIAL E TÉCNICO INTEGRADO À AGENDA INDUSTRIAL.
+            </p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={fetchVisits} 
+            disabled={loading}
+          >
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> ATUALIZAR
+          </button>
+          <button 
+            className="btn btn-primary"
+            onClick={() => { setSelectedItem({ tipo: 'visita' }); setIsModalOpen(true); }}
+            style={{ padding: '0.75rem 1.5rem' }}
+          >
+            <Plus size={20} /> AGENDAR VISITA
+          </button>
+        </div>
       </header>
 
-      <KanbanBoard items={visits} columns={columns} onMove={handleMove} onEdit={handleEdit} />
+      {/* Grid de Resumo Rápido (Opcional, mas melhora a UX) */}
+      <div className="grid-3">
+        {columns.map(col => (
+          <div key={col.id} className="card glass" style={{ padding: '1rem', borderLeft: `3px solid ${col.id === 'agendado' ? 'var(--info)' : col.id === 'realizado' ? 'var(--success)' : 'var(--warning)'}` }}>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{col.title}</p>
+            <h4 style={{ fontSize: '1.5rem', margin: '0.25rem 0' }}>
+              {visits.filter(v => v.status === col.id).length}
+            </h4>
+          </div>
+        ))}
+      </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal}
-        title={editingItem ? "Editar Visita" : "Agendar Visita"} width="600px">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '80vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Cliente (Nome ou Selecionar) *</label>
-              <input 
-                list="clients-list"
-                required
-                style={inputStyle}
-                placeholder="Digite o nome do cliente..."
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-              />
-              <datalist id="clients-list">
-                {clients.map(c => (
-                  <option key={c.id} value={c.nome} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label style={labelStyle}>Projeto Vinculado</label>
-              <select style={selectStyle}
-                value={formData.projectId}
-                onChange={e => setFormData({ ...formData, projectId: e.target.value })}>
-                <option value="" style={{ background: '#1a1a1a' }}>Nenhum</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id} style={{ background: '#1a1a1a' }}>
-                    {p.ambiente} — {p.clientName}
-                  </option>
-                ))}
-              </select>
+      {/* Quadro Kanban */}
+      <div style={{ position: 'relative', marginTop: '1rem' }}>
+        {loading && (
+          <div style={{ 
+            position: 'absolute', 
+            inset: 0, 
+            zIndex: 10, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            background: 'rgba(0,0,0,0.2)', 
+            backdropFilter: 'blur(2px)',
+            borderRadius: 'var(--radius-lg)'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+              <RefreshCw className="animate-spin" size={32} color="var(--primary)" />
+              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)', letterSpacing: '0.1em' }}>SINCRONIZANDO...</span>
             </div>
           </div>
+        )}
+        <KanbanBoard 
+          items={visits} 
+          columns={columns} 
+          onMove={handleMove} 
+          onEdit={handleEdit} 
+        />
+      </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Contato (nome)</label>
-              <input style={inputStyle} placeholder="Quem vai receber"
-                value={formData.contactName} onChange={e => setFormData({ ...formData, contactName: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>WhatsApp</label>
-              <input style={inputStyle} placeholder="(47) 99789-6229"
-                value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Tipo de Visita *</label>
-            <select style={selectStyle} required
-              value={formData.visitType} onChange={e => setFormData({ ...formData, visitType: e.target.value })}>
-              {visitTypes.map(t => (
-                <option key={t.value} value={t.value} style={{ background: '#1a1a1a' }}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Data</label>
-              <input type="date" style={inputStyle}
-                value={formData.visitDate} onChange={e => setFormData({ ...formData, visitDate: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>Hora</label>
-              <input type="time" style={inputStyle}
-                value={formData.visitTime} onChange={e => setFormData({ ...formData, visitTime: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>Endereço/Bairro</label>
-              <input style={inputStyle} placeholder="Bairro ou endereço"
-                value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} />
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Observações</label>
-            <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
-              placeholder="Detalhes da visita..."
-              value={formData.observations} onChange={e => setFormData({ ...formData, observations: e.target.value })} />
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button type="submit" className="btn"
-              style={{
-                background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-                border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer'
-              }}>
-              ✓ {editingItem ? 'Salvar' : 'Agendar'}
-            </button>
-            <button type="button" onClick={closeModal}
-              style={{ background: '#333', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </Modal>
+      <ModalEvento 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={fetchVisits}
+        eventToEdit={selectedItem}
+      />
     </div>
   );
 };
 
 export default VisitKanban;
-

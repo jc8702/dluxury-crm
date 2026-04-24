@@ -264,6 +264,56 @@ export async function runInitDB() {
 
   // 18. Calendar Table
   await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS eventos (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tipo TEXT NOT NULL,
+      titulo TEXT NOT NULL,
+      descricao TEXT,
+      data_inicio TIMESTAMPTZ NOT NULL,
+      data_fim TIMESTAMPTZ NOT NULL,
+      dia_inteiro BOOLEAN DEFAULT FALSE,
+      cliente_id TEXT, -- Alterado para TEXT para flexibilidade
+      projeto_id TEXT,
+      endereco TEXT,
+      objetivo TEXT,
+      status_visita TEXT,
+      resultado_visita TEXT,
+      responsavel_id TEXT NOT NULL,
+      criado_por TEXT NOT NULL,
+      cor TEXT,
+      lembrete_minutos INTEGER,
+      criado_em TIMESTAMPTZ DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS eventos_historico (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      evento_id TEXT NOT NULL,
+      campo_alterado TEXT NOT NULL,
+      valor_anterior TEXT,
+      valor_novo TEXT,
+      alterado_por TEXT NOT NULL,
+      observacao TEXT,
+      alterado_em TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  // Migrações de segurança para tipos de coluna - AGRESSIVO
+  try {
+    await sql`ALTER TABLE eventos ALTER COLUMN cliente_id TYPE TEXT USING cliente_id::TEXT`;
+    await sql`ALTER TABLE eventos ALTER COLUMN projeto_id TYPE TEXT USING projeto_id::TEXT`;
+    await sql`ALTER TABLE eventos ALTER COLUMN criado_por TYPE TEXT USING criado_por::TEXT`;
+    await sql`ALTER TABLE eventos ALTER COLUMN responsavel_id TYPE TEXT USING responsavel_id::TEXT`;
+    
+    await sql`ALTER TABLE eventos_historico ALTER COLUMN evento_id TYPE TEXT USING evento_id::TEXT`;
+    await sql`ALTER TABLE eventos_historico ALTER COLUMN alterado_por TYPE TEXT USING alterado_por::TEXT`;
+  } catch (err: any) {
+    console.error('Erro Crítico na Migração de Tipos:', err.message);
+  }
+  
+  await safeSql(sql`
     CREATE TABLE IF NOT EXISTS eventos_agenda (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       titulo TEXT NOT NULL,

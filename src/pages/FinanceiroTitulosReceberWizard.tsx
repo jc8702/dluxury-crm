@@ -22,6 +22,8 @@ export default function FinanceiroTitulosReceberWizard() {
   const [totalParcelas, setTotalParcelas] = useState(1);
   const [projects, setProjects] = useState<any[]>([]);
 
+  const normalizeList = (value: any) => (Array.isArray(value) ? value : value?.data || []);
+
   const [formData, setFormData] = useState({
     cliente_id: '',
     classe_financeira_id: '',
@@ -51,12 +53,13 @@ export default function FinanceiroTitulosReceberWizard() {
           api.financeiro.formasPagamento.list(),
           api.projects.list()
         ]);
-        setClients(cls || []);
-        setClasses(cf || []);
-        setFormasRecebimento(fr || []);
-        setProjects(prj || []);
+        setClients(normalizeList(cls));
+        setClasses(normalizeList(cf));
+        setFormasRecebimento(normalizeList(fr));
+        setProjects(normalizeList(prj));
 
-        if (fr && fr.length > 0) setFormData(prev => ({ ...prev, forma_recebimento_id: fr[0].id }));
+        const formasList = normalizeList(fr);
+        if (formasList.length > 0) setFormData(prev => ({ ...prev, forma_recebimento_id: formasList[0].id }));
       } catch (err) {
         console.error('[WIZARD RECEBER ERROR]', err);
       }
@@ -251,7 +254,7 @@ export default function FinanceiroTitulosReceberWizard() {
                       setFormData({ ...formData, rateios: newR });
                     }}>
                     <option value="">Selecione...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.ambiente} - {p.client_name}</option>)}
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.ambiente || 'Sem Nome'} - {p.client_name || p.cliente_nome || 'Sem Cliente'}</option>)}
                   </select>
                 </div>
                 <div>

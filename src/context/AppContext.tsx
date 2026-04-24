@@ -323,11 +323,13 @@ interface AppContextType {
   updateProject: (id: string, data: Partial<Project>) => Promise<void>;
   removeProject: (id: string) => Promise<void>;
 
-  // Kanban (visits - legado adaptado)
-  visits: KanbanItem[];
-  updateKanbanStatus: (type: 'project' | 'visit', id: string, newStatus: string) => Promise<void>;
-  addKanbanItem: (item: Omit<KanbanItem, 'id'>) => Promise<void>;
-  updateKanbanItem: (id: string, data: Partial<KanbanItem>) => Promise<void>;
+  // Agenda Unificada
+  events: any[];
+  visits: any[];
+  loadEvents: () => Promise<void>;
+  updateKanbanStatus: (id: string, newStatus: string) => Promise<void>;
+  addEvent: (data: any) => Promise<void>;
+  updateEvent: (id: string, data: any) => Promise<void>;
 
   // Estoque
   categorias: CategoriaMaterial[];
@@ -392,7 +394,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [billings, setBillings] = useState<Billing[]>([]);
-  const [visits, setVisits] = useState<KanbanItem[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<CategoriaMaterial[]>([]);
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
@@ -445,7 +447,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const [clientsData, billingsData, kanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
         api.clients.list().catch(err => { console.error('Clients load error:', err); return []; }),
         api.billings.list().catch(err => { console.error('Billings load error:', err); return []; }),
-        api.kanban.list().catch(err => { console.error('Kanban load error:', err); return []; }),
+        api.agenda.list().catch(err => { console.error('Agenda load error:', err); return []; }),
         api.goals.list().catch(err => { console.error('Goals load error:', err); return []; }),
         api.estoqueCategorias.list().catch(err => { console.error('Categories load error:', err); return []; }),
         api.estoque.list().catch(err => { console.error('Materials load error:', err); return []; }),
@@ -570,25 +572,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: b.status || 'PAGO'
       })));
 
-      // Kanban (visits)
-      const kItems = kanbanData.map((k: any) => ({
-        ...k,
-        id: k.id?.toString() || Math.random().toString(),
-        contactName: k.contact_name || k.contactName,
-        contactRole: k.contact_role || k.contactRole,
-        value: k.value ? Number(k.value) : undefined,
-        visitDate: k.visit_date || k.visitDate,
-        visitTime: k.visit_time || k.visitTime,
-        visitType: k.visit_type || k.visitType,
-        observations: k.observations,
-        dateTime: k.date_time || k.dateTime,
-        visitFormat: k.visit_format || k.visitFormat,
-        description: k.description
-      }));
-      setVisits(kItems.filter((i: any) => (i.type || i.type_kanban) === 'visit'));
+      // Agenda
+      setEvents(Array.isArray(kanbanData) ? kanbanData : []);
 
       // Projects (from kanban items of type 'project' for now — will migrate to projects table)
-      const projectKanbans = kItems.filter((i: any) => (i.type || i.type_kanban) === 'project');
+      const projectKanbans = (Array.isArray(kanbanData) ? kanbanData : []).filter((i: any) => (i.type || i.type_kanban) === 'project' || i.tipo === 'projeto');
       setProjects(projectKanbans.map((p: any) => ({
         id: p.id?.toString(),
         clientId: '',
@@ -788,67 +776,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setBillings((prev: Billing[]) => prev.filter((b: Billing) => b.id !== id));
   };
 
-  // ─── KANBAN (visits) ──────────────────────────────────
-  const updateKanbanStatus = async (_type: any, id: string, newStatus: string) => {
-    await api.kanban.updateStatus(id, newStatus);
-    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
-      i.id === id ? { ...i, status: newStatus } : i
-    ));
-  };
+  // ─── AGENDA (Unificada) ───────────────────────────────
 
-  const addKanbanItem = async (data: any) => {
-    const payload = {
-      ...data,
-      contact_name: data.contactName,
-      contact_role: data.contactRole,
-      visit_date: data.visitDate,
-      visit_time: data.visitTime,
-      visit_type: data.visitType,
-      value: data.value,
-      email: data.email,
-      phone: data.phone,
-      city: data.city,
-      state: data.state,
-      temperature: data.temperature,
-      observations: data.observations || data.description
-    };
-    const saved = await api.kanban.create(payload);
-    const mapped = {
-      ...saved,
-      id: saved.id.toString(),
-      contactName: saved.contact_name,
-      contactRole: saved.contact_role,
-      value: saved.value ? Number(saved.value) : undefined,
-      visitDate: saved.visit_date,
-      visitTime: saved.visit_time,
-      visitType: saved.visit_type,
-      observations: saved.observations,
-      dateTime: saved.date_time,
-      visitFormat: saved.visit_format,
-      description: saved.description
-    };
-    if (data.type === 'visit') {
-      setVisits((prev: KanbanItem[]) => [...prev, mapped]);
+  const loadEvents = useCallback(async () => {
+    try {
+      const data = await api.agenda.list();
+      setEvents(data);
+    } catch (err) {
+      console.error('Erro ao carregar eventos:', err);
     }
+  }, []);
+
+  const updateKanbanStatus = async (id: string, newStatus: string) => {
+    await api.agenda.move(id, newStatus);
+    await loadEvents();
   };
 
-  const updateKanbanItem = async (id: string, data: Partial<KanbanItem>) => {
-    const payload = {
-      ...data,
-      contact_name: data.contactName,
-      contact_role: data.contactRole,
-      visit_date: data.visitDate,
-      visit_time: data.visitTime,
-      visit_type: data.visitType,
-      date_time: data.dateTime,
-      visit_format: data.visitFormat,
-      description: data.description || data.observations
-    };
-    await api.kanban.updateStatus(id, data.status!, payload);
-    setVisits((prev: KanbanItem[]) => prev.map((i: KanbanItem) =>
-      i.id === id ? { ...i, ...data } : i
-    ));
+  const addEvent = async (data: any) => {
+    await api.agenda.create(data);
+    await loadEvents();
   };
+
+  const updateEvent = async (id: string, data: any) => {
+    await api.agenda.update(id, data);
+    await loadEvents();
+  };
+
+  const visits = useMemo(() => {
+    return events
+      .filter(e => e.tipo === 'visita' || e.tipo === 'projeto') // Mapear visitas e projetos para o Kanban comercial
+      .map(e => ({
+        id: e.id?.toString(),
+        title: e.titulo || 'SEM TÍTULO',
+        subtitle: e.cliente_nome || e.clienteNome || 'CLIENTE NÃO INFORMADO',
+        status: e.status_visita || e.status || 'agendado',
+        dateTime: e.data_inicio,
+        phone: e.cliente_telefone || '',
+        city: e.endereco || '',
+        visitType: e.objetivo || 'outro',
+        value: e.valor || 0
+      }));
+  }, [events]);
 
   // ─── ESTOQUE CRUD ─────────────────────────────────────
   const addMaterial = async (data: any) => {
@@ -976,7 +944,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       user, setUser, logout,
       clients, addClient, updateClient, removeClient,
       projects, addProject, updateProject, removeProject,
-      visits, updateKanbanStatus, addKanbanItem, updateKanbanItem,
+      events,
+      visits,
+      loadEvents,
+      updateKanbanStatus,
+      addEvent,
+      updateEvent,
       categorias, materiais, movimentacoes, fornecedores, addMaterial, updateMaterial, removeMaterial, registrarMovimentacao,
       addFornecedor, updateFornecedor, removeFornecedor,
       billings, addBilling, updateBilling, removeBilling,

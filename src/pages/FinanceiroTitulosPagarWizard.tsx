@@ -27,6 +27,8 @@ export default function FinanceiroTitulosPagarWizard() {
   const [totalParcelas, setTotalParcelas] = useState(1);
   const [projects, setProjects] = useState<any[]>([]);
 
+  const normalizeList = (value: any) => (Array.isArray(value) ? value : value?.data || []);
+
   const [formData, setFormData] = useState({
     fornecedor_id: '',
     pedido_compra_id: '',
@@ -54,21 +56,23 @@ export default function FinanceiroTitulosPagarWizard() {
   useEffect(() => {
     const loadOpts = async () => {
       try {
-        const [sup, cf, fp, ci] = await Promise.all([
+        const [sup, cf, fp, ci, prj] = await Promise.all([
           api.suppliers.list(),
           api.financeiro.classesFinanceiras.list(),
           api.financeiro.formasPagamento.list(),
           api.financeiro.contasInternas.list(),
           api.projects.list(),
         ]);
-        setSuppliers(sup || []);
-        setClasses(cf || []);
-        setFormasPagamento(fp || []);
-        setContasInternas(ci || []);
-        setProjects(prj || []);
+        setSuppliers(normalizeList(sup));
+        setClasses(normalizeList(cf));
+        setFormasPagamento(normalizeList(fp));
+        setContasInternas(normalizeList(ci));
+        setProjects(normalizeList(prj));
 
-        if (ci && ci.length > 0) setFormData(prev => ({ ...prev, conta_bancaria_id: ci[0].id }));
-        if (fp && fp.length > 0) setFormData(prev => ({ ...prev, forma_pagamento_id: fp[0].id }));
+        const contasList = normalizeList(ci);
+        const formasList = normalizeList(fp);
+        if (contasList.length > 0) setFormData(prev => ({ ...prev, conta_bancaria_id: contasList[0].id }));
+        if (formasList.length > 0) setFormData(prev => ({ ...prev, forma_pagamento_id: formasList[0].id }));
       } catch (err) {
         console.error('[WIZARD PAGAR ERROR]', err);
       }
