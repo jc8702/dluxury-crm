@@ -891,38 +891,49 @@ async function handleRelatorios(req: any, res: any) {
     const start = startDate.toISOString().split('T')[0];
     const end = endDate.toISOString().split('T')[0];
     const isCaixa = regime === 'caixa';
-    const dateExpr = isCaixa ? 'COALESCE(t.data_pagamento, t.data_vencimento)' : 'COALESCE(t.data_competencia, t.data_vencimento)';
-    const statusExpr = isCaixa ? "AND t.status = 'pago'" : '';
-
-    const receitas = await sql(`
-      SELECT
-        COALESCE(cf.codigo, '9.9') as codigo,
-        COALESCE(cf.nome, 'OUTRAS RECEITAS (NÃO CLASSIFICADAS)') as nome,
-        cf.pai_id,
-        SUM(t.valor_original::numeric) as valor
-      FROM titulos_receber t
-      LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
-      WHERE (${dateExpr})::date BETWEEN '${start}'::date AND '${end}'::date
-        AND t.status != 'cancelado' AND t.deletado = false
-        ${statusExpr}
-      GROUP BY cf.codigo, cf.nome, cf.pai_id
-      ORDER BY cf.codigo
-    `);
-
-    const despesas = await sql(`
-      SELECT
-        COALESCE(cf.codigo, '9.9') as codigo,
-        COALESCE(cf.nome, 'OUTRAS DESPESAS (NÃO CLASSIFICADAS)') as nome,
-        cf.pai_id,
-        SUM(t.valor_original::numeric) as valor
-      FROM titulos_pagar t
-      LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
-      WHERE (${dateExpr})::date BETWEEN '${start}'::date AND '${end}'::date
-        AND t.status != 'cancelado' AND t.deletado = false
-        ${statusExpr}
-      GROUP BY cf.codigo, cf.nome, cf.pai_id
-      ORDER BY cf.codigo
-    `);
+    
+    let receitas, despesas;
+    
+    // Simpler approach - use parameterized queries with tag
+    if (isCaixa) {
+      receitas = await sql`
+        SELECT COALESCE(cf.codigo, '9.9') as codigo, COALESCE(cf.nome, 'OUTRAS RECEITAS') as nome,
+          cf.pai_id, SUM(t.valor_original::numeric) as valor
+        FROM titulos_receber t
+        LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+        WHERE COALESCE(t.data_pagamento, t.data_vencimento)::date BETWEEN ${start}::date AND ${end}::date
+          AND t.status != 'cancelado' AND t.deletado = false AND t.status = 'pago'
+        GROUP BY cf.codigo, cf.nome, cf.pai_id ORDER BY cf.codigo
+      `;
+      despesas = await sql`
+        SELECT COALESCE(cf.codigo, '9.9') as codigo, COALESCE(cf.nome, 'OUTRAS DESPESAS') as nome,
+          cf.pai_id, SUM(t.valor_original::numeric) as valor
+        FROM titulos_pagar t
+        LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+        WHERE COALESCE(t.data_pagamento, t.data_vencimento)::date BETWEEN ${start}::date AND ${end}::date
+          AND t.status != 'cancelado' AND t.deletado = false AND t.status = 'pago'
+        GROUP BY cf.codigo, cf.nome, cf.pai_id ORDER BY cf.codigo
+      `;
+    } else {
+      receitas = await sql`
+        SELECT COALESCE(cf.codigo, '9.9') as codigo, COALESCE(cf.nome, 'OUTRAS RECEITAS') as nome,
+          cf.pai_id, SUM(t.valor_original::numeric) as valor
+        FROM titulos_receber t
+        LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+        WHERE COALESCE(t.data_competencia, t.data_vencimento)::date BETWEEN ${start}::date AND ${end}::date
+          AND t.status != 'cancelado' AND t.deletado = false
+        GROUP BY cf.codigo, cf.nome, cf.pai_id ORDER BY cf.codigo
+      `;
+      despesas = await sql`
+        SELECT COALESCE(cf.codigo, '9.9') as codigo, COALESCE(cf.nome, 'OUTRAS DESPESAS') as nome,
+          cf.pai_id, SUM(t.valor_original::numeric) as valor
+        FROM titulos_pagar t
+        LEFT JOIN classes_financeiras cf ON t.classe_financeira_id = cf.id
+        WHERE COALESCE(t.data_competencia, t.data_vencimento)::date BETWEEN ${start}::date AND ${end}::date
+          AND t.status != 'cancelado' AND t.deletado = false
+        GROUP BY cf.codigo, cf.nome, cf.pai_id ORDER BY cf.codigo
+      `;
+    }
 
     // Montar estrutura DRE Senior
     const totalReceitas = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
