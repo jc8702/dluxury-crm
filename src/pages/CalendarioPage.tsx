@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { withDragAndDrop } from 'react-big-calendar/lib/addons/dragAndDrop';
+import withDragAndDrop from 'react-big-calendar/addons/dragAndDrop';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -14,7 +14,7 @@ import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
 import ModalEvento from '../components/agenda/ModalEvento';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
+import 'react-big-calendar/addons/dragAndDrop/styles.css';
 
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
