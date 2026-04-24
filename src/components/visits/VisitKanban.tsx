@@ -25,21 +25,23 @@ const VisitKanban: React.FC = () => {
 
   const handleMove = async (id: string, newStatus: string) => {
     console.log('[VisitKanban] handleMove:', id, '->', newStatus);
+    console.log('[VisitKanban] visiting id type:', typeof id, 'value:', id);
     try {
       setLoading(true);
-      await updateKanbanStatus(id, newStatus);
-      console.log('[VisitKanban] Moved successfully');
-    } catch (err) {
+      const result = await updateKanbanStatus(id, newStatus);
+      console.log('[VisitKanban] Result:', result);
+    } catch (err: any) {
       console.error('[VisitKanban] Erro ao mover:', err);
-      alert('Erro ao mover visita');
+      alert(err?.message || err?.error || 'Erro ao mover visita');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (item: any) => {
-    // Buscar o objeto completo (original) para edição
-    const fullItem = events.find(e => e.id === item.id);
+    console.log('[VisitKanban] handleEdit item:', item);
+    const fullItem = events.find(e => String(e.id) === String(item.id));
+    console.log('[VisitKanban] Found fullItem:', fullItem);
     setSelectedItem(fullItem);
     setIsModalOpen(true);
   };

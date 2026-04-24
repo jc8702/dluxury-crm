@@ -26,22 +26,18 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData('text/plain', id);
-    e.dataTransfer.effectAllowed = 'move';
     setDraggedId(id);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
   };
 
   const handleDrop = (e: React.DragEvent, status: string) => {
     e.preventDefault();
-    const id = e.dataTransfer.getData('text/plain');
-    console.log('[Kanban] Drop:', id, '->', status);
-    if (id) {
-      onMove(id, status);
+    console.log('[Kanban] Drop: status=', status, 'draggedId=', draggedId);
+    if (draggedId) {
+      onMove(draggedId, status);
     }
     setDraggedId(null);
   };
