@@ -13,17 +13,21 @@ export async function handleClients(req: any, res: any) {
       const f = req.body;
       const comodosStr = Array.isArray(f.comodos_interesse) ? f.comodos_interesse.join(', ') : (f.comodos_interesse || '');
       
+      // Tratar CNPJ/CPF vazios como NULL para evitar duplicates
+      const cnpjVal = f.cnpj && f.cnpj.length > 0 ? f.cnpj : null;
+      const cpfVal = f.cpf && f.cpf.length > 0 ? f.cpf : null;
+      
       const result = await sql`
         INSERT INTO clients (
           nome, cpf, telefone, email, endereco, bairro, cidade, uf, 
           tipo_imovel, comodos_interesse, origem, observacoes, status, 
           razao_social, cnpj, municipio, situacao_cadastral
         ) VALUES (
-          ${f.nome || ''}, ${f.cpf || ''}, ${f.telefone || ''}, ${f.email || ''}, 
+          ${f.nome || ''}, ${cpfVal}, ${f.telefone || ''}, ${f.email || ''}, 
           ${f.endereco || ''}, ${f.bairro || ''}, ${f.cidade || ''}, ${f.uf || ''}, 
           ${f.tipo_imovel || 'casa'}, ${comodosStr}, ${f.origem || 'indicacao'}, 
           ${f.observacoes || ''}, ${f.status || 'ativo'}, ${f.razao_social || f.nome || ''}, 
-          ${f.cpf || ''}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}
+          ${cnpjVal}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}
         ) RETURNING *
       `;
       return res.status(201).json({ success: true, data: result[0] });
