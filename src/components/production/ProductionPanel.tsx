@@ -3,7 +3,7 @@ import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 import { CheckSquare, ArrowLeft, ArrowRight, Edit2, Play, CheckCircle2, Trash2, Plus, X } from 'lucide-react';
 
-type StatusCol = "PENDENTE" | "CORTE" | "MONTAGEM" | "FINALIZADA";
+type StatusCol = "AGUARDANDO" | "PRODUCAO" | "MONTAGEM" | "PINTURA" | "INSPECAO" | "PRONTO" | "FINALIZADO";
 
 interface ChecklistItem {
   id: string;
@@ -23,6 +23,7 @@ interface OrdemProducao {
   tempo_previsto_corte?: number;
   tempo_previsto_montagem?: number;
   checklist?: ChecklistItem[];
+  projeto_id?: string;
 }
 
 const ProductionPanel: React.FC = () => {
@@ -32,6 +33,7 @@ const ProductionPanel: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [showNewOPModal, setShowNewOPModal] = useState(false);
   const [newOPData, setNewOPData] = useState({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
+  const { projects, updateProject } = useAppContext();
 
   const fetchOPs = async () => {
     try {
@@ -74,7 +76,7 @@ const ProductionPanel: React.FC = () => {
   }, [editingOP]);
 
   const updateStatus = async (op: OrdemProducao, direcao: 'avancar' | 'voltar') => {
-    const fluxo: StatusCol[] = ["PENDENTE", "CORTE", "MONTAGEM", "FINALIZADA"];
+    const fluxo: StatusCol[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];
     const index = fluxo.indexOf(op.status);
     let novoStatus: StatusCol;
 
@@ -160,10 +162,13 @@ const deleteOP = useCallback(async (op_id: string) => {
   };
 
   const colunas: { id: StatusCol, label: string, color: string }[] = [
-    { id: "PENDENTE", label: "Aguardando", color: "var(--text-muted)" },
-    { id: "CORTE", label: "Corte / Preparação", color: "#f59e0b" },
-    { id: "MONTAGEM", label: "Montagem / Acabamento", color: "#3b82f6" },
-    { id: "FINALIZADA", label: "Finalizado", color: "#10b981" }
+    { id: "AGUARDANDO", label: "Aguardando", color: "#6b7280" },
+    { id: "PRODUCAO", label: "Produção", color: "#f59e0b" },
+    { id: "MONTAGEM", label: "Montagem", color: "#3b82f6" },
+    { id: "PINTURA", label: "Pintura / Acabamento", color: "#8b5cf6" },
+    { id: "INSPECAO", label: "Inspeção Final", color: "#ec4899" },
+    { id: "PRONTO", label: "Pronto p/ Entrega", color: "#10b981" },
+    { id: "FINALIZADO", label: "Finalizado", color: "#059669" }
   ];
 
   const renderCard = (op: OrdemProducao, col: any) => {
@@ -262,19 +267,72 @@ const deleteOP = useCallback(async (op_id: string) => {
       alignItems: 'start',
       paddingBottom: '4rem'
     }}>
-      {colunas.map(col => (
+      {colunas.map(col => {
+        const colOps = ops.filter(o => o.status === col.id);
+        const colProjects = col.id === 'AGUARDANDO' 
+          ? (projects || []).filter(p => ['aprovado', 'em_producao'].includes(p.status) && !p.ordem_producao_id)
+          : [];
+
+        return (
         <div key={col.id} className="glass" style={{ borderRadius: '20px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', minHeight: '75vh' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '0.8rem', fontWeight: '800', color: col.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{col.label}</h2>
             <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-              {ops.filter(o => o.status === col.id).length}
+              {colOps.length + colProjects.length}
             </span>
           </header>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {ops.filter(o => o.status === col.id).map(op => renderCard(op, col))}
+            {colProjects.map(project => (
+              <div key={project.id} className="card-hover" style={{ 
+                background: 'rgba(255,255,255,0.03)', 
+                borderRadius: '16px', 
+                padding: '1rem', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>#{project.id?.substring(0,8)}</span>
+                  <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: '#10b98122', color: '#10b981', borderRadius: '4px', fontWeight: 'bold' }}>
+                    {project.status === 'aprovado' ? 'APROVADO' : 'EM PROD'}
+                  </span>
+                </div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.5rem' }}>{project.ambiente}</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>{project.clientName}</p>
+                <button onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!confirm('Gerar Ordem de Produção para este projeto?')) return;
+                  try {
+                    const opId = `OP-${project.id?.substring(0,8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+                    const res = await fetch('/api/production', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        op_id: opId,
+                        produto: project.ambiente || 'Produto',
+                        pecas: 1,
+                        projeto_id: project.id,
+                        visita_id: project.visitaId || null,
+                        orcamento_id: project.orcamentoId || null
+                      })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
+                    await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte', ordem_producao_id: opId });
+                    fetchOPs();
+                    alert(`OP ${opId} criada!`);
+                  } catch(e: any) {
+                    alert('Erro: ' + e.message);
+                  }
+                }}
+                  style={{ width: '100%', background: '#d4af37', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>
+                  🔨 Gerar OP
+                </button>
+              </div>
+            ))}
+            {colOps.map(op => renderCard(op, col))}
           </div>
         </div>
-      ))}
+      )})}
 
       {/* Modal de Edição Industrial */}
       {editingOP && (

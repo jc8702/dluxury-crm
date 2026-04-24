@@ -196,7 +196,7 @@ export async function runInitDB() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       op_id TEXT UNIQUE NOT NULL,
       produto TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'PENDENTE',
+      status TEXT NOT NULL DEFAULT 'PRODUCAO',
       pecas INTEGER DEFAULT 0,
       orcamento_id TEXT,
       projeto_id TEXT,

@@ -102,8 +102,8 @@ async function createOP(req: any, res: any) {
     const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
     const [novaOP] = await sql`
-      INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id)
-      VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
+      INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id)
+      VALUES (${op_id}, ${produto}, ${pecas || 0}, 'PRODUCAO', ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
       RETURNING *
     `;
 
