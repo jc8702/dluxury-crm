@@ -992,13 +992,13 @@ async function handleRelatorios(req: any, res: any) {
     let details: any[] = [];
     
     if (!isPagar && !isHistory) {
-      details = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false ORDER BY tr.data_vencimento ASC`;
+      details = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false ORDER BY tr.data_vencimento ASC`;
     } else if (!isPagar && isHistory) {
-      details = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE ORDER BY tr.data_vencimento DESC LIMIT 50`;
+      details = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE ORDER BY tr.data_vencimento DESC LIMIT 50`;
     } else if (isPagar && !isHistory) {
-      details = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false ORDER BY tp.data_vencimento ASC`;
+      details = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false ORDER BY tp.data_vencimento ASC`;
     } else {
-      details = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status = 'pago' AND tp.deletado = false AND tp.data_vencimento < CURRENT_DATE ORDER BY tp.data_vencimento DESC LIMIT 50`;
+      details = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status = 'pago' AND tp.deletado = false AND tp.data_vencimento < CURRENT_DATE ORDER BY tp.data_vencimento DESC LIMIT 50`;
     }
 
     const summary = [

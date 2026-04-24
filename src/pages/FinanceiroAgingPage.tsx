@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone, FiFilter } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone, FiFilter, FiX } from 'react-icons/fi';
 
 export default function FinanceiroAgingPage() {
   const [data, setData] = useState<{ summary: any[], details: any[] }>({ summary: [], details: [] });
   const [loading, setLoading] = useState(false);
   const [modo, setModo] = useState<'receber' | 'pagar'>('receber');
   const [historico, setHistorico] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -28,6 +31,55 @@ export default function FinanceiroAgingPage() {
   const summarySorted = [...data.summary].sort((a, b) => 
     faixasPrioridade.indexOf(a.faixa) - faixasPrioridade.indexOf(b.faixa)
   );
+
+  const handleEmail = (item: any) => {
+    const email = item.entidade_email || (modo === 'receber' ? item.cliente_email : item.fornecedor_email);
+    const nome = item.entidade_nome;
+    const valor = Number(item.valor_aberto).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const dataVenc = new Date(item.data_vencimento).toLocaleDateString('pt-BR');
+    
+    const subject = encodeURIComponent(`Cobrança - Título ${item.numero_titulo}`);
+    const body = encodeURIComponent(`Prezado(a) ${nome},\n\nInformamos que o título ${item.numero_titulo} no valor de ${valor} venceu em ${dataVenc}.\n\nPor favor, entre em contato para regularizar a situação.\n\nAtenciosamente,\nD'LUXURY Ambientes`);
+    
+    if (email) {
+      window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+    } else {
+      alert('E-mail não encontrado para este cliente/fornecedor');
+    }
+  };
+
+  const handleWhatsApp = (item: any) => {
+    const telefone = item.entidade_telefone || (modo === 'receber' ? item.cliente_telefone : item.fornecedor_telefone);
+    const nome = item.entidade_nome;
+    const valor = Number(item.valor_aberto).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const dataVenc = new Date(item.data_vencimento).toLocaleDateString('pt-BR');
+    
+    const mensagem = encodeURIComponent(`Olá ${nome}, tudo bem? Aqui é da D'LUXURY. Seu título de ${valor} venceu em ${dataVenc}. Podemos conversar sobre a regularização?`);
+    
+    if (telefone) {
+      const cleanPhone = telefone.replace(/\D/g, '');
+      window.open(`https://wa.me/55${cleanPhone}?text=${mensagem}`, '_blank');
+    } else {
+      alert('Telefone não encontrado para este cliente/fornecedor');
+    }
+  };
+
+  const handleHistory = async (item: any) => {
+    setSelectedItem(item);
+    setShowHistoryModal(true);
+    try {
+      const entityId = modo === 'receber' ? item.cliente_id : item.fornecedor_id;
+      const res = await api.financeiro.relatorios.aging({ modo, historico: true });
+      const allHistory = res?.data?.details || [];
+      const filtered = allHistory.filter((h: any) => 
+        modo === 'receber' ? h.cliente_id === entityId : h.fornecedor_id === entityId
+      );
+      setHistoryData(filtered);
+    } catch (err) {
+      console.error(err);
+      setHistoryData([]);
+    }
+  };
 
   const totalVencido = data.details.reduce((sum, d) => sum + Number(d.valor_aberto), 0);
 
@@ -155,9 +207,9 @@ export default function FinanceiroAgingPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="E-mail Cobrança"><FiMail /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="WhatsApp"><FiPhone /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="Histórico"><FiClock /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="E-mail Cobrança" onClick={() => handleEmail(t)}><FiMail /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="WhatsApp" onClick={() => handleWhatsApp(t)}><FiPhone /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="Histórico" onClick={() => handleHistory(t)}><FiClock /></button>
                         </div>
                       </td>
                     </tr>
@@ -173,6 +225,49 @@ export default function FinanceiroAgingPage() {
         .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); }
         @media (max-width: 1000px) { .grid-5 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } }
       `}</style>
+
+      {/* History Modal */}
+      {showHistoryModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div className="card" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+              <h3>Histórico de Pagamentos</h3>
+              <button onClick={() => setShowHistoryModal(false)} className="btn btn-outline" style={{ padding: '0.5rem' }}><FiX /></button>
+            </div>
+            {selectedItem && (
+              <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '8px' }}>
+                <strong>{selectedItem.entidade_nome}</strong><br/>
+                <small style={{ color: 'var(--text-muted)' }}>Título: {selectedItem.numero_titulo}</small>
+              </div>
+            )}
+            {historyData.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum histórico encontrado</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data Vencimento</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyData.map((h: any, i: number) => (
+                    <tr key={h.id || i}>
+                      <td>{new Date(h.data_vencimento).toLocaleDateString('pt-BR')}</td>
+                      <td>R$ {Number(h.valor_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                      <td><span className="badge badge-success">{h.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
