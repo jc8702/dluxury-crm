@@ -265,7 +265,30 @@ return (
                     </div>
 
                     {/* Ações */}
-                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                      {project.status === 'aprovado' && (
+                        <button onClick={async () => {
+                          if (!confirm('Criar Ordem de Produção para este projeto?')) return;
+                          try {
+                            const opId = `OP-${project.id?.substring(0,8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+                            await api.production.create({
+                              op_id: opId,
+                              produto: project.ambiente || 'Produto',
+                              pecas: 1,
+                              projeto_id: project.id,
+                              visita_id: project.visitaId || null,
+                              orcamento_id: project.orcamentoId || null
+                            });
+                            await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte' });
+                            alert(`OP ${opId} criada! Projeto movido para "Em Produção".`);
+                          } catch(e: any) {
+                            alert('Erro ao criar OP: ' + e.message);
+                          }
+                        }}
+                          style={{ background: '#d4af37', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}>
+                          🔨 Criar OP
+                        </button>
+                      )}
                       {project.status === 'em_producao' && progress < 100 && (
                         <button onClick={() => handleMarkReady(project)}
                           style={{

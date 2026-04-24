@@ -40,45 +40,11 @@ const ProjectKanban: React.FC = () => {
   ];
 
 const handleMove = (id: string, newStatus: string) => {
-    // Ao mover para aprovado ou em_producao, criar OP automaticamente
-    if (newStatus === 'aprovado' || newStatus === 'em_producao') {
-      handleMoveWithOP(id, newStatus);
+    // Apenas mover o projeto, não criar OP automaticamente mais
+    if (newStatus === 'aprovado') {
+      updateProject(id, { status: newStatus as ProjectStatus, etapaProducao: 'corte' as any });
     } else {
       updateProject(id, { status: newStatus as ProjectStatus });
-    }
-  };
-
-  const handleMoveWithOP = async (id: string, newStatus: string) => {
-    const project = projects.find(p => p.id === id);
-    if (!project) return;
-    
-    try {
-      // Atualizar status do projeto
-      // Se movendo para aprovado, setar etapaProducao inicial
-      const updateData: any = { status: newStatus as ProjectStatus };
-      if (newStatus === 'aprovado' || newStatus === 'em_producao') {
-        updateData.etapaProducao = 'corte';
-      }
-      
-      await updateProject(id, updateData);
-      
-      // Criar OP automaticamente
-      const opId = `OP-${project.id?.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-      await api.production.create({
-        op_id: opId,
-        produto: project.ambiente || 'Produto',
-        pecas: 1,
-        projeto_id: project.id,
-        visita_id: project.visitaId || null,
-        orcamento_id: project.orcamentoId || null
-      });
-      
-      alert(`Projeto movido para "${newStatus}" e OP ${opId} criada automaticamente!`);
-    } catch (e: any) {
-      console.error('Erro ao criar OP:', e);
-      // Ainda assim move o projeto
-      await updateProject(id, { status: newStatus as ProjectStatus });
-      alert(`Projeto movido para "${newStatus}" (mas houve erro ao criar OP automática)`);
     }
   };
 
