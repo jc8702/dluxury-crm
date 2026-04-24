@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone, FiFilter } from 'react-icons/fi';
 
 export default function FinanceiroAgingPage() {
   const [data, setData] = useState<{ summary: any[], details: any[] }>({ summary: [], details: [] });
   const [loading, setLoading] = useState(false);
   const [modo, setModo] = useState<'receber' | 'pagar'>('receber');
+  const [historico, setHistorico] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.financeiro.relatorios.aging({ modo });
+      const res = await api.financeiro.relatorios.aging({ modo, historico });
       setData(res?.data || res || { summary: [], details: [] });
     } catch (err) {
       console.error(err);
@@ -21,7 +22,7 @@ export default function FinanceiroAgingPage() {
 
   useEffect(() => {
     load();
-  }, [modo]);
+  }, [modo, historico]);
 
   const faixasPrioridade = ['Acima de 90 Dias', '61-90 Dias', '31-60 Dias', '0-30 Dias', 'A Vencer'];
   const summarySorted = [...data.summary].sort((a, b) => 
@@ -36,7 +37,7 @@ export default function FinanceiroAgingPage() {
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <FiAlertCircle style={{ color: modo === 'receber' ? 'var(--warning)' : 'var(--danger)' }} />
-            Aging / {modo === 'receber' ? 'Inadimplência' : 'Dívidas'}
+            Aging / {modo === 'receber' ? (historico ? 'HISTÓRICO RECEBER' : 'Inadimplência') : (historico ? 'HISTÓRICO PAGAR' : 'Dívidas')}
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
         </div>
@@ -58,6 +59,17 @@ export default function FinanceiroAgingPage() {
               color: modo === 'pagar' ? 'white' : 'var(--text-muted)',
               fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s'
             }}>PAGAR</button>
+          <div style={{ width: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+          <button 
+            onClick={() => setHistorico(!historico)}
+            style={{ 
+              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
+              background: historico ? 'var(--warning)' : 'transparent',
+              color: historico ? 'black' : 'var(--text-muted)',
+              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}>
+            <FiFilter size={14} />{historico ? 'HISTÓRICO' : 'VENCIDOS'}
+          </button>
         </div>
       </div>
 
