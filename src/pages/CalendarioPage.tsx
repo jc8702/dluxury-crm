@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, Views, withDragAndDrop } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
@@ -13,9 +13,12 @@ import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
 import ModalEvento from '../components/agenda/ModalEvento';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
+
+const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const messages = {
   allDay: 'Dia inteiro',
@@ -58,13 +61,20 @@ const DARK_COLORS = {
 };
 
 const CalendarioPage: React.FC = () => {
-  const { user } = useAppContext();
+  const { user, loadEvents } = useAppContext();
   const [events, setEvents] = useState<MyEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [view, setView] = useState<any>(Views.WEEK);
   const [date, setDate] = useState(new Date());
+  
+  const [dragConfirm, setDragConfirm] = useState<{
+    show: boolean;
+    event: MyEvent | null;
+    newStart: Date | null;
+    newEnd: Date | null;
+  }>({ show: false, event: null, newStart: null, newEnd: null });
 
   const [calendars, setCalendars] = useState([
     { id: 'visita', label: 'Visitas Técnicas', color: '#00A99D', visible: true },
@@ -145,6 +155,38 @@ const CalendarioPage: React.FC = () => {
       tipo: 'compromisso',
     });
     setShowModal(true);
+  };
+
+  const handleEventDrop = useCallback(({ event, start, end }: { event: MyEvent; start: Date; end: Date }) => {
+    setDragConfirm({
+      show: true,
+      event: event,
+      newStart: start,
+      newEnd: end,
+    });
+  }, []);
+
+  const handleConfirmDrag = async (confirm: boolean) => {
+    if (!confirm || !dragConfirm.event || !dragConfirm.newStart || !dragConfirm.newEnd) {
+      setDragConfirm({ show: false, event: null, newStart: null, newEnd: null });
+      fetchEvents();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.agenda.update(dragConfirm.event.id, {
+        data_inicio: dragConfirm.newStart.toISOString(),
+        data_fim: dragConfirm.newEnd.toISOString(),
+      });
+      await loadEvents();
+    } catch (err) {
+      console.error('Erro ao mover evento:', err);
+      alert('Erro ao alterar data do evento');
+    } finally {
+      setLoading(false);
+      setDragConfirm({ show: false, event: null, newStart: null, newEnd: null });
+    }
   };
 
   const eventStyleGetter = (event: MyEvent) => {
@@ -350,7 +392,7 @@ const CalendarioPage: React.FC = () => {
 
         {/* CALENDAR AREA */}
         <div style={{ flex: 1, padding: '16px' }}>
-          <Calendar
+          <DragAndDropCalendar
             localizer={localizer}
             events={events.filter(e => calendars.find(c => c.id === e.tipo)?.visible !== false)}
             startAccessor="start"
@@ -361,7 +403,10 @@ const CalendarioPage: React.FC = () => {
             eventPropGetter={eventStyleGetter}
             onSelectEvent={handleSelectEvent}
             onSelectSlot={handleSelectSlot}
+            onEventDrop={handleEventDrop}
+            onEventResize={handleEventDrop}
             selectable
+            resizable
             view={view}
             onView={(v) => setView(v)}
             date={date}
@@ -379,6 +424,105 @@ const CalendarioPage: React.FC = () => {
         onSave={() => { fetchEvents(); setShowModal(false); setSelectedEvent(null); }}
         eventToEdit={selectedEvent}
       />
+
+      {/* CONFIRM DRAG MODAL */}
+      {dragConfirm.show && dragConfirm.event && dragConfirm.newStart && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+        }}>
+          <div style={{
+            background: DARK_COLORS.surface,
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            border: `1px solid ${DARK_COLORS.border}`,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: '50%', 
+                background: 'rgba(212, 175, 55, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+              }}>
+                <AlertTriangle size={28} color={DARK_COLORS.primary} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: DARK_COLORS.text, marginBottom: '8px' }}>
+                Alterar Data/Hora?
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: DARK_COLORS.textMuted }}>
+                {dragConfirm.event?.title}
+              </p>
+              <div style={{ 
+                marginTop: '12px', 
+                padding: '12px', 
+                background: 'rgba(212, 175, 55, 0.1)', 
+                borderRadius: '8px',
+                border: `1px solid ${DARK_COLORS.primary}`,
+              }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: '600', color: DARK_COLORS.primary }}>
+                  📅 {dragConfirm.newStart?.toLocaleDateString('pt-BR')}
+                </p>
+                <p style={{ fontSize: '0.8rem', color: DARK_COLORS.textMuted }}>
+                  🕐 {dragConfirm.newStart?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
+                  {' - '} 
+                  {dragConfirm.newEnd?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => handleConfirmDrag(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${DARK_COLORS.border}`,
+                  background: 'transparent',
+                  color: DARK_COLORS.text,
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={() => handleConfirmDrag(true)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: DARK_COLORS.primary,
+                  color: '#000',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <Check size={18} /> CONFIRMAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* GLOBAL STYLES */}
       <style>{`
