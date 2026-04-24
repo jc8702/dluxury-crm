@@ -30,6 +30,8 @@ const ProductionPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingOP, setEditingOP] = useState<OrdemProducao | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showNewOPModal, setShowNewOPModal] = useState(false);
+  const [newOPData, setNewOPData] = useState({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
 
   const fetchOPs = async () => {
     try {
@@ -124,7 +126,7 @@ const ProductionPanel: React.FC = () => {
     }
   };
 
-  const deleteOP = useCallback(async (op_id: string) => {
+const deleteOP = useCallback(async (op_id: string) => {
     if (!confirm('Deseja realmente excluir esta Ordem de Produção? Esta ação não pode ser desfeita.')) return;
     setDeleting(true);
     try {
@@ -135,13 +137,27 @@ const ProductionPanel: React.FC = () => {
       }
       setOps(prev => prev.filter(o => o.op_id !== op_id));
       setEditingOP(null);
-      try { window.dispatchEvent(new CustomEvent('op_deleted', { detail: { op_id } })); } catch (e) {}
     } catch (e: any) {
-      alert('Erro ao excluir OP: ' + e.message);
+      alert('Erro: ' + e.message);
     } finally {
       setDeleting(false);
     }
   }, []);
+
+  const createNewOP = async () => {
+    if (!newOPData.op_id || !newOPData.produto) {
+      alert('Preencha o ID da OP e o Produto.');
+      return;
+    }
+    try {
+      await api.production.create(newOPData);
+      setShowNewOPModal(false);
+      setNewOPData({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
+      fetchOPs();
+    } catch (e: any) {
+      alert('Erro ao criar OP: ' + e.message);
+    }
+  };
 
   const colunas: { id: StatusCol, label: string, color: string }[] = [
     { id: "PENDENTE", label: "Aguardando", color: "var(--text-muted)" },

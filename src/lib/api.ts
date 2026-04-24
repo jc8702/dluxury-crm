@@ -144,6 +144,7 @@ export const api = {
   },
   production: {
     list: () => apiCall<any[]>('production'),
+    create: (data: any) => apiCall<any>('production', 'POST', data),
     updateStatus: (op_id: string, status: string) => apiCall<any>('production', 'PATCH', { op_id, status }),
     updateDetails: (data: any) => apiCall<any>('production?id=details', 'PATCH', data),
     getMetrics: () => apiCall<any>('production/metrics'),

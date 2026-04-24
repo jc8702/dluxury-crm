@@ -5,7 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { ProjectStatus } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, clients, addProject, updateProject, orcamentos } = useAppContext();
+  const { projects, clients, addProject, updateProject, orcamentos, events } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -16,8 +16,11 @@ const ProjectKanban: React.FC = () => {
     prazoEntrega: '',
     responsavel: '',
     observacoes: '',
-    status: 'lead' as ProjectStatus
+    status: 'lead' as ProjectStatus,
+    visitaId: ''
   });
+
+  const visitas = events?.filter((e: any) => e.tipo === 'visita') || [];
 
   const columns = [
     { id: 'lead', title: '📥 Lead' },
@@ -40,7 +43,7 @@ const ProjectKanban: React.FC = () => {
     updateProject(id, { status: newStatus as ProjectStatus });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const selectedClient = clients.find(c => c.id === formData.clientId);
     const data = {
@@ -52,7 +55,8 @@ const ProjectKanban: React.FC = () => {
       prazoEntrega: formData.prazoEntrega || undefined,
       responsavel: formData.responsavel || undefined,
       observacoes: formData.observacoes,
-      status: formData.status
+      status: formData.status,
+      visitaId: formData.visitaId || undefined
     };
 
     if (editingItem) {
@@ -74,17 +78,18 @@ const ProjectKanban: React.FC = () => {
       prazoEntrega: item.prazoEntrega || '',
       responsavel: item.responsavel || '',
       observacoes: item.observacoes || item.observations || '',
-      status: item.status
+      status: item.status,
+      visitaId: item.visitaId || ''
     });
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
     setFormData({
       clientId: '', ambiente: '', descricao: '', valorEstimado: '',
-      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead'
+      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: ''
     });
   };
 
@@ -215,7 +220,7 @@ const ProjectKanban: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={labelStyle}>Valor Estimado (R$)</label>
               <input type="number" step="0.01" style={inputStyle} placeholder="0,00"
@@ -226,6 +231,19 @@ const ProjectKanban: React.FC = () => {
               <input type="date" style={inputStyle}
                 value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
             </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Vincular à Visita</label>
+            <select style={selectStyle}
+              value={formData.visitaId} onChange={e => setFormData({ ...formData, visitaId: e.target.value })}>
+              <option value="" style={{ background: '#1a1a1a' }}>Nenhuma visita vinculada</option>
+              {visitas.map((v: any) => (
+                <option key={v.id} value={v.id} style={{ background: '#1a1a1a' }}>
+                  {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
