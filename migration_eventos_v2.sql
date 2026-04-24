@@ -105,8 +105,20 @@ CREATE TRIGGER trigger_atualizar_eventos
 
 CREATE OR REPLACE FUNCTION registrar_mudanca_status_visita()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_alterado_por UUID;
 BEGIN
   IF NEW.tipo = 'visita' AND (OLD.status_visita IS DISTINCT FROM NEW.status_visita) THEN
+    BEGIN
+      v_alterado_por := NEW.responsavel_id::UUID;
+    EXCEPTION WHEN OTHERS THEN
+      v_alterado_por := NULL;
+    END;
+    
+    IF v_alterado_por IS NULL THEN
+      SELECT id INTO v_alterado_por FROM users LIMIT 1;
+    END IF;
+    
     INSERT INTO eventos_historico (
       evento_id,
       campo_alterado,
@@ -116,9 +128,9 @@ BEGIN
     ) VALUES (
       NEW.id,
       'status_visita',
-      OLD.status_visita,
-      NEW.status_visita,
-      NEW.responsavel_id
+      COALESCE(OLD.status_visita, '')::TEXT,
+      COALESCE(NEW.status_visita, '')::TEXT,
+      v_alterado_por
     );
   END IF;
   
@@ -126,10 +138,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_historico_status_visita
-  AFTER UPDATE ON eventos
-  FOR EACH ROW
-  EXECUTE FUNCTION registrar_mudanca_status_visita();
+-- TRIGGER DESABILITADO TEMPORARIAMENTE DEVIDO A PROBLEMAS DE TIPO
+-- CREATE TRIGGER trigger_historico_status_visita
+--   AFTER UPDATE ON eventos
+--   FOR EACH ROW
+--   EXECUTE FUNCTION registrar_mudanca_status_visita();
 
 -- ════════════════════════════════════════════════════════════════════
 -- SEED INICIAL
