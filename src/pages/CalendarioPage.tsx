@@ -20,6 +20,11 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
+const toLocalString = (date: Date): string => {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const messages = {
@@ -133,8 +138,8 @@ const CalendarioPage: React.FC = () => {
       id: event.id,
       titulo: event.title,
       tipo: event.tipo,
-      data_inicio: new Date(event.start).toISOString().slice(0, 16),
-      data_fim: new Date(event.end).toISOString().slice(0, 16),
+      data_inicio: toLocalString(new Date(event.start)),
+      data_fim: toLocalString(new Date(event.end)),
       dia_inteiro: event.allDay,
       cor: event.cor,
     });
@@ -143,8 +148,8 @@ const CalendarioPage: React.FC = () => {
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedEvent({
-      data_inicio: start.toISOString().slice(0, 16),
-      data_fim: end.toISOString().slice(0, 16),
+      data_inicio: toLocalString(start),
+      data_fim: toLocalString(end),
       tipo: 'compromisso',
     });
     setShowModal(true);
@@ -169,8 +174,8 @@ const CalendarioPage: React.FC = () => {
     try {
       setLoading(true);
       await api.agenda.update(dragConfirm.event.id, {
-        data_inicio: dragConfirm.newStart.toISOString(),
-        data_fim: dragConfirm.newEnd.toISOString(),
+        data_inicio: new Date(dragConfirm.newStart).toISOString(),
+        data_fim: new Date(dragConfirm.newEnd).toISOString(),
       });
       await loadEvents();
     } catch (err) {
