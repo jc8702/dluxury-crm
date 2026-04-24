@@ -40,12 +40,7 @@ const ProjectKanban: React.FC = () => {
   ];
 
 const handleMove = (id: string, newStatus: string) => {
-    // Apenas mover o projeto, não criar OP automaticamente mais
-    if (newStatus === 'aprovado') {
-      updateProject(id, { status: newStatus as ProjectStatus, etapaProducao: 'corte' as any });
-    } else {
-      updateProject(id, { status: newStatus as ProjectStatus });
-    }
+    updateProject(id, { status: newStatus as ProjectStatus });
   };
 
 const handleSubmit = async (e: React.FormEvent) => {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { api } from '../../lib/api';
 import ProductionPanel from './ProductionPanel';
 import ProductionDashboard from './ProductionDashboard';
 import type { Project, ProductionStep } from '../../context/AppContext';
@@ -271,14 +272,20 @@ return (
                           if (!confirm('Criar Ordem de Produção para este projeto?')) return;
                           try {
                             const opId = `OP-${project.id?.substring(0,8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-                            await api.production.create({
-                              op_id: opId,
-                              produto: project.ambiente || 'Produto',
-                              pecas: 1,
-                              projeto_id: project.id,
-                              visita_id: project.visitaId || null,
-                              orcamento_id: project.orcamentoId || null
+                            const res = await fetch('/api/production', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                op_id: opId,
+                                produto: project.ambiente || 'Produto',
+                                pecas: 1,
+                                projeto_id: project.id,
+                                visita_id: project.visitaId || null,
+                                orcamento_id: project.orcamentoId || null
+                              })
                             });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
                             await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte' });
                             alert(`OP ${opId} criada! Projeto movido para "Em Produção".`);
                           } catch(e: any) {
