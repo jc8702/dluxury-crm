@@ -24,10 +24,13 @@ const VisitKanban: React.FC = () => {
   };
 
   const handleMove = async (id: string, newStatus: string) => {
+    console.log('[VisitKanban] handleMove:', id, '->', newStatus);
     try {
       setLoading(true);
       await updateKanbanStatus(id, newStatus);
+      console.log('[VisitKanban] Moved successfully');
     } catch (err) {
+      console.error('[VisitKanban] Erro ao mover:', err);
       alert('Erro ao mover visita');
     } finally {
       setLoading(false);

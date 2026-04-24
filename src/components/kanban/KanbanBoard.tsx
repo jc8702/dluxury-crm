@@ -25,19 +25,25 @@ interface KanbanBoardProps {
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit }) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  const handleDragStart = (id: string) => {
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
     setDraggedId(id);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (status: string) => {
-    if (draggedId) {
-      onMove(draggedId, status);
-      setDraggedId(null);
+  const handleDrop = (e: React.DragEvent, status: string) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    console.log('[Kanban] Drop:', id, '->', status);
+    if (id) {
+      onMove(id, status);
     }
+    setDraggedId(null);
   };
 
   return (
@@ -46,7 +52,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
         <div 
           key={col.id} 
           onDragOver={handleDragOver}
-          onDrop={() => handleDrop(col.id)}
+          onDrop={(e) => handleDrop(e, col.id)}
           style={{ 
             background: 'rgba(30, 41, 59, 0.5)', 
             borderRadius: 'var(--radius-lg)', 
@@ -73,7 +79,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
               <div 
                 key={item.id}
                 draggable
-                onDragStart={() => handleDragStart(item.id)}
+                onDragStart={(e) => handleDragStart(e, item.id)}
                 onClick={() => onEdit && onEdit(item)}
                 className="card hover-scale"
                 style={{ 
