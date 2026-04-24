@@ -986,43 +986,18 @@ async function handleRelatorios(req: any, res: any) {
   }
 
   if (type === 'aging') {
-    const { modo, historico } = req.query;
-    const isPagar = modo === 'pagar';
-    const showHistory = historico === 'true';
+    const isPagar = req.query.modo === 'pagar';
+    const isHistory = req.query.historico === 'true';
     
-    let details;
-    if (isPagar && showHistory) {
-      details = await sql`
-        SELECT t.*, COALESCE(f.nome, 'N/A') as entidade_nome
-        FROM titulos_pagar t
-        LEFT JOIN fornecedores f ON f.id::text = t.fornecedor_id::text
-        WHERE t.status = 'pago' AND t.deletado = false AND t.data_vencimento < CURRENT_DATE
-        ORDER BY t.data_vencimento DESC LIMIT 100
-      `;
+    let rows: any[] = [];
+    if (isPagar && isHistory) {
+      rows = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status = 'pago' AND tp.deletado = false AND tp.data_vencimento < CURRENT_DATE ORDER BY tp.data_vencimento DESC LIMIT 100`.then(r => r);
     } else if (isPagar) {
-      details = await sql`
-        SELECT t.*, COALESCE(f.nome, 'N/A') as entidade_nome
-        FROM titulos_pagar t
-        LEFT JOIN fornecedores f ON f.id::text = t.fornecedor_id::text
-        WHERE t.status NOT IN ('pago', 'cancelado') AND t.deletado = false
-        ORDER BY t.data_vencimento ASC
-      `;
-    } else if (showHistory) {
-      details = await sql`
-        SELECT t.*, COALESCE(c.nome, 'N/A') as entidade_nome
-        FROM titulos_receber t
-        LEFT JOIN clients c ON c.id::text = t.cliente_id::text
-        WHERE t.status = 'pago' AND t.deletado = false AND t.data_vencimento < CURRENT_DATE
-        ORDER BY t.data_vencimento DESC LIMIT 100
-      `;
+      rows = await sql`SELECT tp.*, COALESCE(f.nome, 'N/A') as entidade_nome FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false ORDER BY tp.data_vencimento ASC`.then(r => r);
+    } else if (isHistory) {
+      rows = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE ORDER BY tr.data_vencimento DESC LIMIT 100`.then(r => r);
     } else {
-      details = await sql`
-        SELECT t.*, COALESCE(c.nome, 'N/A') as entidade_nome
-        FROM titulos_receber t
-        LEFT JOIN clients c ON c.id::text = t.cliente_id::text
-        WHERE t.status NOT IN ('pago', 'cancelado') AND t.deletado = false
-        ORDER BY t.data_vencimento ASC
-      `;
+      rows = await sql`SELECT tr.*, COALESCE(c.nome, 'N/A') as entidade_nome FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false ORDER BY tr.data_vencimento ASC`.then(r => r);
     }
 
     const summary = [
@@ -1033,17 +1008,14 @@ async function handleRelatorios(req: any, res: any) {
       { faixa: 'Acima de 90 Dias', total: 0, qtd_titulos: 0 },
     ];
 
-    (Array.isArray(details) ? details : []).forEach((t: any) => {
+    rows.forEach((t: any) => {
       const dias = Math.floor((new Date().getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
       const idx = dias <= 0 ? 0 : dias <= 30 ? 1 : dias <= 60 ? 2 : dias <= 90 ? 3 : 4;
       summary[idx].total += Number(t.valor_aberto || 0);
       summary[idx].qtd_titulos += 1;
     });
 
-    return res.status(200).json({ 
-      success: true, 
-      data: { summary, details: Array.isArray(details) ? details : [] } 
-    });
+    return res.status(200).json({ success: true, data: { summary, details: rows } });
   }
 
   if (type === 'projetado') {
