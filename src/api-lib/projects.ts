@@ -49,12 +49,12 @@ export async function handleProjects(req: any, res: any) {
     }
     if (req.method === 'POST') {
       const f = req.body;
-      const result = await sql`INSERT INTO projects (client_id, client_name, ambiente, descricao, valor_estimado, valor_final, prazo_entrega, status, etapa_producao, responsavel, observacoes) VALUES (${f.client_id}, ${f.client_name}, ${f.ambiente}, ${f.descricao}, ${f.valor_estimado}, ${f.valor_final}, ${f.prazo_entrega}, ${f.status || 'lead'}, ${f.etapa_producao}, ${f.responsavel}, ${f.observacoes}) RETURNING *`;
+      const result = await sql`INSERT INTO projects (client_id, client_name, ambiente, descricao, valor_estimado, valor_final, prazo_entrega, status, etapa_producao, responsavel, observacoes, visita_id) VALUES (${f.client_id}, ${f.client_name}, ${f.ambiente}, ${f.descricao}, ${f.valor_estimado}, ${f.valor_final}, ${f.prazo_entrega}, ${f.status || 'lead'}, ${f.etapa_producao}, ${f.responsavel}, ${f.observacoes}, ${f.visita_id}) RETURNING *`;
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const f = req.body;
-      const r = await sql`UPDATE projects SET client_id = COALESCE(${f.client_id}, client_id), client_name = COALESCE(${f.client_name}, client_name), ambiente = COALESCE(${f.ambiente}, ambiente), descricao = COALESCE(${f.descricao}, descricao), valor_estimado = COALESCE(${f.valor_estimado}, valor_estimado), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega = COALESCE(${f.prazo_entrega}, prazo_entrega), status = COALESCE(${f.status}, status), etapa_producao = COALESCE(${f.etapa_producao}, etapa_producao), responsavel = COALESCE(${f.responsavel}, responsavel), observacoes = COALESCE(${f.observacoes}, observacoes), updated_at = CURRENT_TIMESTAMP WHERE id = ${req.query.id} RETURNING *`;
+      const r = await sql`UPDATE projects SET client_id = COALESCE(${f.client_id}, client_id), client_name = COALESCE(${f.client_name}, client_name), ambiente = COALESCE(${f.ambiente}, ambiente), descricao = COALESCE(${f.descricao}, descricao), valor_estimado = COALESCE(${f.valor_estimado}, valor_estimado), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega = COALESCE(${f.prazo_entrega}, prazo_entrega), status = COALESCE(${f.status}, status), etapa_producao = COALESCE(${f.etapa_producao}, etapa_producao), responsavel = COALESCE(${f.responsavel}, responsavel), observacoes = COALESCE(${f.observacoes}, observacoes), visita_id = COALESCE(${f.visita_id}, visita_id), orcamento_id = COALESCE(${f.orcamento_id}, orcamento_id), updated_at = CURRENT_TIMESTAMP WHERE id = ${req.query.id} RETURNING *`;
       if (r.length && f.status === 'concluido') {
         const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${req.query.id}`;
         for (const itm of itms) await writeOffStockForProject(itm.id);

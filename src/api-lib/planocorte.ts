@@ -35,6 +35,10 @@ export async function handlePlanoCorte(req: any, res: any) {
             kerf_mm: req.body.kerf_mm || 3,
             materiais: req.body.materiais || [],
             sku_engenharia: req.body.sku_engenharia,
+            visita_id: req.body.visita_id || null,
+            projeto_id: req.body.projeto_id || null,
+            orcamento_id: req.body.orcamento_id || null,
+            ordem_producao_id: req.body.ordem_producao_id || null,
           }).returning();
           return res.status(201).json({ success: true, data: novo });
         } else if (action === 'aprovar_producao') {

@@ -42,12 +42,13 @@ export async function handleOrcamentos(req: any, res: any) {
 
       const orc = await sql`
         INSERT INTO orcamentos (
-          cliente_id, projeto_id, numero, status, valor_base, taxa_mensal, 
+          cliente_id, projeto_id, visita_id, numero, status, valor_base, taxa_mensal, 
           condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, 
           adicional_urgencia_pct, observacoes, materiais_consumidos
         ) VALUES (
           ${f.cliente_id}, 
-          ${f.projeto_id || null}, 
+          ${f.projeto_id || null},
+          ${f.visita_id || null},
           ${num}, 
           ${f.status || 'rascunho'}, 
           ${Number(f.valor_base) || 0}, 
@@ -72,7 +73,7 @@ export async function handleOrcamentos(req: any, res: any) {
 
     if (req.method === 'PATCH') {
       const f = req.body;
-      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), atualizado_em = NOW() WHERE id = ${id} RETURNING *`;
+      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), projeto_id = COALESCE(${f.projeto_id}, projeto_id), visita_id = COALESCE(${f.visita_id}, visita_id), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), atualizado_em = NOW() WHERE id = ${id} RETURNING *`;
       if (Array.isArray(f.itens)) {
         await sql`DELETE FROM itens_orcamento WHERE orcamento_id = ${id}`;
         for (const itm of f.itens) {

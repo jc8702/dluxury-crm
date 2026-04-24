@@ -26,7 +26,7 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS projects (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      client_id TEXT, client_name TEXT, ambiente TEXT NOT NULL, descricao TEXT, valor_estimado DECIMAL(12,2), valor_final DECIMAL(12,2), prazo_entrega DATE, status TEXT NOT NULL DEFAULT 'lead', etapa_producao TEXT, responsavel TEXT, observacoes TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      client_id TEXT, client_name TEXT, ambiente TEXT NOT NULL, descricao TEXT, valor_estimado DECIMAL(12,2), valor_final DECIMAL(12,2), prazo_entrega DATE, status TEXT NOT NULL DEFAULT 'lead', etapa_producao TEXT, responsavel TEXT, observacoes TEXT, visita_id TEXT, orcamento_id TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -54,6 +54,18 @@ export async function runInitDB() {
 
   // 6. Migrations (safe)
   await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`);
+  await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
+  await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
+  await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS ordem_producao_id TEXT`);
+  await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS ncm TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS preco_venda NUMERIC`);
@@ -141,6 +153,7 @@ export async function runInitDB() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       cliente_id TEXT, -- Flexível (TEXT ou UUID)
       projeto_id TEXT, -- Flexível (TEXT ou UUID)
+      visita_id TEXT, -- Flexível (TEXT ou UUID)
       numero TEXT UNIQUE,
       status TEXT DEFAULT 'rascunho',
       valor_base DECIMAL(12,2),
@@ -152,8 +165,8 @@ export async function runInitDB() {
       adicional_urgencia_pct DECIMAL(5,2) DEFAULT 0,
       observacoes TEXT,
       materiais_consumidos JSONB DEFAULT '[]',
-      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -185,6 +198,9 @@ export async function runInitDB() {
       produto TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'PENDENTE',
       pecas INTEGER DEFAULT 0,
+      orcamento_id TEXT,
+      projeto_id TEXT,
+      visita_id TEXT,
       data_inicio TIMESTAMP WITH TIME ZONE,
       data_fim TIMESTAMP WITH TIME ZONE,
       tempo_previsto_corte INTEGER DEFAULT 0,
@@ -274,6 +290,8 @@ export async function runInitDB() {
       dia_inteiro BOOLEAN DEFAULT FALSE,
       cliente_id TEXT, -- Alterado para TEXT para flexibilidade
       projeto_id TEXT,
+      visita_id TEXT,
+      orcamento_id TEXT,
       endereco TEXT,
       objetivo TEXT,
       status_visita TEXT,
@@ -334,7 +352,7 @@ export async function runInitDB() {
     )
   `);
 
-  // 19. Industrial Cutting Plan
+// 19. Industrial Cutting Plan
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS planos_corte (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -343,10 +361,11 @@ export async function runInitDB() {
       kerf_mm DECIMAL(5,2) DEFAULT 3.0,
       grupos JSONB DEFAULT '[]',
       pecas JSONB DEFAULT '[]',
-      resultado JSONB DEFAULT '{}',
+      visita_id TEXT,
+      projeto_id TEXT,
       orcamento_id TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      ordem_producao_id TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 

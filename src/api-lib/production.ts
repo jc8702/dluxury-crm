@@ -80,7 +80,7 @@ async function listOPs(res: any) {
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
 async function createOP(req: any, res: any) {
-  const { op_id, produto, pecas, metadata, checklist } = req.body;
+  const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id } = req.body;
 
   if (!op_id || !produto) {
     return res.status(400).json({ success: false, error: 'Dados insuficientes para criar OP' });
@@ -95,8 +95,8 @@ async function createOP(req: any, res: any) {
   const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
   const [novaOP] = await sql`
-    INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist)
-    VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)})
+    INSERT INTO ordens_producao (op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id)
+    VALUES (${op_id}, ${produto}, ${pecas || 0}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
     RETURNING *
   `;
 
