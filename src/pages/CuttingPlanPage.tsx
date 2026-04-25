@@ -13,9 +13,115 @@ import type {
 import { calcularPlanoCorte } from '../utils/planodeCorte';
 import { CanvasAvancado } from '../modules/plano-de-corte/ui/components/CanvasAvancado';
 import { ImportadorEngenharia } from '../modules/plano-de-corte/ui/components/ImportadorEngenharia';
+import { Search } from 'lucide-react';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
 const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
+
+const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }: any) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [manualEsp, setManualEsp] = useState(15);
+  const [manualTipo, setManualTipo] = useState('Branco');
+
+  const filtered = materiais.filter((m: any) => 
+    (m.categoria_id === 'chapas' || m.unidade === 'CHAPA') &&
+    (m.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (m.sku && m.sku.toLowerCase().includes(searchTerm.toLowerCase())))
+  );
+
+  return (
+    <div className="modal-overlay hide-on-print" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1}>
+      <div className="modal-content animate-pop-in" style={{ width: '800px', display: 'flex', gap: '2rem' }} onClick={e => e.stopPropagation()}>
+        {/* Esquerda: Cadastro do Estoque */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', borderRight: '1px solid var(--border)', paddingRight: '2rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Box className="text-[#E2AC00]" /> Selecionar do Estoque
+          </h3>
+          
+          <div style={{ position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Buscar por Nome ou SKU..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ width: '100%', padding: '8px 10px 8px 34px', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)' }}
+            />
+          </div>
+
+          <div style={{ overflowY: 'auto', maxHeight: '450px', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingRight: '4px' }}>
+            {filtered.map((m: any) => (
+              <div key={m.id} onClick={() => onAddEstoque(m)} className="card hover-scale" style={{ padding: '0.75rem', cursor: 'pointer', background: 'var(--surface-hover)' }}>
+                <div style={{ fontWeight: '700', fontSize: '0.85rem' }}>{m.nome}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  <span>{m.sku}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: '800' }}>E: {m.espessura || '?'}mm</span>
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && <p style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>Nenhuma chapa encontrada.</p>}
+          </div>
+        </div>
+
+        {/* Direita: Adição Manual */}
+        <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Settings2 className="text-[#E2AC00]" /> Configuração Manual
+          </h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="section" style={{ padding: '1rem' }}>
+              <label className="label-base">ESPESSURA (mm)</label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {ESPESSURAS_PADRAO.map(e => (
+                  <button 
+                    key={e}
+                    onClick={() => setManualEsp(e)}
+                    className="btn"
+                    style={{ 
+                      fontSize: '0.75rem', padding: '0.4rem 0.6rem',
+                      background: manualEsp === e ? 'var(--primary)' : 'transparent',
+                      color: manualEsp === e ? '#000' : 'var(--text)',
+                      border: `1px solid ${manualEsp === e ? 'var(--primary)' : 'var(--border)'}`
+                    }}
+                  >
+                    {e}mm
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="section" style={{ padding: '1rem' }}>
+              <label className="label-base">TIPO</label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {TIPOS_PADRAO.map(t => (
+                  <button 
+                    key={t}
+                    onClick={() => setManualTipo(t)}
+                    className="btn"
+                    style={{ 
+                      fontSize: '0.75rem', padding: '0.4rem 0.6rem',
+                      background: manualTipo === t ? 'var(--primary)' : 'transparent',
+                      color: manualTipo === t ? '#000' : 'var(--text)',
+                      border: `1px solid ${manualTipo === t ? 'var(--primary)' : 'var(--border)'}`
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button 
+              onClick={() => onAddManual({ nome: `MDF ${manualTipo}`, sku: `MDF-${manualTipo.toUpperCase()}-${manualEsp}MM`, espessura: manualEsp, tipo: manualTipo })}
+              className="btn btn-primary mt-4" style={{ width: '100%' }}>
+              + INSERIR CHAPA
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CuttingPlanPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -519,7 +625,7 @@ const CuttingPlanPage: React.FC = () => {
         </div>
 
         {/* VISUALIZATION CANVAS */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
+        <div className="hide-on-print" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)', overflow: 'hidden' }}>
           {/* TAB DE CHAPAS */}
           <div style={{ display: 'flex', background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: '40px', overflowX: 'auto' }}>
             {activeResultadoGrupo?.superficies.map((s, idx) => (
@@ -543,11 +649,11 @@ const CuttingPlanPage: React.FC = () => {
             ))}
           </div>
 
-          <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '3rem' }}>
             {activeSuperficie ? (
               <CanvasAvancado superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} />
             ) : (
-              <div style={{ textAlign: 'center', opacity: 0.15 }}>
+              <div style={{ textAlign: 'center', opacity: 0.15, marginTop: '20vh' }}>
                 <Scissors size={140} style={{ margin: '0 auto 1.5rem', color: 'var(--primary)' }} />
                 <p style={{ fontSize: '1.2rem', fontWeight: '900', letterSpacing: '0.2em' }}>AGUARDANDO OTIMIZAÇÃO</p>
                 <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Adicione materiais e peças para começar.</p>
@@ -583,80 +689,75 @@ const CuttingPlanPage: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
-      {showMaterialModal && (
-        <div className="modal-overlay" onClick={() => setShowMaterialModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowMaterialModal(false); }} tabIndex={-1}>
-          <div className="modal-content animate-pop-in" style={{ width: '800px', display: 'flex', gap: '2rem' }} onClick={e => e.stopPropagation()}>
-            {/* Esquerda: Cadastro do Estoque */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', borderRight: '1px solid var(--border)', paddingRight: '2rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Box className="text-[#E2AC00]" /> Selecionar do Estoque
-              </h3>
-              <div style={{ overflowY: 'auto', maxHeight: '500px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {materiaisEstoque.filter(m => m.categoria_id === 'chapas' || m.unidade === 'CHAPA').map(m => (
-                  <div key={m.id} onClick={() => addGrupoDoEstoque(m)} className="card hover-scale" style={{ padding: '0.75rem', cursor: 'pointer', background: 'var(--surface-hover)' }}>
-                    <div style={{ fontWeight: '700', fontSize: '0.85rem' }}>{m.nome}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                      <span>{m.sku}</span>
-                      <span style={{ color: 'var(--primary)', fontWeight: '800' }}>E: {m.espessura || '?'}mm</span>
+      {/* RENDERIZAÇÃO PARA IMPRESSÃO DE ETIQUETAS */}
+      <div className="print-only">
+        {resultado?.grupos.map(g => 
+          g.superficies.map(s => 
+            s.pecasPositionadas.map((p, pIdx) => (
+              <div key={`${s.id}-${p.pecaId}-${pIdx}`} style={{ 
+                width: '10cm', height: '5cm', border: '1px solid black', margin: '0 auto 1cm auto', pageBreakInside: 'avoid',
+                display: 'flex', flexDirection: 'column', padding: '10px', fontFamily: 'sans-serif'
+              }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{p.descricao}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px' }}>Dimensões: {p.largura} x {p.altura} mm</div>
+                    <div style={{ fontSize: '10px', marginTop: '5px' }}>Material: {g.nomeMaterial}</div>
+                    <div style={{ fontSize: '10px' }}>Chapa: {s.id.split('-')[1] || 'Retalho'} - Etiqueta #{p.numeroEtiqueta}</div>
+                  </div>
+                  {/* QR Code Placeholder (could be a real QR code library later) */}
+                  <div style={{ width: '60px', height: '60px', background: '#000' }}>
+                    {/* Simulated QR Code for print */}
+                    <div style={{ width: '100%', height: '100%', display: 'flex', flexWrap: 'wrap' }}>
+                       <div style={{ width: '30%', height: '30%', background: '#fff', margin: '1px' }}></div>
+                       <div style={{ width: '30%', height: '30%', background: '#fff', margin: '1px' }}></div>
                     </div>
                   </div>
-                ))}
-                {materiaisEstoque.length === 0 && <p style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>Carregando estoque...</p>}
-              </div>
-            </div>
-
-            {/* Direita: Adição Manual */}
-            <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Settings2 className="text-[#E2AC00]" /> Configuração Manual
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="section" style={{ padding: '1rem' }}>
-                  <label className="label-base">ESPESSURA</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    {ESPESSURAS_PADRAO.map(e => (
-                      <button 
-                        key={e}
-                        onClick={() => addGrupoManual({ nome: `MDF ${e}mm`, sku: `MDF-${e}MM`, espessura: e, tipo: 'Branco' })}
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.75rem', padding: '0.5rem' }}
-                      >
-                        {e} mm
-                      </button>
-                    ))}
-                  </div>
                 </div>
-
-                <div className="section" style={{ padding: '1rem' }}>
-                  <label className="label-base">TIPOS RÁPIDOS</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {TIPOS_PADRAO.map(t => (
-                      <button 
-                        key={t}
-                        onClick={() => addGrupoManual({ nome: `MDF ${t}`, sku: `MDF-${t.toUpperCase()}`, espessura: 18, tipo: t })}
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.7rem', padding: '0.4rem 0.8rem' }}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                  * Você poderá ajustar as dimensões exatas da chapa após adicionar ao plano.
-                </p>
               </div>
-            </div>
-          </div>
-        </div>
+            ))
+          )
+        )}
+      </div>
+
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .hide-on-print {
+            display: none !important;
+          }
+          .print-only, .print-only * {
+            visibility: visible;
+          }
+          .print-only {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }
+        @media screen {
+          .print-only {
+            display: none;
+          }
+        }
+      `}</style>
+
+      {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
+      {showMaterialModal && (
+        <ModalMaterial 
+          materiais={materiaisEstoque} 
+          onAddEstoque={addGrupoDoEstoque} 
+          onAddManual={addGrupoManual} 
+          onClose={() => setShowMaterialModal(false)} 
+        />
       )}
 
       {/* MODAL: IMPORTAR PEÇAS */}
       {showImportModal && (
-        <div className="modal-overlay" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
+        <div className="modal-overlay hide-on-print" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
           <div className="modal-content animate-pop-in" style={{ width: '600px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar Peças</h2>
