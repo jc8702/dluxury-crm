@@ -342,11 +342,16 @@ const CuttingPlanPage: React.FC = () => {
     setGrupos(grupos.map(g => g.id === id ? { ...g, ...data } : g));
   };
 
-  const handleImportOrcamento = async (orcId: string) => {
+  const handleImportOrcamento = async (orc: any) => {
+    if (orc.status === 'rascunho') {
+      alert("Este orçamento ainda é um rascunho. É necessário aprová-o e gerar o detalhamento técnico no Módulo de Orçamentos antes de enviar para o Plano de Corte.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const tree = await api.orcamentoTecnico.getTree(orcId);
-      if (tree && Array.isArray(tree)) {
+      const tree = await api.orcamentoTecnico.getTree(orc.id);
+      if (tree && Array.isArray(tree) && tree.length > 0) {
         const novosGrupos = [...grupos];
         const novasPecas = [...pecas];
 
@@ -689,62 +694,6 @@ const CuttingPlanPage: React.FC = () => {
         </div>
       </div>
 
-      {/* RENDERIZAÇÃO PARA IMPRESSÃO DE ETIQUETAS */}
-      <div className="print-only">
-        {resultado?.grupos.map(g => 
-          g.superficies.map(s => 
-            s.pecasPositionadas.map((p, pIdx) => (
-              <div key={`${s.id}-${p.pecaId}-${pIdx}`} style={{ 
-                width: '10cm', height: '5cm', border: '1px solid black', margin: '0 auto 1cm auto', pageBreakInside: 'avoid',
-                display: 'flex', flexDirection: 'column', padding: '10px', fontFamily: 'sans-serif'
-              }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{p.descricao}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                  <div>
-                    <div style={{ fontSize: '12px' }}>Dimensões: {p.largura} x {p.altura} mm</div>
-                    <div style={{ fontSize: '10px', marginTop: '5px' }}>Material: {g.nomeMaterial}</div>
-                    <div style={{ fontSize: '10px' }}>Chapa: {s.id.split('-')[1] || 'Retalho'} - Etiqueta #{p.numeroEtiqueta}</div>
-                  </div>
-                  {/* QR Code Placeholder (could be a real QR code library later) */}
-                  <div style={{ width: '60px', height: '60px', background: '#000' }}>
-                    {/* Simulated QR Code for print */}
-                    <div style={{ width: '100%', height: '100%', display: 'flex', flexWrap: 'wrap' }}>
-                       <div style={{ width: '30%', height: '30%', background: '#fff', margin: '1px' }}></div>
-                       <div style={{ width: '30%', height: '30%', background: '#fff', margin: '1px' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )
-        )}
-      </div>
-
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .hide-on-print {
-            display: none !important;
-          }
-          .print-only, .print-only * {
-            visibility: visible;
-          }
-          .print-only {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-        @media screen {
-          .print-only {
-            display: none;
-          }
-        }
-      `}</style>
-
       {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
       {showMaterialModal && (
         <ModalMaterial 
@@ -776,7 +725,7 @@ const CuttingPlanPage: React.FC = () => {
                 <h3 className="font-bold text-sm mb-3 text-slate-400 uppercase tracking-wider">Ou importar de um orçamento do ERP</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
                   {orcamentos.map(o => (
-                    <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
+                    <div key={o.id} onClick={() => handleImportOrcamento(o)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer', opacity: o.status === 'rascunho' ? 0.6 : 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontWeight: '900', color: 'var(--primary)' }}>#{o.numero}</span>
                         <span className="badge" style={{ background: o.status === 'aprovado' ? 'var(--success)' : 'var(--badge-bg)', color: 'white' }}>{o.status}</span>
@@ -799,13 +748,27 @@ const CuttingPlanPage: React.FC = () => {
       )}
 
 
-      {/* PRINT STYLES */}
+      {/* PRINT STYLES E ETIQUETAS */}
       <style>{`
         @media print {
-          body > * { display: none !important; }
-          .print-only { display: block !important; }
+          .hide-on-print, .sidebar, .topbar, nav, header, button, .modal-overlay { 
+            display: none !important; 
+          }
+          .app-content, .page-container, .main-layout, #root, body, html {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            color: black !important;
+            overflow: visible !important;
+            height: auto !important;
+          }
+          .print-only { 
+            display: block !important; 
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+          }
           .print-etiquetas { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; padding: 10mm; }
-          .etiqueta { width: 95mm; height: 45mm; border: 1px solid #000; padding: 4mm; color: #000; font-family: sans-serif; position: relative; display: flex; }
+          .etiqueta { width: 95mm; height: 45mm; border: 1px solid #000; padding: 4mm; color: #000; font-family: sans-serif; position: relative; display: flex; break-inside: avoid; margin-bottom: 2mm; }
           .etiqueta-content { flex: 1; }
           .etiqueta-header { display: flex; justify-content: space-between; font-size: 7pt; border-bottom: 1px solid #ddd; margin-bottom: 1mm; font-weight: bold; }
           .etiqueta-title { font-size: 10pt; font-weight: 800; margin-bottom: 1mm; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -813,9 +776,12 @@ const CuttingPlanPage: React.FC = () => {
           .etiqueta-footer { position: absolute; bottom: 4mm; left: 4mm; right: 25mm; font-size: 7pt; color: #666; display: flex; justify-content: space-between; }
           .etiqueta-qr { width: 20mm; height: 20mm; margin-left: 2mm; align-self: center; }
         }
+        @media screen {
+          .print-only { display: none !important; }
+        }
       `}</style>
       
-      <div className="hidden print-only">
+      <div className="print-only">
         <div className="print-etiquetas">
           {resultado?.grupos.flatMap(g => g.superficies.flatMap(s => s.pecasPositionadas.map(p => (
             <div key={`${p.pecaId}-${p.numeroEtiqueta}`} className="etiqueta">

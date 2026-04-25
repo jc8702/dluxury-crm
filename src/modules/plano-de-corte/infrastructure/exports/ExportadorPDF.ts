@@ -13,13 +13,13 @@ export class ExportadorPDF {
       doc.setFontSize(12);
       doc.text(`Chapa ${index + 1} - ${sup.largura}x${sup.altura}mm - Aproveitamento: ${sup.aproveitamentoPct.toFixed(1)}%`, 10, 22);
 
-      // Calcular escala para caber na página A4 (margens de 20mm)
-      const maxW = 257; // 297 - 40
-      const maxH = 160; // 210 - 50
+      // Calcular escala para caber na página A4 (Deixando espaço embaixo para legenda)
+      const maxW = 277; // 297 - 20 margens laterais
+      const maxH = 120; // Reduzido para caber legenda abaixo (210 - 90)
       const scale = Math.min(maxW / sup.largura, maxH / sup.altura);
 
-      const offsetX = 20;
-      const offsetY = 35;
+      const offsetX = 10;
+      const offsetY = 30;
 
       // Desenhar Chapa Base
       doc.setDrawColor(0);
@@ -50,15 +50,44 @@ export class ExportadorPDF {
           doc.setLineWidth(0.2);
         }
 
-        // Se a peça for grande o suficiente, escrever dentro
-        if (w > 15 && h > 10) {
-          doc.setFontSize(8);
-          doc.text(`#${peca.numeroEtiqueta}`, x + 2, y + 5);
+        // Escrever número da etiqueta na peça (mesmo pequena)
+        doc.setFontSize(w < 10 || h < 10 ? 4 : 7);
+        doc.text(`#${peca.numeroEtiqueta}`, x + (w/2), y + (h/2), { align: 'center', baseline: 'middle' });
+
+        // Se a peça for grande o suficiente, escrever descrição
+        if (w > 20 && h > 15) {
           doc.setFontSize(6);
-          const desc = peca.descricao.length > 15 ? peca.descricao.substring(0, 15) + '...' : peca.descricao;
-          doc.text(desc, x + 2, y + 9);
-          doc.text(`${peca.largura}x${peca.altura}`, x + 2, y + 13);
+          const desc = peca.descricao.length > 12 ? peca.descricao.substring(0, 12) + '..' : peca.descricao;
+          doc.text(desc, x + (w/2), y + (h/2) + 4, { align: 'center', baseline: 'middle' });
+          doc.text(`${peca.largura}x${peca.altura}`, x + (w/2), y + (h/2) + 8, { align: 'center', baseline: 'middle' });
         }
+      });
+
+      // --- LEGENDA (Tabela de Peças Abaixo do Desenho) ---
+      const legendYStart = offsetY + (sup.altura * scale) + 10;
+      doc.setFontSize(10);
+      doc.text('Legenda de Peças:', offsetX, legendYStart);
+      
+      let col = 0;
+      let row = 0;
+      const colWidth = 65;
+      const rowHeight = 5;
+      const maxRows = Math.floor((200 - legendYStart) / rowHeight);
+
+      doc.setFontSize(7);
+      sup.pecasPositionadas.forEach((peca) => {
+        if (row >= maxRows) {
+          row = 0;
+          col++;
+        }
+        // Se exceder as colunas, paramos (limite de espaço)
+        if (col > 3) return;
+
+        const xPos = offsetX + (col * colWidth);
+        const yPos = legendYStart + 6 + (row * rowHeight);
+        
+        doc.text(`#${peca.numeroEtiqueta} - ${peca.largura}x${peca.altura}mm - ${peca.descricao.substring(0,20)}`, xPos, yPos);
+        row++;
       });
     });
 
