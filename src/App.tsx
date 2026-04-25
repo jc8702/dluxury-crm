@@ -8,7 +8,7 @@ const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const OrcamentosPage = lazy(() => import('./pages/OrcamentosPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProductionPage = lazy(() => import('./pages/ProductionPage'));
-const CuttingPlanPage = lazy(() => import('./modules/plano-de-corte/ui/pages/PlanoDeCorte'));
+const CuttingPlanPage = lazy(() => import('./pages/CuttingPlanPage'));
 const VisitsPage = lazy(() => import('./pages/VisitsPage'));
 const CalendarioPage = lazy(() => import('./pages/CalendarioPage'));
 const PosVendaPage = lazy(() => import('./pages/PosVendaPage'));

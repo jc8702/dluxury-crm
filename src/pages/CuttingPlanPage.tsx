@@ -11,7 +11,8 @@ import type {
   ResultadoPlano
 } from '../utils/planodeCorte';
 import { calcularPlanoCorte } from '../utils/planodeCorte';
-import PlanoCorteVisual from '../components/production/PlanoCorteVisual';
+import { CanvasAvancado } from '../modules/plano-de-corte/ui/components/CanvasAvancado';
+import { ImportadorEngenharia } from '../modules/plano-de-corte/ui/components/ImportadorEngenharia';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
 const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
@@ -297,6 +298,42 @@ const CuttingPlanPage: React.FC = () => {
     }
   };
 
+  const handleImportDae = (pecasDae: PecaInput[]) => {
+    const novosGrupos = [...grupos];
+    const novasPecas = [...pecas];
+
+    pecasDae.forEach(peca => {
+      // Find or create group
+      let grupo = novosGrupos.find(g => g.sku === peca.grupoMaterialId);
+      if (!grupo) {
+        grupo = {
+          id: Math.random().toString(36).substring(7),
+          materialId: '',
+          sku: peca.grupoMaterialId,
+          nomeMaterial: `Material ${peca.grupoMaterialId}`,
+          larguraChapaMm: 2750, 
+          alturaChapaMm: 1830, 
+          espessuraMm: 15,
+          precoChapa: 0,
+          chapasAdicionaisManual: 0, 
+          retalhosDisponiveis: [], 
+          kerfMm: kerf
+        };
+        novosGrupos.push(grupo);
+      }
+      
+      novasPecas.push({
+        ...peca,
+        id: Math.random().toString(36).substring(7),
+        grupoMaterialId: grupo.id
+      });
+    });
+
+    setGrupos(novosGrupos);
+    setPecas(novasPecas);
+    setShowImportModal(false);
+  };
+
   const handleExportCSV = () => {
     if (!resultado) return;
     const headers = ['Etiqueta', 'Descrição', 'L (mm)', 'A (mm)', 'Qtd', 'Material', 'Ambiente', 'Chapa'];
@@ -313,6 +350,21 @@ const CuttingPlanPage: React.FC = () => {
     link.href = URL.createObjectURL(blob);
     link.download = `plano_corte_${plano?.nome}.csv`;
     link.click();
+  };
+
+  const handleExportPDF = async () => {
+    if (!resultado || !activeResultadoGrupo) return;
+    const { ExportadorPDF } = await import('../modules/plano-de-corte/infrastructure/exports/ExportadorPDF');
+    ExportadorPDF.exportarPlano(activeResultadoGrupo.superficies, plano?.nome || 'Novo Plano');
+  };
+
+  const handleExportGCode = async () => {
+    if (!activeSuperficie) {
+      alert("Selecione uma chapa para exportar o G-Code.");
+      return;
+    }
+    const { ExportadorGCode } = await import('../modules/plano-de-corte/infrastructure/exports/ExportadorGCode');
+    ExportadorGCode.exportarChapa(activeSuperficie, activeChapaIdx, activeGrupo?.kerfMm || 3);
   };
 
   const activeGrupo = grupos[activeGrupoIdx];
@@ -493,7 +545,7 @@ const CuttingPlanPage: React.FC = () => {
 
           <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>
             {activeSuperficie ? (
-              <PlanoCorteVisual superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} />
+              <CanvasAvancado superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} />
             ) : (
               <div style={{ textAlign: 'center', opacity: 0.15 }}>
                 <Scissors size={140} style={{ margin: '0 auto 1.5rem', color: 'var(--primary)' }} />
@@ -521,8 +573,10 @@ const CuttingPlanPage: React.FC = () => {
                 <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>{resultado.totalPecasPositionadas}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={handleExportCSV} className="btn btn-outline" style={{ height: '40px' }}><Download size={18} /> Exportar</button>
-                <button onClick={() => window.print()} className="btn btn-outline" style={{ height: '40px' }}><Printer size={18} /> Etiquetas</button>
+                <button onClick={handleExportCSV} className="btn btn-outline" style={{ height: '40px' }} title="Exportar CSV"><FileText size={18} /></button>
+                <button onClick={handleExportPDF} className="btn btn-outline" style={{ height: '40px' }} title="Exportar PDF do Desenho"><Download size={18} /> PDF</button>
+                <button onClick={handleExportGCode} className="btn btn-outline" style={{ height: '40px' }} title="Exportar G-Code para CNC (Chapa Ativa)"><Layers size={18} /> CNC</button>
+                <button onClick={() => window.print()} className="btn btn-primary" style={{ height: '40px' }}><Printer size={18} /> Etiquetas</button>
               </div>
             </div>
           )}
@@ -600,34 +654,49 @@ const CuttingPlanPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: IMPORTAR ORÇAMENTO */}
+      {/* MODAL: IMPORTAR PEÇAS */}
       {showImportModal && (
         <div className="modal-overlay" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
-          <div className="modal-content animate-pop-in" style={{ width: '500px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content animate-pop-in" style={{ width: '600px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar do Orçamento</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar Peças</h2>
               <button onClick={() => setShowImportModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '450px', overflowY: 'auto' }}>
-              {orcamentos.map(o => (
-                <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '900', color: 'var(--primary)' }}>#{o.numero}</span>
-                    <span className="badge" style={{ background: o.status === 'aprovado' ? 'var(--success)' : 'var(--badge-bg)', color: 'white' }}>{o.status}</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', marginTop: '4px', fontWeight: '600' }}>{o.cliente_nome || 'Cliente não identificado'}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Criado em: {new Date(o.criado_em).toLocaleDateString()}</div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              
+              {/* Importador 3D (CAD/SketchUp/Promob) */}
+              <section>
+                <ImportadorEngenharia onImport={handleImportDae} />
+              </section>
+
+              {/* Importador de Orçamentos ERP */}
+              <section>
+                <h3 className="font-bold text-sm mb-3 text-slate-400 uppercase tracking-wider">Ou importar de um orçamento do ERP</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
+                  {orcamentos.map(o => (
+                    <div key={o.id} onClick={() => handleImportOrcamento(o.id)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '900', color: 'var(--primary)' }}>#{o.numero}</span>
+                        <span className="badge" style={{ background: o.status === 'aprovado' ? 'var(--success)' : 'var(--badge-bg)', color: 'white' }}>{o.status}</span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', marginTop: '4px', fontWeight: '600' }}>{o.cliente_nome || 'Cliente não identificado'}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Criado em: {new Date(o.criado_em).toLocaleDateString()}</div>
+                    </div>
+                  ))}
+                  {orcamentos.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>
+                      <p>Nenhum orçamento encontrado.</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {orcamentos.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem', opacity: 0.5 }}>
-                  <p>Nenhum orçamento encontrado.</p>
-                </div>
-              )}
+              </section>
+              
             </div>
           </div>
         </div>
       )}
+
 
       {/* PRINT STYLES */}
       <style>{`
@@ -635,11 +704,13 @@ const CuttingPlanPage: React.FC = () => {
           body > * { display: none !important; }
           .print-only { display: block !important; }
           .print-etiquetas { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; padding: 10mm; }
-          .etiqueta { width: 95mm; height: 45mm; border: 1px solid #000; padding: 4mm; color: #000; font-family: sans-serif; position: relative; }
+          .etiqueta { width: 95mm; height: 45mm; border: 1px solid #000; padding: 4mm; color: #000; font-family: sans-serif; position: relative; display: flex; }
+          .etiqueta-content { flex: 1; }
           .etiqueta-header { display: flex; justify-content: space-between; font-size: 7pt; border-bottom: 1px solid #ddd; margin-bottom: 1mm; font-weight: bold; }
           .etiqueta-title { font-size: 10pt; font-weight: 800; margin-bottom: 1mm; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
           .etiqueta-dim { font-size: 18pt; font-weight: 900; margin: 1mm 0; }
-          .etiqueta-footer { position: absolute; bottom: 4mm; left: 4mm; right: 4mm; font-size: 7pt; color: #666; display: flex; justify-content: space-between; }
+          .etiqueta-footer { position: absolute; bottom: 4mm; left: 4mm; right: 25mm; font-size: 7pt; color: #666; display: flex; justify-content: space-between; }
+          .etiqueta-qr { width: 20mm; height: 20mm; margin-left: 2mm; align-self: center; }
         }
       `}</style>
       
@@ -647,20 +718,28 @@ const CuttingPlanPage: React.FC = () => {
         <div className="print-etiquetas">
           {resultado?.grupos.flatMap(g => g.superficies.flatMap(s => s.pecasPositionadas.map(p => (
             <div key={`${p.pecaId}-${p.numeroEtiqueta}`} className="etiqueta">
-              <div className="etiqueta-header">
-                <span>D'LUXURY ERP</span>
-                <span>#{String(p.numeroEtiqueta).padStart(3, '0')}</span>
+              <div className="etiqueta-content">
+                <div className="etiqueta-header">
+                  <span>D'LUXURY ERP</span>
+                  <span>#{String(p.numeroEtiqueta).padStart(3, '0')}</span>
+                </div>
+                <div className="etiqueta-title">{p.descricao}</div>
+                <div className="etiqueta-dim">{p.largura} × {p.altura} <span style={{fontSize: '10pt'}}>mm</span></div>
+                <div className="etiqueta-footer">
+                  <span>{p.ambiente} | {p.movel || 'Geral'}</span>
+                  <span style={{fontWeight: 'bold'}}>{g.sku}</span>
+                </div>
               </div>
-              <div className="etiqueta-title">{p.descricao}</div>
-              <div className="etiqueta-dim">{p.largura} × {p.altura} <span style={{fontSize: '10pt'}}>mm</span></div>
-              <div className="etiqueta-footer">
-                <span>{p.ambiente} | {p.movel || 'Geral'}</span>
-                <span style={{fontWeight: 'bold'}}>{g.sku}</span>
-              </div>
+              <img 
+                className="etiqueta-qr" 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ID:${p.pecaId}|DIM:${p.largura}x${p.altura}|MAT:${g.sku}`} 
+                alt="QR Code" 
+              />
             </div>
           ))))}
         </div>
       </div>
+
     </div>
   );
 };

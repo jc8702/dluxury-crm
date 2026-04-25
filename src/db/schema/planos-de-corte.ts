@@ -36,3 +36,16 @@ export const erpSkusEngenharia = pgTable('erp_skus_engenharia', {
   ativo: boolean('ativo').default(true),
   created_at: timestamp('created_at').defaultNow(),
 });
+
+// 4. Tabela de Retalhos (Sobras Reutilizáveis)
+export const retalhosEstoque = pgTable('retalhos_estoque', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  sku_chapa: varchar('sku_chapa', { length: 100 }).notNull(),
+  largura_mm: integer('largura_mm').notNull(),
+  altura_mm: integer('altura_mm').notNull(),
+  espessura_mm: integer('espessura_mm').notNull(),
+  origem: varchar('origem', { length: 50 }), // 'sobra_plano_corte', 'devolucao', 'manual'
+  plano_corte_origem_id: uuid('plano_corte_origem_id').references(() => planosDeCorte.id),
+  disponivel: boolean('disponivel').default(true),
+  criado_em: timestamp('criado_em').defaultNow(),
+});

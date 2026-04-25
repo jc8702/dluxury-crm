@@ -63,4 +63,10 @@ export interface PecaPosicionada {
   largura: number;
   altura: number;
   rotacionada: boolean;
+  fio_de_fita?: {
+    topo: boolean;
+    baixo: boolean;
+    esquerda: boolean;
+    direita: boolean;
+  };
 }
