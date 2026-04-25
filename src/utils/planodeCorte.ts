@@ -195,13 +195,13 @@ function processarGrupo(pecas: PecaInput[], grupo: GrupoMaterial): ResultadoGrup
     if (pecasRestantes.length === 0) break;
     
     const s = criarSuperficie(retalho.id, 'retalho', retalho.larguraMm, retalho.alturaMm, 0, retalho.id);
-    encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
+    const encaixadasIds = encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
     
-    if (s.pecasPositionadas.length > 0) {
+    if (encaixadasIds.length > 0) {
       superficies.push(s);
       // Remover peças encaixadas
-      s.pecasPositionadas.forEach(p => {
-        const idx = pecasRestantes.findIndex(r => r.id === p.pecaId);
+      encaixadasIds.forEach(id => {
+        const idx = pecasRestantes.findIndex(r => r.id === id);
         if (idx !== -1) pecasRestantes.splice(idx, 1);
       });
     }
@@ -210,9 +210,9 @@ function processarGrupo(pecas: PecaInput[], grupo: GrupoMaterial): ResultadoGrup
   // 2. Usar chapas inteiras para o restante
   while (pecasRestantes.length > 0) {
     const s = criarSuperficie(`inteira-${superficies.length + 1}`, 'inteira', grupo.larguraChapaMm, grupo.alturaChapaMm, grupo.precoChapa);
-    const encaixouAlguma = encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
+    const encaixadasIds = encaixarNaSuperficie(pecasRestantes, s, grupo.kerfMm, grupo.id);
     
-    if (!encaixouAlguma) {
+    if (encaixadasIds.length === 0) {
       // Peça não cabe nem em chapa vazia? Erro de input, mas vamos pular para não travar
       console.warn('Peça muito grande para a chapa:', pecasRestantes[0]);
       pecasRestantes.shift();
@@ -220,8 +220,8 @@ function processarGrupo(pecas: PecaInput[], grupo: GrupoMaterial): ResultadoGrup
     }
 
     superficies.push(s);
-    s.pecasPositionadas.forEach(p => {
-      const idx = pecasRestantes.findIndex(r => r.id === p.pecaId);
+    encaixadasIds.forEach(id => {
+      const idx = pecasRestantes.findIndex(r => r.id === id);
       if (idx !== -1) pecasRestantes.splice(idx, 1);
     });
   }
@@ -294,8 +294,8 @@ function embaralharPecas(pecas: PecaInput[]): PecaInput[] {
 /**
  * Lógica MaxRects BSSF Core
  */
-function encaixarNaSuperficie(pecas: PecaInput[], superficie: Superficie, kerf: number, grupoId: string): boolean {
-  let encaixouAlguma = false;
+function encaixarNaSuperficie(pecas: PecaInput[], superficie: Superficie, kerf: number, grupoId: string): string[] {
+  const encaixadas: string[] = [];
 
   for (const peca of pecas) {
     let bestFit: { rect: Rect; rot: boolean; score: number } | null = null;
@@ -341,7 +341,7 @@ function encaixarNaSuperficie(pecas: PecaInput[], superficie: Superficie, kerf: 
 
       superficie.pecasPositionadas.push(posPeca);
       dividirEspacos(superficie, posPeca, kerf);
-      encaixouAlguma = true;
+      encaixadas.push(peca.id);
     }
   }
 
@@ -349,7 +349,7 @@ function encaixarNaSuperficie(pecas: PecaInput[], superficie: Superficie, kerf: 
   const areaPecas = superficie.pecasPositionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
   superficie.aproveitamentoPct = (areaPecas / (superficie.largura * superficie.altura)) * 100;
 
-  return encaixouAlguma;
+  return encaixadas;
 }
 
 function dividirEspacos(superficie: Superficie, peca: PecaPositionada, kerf: number) {
