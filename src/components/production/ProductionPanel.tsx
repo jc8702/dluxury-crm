@@ -165,17 +165,35 @@ const deleteOP = useCallback(async (op_id: string) => {
     { id: "AGUARDANDO", label: "Aguardando", color: "#6b7280" },
     { id: "PRODUCAO", label: "Produção", color: "#f59e0b" },
     { id: "MONTAGEM", label: "Montagem", color: "#3b82f6" },
-    { id: "PINTURA", label: "Pintura / Acabamento", color: "#8b5cf6" },
     { id: "INSPECAO", label: "Inspeção Final", color: "#ec4899" },
     { id: "PRONTO", label: "Pronto p/ Entrega", color: "#10b981" },
     { id: "FINALIZADO", label: "Finalizado", color: "#059669" }
   ];
 
+  const defaultTasksByStatus: Record<string, string[]> = {
+    "AGUARDANDO": [],
+    "PRODUCAO": ["Corte", "Fita de Borda", "Furações"],
+    "MONTAGEM": ["Pré-Montagem", "Pintura", "Acabamento / Limpeza"],
+    "INSPECAO": ["Inspeção de Qualidade"],
+    "PRONTO": ["Embalagem"],
+    "FINALIZADO": []
+  };
+
+  const calculateProgress = (op: OrdemProducao): number => {
+    const tasks = defaultTasksByStatus[op.status] || [];
+    const checklist = op.checklist || [];
+    if (tasks.length === 0) return 0;
+    const completed = checklist.filter(i => i.completed).length;
+    return Math.round((completed / tasks.length) * 100);
+  };
+
   const renderCard = (op: OrdemProducao, col: any) => {
     const checklist = op.checklist || [];
     const completed = checklist.filter(i => i.completed).length;
     const total = checklist.length;
-    const progress = total > 0 ? (completed / total) * 100 : 0;
+    const tasks = defaultTasksByStatus[col.id] || [];
+    const progress = calculateProgress(op);
+    const allTasksDone = tasks.length === 0 || completed === tasks.length;
 
     return (
       <div key={op.id} className="card-hover" style={{ 
@@ -195,6 +213,30 @@ const deleteOP = useCallback(async (op_id: string) => {
         
         <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.5rem' }}>{op.produto}</h4>
         
+        {tasks.length > 0 && (
+          <div style={{ marginBottom: '0.5rem' }}>
+            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+              <span>TAREFAS</span>
+              <span style={{ fontWeight: 'bold', color: progress === 100 ? '#10b981' : col.color }}>{progress}%</span>
+            </div>
+            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '6px' }}>
+              <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : col.color, transition: 'width 0.3s ease' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {tasks.map((task, idx) => {
+                const taskItem = checklist.find(c => c.task === task);
+                const isDone = !!taskItem?.completed;
+                return (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.6rem', padding: '3px 6px', background: isDone ? '#10b98122' : 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
+                    <span style={{ color: isDone ? '#10b981' : 'var(--text-muted)' }}>{isDone ? '✓' : '○'}</span>
+                    <span style={{ color: isDone ? '#10b981' : 'inherit', textDecoration: isDone ? 'line-through' : 'none' }}>{task}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
         <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', marginBottom: '4px' }}>
             <span style={{ color: 'var(--text-muted)' }}>📅 Previsão:</span>
@@ -202,40 +244,18 @@ const deleteOP = useCallback(async (op_id: string) => {
               {op.data_prevista_entrega ? new Date(op.data_prevista_entrega).toLocaleDateString('pt-BR') : '--'}
             </span>
           </div>
-          
-          {total > 0 && (
-            <div style={{ marginTop: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                <span>CHECKLIST</span>
-                <span>{completed}/{total}</span>
-              </div>
-              <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : col.color, transition: 'width 0.3s ease' }} />
-              </div>
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', gap: '4px' }}>
-            {col.id !== "PENDENTE" && (
+            {col.id !== "AGUARDANDO" && (
               <button onClick={() => updateStatus(op, 'voltar')} className="btn-icon" style={{ padding: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.03)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <ArrowLeft size={12} />
               </button>
             )}
           </div>
-          {col.id !== "FINALIZADA" && (() => {
-            // Determine if advancing is allowed (checklist + piece-level)
-            const checklistArr = op.checklist || [];
-            const checklistCompleteLocal = checklistArr.length === 0 || checklistArr.every(i => i.completed);
-            let piecesCompleteLocal = true;
-            try {
-              const meta: any = (op as any).metadata || {};
-              const pecas = Array.isArray(meta.pecas) ? meta.pecas : [];
-              for (const pp of pecas) { if (pp && pp.operator_checked === false) { piecesCompleteLocal = false; break; } }
-            } catch (e) { piecesCompleteLocal = true; }
-
-            const canAdvance = checklistCompleteLocal && piecesCompleteLocal;
+          {col.id !== "FINALIZADO" && (() => {
+            const canAdvance = allTasksDone;
             return (
               <button
                 onClick={() => canAdvance ? updateStatus(op, 'avancar') : alert('⚠️ Checklist ou peças pendentes! Conclua todas as tarefas antes de avançar.')}
@@ -259,13 +279,14 @@ const deleteOP = useCallback(async (op_id: string) => {
 
   if (loading && ops.length === 0) return <div style={{ padding: '2rem', color: 'var(--text-muted)' }}>Sincronizando com chão de fábrica...</div>;
 
+  // Layout em linha (scroll horizontal)
   return (
     <div style={{ 
-      display: 'grid', 
-      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-      gap: '1.5rem',
-      alignItems: 'start',
-      paddingBottom: '4rem'
+      display: 'flex', 
+      gap: '1rem',
+      overflowX: 'auto',
+      paddingBottom: '4rem',
+      padding: '0 0 1rem 0'
     }}>
       {colunas.map(col => {
         const colOps = ops.filter(o => o.status === col.id);
@@ -274,7 +295,7 @@ const deleteOP = useCallback(async (op_id: string) => {
           : [];
 
         return (
-        <div key={col.id} className="glass" style={{ borderRadius: '20px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', minHeight: '75vh' }}>
+        <div key={col.id} className="glass" style={{ borderRadius: '20px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', minWidth: '320px', maxWidth: '320px', minHeight: '75vh', flexShrink: 0 }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '0.8rem', fontWeight: '800', color: col.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{col.label}</h2>
             <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 'bold' }}>
