@@ -1,197 +1,61 @@
-import { ChapaMaterial, PecaCorte, LayoutChapa, PecaPosicionada } from '../entities/CuttingPlan';
-import { MaxRectsOptimizer } from './MaxRectsOptimizer';
+import { Peca, ResultadoOtimizacao, MaxRectsOptimizer } from './MaxRectsOptimizer';
 import { GuillotineOptimizer } from './GuillotineOptimizer';
 
-export interface RetalhoMaterial {
-  id: string;
-  sku: string;
-  largura_mm: number;
-  altura_mm: number;
-}
-
-export interface OtimizacaoResult {
-  layouts: LayoutChapa[];
-  naoPosicionadas: PecaCorte[];
-  aproveitamento_percentual: number;
-}
+type Heuristica = 'area_desc' | 'perimetro_desc' | 'largura_desc' | 'altura_desc' | 'aleatorio';
 
 export class HybridOptimizer {
-  public otimizar(
-    pecas: PecaCorte[], 
-    chapasBase: ChapaMaterial[], 
-    kerf: number, 
-    iteracoes: number = 20,
-    retalhosDisponiveis: RetalhoMaterial[] = []
-  ): OtimizacaoResult {
-    // Expandir peças de acordo com a quantidade
-    const pecasExpandidas: PecaCorte[] = [];
-    pecas.forEach(p => {
-      for (let i = 0; i < p.quantidade; i++) {
-        pecasExpandidas.push({ ...p });
-      }
-    });
+  private larguraChapa: number;
+  private alturaChapa: number;
+  private kerfMm: number;
 
-    let melhorResultado: OtimizacaoResult | null = null;
+  constructor(larguraChapa: number, alturaChapa: number, kerfMm: number = 3) {
+    this.larguraChapa = larguraChapa;
+    this.alturaChapa = alturaChapa;
+    this.kerfMm = kerfMm;
+  }
 
-    for (let iter = 0; iter < iteracoes; iter++) {
-      // Diferentes heurísticas de ordenação para as iterações
-      const pecasOrdenadas = this.ordenarPecas(pecasExpandidas, iter);
+  otimizar(pecas: Peca[], iteracoes: number = 50): ResultadoOtimizacao {
+    let melhorResultado: ResultadoOtimizacao | null = null;
+    let melhorAproveitamento = -1;
+    const heuristicas: Heuristica[] = ['area_desc', 'perimetro_desc', 'largura_desc', 'altura_desc'];
 
-      // Tentar com MaxRects
-      const resultMaxRects = this.rodarAlgoritmo(pecasOrdenadas, chapasBase, kerf, 'MaxRects', retalhosDisponiveis);
-      if (!melhorResultado || resultMaxRects.aproveitamento_percentual > melhorResultado.aproveitamento_percentual) {
-        melhorResultado = resultMaxRects;
-      }
+    for (let i = 0; i < iteracoes; i++) {
+      const usarMaxRects = i % 2 === 0;
+      const heuristica: Heuristica = i < 4 ? heuristicas[i] : 'aleatorio';
+      const pecasOrdenadas = this.ordenarPecas(pecas, heuristica, i);
+      const otimizador = usarMaxRects
+        ? new MaxRectsOptimizer(this.larguraChapa, this.alturaChapa, this.kerfMm)
+        : new GuillotineOptimizer(this.larguraChapa, this.alturaChapa, this.kerfMm);
 
-      // Tentar com Guillotina (Shortest e Longest)
-      const resultGuillotineShort = this.rodarAlgoritmo(pecasOrdenadas, chapasBase, kerf, 'GuillotineShort', retalhosDisponiveis);
-      if (resultGuillotineShort.aproveitamento_percentual > melhorResultado.aproveitamento_percentual) {
-        melhorResultado = resultGuillotineShort;
-      }
-
-      const resultGuillotineLong = this.rodarAlgoritmo(pecasOrdenadas, chapasBase, kerf, 'GuillotineLong', retalhosDisponiveis);
-      if (resultGuillotineLong.aproveitamento_percentual > melhorResultado.aproveitamento_percentual) {
-        melhorResultado = resultGuillotineLong;
+      const resultado = otimizador.otimizar(pecasOrdenadas);
+      if (resultado.aproveitamento > melhorAproveitamento) {
+        melhorAproveitamento = resultado.aproveitamento;
+        melhorResultado = resultado;
       }
     }
-
     return melhorResultado!;
   }
 
-  private rodarAlgoritmo(
-    pecas: PecaCorte[], 
-    chapasBase: ChapaMaterial[], 
-    kerf: number, 
-    algoritmo: 'MaxRects' | 'GuillotineShort' | 'GuillotineLong',
-    retalhosDisponiveis: RetalhoMaterial[]
-  ): OtimizacaoResult {
-    const layouts: LayoutChapa[] = [];
-    let pecasRestantes = [...pecas];
-    let chapaIdx = 1;
-
-    let areaTotalAproveitada = 0;
-    let areaTotalChapas = 0;
-
-    // FASE 1: Tentar encaixar em retalhos disponíveis (usar os menores primeiro)
-    const retalhosOrdenados = [...retalhosDisponiveis].sort((a, b) => 
-      (a.largura_mm * a.altura_mm) - (b.largura_mm * b.altura_mm)
-    );
-
-    for (const retalho of retalhosOrdenados) {
-      if (pecasRestantes.length === 0) break;
-
-      const chapaMock: ChapaMaterial = {
-        id: retalho.id,
-        sku: retalho.sku,
-        nome: `Retalho ${retalho.id.substring(0,6)}`,
-        largura_mm: retalho.largura_mm,
-        altura_mm: retalho.altura_mm,
-        espessura_mm: chapasBase[0].espessura_mm,
-        pecas: []
-      };
-
-      const resultadoAlgoritmo = this.executarAlgoritmoEspecifico(pecasRestantes, chapaMock, kerf, algoritmo);
-
-      if (resultadoAlgoritmo.posicionadas.length > 0) {
-        const areaChapa = chapaMock.largura_mm * chapaMock.altura_mm;
-        const areaUsada = resultadoAlgoritmo.posicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
-        
-        layouts.push({
-          chapa_sku: chapaMock.sku,
-          indice_chapa: chapaIdx++,
-          largura_original_mm: chapaMock.largura_mm,
-          altura_original_mm: chapaMock.altura_mm,
-          pecas_posicionadas: resultadoAlgoritmo.posicionadas,
-          area_aproveitada_mm2: areaUsada,
-          area_desperdicada_mm2: areaChapa - areaUsada
-        });
-
-        areaTotalAproveitada += areaUsada;
-        areaTotalChapas += areaChapa;
-        pecasRestantes = resultadoAlgoritmo.naoPosicionadas;
-      }
-    }
-
-    // FASE 2: Usar chapas inteiras para o restante
-    const chapaTemplate = chapasBase[0];
-
-    while (pecasRestantes.length > 0) {
-      const resultadoAlgoritmo = this.executarAlgoritmoEspecifico(pecasRestantes, chapaTemplate, kerf, algoritmo);
-
-      if (resultadoAlgoritmo.posicionadas.length === 0) {
-        break; // Peças restantes são maiores que a chapa
-      }
-
-      const areaChapa = chapaTemplate.largura_mm * chapaTemplate.altura_mm;
-      const areaUsada = resultadoAlgoritmo.posicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
-      
-      layouts.push({
-        chapa_sku: chapaTemplate.sku,
-        indice_chapa: chapaIdx++,
-        largura_original_mm: chapaTemplate.largura_mm,
-        altura_original_mm: chapaTemplate.altura_mm,
-        pecas_posicionadas: resultadoAlgoritmo.posicionadas,
-        area_aproveitada_mm2: areaUsada,
-        area_desperdicada_mm2: areaChapa - areaUsada
-      });
-
-      areaTotalAproveitada += areaUsada;
-      areaTotalChapas += areaChapa;
-      pecasRestantes = resultadoAlgoritmo.naoPosicionadas;
-    }
-
-    return {
-      layouts,
-      naoPosicionadas: pecasRestantes,
-      aproveitamento_percentual: areaTotalChapas > 0 ? (areaTotalAproveitada / areaTotalChapas) * 100 : 0
-    };
-  }
-
-  private executarAlgoritmoEspecifico(
-    pecas: PecaCorte[], 
-    chapa: ChapaMaterial, 
-    kerf: number, 
-    algoritmo: 'MaxRects' | 'GuillotineShort' | 'GuillotineLong'
-  ) {
-    if (algoritmo === 'MaxRects') {
-      const optimizer = new MaxRectsOptimizer();
-      return optimizer.optimize(pecas, chapa, kerf);
-    } else {
-      const optimizer = new GuillotineOptimizer();
-      return optimizer.optimize(
-        pecas, 
-        chapa, 
-        kerf, 
-        algoritmo === 'GuillotineShort' ? 'ShortestAxis' : 'LongestAxis'
-      );
+  private ordenarPecas(pecas: Peca[], heuristica: Heuristica, seed: number): Peca[] {
+    const copia = [...pecas];
+    switch (heuristica) {
+      case 'area_desc': return copia.sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
+      case 'perimetro_desc': return copia.sort((a, b) => ((b.largura + b.altura) * 2) - ((a.largura + a.altura) * 2));
+      case 'largura_desc': return copia.sort((a, b) => b.largura - a.largura);
+      case 'altura_desc': return copia.sort((a, b) => b.altura - a.altura);
+      case 'aleatorio': return this.embaralhar(copia, seed);
+      default: return copia;
     }
   }
 
-  private ordenarPecas(pecas: PecaCorte[], iteracao: number): PecaCorte[] {
-    const sorted = [...pecas];
-    const modo = iteracao % 5;
-
-    switch (modo) {
-      case 0: // Área decrescente
-        sorted.sort((a, b) => (b.largura_mm * b.altura_mm) - (a.largura_mm * a.altura_mm));
-        break;
-      case 1: // Perímetro decrescente
-        sorted.sort((a, b) => (b.largura_mm + b.altura_mm) - (a.largura_mm + a.altura_mm));
-        break;
-      case 2: // Maior lado decrescente
-        sorted.sort((a, b) => Math.max(b.largura_mm, b.altura_mm) - Math.max(a.largura_mm, a.altura_mm));
-        break;
-      case 3: // Menor lado decrescente
-        sorted.sort((a, b) => Math.min(b.largura_mm, b.altura_mm) - Math.min(a.largura_mm, a.altura_mm));
-        break;
-      case 4: // Embaralhado
-        for (let i = sorted.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
-        }
-        break;
+  private embaralhar(array: Peca[], seed: number): Peca[] {
+    const resultado = [...array];
+    let s = seed;
+    const random = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    for (let i = resultado.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [resultado[i], resultado[j]] = [resultado[j], resultado[i]];
     }
-
-    return sorted;
+    return resultado;
   }
 }

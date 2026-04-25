@@ -1,132 +1,89 @@
-import { ChapaMaterial, PecaCorte, PecaPosicionada } from '../entities/CuttingPlan';
-
-export interface FreeRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
+import { FreeRectangle, Peca, PecaPosicionada, ResultadoOtimizacao } from './MaxRectsOptimizer';
 
 export class GuillotineOptimizer {
-  private freeRectangles: FreeRect[] = [];
-  private chapaWidth: number = 0;
-  private chapaHeight: number = 0;
+  private espacosLivres: FreeRectangle[] = [];
+  private pecasPosicionadas: PecaPosicionada[] = [];
+  private kerfMm: number;
+  private larguraChapa: number;
+  private alturaChapa: number;
 
-  public optimize(pecas: PecaCorte[], chapa: ChapaMaterial, kerf: number, splitHeuristic: 'ShortestAxis' | 'LongestAxis' = 'ShortestAxis'): { posicionadas: PecaPosicionada[], naoPosicionadas: PecaCorte[], aproveitamento: number } {
-    this.chapaWidth = chapa.largura_mm;
-    this.chapaHeight = chapa.altura_mm;
-    this.freeRectangles = [{ x: 0, y: 0, w: chapa.largura_mm, h: chapa.altura_mm }];
-    
-    const posicionadas: PecaPosicionada[] = [];
-    const naoPosicionadas: PecaCorte[] = [];
+  constructor(larguraChapa: number, alturaChapa: number, kerfMm: number = 3) {
+    this.larguraChapa = larguraChapa;
+    this.alturaChapa = alturaChapa;
+    this.kerfMm = kerfMm;
+    this.reset();
+  }
 
-    for (const peca of pecas) {
-      const bestNode = this.findPositionForNewNodeBestAreaFit(peca.largura_mm, peca.altura_mm, peca.rotacionavel);
-      
-      if (bestNode.score === Infinity) {
-        naoPosicionadas.push(peca);
-        continue;
-      }
+  reset(): void {
+    this.espacosLivres = [{ x: 0, y: 0, width: this.larguraChapa, height: this.alturaChapa }];
+    this.pecasPosicionadas = [];
+  }
 
-      const novaPosicionada: PecaPosicionada = {
-        peca_id: peca.id,
-        nome: peca.nome,
-        x: bestNode.x,
-        y: bestNode.y,
-        largura: bestNode.rotacionada ? peca.altura_mm : peca.largura_mm,
-        altura: bestNode.rotacionada ? peca.largura_mm : peca.altura_mm,
-        rotacionada: bestNode.rotacionada,
-        fio_de_fita: peca.fio_de_fita
-      };
+  otimizar(pecas: Peca[]): ResultadoOtimizacao {
+    this.reset();
+    const pecasOrdenadas = [...pecas].sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
 
-      posicionadas.push(novaPosicionada);
-
-      const nodeW = novaPosicionada.x + novaPosicionada.largura + kerf <= this.chapaWidth ? novaPosicionada.largura + kerf : novaPosicionada.largura;
-      const nodeH = novaPosicionada.y + novaPosicionada.altura + kerf <= this.chapaHeight ? novaPosicionada.altura + kerf : novaPosicionada.altura;
-
-      this.splitFreeRectByHeuristic(bestNode.rectIndex, nodeW, nodeH, splitHeuristic);
+    for (const peca of pecasOrdenadas) {
+      const resultado = this.posicionarPeca(peca);
+      if (resultado) this.pecasPosicionadas.push(resultado);
     }
 
-    const areaChapa = chapa.largura_mm * chapa.altura_mm;
-    const areaUsada = posicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
+    const areaUsada = this.pecasPosicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
+    const areaTotal = this.larguraChapa * this.alturaChapa;
 
     return {
-      posicionadas,
-      naoPosicionadas,
-      aproveitamento: (areaUsada / areaChapa) * 100
+      pecas_posicionadas: this.pecasPosicionadas,
+      espacos_livres: this.espacosLivres,
+      aproveitamento: (areaUsada / areaTotal) * 100,
+      area_usada: areaUsada,
+      area_total: areaTotal
     };
   }
 
-  private findPositionForNewNodeBestAreaFit(width: number, height: number, rotacionavel?: boolean) {
-    let bestNode = { x: 0, y: 0, rotacionada: false, score: Infinity, rectIndex: -1 };
+  private posicionarPeca(peca: Peca): PecaPosicionada | null {
+    let melhorIdx = -1;
+    let melhorOrientacao: 'normal' | 'rotacionada' | null = null;
+    let menorDesperdicio = Infinity;
 
-    for (let i = 0; i < this.freeRectangles.length; ++i) {
-      const rect = this.freeRectangles[i];
-
-      // Tentar sem rotacionar
-      if (width <= rect.w && height <= rect.h) {
-        const areaFit = (rect.w * rect.h) - (width * height);
-        if (areaFit < bestNode.score) {
-          bestNode.x = rect.x;
-          bestNode.y = rect.y;
-          bestNode.rotacionada = false;
-          bestNode.score = areaFit;
-          bestNode.rectIndex = i;
-        }
+    for (let i = 0; i < this.espacosLivres.length; i++) {
+      const espaco = this.espacosLivres[i];
+      if (peca.largura + this.kerfMm <= espaco.width && peca.altura + this.kerfMm <= espaco.height) {
+        const desperdicio = (espaco.width * espaco.height) - (peca.largura * peca.altura);
+        if (desperdicio < menorDesperdicio) { menorDesperdicio = desperdicio; melhorIdx = i; melhorOrientacao = 'normal'; }
       }
-
-      // Tentar rotacionando
-      if (rotacionavel && height <= rect.w && width <= rect.h) {
-        const areaFit = (rect.w * rect.h) - (height * width);
-        if (areaFit < bestNode.score) {
-          bestNode.x = rect.x;
-          bestNode.y = rect.y;
-          bestNode.rotacionada = true;
-          bestNode.score = areaFit;
-          bestNode.rectIndex = i;
-        }
+      if (peca.rotacionavel && peca.altura + this.kerfMm <= espaco.width && peca.largura + this.kerfMm <= espaco.height) {
+        const desperdicio = (espaco.width * espaco.height) - (peca.largura * peca.altura);
+        if (desperdicio < menorDesperdicio) { menorDesperdicio = desperdicio; melhorIdx = i; melhorOrientacao = 'rotacionada'; }
       }
     }
 
-    return bestNode;
+    if (melhorIdx === -1) return null;
+
+    const espaco = this.espacosLivres[melhorIdx];
+    const rotacionada = melhorOrientacao === 'rotacionada';
+    const largura = rotacionada ? peca.altura : peca.largura;
+    const altura = rotacionada ? peca.largura : peca.altura;
+
+    const resultado: PecaPosicionada = {
+      peca_id: peca.id, nome: peca.nome, x: espaco.x, y: espaco.y, largura, altura, rotacionada, fio_de_fita: peca.fio_de_fita
+    };
+
+    this.dividirEspacoGuillotine(melhorIdx, largura, altura);
+    return resultado;
   }
 
-  private splitFreeRectByHeuristic(freeRectIndex: number, width: number, height: number, splitHeuristic: 'ShortestAxis' | 'LongestAxis') {
-    const freeRect = this.freeRectangles[freeRectIndex];
-    const w = freeRect.w;
-    const h = freeRect.h;
+  private dividirEspacoGuillotine(idx: number, larguraPeca: number, alturaPeca: number): void {
+    const espaco = this.espacosLivres[idx];
+    const larguraRestante = espaco.width - larguraPeca - this.kerfMm;
+    const alturaRestante = espaco.height - alturaPeca - this.kerfMm;
+    this.espacosLivres.splice(idx, 1);
 
-    // Remove the rectangle that was split
-    this.freeRectangles.splice(freeRectIndex, 1);
-
-    let splitHorizontal = false;
-    if (splitHeuristic === 'ShortestAxis') {
-      splitHorizontal = (w <= h);
+    if (larguraRestante > alturaRestante) {
+      if (larguraRestante > 0) this.espacosLivres.push({ x: espaco.x + larguraPeca + this.kerfMm, y: espaco.y, width: larguraRestante, height: espaco.height });
+      if (alturaRestante > 0) this.espacosLivres.push({ x: espaco.x, y: espaco.y + alturaPeca + this.kerfMm, width: larguraPeca, height: alturaRestante });
     } else {
-      splitHorizontal = (w > h);
-    }
-
-    const bottomNode: FreeRect = { x: freeRect.x, y: freeRect.y + height, w: 0, h: 0 };
-    const rightNode: FreeRect = { x: freeRect.x + width, y: freeRect.y, w: 0, h: 0 };
-
-    if (splitHorizontal) {
-      bottomNode.w = freeRect.w;
-      bottomNode.h = freeRect.h - height;
-      rightNode.w = freeRect.w - width;
-      rightNode.h = height;
-    } else {
-      bottomNode.w = width;
-      bottomNode.h = freeRect.h - height;
-      rightNode.w = freeRect.w - width;
-      rightNode.h = freeRect.h;
-    }
-
-    // Add new free rectangles, if they have area > 0
-    if (bottomNode.w > 0 && bottomNode.h > 0) {
-      this.freeRectangles.push(bottomNode);
-    }
-    if (rightNode.w > 0 && rightNode.h > 0) {
-      this.freeRectangles.push(rightNode);
+      if (alturaRestante > 0) this.espacosLivres.push({ x: espaco.x, y: espaco.y + alturaPeca + this.kerfMm, width: espaco.width, height: alturaRestante });
+      if (larguraRestante > 0) this.espacosLivres.push({ x: espaco.x + larguraPeca + this.kerfMm, y: espaco.y, width: larguraRestante, height: alturaPeca });
     }
   }
 }

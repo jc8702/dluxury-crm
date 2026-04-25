@@ -1,70 +1,78 @@
-/**
- * WEB WORKER: ALGORITMO DE OTIMIZAÇÃO GUILLOTINE BFD
- */
+import { HybridOptimizer } from '../../domain/services/HybridOptimizer';
 
-import type { ChapaMaterial, ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
-import { HybridOptimizer, RetalhoMaterial } from '../../domain/services/HybridOptimizer';
+interface WorkerInput {
+  materiais: any[];
+  kerf_mm: number;
+}
 
-self.onmessage = (e: MessageEvent) => {
-  const { materiais, kerf_mm, retalhos } = e.data;
-  
+self.onmessage = (e: MessageEvent<WorkerInput>) => {
+  const { materiais, kerf_mm } = e.data;
+
   try {
     const inicio = performance.now();
-    const resultado = otimizarTodasChapas(materiais, kerf_mm, retalhos || []);
+    const layouts: any[] = [];
+    let materiaisProcessados = 0;
+
+    for (const material of materiais) {
+      const pecasExpandidas: any[] = [];
+      material.pecas.forEach((p: any) => {
+        for (let i = 0; i < p.quantidade; i++) {
+          pecasExpandidas.push({
+            id: `${p.id}_${i}`,
+            nome: p.nome,
+            largura: p.largura_mm,
+            altura: p.altura_mm,
+            rotacionavel: p.rotacionavel !== false,
+            fio_de_fita: p.fio_de_fita
+          });
+        }
+      });
+
+      const otimizador = new HybridOptimizer(material.largura_mm, material.altura_mm, kerf_mm);
+      const pecasRestantes = [...pecasExpandidas];
+      let indiceChapaAtual = 1;
+
+      while (pecasRestantes.length > 0) {
+        const resultado = otimizador.otimizar(pecasRestantes);
+        if (resultado.pecas_posicionadas.length === 0) {
+          throw new Error(`Peça "${pecasRestantes[0].nome}" não cabe na chapa.`);
+        }
+
+        layouts.push({
+          chapa_sku: material.sku,
+          indice_chapa: indiceChapaAtual++,
+          largura_original_mm: material.largura_mm,
+          altura_original_mm: material.altura_mm,
+          pecas_posicionadas: resultado.pecas_posicionadas,
+          area_aproveitada_mm2: resultado.area_usada,
+          area_desperdicada_mm2: resultado.area_total - resultado.area_usada
+        });
+
+        resultado.pecas_posicionadas.forEach(pp => {
+          const idx = pecasRestantes.findIndex(p => p.id === pp.peca_id);
+          if (idx !== -1) pecasRestantes.splice(idx, 1);
+        });
+      }
+
+      materiaisProcessados++;
+      self.postMessage({ tipo: 'progresso', progresso: (materiaisProcessados / materiais.length) * 100 });
+    }
+
     const fim = performance.now();
-    
-    resultado.tempo_calculo_ms = fim - inicio;
-    self.postMessage({ tipo: 'resultado', resultado });
-  } catch (err: any) {
-    self.postMessage({ tipo: 'erro', mensagem: err.message });
-  }
-};
+    const areaTotal = layouts.reduce((acc, l) => acc + (l.largura_original_mm * l.altura_original_mm), 0);
+    const areaUsada = layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0);
 
-function otimizarTodasChapas(materiais: ChapaMaterial[], kerf: number, retalhosGlobais: RetalhoMaterial[]): ResultadoOtimizacao {
-  const resultado: ResultadoOtimizacao = {
-    chapas_necessarias: 0,
-    aproveitamento_percentual: 0,
-    layouts: [],
-    tempo_calculo_ms: 0
-  };
-
-  const optimizer = new HybridOptimizer();
-
-  for (const mat of materiais) {
-    if (mat.pecas.length === 0) continue;
-
-    // A otimização roda para cada tipo de material separadamente.
-    // Filtrar retalhos aplicáveis a este material
-    const retalhosAplicaveis = retalhosGlobais.filter(r => r.sku === mat.sku);
-    
-    const chapasBase = [mat];
-    const matResult = optimizer.otimizar(mat.pecas, chapasBase, kerf, 50, retalhosAplicaveis);
-
-    // Ajusta o índice das chapas para não sobrepor entre materiais diferentes
-    const chapaOffset = resultado.layouts.length;
-    matResult.layouts.forEach(l => {
-      l.indice_chapa += chapaOffset;
+    self.postMessage({
+      tipo: 'resultado',
+      resultado: {
+        chapas_necessarias: layouts.length,
+        aproveitamento_percentual: (areaUsada / areaTotal) * 100,
+        layouts,
+        tempo_calculo_ms: fim - inicio
+      }
     });
 
-    resultado.layouts.push(...matResult.layouts);
-    
-    if (matResult.naoPosicionadas.length > 0) {
-      console.warn(`Atenção: ${matResult.naoPosicionadas.length} peças não puderam ser posicionadas na chapa ${mat.sku}`);
-    }
+  } catch (error: any) {
+    self.postMessage({ tipo: 'erro', mensagem: error.message });
   }
-
-  resultado.chapas_necessarias = resultado.layouts.length;
-  
-  // Recalcular aproveitamento global
-  let areaTotalAproveitada = 0;
-  let areaTotalChapas = 0;
-
-  for (const layout of resultado.layouts) {
-    areaTotalAproveitada += layout.area_aproveitada_mm2;
-    areaTotalChapas += (layout.largura_original_mm || 0) * (layout.altura_original_mm || 0);
-  }
-
-  resultado.aproveitamento_percentual = areaTotalChapas > 0 ? (areaTotalAproveitada / areaTotalChapas) * 100 : 0;
-
-  return resultado;
-}
+};

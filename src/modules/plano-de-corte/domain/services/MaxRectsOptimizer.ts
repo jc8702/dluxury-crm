@@ -1,179 +1,185 @@
-import { ChapaMaterial, PecaCorte, LayoutChapa, PecaPosicionada } from '../entities/CuttingPlan';
+export interface Peca {
+  id: string;
+  nome: string;
+  largura: number;
+  altura: number;
+  rotacionavel: boolean;
+  fio_de_fita?: {
+    topo: boolean;
+    baixo: boolean;
+    esquerda: boolean;
+    direita: boolean;
+  };
+}
 
-export interface FreeRect {
+export interface PecaPosicionada {
+  peca_id: string;
+  nome: string;
   x: number;
   y: number;
-  w: number;
-  h: number;
+  largura: number;
+  altura: number;
+  rotacionada: boolean;
+  fio_de_fita?: any;
+}
+
+export interface FreeRectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ResultadoOtimizacao {
+  pecas_posicionadas: PecaPosicionada[];
+  espacos_livres: FreeRectangle[];
+  aproveitamento: number;
+  area_usada: number;
+  area_total: number;
 }
 
 export class MaxRectsOptimizer {
-  private freeRectangles: FreeRect[] = [];
-  private chapaWidth: number = 0;
-  private chapaHeight: number = 0;
+  private freeRectangles: FreeRectangle[] = [];
+  private pecasPosicionadas: PecaPosicionada[] = [];
+  private kerfMm: number;
+  private larguraChapa: number;
+  private alturaChapa: number;
 
-  public optimize(pecas: PecaCorte[], chapa: ChapaMaterial, kerf: number): { posicionadas: PecaPosicionada[], naoPosicionadas: PecaCorte[], aproveitamento: number } {
-    this.chapaWidth = chapa.largura_mm;
-    this.chapaHeight = chapa.altura_mm;
-    this.freeRectangles = [{ x: 0, y: 0, w: chapa.largura_mm, h: chapa.altura_mm }];
-    
-    const posicionadas: PecaPosicionada[] = [];
-    const naoPosicionadas: PecaCorte[] = [];
+  constructor(larguraChapa: number, alturaChapa: number, kerfMm: number = 3) {
+    this.larguraChapa = larguraChapa;
+    this.alturaChapa = alturaChapa;
+    this.kerfMm = kerfMm;
+    this.reset();
+  }
 
-    // Peças já vêm na ordem que devem ser tentadas
-    for (const peca of pecas) {
-      const bestNode = this.findPositionForNewNodeBestShortSideFit(peca.largura_mm, peca.altura_mm, peca.rotacionavel);
+  reset(): void {
+    this.freeRectangles = [
+      { x: 0, y: 0, width: this.larguraChapa, height: this.alturaChapa }
+    ];
+    this.pecasPosicionadas = [];
+  }
+
+  otimizar(pecas: Peca[]): ResultadoOtimizacao {
+    this.reset();
+    const pecasRestantes = [...pecas];
+
+    while (pecasRestantes.length > 0) {
+      const resultado = this.encontrarMelhorPosicao(pecasRestantes);
       
-      if (bestNode.score === Infinity) {
-        naoPosicionadas.push(peca);
-        continue; // não coube
-      }
+      if (!resultado) break;
 
-      // posiciona
-      const novaPosicionada: PecaPosicionada = {
+      const { peca, posicao } = resultado;
+      
+      this.pecasPosicionadas.push({
         peca_id: peca.id,
         nome: peca.nome,
-        x: bestNode.x,
-        y: bestNode.y,
-        largura: bestNode.rotacionada ? peca.altura_mm : peca.largura_mm,
-        altura: bestNode.rotacionada ? peca.largura_mm : peca.altura_mm,
-        rotacionada: bestNode.rotacionada,
+        x: posicao.x,
+        y: posicao.y,
+        largura: posicao.largura,
+        altura: posicao.altura,
+        rotacionada: posicao.rotacionada,
         fio_de_fita: peca.fio_de_fita
-      };
+      });
 
-      posicionadas.push(novaPosicionada);
-
-      // Node ocupado real considera o kerf (só à direita e abaixo)
-      // O kerf só é adicionado entre peças, não na borda da chapa
-      // Para simular isso, reservamos o espaço da peça + kerf
-      const nodeW = novaPosicionada.x + novaPosicionada.largura + kerf <= this.chapaWidth ? novaPosicionada.largura + kerf : novaPosicionada.largura;
-      const nodeH = novaPosicionada.y + novaPosicionada.altura + kerf <= this.chapaHeight ? novaPosicionada.altura + kerf : novaPosicionada.altura;
-
-      this.placeRectangle({ x: novaPosicionada.x, y: novaPosicionada.y, w: nodeW, h: nodeH });
+      this.dividirFreeRectangles(posicao);
+      const idx = pecasRestantes.indexOf(peca);
+      pecasRestantes.splice(idx, 1);
     }
 
-    const areaChapa = chapa.largura_mm * chapa.altura_mm;
-    const areaUsada = posicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
+    const areaUsada = this.pecasPosicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
+    const areaTotal = this.larguraChapa * this.alturaChapa;
 
     return {
-      posicionadas,
-      naoPosicionadas,
-      aproveitamento: (areaUsada / areaChapa) * 100
+      pecas_posicionadas: this.pecasPosicionadas,
+      espacos_livres: this.freeRectangles,
+      aproveitamento: (areaUsada / areaTotal) * 100,
+      area_usada: areaUsada,
+      area_total: areaTotal
     };
   }
 
-  private findPositionForNewNodeBestShortSideFit(width: number, height: number, rotacionavel?: boolean) {
-    let bestNode = { x: 0, y: 0, rotacionada: false, score: Infinity, longSide: Infinity };
+  private encontrarMelhorPosicao(pecas: Peca[]) {
+    let melhorScore = Infinity;
+    let melhorPeca: Peca | null = null;
+    let melhorPosicao: any = null;
+
+    for (const peca of pecas) {
+      for (const rect of this.freeRectangles) {
+        const larguraComKerf = peca.largura + this.kerfMm;
+        const alturaComKerf = peca.altura + this.kerfMm;
+
+        if (larguraComKerf <= rect.width && alturaComKerf <= rect.height) {
+          const leftoverX = rect.width - larguraComKerf;
+          const leftoverY = rect.height - alturaComKerf;
+          const shortSide = Math.min(leftoverX, leftoverY);
+
+          if (shortSide < melhorScore) {
+            melhorScore = shortSide;
+            melhorPeca = peca;
+            melhorPosicao = { x: rect.x, y: rect.y, largura: peca.largura, altura: peca.altura, rotacionada: false };
+          }
+        }
+
+        if (peca.rotacionavel) {
+          const larguraRotadaComKerf = peca.altura + this.kerfMm;
+          const alturaRotadaComKerf = peca.largura + this.kerfMm;
+
+          if (larguraRotadaComKerf <= rect.width && alturaRotadaComKerf <= rect.height) {
+            const leftoverX = rect.width - larguraRotadaComKerf;
+            const leftoverY = rect.height - alturaRotadaComKerf;
+            const shortSide = Math.min(leftoverX, leftoverY);
+
+            if (shortSide < melhorScore) {
+              melhorScore = shortSide;
+              melhorPeca = peca;
+              melhorPosicao = { x: rect.x, y: rect.y, largura: peca.altura, altura: peca.largura, rotacionada: true };
+            }
+          }
+        }
+      }
+    }
+
+    return melhorPeca && melhorPosicao ? { peca: melhorPeca, posicao: melhorPosicao } : null;
+  }
+
+  private dividirFreeRectangles(pecaPos: any): void {
+    const novosFreeRects: FreeRectangle[] = [];
+    const pecaComKerf = { x: pecaPos.x, y: pecaPos.y, width: pecaPos.largura + this.kerfMm, height: pecaPos.altura + this.kerfMm };
 
     for (const rect of this.freeRectangles) {
-      // Tentar sem rotacionar
-      if (width <= rect.w && height <= rect.h) {
-        const leftoverHoriz = rect.w - width;
-        const leftoverVert = rect.h - height;
-        const shortSideFit = Math.min(leftoverHoriz, leftoverVert);
-        const longSideFit = Math.max(leftoverHoriz, leftoverVert);
-
-        if (shortSideFit < bestNode.score || (shortSideFit === bestNode.score && longSideFit < bestNode.longSide)) {
-          bestNode.x = rect.x;
-          bestNode.y = rect.y;
-          bestNode.rotacionada = false;
-          bestNode.score = shortSideFit;
-          bestNode.longSide = longSideFit;
-        }
+      if (!this.intersecta(rect, pecaComKerf)) {
+        novosFreeRects.push(rect);
+        continue;
       }
 
-      // Tentar rotacionando
-      if (rotacionavel && height <= rect.w && width <= rect.h) {
-        const leftoverHoriz = rect.w - height;
-        const leftoverVert = rect.h - width;
-        const shortSideFit = Math.min(leftoverHoriz, leftoverVert);
-        const longSideFit = Math.max(leftoverHoriz, leftoverVert);
-
-        if (shortSideFit < bestNode.score || (shortSideFit === bestNode.score && longSideFit < bestNode.longSide)) {
-          bestNode.x = rect.x;
-          bestNode.y = rect.y;
-          bestNode.rotacionada = true;
-          bestNode.score = shortSideFit;
-          bestNode.longSide = longSideFit;
-        }
-      }
+      if (pecaComKerf.x > rect.x) novosFreeRects.push({ x: rect.x, y: rect.y, width: pecaComKerf.x - rect.x, height: rect.height });
+      if (pecaComKerf.x + pecaComKerf.width < rect.x + rect.width) novosFreeRects.push({ x: pecaComKerf.x + pecaComKerf.width, y: rect.y, width: rect.x + rect.width - (pecaComKerf.x + pecaComKerf.width), height: rect.height });
+      if (pecaComKerf.y > rect.y) novosFreeRects.push({ x: rect.x, y: rect.y, width: rect.width, height: pecaComKerf.y - rect.y });
+      if (pecaComKerf.y + pecaComKerf.height < rect.y + rect.height) novosFreeRects.push({ x: rect.x, y: pecaComKerf.y + pecaComKerf.height, width: rect.width, height: rect.y + rect.height - (pecaComKerf.y + pecaComKerf.height) });
     }
 
-    return bestNode;
+    this.freeRectangles = this.removerRedundancias(novosFreeRects);
   }
 
-  private placeRectangle(node: FreeRect) {
-    let numRectanglesToProcess = this.freeRectangles.length;
-    for (let i = 0; i < numRectanglesToProcess; ++i) {
-      if (this.splitFreeNode(this.freeRectangles[i], node)) {
-        this.freeRectangles.splice(i, 1);
-        --i;
-        --numRectanglesToProcess;
-      }
-    }
-
-    this.pruneFreeList();
+  private intersecta(a: FreeRectangle, b: any): boolean {
+    return !(a.x >= b.x + b.width || a.x + a.width <= b.x || a.y >= b.y + b.height || a.y + a.height <= b.y);
   }
 
-  private splitFreeNode(freeNode: FreeRect, usedNode: FreeRect): boolean {
-    // Test with SAT if the rectangles even intersect.
-    if (usedNode.x >= freeNode.x + freeNode.w || usedNode.x + usedNode.w <= freeNode.x ||
-        usedNode.y >= freeNode.y + freeNode.h || usedNode.y + usedNode.h <= freeNode.y) {
-      return false;
+  private removerRedundancias(rects: FreeRectangle[]): FreeRectangle[] {
+    const resultado: FreeRectangle[] = [];
+    for (let i = 0; i < rects.length; i++) {
+      const rectA = rects[i];
+      let isContido = false;
+      for (let j = 0; j < rects.length; j++) {
+        if (i === j) continue;
+        if (this.contem(rects[j], rectA)) { isContido = true; break; }
+      }
+      if (!isContido) resultado.push(rectA);
     }
-
-    if (usedNode.x < freeNode.x + freeNode.w && usedNode.x + usedNode.w > freeNode.x) {
-      // New node at the top side of the used node.
-      if (usedNode.y > freeNode.y && usedNode.y < freeNode.y + freeNode.h) {
-        const newNode: FreeRect = { ...freeNode };
-        newNode.h = usedNode.y - newNode.y;
-        this.freeRectangles.push(newNode);
-      }
-      // New node at the bottom side of the used node.
-      if (usedNode.y + usedNode.h < freeNode.y + freeNode.h) {
-        const newNode: FreeRect = { ...freeNode };
-        newNode.y = usedNode.y + usedNode.h;
-        newNode.h = freeNode.y + freeNode.h - (usedNode.y + usedNode.h);
-        this.freeRectangles.push(newNode);
-      }
-    }
-
-    if (usedNode.y < freeNode.y + freeNode.h && usedNode.y + usedNode.h > freeNode.y) {
-      // New node at the left side of the used node.
-      if (usedNode.x > freeNode.x && usedNode.x < freeNode.x + freeNode.w) {
-        const newNode: FreeRect = { ...freeNode };
-        newNode.w = usedNode.x - newNode.x;
-        this.freeRectangles.push(newNode);
-      }
-      // New node at the right side of the used node.
-      if (usedNode.x + usedNode.w < freeNode.x + freeNode.w) {
-        const newNode: FreeRect = { ...freeNode };
-        newNode.x = usedNode.x + usedNode.w;
-        newNode.w = freeNode.x + freeNode.w - (usedNode.x + usedNode.w);
-        this.freeRectangles.push(newNode);
-      }
-    }
-
-    return true;
+    return resultado;
   }
 
-  private pruneFreeList() {
-    for (let i = 0; i < this.freeRectangles.length; ++i) {
-      for (let j = i + 1; j < this.freeRectangles.length; ++j) {
-        if (this.isContainedIn(this.freeRectangles[i], this.freeRectangles[j])) {
-          this.freeRectangles.splice(i, 1);
-          --i;
-          break;
-        }
-        if (this.isContainedIn(this.freeRectangles[j], this.freeRectangles[i])) {
-          this.freeRectangles.splice(j, 1);
-          --j;
-        }
-      }
-    }
-  }
-
-  private isContainedIn(a: FreeRect, b: FreeRect): boolean {
-    return a.x >= b.x && a.y >= b.y && a.x + a.w <= b.x + b.w && a.y + a.h <= b.y + b.h;
+  private contem(a: FreeRectangle, b: FreeRectangle): boolean {
+    return (a.x <= b.x && a.y <= b.y && a.x + a.width >= b.x + b.width && a.y + a.height >= b.y + b.height);
   }
 }
