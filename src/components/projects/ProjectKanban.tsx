@@ -96,7 +96,9 @@ const closeModal = () => {
   // Map projects to kanban items format
   const kanbanItems = projects.map(p => {
     const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
-    const badges = projOrcamentos.map(o => `📄 ${o.numero}`);
+    const badges = [];
+    if (p.tag) badges.push(`🏷️ ${p.tag}`);
+    projOrcamentos.forEach(o => badges.push(`📄 ${o.numero}`));
 
     return {
       id: p.id,

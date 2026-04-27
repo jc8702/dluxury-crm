@@ -46,9 +46,10 @@ export type Project = {
   etapaProducao?: ProductionStep;
   responsavel?: string;
   observacoes?: string;
+  tag?: string;
   visitaId?: string;
   orcamentoId?: string;
-  ordem_producao_id?: string;
+  ordem_producao_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -599,6 +600,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : (p.value || p.valor_estimado || 0),
         status: mapLegacyStatus(p.status || p.status_visita),
         observacoes: p.observations || p.observacoes || '',
+        tag: p.tag || '',
         ordem_producao_id: p.ordem_producao_id || null
       })));
 
@@ -717,6 +719,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       value: data.valorEstimado,
       observations: data.observacoes || data.descricao || '',
       description: data.descricao || '',
+      tag: data.tag
     };
     const saved = await api.kanban.create(payload);
     const mapped: Project = {
@@ -732,6 +735,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       etapaProducao: data.etapaProducao,
       responsavel: data.responsavel,
       observacoes: data.observacoes,
+      tag: saved.tag,
     };
     setProjects((prev: Project[]) => [...prev, mapped]);
   };

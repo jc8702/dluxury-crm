@@ -142,7 +142,7 @@ const CuttingPlanPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [orcamentos, setOrcamentos] = useState<any[]>([]);
+  const [projetosParaImportar, setProjetosParaImportar] = useState<any[]>([]);
   const [materiaisEstoque, setMateriaisEstoque] = useState<any[]>([]);
   const [planosSalvos, setPlanosSalvos] = useState<any[]>([]);
   const [showPlanosModal, setShowPlanosModal] = useState(false);
@@ -174,7 +174,11 @@ const CuttingPlanPage: React.FC = () => {
   // Carregar listas para os modais
   useEffect(() => {
     if (showImportModal) {
-      api.orcamentos.list().then(setOrcamentos).catch(console.error);
+      api.kanban.list().then(res => {
+        // Filtra apenas projetos
+        const prjs = (res || []).filter((i: any) => (i.type || '').toLowerCase() === 'project');
+        setProjetosParaImportar(prjs);
+      }).catch(console.error);
     }
     if (showPlanosModal) {
       api.planoCorte.list().then(setPlanosSalvos).catch(console.error);
@@ -410,78 +414,89 @@ const CuttingPlanPage: React.FC = () => {
     setGrupos(grupos.map(g => g.id === id ? { ...g, ...data } : g));
   };
 
-  const handleImportOrcamento = async (orc: any) => {
-    if (orc.status !== 'aprovado') {
-      alert("Este orçamento ainda não foi aprovado. É necessário aprová-lo e gerar o detalhamento técnico no Módulo de Orçamentos antes de enviar para o Plano de Corte.");
-      return;
-    }
-
+  const handleImportProjeto = async (prj: any) => {
     setLoading(true);
     try {
-      const data = await api.orcamentoTecnico.getTree(orc.id);
-      const tree = data.ambientes || [];
-      
-      if (tree && Array.isArray(tree) && tree.length > 0) {
-        const novosGrupos = [...grupos];
-        const novasPecas = [...pecas];
+      // 1. Buscar todos os orçamentos aprovados deste projeto
+      const orcRes = await api.orcamentos.list();
+      const approvedOrcs = (orcRes || []).filter((o: any) => 
+        String(o.projeto_id) === String(prj.id) && o.status === 'aprovado'
+      );
 
-        tree.forEach(ambiente => {
-          ambiente.moveis?.forEach((movel: any) => {
-            movel.pecas?.forEach((peca: any) => {
-              // Encontra ou cria o grupo de material baseado no SKU e Espessura
-              const espessura = Number(peca.espessura_mm) || Number(peca.espessura) || 15;
-              let grupo = novosGrupos.find(g => 
-                (peca.material_id && g.materialId === peca.material_id) || 
-                (peca.sku && g.sku === peca.sku)
-              );
+      if (approvedOrcs.length === 0) {
+        alert("Este projeto não possui orçamentos aprovados com detalhamento técnico.");
+        setLoading(false);
+        return;
+      }
 
-              // Se o grupo existe mas a espessura é diferente, precisamos de um novo grupo para esta espessura
-              if (grupo && grupo.espessuraMm !== espessura) {
-                grupo = undefined;
-              }
+      const novosGrupos = [...grupos];
+      const novasPecas = [...pecas];
+      let totalImportado = 0;
 
-              if (!grupo) {
-                grupo = {
+      // 2. Para cada orçamento aprovado, buscar a árvore técnica e importar peças
+      for (const orc of approvedOrcs) {
+        const data = await api.orcamentoTecnico.getTree(orc.id);
+        const tree = data.ambientes || [];
+        
+        if (tree && Array.isArray(tree) && tree.length > 0) {
+          tree.forEach(ambiente => {
+            ambiente.moveis?.forEach((movel: any) => {
+              movel.pecas?.forEach((peca: any) => {
+                const espessura = Number(peca.espessura_mm) || Number(peca.espessura) || 15;
+                let grupo = novosGrupos.find(g => 
+                  (peca.material_id && g.materialId === peca.material_id) || 
+                  (peca.sku && g.sku === peca.sku)
+                );
+
+                if (grupo && grupo.espessuraMm !== espessura) grupo = undefined;
+
+                if (!grupo) {
+                  grupo = {
+                    id: Math.random().toString(36).substring(7),
+                    materialId: peca.material_id || '',
+                    sku: peca.sku || `MDF-${espessura}MM`,
+                    nomeMaterial: peca.descricao_material || `MDF ${espessura}mm`,
+                    larguraChapaMm: 2750, 
+                    alturaChapaMm: 1830, 
+                    espessuraMm: espessura,
+                    precoChapa: 0,
+                    chapasAdicionaisManual: 0, 
+                    retalhosDisponiveis: [], 
+                    kerfMm: kerf
+                  };
+                  novosGrupos.push(grupo);
+                }
+
+                novasPecas.push({
                   id: Math.random().toString(36).substring(7),
-                  materialId: peca.material_id || '',
-                  sku: peca.sku || `MDF-${espessura}MM`,
-                  nomeMaterial: peca.descricao_material || `MDF ${espessura}mm`,
-                  larguraChapaMm: 2750, 
-                  alturaChapaMm: 1830, 
-                  espessuraMm: espessura,
-                  precoChapa: 0,
-                  chapasAdicionaisManual: 0, 
-                  retalhosDisponiveis: [], 
-                  kerfMm: kerf
-                };
-                novosGrupos.push(grupo);
-              }
-
-              novasPecas.push({
-                id: Math.random().toString(36).substring(7),
-                descricao: peca.descricao_peca || 'Peça Importada',
-                larguraMm: Number(peca.largura_cm) * 10,
-                alturaMm: Number(peca.altura_cm) * 10,
-                quantidade: Number(peca.quantidade) || 1,
-                podeRotacionar: peca.sentido_veio !== 'longitudinal' && peca.sentido_veio !== 'transversal',
-                ambiente: ambiente.nome,
-                movel: movel.nome,
-                grupoMaterialId: grupo.id
+                  descricao: peca.descricao_peca || 'Peça Importada',
+                  larguraMm: Number(peca.largura_cm) * 10,
+                  alturaMm: Number(peca.altura_cm) * 10,
+                  quantidade: Number(peca.quantidade) || 1,
+                  podeRotacionar: peca.sentido_veio !== 'longitudinal' && peca.sentido_veio !== 'transversal',
+                  ambiente: ambiente.nome,
+                  movel: movel.nome,
+                  grupoMaterialId: grupo.id
+                });
+                totalImportado++;
               });
             });
           });
-        });
+        }
+      }
 
-        setGrupos(novosGrupos);
-        setPecas(novasPecas);
-        setShowImportModal(false);
-        alert(`${novasPecas.length - pecas.length} peças importadas com sucesso do orçamento ${orc.numero}.`);
+      setGrupos(novosGrupos);
+      setPecas(novasPecas);
+      setShowImportModal(false);
+      
+      if (totalImportado > 0) {
+        alert(`${totalImportado} peças importadas com sucesso do projeto ${prj.title} (TAG: ${prj.tag || prj.id}).`);
       } else {
-        alert("O detalhamento técnico deste orçamento parece estar vazio. Verifique no Módulo de Orçamentos.");
+        alert("Nenhuma peça encontrada nos orçamentos aprovados deste projeto.");
       }
     } catch (e) { 
-      console.error("Erro ao importar orçamento", e);
-      alert("Falha ao importar peças. Verifique se o orçamento possui detalhamento técnico salvo.");
+      console.error("Erro ao importar projeto", e);
+      alert("Falha ao importar peças do projeto.");
     } finally { 
       setLoading(false); 
     }
@@ -560,7 +575,7 @@ const CuttingPlanPage: React.FC = () => {
         
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={() => setShowPlanosModal(true)} className="btn btn-outline" style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}><Layout size={18} /> Planos Salvos</button>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-outline"><FileText size={18} /> Orçamentos</button>
+          <button onClick={() => setShowImportModal(true)} className="btn btn-outline"><Box size={18} /> Projetos (TAG)</button>
           <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }} disabled={isCalculating}>
             {isCalculating ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} 
             {isCalculating ? `OTIMIZANDO (${progress}%)` : 'OTIMIZAR'}
@@ -807,36 +822,39 @@ const CuttingPlanPage: React.FC = () => {
       {/* MODAL: IMPORTAR PEÇAS */}
       {showImportModal && (
         <div className="modal-overlay hide-on-print" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
-          <div className="modal-content animate-pop-in" style={{ width: '600px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content animate-pop-in" style={{ width: '700px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar Peças</h2>
               <button onClick={() => setShowImportModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
               
               {/* Importador 3D (CAD/SketchUp/Promob) */}
               <section>
+                <h3 className="font-bold text-xs mb-3 text-slate-500 uppercase tracking-widest">Opção 1: Arquivo de Engenharia</h3>
                 <ImportadorEngenharia onImport={handleImportDae} />
               </section>
 
-              {/* Importador de Orçamentos ERP */}
+              {/* Importador de Projetos (CRM) */}
               <section>
-                <h3 className="font-bold text-sm mb-3 text-slate-400 uppercase tracking-wider">Ou importar de um orçamento do ERP</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
-                  {(orcamentos || []).map(o => (
-                    <div key={o.id} onClick={() => handleImportOrcamento(o)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer', opacity: o.status === 'rascunho' ? 0.6 : 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: '900', color: 'var(--primary)' }}>#{o.numero}</span>
-                        <span className="badge" style={{ background: o.status === 'aprovado' ? 'var(--success)' : 'var(--badge-bg)', color: 'white' }}>{o.status}</span>
+                <h3 className="font-bold text-xs mb-3 text-slate-500 uppercase tracking-widest">Opção 2: Projetos do Sistema (TAG)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
+                  {(projetosParaImportar || []).map(p => (
+                    <div key={p.id} onClick={() => handleImportProjeto(p)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: '0.9rem' }}>{p.tag || `PRJ-${p.id}`}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: '600', marginTop: '2px' }}>{p.title}</div>
+                        </div>
+                        <span className="badge" style={{ background: 'var(--surface-hover)', fontSize: '0.6rem' }}>{p.status}</span>
                       </div>
-                      <div style={{ fontSize: '0.85rem', marginTop: '4px', fontWeight: '600' }}>{o.cliente_nome || 'Cliente não identificado'}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Criado em: {o.criado_em ? new Date(o.criado_em).toLocaleDateString() : 'N/A'}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>{p.subtitle}</div>
                     </div>
                   ))}
-                  {(!orcamentos || orcamentos.length === 0) && (
+                  {(!projetosParaImportar || projetosParaImportar.length === 0) && (
                     <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>
-                      <p>Nenhum orçamento encontrado.</p>
+                      <p className="text-sm">Nenhum projeto encontrado.</p>
                     </div>
                   )}
                 </div>

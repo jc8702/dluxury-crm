@@ -317,7 +317,7 @@ const deleteOP = useCallback(async (op_id: string) => {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
               }}>
                 <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>#{project.id?.substring(0,8)}</span>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>{project.tag || `#${project.id?.substring(0,8)}`}</span>
                   <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: '#10b98122', color: '#10b981', borderRadius: '4px', fontWeight: 'bold' }}>
                     {project.status === 'aprovado' ? 'APROVADO' : 'EM PROD'}
                   </span>

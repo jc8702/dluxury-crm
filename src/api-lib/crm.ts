@@ -91,11 +91,23 @@ export async function handleKanban(req: any, res: any) {
     }
     if (req.method === 'POST') {
       const f = req.body;
-      const r = await sql`INSERT INTO kanban_items (title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature, visit_date, visit_time, visit_type, observations) VALUES (${f.title}, ${f.subtitle}, ${f.label}, ${f.status}, ${f.type}, ${f.contact_name}, ${f.contact_role}, ${f.email}, ${f.phone}, ${f.city}, ${f.state}, ${f.value}, ${f.temperature}, ${f.visit_date}, ${f.visit_time}, ${f.visit_type}, ${f.observations}) RETURNING *`;
+      const tag = f.type === 'project' ? `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : null;
+      const r = await sql`INSERT INTO kanban_items (title, subtitle, label, status, type, contact_name, contact_role, email, phone, city, state, value, temperature, visit_date, visit_time, visit_type, observations, tag) VALUES (${f.title}, ${f.subtitle}, ${f.label}, ${f.status}, ${f.type}, ${f.contact_name}, ${f.contact_role}, ${f.email}, ${f.phone}, ${f.city}, ${f.state}, ${f.value}, ${f.temperature}, ${f.visit_date}, ${f.visit_time}, ${f.visit_type}, ${f.observations}, ${tag}) RETURNING *`;
       return res.status(201).json({ success: true, data: r[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
-      const r = await sql`UPDATE kanban_items SET status = ${req.body.status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${req.query.id} RETURNING *`;
+      const { status, tag, observations, title } = req.body;
+      const r = await sql`
+        UPDATE kanban_items 
+        SET 
+          status = COALESCE(${status}, status), 
+          tag = COALESCE(${tag}, tag),
+          observations = COALESCE(${observations}, observations),
+          title = COALESCE(${title}, title),
+          updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ${req.query.id} 
+        RETURNING *
+      `;
       return res.status(200).json({ success: true, data: r[0] });
     }
     return res.status(405).end();
