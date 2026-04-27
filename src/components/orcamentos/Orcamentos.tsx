@@ -363,7 +363,7 @@ const [newItem, setNewItem] = useState({
       {/* Dados do orçamento */}
       <div className="card">
         <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Dados do Orçamento</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Cliente</label>
             <select style={selectStyle} value={selectedClient} onChange={e => setSelectedClient(e.target.value)}>
@@ -372,12 +372,30 @@ const [newItem, setNewItem] = useState({
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente (TAG)</label>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Buscar Projeto por TAG</label>
+            <div style={{ position: 'relative' }}>
+              <input 
+                style={{...inputStyle, paddingLeft: '2.5rem', borderColor: selectedProject ? 'var(--success)' : 'rgba(212,175,55,0.3)'}} 
+                placeholder="Ex: PRJ-XXXX"
+                onChange={(e) => {
+                  const tag = e.target.value.toUpperCase();
+                  const found = projects.find(p => p.tag === tag);
+                  if (found) {
+                    setSelectedProject(found.id);
+                    if (found.clientId) setSelectedClient(found.clientId);
+                  }
+                }}
+              />
+              <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente Vinculado</label>
             <select style={selectStyle} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
               <option value="">Nenhum projeto vinculado</option>
-              {clientProjects.map(p => (
+              {projects.map(p => (
                 <option key={p.id} value={p.id}>
-                  {p.tag ? `[${p.tag}] ` : ''}{p.ambiente}
+                  {p.tag ? `[${p.tag}] ` : ''}{p.ambiente} ({p.clientName})
                 </option>
               ))}
             </select>
