@@ -1,305 +1,654 @@
-import React, { useRef, useState, useEffect } from 'react';
-import type { Superficie, GrupoMaterial } from '../../../../utils/planodeCorte';
+'use client';
+
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import type { LayoutChapa, PecaPosicionada } from '../../domain/entities/CuttingPlan';
 
 interface CanvasAvancadoProps {
-  superficie: Superficie;
-  grupoMaterial: GrupoMaterial;
-  highlightPecaId: string | null;
+  layout: LayoutChapa;
+  chapaDimensoes: { largura: number; altura: number };
+  onPecaClick?: (peca: PecaPosicionada) => void;
+  onExportarPDF?: () => void;
+  className?: string;
 }
 
-const CORES_AMBIENTE: Record<string, string> = {
-  'Quarto Casal':    '#3B82F6',  // azul
-  'Quarto Solteiro': '#8B5CF6',  // roxo
-  'Cozinha':         '#10B981',  // verde
-  'Sala':            '#F59E0B',  // âmbar
-  'Banheiro':        '#06B6D4',  // ciano
-  'Closet':          '#EC4899',  // rosa
-  'Home Office':     '#6366F1',  // índigo
-  'default':         '#94A3B8',  // cinza slate
+interface Viewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+const ZOOM_MIN = 0.1;
+const ZOOM_MAX = 5;
+const GRID_SPACING_MM = 100;
+const REGUA_HEIGHT = 40;
+const CORES_FITA = {
+  topo: '#EF4444',
+  baixo: '#3B82F6',
+  esquerda: '#10B981',
+  direita: '#F59E0B'
 };
 
-export const CanvasAvancado: React.FC<CanvasAvancadoProps> = ({ superficie, grupoMaterial, highlightPecaId }) => {
+export function CanvasAvancado({
+  layout,
+  chapaDimensoes,
+  onPecaClick,
+  onExportarPDF,
+  className = ''
+}: CanvasAvancadoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 0.2 });
+  
+  const [viewport, setViewport] = useState<Viewport>({
+    x: REGUA_HEIGHT,
+    y: REGUA_HEIGHT,
+    zoom: 0.3
+  });
+  
   const [hoveredPeca, setHoveredPeca] = useState<string | null>(null);
   const [isPanning, setIsPanning] = useState(false);
-  const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [showGrid, setShowGrid] = useState(true);
+  const [showMeasurements, setShowMeasurements] = useState(true);
 
-  // Auto-fit inicial
-  useEffect(() => {
-    if (containerRef.current && superficie) {
-      const container = containerRef.current;
-      const padding = 60; // Para réguas e bordas
-      const availableWidth = container.clientWidth - padding;
-      const availableHeight = container.clientHeight - padding;
-      
-      const scaleX = availableWidth / superficie.largura;
-      const scaleY = availableHeight / superficie.altura;
-      const initialScale = Math.min(scaleX, scaleY, 0.8);
-      
-      setViewport({ 
-        zoom: initialScale,
-        x: (container.clientWidth - superficie.largura * initialScale) / 2, 
-        y: (container.clientHeight - superficie.altura * initialScale) / 2 
-      });
-    }
-  }, [superficie.id]);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDERIZAÇÃO PRINCIPAL DO CANVAS
+  // ─────────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !containerRef.current) return;
-    
-    const ctx = canvas.getContext('2d')!;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const dpr = window.devicePixelRatio || 1;
-    
-    // Setup high-DPI canvas
-    const rect = containerRef.current.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+
+    // Ajustar tamanho do canvas
+    canvas.width = canvas.offsetWidth * dpr;
+    canvas.height = canvas.offsetHeight * dpr;
     ctx.scale(dpr, dpr);
-    
-    // Clear
+
+    // Limpar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Save state for transformations
+
+    // Desenhar réguas (sempre visíveis)
+    desenharReguas(ctx, viewport, chapaDimensoes, canvas.offsetWidth, canvas.offsetHeight);
+
+    // Salvar contexto e aplicar transformações
     ctx.save();
     ctx.translate(viewport.x, viewport.y);
     ctx.scale(viewport.zoom, viewport.zoom);
-    
-    // Fundo sombra
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(10 / viewport.zoom, 10 / viewport.zoom, superficie.largura, superficie.altura);
 
-    // Chapa Base
-    ctx.fillStyle = '#1A1A1A';
-    ctx.fillRect(0, 0, superficie.largura, superficie.altura);
-    
-    // Borda Chapa
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 2 / viewport.zoom;
-    ctx.strokeRect(0, 0, superficie.largura, superficie.altura);
-
-    // Grid 100x100mm
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.lineWidth = 1 / viewport.zoom;
-    ctx.beginPath();
-    for (let x = 0; x <= superficie.largura; x += 100) {
-      ctx.moveTo(x, 0); ctx.lineTo(x, superficie.altura);
+    // Desenhar grid de fundo
+    if (showGrid) {
+      desenharGrid(ctx, chapaDimensoes);
     }
-    for (let y = 0; y <= superficie.altura; y += 100) {
-      ctx.moveTo(0, y); ctx.lineTo(superficie.largura, y);
-    }
-    ctx.stroke();
 
-    // Peças Posicionadas
-    superficie.pecasPositionadas.forEach(peca => {
-      const isHighlighted = highlightPecaId === peca.pecaId;
-      const isHovered = hoveredPeca === peca.pecaId;
-      const baseColor = CORES_AMBIENTE[peca.ambiente || 'default'] || CORES_AMBIENTE['default'];
-      
-      // Draw Peca
-      ctx.fillStyle = (isHighlighted || isHovered) ? hexToRgba(baseColor, 0.4) : hexToRgba(baseColor, 0.15);
-      ctx.fillRect(peca.x, peca.y, peca.largura, peca.altura);
-      
-      ctx.strokeStyle = (isHighlighted || isHovered) ? '#E2AC00' : baseColor;
-      ctx.lineWidth = ((isHighlighted || isHovered) ? 4 : 1) / viewport.zoom;
-      ctx.strokeRect(peca.x, peca.y, peca.largura, peca.altura);
+    // Desenhar borda da chapa
+    desenharBordaChapa(ctx, chapaDimensoes);
 
-      // Fio de fita (Linhas vermelhas grossas) - mock if not defined
-      const fio = (peca as any).fio_de_fita;
-      if (fio) {
-        ctx.strokeStyle = '#EF4444'; // Red para borda com fita
-        ctx.lineWidth = 6 / viewport.zoom;
-        ctx.beginPath();
-        if (fio.topo) { ctx.moveTo(peca.x, peca.y); ctx.lineTo(peca.x + peca.largura, peca.y); }
-        if (fio.direita) { ctx.moveTo(peca.x + peca.largura, peca.y); ctx.lineTo(peca.x + peca.largura, peca.y + peca.altura); }
-        if (fio.baixo) { ctx.moveTo(peca.x, peca.y + peca.altura); ctx.lineTo(peca.x + peca.largura, peca.y + peca.altura); }
-        if (fio.esquerda) { ctx.moveTo(peca.x, peca.y); ctx.lineTo(peca.x, peca.y + peca.altura); }
-        ctx.stroke();
-      }
-
-      // Labels se houver espaço
-      const labelW = peca.largura * viewport.zoom;
-      const labelH = peca.altura * viewport.zoom;
-
-      if (labelW > 80 && labelH > 40) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        ctx.font = `bold ${12 / viewport.zoom}px Inter, sans-serif`;
-        ctx.fillText(peca.descricao.substring(0, 15), peca.x + peca.largura / 2, peca.y + peca.altura / 2 - (10 / viewport.zoom));
-        
-        ctx.font = `${10 / viewport.zoom}px monospace`;
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.fillText(`${peca.largura} x ${peca.altura}mm`, peca.x + peca.largura / 2, peca.y + peca.altura / 2 + (5 / viewport.zoom));
-
-        ctx.font = `bold ${10 / viewport.zoom}px sans-serif`;
-        ctx.fillStyle = '#E2AC00';
-        ctx.fillText(`🏷️ ${String(peca.numeroEtiqueta).padStart(3, '0')}`, peca.x + peca.largura / 2, peca.y + peca.altura / 2 + (20 / viewport.zoom));
-      } else if (labelW > 20 && labelH > 20) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `bold ${14 / viewport.zoom}px sans-serif`;
-        ctx.fillText(`${peca.numeroEtiqueta}`, peca.x + peca.largura / 2, peca.y + peca.altura / 2);
-      }
+    // Desenhar peças
+    layout.pecas_posicionadas?.forEach(peca => {
+      desenharPeca(ctx, peca, peca.peca_id === hoveredPeca, viewport.zoom, showMeasurements);
     });
 
     ctx.restore();
 
-    // Desenhar Réguas Milimetradas (overlay UI fixo)
-    desenharReguas(ctx, rect.width, rect.height, viewport, superficie.largura, superficie.altura);
+    // Desenhar estatísticas (overlay)
+    desenharEstatisticas(ctx, layout, chapaDimensoes, canvas.offsetWidth);
 
-  }, [superficie, viewport, highlightPecaId, hoveredPeca]);
+  }, [layout, viewport, hoveredPeca, showGrid, showMeasurements, chapaDimensoes]);
 
-  // Handlers
-  const handleWheel = (e: React.WheelEvent) => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CONTROLE DE ZOOM (Mouse Wheel)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(ZOOM_MIN, Math.min(viewport.zoom * delta, ZOOM_MAX));
+
+    // Zoom centrado no cursor
     const rect = canvasRef.current!.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    // Zoom no ponto do mouse
-    setViewport(v => {
-      const newZoom = Math.max(0.05, Math.min(v.zoom * zoomFactor, 10));
-      return {
-        zoom: newZoom,
-        x: mouseX - (mouseX - v.x) * (newZoom / v.zoom),
-        y: mouseY - (mouseY - v.y) * (newZoom / v.zoom)
-      };
+    const worldX = (mouseX - viewport.x) / viewport.zoom;
+    const worldY = (mouseY - viewport.y) / viewport.zoom;
+
+    const newX = mouseX - worldX * newZoom;
+    const newY = mouseY - worldY * newZoom;
+
+    setViewport({ x: newX, y: newY, zoom: newZoom });
+  }, [viewport]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CONTROLE DE PAN (Drag com Mouse)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsPanning(true);
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Pan
+    if (isPanning) {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+
+      setViewport(v => ({
+        ...v,
+        x: v.x + dx,
+        y: v.y + dy
+      }));
+
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    // Detectar hover
+    const worldX = (mouseX - viewport.x) / viewport.zoom;
+    const worldY = (mouseY - viewport.y) / viewport.zoom;
+
+    const pecaHover = layout.pecas_posicionadas?.find(p =>
+      worldX >= p.x && worldX <= p.x + p.largura &&
+      worldY >= p.y && worldY <= p.y + p.altura
+    );
+
+    setHoveredPeca(pecaHover?.peca_id || null);
+  }, [isPanning, lastMousePos, viewport, layout.pecas_posicionadas]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsPanning(false);
+    setHoveredPeca(null);
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CLICK EM PEÇA
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!onPecaClick || !hoveredPeca) return;
+
+    const peca = layout.pecas_posicionadas?.find(p => p.peca_id === hoveredPeca);
+    if (peca) {
+      onPecaClick(peca);
+    }
+  }, [hoveredPeca, layout.pecas_posicionadas, onPecaClick]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CONTROLES DE ZOOM
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const zoomIn = () => {
+    setViewport(v => ({ ...v, zoom: Math.min(v.zoom * 1.3, ZOOM_MAX) }));
+  };
+
+  const zoomOut = () => {
+    setViewport(v => ({ ...v, zoom: Math.max(v.zoom * 0.7, ZOOM_MIN) }));
+  };
+
+  const resetView = () => {
+    setViewport({ x: REGUA_HEIGHT, y: REGUA_HEIGHT, zoom: 0.3 });
+  };
+
+  const fitToScreen = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const containerWidth = canvas.offsetWidth - REGUA_HEIGHT * 2;
+    const containerHeight = canvas.offsetHeight - REGUA_HEIGHT * 2;
+
+    const scaleX = containerWidth / chapaDimensoes.largura;
+    const scaleY = containerHeight / chapaDimensoes.altura;
+    const newZoom = Math.min(scaleX, scaleY) * 0.9;
+
+    setViewport({
+      x: REGUA_HEIGHT + (containerWidth - chapaDimensoes.largura * newZoom) / 2,
+      y: REGUA_HEIGHT + (containerHeight - chapaDimensoes.altura * newZoom) / 2,
+      zoom: newZoom
     });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsPanning(true);
-    setStartPan({ x: e.clientX - viewport.x, y: e.clientY - viewport.y });
-  };
+  useEffect(() => {
+    fitToScreen();
+  }, [chapaDimensoes]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      setViewport(v => ({ ...v, x: e.clientX - startPan.x, y: e.clientY - startPan.y }));
-    } else {
-      // Hit detection para Hover
-      const rect = canvasRef.current!.getBoundingClientRect();
-      const x = (e.clientX - rect.left - viewport.x) / viewport.zoom;
-      const y = (e.clientY - rect.top - viewport.y) / viewport.zoom;
-
-      const hovered = superficie.pecasPositionadas.find(p => 
-        x >= p.x && x <= p.x + p.largura && y >= p.y && y <= p.y + p.altura
-      );
-      setHoveredPeca(hovered ? hovered.pecaId : null);
-    }
-  };
-
-  const handleMouseUp = () => setIsPanning(false);
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative w-full h-full flex flex-col" ref={containerRef}>
+    <div ref={containerRef} className={className} style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'var(--background)',
+      overflow: 'hidden',
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid var(--border)'
+    }}>
+      {/* CANVAS PRINCIPAL */}
       <canvas
         ref={canvasRef}
-        className={`w-full h-full ${isPanning ? 'cursor-grabbing' : 'cursor-grab'} outline-none`}
+        style={{
+          width: '100%',
+          height: '100%',
+          cursor: isPanning ? 'grabbing' : 'grab',
+          display: 'block'
+        }}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        tabIndex={0}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       />
 
-      {/* Controles de Zoom */}
-      <div className="absolute bottom-4 right-4 flex gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/50 backdrop-blur">
-        <button 
-          className="w-8 h-8 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
-          onClick={() => setViewport(v => ({ ...v, zoom: Math.min(v.zoom * 1.2, 10) }))}
-        >+</button>
-        <div className="w-16 flex items-center justify-center text-xs font-mono text-slate-300">
-          {Math.round(viewport.zoom * 100)}%
-        </div>
-        <button 
-          className="w-8 h-8 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors"
-          onClick={() => setViewport(v => ({ ...v, zoom: Math.max(v.zoom * 0.8, 0.05) }))}
-        >-</button>
+      {/* TOOLBAR - CONTROLES DE ZOOM */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1.5rem',
+        right: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        backgroundColor: 'var(--surface-overlay)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '0.5rem',
+        boxShadow: 'var(--shadow-md)',
+        zIndex: 10
+      }}>
+        <button
+          onClick={zoomIn}
+          className="btn"
+          style={{ padding: '0.4rem', minWidth: '32px' }}
+          title="Zoom In (Scroll Up)"
+        >
+          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
+        </button>
+        <button
+          onClick={zoomOut}
+          className="btn"
+          style={{ padding: '0.4rem', minWidth: '32px' }}
+          title="Zoom Out (Scroll Down)"
+        >
+          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>−</span>
+        </button>
+        <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0' }} />
+        <button
+          onClick={resetView}
+          className="btn"
+          style={{ padding: '0.4rem', fontSize: '0.75rem', minWidth: '32px' }}
+          title="Reset View"
+        >
+          ↺
+        </button>
+        <button
+          onClick={fitToScreen}
+          className="btn"
+          style={{ padding: '0.4rem', fontSize: '0.75rem', minWidth: '32px' }}
+          title="Fit to Screen"
+        >
+          ⊡
+        </button>
       </div>
 
-      {hoveredPeca && (() => {
-        const pecaInfo = superficie.pecasPositionadas.find(p => p.pecaId === hoveredPeca);
-        if (pecaInfo) {
-          return (
-            <div className="absolute top-4 right-4 bg-slate-900/95 border border-amber-500/50 shadow-xl rounded-lg p-3 pointer-events-none text-white min-w-[200px]">
-              <div className="text-amber-400 font-bold text-xs mb-1">🏷️ #{pecaInfo.numeroEtiqueta}</div>
-              <div className="font-bold text-sm truncate">{pecaInfo.descricao}</div>
-              <div className="text-slate-400 font-mono text-xs mt-1">
-                {pecaInfo.largura} x {pecaInfo.altura} mm
-              </div>
-              <div className="text-slate-500 text-[10px] mt-2">
-                {pecaInfo.ambiente || 'Geral'}
-              </div>
-            </div>
-          );
-        }
-      })()}
+      {/* TOOLBAR - OPÇÕES DE VISUALIZAÇÃO */}
+      <div style={{
+        position: 'absolute',
+        top: '1.5rem',
+        right: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        backgroundColor: 'var(--surface-overlay)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '0.75rem',
+        boxShadow: 'var(--shadow-md)',
+        zIndex: 10
+      }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text)', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showGrid}
+            onChange={(e) => setShowGrid(e.target.checked)}
+          />
+          GRID
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text)', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showMeasurements}
+            onChange={(e) => setShowMeasurements(e.target.checked)}
+          />
+          MEDIDAS
+        </label>
+        {onExportarPDF && (
+          <>
+            <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0' }} />
+            <button
+              onClick={onExportarPDF}
+              className="btn btn-primary"
+              style={{ fontSize: '0.7rem', padding: '0.4rem 0.6rem' }}
+            >
+              📄 PDF
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* INFO ZOOM */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1.5rem',
+        left: '1.5rem',
+        backgroundColor: 'var(--surface-overlay)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius-xs)',
+        padding: '0.25rem 0.75rem',
+        fontSize: '0.7rem',
+        color: 'var(--text-secondary)',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        ZOOM: {(viewport.zoom * 100).toFixed(0)}%
+      </div>
+
+      {/* INFO PEÇA HOVER */}
+      {hoveredPeca && (
+        <div style={{
+          position: 'absolute',
+          top: '1.5rem',
+          left: '1.5rem',
+          backgroundColor: 'var(--surface-overlay)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid var(--primary)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '1rem',
+          boxShadow: 'var(--shadow-lg)',
+          maxWidth: '280px',
+          zIndex: 20,
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          {(() => {
+            const peca = layout.pecas_posicionadas?.find(p => p.peca_id === hoveredPeca);
+            if (!peca) return null;
+            
+            return (
+              <>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem' }}>{peca.nome}</h3>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                  <p>POSIÇÃO: ({Math.round(peca.x)}, {Math.round(peca.y)}) MM</p>
+                  <p>TAMANHO: {peca.largura} × {peca.altura} MM</p>
+                  <p>ÁREA: {((peca.largura * peca.altura) / 1000000).toFixed(3)} M²</p>
+                  {peca.rotacionada && (
+                    <p style={{ color: 'var(--warning)', marginTop: '0.25rem' }}>🔄 ROTACIONADA 90°</p>
+                  )}
+                  {peca.fio_de_fita && (
+                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
+                      <p style={{ fontSize: '0.65rem', fontWeight: 'bold', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>FIO DE FITA:</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.65rem' }}>
+                        {peca.fio_de_fita.topo && <span style={{ color: CORES_FITA.topo }}>⬆ TOPO</span>}
+                        {peca.fio_de_fita.baixo && <span style={{ color: CORES_FITA.baixo }}>⬇ BAIXO</span>}
+                        {peca.fio_de_fita.esquerda && <span style={{ color: CORES_FITA.esquerda }}>⬅ ESQ</span>}
+                        {peca.fio_de_fita.direita && <span style={{ color: CORES_FITA.direita }}>➡ DIR</span>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
-};
-
-// Utils
-function hexToRgba(hex: string, alpha: number) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return `rgba(100,100,100,${alpha})`;
-  return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
 }
 
-function desenharReguas(ctx: CanvasRenderingContext2D, width: number, height: number, viewport: any, w_real: number, h_real: number) {
-  const THICKNESS = 25;
+// ─────────────────────────────────────────────────────────────────────────────
+// FUNÇÕES DE DESENHO
+// ─────────────────────────────────────────────────────────────────────────────
 
+function desenharGrid(ctx: CanvasRenderingContext2D, dimensoes: { largura: number; altura: number }) {
   ctx.save();
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-  // Fundo Régua Horizontal (Top)
-  ctx.fillRect(0, 0, width, THICKNESS);
-  // Fundo Régua Vertical (Left)
-  ctx.fillRect(0, 0, THICKNESS, height);
-  // Canto
-  ctx.fillStyle = 'rgba(30, 41, 59, 1)';
-  ctx.fillRect(0, 0, THICKNESS, THICKNESS);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 0.5;
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '9px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-
-  // Graduação Horizontal
-  for (let x = 0; x <= w_real; x += 100) {
-    const screenX = viewport.x + (x * viewport.zoom);
-    if (screenX > THICKNESS && screenX < width) {
-      ctx.fillRect(screenX, THICKNESS - 5, 1, 5);
-      if (x % 500 === 0) {
-        ctx.fillRect(screenX, THICKNESS - 8, 1, 8);
-        ctx.fillText(`${x}`, screenX, 5);
-      }
-    }
+  // Linhas verticais a cada 100mm
+  for (let x = 0; x <= dimensoes.largura; x += GRID_SPACING_MM) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, dimensoes.altura);
+    ctx.stroke();
   }
 
-  // Graduação Vertical
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  for (let y = 0; y <= h_real; y += 100) {
-    const screenY = viewport.y + (y * viewport.zoom);
-    if (screenY > THICKNESS && screenY < height) {
-      ctx.fillRect(THICKNESS - 5, screenY, 5, 1);
-      if (y % 500 === 0) {
-        ctx.fillRect(THICKNESS - 8, screenY, 8, 1);
-        ctx.save();
-        ctx.translate(10, screenY);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(`${y}`, 0, 0);
-        ctx.restore();
-      }
-    }
+  // Linhas horizontais a cada 100mm
+  for (let y = 0; y <= dimensoes.altura; y += GRID_SPACING_MM) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(dimensoes.largura, y);
+    ctx.stroke();
   }
+
   ctx.restore();
 }
+
+function desenharBordaChapa(ctx: CanvasRenderingContext2D, dimensoes: { largura: number; altura: number }) {
+  ctx.save();
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(0, 0, dimensoes.largura, dimensoes.altura);
+  ctx.restore();
+}
+
+function desenharPeca(
+  ctx: CanvasRenderingContext2D,
+  peca: PecaPosicionada,
+  highlighted: boolean,
+  zoom: number,
+  showMeasurements: boolean
+) {
+  ctx.save();
+
+  // Fundo da peça
+  ctx.fillStyle = highlighted ? 'rgba(212, 175, 55, 0.3)' : 'rgba(0, 169, 157, 0.15)';
+  ctx.fillRect(peca.x, peca.y, peca.largura, peca.altura);
+
+  // Borda principal
+  ctx.strokeStyle = highlighted ? 'var(--primary)' : '#00A99D';
+  ctx.lineWidth = (highlighted ? 4 : 2) / zoom;
+  ctx.strokeRect(peca.x, peca.y, peca.largura, peca.altura);
+
+  // Fio de fita (bordas coloridas)
+  if (peca.fio_de_fita) {
+    ctx.lineWidth = 6 / zoom;
+
+    if (peca.fio_de_fita.topo) {
+      ctx.strokeStyle = CORES_FITA.topo;
+      ctx.beginPath();
+      ctx.moveTo(peca.x, peca.y);
+      ctx.lineTo(peca.x + peca.largura, peca.y);
+      ctx.stroke();
+    }
+
+    if (peca.fio_de_fita.baixo) {
+      ctx.strokeStyle = CORES_FITA.baixo;
+      ctx.beginPath();
+      ctx.moveTo(peca.x, peca.y + peca.altura);
+      ctx.lineTo(peca.x + peca.largura, peca.y + peca.altura);
+      ctx.stroke();
+    }
+
+    if (peca.fio_de_fita.esquerda) {
+      ctx.strokeStyle = CORES_FITA.esquerda;
+      ctx.beginPath();
+      ctx.moveTo(peca.x, peca.y);
+      ctx.lineTo(peca.x, peca.y + peca.altura);
+      ctx.stroke();
+    }
+
+    if (peca.fio_de_fita.direita) {
+      ctx.strokeStyle = CORES_FITA.direita;
+      ctx.beginPath();
+      ctx.moveTo(peca.x + peca.largura, peca.y);
+      ctx.lineTo(peca.x + peca.largura, peca.y + peca.altura);
+      ctx.stroke();
+    }
+  }
+
+  // Texto (se couber)
+  const minSizeForText = 60 / zoom;
+  if (peca.largura > minSizeForText && peca.altura > minSizeForText / 2) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Nome
+    ctx.font = `bold ${Math.max(10, 14 / zoom)}px Inter, sans-serif`;
+    ctx.fillText(
+      peca.nome.toUpperCase(),
+      peca.x + peca.largura / 2,
+      peca.y + peca.altura / 2 - 8 / zoom
+    );
+
+    // Dimensões
+    if (showMeasurements) {
+      ctx.font = `${Math.max(8, 10 / zoom)}px monospace`;
+      ctx.fillText(
+        `${peca.largura} × ${peca.altura}`,
+        peca.x + peca.largura / 2,
+        peca.y + peca.altura / 2 + 10 / zoom
+      );
+    }
+
+    // Ícone de rotação
+    if (peca.rotacionada) {
+      ctx.font = `${Math.max(10, 14 / zoom)}px sans-serif`;
+      ctx.fillText(
+        '🔄',
+        peca.x + peca.largura - 15 / zoom,
+        peca.y + 15 / zoom
+      );
+    }
+  }
+
+  ctx.restore();
+}
+
+function desenharReguas(
+  ctx: CanvasRenderingContext2D,
+  viewport: Viewport,
+  dimensoes: { largura: number; altura: number },
+  canvasWidth: number,
+  canvasHeight: number
+) {
+  ctx.save();
+
+  // Fundo das réguas
+  ctx.fillStyle = 'rgba(10, 13, 20, 0.98)';
+  ctx.fillRect(0, 0, canvasWidth, REGUA_HEIGHT); // Horizontal
+  ctx.fillRect(0, 0, REGUA_HEIGHT, canvasHeight); // Vertical
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = 'var(--border-strong)';
+  ctx.lineWidth = 1;
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // RÉGUA HORIZONTAL (topo)
+  for (let x = 0; x <= dimensoes.largura; x += 100) {
+    const screenX = viewport.x + x * viewport.zoom;
+    
+    if (screenX >= REGUA_HEIGHT && screenX <= canvasWidth) {
+      // Marcação
+      ctx.beginPath();
+      ctx.moveTo(screenX, REGUA_HEIGHT - 8);
+      ctx.lineTo(screenX, REGUA_HEIGHT);
+      ctx.stroke();
+
+      // Número
+      ctx.fillText(String(x), screenX, REGUA_HEIGHT / 2);
+    }
+  }
+
+  // RÉGUA VERTICAL (esquerda)
+  ctx.textAlign = 'right';
+  for (let y = 0; y <= dimensoes.altura; y += 100) {
+    const screenY = viewport.y + y * viewport.zoom;
+    
+    if (screenY >= REGUA_HEIGHT && screenY <= canvasHeight) {
+      // Marcação
+      ctx.beginPath();
+      ctx.moveTo(REGUA_HEIGHT - 8, screenY);
+      ctx.lineTo(REGUA_HEIGHT, screenY);
+      ctx.stroke();
+
+      // Número
+      ctx.save();
+      ctx.translate(REGUA_HEIGHT / 2, screenY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(String(y), 0, 0);
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+}
+
+function desenharEstatisticas(
+  ctx: CanvasRenderingContext2D,
+  layout: LayoutChapa,
+  dimensoes: { largura: number; altura: number },
+  canvasWidth: number
+) {
+  const areaChapa = dimensoes.largura * dimensoes.altura;
+  const areaUsada = layout.area_aproveitada_mm2 || 0;
+  const aproveitamento = (areaUsada / areaChapa) * 100;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(10, 13, 20, 0.9)';
+  ctx.fillRect(canvasWidth - 180, REGUA_HEIGHT + 10, 170, 70);
+  ctx.strokeStyle = 'var(--primary)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(canvasWidth - 180, REGUA_HEIGHT + 10, 170, 70);
+
+  ctx.fillStyle = 'var(--primary)';
+  ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('ESTATÍSTICAS', canvasWidth - 170, REGUA_HEIGHT + 25);
+
+  ctx.font = '10px monospace';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(
+    `APROVEITAMENTO: ${aproveitamento.toFixed(1)}%`,
+    canvasWidth - 170,
+    REGUA_HEIGHT + 42
+  );
+  ctx.fillText(
+    `PEÇAS: ${layout.pecas_posicionadas?.length || 0}`,
+    canvasWidth - 170,
+    REGUA_HEIGHT + 58
+  );
+
+  ctx.restore();
+}
+
+export default CanvasAvancado;

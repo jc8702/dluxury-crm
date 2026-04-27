@@ -729,7 +729,13 @@ const CuttingPlanPage: React.FC = () => {
 
           <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '3rem' }}>
             {activeSuperficie ? (
-              <CanvasAvancado superficie={activeSuperficie} grupoMaterial={activeGrupo} highlightPecaId={highlightPecaId} />
+              <CanvasAvancado 
+                layout={activeSuperficie} 
+                chapaDimensoes={{ 
+                  largura: activeGrupo?.larguraChapaMm || 2750, 
+                  altura: activeGrupo?.alturaChapaMm || 1830 
+                }} 
+              />
             ) : (
               <div style={{ textAlign: 'center', opacity: 0.15, marginTop: '20vh' }}>
                 <Scissors size={140} style={{ margin: '0 auto 1.5rem', color: 'var(--primary)' }} />
