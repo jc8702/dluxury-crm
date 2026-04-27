@@ -841,15 +841,48 @@ const CuttingPlanPage: React.FC = () => {
                 <h3 className="font-bold text-xs mb-3 text-slate-500 uppercase tracking-widest">Opção 2: Projetos do Sistema (TAG)</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
                   {(projetosParaImportar || []).map(p => (
-                    <div key={p.id} onClick={() => handleImportProjeto(p)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ fontWeight: '900', color: 'var(--primary)', fontSize: '0.9rem' }}>{p.tag || `PRJ-${p.id}`}</div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: '600', marginTop: '2px' }}>{p.title}</div>
-                        </div>
-                        <span className="badge" style={{ background: 'var(--surface-hover)', fontSize: '0.6rem' }}>{p.status}</span>
+                    <div 
+                      key={p.id} 
+                      onClick={() => handleImportProjeto(p)} 
+                      className="card hover-scale" 
+                      style={{ 
+                        padding: '1.25rem', 
+                        cursor: 'pointer', 
+                        border: '1px solid var(--border)',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          fontWeight: '900', 
+                          background: 'var(--primary)', 
+                          color: '#000', 
+                          padding: '2px 8px', 
+                          borderRadius: '4px' 
+                        }}>
+                          {p.tag || `PRJ-${p.id}`}
+                        </span>
+                        <span className="badge" style={{ fontSize: '0.6rem', opacity: 0.8 }}>{p.status}</span>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>{p.subtitle}</div>
+                      
+                      <div>
+                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', textTransform: 'uppercase' }}>
+                          {p.title}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '600' }}>
+                           👤 {p.subtitle || 'Cliente não identificado'}
+                        </div>
+                      </div>
+
+                      {p.value > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Valor Estimado: R$ {Number(p.value).toLocaleString('pt-BR')}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {(!projetosParaImportar || projetosParaImportar.length === 0) && (

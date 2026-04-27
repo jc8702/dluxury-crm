@@ -13,6 +13,7 @@ export interface KanbanItem {
   badges?: string[];
   phone?: string;
   city?: string;
+  tag?: string;
 }
 
 interface KanbanBoardProps {
@@ -89,8 +90,23 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
+                  {item.tag && (
+                    <div style={{ 
+                      fontSize: '0.65rem', 
+                      background: 'linear-gradient(135deg, #E2AC00, #B49050)', 
+                      color: '#000', 
+                      padding: '2px 8px', 
+                      borderRadius: '12px', 
+                      width: 'fit-content', 
+                      fontWeight: '900',
+                      marginBottom: '0.5rem',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      {item.tag}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1 }}>{item.title}</p>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1, textTransform: 'uppercase' }}>{item.title}</p>
                     {onEdit && (
                       <div 
                         style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}

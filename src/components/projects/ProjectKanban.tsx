@@ -96,19 +96,18 @@ const closeModal = () => {
   // Map projects to kanban items format
   const kanbanItems = projects.map(p => {
     const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
-    const badges = [];
-    if (p.tag) badges.push(`🏷️ ${p.tag}`);
-    projOrcamentos.forEach(o => badges.push(`📄 ${o.numero}`));
+    const badges = projOrcamentos.map(o => `📄 ${o.numero}`);
 
     return {
       id: p.id,
       title: p.ambiente,
-      subtitle: p.clientName || '',
+      subtitle: p.clientName || 'Cliente não identificado',
       label: p.valorEstimado ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
       status: p.status,
       type: 'project' as const,
       value: p.valorEstimado,
       badges,
+      tag: p.tag, // Adicionado explicitamente para ser usado pelo KanbanBoard se suportado
       // Carry original project data
       clientId: p.clientId,
       clientName: p.clientName,
