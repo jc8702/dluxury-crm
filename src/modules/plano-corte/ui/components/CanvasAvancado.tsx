@@ -54,6 +54,9 @@ export function CanvasAvancado({
   // RENDERIZAÇÃO PRINCIPAL DO CANVAS
   // ─────────────────────────────────────────────────────────────────────────────
 
+  // Normalização dos dados (Depara Flexível)
+  const pecas = (layout as any).pecas_posicionadas || (layout as any).pecasPositionadas || [];
+  
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -88,16 +91,26 @@ export function CanvasAvancado({
     desenharBordaChapa(ctx, chapaDimensoes);
 
     // Desenhar peças
-    layout.pecas_posicionadas?.forEach(peca => {
-      desenharPeca(ctx, peca, peca.peca_id === hoveredPeca, viewport.zoom, showMeasurements);
+    pecas.forEach((p: any) => {
+      const normalizedPeca: PecaPosicionada = {
+        peca_id: p.peca_id || p.pecaId || p.id,
+        nome: p.nome || p.descricao || 'PEÇA',
+        x: p.x,
+        y: p.y,
+        largura: p.largura,
+        altura: p.altura,
+        rotacionada: p.rotacionada,
+        fio_de_fita: p.fio_de_fita
+      };
+      desenharPeca(ctx, normalizedPeca, normalizedPeca.peca_id === hoveredPeca, viewport.zoom, showMeasurements);
     });
 
     ctx.restore();
 
     // Desenhar estatísticas (overlay)
-    desenharEstatisticas(ctx, layout, chapaDimensoes, canvas.offsetWidth);
+    desenharEstatisticas(ctx, layout, pecas, chapaDimensoes, canvas.offsetWidth);
 
-  }, [layout, viewport, hoveredPeca, showGrid, showMeasurements, chapaDimensoes]);
+  }, [layout, pecas, viewport, hoveredPeca, showGrid, showMeasurements, chapaDimensoes]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // CONTROLE DE ZOOM (Mouse Wheel)
@@ -159,13 +172,14 @@ export function CanvasAvancado({
     const worldX = (mouseX - viewport.x) / viewport.zoom;
     const worldY = (mouseY - viewport.y) / viewport.zoom;
 
-    const pecaHover = layout.pecas_posicionadas?.find(p =>
+    const pecaHover = pecas.find((p: any) =>
       worldX >= p.x && worldX <= p.x + p.largura &&
       worldY >= p.y && worldY <= p.y + p.altura
     );
 
-    setHoveredPeca(pecaHover?.peca_id || null);
-  }, [isPanning, lastMousePos, viewport, layout.pecas_posicionadas]);
+    const pecaId = pecaHover ? (pecaHover.peca_id || pecaHover.pecaId || pecaHover.id) : null;
+    setHoveredPeca(pecaId);
+  }, [isPanning, lastMousePos, viewport, pecas]);
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -183,11 +197,21 @@ export function CanvasAvancado({
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (!onPecaClick || !hoveredPeca) return;
 
-    const peca = layout.pecas_posicionadas?.find(p => p.peca_id === hoveredPeca);
-    if (peca) {
-      onPecaClick(peca);
+    const p = pecas.find((p: any) => (p.peca_id || p.pecaId || p.id) === hoveredPeca);
+    if (p) {
+      const normalizedPeca: PecaPosicionada = {
+        peca_id: p.peca_id || p.pecaId || p.id,
+        nome: p.nome || p.descricao || 'PEÇA',
+        x: p.x,
+        y: p.y,
+        largura: p.largura,
+        altura: p.altura,
+        rotacionada: p.rotacionada,
+        fio_de_fita: p.fio_de_fita
+      };
+      onPecaClick(normalizedPeca);
     }
-  }, [hoveredPeca, layout.pecas_posicionadas, onPecaClick]);
+  }, [hoveredPeca, pecas, onPecaClick]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // CONTROLES DE ZOOM
@@ -225,7 +249,7 @@ export function CanvasAvancado({
 
   useEffect(() => {
     fitToScreen();
-  }, [chapaDimensoes]);
+  }, [chapaDimensoes, layout]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
@@ -258,53 +282,32 @@ export function CanvasAvancado({
         onClick={handleClick}
       />
 
-      {/* TOOLBAR - CONTROLES DE ZOOM */}
+      {/* TOOLBAR - CONTROLES DE ZOOM (Reposicionado para evitar sobreposição) */}
       <div style={{
         position: 'absolute',
-        bottom: '1.5rem',
+        bottom: '5.5rem',
         right: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
+        gap: '2px',
         backgroundColor: 'var(--surface-overlay)',
         backdropFilter: 'blur(10px)',
         border: '1px solid var(--border-strong)',
         borderRadius: 'var(--radius-sm)',
-        padding: '0.5rem',
+        padding: '4px',
         boxShadow: 'var(--shadow-md)',
-        zIndex: 10
+        zIndex: 50
       }}>
-        <button
-          onClick={zoomIn}
-          className="btn"
-          style={{ padding: '0.4rem', minWidth: '32px' }}
-          title="Zoom In (Scroll Up)"
-        >
+        <button onClick={zoomIn} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent' }} title="Zoom In">
           <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
         </button>
-        <button
-          onClick={zoomOut}
-          className="btn"
-          style={{ padding: '0.4rem', minWidth: '32px' }}
-          title="Zoom Out (Scroll Down)"
-        >
+        <button onClick={zoomOut} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent' }} title="Zoom Out">
           <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>−</span>
         </button>
-        <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0' }} />
-        <button
-          onClick={resetView}
-          className="btn"
-          style={{ padding: '0.4rem', fontSize: '0.75rem', minWidth: '32px' }}
-          title="Reset View"
-        >
+        <button onClick={resetView} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent', fontSize: '0.9rem' }} title="Reset">
           ↺
         </button>
-        <button
-          onClick={fitToScreen}
-          className="btn"
-          style={{ padding: '0.4rem', fontSize: '0.75rem', minWidth: '32px' }}
-          title="Fit to Screen"
-        >
+        <button onClick={fitToScreen} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent', fontSize: '0.9rem' }} title="Fit">
           ⊡
         </button>
       </div>
@@ -312,46 +315,31 @@ export function CanvasAvancado({
       {/* TOOLBAR - OPÇÕES DE VISUALIZAÇÃO */}
       <div style={{
         position: 'absolute',
-        top: '1.5rem',
-        right: '1.5rem',
+        top: '1rem',
+        right: '1rem',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem',
+        alignItems: 'center',
+        gap: '1rem',
         backgroundColor: 'var(--surface-overlay)',
         backdropFilter: 'blur(10px)',
         border: '1px solid var(--border-strong)',
         borderRadius: 'var(--radius-sm)',
-        padding: '0.75rem',
+        padding: '0.5rem 1rem',
         boxShadow: 'var(--shadow-md)',
-        zIndex: 10
+        zIndex: 100
       }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text)', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={showGrid}
-            onChange={(e) => setShowGrid(e.target.checked)}
-          />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={showGrid} onChange={(e) => setShowGrid(e.target.checked)} />
           GRID
         </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text)', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={showMeasurements}
-            onChange={(e) => setShowMeasurements(e.target.checked)}
-          />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={showMeasurements} onChange={(e) => setShowMeasurements(e.target.checked)} />
           MEDIDAS
         </label>
         {onExportarPDF && (
-          <>
-            <div style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0' }} />
-            <button
-              onClick={onExportarPDF}
-              className="btn btn-primary"
-              style={{ fontSize: '0.7rem', padding: '0.4rem 0.6rem' }}
-            >
-              📄 PDF
-            </button>
-          </>
+          <button onClick={onExportarPDF} className="btn btn-primary" style={{ fontSize: '0.65rem', padding: '4px 10px', height: '28px' }}>
+             📄 PDF
+          </button>
         )}
       </div>
 
@@ -388,27 +376,27 @@ export function CanvasAvancado({
           animation: 'fadeIn 0.2s ease'
         }}>
           {(() => {
-            const peca = layout.pecas_posicionadas?.find(p => p.peca_id === hoveredPeca);
-            if (!peca) return null;
+            const p = pecas.find((p: any) => (p.peca_id || p.pecaId || p.id) === hoveredPeca);
+            if (!p) return null;
             
             return (
               <>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem' }}>{peca.nome}</h3>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem' }}>{p.nome || p.descricao}</h3>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                  <p>POSIÇÃO: ({Math.round(peca.x)}, {Math.round(peca.y)}) MM</p>
-                  <p>TAMANHO: {peca.largura} × {peca.altura} MM</p>
-                  <p>ÁREA: {((peca.largura * peca.altura) / 1000000).toFixed(3)} M²</p>
-                  {peca.rotacionada && (
+                  <p>POSIÇÃO: ({Math.round(p.x)}, {Math.round(p.y)}) MM</p>
+                  <p>TAMANHO: {p.largura} × {p.altura} MM</p>
+                  <p>ÁREA: {((p.largura * p.altura) / 1000000).toFixed(3)} M²</p>
+                  {p.rotacionada && (
                     <p style={{ color: 'var(--warning)', marginTop: '0.25rem' }}>🔄 ROTACIONADA 90°</p>
                   )}
-                  {peca.fio_de_fita && (
+                  {p.fio_de_fita && (
                     <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
                       <p style={{ fontSize: '0.65rem', fontWeight: 'bold', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>FIO DE FITA:</p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.65rem' }}>
-                        {peca.fio_de_fita.topo && <span style={{ color: CORES_FITA.topo }}>⬆ TOPO</span>}
-                        {peca.fio_de_fita.baixo && <span style={{ color: CORES_FITA.baixo }}>⬇ BAIXO</span>}
-                        {peca.fio_de_fita.esquerda && <span style={{ color: CORES_FITA.esquerda }}>⬅ ESQ</span>}
-                        {peca.fio_de_fita.direita && <span style={{ color: CORES_FITA.direita }}>➡ DIR</span>}
+                        {p.fio_de_fita.topo && <span style={{ color: CORES_FITA.topo }}>⬆ TOPO</span>}
+                        {p.fio_de_fita.baixo && <span style={{ color: CORES_FITA.baixo }}>⬇ BAIXO</span>}
+                        {p.fio_de_fita.esquerda && <span style={{ color: CORES_FITA.esquerda }}>⬅ ESQ</span>}
+                        {p.fio_de_fita.direita && <span style={{ color: CORES_FITA.direita }}>➡ DIR</span>}
                       </div>
                     </div>
                   )}
@@ -616,36 +604,38 @@ function desenharReguas(
 function desenharEstatisticas(
   ctx: CanvasRenderingContext2D,
   layout: LayoutChapa,
+  pecas: any[],
   dimensoes: { largura: number; altura: number },
   canvasWidth: number
 ) {
   const areaChapa = dimensoes.largura * dimensoes.altura;
-  const areaUsada = layout.area_aproveitada_mm2 || 0;
+  const areaUsada = layout.area_aproveitada_mm2 || (layout as any).areaUsada || (pecas.reduce((acc, p) => acc + (p.largura * p.altura), 0));
   const aproveitamento = (areaUsada / areaChapa) * 100;
 
   ctx.save();
+  // Reposicionado para baixo esquerda para não conflitar com painel de GRID
   ctx.fillStyle = 'rgba(10, 13, 20, 0.9)';
-  ctx.fillRect(canvasWidth - 180, REGUA_HEIGHT + 10, 170, 70);
+  ctx.fillRect(REGUA_HEIGHT + 10, canvasWidth > 600 ? 50 : 80, 170, 70);
   ctx.strokeStyle = 'var(--primary)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(canvasWidth - 180, REGUA_HEIGHT + 10, 170, 70);
+  ctx.strokeRect(REGUA_HEIGHT + 10, canvasWidth > 600 ? 50 : 80, 170, 70);
 
   ctx.fillStyle = 'var(--primary)';
   ctx.font = 'bold 10px Inter, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('ESTATÍSTICAS', canvasWidth - 170, REGUA_HEIGHT + 25);
+  ctx.fillText('ESTATÍSTICAS', REGUA_HEIGHT + 20, (canvasWidth > 600 ? 50 : 80) + 15);
 
   ctx.font = '10px monospace';
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(
     `APROVEITAMENTO: ${aproveitamento.toFixed(1)}%`,
-    canvasWidth - 170,
-    REGUA_HEIGHT + 42
+    REGUA_HEIGHT + 20,
+    (canvasWidth > 600 ? 50 : 80) + 32
   );
   ctx.fillText(
-    `PEÇAS: ${layout.pecas_posicionadas?.length || 0}`,
-    canvasWidth - 170,
-    REGUA_HEIGHT + 58
+    `PEÇAS: ${pecas.length}`,
+    REGUA_HEIGHT + 20,
+    (canvasWidth > 600 ? 50 : 80) + 48
   );
 
   ctx.restore();

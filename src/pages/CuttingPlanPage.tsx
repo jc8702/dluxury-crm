@@ -727,7 +727,7 @@ const CuttingPlanPage: React.FC = () => {
             ))}
           </div>
 
-          <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '3rem' }}>
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', position: 'relative' }}>
             {activeSuperficie ? (
               <CanvasAvancado 
                 layout={activeSuperficie} 
