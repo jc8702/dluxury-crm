@@ -7,13 +7,61 @@ export async function handleProjects(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
 
-    // Migração: adicionar colunas se não existirem
+    // Infraestrutura: garantir existência da tabela e colunas
     try {
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tag TEXT`;
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS orcamento_id TEXT`;
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
+      await sql`
+        CREATE TABLE IF NOT EXISTS projects (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          client_id TEXT,
+          client_name TEXT,
+          cliente_nome TEXT,
+          ambiente TEXT,
+          title TEXT,
+          titulo TEXT,
+          descricao TEXT,
+          description TEXT,
+          valor_estimado NUMERIC DEFAULT 0,
+          valor_final NUMERIC DEFAULT 0,
+          prazo_entrega TEXT,
+          status TEXT DEFAULT 'lead',
+          etapa_producao TEXT,
+          responsavel TEXT,
+          observacoes TEXT,
+          observations TEXT,
+          visita_id TEXT,
+          tag TEXT,
+          orcamento_id TEXT,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `;
+      // Garantir colunas novas em tabelas existentes
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tag TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_name TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS cliente_nome TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS title TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS titulo TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS observations TEXT`.catch(() => {});
+
+      // Migração de emergência: Se projects estiver vazio, tenta puxar do kanban (tabela antiga)
+      const count = await sql`SELECT count(*) FROM projects`;
+      if (parseInt(count[0].count) === 0) {
+        try {
+          await sql`
+            INSERT INTO projects (id, client_id, client_name, ambiente, status, observations, created_at, updated_at)
+            SELECT id::uuid, client_id, subtitle, title, status, observations, created_at, NOW()
+            FROM kanban
+            ON CONFLICT DO NOTHING
+          `;
+        } catch (migErr) {
+          console.error('Migration from kanban failed:', migErr);
+        }
+      }
     } catch (e) {
-      console.error('Migration error in projects:', e);
+      console.error('Database setup error in projects:', e);
     }
     if (req.method === 'GET') {
       const { client_id, status } = req.query;
@@ -43,7 +91,13 @@ export async function handleProjects(req: any, res: any) {
               ORDER BY p.created_at DESC
             `
           : sql`
-              SELECT p.*, o.valor_final as valor_orcamento_atual
+              SELECT 
+                p.*, 
+                COALESCE(p.client_name, p.cliente_nome) as client_name,
+                COALESCE(p.cliente_nome, p.client_name) as cliente_nome,
+                COALESCE(p.ambiente, p.title, p.titulo) as ambiente,
+                COALESCE(p.title, p.ambiente) as title,
+                o.valor_final as valor_orcamento_atual
               FROM projects p
               LEFT JOIN (
                 SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
@@ -59,12 +113,48 @@ export async function handleProjects(req: any, res: any) {
     if (req.method === 'POST') {
       const f = req.body;
       const tag = f.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-      const result = await sql`INSERT INTO projects (client_id, client_name, ambiente, descricao, valor_estimado, valor_final, prazo_entrega, status, etapa_producao, responsavel, observacoes, visita_id, tag) VALUES (${f.client_id}, ${f.client_name}, ${f.ambiente}, ${f.descricao}, ${f.valor_estimado}, ${f.valor_final}, ${f.prazo_entrega}, ${f.status || 'lead'}, ${f.etapa_producao}, ${f.responsavel}, ${f.observacoes}, ${f.visita_id}, ${tag}) RETURNING *`;
+      const result = await sql`
+        INSERT INTO projects (
+          client_id, client_name, ambiente, descricao, 
+          valor_estimado, valor_final, prazo_entrega, status, 
+          etapa_producao, responsavel, observacoes, visita_id, tag
+        ) VALUES (
+          ${f.client_id || f.clientId}, 
+          ${f.client_name || f.clientName || f.cliente_nome}, 
+          ${f.ambiente || f.title || f.titulo}, 
+          ${f.descricao || f.description}, 
+          ${f.valor_estimado || f.valorEstimado || 0}, 
+          ${f.valor_final || f.valorFinal || 0}, 
+          ${f.prazo_entrega || f.prazoEntrega}, 
+          ${f.status || 'lead'}, 
+          ${f.etapa_producao || f.etapaProducao}, 
+          ${f.responsavel}, 
+          ${f.observacoes || f.observations}, 
+          ${f.visita_id || f.visitaId}, 
+          ${tag}
+        ) RETURNING *`;
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const f = req.body;
-      const r = await sql`UPDATE projects SET client_id = COALESCE(${f.client_id}, client_id), client_name = COALESCE(${f.client_name}, client_name), ambiente = COALESCE(${f.ambiente}, ambiente), descricao = COALESCE(${f.descricao}, descricao), valor_estimado = COALESCE(${f.valor_estimado}, valor_estimado), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega = COALESCE(${f.prazo_entrega}, prazo_entrega), status = COALESCE(${f.status}, status), etapa_producao = COALESCE(${f.etapa_producao}, etapa_producao), responsavel = COALESCE(${f.responsavel}, responsavel), observacoes = COALESCE(${f.observacoes}, observacoes), visita_id = COALESCE(${f.visita_id}, visita_id), orcamento_id = COALESCE(${f.orcamento_id}, orcamento_id), tag = COALESCE(${f.tag}, tag), updated_at = CURRENT_TIMESTAMP WHERE id = ${req.query.id} RETURNING *`;
+      const r = await sql`
+        UPDATE projects SET 
+          client_id = COALESCE(${f.client_id || f.clientId}, client_id), 
+          client_name = COALESCE(${f.client_name || f.clientName || f.cliente_nome}, client_name), 
+          ambiente = COALESCE(${f.ambiente || f.title || f.titulo}, ambiente), 
+          descricao = COALESCE(${f.descricao || f.description}, descricao), 
+          valor_estimado = COALESCE(${f.valor_estimado || f.valorEstimado}, valor_estimado), 
+          valor_final = COALESCE(${f.valor_final || f.valorFinal}, valor_final), 
+          prazo_entrega = COALESCE(${f.prazo_entrega || f.prazoEntrega}, prazo_entrega), 
+          status = COALESCE(${f.status}, status), 
+          etapa_producao = COALESCE(${f.etapa_producao || f.etapaProducao}, etapa_producao), 
+          responsavel = COALESCE(${f.responsavel}, responsavel), 
+          observacoes = COALESCE(${f.observacoes || f.observations}, observacoes), 
+          visita_id = COALESCE(${f.visita_id || f.visitaId}, visita_id), 
+          orcamento_id = COALESCE(${f.orcamento_id || f.orcamentoId}, orcamento_id), 
+          tag = COALESCE(${f.tag}, tag), 
+          updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ${req.query.id} RETURNING *`;
       if (r.length && f.status === 'concluido') {
         const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${req.query.id}`;
         for (const itm of itms) await writeOffStockForProject(itm.id);

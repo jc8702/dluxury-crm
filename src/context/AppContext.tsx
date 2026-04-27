@@ -595,12 +595,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setProjects(projectItems.map((p: any) => ({
         id: p.id?.toString(),
         clientId: p.client_id || '',
-        clientName: p.subtitle || p.cliente_nome || '',
-        ambiente: p.title || p.titulo || '',
-        descricao: p.description || p.observations || p.descricao || '',
-        valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : (p.value || p.valor_estimado || 0),
+        clientName: p.client_name || p.cliente_nome || p.subtitle || 'Sem Nome',
+        ambiente: p.ambiente || p.title || p.titulo || 'Sem Ambiente',
+        descricao: p.descricao || p.description || p.observations || '',
+        valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : (p.valor_estimado || p.value || 0),
         status: mapLegacyStatus(p.status || p.status_visita),
-        observacoes: p.observations || p.observacoes || '',
+        observacoes: p.observacoes || p.observations || '',
         tag: p.tag || '',
         ordem_producao_id: p.ordem_producao_id || null
       })));

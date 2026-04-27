@@ -175,8 +175,11 @@ const CuttingPlanPage: React.FC = () => {
   useEffect(() => {
     if (showImportModal) {
       api.projects.list().then(res => {
-        // Filtra apenas projetos
-        const prjs = (res || []).filter((i: any) => (i.type || '').toLowerCase() === 'project');
+        // Trata como projeto qualquer item vindo do endpoint de projetos
+        const prjs = (Array.isArray(res) ? res : []).map((p: any) => ({
+          ...p,
+          type: 'project' // Garante que o frontend identifique como projeto
+        }));
         setProjetosParaImportar(prjs);
       }).catch(console.error);
     }
