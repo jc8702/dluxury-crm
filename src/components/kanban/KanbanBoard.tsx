@@ -107,7 +107,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1, textTransform: 'uppercase' }}>{item.title}</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.875rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}>{item.title}</p>
+                      {item.tag && (
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(212, 175, 55, 0.15)', color: '#d4af37', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          {item.tag}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       {onEdit && (
                         <div 

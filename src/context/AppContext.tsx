@@ -453,7 +453,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         api.clients.list().catch(err => { console.error('Clients load error:', err); return []; }),
         api.billings.list().catch(err => { console.error('Billings load error:', err); return []; }),
         api.agenda.list().catch(err => { console.error('Agenda load error:', err); return []; }),
-        api.kanban.list().catch(err => { console.error('Kanban load error:', err); return []; }),
+        api.projects.list().catch(err => { console.error('Kanban load error:', err); return []; }),
         api.goals.list().catch(err => { console.error('Goals load error:', err); return []; }),
         api.estoqueCategorias.list().catch(err => { console.error('Categories load error:', err); return []; }),
         api.estoque.list().catch(err => { console.error('Materials load error:', err); return []; }),
@@ -587,10 +587,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ];
 
       // Projects (unified from kanban and agenda)
-      const projectItems = allKanbanItems.filter((i: any) => 
-        (i.type || i.type_kanban || '').toLowerCase() === 'project' || 
-        (i.tipo || '').toLowerCase() === 'projeto'
-      );
+      const projectItems = [
+        ...(Array.isArray(realKanbanData) ? realKanbanData.map((i: any) => ({ ...i, type: 'project' })) : []),
+        ...(Array.isArray(agendaData) ? agendaData.filter((i: any) => (i.tipo || '').toLowerCase() === 'projeto') : [])
+      ];
 
       setProjects(projectItems.map((p: any) => ({
         id: p.id?.toString(),
@@ -722,7 +722,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       description: data.descricao || '',
       tag: data.tag
     };
-    const saved = await api.kanban.create(payload);
+    const saved = await api.projects.create(payload);
     const mapped: Project = {
       id: saved.id.toString(),
       clientId: data.clientId,
@@ -750,7 +750,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.observacoes) payload.observations = data.observacoes;
     if (data.descricao) payload.description = data.descricao;
 
-    await api.kanban.updateStatus(id, data.status || '', payload);
+    await api.projects.update(id, payload);
     setProjects((prev: Project[]) => prev.map((p: Project) =>
       p.id === id ? { ...p, ...data } : p
     ));
@@ -758,7 +758,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const removeProject = async (id: string) => {
     try {
-      await api.kanban.delete(id);
+      await api.projects.delete(id);
       setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== id));
     } catch (e: any) {
       alert('Erro ao excluir projeto: ' + e.message);

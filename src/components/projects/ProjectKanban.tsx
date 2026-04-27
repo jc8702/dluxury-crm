@@ -5,7 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { ProjectStatus } from '../../context/AppContext';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, clients, addProject, updateProject, orcamentos, events } = useAppContext();
+  const { projects, clients, addProject, updateProject, removeProject, orcamentos, events } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState({

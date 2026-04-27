@@ -379,6 +379,7 @@ const [newItem, setNewItem] = useState({
                 placeholder="Ex: PRJ-XXXX"
                 onChange={(e) => {
                   const tag = e.target.value.toUpperCase();
+                  if (tag.length < 4) return;
                   const found = projects.find(p => p.tag === tag);
                   if (found) {
                     setSelectedProject(found.id);
@@ -387,18 +388,30 @@ const [newItem, setNewItem] = useState({
                 }}
               />
               <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              {selectedProject && (
+                <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                   <Check size={14} /> <span style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{projects.find(p => p.id === selectedProject)?.tag}</span>
+                </div>
+              )}
             </div>
           </div>
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente Vinculado</label>
-            <select style={selectStyle} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-              <option value="">Nenhum projeto vinculado</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.tag ? `[${p.tag}] ` : ''}{p.ambiente} ({p.clientName})
-                </option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select style={{...selectStyle, flex: 1}} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
+                <option value="">Nenhum projeto vinculado</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.tag ? `[${p.tag}] ` : ''}{p.ambiente} ({p.clientName})
+                  </option>
+                ))}
+              </select>
+              {selectedProject && (
+                <div style={{ background: 'rgba(212,175,55,0.1)', color: '#d4af37', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)', display: 'flex', alignItems: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  {projects.find(p => p.id === selectedProject)?.tag}
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Margem de Lucro (%)</label>

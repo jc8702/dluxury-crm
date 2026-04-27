@@ -174,7 +174,7 @@ const CuttingPlanPage: React.FC = () => {
   // Carregar listas para os modais
   useEffect(() => {
     if (showImportModal) {
-      api.kanban.list().then(res => {
+      api.projects.list().then(res => {
         // Filtra apenas projetos
         const prjs = (res || []).filter((i: any) => (i.type || '').toLowerCase() === 'project');
         setProjetosParaImportar(prjs);
