@@ -372,10 +372,14 @@ const [newItem, setNewItem] = useState({
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente</label>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente (TAG)</label>
             <select style={selectStyle} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
               <option value="">Nenhum projeto vinculado</option>
-              {clientProjects.map(p => <option key={p.id} value={p.id}>{p.ambiente}</option>)}
+              {clientProjects.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.tag ? `[${p.tag}] ` : ''}{p.ambiente}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -493,6 +497,11 @@ const [newItem, setNewItem] = useState({
             <div>
               <div style={{ fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {orc.numero} - {orc.cliente_nome}
+                {orc.projeto_id && (
+                  <span style={{ fontSize: '0.7rem', background: 'rgba(212,175,55,0.2)', color: '#d4af37', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>
+                    🏷️ {projects.find(p => p.id === orc.projeto_id)?.tag || 'SEM TAG'}
+                  </span>
+                )}
                 <span style={{ 
                   fontSize: '0.65rem', 
                   padding: '2px 8px', 
@@ -505,7 +514,10 @@ const [newItem, setNewItem] = useState({
                   {orc.status}
                 </span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{orc.observacoes || 'Sem observações'}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {orc.observacoes || 'Sem observações'}
+                {orc.projeto_id && ` | Projeto: ${projects.find(p => p.id === orc.projeto_id)?.ambiente || 'Não encontrado'}`}
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <div style={{ fontWeight: 'bold', marginRight: '1rem' }}>{formatCurrency(orc.valor_final)}</div>
