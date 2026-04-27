@@ -192,6 +192,7 @@ const closeModal = () => {
         columns={columns}
         onMove={handleMove}
         onEdit={handleEdit}
+        onDelete={removeProject}
       />
 
       <Modal isOpen={isModalOpen} onClose={closeModal}

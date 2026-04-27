@@ -131,6 +131,16 @@ const EngineeringPage: React.FC = () => {
                 <td style={{ padding: '1rem' }}>
                    <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button onClick={() => { setFormData(p); setIsModalOpen(true); }} className="btn btn-outline btn-sm">Editar</button>
+                      <button onClick={async () => {
+                        if (confirm(`Tem certeza que deseja excluir o módulo "${p.nome}"?`)) {
+                          try {
+                            await api.engineering.delete(p.id);
+                            fetchProducts();
+                          } catch (err: any) {
+                            alert('Erro ao excluir: ' + err.message);
+                          }
+                        }
+                      }} className="btn btn-outline btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>Excluir</button>
                    </div>
                 </td>
               </>

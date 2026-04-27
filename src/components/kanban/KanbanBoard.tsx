@@ -21,6 +21,7 @@ interface KanbanBoardProps {
   columns: { id: string; title: string }[];
   onMove: (id: string, newStatus: string) => void;
   onEdit?: (item: KanbanItem) => void;
+  onDelete?: (id: string) => void;
 }
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit }) => {
@@ -107,13 +108,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <p style={{ fontSize: '0.875rem', fontWeight: 'bold', flex: 1, textTransform: 'uppercase' }}>{item.title}</p>
-                    {onEdit && (
-                      <div 
-                        style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
-                      >
-                        Editar
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {onEdit && (
+                        <div 
+                          style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                        >
+                          Editar
+                        </div>
+                      )}
+                      {onDelete && (
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Tem certeza que deseja excluir este item?')) {
+                              onDelete(item.id);
+                            }
+                          }}
+                          style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
+                        >
+                          Excluir
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
                   

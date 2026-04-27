@@ -334,6 +334,7 @@ interface AppContextType {
   updateKanbanStatus: (id: string, newStatus: string) => Promise<void>;
   addEvent: (data: any) => Promise<void>;
   updateEvent: (id: string, data: any) => Promise<void>;
+  removeVisit: (id: string) => Promise<void>;
 
   // Estoque
   categorias: CategoriaMaterial[];
@@ -756,8 +757,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const removeProject = async (id: string) => {
-    // Will need a delete endpoint — for now just remove from state
-    setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== id));
+    try {
+      await api.kanban.delete(id);
+      setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== id));
+    } catch (e: any) {
+      alert('Erro ao excluir projeto: ' + e.message);
+    }
+  };
+
+  const removeVisit = async (id: string) => {
+    try {
+      await api.agenda.delete(id);
+      setEvents((prev: any[]) => prev.filter((e: any) => e.id?.toString() !== id));
+      // Refresh kanban items in state if they come from merged list
+      reloadData(); 
+    } catch (e: any) {
+      alert('Erro ao excluir visita: ' + e.message);
+    }
   };
 
   // ─── BILLING CRUD ──────────────────────────────────────
@@ -972,6 +988,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateKanbanStatus,
       addEvent,
       updateEvent,
+      removeVisit,
       categorias, materiais, movimentacoes, fornecedores, addMaterial, updateMaterial, removeMaterial, registrarMovimentacao,
       addFornecedor, updateFornecedor, removeFornecedor,
       billings, addBilling, updateBilling, removeBilling,

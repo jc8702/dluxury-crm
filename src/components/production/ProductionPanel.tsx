@@ -205,7 +205,16 @@ const deleteOP = useCallback(async (op_id: string) => {
         cursor: 'pointer'
       }} onClick={() => setEditingOP(op)}>
         <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>#{op.op_id}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>#{op.op_id}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); deleteOP(op.op_id); }}
+              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, opacity: 0.6, display: 'flex', alignItems: 'center' }}
+              title="Excluir OP"
+            >
+              <Trash2 size={10} />
+            </button>
+          </div>
           <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: `${col.color}22`, color: col.color, borderRadius: '4px', fontWeight: 'bold' }}>
             {op.pecas} PEÇAS
           </span>

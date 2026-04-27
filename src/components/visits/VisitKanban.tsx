@@ -6,7 +6,7 @@ import { useAppContext } from '../../context/AppContext';
 import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {
-  const { events, visits, loadEvents, updateKanbanStatus } = useAppContext();
+  const { events, visits, loadEvents, updateKanbanStatus, removeVisit } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -132,6 +132,7 @@ const VisitKanban: React.FC = () => {
           columns={columns} 
           onMove={handleMove} 
           onEdit={handleEdit} 
+          onDelete={removeVisit} 
         />
       </div>
 

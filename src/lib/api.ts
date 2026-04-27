@@ -169,6 +169,7 @@ export const api = {
     list: () => apiCall<any[]>('kanban'),
     create: (data: any) => apiCall<any>('kanban', 'POST', data),
     updateStatus: (id: string, status: string, extra: any = {}) => apiCall<any>(`kanban?id=${id}`, 'PATCH', { status, ...extra }),
+    delete: (id: string) => apiCall<any>(`kanban?id=${id}`, 'DELETE'),
   },
   goals: {
     list: () => apiCall<Record<string, number>>('goals'),
