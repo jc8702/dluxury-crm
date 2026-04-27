@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { 
   Plus, Search, Trash2, Edit2, 
   Save, FileDown, Send, Link as LinkIcon,
-  AlertCircle
+  AlertCircle, Check
 } from 'lucide-react';
 import { useEscClose } from '../../hooks/useEscClose';
 
@@ -40,6 +40,8 @@ const Estimates: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [skuSearch, setSkuSearch] = useState('');
   const [skuResults, setSkuResults] = useState<any[]>([]);
+  const { user } = useAppContext();
+  const isAdmin = user?.role === 'admin';
   
   // Novos campos para parcelamento manual e taxa
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
@@ -150,7 +152,7 @@ const Estimates: React.FC = () => {
       const orcData = {
         cliente_id: selectedClient,
         projeto_id: selectedProject || null,
-        status: 'rascunho',
+        status: editingId ? orcamentosList.find(o => o.id === editingId)?.status || 'rascunho' : 'rascunho',
         valor_base: subtotalCusto,
         taxa_financeira: taxaFinanceira,
         total_parcelas: numParcelas,
@@ -185,6 +187,19 @@ const Estimates: React.FC = () => {
       clearDraft();
     } catch (e: any) {
       alert("Erro ao salvar orçamento: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    try {
+      setSaving(true);
+      await api.orcamentos.update(id, { status: newStatus });
+      alert(`Status atualizado para ${newStatus.toUpperCase()}!`);
+      loadHistory();
+    } catch (e: any) {
+      alert("Erro ao atualizar status: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -304,11 +319,46 @@ const [newItem, setNewItem] = useState({
           </p>
         </div>
         <div>
-          <button onClick={handleGeneratePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed' }}>
+          <button onClick={handleGeneratePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed', marginRight: '0.5rem' }}>
             🖨️ Exportar Orçamento PDF
           </button>
         </div>
       </header>
+
+      {editingId && (
+        <div style={{ display: 'flex', gap: '1rem', background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.2)', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Status Atual:</div>
+            <span style={{ 
+              background: orcamentosList.find(o => o.id === editingId)?.status === 'aprovado' ? 'var(--success)' : 
+                         orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
+              color: orcamentosList.find(o => o.id === editingId)?.status === 'aprovado' ? 'white' : 
+                     orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? '#1a1a2e' : 'var(--text-muted)',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              textTransform: 'uppercase'
+            }}>
+              {orcamentosList.find(o => o.id === editingId)?.status || 'Rascunho'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              onClick={() => updateStatus(editingId, 'enviado')}
+              disabled={saving || orcamentosList.find(o => o.id === editingId)?.status === 'enviado'}
+              style={{ background: 'var(--primary)', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || orcamentosList.find(o => o.id === editingId)?.status === 'enviado') ? 0.6 : 1 }}>
+              <Send size={14} style={{ marginRight: '0.4rem' }} /> Marcar como Enviado
+            </button>
+            <button 
+              onClick={() => updateStatus(editingId, 'aprovado')}
+              disabled={saving || !isAdmin || orcamentosList.find(o => o.id === editingId)?.status === 'aprovado'}
+              style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || !isAdmin || orcamentosList.find(o => o.id === editingId)?.status === 'aprovado') ? 0.6 : 1 }}>
+              <Check size={14} style={{ marginRight: '0.4rem' }} /> Aprovar Orçamento (Admin)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Dados do orçamento */}
       <div className="card">
@@ -441,7 +491,20 @@ const [newItem, setNewItem] = useState({
         {orcamentosList.map(orc => (
           <div key={orc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div>
-              <div style={{ fontWeight: 'bold', color: '#d4af37' }}>{orc.numero} - {orc.cliente_nome}</div>
+              <div style={{ fontWeight: 'bold', color: '#d4af37', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {orc.numero} - {orc.cliente_nome}
+                <span style={{ 
+                  fontSize: '0.65rem', 
+                  padding: '2px 8px', 
+                  borderRadius: '10px', 
+                  background: orc.status === 'aprovado' ? 'var(--success)' : orc.status === 'enviado' ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
+                  color: orc.status === 'aprovado' ? 'white' : orc.status === 'enviado' ? '#1a1a2e' : 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  fontWeight: '800'
+                }}>
+                  {orc.status}
+                </span>
+              </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{orc.observacoes || 'Sem observações'}</div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

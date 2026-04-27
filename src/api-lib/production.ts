@@ -27,6 +27,7 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
+    await sql`UPDATE ordens_producao SET status = 'AGUARDANDO' WHERE status = 'PENDENTE'`.catch(() => {});
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
@@ -101,9 +102,11 @@ async function createOP(req: any, res: any) {
 
     const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
+    const initialStatus = req.body.status || 'PENDENTE';
+
     const [novaOP] = await sql`
       INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id)
-      VALUES (${op_id}, ${produto}, ${pecas || 0}, 'PRODUCAO', ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
+      VALUES (${op_id}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
       RETURNING *
     `;
 
@@ -203,8 +206,8 @@ async function updateOPStatus(req: any, res: any) {
       }
     } catch (e) {}
 
-    // If attempting to advance to next productive stage (not allowing revert to PENDENTE), block if incomplete
-    const fluxo: string[] = ["PENDENTE", "CORTE", "MONTAGEM", "FINALIZADA"];
+    // If attempting to advance to next productive stage (not allowing revert to AGUARDANDO), block if incomplete
+    const fluxo: string[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];
     const idxFrom = fluxo.indexOf(op.status);
     const idxTo = fluxo.indexOf(status);
     if (idxTo > idxFrom) {
@@ -214,13 +217,13 @@ async function updateOPStatus(req: any, res: any) {
     }
   }
 
-  // Se começou agora (moveu de PENDENTE para qualquer etapa produtiva)
-  if (!data_inicio && status !== "PENDENTE") {
+  // Se começou agora (moveu de AGUARDANDO para qualquer etapa produtiva)
+  if (!data_inicio && status !== "AGUARDANDO") {
     data_inicio = new Date();
   }
 
-  // Se voltou para PENDENTE, reseta início
-  if (status === "PENDENTE") {
+  // Se voltou para AGUARDANDO, reseta início
+  if (status === "AGUARDANDO") {
     data_inicio = null;
   }
 

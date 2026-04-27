@@ -114,6 +114,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
       descricao_peca: 'NOVA PEÇA',
       largura_cm: 0,
       altura_cm: 0,
+      espessura_mm: config?.espessura_chapa_padrao || 15,
       quantidade: 1,
       fator_perda_pct: config?.fator_perda_padrao || 0,
       metros_fita_borda: 0
@@ -177,6 +178,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
           descricao_peca: `${regra.componente_nome} [${regra.formula_largura} x ${regra.formula_altura}]`,
           largura_cm: largura_final_cm,
           altura_cm: altura_final_cm,
+          espessura_mm: Number(config?.espessura_chapa_padrao || 15),
           quantidade: qtd,
           m2_unitario: m2_unit,
           m2_total: m2_total,
@@ -403,6 +405,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                         <th style={{ padding: '0.5rem' }}>SKU MATERIAL</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>L (cm)</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>A (cm)</th>
+                        <th style={{ padding: '0.5rem', width: '60px' }}>ESP(mm)</th>
                         <th style={{ padding: '0.5rem', width: '60px' }}>QTD</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>VEIO</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>DESC. FITA(mm)</th>
@@ -459,6 +462,14 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                                 const cost = custoPeca(m2Loss * p.quantidade, p.preco_custo_m2);
                                 handleUpdatePeca(p.id, { altura_cm: val, m2_unitario: m2, m2_total: m2 * p.quantidade, m2_com_perda: m2Loss * p.quantidade, custo_total_peca: cost });
                               }}
+                            />
+                          </td>
+                          <td style={{ padding: '0.5rem' }}>
+                            <input 
+                              type="number" 
+                              style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', textAlign: 'center' }}
+                              value={p.espessura_mm || 15}
+                              onBlur={(e) => handleUpdatePeca(p.id, { espessura_mm: Number(e.target.value) })}
                             />
                           </td>
                           <td style={{ padding: '0.5rem' }}>

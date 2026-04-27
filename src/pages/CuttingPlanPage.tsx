@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   Scissors, Plus, Save, Trash2, Maximize, ZoomIn, ZoomOut, 
   Printer, FileText, Download, Layout, Layers, RefreshCcw,
-  Maximize2, Box, Info, Settings2
+  Maximize2, Box, Info, Settings2, X, CheckCircle, ChevronRight
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { 
@@ -10,9 +11,12 @@ import type {
   GrupoMaterial, 
   ResultadoPlano
 } from '../utils/planodeCorte';
-import { calcularPlanoCorte } from '../utils/planodeCorte';
-import { CanvasAvancado } from '../modules/plano-de-corte/ui/components/CanvasAvancado';
-import { ImportadorEngenharia } from '../modules/plano-de-corte/ui/components/ImportadorEngenharia';
+import { useCuttingWorker } from '../modules/plano-corte/infrastructure/hooks/useCuttingWorker';
+import { retalhosRepository } from '../modules/plano-corte/infrastructure/repositories/RetalhosRepository';
+import { PainelRetalhos } from '../modules/plano-corte/ui/components/PainelRetalhos';
+import { CanvasAvancado } from '../modules/plano-corte/ui/components/CanvasAvancado';
+import { ImportadorEngenharia } from '../modules/plano-corte/ui/components/ImportadorEngenharia';
+import { ExportacaoModal } from '../modules/plano-corte/ui/components/ExportacaoModal';
 import { Search } from 'lucide-react';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
@@ -124,6 +128,8 @@ const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }: any) =
 };
 
 const CuttingPlanPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { calcular, isCalculating, progress } = useCuttingWorker();
   const [loading, setLoading] = useState(false);
   const [plano, setPlano] = useState<any>({ nome: 'Novo Plano de Corte', status: 'rascunho' });
   const [grupos, setGrupos] = useState<GrupoMaterial[]>([]);
@@ -135,66 +141,60 @@ const CuttingPlanPage: React.FC = () => {
   const [kerf, setKerf] = useState(3);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [orcamentos, setOrcamentos] = useState<any[]>([]);
   const [materiaisEstoque, setMateriaisEstoque] = useState<any[]>([]);
+  const [planosSalvos, setPlanosSalvos] = useState<any[]>([]);
+  const [showPlanosModal, setShowPlanosModal] = useState(false);
+  const [searchParams] = useSearchParams();
+  const currentUrlId = searchParams.get('id');
 
-  // Carregar dados iniciais e materiais
+  // Carregar materiais e plano inicial
   useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      try {
-        // 1. Carregar materiais do estoque para o seletor
-        const mats = await api.estoque.list();
-        setMateriaisEstoque(mats || []);
-
-        // 2. Carregar plano se houver ID na URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id');
-        if (id) {
-          const res = await api.planoCorte.get(id);
-          if (res) {
-            setPlano(res);
-            setGrupos(res.grupos || []);
-            setPecas(res.pecas || []);
-          }
-        }
-      } catch (e) { 
-        console.error('Erro na inicialização:', e);
-      } finally { 
-        setLoading(false); 
-      }
-    };
-    init();
+    api.estoque.list().then(setMateriaisEstoque).catch(console.error);
   }, []);
 
-  // Carregar orçamentos quando o modal abrir
+  // Reagir a mudanças de ID na URL para carregar o plano
+  useEffect(() => {
+    if (currentUrlId) {
+      setLoading(true);
+      api.planoCorte.get(currentUrlId).then(res => {
+        if (res) {
+          setPlano(res);
+          // O resultado e materiais podem vir no JSONB
+          if (res.materiais) setGrupos(res.materiais);
+          if (res.resultado) setResultado(res.resultado);
+        }
+      }).catch(err => {
+        console.error('Erro ao carregar plano:', err);
+      }).finally(() => setLoading(false));
+    }
+  }, [currentUrlId]);
+
+  // Carregar listas para os modais
   useEffect(() => {
     if (showImportModal) {
-      api.orcamentos.list().then(res => {
-        // Filtra orçamentos aprovados ou recentes
-        setOrcamentos(res || []);
-      }).catch(console.error);
+      api.orcamentos.list().then(setOrcamentos).catch(console.error);
     }
-  }, [showImportModal]);
+    if (showPlanosModal) {
+      api.planoCorte.list().then(setPlanosSalvos).catch(console.error);
+    }
+  }, [showImportModal, showPlanosModal]);
 
-  const handleCalcular = () => {
+  const handleCalcular = async () => {
     if (grupos.length === 0 || pecas.length === 0) {
       alert("Adicione ao menos um material e uma peça.");
       return;
     }
-    setLoading(true);
-    // Pequeno delay para efeito visual e evitar travamento na thread principal
-    setTimeout(() => {
-      try {
-        const res = calcularPlanoCorte(pecas, grupos, 3);
-        setResultado(res);
-      } catch (e) {
-        console.error("Erro no cálculo:", e);
-        alert("Erro ao calcular plano de corte. Verifique as dimensões das peças.");
-      } finally {
-        setLoading(false);
-      }
-    }, 500);
+    
+    try {
+      const res = await calcular(pecas, grupos, kerf);
+      setResultado(res);
+      setActiveChapaIdx(0);
+    } catch (e: any) {
+      console.error("Erro no cálculo:", e);
+      alert(`Erro ao calcular plano de corte: ${e.message || "Verifique as dimensões das peças"}`);
+    }
   };
 
   const handleSave = async () => {
@@ -205,83 +205,151 @@ const CuttingPlanPage: React.FC = () => {
 
     setLoading(true);
     try {
-      let currentPlanoId = plano.id;
+      let currentPlanoId = plano.id || currentUrlId;
 
-      // 1. Se for um plano novo, cria primeiro no banco
       if (!currentPlanoId) {
+        // Criar novo
         const createRes = await api.planoCorte.create({
-          nome: plano.nome,
+          nome: plano.nome || 'Novo Plano',
           status: 'calculado',
-          // Outros campos se necessário
+          materiais: grupos,
+          resultado: resultado
         });
         
-        if (createRes.success && createRes.data) {
-          currentPlanoId = createRes.data.id;
-          setPlano(createRes.data);
-          // Atualiza URL para refletir o ID criado
-          navigate(`/plano-corte?id=${currentPlanoId}`, { replace: true });
+        if (createRes && createRes.id) {
+          currentPlanoId = createRes.id;
+          // IMPORTANTE: Atualiza o estado local imediatamente para destravar o botão
+          setPlano(prev => ({ ...prev, id: currentPlanoId, status: 'calculado' }));
+          
+          navigate(`/plano-de-corte?id=${currentPlanoId}`, { replace: true });
+          alert("Plano criado e salvo com sucesso!");
         } else {
-          throw new Error('Falha ao registrar novo plano no banco.');
+          throw new Error('Falha ao registrar novo plano.');
+        }
+      } else {
+        // Atualizar existente
+        const payload = {
+          plano_id: currentPlanoId,
+          materiais: grupos,
+          resultado: resultado
+        };
+
+        const res = await api.planoCorte.save(payload);
+        if (res) {
+          alert(`Plano atualizado com sucesso!`);
+          // Forçar atualização local do estado se necessário, mas o id já está na URL
+          setPlano(prev => ({ ...prev, id: currentPlanoId, status: 'calculado' }));
         }
       }
 
-      const payload = {
-        plano_id: currentPlanoId,
-        grupos: resultado.grupos.map(g => ({
-          id: g.grupoId,
-          totalChapas: g.totalChapasInteiras,
-          totalRetalhos: g.totalRetalhosUsados,
-          aproveitamento: g.aproveitamentoMedio,
-          custoTotal: g.custoTotal
-        })),
-        resultados: resultado.grupos.flatMap(g => 
-          g.superficies.flatMap(s => 
-            s.pecasPositionadas.map(p => ({
-              grupo_material_id: g.grupoId,
-              numero_chapa: s.id.includes('inteira') ? parseInt(s.id.split('-')[1]) : 0,
-              peca_id: p.pecaId,
-              pos_x_mm: p.x,
-              pos_y_mm: p.y,
-              largura_final_mm: p.largura,
-              altura_final_mm: p.altura,
-              rotacionada: p.rotacionada,
-              e_retalho: s.tipo === 'retalho',
-              retalho_id: s.retalhoId,
-              area_m2: p.areaMm2 / 1000000,
-              custo_proporcional: p.custoProporcional
-            }))
-          )
-        ),
-        sobras: resultado.sobrasGeradas.map(s => ({
-          grupo_material_id: s.superficieId,
-          numero_chapa: s.superficieId.includes('inteira') ? parseInt(s.superficieId.split('-')[1]) : 0,
-          pos_x_mm: s.x,
-          pos_y_mm: s.y,
-          largura_mm: s.largura,
-          altura_mm: s.altura,
-          area_m2: (s.largura * s.altura) / 1000000,
-          aproveitavel: s.aproveitavel
-        })),
-        KPIs: {
-          totalPecas: resultado.totalPecasPositionadas,
-          totalChapas: resultado.totalChapasInteiras,
-          totalRetalhos: resultado.totalRetalhosUsados,
-          aproveitamento: resultado.aproveitamentoGeral,
-          custoTotal: resultado.custoTotalMaterial,
-          tempoCalculo: resultado.tempoCalculoMs
-        }
-      };
+      // REGISTRAR NOVOS RETALHOS (DEPARA BLOCO 2)
+      const areaMinima = 300 * 300;
+      const sobrasAproveitaveis = resultado.sobrasGeradas.filter(s => 
+        s.aproveitavel && (s.largura * s.altura >= areaMinima)
+      );
 
-      const res = await api.planoCorte.save(payload);
-      if (res.success) {
-        alert('Plano de corte salvo com sucesso!');
-        setPlano((prev: any) => ({ ...prev, status: 'calculado' }));
-      } else {
-        throw new Error(res.error);
+      if (sobrasAproveitaveis.length > 0) {
+        await Promise.all(sobrasAproveitaveis.map(async s => {
+          const grupo = resultado.grupos.find(g => g.superficies.some(sup => sup.id === s.superficieId));
+          const skuBase = grupo?.sku || 'MDF-GENERICO';
+
+          try {
+            // Registrar na tabela específica de retalhos (Bloco 2)
+            return await retalhosRepository.salvarRetalho({
+              sku_chapa: skuBase,
+              largura_mm: s.largura,
+              altura_mm: s.altura,
+              espessura_mm: grupo?.espessuraMm || 15,
+              origem: 'sobra_plano_corte',
+              plano_corte_origem_id: currentPlanoId,
+              projeto_origem: plano.nome,
+              observacoes: `Gerado pelo Plano de Corte #${currentPlanoId}`,
+              localizacao: 'Geral',
+              usuario_criou: 'sistema'
+            });
+          } catch (e) {
+            console.error("Erro ao registrar retalho no estoque:", e);
+          }
+        }));
       }
     } catch (err: any) {
       console.error('Erro ao salvar plano:', err);
       alert('Erro ao salvar: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAprovarProducao = async () => {
+    if (!resultado || !plano.id) {
+      alert("Salve o plano antes de aprovar a produção.");
+      return;
+    }
+
+    if (!confirm("Deseja aprovar a produção? Isso irá baixar as chapas do estoque e gerar uma nova OP.")) return;
+
+    setLoading(true);
+    try {
+      // 1. Calcular consumo de chapas por SKU
+      const consumo: Record<string, number> = {};
+      resultado.grupos.forEach(g => {
+        const sku = g.sku;
+        const qtd = g.superficies.filter(s => !s.is_retalho).length;
+        if (qtd > 0) {
+          consumo[sku] = (consumo[sku] || 0) + qtd;
+        }
+      });
+
+      const materiaisConsumidos = Object.entries(consumo).map(([sku, qtd]) => ({ sku, qtd }));
+
+      // 2. Chamar API para baixar estoque de chapas inteiras
+      await api.planoCorte.aprovarProducao(materiaisConsumidos);
+
+      // 3. Baixar Retalhos Utilizados (Bloco 2)
+      const retalhosUtilizadosIds: string[] = [];
+      resultado.grupos.forEach(g => {
+        g.superficies.forEach(s => {
+          // No otimizador, se chapa_id não for nulo e não for prefixo de chapa inteira, é o ID do retalho
+          if (s.id && !s.id.startsWith('sup-') && s.id.length > 20) {
+            retalhosUtilizadosIds.push(s.id);
+          }
+        });
+      });
+
+      if (retalhosUtilizadosIds.length > 0) {
+        console.log(`[RETALHOS] Baixando ${retalhosUtilizadosIds.length} retalhos...`);
+        await Promise.all(retalhosUtilizadosIds.map(id => 
+          retalhosRepository.usarRetalho(id, plano.id)
+        ));
+      }
+
+      // 4. Criar Ordem de Produção (OP)
+      const totalPecas = resultado.grupos.reduce((acc, g) => 
+        acc + g.superficies.reduce((accS, s) => accS + s.pecasPositionadas.length, 0), 0
+      );
+
+      const opId = `OP-${Date.now().toString().slice(-6)}`;
+
+      await api.production.create({
+        op_id: opId,
+        produto: plano.nome || 'Plano de Corte',
+        pecas: totalPecas,
+        status: 'AGUARDANDO',
+        orcamento_id: plano.orcamento_id || null,
+        projeto_id: plano.projeto_id || null,
+        visita_id: plano.visita_id || null,
+        metadata: {
+          plano_id: plano.id,
+          materiais: grupos,
+          resultado: resultado
+        }
+      });
+
+      alert(`Produção aprovada! OP ${opId} gerada com sucesso e encaminhada para a linha de produção.`);
+      navigate('/producao');
+    } catch (e) {
+      console.error("Erro ao aprovar produção", e);
+      alert("Falha ao aprovar produção.");
     } finally {
       setLoading(false);
     }
@@ -343,14 +411,16 @@ const CuttingPlanPage: React.FC = () => {
   };
 
   const handleImportOrcamento = async (orc: any) => {
-    if (orc.status === 'rascunho') {
-      alert("Este orçamento ainda é um rascunho. É necessário aprová-o e gerar o detalhamento técnico no Módulo de Orçamentos antes de enviar para o Plano de Corte.");
+    if (orc.status !== 'aprovado') {
+      alert("Este orçamento ainda não foi aprovado. É necessário aprová-lo e gerar o detalhamento técnico no Módulo de Orçamentos antes de enviar para o Plano de Corte.");
       return;
     }
 
     setLoading(true);
     try {
-      const tree = await api.orcamentoTecnico.getTree(orc.id);
+      const data = await api.orcamentoTecnico.getTree(orc.id);
+      const tree = data.ambientes || [];
+      
       if (tree && Array.isArray(tree) && tree.length > 0) {
         const novosGrupos = [...grupos];
         const novasPecas = [...pecas];
@@ -359,11 +429,16 @@ const CuttingPlanPage: React.FC = () => {
           ambiente.moveis?.forEach((movel: any) => {
             movel.pecas?.forEach((peca: any) => {
               // Encontra ou cria o grupo de material baseado no SKU e Espessura
-              const espessura = Number(peca.espessura) || 15;
+              const espessura = Number(peca.espessura_mm) || Number(peca.espessura) || 15;
               let grupo = novosGrupos.find(g => 
-                (g.materialId === peca.material_id || g.sku === peca.sku) && 
-                g.espessuraMm === espessura
+                (peca.material_id && g.materialId === peca.material_id) || 
+                (peca.sku && g.sku === peca.sku)
               );
+
+              // Se o grupo existe mas a espessura é diferente, precisamos de um novo grupo para esta espessura
+              if (grupo && grupo.espessuraMm !== espessura) {
+                grupo = undefined;
+              }
 
               if (!grupo) {
                 grupo = {
@@ -400,10 +475,13 @@ const CuttingPlanPage: React.FC = () => {
         setGrupos(novosGrupos);
         setPecas(novasPecas);
         setShowImportModal(false);
+        alert(`${novasPecas.length - pecas.length} peças importadas com sucesso do orçamento ${orc.numero}.`);
+      } else {
+        alert("O detalhamento técnico deste orçamento parece estar vazio. Verifique no Módulo de Orçamentos.");
       }
     } catch (e) { 
       console.error("Erro ao importar orçamento", e);
-      alert("Falha ao importar peças. Verifique o formato do orçamento.");
+      alert("Falha ao importar peças. Verifique se o orçamento possui detalhamento técnico salvo.");
     } finally { 
       setLoading(false); 
     }
@@ -445,39 +523,6 @@ const CuttingPlanPage: React.FC = () => {
     setShowImportModal(false);
   };
 
-  const handleExportCSV = () => {
-    if (!resultado) return;
-    const headers = ['Etiqueta', 'Descrição', 'L (mm)', 'A (mm)', 'Qtd', 'Material', 'Ambiente', 'Chapa'];
-    const rows = resultado.grupos.flatMap(g => 
-      g.superficies.flatMap(s => 
-        s.pecasPositionadas.map(p => [
-          p.numeroEtiqueta, p.descricao, p.largura, p.altura, 1, g.sku, p.ambiente, s.id
-        ])
-      )
-    );
-    const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
-    const blob = new Blob([["\ufeff", csvContent].join("")], { type: 'text/csv;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `plano_corte_${plano?.nome}.csv`;
-    link.click();
-  };
-
-  const handleExportPDF = async () => {
-    if (!resultado || !activeResultadoGrupo) return;
-    const { ExportadorPDF } = await import('../modules/plano-de-corte/infrastructure/exports/ExportadorPDF');
-    ExportadorPDF.exportarPlano(activeResultadoGrupo.superficies, plano?.nome || 'Novo Plano');
-  };
-
-  const handleExportGCode = async () => {
-    if (!activeSuperficie) {
-      alert("Selecione uma chapa para exportar o G-Code.");
-      return;
-    }
-    const { ExportadorGCode } = await import('../modules/plano-de-corte/infrastructure/exports/ExportadorGCode');
-    ExportadorGCode.exportarChapa(activeSuperficie, activeChapaIdx, activeGrupo?.kerfMm || 3);
-  };
-
   const activeGrupo = grupos[activeGrupoIdx];
   const activeResultadoGrupo = resultado?.grupos.find(g => g.grupoId === activeGrupo?.id);
   const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
@@ -514,12 +559,22 @@ const CuttingPlanPage: React.FC = () => {
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={() => setShowPlanosModal(true)} className="btn btn-outline" style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}><Layout size={18} /> Planos Salvos</button>
           <button onClick={() => setShowImportModal(true)} className="btn btn-outline"><FileText size={18} /> Orçamentos</button>
-          <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }}>
-            {loading ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} OTIMIZAR
+          <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }} disabled={isCalculating}>
+            {isCalculating ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} 
+            {isCalculating ? `OTIMIZANDO (${progress}%)` : 'OTIMIZAR'}
           </button>
           <button onClick={handleSave} className="btn btn-outline" disabled={loading}>
-            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Resultado'}
+            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar'}
+          </button>
+          <button 
+            onClick={handleAprovarProducao} 
+            className="btn btn-primary" 
+            disabled={loading || !resultado || !plano.id}
+            style={{ background: '#10B981', borderColor: '#10B981' }}
+          >
+            <CheckCircle size={18} /> Aprovar Produção
           </button>
         </div>
       </div>
@@ -684,15 +739,60 @@ const CuttingPlanPage: React.FC = () => {
                 <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>{resultado.totalPecasPositionadas}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={handleExportCSV} className="btn btn-outline" style={{ height: '40px' }} title="Exportar CSV"><FileText size={18} /></button>
-                <button onClick={handleExportPDF} className="btn btn-outline" style={{ height: '40px' }} title="Exportar PDF do Desenho"><Download size={18} /> PDF</button>
-                <button onClick={handleExportGCode} className="btn btn-outline" style={{ height: '40px' }} title="Exportar G-Code para CNC (Chapa Ativa)"><Layers size={18} /> CNC</button>
-                <button onClick={() => window.print()} className="btn btn-primary" style={{ height: '40px' }}><Printer size={18} /> Etiquetas</button>
+                <button onClick={() => setShowExportModal(true)} className="btn btn-primary" style={{ height: '40px', padding: '0 2rem' }}>
+                  <Download size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> EXPORTAR PRODUÇÃO
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* MODAL: EXPORTAÇÃO (NOVO) */}
+      {showExportModal && resultado && (
+        <ExportacaoModal
+          resultado={resultado}
+          planoNome={plano?.nome || 'Novo Plano'}
+          activeSuperficie={activeSuperficie}
+          activeChapaIdx={activeChapaIdx}
+          kerfMm={activeGrupo?.kerfMm || kerf}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
+
+      {/* MODAL: PLANOS SALVOS (NOVO) */}
+      {showPlanosModal && (
+        <div className="modal-overlay" onClick={() => setShowPlanosModal(false)}>
+          <div className="modal-content animate-pop-in" style={{ width: '600px' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Layout className="text-[#E2AC00]" /> Planos de Corte Salvos
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '500px', overflowY: 'auto' }}>
+              {(planosSalvos || []).map(p => (
+                <div 
+                  key={p.id} 
+                  className="card hover-scale" 
+                  style={{ padding: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-hover)' }}
+                  onClick={() => {
+                    navigate(`/plano-de-corte?id=${p.id}`);
+                    setShowPlanosModal(false);
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: '800' }}>{p.nome}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Salvo em: {p.criado_em ? new Date(p.criado_em).toLocaleString() : 'N/A'}
+                    </div>
+                  </div>
+                  <ChevronRight size={18} style={{ color: 'var(--primary)' }} />
+                </div>
+              ))}
+              {(!planosSalvos || planosSalvos.length === 0) && <p style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>Nenhum plano encontrado no histórico.</p>}
+            </div>
+            <button className="btn btn-outline mt-6" style={{ width: '100%' }} onClick={() => setShowPlanosModal(false)}>FECHAR</button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
       {showMaterialModal && (
@@ -724,17 +824,17 @@ const CuttingPlanPage: React.FC = () => {
               <section>
                 <h3 className="font-bold text-sm mb-3 text-slate-400 uppercase tracking-wider">Ou importar de um orçamento do ERP</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
-                  {orcamentos.map(o => (
+                  {(orcamentos || []).map(o => (
                     <div key={o.id} onClick={() => handleImportOrcamento(o)} className="card hover-scale" style={{ padding: '1rem', cursor: 'pointer', opacity: o.status === 'rascunho' ? 0.6 : 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontWeight: '900', color: 'var(--primary)' }}>#{o.numero}</span>
                         <span className="badge" style={{ background: o.status === 'aprovado' ? 'var(--success)' : 'var(--badge-bg)', color: 'white' }}>{o.status}</span>
                       </div>
                       <div style={{ fontSize: '0.85rem', marginTop: '4px', fontWeight: '600' }}>{o.cliente_nome || 'Cliente não identificado'}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Criado em: {new Date(o.criado_em).toLocaleDateString()}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>Criado em: {o.criado_em ? new Date(o.criado_em).toLocaleDateString() : 'N/A'}</div>
                     </div>
                   ))}
-                  {orcamentos.length === 0 && (
+                  {(!orcamentos || orcamentos.length === 0) && (
                     <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>
                       <p>Nenhum orçamento encontrado.</p>
                     </div>

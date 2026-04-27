@@ -447,10 +447,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await fetch('/api/init-db').catch(() => ({}));
 
-      const [clientsData, billingsData, kanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
+      const [clientsData, billingsData, agendaData, realKanbanData, goalsData, catsData, matsData, fornsData, orcamentosData, condicoesData, movsData] = await Promise.all([
         api.clients.list().catch(err => { console.error('Clients load error:', err); return []; }),
         api.billings.list().catch(err => { console.error('Billings load error:', err); return []; }),
         api.agenda.list().catch(err => { console.error('Agenda load error:', err); return []; }),
+        api.kanban.list().catch(err => { console.error('Kanban load error:', err); return []; }),
         api.goals.list().catch(err => { console.error('Goals load error:', err); return []; }),
         api.estoqueCategorias.list().catch(err => { console.error('Categories load error:', err); return []; }),
         api.estoque.list().catch(err => { console.error('Materials load error:', err); return []; }),
@@ -575,20 +576,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: b.status || 'PAGO'
       })));
 
-      // Agenda
-      setEvents(Array.isArray(kanbanData) ? kanbanData : []);
+      // Agenda & Kanban (Merge for events and projects)
+      setEvents(Array.isArray(agendaData) ? agendaData : []);
+      
+      const allKanbanItems = [
+        ...(Array.isArray(realKanbanData) ? realKanbanData : []),
+        ...(Array.isArray(agendaData) ? agendaData : [])
+      ];
 
-      // Projects (from kanban items of type 'project' for now — will migrate to projects table)
-      const projectKanbans = (Array.isArray(kanbanData) ? kanbanData : []).filter((i: any) => (i.type || i.type_kanban) === 'project' || i.tipo === 'projeto');
-      setProjects(projectKanbans.map((p: any) => ({
+      // Projects (unified from kanban and agenda)
+      const projectItems = allKanbanItems.filter((i: any) => 
+        (i.type || i.type_kanban || '').toLowerCase() === 'project' || 
+        (i.tipo || '').toLowerCase() === 'projeto'
+      );
+
+      setProjects(projectItems.map((p: any) => ({
         id: p.id?.toString(),
-        clientId: '',
-        clientName: p.subtitle || '',
-        ambiente: p.title || '',
-        descricao: p.description || p.observations || '',
-        valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : p.value,
-        status: mapLegacyStatus(p.status),
-        observacoes: p.observations || '',
+        clientId: p.client_id || '',
+        clientName: p.subtitle || p.cliente_nome || '',
+        ambiente: p.title || p.titulo || '',
+        descricao: p.description || p.observations || p.descricao || '',
+        valorEstimado: p.valor_orcamento_atual ? Number(p.valor_orcamento_atual) : (p.value || p.valor_estimado || 0),
+        status: mapLegacyStatus(p.status || p.status_visita),
+        observacoes: p.observations || p.observacoes || '',
+        ordem_producao_id: p.ordem_producao_id || null
       })));
 
       // Removendo logs da carga principal pois System Health foi removido
@@ -621,6 +632,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // ─── HELPERS ───────────────────────────────────────────
   function mapLegacyStatus(status: string): ProjectStatus {
+    const s = (status || '').toLowerCase();
     const map: Record<string, ProjectStatus> = {
       'novo': 'lead',
       'analise': 'visita_tecnica',
@@ -628,6 +640,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       'negociacao': 'orcamento_enviado',
       'assinatura': 'aprovado',
       'ganho': 'concluido',
+      'corte': 'em_producao',
+      'producao': 'em_producao',
+      'pendente': 'lead',
       // Direct mappings
       'lead': 'lead',
       'visita_tecnica': 'visita_tecnica',
@@ -638,7 +653,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       'instalado': 'instalado',
       'concluido': 'concluido',
     };
-    return map[status] || 'lead';
+    return map[s] || 'lead';
   }
 
 

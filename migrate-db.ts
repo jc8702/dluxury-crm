@@ -1,6 +1,5 @@
+import 'dotenv/config';
 import { sql } from './src/api-lib/_db.ts';
-import dotenv from 'dotenv';
-dotenv.config();
 
 async function migrate() {
   console.log('Iniciando migração...');
@@ -41,7 +40,15 @@ async function migrate() {
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS pis NUMERIC`;
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS cofins NUMERIC`;
     await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS origem INTEGER DEFAULT 0`;
-    console.log('Colunas fiscais adicionadas a itens_orcamento.');
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS erp_product_id UUID`;
+    await sql`ALTER TABLE itens_orcamento ADD COLUMN IF NOT EXISTS erp_parametros JSONB`;
+    console.log('Colunas de integração ERP adicionadas a itens_orcamento.');
+    // 6. Planos de Corte - Foreign Keys
+    await sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS visita_id UUID`;
+    await sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS projeto_id UUID`;
+    await sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS orcamento_id UUID`;
+    await sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS ordem_producao_id UUID`;
+    console.log('Colunas de FK adicionadas a planos_de_corte.');
 
     console.log('Migração concluída com sucesso!');
     process.exit(0);

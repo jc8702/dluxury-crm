@@ -99,6 +99,10 @@ export default async function handler(req: any, res: any) {
       const { handleCompras } = await import('../src/api-lib/compras.js');
       return await handleCompras(req, res);
     }
+    if (cleanUrl.startsWith('/api/retalhos')) {
+      const { handleRetalhos } = await import('../src/api-lib/retalhos.js');
+      return await handleRetalhos(req, res);
+    }
     if (cleanUrl.startsWith('/api/aprovacao')) {
       const { handleAprovacao } = await import('../src/api-lib/aprovacao.js');
       return await handleAprovacao(req, res);

@@ -8,6 +8,10 @@ export const planosDeCorte = pgTable('planos_de_corte', {
   kerf_mm: integer('kerf_mm').default(3),
   materiais: jsonb('materiais').notNull(),       // Armazena ChapaMaterial[]
   resultado: jsonb('resultado'),                  // Armazena ResultadoOtimizacao
+  visita_id: uuid('visita_id'),
+  projeto_id: uuid('projeto_id'),
+  orcamento_id: uuid('orcamento_id'),
+  ordem_producao_id: uuid('ordem_producao_id'),
   observacoes: text('observacoes'),
   criado_em: timestamp('criado_em').defaultNow(),
   atualizado_em: timestamp('atualizado_em').defaultNow(),
@@ -40,12 +44,24 @@ export const erpSkusEngenharia = pgTable('erp_skus_engenharia', {
 // 4. Tabela de Retalhos (Sobras Reutilizáveis)
 export const retalhosEstoque = pgTable('retalhos_estoque', {
   id: uuid('id').defaultRandom().primaryKey(),
-  sku_chapa: varchar('sku_chapa', { length: 100 }).notNull(),
   largura_mm: integer('largura_mm').notNull(),
   altura_mm: integer('altura_mm').notNull(),
   espessura_mm: integer('espessura_mm').notNull(),
-  origem: varchar('origem', { length: 50 }), // 'sobra_plano_corte', 'devolucao', 'manual'
-  plano_corte_origem_id: uuid('plano_corte_origem_id').references(() => planosDeCorte.id),
-  disponivel: boolean('disponivel').default(true),
-  criado_em: timestamp('criado_em').defaultNow(),
+  sku_chapa: varchar('sku_chapa', { length: 100 }).notNull(),
+  origem: varchar('origem', { length: 50 }).notNull(), // 'sobra_plano_corte', 'devolucao', 'manual', 'ajuste'
+  plano_corte_origem_id: uuid('plano_corte_origem_id'),
+  projeto_origem: varchar('projeto_origem', { length: 255 }),
+  observacoes: text('observacoes'),
+  disponivel: boolean('disponivel').default(true).notNull(),
+  utilizado_em_id: uuid('utilizado_em_id'),
+  data_utilizacao: timestamp('data_utilizacao', { withTimezone: true }),
+  descartado: boolean('descartado').default(false).notNull(),
+  motivo_descarte: varchar('motivo_descarte', { length: 255 }),
+  data_descarte: timestamp('data_descarte', { withTimezone: true }),
+  localizacao: varchar('localizacao', { length: 100 }),
+  criado_em: timestamp('criado_em', { withTimezone: true }).defaultNow().notNull(),
+  atualizado_em: timestamp('atualizado_em', { withTimezone: true }).defaultNow().notNull(),
+  usuario_criou: varchar('usuario_criou', { length: 100 }),
+  usuario_atualizou: varchar('usuario_atualizou', { length: 100 }),
+  metadata: jsonb('metadata').default({}),
 });

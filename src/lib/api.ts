@@ -94,6 +94,12 @@ export const api = {
     update: (id: string, data: any) => apiCall<any>(`projects?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`projects?id=${id}`, 'DELETE'),
   },
+  retalhos: {
+    list: (params?: string) => apiCall<any[]>(`retalhos${params ? `?${params}` : ''}`),
+    create: (data: any) => apiCall<any>('retalhos', 'POST', data),
+    update: (id: string, data: any, action?: string) => apiCall<any>(`retalhos?id=${id}${action ? `&action=${action}` : ''}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`retalhos?id=${id}`, 'DELETE'),
+  },
   compras: {
     listPedidos: () => apiCall<any[]>('compras?type=pedidos'),
     listBySupplier: (fornecedorId: string) => apiCall<any[]>(`compras?type=pedidos&fornecedor_id=${fornecedorId}`),
@@ -301,10 +307,12 @@ export const api = {
     forecastDemand: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
   },
   planoCorte: {
-    list: () => apiCall<any[]>('plano-corte?action=listar_planos_corte'),
-    get: (id: string) => apiCall<any>(`plano-corte?action=buscar_plano_completo&id=${id}`),
-    save: (data: any) => apiCall<any>('plano-corte?action=salvar_resultado_corte', 'POST', data),
+    list: () => apiCall<any[]>('plano-corte'),
+    get: (id: string) => apiCall<any>(`plano-corte?id=${id}`),
     create: (data: any) => apiCall<any>('plano-corte?action=criar_plano', 'POST', data),
+    save: (data: any) => apiCall<any>('plano-corte?action=salvar_resultado_corte', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`plano-corte?id=${id}`, 'PUT', data),
+    aprovarProducao: (materiais_consumidos: any[]) => apiCall<any>('plano-corte?action=aprovar_producao', 'POST', { materiais_consumidos }),
   },
   cuttingPlan: {
     list: () => apiCall<any[]>('production?type=cutting_plan_list'),

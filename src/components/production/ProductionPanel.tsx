@@ -289,7 +289,12 @@ const deleteOP = useCallback(async (op_id: string) => {
       padding: '0 0 1rem 0'
     }}>
       {colunas.map(col => {
-        const colOps = ops.filter(o => o.status === col.id);
+        const colOps = ops.filter(o => {
+          const s = (o.status || '').toUpperCase();
+          if (col.id === 'AGUARDANDO') return s === 'AGUARDANDO' || s === 'PENDENTE';
+          if (col.id === 'PRODUCAO') return s === 'PRODUCAO' || s === 'CORTE' || s === 'FABRICACAO';
+          return s === col.id;
+        });
         const colProjects = col.id === 'AGUARDANDO' 
           ? (projects || []).filter(p => ['aprovado', 'em_producao'].includes(p.status) && !p.ordem_producao_id)
           : [];

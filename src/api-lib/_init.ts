@@ -354,20 +354,87 @@ export async function runInitDB() {
 
 // 19. Industrial Cutting Plan
   await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS planos_corte (
+    CREATE TABLE IF NOT EXISTS planos_de_corte (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      nome TEXT NOT NULL,
-      status TEXT DEFAULT 'rascunho',
-      kerf_mm DECIMAL(5,2) DEFAULT 3.0,
-      grupos JSONB DEFAULT '[]',
-      pecas JSONB DEFAULT '[]',
-      visita_id TEXT,
-      projeto_id TEXT,
-      orcamento_id TEXT,
-      ordem_producao_id TEXT,
+      nome VARCHAR(255) NOT NULL,
+      sku_engenharia VARCHAR(100),
+      kerf_mm INTEGER DEFAULT 3,
+      materiais JSONB NOT NULL,
+      resultado JSONB,
+      visita_id UUID,
+      projeto_id UUID,
+      orcamento_id UUID,
+      ordem_producao_id UUID,
+      observacoes TEXT,
+      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 20. ERP Chapas (Industrial Stock)
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS erp_chapas (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sku VARCHAR(100) UNIQUE NOT NULL,
+      nome VARCHAR(255) NOT NULL,
+      largura_mm INTEGER NOT NULL,
+      altura_mm INTEGER NOT NULL,
+      espessura_mm INTEGER NOT NULL,
+      preco_unitario DECIMAL(12,2),
+      ativo BOOLEAN DEFAULT true,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // 21. ERP SKUs Engineering
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS erp_skus_engenharia (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sku VARCHAR(100) UNIQUE NOT NULL,
+      nome VARCHAR(255) NOT NULL,
+      componentes JSONB NOT NULL,
+      versao INTEGER DEFAULT 1,
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 22. Retalhos (Scraps) - NOVO SCHEMA BLOCO 2
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS retalhos_estoque (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sku_chapa VARCHAR(100) NOT NULL,
+      largura_mm INTEGER NOT NULL,
+      altura_mm INTEGER NOT NULL,
+      espessura_mm INTEGER NOT NULL,
+      origem VARCHAR(50) NOT NULL DEFAULT 'manual',
+      plano_corte_origem_id UUID REFERENCES planos_de_corte(id),
+      utilizado_em_id UUID REFERENCES planos_de_corte(id),
+      projeto_origem VARCHAR(255),
+      localizacao VARCHAR(100) DEFAULT 'Geral',
+      observacoes TEXT,
+      disponivel BOOLEAN DEFAULT true,
+      descartado BOOLEAN DEFAULT false,
+      data_descarte TIMESTAMP WITH TIME ZONE,
+      data_utilizacao TIMESTAMP WITH TIME ZONE,
+      usuario_criou VARCHAR(100),
+      usuario_atualizou VARCHAR(100),
+      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      metadata JSONB
+    )
+  `);
+
+  // Seed default Chapas if empty
+  try {
+    const cc = await sql`SELECT count(*) as count FROM erp_chapas`;
+    if (cc.length && parseInt(cc[0].count, 10) === 0) {
+      await sql`INSERT INTO erp_chapas (sku, nome, largura_mm, altura_mm, espessura_mm, preco_unitario) VALUES 
+        ('MDF-BRA-15', 'MDF Branco 15mm', 2750, 1830, 15, 280.00),
+        ('MDF-BRA-18', 'MDF Branco 18mm', 2750, 1830, 18, 320.00),
+        ('MDF-GRA-15', 'MDF Grafite 15mm', 2750, 1830, 15, 310.00)`;
+    }
+  } catch (e) {}
 
   console.log('--- Sincronização Concluída ---');
 
