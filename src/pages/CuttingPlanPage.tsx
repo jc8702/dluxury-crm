@@ -17,7 +17,8 @@ import { PainelRetalhos } from '../modules/plano-corte/ui/components/PainelRetal
 import { CanvasAvancado } from '../modules/plano-corte/ui/components/CanvasAvancado';
 import { ImportadorEngenharia } from '../modules/plano-corte/ui/components/ImportadorEngenharia';
 import { ExportacaoModal } from '../modules/plano-corte/ui/components/ExportacaoModal';
-import { Search } from 'lucide-react';
+import { ImportacaoModal } from '../modules/plano-corte/ui/components/ImportacaoModal';
+import { Search, FileUp } from 'lucide-react';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
 const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
@@ -141,6 +142,7 @@ const CuttingPlanPage: React.FC = () => {
   const [kerf, setKerf] = useState(3);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showIndustrialImport, setShowIndustrialImport] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [projetosParaImportar, setProjetosParaImportar] = useState<any[]>([]);
   const [materiaisEstoque, setMateriaisEstoque] = useState<any[]>([]);
@@ -505,6 +507,49 @@ const CuttingPlanPage: React.FC = () => {
     }
   };
 
+  const handleImportIndustrial = (pecasImportadas: any[]) => {
+    const novosGrupos = [...grupos];
+    const novasPecas = [...pecas];
+
+    pecasImportadas.forEach(p => {
+      // Tentar encontrar ou criar grupo baseado no material (se disponível) ou padrão
+      const skuMaterial = p.sku_chapa || 'MDF-PADRAO';
+      let grupo = novosGrupos.find(g => g.sku === skuMaterial);
+      
+      if (!grupo) {
+        grupo = {
+          id: Math.random().toString(36).substring(7),
+          materialId: '',
+          sku: skuMaterial,
+          nomeMaterial: `Material ${skuMaterial}`,
+          larguraChapaMm: 2750, 
+          alturaChapaMm: 1830, 
+          espessuraMm: p.espessura_mm || 15,
+          precoChapa: 0,
+          chapasAdicionaisManual: 0, 
+          retalhosDisponiveis: [], 
+          kerfMm: kerf
+        };
+        novosGrupos.push(grupo);
+      }
+      
+      novasPecas.push({
+        id: Math.random().toString(36).substring(7),
+        descricao: p.nome || 'Peça Importada',
+        larguraMm: p.largura_mm || p.largura,
+        alturaMm: p.altura_mm || p.altura,
+        quantidade: p.quantidade || 1,
+        podeRotacionar: p.rotacionavel ?? true,
+        grupoMaterialId: grupo.id,
+        fio_de_fita: p.fio_de_fita
+      } as any);
+    });
+
+    setGrupos(novosGrupos);
+    setPecas(novasPecas);
+    setShowIndustrialImport(false);
+  };
+
   const handleImportDae = (pecasDae: PecaInput[]) => {
     const novosGrupos = [...grupos];
     const novasPecas = [...pecas];
@@ -578,6 +623,7 @@ const CuttingPlanPage: React.FC = () => {
         
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={() => setShowPlanosModal(true)} className="btn btn-outline" style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}><Layout size={18} /> Planos Salvos</button>
+          <button onClick={() => setShowIndustrialImport(true)} className="btn btn-primary" style={{ background: 'var(--surface-light)', color: 'var(--text)', borderColor: 'var(--border)' }}><FileUp size={18} /> Importar Industrial</button>
           <button onClick={() => setShowImportModal(true)} className="btn btn-outline"><Box size={18} /> Projetos (TAG)</button>
           <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }} disabled={isCalculating}>
             {isCalculating ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} 
@@ -825,6 +871,14 @@ const CuttingPlanPage: React.FC = () => {
           onAddEstoque={addGrupoDoEstoque} 
           onAddManual={addGrupoManual} 
           onClose={() => setShowMaterialModal(false)} 
+        />
+      )}
+
+      {/* MODAL: IMPORTAÇÃO INDUSTRIAL */}
+      {showIndustrialImport && (
+        <ImportacaoModal 
+          onImportar={handleImportIndustrial} 
+          onFechar={() => setShowIndustrialImport(false)} 
         />
       )}
 

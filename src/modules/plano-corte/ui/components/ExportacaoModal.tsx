@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { FileText, Download, Layers, Printer, X, FileSpreadsheet } from 'lucide-react';
-import { ExportadorPDF } from '../../infrastructure/exports/ExportadorPDF';
-import { ExportadorGCode } from '../../infrastructure/exports/ExportadorGCode';
-import { ExportadorEtiquetas } from '../../infrastructure/exports/ExportadorEtiquetas';
 import type { ResultadoPlano, Superficie } from '../../../../utils/planodeCorte';
+import { exportarMapaCorte } from '../../application/usecases/ExportarMapaCorte';
+import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas';
+import { exportarCNC, salvarArquivoCNC } from '../../application/usecases/ExportarCNC';
+import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
 
 interface ExportacaoModalProps {
   resultado: ResultadoPlano;
@@ -24,8 +25,36 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
 }) => {
   const [isExporting, setIsExporting] = useState(false);
 
-  // Reúne todas as superfícies de todos os grupos
-  const todasSuperficies = resultado.grupos.flatMap(g => g.superficies);
+  // Mapeamento De-Para: Legado (utils/planodeCorte) -> Domínio (entities/CuttingPlan)
+  const mapearParaDominio = (): ResultadoOtimizacao => {
+    const layouts: LayoutChapa[] = resultado.grupos.flatMap(g => 
+      g.superficies.map((s, idx) => ({
+        chapa_sku: g.sku,
+        indice_chapa: idx,
+        largura_original_mm: s.largura,
+        altura_original_mm: s.altura,
+        area_aproveitada_mm2: (s.aproveitamentoPct / 100) * (s.largura * s.altura),
+        area_desperdicada_mm2: (1 - s.aproveitamentoPct / 100) * (s.largura * s.altura),
+        pecas_posicionadas: s.pecasPositionadas.map(p => ({
+          peca_id: p.pecaId,
+          nome: p.descricao,
+          x: p.x,
+          y: p.y,
+          largura: p.largura,
+          altura: p.altura,
+          rotacionada: p.rotacionada,
+          fio_de_fita: (p as any).fio_de_fita // Pass-through if exists
+        }))
+      }))
+    );
+
+    return {
+      chapas_necessarias: layouts.length,
+      aproveitamento_percentual: resultado.aproveitamentoGeral,
+      layouts,
+      tempo_calculo_ms: 0
+    };
+  };
 
   const handleExportCSV = () => {
     setIsExporting(true);
@@ -53,7 +82,8 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   const handleExportMapaPDF = async () => {
     setIsExporting(true);
     try {
-      await ExportadorPDF.exportarPlano(todasSuperficies, planoNome);
+      const dadosDominio = mapearParaDominio();
+      await exportarMapaCorte(dadosDominio);
     } catch (e) {
       console.error(e);
       alert('Erro ao gerar PDF do Mapa de Corte.');
@@ -66,7 +96,17 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   const handleExportEtiquetas = async () => {
     setIsExporting(true);
     try {
-      await ExportadorEtiquetas.exportar(todasSuperficies, planoNome);
+      const todasPecas = resultado.grupos.flatMap(g => 
+        g.superficies.flatMap(s => 
+          s.pecasPositionadas.map(p => ({
+            ...p,
+            nome: p.descricao,
+            peca_id: p.pecaId,
+            sku_chapa: g.sku
+          }))
+        )
+      );
+      await exportarEtiquetas(todasPecas, planoNome);
     } catch (e) {
       console.error(e);
       alert('Erro ao gerar PDF de Etiquetas.');
@@ -83,7 +123,25 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
     }
     setIsExporting(true);
     try {
-      ExportadorGCode.exportarChapa(activeSuperficie, activeChapaIdx, kerfMm);
+      const layout: LayoutChapa = {
+        chapa_sku: "CHAPA", // Placeholder
+        indice_chapa: activeChapaIdx,
+        largura_original_mm: activeSuperficie.largura,
+        altura_original_mm: activeSuperficie.altura,
+        pecas_posicionadas: activeSuperficie.pecasPositionadas.map(p => ({
+          peca_id: p.pecaId,
+          nome: p.descricao,
+          x: p.x,
+          y: p.y,
+          largura: p.largura,
+          altura: p.altura,
+          rotacionada: p.rotacionada
+        })),
+        area_aproveitada_mm2: 0,
+        area_desperdicada_mm2: 0
+      };
+      const gcode = exportarCNC(layout);
+      salvarArquivoCNC(gcode, `cnc_${planoNome.replace(/\s+/g, '_')}_chapa_${activeChapaIdx + 1}.nc`);
     } catch (e) {
       console.error(e);
       alert('Erro ao gerar G-Code.');
@@ -116,7 +174,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               </div>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Mapa de Corte (PDF)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Escala 1:10 para conferência e montagem manual.</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Escala 1:8 em formato A3 para montagem.</p>
               </div>
             </div>
           </div>
@@ -129,7 +187,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               </div>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Etiquetas (Térmica)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Gerar PDF para impressora térmica com QR Code.</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Etiquetas 100x50mm com QR Code industrial.</p>
               </div>
             </div>
           </div>
@@ -157,7 +215,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               </div>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Lista de Peças (CSV)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Lista bruta de peças para integração com outros sistemas.</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Lista bruta para ERPs e sistemas externos.</p>
               </div>
             </div>
           </div>
@@ -166,7 +224,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
         
         {isExporting && (
           <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-            Gerando arquivo, aguarde...
+            Gerando arquivo industrial, aguarde...
           </div>
         )}
       </div>
