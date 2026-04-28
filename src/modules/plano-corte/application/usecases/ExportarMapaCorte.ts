@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
+import type { ResultadoOtimizacao } from '../../domain/entities/CuttingPlan';
 
 export async function exportarMapaCorte(resultado: ResultadoOtimizacao): Promise<void> {
   const doc = new jsPDF({
@@ -36,8 +36,8 @@ export async function exportarMapaCorte(resultado: ResultadoOtimizacao): Promise
     doc.rect(
       OFFSET_X,
       OFFSET_Y,
-      (layout.largura_original_mm || 2750) * ESCALA,
-      (layout.altura_original_mm || 1830) * ESCALA
+      layout.largura_original_mm! * ESCALA,
+      layout.altura_original_mm! * ESCALA
     );
 
     // DESENHAR PEÇAS
@@ -150,9 +150,8 @@ export async function exportarMapaCorte(resultado: ResultadoOtimizacao): Promise
     });
 
     // ESTATÍSTICAS RODAPÉ
-    const largura = layout.largura_original_mm || 2750;
-    const altura = layout.altura_original_mm || 1830;
-    const aproveitamento = (layout.area_aproveitada_mm2 / (largura * altura)) * 100;
+    const aproveitamento = (layout.area_aproveitada_mm2 / 
+      (layout.largura_original_mm! * layout.altura_original_mm!)) * 100;
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');

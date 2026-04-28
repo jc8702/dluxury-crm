@@ -12,7 +12,7 @@ export async function handleEstoque(req: any, res: any) {
       if (method === 'GET') {
         const { material_id, limit: ql } = req.query;
         const lim = Number(ql) || 100;
-        const result = material_id ? await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id WHERE mov.material_id = ${material_id} ORDER BY mov.criado_em DESC LIMIT ${lim}` : await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id ORDER BY mov.criado_em DESC LIMIT ${lim}`;
+        const result = material_id ? await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id WHERE mov.material_id = ${material_id} ORDER BY mov.created_at DESC LIMIT ${lim}` : await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id ORDER BY mov.created_at DESC LIMIT ${lim}`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
@@ -27,8 +27,8 @@ export async function handleEstoque(req: any, res: any) {
         if (estD < 0 && tipo === 'saida') throw new Error('Estoque insuficiente');
         
         const { user } = extractAndVerifyToken(req);
-        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, criado_por) VALUES (${material_id}, ${tipo}, ${quantidade}, ${Number(quantidade) * Number(mat.fator_conversao)}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}) RETURNING *`;
-        await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, atualizado_em = CURRENT_TIMESTAMP WHERE id = ${material_id}`;
+        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by) VALUES (${material_id}, ${tipo}, ${quantidade}, ${Number(quantidade) * Number(mat.fator_conversao)}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}) RETURNING *`;
+        await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, updated_at = CURRENT_TIMESTAMP WHERE id = ${material_id}`;
         return res.status(201).json({ success: true, data: mov[0] });
       }
     }
@@ -70,7 +70,7 @@ export async function handleEstoque(req: any, res: any) {
     if (method === 'GET') {
       if (id) {
         const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
-        const movs = await sql`SELECT * FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY criado_em DESC LIMIT 50`;
+        const movs = await sql`SELECT * FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
       const { q } = req.query;
@@ -89,7 +89,7 @@ export async function handleEstoque(req: any, res: any) {
         const r = await sql`INSERT INTO materiais (sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes, cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro, icms, icms_st, ipi, pis, cofins, origem, marca) VALUES (${f.sku}, ${f.nome}, ${f.descricao}, ${f.categoria_id}, ${f.subcategoria}, ${f.unidade_compra}, ${f.unidade_uso}, ${f.fator_conversao}, ${f.estoque_minimo}, ${f.preco_custo}, ${f.fornecedor_principal}, ${f.observacoes}, ${f.cfop}, ${f.ncm}, ${f.largura_mm}, ${f.altura_mm}, ${f.preco_venda}, ${f.margem_lucro}, ${f.icms}, ${f.icms_st}, ${f.ipi}, ${f.pis}, ${f.cofins}, ${f.origem}, ${f.marca}) RETURNING *`;
         return res.status(201).json({ success: true, data: r[0] });
       }
-      const r = await sql`UPDATE materiais SET sku = ${f.sku}, nome = ${f.nome}, descricao = ${f.descricao}, categoria_id = ${f.categoria_id}, subcategoria = ${f.subcategoria}, unidade_compra = ${f.unidade_compra}, unidade_uso = ${f.unidade_uso}, fator_conversao = ${f.fator_conversao}, estoque_minimo = ${f.estoque_minimo}, preco_custo = ${f.preco_custo}, fornecedor_principal = ${f.fornecedor_principal}, observacoes = ${f.observacoes}, cfop = ${f.cfop}, ncm = ${f.ncm}, largura_mm = ${f.largura_mm}, altura_mm = ${f.altura_mm}, preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro}, icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi}, pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem}, marca = ${f.marca}, atualizado_em = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
+      const r = await sql`UPDATE materiais SET sku = ${f.sku}, nome = ${f.nome}, descricao = ${f.descricao}, categoria_id = ${f.categoria_id}, subcategoria = ${f.subcategoria}, unidade_compra = ${f.unidade_compra}, unidade_uso = ${f.unidade_uso}, fator_conversao = ${f.fator_conversao}, estoque_minimo = ${f.estoque_minimo}, preco_custo = ${f.preco_custo}, fornecedor_principal = ${f.fornecedor_principal}, observacoes = ${f.observacoes}, cfop = ${f.cfop}, ncm = ${f.ncm}, largura_mm = ${f.largura_mm}, altura_mm = ${f.altura_mm}, preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro}, icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi}, pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem}, marca = ${f.marca}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
       return res.status(200).json({ success: true, data: r[0] });
     }
 

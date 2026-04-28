@@ -32,7 +32,7 @@ export async function handleAfterSales(req: any, res: any) {
       
       // Gerar número automático GAR-2025-001
       const year = new Date().getFullYear();
-      const [{ count }] = await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM criado_em) = ${year}`;
+      const [{ count }] = await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM created_at) = ${year}`;
       const numero = `GAR-${year}-${(Number(count) + 1).toString().padStart(3, '0')}`;
 
       // Verificar garantia (1 ano após entrega do projeto) - Simulação simplificada
@@ -77,7 +77,7 @@ export async function handleAfterSales(req: any, res: any) {
           responsavel = ${responsavel},
           custo_atendimento = ${custo_atendimento},
           data_resolucao = COALESCE(${data_resolucao}, data_resolucao),
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;

@@ -18,7 +18,7 @@ export async function exportarEtiquetas(
     const peca = pecas[i];
     
     // Gerar QR Code
-    const qrData = `${urlBase}/${planoCorteId}/${peca.peca_id || peca.id}`;
+    const qrData = `${urlBase}/${planoCorteId}/${peca.id}`;
     const qrDataURL = await QRCode.toDataURL(qrData, {
       width: 100,
       margin: 1
@@ -30,7 +30,7 @@ export async function exportarEtiquetas(
     // Informações (lado direito)
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(peca.nome || peca.descricao || 'PEÇA', 45, 12);
+    doc.text(peca.nome, 45, 12);
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
@@ -60,7 +60,7 @@ export async function exportarEtiquetas(
     // ID da peça (código rastreamento)
     doc.setFontSize(6);
     doc.setTextColor(100);
-    doc.text(peca.peca_id || peca.id || String(i), 5, 48);
+    doc.text(peca.id, 5, 48);
   }
 
   const nomeArquivo = `etiquetas-${planoCorteId}.pdf`;

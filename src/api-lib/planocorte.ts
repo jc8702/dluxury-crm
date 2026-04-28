@@ -1,6 +1,7 @@
 import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia } from '../db/schema/planos-de-corte.js';
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, ilike, or, isNull, and } from 'drizzle-orm';
+import { auditLog, sql, validateAuth } from './_db.js';
 
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
@@ -15,13 +16,11 @@ export async function handlePlanoCorte(req: any, res: any) {
     switch (method) {
       case 'GET':
         if (id) {
-          // Buscar plano específico
-          const [plano] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, id));
+          const [plano] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), isNull(planosDeCorte.deleted_at)));
           if (!plano) return res.status(404).json({ success: false, error: 'Plano não encontrado' });
           return res.status(200).json({ success: true, data: plano });
         } else {
-          // Listar todos os planos
-          const planos = await db.select().from(planosDeCorte);
+          const planos = await db.select().from(planosDeCorte).where(isNull(planosDeCorte.deleted_at));
           return res.status(200).json({ success: true, data: planos });
         }
 
@@ -30,6 +29,7 @@ export async function handlePlanoCorte(req: any, res: any) {
         const { action } = req.query || {};
         
         if (action === 'criar_plano') {
+          const { user } = validateAuth(req);
           const [novo] = await db.insert(planosDeCorte).values({
             nome: req.body.nome,
             kerf_mm: req.body.kerf_mm || 3,
@@ -40,6 +40,9 @@ export async function handlePlanoCorte(req: any, res: any) {
             orcamento_id: req.body.orcamento_id || null,
             ordem_producao_id: req.body.ordem_producao_id || null,
           }).returning();
+          
+          await auditLog('planos_de_corte', novo.id, 'CREATE', user?.id, null, novo);
+          
           return res.status(201).json({ success: true, data: novo });
         } else if (action === 'aprovar_producao') {
           // Decrementar Estoque
@@ -54,29 +57,41 @@ export async function handlePlanoCorte(req: any, res: any) {
 
           return res.status(200).json({ success: true, message: 'Produção aprovada e estoque reservado.' });
         } else {
-          // Salvar Resultado Completo (Update)
+          const { user } = validateAuth(req);
           const { plano_id, materiais, resultado, KPIs } = req.body;
+          const [before] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, plano_id));
+          
           const [atualizado] = await db.update(planosDeCorte)
             .set({ 
               materiais, 
               resultado, 
-              atualizado_em: new Date() 
+              updated_at: new Date() 
             })
             .where(eq(planosDeCorte.id, plano_id))
             .returning();
+
+          await auditLog('planos_de_corte', plano_id, 'SAVE_RESULT', user?.id, before, atualizado);
+          
           return res.status(200).json({ success: true, data: atualizado });
         }
 
       case 'PUT':
         // Atualização genérica
         const [upd] = await db.update(planosDeCorte)
-          .set({ ...req.body, atualizado_em: new Date() })
+          .set({ ...req.body, updated_at: new Date() })
           .where(eq(planosDeCorte.id, id))
           .returning();
         return res.status(200).json({ success: true, data: upd });
 
       case 'DELETE':
-        await db.delete(planosDeCorte).where(eq(planosDeCorte.id, id));
+        const { user } = validateAuth(req);
+        const [existing] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, id));
+        if (!existing) return res.status(404).json({ success: false, error: 'Plano não encontrado' });
+
+        await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(eq(planosDeCorte.id, id));
+        
+        await auditLog('planos_de_corte', id, 'DELETE', user?.id, existing, { status: 'deleted' });
+        
         return res.status(200).json({ success: true });
 
       default:

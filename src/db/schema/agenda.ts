@@ -37,13 +37,13 @@ export const eventos = pgTable("eventos", {
   resultadoVisita: text("resultado_visita"),
   
   // Metadados
-  criadoPor: varchar("criado_por", { length: 50 }).notNull(), // Flexível
+  createdBy: varchar("created_by", { length: 50 }).notNull(), // Flexível
   responsavelId: varchar("responsavel_id", { length: 50 }).notNull(), // Flexível
   cor: varchar("cor", { length: 7 }),
   lembreteMinutos: integer("lembrete_minutos"),
   
-  criadoEm: timestamp("criado_em", { withTimezone: true }).defaultNow(),
-  atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 }, (table) => ({
   idxTipo: index("idx_eventos_tipo").on(table.tipo),
   idxStatusVisita: index("idx_eventos_status_visita").on(table.statusVisita).where(sql`tipo = 'visita'`),
@@ -59,9 +59,9 @@ export const eventosHistorico = pgTable("eventos_historico", {
   valorNovo: text("valor_novo"),
   alteradoPor: uuid("alterado_por").notNull(), // Referencia users(id)
   observacao: text("observacao"),
-  alteradoEm: timestamp("alterado_em", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 }, (table) => ({
-  idxEvento: index("idx_historico_evento").on(table.eventoId, table.alteradoEm),
+  idxEvento: index("idx_historico_evento").on(table.eventoId, table.updatedAt),
 }));
 
 export const tiposEventoConfig = pgTable("tipos_evento_config", {

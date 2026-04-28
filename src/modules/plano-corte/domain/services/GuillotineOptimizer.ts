@@ -1,163 +1,122 @@
-import type { FreeRectangle, Peca, PecaPosicionada, ResultadoOtimizacao } from '../types';
+import type { 
+  Peca, 
+  PecaPosicionada, 
+  ResultadoOtimizacao 
+} from './MaxRectsOptimizer';
 
+/**
+ * CLASSE: Guillotine Optimizer — Best Fit Decreasing
+ * 
+ * Algoritmo:
+ * 1. Ordena peças por área (maior primeiro) — BFD heurística
+ * 2. Para cada peça, encontra melhor faixa (horizontal ou vertical)
+ * 3. Posiciona e "corta" (guillotina) o espaço em duas partes
+ * 4. Repete até todas peças tentarem ser colocadas
+ */
 export class GuillotineOptimizer {
-  private espacosLivres: FreeRectangle[] = [];
-  private pecasPosicionadas: PecaPosicionada[] = [];
-  private kerfMm: number;
-  private larguraChapa: number;
-  private alturaChapa: number;
+  private largura_chapa: number;
+  private altura_chapa: number;
+  private kerf_mm: number;
 
-  constructor(larguraChapa: number, alturaChapa: number, kerfMm: number = 3) {
-    this.larguraChapa = larguraChapa;
-    this.alturaChapa = alturaChapa;
-    this.kerfMm = kerfMm;
-    this.reset();
-  }
-
-  reset(): void {
-    this.espacosLivres = [
-      { x: 0, y: 0, width: this.larguraChapa + this.kerfMm, height: this.alturaChapa + this.kerfMm }
-    ];
-    this.pecasPosicionadas = [];
+  constructor(largura: number, altura: number, kerf: number = 3) {
+    this.largura_chapa = largura;
+    this.altura_chapa = altura;
+    this.kerf_mm = kerf;
   }
 
   otimizar(pecas: Peca[]): ResultadoOtimizacao {
-    this.reset();
+    const inicio = performance.now();
 
-    const pecasOrdenadas = [...pecas].sort(
-      (a, b) => (b.largura * b.altura) - (a.largura * a.altura)
-    );
+    const pecasOrdenadas = [...pecas].sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
+    const pecas_posicionadas: PecaPosicionada[] = [];
+    const pecas_rejeitadas: Peca[] = [];
+
+    interface Faixa {
+      x: number;
+      y: number;
+      largura: number;
+      altura: number;
+    }
+
+    const faixasLivres: Faixa[] = [{ x: 0, y: 0, largura: this.largura_chapa, altura: this.altura_chapa }];
 
     for (const peca of pecasOrdenadas) {
-      const resultado = this.posicionarPeca(peca);
-      
-      if (!resultado) {
+      let posicionada = false;
+
+      for (let i = 0; i < faixasLivres.length; i++) {
+        const faixa = faixasLivres[i];
+        let larguraNecessaria = peca.largura + this.kerf_mm;
+        let alturaNecessaria = peca.altura + this.kerf_mm;
+        let rotacionada = false;
+
+        // Tentar normal
+        if (larguraNecessaria <= faixa.largura && alturaNecessaria <= faixa.altura) {
+          rotacionada = false;
+        } 
+        // Tentar rotacionado
+        else if (peca.rotacionavel && (peca.altura + this.kerf_mm <= faixa.largura) && (peca.largura + this.kerf_mm <= faixa.altura)) {
+          larguraNecessaria = peca.altura + this.kerf_mm;
+          alturaNecessaria = peca.largura + this.kerf_mm;
+          rotacionada = true;
+        } else {
+          continue;
+        }
+
+        // Posicionar
+        pecas_posicionadas.push({
+          ...peca,
+          x: faixa.x,
+          y: faixa.y,
+          rotacionada
+        });
+
+        // Split Guillotine (Horizontal Split Strategy)
+        const f = faixasLivres[i];
+        faixasLivres.splice(i, 1);
+
+        // 1. Espaço à direita (mesma altura que a peça)
+        if (f.largura - larguraNecessaria > 0) {
+          faixasLivres.push({
+            x: f.x + larguraNecessaria,
+            y: f.y,
+            largura: f.largura - larguraNecessaria,
+            altura: alturaNecessaria
+          });
+        }
+
+        // 2. Espaço acima (toda a largura da faixa original)
+        if (f.altura - alturaNecessaria > 0) {
+          faixasLivres.push({
+            x: f.x,
+            y: f.y + alturaNecessaria,
+            largura: f.largura,
+            altura: f.altura - alturaNecessaria
+          });
+        }
+
+        posicionada = true;
         break;
       }
 
-      this.pecasPosicionadas.push(resultado);
+      if (!posicionada) {
+        pecas_rejeitadas.push(peca);
+      }
     }
 
-    const areaUsada = this.pecasPosicionadas.reduce((acc, p) => acc + (p.largura * p.altura), 0);
-    const areaTotal = this.larguraChapa * this.alturaChapa;
+    const area_usada = pecas_posicionadas.reduce((sum, p) => sum + (p.largura * p.altura), 0);
+    const area_total = this.largura_chapa * this.altura_chapa;
+    const aproveitamento = (area_usada / area_total) * 100;
 
     return {
-      largura_chapa: this.larguraChapa,
-      altura_chapa: this.alturaChapa,
-      pecas_posicionadas: this.pecasPosicionadas,
-      espacos_livres: [], 
-      sobras: [], 
-      aproveitamento: (areaUsada / areaTotal) * 100,
-      area_usada: areaUsada,
-      area_total: areaTotal,
-      algoritmo_usado: 'Guillotine BFD'
+      pecas_posicionadas,
+      pecas_rejeitadas,
+      aproveitamento: Math.round(aproveitamento * 100) / 100,
+      area_usada,
+      area_total,
+      area_desperdicada: area_total - area_usada,
+      tempo_ms: Math.round(performance.now() - inicio)
     };
-  }
-
-  private posicionarPeca(peca: Peca): PecaPosicionada | null {
-    let melhorIdx = -1;
-    let melhorOrientacao: 'normal' | 'rotacionada' | null = null;
-    let menorDesperdicio = Infinity;
-
-    for (let i = 0; i < this.espacosLivres.length; i++) {
-      const espaco = this.espacosLivres[i];
-
-      if (peca.largura + this.kerfMm <= espaco.width && 
-          peca.altura + this.kerfMm <= espaco.height) {
-        
-        const desperdicio = (espaco.width * espaco.height) - (peca.largura * peca.altura);
-        
-        if (desperdicio < menorDesperdicio) {
-          menorDesperdicio = desperdicio;
-          melhorIdx = i;
-          melhorOrientacao = 'normal';
-        }
-      }
-
-      if (peca.rotacionavel &&
-          peca.altura + this.kerfMm <= espaco.width && 
-          peca.largura + this.kerfMm <= espaco.height) {
-        
-        const desperdicio = (espaco.width * espaco.height) - (peca.largura * peca.altura);
-        
-        if (desperdicio < menorDesperdicio) {
-          menorDesperdicio = desperdicio;
-          melhorIdx = i;
-          melhorOrientacao = 'rotacionada';
-        }
-      }
-    }
-
-    if (melhorIdx === -1) {
-      return null;
-    }
-
-    const espaco = this.espacosLivres[melhorIdx];
-    const rotacionada = melhorOrientacao === 'rotacionada';
-    
-    const largura = rotacionada ? peca.altura : peca.largura;
-    const altura = rotacionada ? peca.largura : peca.altura;
-
-    const resultado: PecaPosicionada = {
-      peca_id: peca.id,
-      nome: peca.nome,
-      x: espaco.x,
-      y: espaco.y,
-      largura,
-      altura,
-      rotacionada,
-      fio_de_fita: peca.fio_de_fita
-    };
-
-    this.dividirEspacoGuillotine(melhorIdx, largura, altura);
-
-    return resultado;
-  }
-
-  private dividirEspacoGuillotine(idx: number, larguraPeca: number, alturaPeca: number): void {
-    const espaco = this.espacosLivres[idx];
-    
-    const larguraRestante = espaco.width - larguraPeca - this.kerfMm;
-    const alturaRestante = espaco.height - alturaPeca - this.kerfMm;
-
-    this.espacosLivres.splice(idx, 1);
-
-    if (larguraRestante > alturaRestante) {
-      if (larguraRestante > 0) {
-        this.espacosLivres.push({
-          x: espaco.x + larguraPeca + this.kerfMm,
-          y: espaco.y,
-          width: larguraRestante,
-          height: espaco.height
-        });
-      }
-
-      if (alturaRestante > 0) {
-        this.espacosLivres.push({
-          x: espaco.x,
-          y: espaco.y + alturaPeca + this.kerfMm,
-          width: larguraPeca,
-          height: alturaRestante
-        });
-      }
-    } else {
-      if (alturaRestante > 0) {
-        this.espacosLivres.push({
-          x: espaco.x,
-          y: espaco.y + alturaPeca + this.kerfMm,
-          width: espaco.width,
-          height: alturaRestante
-        });
-      }
-
-      if (larguraRestante > 0) {
-        this.espacosLivres.push({
-          x: espaco.x + larguraPeca + this.kerfMm,
-          y: espaco.y,
-          width: larguraRestante,
-          height: alturaPeca
-        });
-      }
-    }
   }
 }
+
+export default GuillotineOptimizer;

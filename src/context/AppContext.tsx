@@ -105,8 +105,8 @@ export type Orcamento = {
   observacoes?: string;
   materiais_consumidos?: { material_id: string; quantidade: number }[];
   itens: OrcamentoItem[];
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type CondicaoPagamento = {
@@ -283,7 +283,7 @@ export type MovimentacaoEstoque = {
   estoque_antes: number;
   estoque_depois: number;
   criado_por: string;
-  criado_em: string;
+  created_at: string;
 };
 
 export type Fornecedor = {

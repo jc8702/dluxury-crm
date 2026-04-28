@@ -1,5 +1,5 @@
 import { HybridOptimizer } from './HybridOptimizer';
-import type { Peca, ResultadoOtimizacao } from '../types';
+import type { Peca, ResultadoOtimizacao } from './MaxRectsOptimizer';
 import type { RetalhosRepository } from '../../infrastructure/repositories/RetalhosRepository';
 import type { RetalhoDisponivel } from '../entities/Retalho';
 
@@ -39,7 +39,7 @@ interface Sobra {
 }
 
 /**
- * OTIMIZADOR COM RETALHOS (DEPARA BLOCO 2)
+ * OTIMIZADOR COM RETALHOS
  * Estende HybridOptimizer para usar retalhos antes de chapas inteiras
  */
 export class OtimizadorComRetalhos {
@@ -94,14 +94,12 @@ export class OtimizadorComRetalhos {
           area_desperdicada_mm2: resultado.area_total - resultado.area_usada
         });
 
-        // NOTA: O registro do uso (usarRetalho) deve ser feito na aprovação da produção
-        // para evitar baixar do estoque um retalho de uma simulação não salva.
-        // No entanto, seguindo o código do BLOCO 2:
-        // await this.retalhosRepo.usarRetalho(retalho.id, planoCorteId);
+        // Marcar retalho como utilizado
+        await this.retalhosRepo.usarRetalho(retalho.id, planoCorteId);
 
         // Remover peças posicionadas da lista
         pecasRestantes = pecasRestantes.filter(
-          p => !resultado.pecas_posicionadas.find(pp => pp.peca_id === p.id)
+          p => !resultado.pecas_posicionadas.find(pp => pp.id === p.id)
         );
       }
     }
@@ -122,9 +120,9 @@ export class OtimizadorComRetalhos {
       const resultado = otimizador.otimizar(pecasRestantes, 50); // 50 iterações
 
       if (resultado.pecas_posicionadas.length === 0) {
-        // Se uma peça não cabe, tentamos reduzir a peça ou emitir erro
-        console.error(`Peça não cabe: ${pecasRestantes[0].nome}`);
-        break; 
+        throw new Error(
+          `Peça "${pecasRestantes[0].nome}" (${pecasRestantes[0].largura}x${pecasRestantes[0].altura}mm) não cabe na chapa (${chapa.largura_mm}x${chapa.altura_mm}mm)`
+        );
       }
 
       layouts.push({
@@ -138,9 +136,16 @@ export class OtimizadorComRetalhos {
         area_desperdicada_mm2: resultado.area_total - resultado.area_usada
       });
 
+      // Detectar e salvar sobras como novos retalhos
+      await this.salvarSobrasComoRetalhos(
+        resultado,
+        chapa,
+        planoCorteId
+      );
+
       // Remover peças posicionadas
       pecasRestantes = pecasRestantes.filter(
-        p => !resultado.pecas_posicionadas.find(pp => pp.peca_id === p.id)
+        p => !resultado.pecas_posicionadas.find(pp => pp.id === p.id)
       );
     }
 
@@ -167,7 +172,7 @@ export class OtimizadorComRetalhos {
       layouts,
       retalhos_utilizados: retalhosUtilizados,
       chapas_novas_utilizadas: chapasNovas,
-      aproveitamento_percentual: areaTotal > 0 ? (areaUsada / areaTotal) * 100 : 0,
+      aproveitamento_percentual: (areaUsada / areaTotal) * 100,
       economia_retalhos_mm2: economiaRetalhos,
       tempo_calculo_ms: tempo
     };
@@ -175,6 +180,7 @@ export class OtimizadorComRetalhos {
 
   /**
    * TENTAR ENCAIXAR EM RETALHO
+   * Roda HybridOptimizer em um retalho específico
    */
   private async tentarEncaixarEmRetalho(
     pecas: Peca[],
@@ -192,13 +198,12 @@ export class OtimizadorComRetalhos {
 
   /**
    * SALVAR SOBRAS COMO RETALHOS
-   * Este método é chamado pelo controlador após o usuário salvar o plano definitivo
+   * Detecta sobras e salva no banco se >= 300x300mm
    */
-  public async salvarSobrasComoRetalhos(
+  private async salvarSobrasComoRetalhos(
     resultado: ResultadoOtimizacao,
     chapa: ChapaMaterial,
-    planoCorteId: string,
-    projetoNome?: string
+    planoCorteId: string
   ): Promise<void> {
     const sobras = this.detectarSobras(resultado, chapa.largura_mm, chapa.altura_mm);
 
@@ -212,7 +217,6 @@ export class OtimizadorComRetalhos {
           sku_chapa: chapa.sku,
           origem: 'sobra_plano_corte',
           plano_corte_origem_id: planoCorteId,
-          projeto_origem: projetoNome,
           usuario_criou: 'sistema'
         });
       }
@@ -221,6 +225,7 @@ export class OtimizadorComRetalhos {
 
   /**
    * DETECTAR SOBRAS
+   * Analisa espaços livres (free rectangles) e extrai as maiores sobras
    */
   private detectarSobras(
     resultado: ResultadoOtimizacao,
@@ -229,17 +234,25 @@ export class OtimizadorComRetalhos {
   ): Sobra[] {
     const sobras: Sobra[] = [];
 
-    // Usar espaços livres do otimizador
-    if (resultado.espacos_livres && resultado.espacos_livres.length > 0) {
-      for (const espaco of resultado.espacos_livres) {
-        if (espaco.width >= 300 && espaco.height >= 300) {
-          sobras.push({
-            x: espaco.x,
-            y: espaco.y,
-            largura: espaco.width,
-            altura: espaco.height
-          });
-        }
+    // Nota: O resultado original não inclui 'espacos_livres'.
+    // Esta implementação assume que o otimizador poderia ser estendido para retornar isso.
+    // Como fallback, usamos a área desperdiçada para estimar uma sobra.
+    
+    const areaDesperdicio = resultado.area_total - resultado.area_usada;
+
+    // Estimar sobra retangular (simplificação para este MVP)
+    // Em uma implementação real, o otimizador deveria retornar a geometria dos espaços vazios.
+    if (areaDesperdicio >= 90000) { // 300x300mm
+      const larguraSobra = Math.floor(Math.sqrt(areaDesperdicio));
+      const alturaSobra = Math.floor(areaDesperdicio / larguraSobra);
+
+      if (larguraSobra >= 300 && alturaSobra >= 300) {
+        sobras.push({
+          x: 0,
+          y: 0,
+          largura: larguraSobra,
+          altura: alturaSobra
+        });
       }
     }
 

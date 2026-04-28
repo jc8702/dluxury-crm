@@ -167,7 +167,7 @@ async function handleClasses(req: any, res: any, id?: string) {
         pai_id = COALESCE(${f.pai_id}, pai_id),
         ativa = COALESCE(${f.ativa}, ativa),
         permite_lancamento = COALESCE(${f.permite_lancamento}, permite_lancamento),
-        atualizado_em = NOW()
+        updated_at = NOW()
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });
   }
@@ -404,7 +404,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
           valor_aberto = ${novoValorAberto}, 
           status = ${novoStatus}, 
           data_pagamento = ${novoStatus === 'pago' ? new Date() : null},
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${id}`;
         
         await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa} WHERE id = ${validated.conta_interna_id}`;
@@ -513,7 +513,7 @@ async function handleTitulosReceber(req: any, res: any, id?: string) {
         taxa_financeira = COALESCE(${f.taxa_financeira}, taxa_financeira),
         valor_custo_financeiro = COALESCE(${f.valor_custo_financeiro}, valor_custo_financeiro),
         data_vencimento = COALESCE(${f.data_vencimento ? new Date(f.data_vencimento) : null}, data_vencimento),
-        atualizado_em = NOW() 
+        updated_at = NOW() 
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });
   }
@@ -575,7 +575,7 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
           valor_aberto = ${novoValorAberto}, 
           status = ${novoStatus}, 
           data_pagamento = ${novoStatus === 'pago' ? new Date() : null},
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${id}`;
 
         await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${contaId}`;
@@ -683,7 +683,7 @@ async function handleTitulosPagar(req: any, res: any, id?: string) {
         taxa_financeira = COALESCE(${f.taxa_financeira}, taxa_financeira),
         valor_custo_financeiro = COALESCE(${f.valor_custo_financeiro}, valor_custo_financeiro),
         data_vencimento = COALESCE(${f.data_vencimento ? new Date(f.data_vencimento) : null}, data_vencimento),
-        atualizado_em = NOW() 
+        updated_at = NOW() 
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });
   }
@@ -1257,7 +1257,7 @@ async function handleFechamentos(req: any, res: any, id?: string) {
           status = ${f.status || existing.status || 'fechado'},
           observacoes = ${f.observacoes || existing.observacoes || null},
           data_fechamento = ${dataFechamento},
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${existing.id}
         RETURNING *
       `;
@@ -1498,7 +1498,7 @@ async function handleCondicoesPagamento(req: any, res: any, id?: string) {
         ativo = COALESCE(${f.ativo}, ativo),
         entrada_percentual = COALESCE(${Number(f.entrada_percentual)}, entrada_percentual),
         juros_percentual = COALESCE(${Number(f.juros_percentual)}, juros_percentual),
-        atualizado_em = NOW()
+        updated_at = NOW()
       WHERE id = ${id} RETURNING *`;
     return res.status(200).json({ success: true, data: result[0] });
   }

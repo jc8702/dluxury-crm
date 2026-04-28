@@ -46,6 +46,8 @@ const Estimates: React.FC = () => {
   // Novos campos para parcelamento manual e taxa
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
   const [numParcelas, setNumParcelas] = useState(1);
+  const [tagSearch, setTagSearch] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
 
   const searchSKU = async (q: string) => {
     setSkuSearch(q);
@@ -249,10 +251,14 @@ const [newItem, setNewItem] = useState({
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const clientProjects = projects.filter(p => {
-    const client = clients.find(c => c.id === selectedClient);
-    return client && p.clientName === client.nome;
-  });
+  const clientProjects = useMemo(() => {
+    if (!selectedClient) return [];
+    return projects.filter(p => {
+      if (p.clientId && p.clientId === selectedClient) return true;
+      const client = clients.find(c => c.id === selectedClient);
+      return client && (p.clientName === client.nome || p.cliente_nome === client.nome);
+    });
+  }, [projects, clients, selectedClient]);
 
   const generatePDF_Export = async (itemsList: any[], clientName: string, budgetNum: string, total: number, obs: string) => {
     const doc = new jsPDF();
@@ -377,10 +383,13 @@ const [newItem, setNewItem] = useState({
               <input 
                 style={{...inputStyle, paddingLeft: '2.5rem', borderColor: selectedProject ? 'var(--success)' : 'rgba(212,175,55,0.3)'}} 
                 placeholder="Ex: PRJ-XXXX"
+                value={tagSearch}
+                onFocus={() => setShowTagSuggestions(true)}
                 onChange={(e) => {
-                  const tag = e.target.value.toUpperCase();
-                  if (tag.length < 4) return;
-                  const found = projects.find(p => p.tag === tag);
+                  const val = e.target.value.toUpperCase();
+                  setTagSearch(val);
+                  setShowTagSuggestions(true);
+                  const found = projects.find(p => p.tag === val);
                   if (found) {
                     setSelectedProject(found.id);
                     if (found.clientId) setSelectedClient(found.clientId);
@@ -388,6 +397,27 @@ const [newItem, setNewItem] = useState({
                 }}
               />
               <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              
+              {showTagSuggestions && tagSearch.length >= 2 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a2e', border: '1px solid #d4af37', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+                  {projects.filter(p => p.tag?.includes(tagSearch) || p.ambiente?.toUpperCase().includes(tagSearch)).map(p => (
+                    <div 
+                      key={p.id} 
+                      style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between' }}
+                      onClick={() => {
+                        setSelectedProject(p.id);
+                        if (p.clientId) setSelectedClient(p.clientId);
+                        setTagSearch(p.tag || '');
+                        setShowTagSuggestions(false);
+                      }}
+                    >
+                      <span style={{ fontWeight: 'bold', color: '#d4af37' }}>{p.tag}</span>
+                      <span style={{ fontSize: '0.8rem' }}>{p.ambiente}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {selectedProject && (
                 <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                    <Check size={14} /> <span style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{projects.find(p => p.id === selectedProject)?.tag}</span>

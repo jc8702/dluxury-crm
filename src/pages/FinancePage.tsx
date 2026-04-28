@@ -118,14 +118,17 @@ export default function FinancePage() {
           </div>
 
           {/* Fluxo Projetado */}
-          <div className="card glass" style={{ gridColumn: 'span 4', padding: '1.25rem' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>FLUXO PROJETADO (30d)</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: ((stats.a_receber_30d || 0) - (stats.a_pagar_30d || 0)) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-              {fmt((stats.a_receber_30d || 0) - (stats.a_pagar_30d || 0))}
+          <div className="card glass" style={{ gridColumn: 'span 4', padding: '1.25rem', borderLeft: '4px solid #8b5cf6' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>PROJEÇÃO SALDO (FIM DO MÊS)</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: (stats.saldo_total + (stats.a_receber_30d || 0) - (stats.a_pagar_30d || 0)) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+              {fmt(stats.saldo_total + (stats.a_receber_30d || 0) - (stats.a_pagar_30d || 0))}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              Baseado no saldo atual + títulos vincendos em 30 dias.
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.78rem' }}>
-              <span style={{ color: 'var(--success)' }}>+ {fmt(stats.a_receber_30d || 0)}</span>
-              <span style={{ color: 'var(--danger)' }}>- {fmt(stats.a_pagar_30d || 0)}</span>
+              <span style={{ color: 'var(--success)' }}>Est: + {fmt(stats.a_receber_30d || 0)}</span>
+              <span style={{ color: 'var(--danger)' }}>Est: - {fmt(stats.a_pagar_30d || 0)}</span>
             </div>
           </div>
 

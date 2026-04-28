@@ -443,51 +443,82 @@ const CuttingPlanPage: React.FC = () => {
         const data = await api.orcamentoTecnico.getTree(orc.id);
         const tree = data.ambientes || [];
         
+        let pecasParaProcessar = [];
+
         if (tree && Array.isArray(tree) && tree.length > 0) {
-          tree.forEach(ambiente => {
-            ambiente.moveis?.forEach((movel: any) => {
-              movel.pecas?.forEach((peca: any) => {
-                const espessura = Number(peca.espessura_mm) || Number(peca.espessura) || 15;
-                let grupo = novosGrupos.find(g => 
-                  (peca.material_id && g.materialId === peca.material_id) || 
-                  (peca.sku && g.sku === peca.sku)
-                );
-
-                if (grupo && grupo.espessuraMm !== espessura) grupo = undefined;
-
-                if (!grupo) {
-                  grupo = {
-                    id: Math.random().toString(36).substring(7),
-                    materialId: peca.material_id || '',
-                    sku: peca.sku || `MDF-${espessura}MM`,
-                    nomeMaterial: peca.descricao_material || `MDF ${espessura}mm`,
-                    larguraChapaMm: 2750, 
-                    alturaChapaMm: 1830, 
-                    espessuraMm: espessura,
-                    precoChapa: 0,
-                    chapasAdicionaisManual: 0, 
-                    retalhosDisponiveis: [], 
-                    kerfMm: kerf
-                  };
-                  novosGrupos.push(grupo);
-                }
-
-                novasPecas.push({
-                  id: Math.random().toString(36).substring(7),
-                  descricao: peca.descricao_peca || 'Peça Importada',
-                  larguraMm: Number(peca.largura_cm) * 10,
-                  alturaMm: Number(peca.altura_cm) * 10,
-                  quantidade: Number(peca.quantidade) || 1,
-                  podeRotacionar: peca.sentido_veio !== 'longitudinal' && peca.sentido_veio !== 'transversal',
-                  ambiente: ambiente.nome,
-                  movel: movel.nome,
-                  grupoMaterialId: grupo.id
+          // Extrair da Árvore Técnica (Industrial)
+          tree.forEach(amb => {
+            amb.moveis?.forEach((mov: any) => {
+              mov.pecas?.forEach((p: any) => {
+                pecasParaProcessar.push({
+                  ...p,
+                  ambiente_nome: amb.nome,
+                  movel_nome: mov.nome
                 });
-                totalImportado++;
               });
             });
           });
+        } else {
+          // Fallback: Tentar itens do orçamento (Comercial)
+          const fullOrc = await api.orcamentos.get(orc.id);
+          const itens = fullOrc.itens || [];
+          itens.forEach((itm: any) => {
+            if (itm.largura_cm > 0 && itm.altura_cm > 0) {
+              pecasParaProcessar.push({
+                descricao_peca: itm.descricao,
+                largura_cm: itm.largura_cm,
+                altura_cm: itm.altura_cm,
+                quantidade: itm.quantidade || 1,
+                sku: itm.material,
+                ambiente_nome: itm.ambiente || 'Geral',
+                movel_nome: itm.descricao,
+                espessura_mm: 15 // Default
+              });
+            }
+          });
         }
+
+        pecasParaProcessar.forEach(peca => {
+          const espessura = Number(peca.espessura_mm) || Number(peca.espessura) || 15;
+          const pecaSku = peca.sku ? String(peca.sku).trim().toUpperCase() : null;
+
+          let grupo = novosGrupos.find(g => 
+            (peca.material_id && g.materialId === peca.material_id) || 
+            (pecaSku && String(g.sku).trim().toUpperCase() === pecaSku)
+          );
+
+          if (grupo && grupo.espessuraMm !== espessura) grupo = undefined;
+
+          if (!grupo) {
+            grupo = {
+              id: Math.random().toString(36).substring(7),
+              materialId: peca.material_id || '',
+              sku: pecaSku || `MDF-${espessura}MM`,
+              nomeMaterial: peca.descricao_material || `MDF ${espessura}mm`,
+              larguraChapaMm: 2750, 
+              alturaChapaMm: 1830, 
+              espessuraMm: espessura,
+              precoChapa: 0,
+              chapasAdicionaisManual: 0, 
+              retalhosDisponiveis: [], 
+              kerfMm: kerf
+            };
+            novosGrupos.push(grupo);
+          }
+
+          novasPecas.push({
+            id: Math.random().toString(36).substring(7),
+            descricao: peca.descricao_peca || 'Peça Importada',
+            larguraMm: Math.round(Number(peca.largura_cm) * 10),
+            alturaMm: Math.round(Number(peca.altura_cm) * 10),
+            quantidade: Number(peca.quantidade) || 1,
+            podeRotacionar: peca.sentido_veio !== 'longitudinal' && peca.sentido_veio !== 'transversal',
+            ambiente: peca.ambiente_nome || 'Geral',
+            movel: peca.movel_nome || 'Geral',
+            grupoMaterialId: grupo.id
+          });
+          totalImportado++;
+        });
       }
 
       setGrupos(novosGrupos);
@@ -937,7 +968,7 @@ const CuttingPlanPage: React.FC = () => {
                           {p.title}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '600' }}>
-                           👤 {p.subtitle || 'Cliente não identificado'}
+                           👤 {p.client_name || p.cliente_nome || p.subtitle || 'Cliente não identificado'}
                         </div>
                       </div>
 

@@ -29,7 +29,7 @@ export async function handleRetalhos(req: any, res: any) {
           if (disponivel !== undefined) filters.push(eq(retalhosEstoque.disponivel, disponivel === 'true'));
           if (descartado !== undefined) filters.push(eq(retalhosEstoque.descartado, descartado === 'true'));
 
-          const results = await query.where(and(...filters)).orderBy(retalhosEstoque.criado_em);
+          const results = await query.where(and(...filters)).orderBy(retalhosEstoque.created_at);
           return res.status(200).json({ success: true, data: results });
         }
 
@@ -37,8 +37,8 @@ export async function handleRetalhos(req: any, res: any) {
         // Criar novo retalho
         const [novo] = await db.insert(retalhosEstoque).values({
           ...req.body,
-          criado_em: new Date(),
-          atualizado_em: new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
           usuario_criou: req.user?.nome || 'Sistema'
         }).returning();
         return res.status(201).json({ success: true, data: novo });
@@ -49,7 +49,7 @@ export async function handleRetalhos(req: any, res: any) {
 
         const updateData: any = { 
           ...req.body, 
-          atualizado_em: new Date(),
+          updated_at: new Date(),
           usuario_atualizou: req.user?.nome || 'Sistema'
         };
 

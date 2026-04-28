@@ -49,5 +49,3 @@ export interface FiltrosRetalho {
   disponivel?: boolean;
   descartado?: boolean;
 }
-
-export interface FiltroRetalhos extends FiltrosRetalho {} // Alias para compatibilidade

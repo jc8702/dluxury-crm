@@ -72,7 +72,7 @@ async function auditSKU(payload: any) {
 async function purchaseSuggestion() {
   const estoque = await sql`
     SELECT m.nome, m.estoque_atual, m.estoque_minimo, m.unidade_compra,
-           (SELECT COUNT(*) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida' AND criado_em > NOW() - INTERVAL '30 days') as consumo_30d
+           (SELECT COUNT(*) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida' AND created_at > NOW() - INTERVAL '30 days') as consumo_30d
     FROM materiais m WHERE m.ativo = true AND m.estoque_atual <= m.estoque_minimo * 1.5
   `;
   try {
@@ -154,10 +154,10 @@ async function generateProposalPDF(payload: any) {
 
 async function forecastDemand(payload: any) {
   const historico = await sql`
-    SELECT DATE_TRUNC('month', criado_em) as mes, SUM(valor_total) as receita
+    SELECT DATE_TRUNC('month', created_at) as mes, SUM(valor_total) as receita
     FROM titulos_receber 
-    WHERE criado_em > NOW() - INTERVAL '12 months' AND status = 'recebido'
-    GROUP BY DATE_TRUNC('month', criado_em)
+    WHERE created_at > NOW() - INTERVAL '12 months' AND status = 'recebido'
+    GROUP BY DATE_TRUNC('month', created_at)
     ORDER BY mes
   `;
   try {
@@ -383,13 +383,11 @@ async function handleConfirmAction(history: any[]) {
   }
 
   if (isBOM) {
-    // Busca a mensagem do usuário que originou o projeto (uma antes da última do assistente)
-    // Busca a mensagem do usuário que originou o projeto (uma antes da última do assistente)
+    // Busca a mensagem do usuário que originou o projeto
     const userProjectMsg = [...history].reverse().find((m, i, arr) => m.role === 'user' && i > arr.indexOf(lastAiMessage));
     const msg = userProjectMsg?.content || "";
     
-    const projetoCompleto = gerarProjetoCompleto(msg);
-    const op = gerarOP(projetoCompleto);
+    const op = await gerarOrdemProducao(msg);
 
     // Persiste no banco de dados (MES)
     await sql`
@@ -402,8 +400,12 @@ async function handleConfirmAction(history: any[]) {
     opReport += `**Status:** 🏭 PENDENTE (AGUARDANDO CORTE)\n\n`;
     
     opReport += `#### 📋 Resumo de Materiais Consolidados:\n`;
-    op.materiais.forEach(m => {
-      opReport += `- ${m.descricao}: **${m.quantidade} ${m.unidade}**\n`;
+    // Materiais agora vêm do objeto OP atualizado
+    // Como simplificamos na OP, vamos iterar sobre as peças para mostrar o resumo
+    const materiaisUnicos = [...new Set(op.pecas.map(p => p.material))];
+    materiaisUnicos.forEach(mat => {
+       const qtd = op.pecas.filter(p => p.material === mat).length;
+       opReport += `- ${mat}: **${qtd} peças**\n`;
     });
 
     opReport += `\n**Ação:** Os dados foram enviados para o mapa de corte e separação de materiais.`;
@@ -415,16 +417,16 @@ async function handleConfirmAction(history: any[]) {
 }
 
 async function handleSuggestBOM(entities: Entities, originalMessage: string) {
-  const analise = gerarProjetoCompleto(originalMessage);
-  const { projeto, pecas, planoDeCorte, custo, venda } = analise;
+  const analise = await gerarProjetoCompleto(originalMessage);
+  const { projeto, pecas, planoDeCorte, custo, venda, analise_financeira } = analise;
 
   let report = `### 📋 Engenharia de Projeto: ${projeto.tipo}\n`;
   report += `**Configuração:** ${projeto.largura} x ${projeto.altura} x ${projeto.profundidade} mm (MDF ${projeto.espessura}mm)\n`;
   report += `\n---\n\n`;
 
-  report += `#### 🪚 Plano de Corte (Nesting)\n`;
+  report += `#### 🪚 Plano de Corte (Nesting Real)\n`;
   planoDeCorte.forEach(chapa => {
-    report += `- **Chapa #${chapa.chapaId}** (2750x1850): **${chapa.aproveitamento}%** de aproveitamento\n`;
+    report += `- **Chapa #${chapa.chapaId}** (2750x1840): **${chapa.aproveitamento}%** de aproveitamento real\n`;
   });
   report += `\n---\n\n`;
 
@@ -437,12 +439,24 @@ async function handleSuggestBOM(entities: Entities, originalMessage: string) {
   });
 
   report += `\n---\n\n`;
-  report += `#### 💰 Orçamento Industrial\n`;
-  report += `- **Custo Real (Materiais + Ferragens):** R$ ${custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-  report += `- **Preço de Venda Sugerido:** R$ ${venda.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-  report += `- **Margem Operacional:** ${venda.margem}%\n\n`;
+  report += `#### 💰 Orçamento Industrial (Base Neon DB)\n`;
+  if (analise_financeira) {
+    report += `- **Custo Material (c/ Desperdício):** R$ ${analise_financeira.material.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    report += `- **Mão de Obra (MOD):** R$ ${analise_financeira.mod.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    report += `- **Custo Total Real:** R$ ${analise_financeira.total_custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`;
+    report += `- **Preço de Venda Sugerido (Markup 2.8):** **R$ ${analise_financeira.preco_sugerido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}**\n`;
+    report += `- **Margem Operacional:** ${analise_financeira.margem_contribuicao}%\n\n`;
+  } else {
+    report += `- **Custo Real:** R$ ${custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    report += `- **Preço de Venda Sugerido:** R$ ${venda.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+  }
 
-  report += `> **Ação Recomendada:** Deseja que eu gere os documentos de produção e o orçamento formal para este projeto?`;
+  if (analise.avisos.length > 0) {
+    report += `\n⚠️ **Avisos de Engenharia:**\n`;
+    analise.avisos.forEach(av => report += `- ${av}\n`);
+  }
+
+  report += `\n> **Ação Recomendada:** Deseja que eu gere os documentos de produção e o orçamento formal para este projeto?`;
   
   return { message: report };
 }
@@ -488,10 +502,10 @@ async function processUserMessage(message: string, history: any[] = []) {
       ? `\n\nHistórico:\n${history.map(h => `${h.role === 'user' ? 'Usuário' : 'IA'}: ${h.content}`).join('\n')}` 
       : '';
     
-    const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND criado_em > NOW() - INTERVAL '30 days'`;
+    const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days'`;
     const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
     const clientes = await sql`SELECT nome FROM clientes ORDER BY nome LIMIT 5`;
-    const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY criado_em DESC LIMIT 5`;
+    const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY created_at DESC LIMIT 5`;
     
     const dados = {
       vendasMes: vendas[0]?.total || 0,

@@ -55,8 +55,8 @@ export interface ClasseFinanceira {
   ativa: boolean;
   dt_limite?: string;
   permite_lancamento: boolean;
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ContaInterna {
@@ -70,7 +70,7 @@ export interface ContaInterna {
   saldo_atual: number;
   data_saldo_inicial?: string;
   ativa: boolean;
-  criado_em?: string;
+  created_at?: string;
 }
 
 export interface TituloReceber {
@@ -96,8 +96,8 @@ export interface TituloReceber {
   parcela: number;
   total_parcelas: number;
   observacoes?: string;
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface TituloPagar {
@@ -125,8 +125,8 @@ export interface TituloPagar {
   total_parcelas: number;
   tipo_despesa?: string;
   observacoes?: string;
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 
@@ -146,7 +146,7 @@ export interface Material {
   fornecedor_principal?: string;
   observacoes?: string;
   ativo: boolean;
-  atualizado_em?: string;
+  updated_at?: string;
 }
 
 export interface Orcamento {
@@ -171,8 +171,8 @@ export interface Orcamento {
   aprovado_nome?: string;
   recusado_em?: string;
   motivo_recusa?: string;
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Project {
@@ -247,8 +247,8 @@ export interface PedidoCompra {
   frete: number;
   observacoes?: string;
   origem: 'manual' | 'sugestao_estoque';
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ItemPedidoCompra {
@@ -291,7 +291,7 @@ export interface EventoAgenda {
   observacoes?: string;
   status: 'agendado' | 'confirmado' | 'realizado' | 'cancelado';
   cor?: string;
-  criado_em?: string;
+  created_at?: string;
 }
 
 export interface Notificacao {
@@ -305,5 +305,5 @@ export interface Notificacao {
   referencia_tipo?: 'orcamento' | 'projeto' | 'material' | 'chamado';
   referencia_id?: string;
   url_destino?: string;
-  criado_em?: string;
+  created_at?: string;
 }

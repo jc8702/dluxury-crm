@@ -1,4 +1,4 @@
-import { sql } from './_db.js';
+import { sql, auditLog, validateAuth } from './_db.js';
 import { calcularPrevisaoEntrega } from './_productionForecasting.js';
 
 /**
@@ -66,7 +66,7 @@ async function syncQueueForecasting() {
 }
 
 async function listOPs(res: any) {
-  const ops = await sql`SELECT * FROM ordens_producao ORDER BY created_at DESC`;
+  const ops = await sql`SELECT * FROM ordens_producao WHERE deleted_at IS NULL ORDER BY created_at DESC`;
   
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
   const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
@@ -106,9 +106,12 @@ async function createOP(req: any, res: any) {
 
     const [novaOP] = await sql`
       INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id)
-      VALUES (${op_id}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
+      VALUES (${op_id.trim().toUpperCase()}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
       RETURNING *
     `;
+
+    const { user } = validateAuth(req);
+    await auditLog('ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
 
     console.log('[CREATE_OP] Created:', novaOP);
 
@@ -148,6 +151,9 @@ async function updateOPDetails(req: any, res: any) {
     RETURNING *
   `;
 
+  const { user } = validateAuth(req);
+  await auditLog('ordens_producao', atualizada.id, 'UPDATE_DETAILS', user?.id, existing, atualizada);
+
   // If changed peças, recalcula previsões
   await syncQueueForecasting();
 
@@ -160,19 +166,20 @@ async function updateOPDetails(req: any, res: any) {
  * Exclui uma OP e remove o card do kanban se existir
  */
   async function deleteOP(req: any, res: any) {
+  const { user } = validateAuth(req);
   const { op_id } = req.query || req.body || {};
   if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
 
   const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
   if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
-  await sql`DELETE FROM ordens_producao WHERE op_id = ${op_id}`;
+  // Soft Delete
+  await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id}`;
 
-  // Try to remove kanban item(s) referencing this OP
-  // Prefer explicit op_id field (if present), fallback to searching observations text
-  await sql`DELETE FROM kanban_items WHERE op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
+  // Soft Delete em itens de kanban relacionados
+  await sql`UPDATE kanban_items SET status = 'DELETADO', updated_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
 
-  try { window.dispatchEvent(new CustomEvent('op_deleted', { detail: { op_id } })); } catch (e) {}
+  await auditLog('ordens_producao', existing.id, 'DELETE', user?.id, existing, { deleted_at: new Date() });
 
   return res.status(200).json({ success: true, data: { op_id } });
 }
@@ -255,7 +262,14 @@ async function updateOPStatus(req: any, res: any) {
  * Calcula métricas de produtividade (MES)
  */
 async function getProductionMetrics(res: any) {
-  const allOps = await sql`SELECT * FROM ordens_producao`;
+  // Puxar apenas OPs cujos projetos ainda existem (se tiverem projeto_id)
+  const allOps = await sql`
+    SELECT op.* 
+    FROM ordens_producao op
+    LEFT JOIN projects p ON op.projeto_id = p.id::text
+    WHERE op.deleted_at IS NULL 
+    AND (op.projeto_id IS NULL OR (p.id IS NOT NULL AND p.deleted_at IS NULL))
+  `;
   const agora = Date.now();
   
   const finalizadas = allOps.filter(o => o.status === "FINALIZADA" && o.data_inicio && o.data_fim);

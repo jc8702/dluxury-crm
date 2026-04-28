@@ -71,6 +71,33 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS preco_venda NUMERIC`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`);
 
+  // Migrações de padronização de nomes de colunas (criado_em -> created_at)
+  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamento_ambientes RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamento_moveis RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamento_pecas RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamento_ferragens RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamento_custos_extras RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE notificacoes RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE eventos RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE eventos RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_por TO created_by`).catch(() => {});
+  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE projects RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE erp_product_bom RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  
+  // Garantir que updated_at exista se não existir
+  await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+
   // 7. Users Table
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS users (
@@ -326,8 +353,8 @@ export async function runInitDB() {
       dentro_garantia BOOLEAN DEFAULT TRUE,
       solucao_aplicada TEXT,
       fotos_urls TEXT[],
-      criado_em TIMESTAMPTZ DEFAULT NOW(),
-      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -338,7 +365,7 @@ export async function runInitDB() {
       status_anterior TEXT,
       status_novo TEXT,
       observacao TEXT,
-      criado_em TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -355,7 +382,7 @@ export async function runInitDB() {
       referencia_tipo TEXT,
       referencia_id TEXT, -- Alterado para TEXT (Flexível)
       url_destino TEXT,
-      criado_em TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -378,11 +405,11 @@ export async function runInitDB() {
       status_visita TEXT,
       resultado_visita TEXT,
       responsavel_id TEXT NOT NULL,
-      criado_por TEXT NOT NULL,
+      created_by TEXT NOT NULL,
       cor TEXT,
       lembrete_minutos INTEGER,
-      criado_em TIMESTAMPTZ DEFAULT NOW(),
-      atualizado_em TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -395,7 +422,7 @@ export async function runInitDB() {
       valor_novo TEXT,
       alterado_por TEXT NOT NULL,
       observacao TEXT,
-      alterado_em TIMESTAMPTZ DEFAULT NOW()
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -429,7 +456,7 @@ export async function runInitDB() {
       observacoes TEXT,
       status TEXT DEFAULT 'agendado',
       cor TEXT,
-      criado_em TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
@@ -447,8 +474,8 @@ export async function runInitDB() {
       orcamento_id UUID,
       ordem_producao_id UUID,
       observacoes TEXT,
-      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -500,8 +527,8 @@ export async function runInitDB() {
       data_utilizacao TIMESTAMP WITH TIME ZONE,
       usuario_criou VARCHAR(100),
       usuario_atualizou VARCHAR(100),
-      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       metadata JSONB
     )
   `);

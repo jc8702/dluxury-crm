@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { FileSpreadsheet, Ruler, X, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import { parseCSV } from '../../infrastructure/parsers/CSVParser';
 import { parseSketchUpDAE } from '../../infrastructure/parsers/SketchUpParser';
 
@@ -53,128 +52,77 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
   }, [arquivo, tipo, onImportar, onFechar]);
 
   return (
-    <div className="modal-overlay" onClick={onFechar} style={{ zIndex: 1000 }}>
-      <div 
-        className="modal-content animate-pop-in" 
-        style={{ width: '500px', background: 'var(--surface)', padding: '2rem' }} 
-        onClick={e => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text)', margin: 0 }}>Importar Peças</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Integração direta com SketchUp e planilhas</p>
-          </div>
-          <button onClick={onFechar} className="btn-icon" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-            <X size={24} />
-          </button>
-        </div>
+    <div className="modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="glass" style={{ maxWidth: '450px', width: '90%', padding: '2.5rem', borderRadius: 'var(--radius-lg)' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+          IMPORTAR PEÇAS
+        </h2>
 
         {/* TIPO DE IMPORTAÇÃO */}
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Formato do Projeto
-          </label>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label className="label-base" style={{ marginBottom: '0.75rem', display: 'block' }}>TIPO DE ARQUIVO</label>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button
               onClick={() => setTipo('csv')}
-              className={tipo === 'csv' ? 'btn btn-primary' : 'btn'}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', height: '45px' }}
+              className={tipo === 'csv' ? 'btn-primary' : 'btn-outline'}
+              style={{ flex: 1, padding: '0.75rem' }}
             >
-              <FileSpreadsheet size={18} /> CSV / EXCEL
+              📊 CSV / EXCEL
             </button>
             <button
               onClick={() => setTipo('sketchup')}
-              className={tipo === 'sketchup' ? 'btn btn-primary' : 'btn'}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', height: '45px' }}
+              className={tipo === 'sketchup' ? 'btn-primary' : 'btn-outline'}
+              style={{ flex: 1, padding: '0.75rem' }}
             >
-              <Ruler size={18} /> SKETCHUP
+              📐 SKETCHUP
             </button>
           </div>
         </div>
 
-        {/* AREA DE UPLOAD */}
-        <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Seleção de Arquivo
-          </label>
-          <div 
-            style={{ 
-              border: '2px dashed var(--border-strong)', 
-              borderRadius: 'var(--radius-md)', 
-              padding: '2.5rem 1.5rem', 
-              textAlign: 'center',
-              backgroundColor: 'rgba(255,255,255,0.02)',
-              position: 'relative',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <input
-              type="file"
-              accept={tipo === 'csv' ? '.csv,.txt' : '.dae'}
-              onChange={handleArquivo}
-              style={{ 
-                position: 'absolute', 
-                inset: 0, 
-                opacity: 0, 
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            />
-            {!arquivo ? (
-              <>
-                <Upload size={40} style={{ color: 'var(--primary)', opacity: 0.5, marginBottom: '1rem' }} />
-                <p style={{ fontSize: '0.9rem', color: 'var(--text)', fontWeight: '600' }}>Clique ou arraste o arquivo</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  {tipo === 'csv' ? 'Suporta .csv e .txt' : 'Suporta arquivos COLLADA .dae'}
-                </p>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={40} style={{ color: 'var(--success)', marginBottom: '1rem' }} />
-                <p style={{ fontSize: '0.9rem', color: 'var(--text)', fontWeight: '700' }}>{arquivo.name}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  {(arquivo.size / 1024).toFixed(1)} KB - Pronto para importar
-                </p>
-              </>
-            )}
-          </div>
+        {/* UPLOAD ARQUIVO */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label className="label-base" style={{ marginBottom: '0.75rem', display: 'block' }}>SELECIONAR ARQUIVO</label>
+          <input
+            type="file"
+            accept={tipo === 'csv' ? '.csv,.txt' : '.dae'}
+            onChange={handleArquivo}
+            className="input"
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
+          {arquivo && (
+            <p style={{ fontSize: '0.7rem', color: 'var(--success)', marginTop: '0.5rem', fontWeight: '600' }}>
+              ✓ {arquivo.name} ({(arquivo.size / 1024).toFixed(1)} KB)
+            </p>
+          )}
         </div>
 
-        {/* MENSAGEM DE ERRO */}
+        {/* ERRO */}
         {erro && (
-          <div style={{ 
-            marginBottom: '1.5rem', 
-            padding: '1rem', 
-            backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-            border: '1px solid rgba(239, 68, 68, 0.2)', 
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            color: '#ef4444',
-            fontSize: '0.85rem'
+          <div style={{
+            marginBottom: '1.5rem', padding: '1rem',
+            background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)',
+            borderRadius: 'var(--radius-sm)', color: 'var(--danger)', fontSize: '0.8rem', fontWeight: '500'
           }}>
-            <AlertCircle size={18} />
-            {erro}
+            ⚠️ {erro}
           </div>
         )}
 
         {/* AÇÕES */}
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
           <button
             onClick={onFechar}
-            className="btn"
-            style={{ flex: 1, height: '48px' }}
+            className="btn-outline"
+            style={{ flex: 1 }}
           >
             CANCELAR
           </button>
           <button
             onClick={handleImportar}
             disabled={!arquivo || processando}
-            className="btn btn-primary"
-            style={{ flex: 2, height: '48px', fontWeight: 'bold', letterSpacing: '0.05em' }}
+            className="btn-primary"
+            style={{ flex: 1 }}
           >
-            {processando ? 'PROCESSANDO...' : 'EXECUTAR IMPORTAÇÃO'}
+            {processando ? 'PROCESSANDO...' : 'IMPORTAR AGORA'}
           </button>
         </div>
       </div>

@@ -995,7 +995,7 @@ async function getTopSKUs(args: any, ctx: ToolExecutionContext): Promise<AiToolR
     FROM orcamentos o
     JOIN itens_orcamento io ON io.orcamento_id = o.id
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${start} AND ${end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${start} AND ${end}
   `;
 
   const grouped = new Map<string, { nome: string; quantidade: number; valor_total: number }>();
@@ -1045,7 +1045,7 @@ async function getCurvaABCClientes(args: any, ctx: ToolExecutionContext): Promis
     FROM orcamentos o
     LEFT JOIN clients c ON c.id::text = o.cliente_id::text
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${start} AND ${end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${start} AND ${end}
     GROUP BY 1
     ORDER BY valor DESC
   `;
@@ -1105,9 +1105,9 @@ async function getPerformanceVendas(args: any, ctx: ToolExecutionContext): Promi
       o.numero,
       o.status,
       o.valor_final::numeric as valor_final,
-      COALESCE(o.atualizado_em, o.criado_em) as data_ref
+      COALESCE(o.updated_at, o.created_at) as data_ref
     FROM orcamentos o
-    WHERE COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${start} AND ${end}
+    WHERE COALESCE(o.updated_at, o.created_at) BETWEEN ${start} AND ${end}
   `;
 
   const grouped = groupByPeriod(
@@ -1172,7 +1172,7 @@ async function getProdutosMaisLucrativos(args: any, ctx: ToolExecutionContext): 
     JOIN itens_orcamento io ON io.orcamento_id = o.id
     LEFT JOIN materiais m ON LOWER(TRIM(m.nome)) = LOWER(TRIM(io.material))
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${start} AND ${end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${start} AND ${end}
   `;
 
   const grouped = new Map<string, { nome: string; quantidade: number; receita_total: number; custo_total: number; lucro_bruto: number; margem: number }>();
@@ -1339,9 +1339,9 @@ async function getPlanosCorteSalvos(args: any): Promise<AiToolResult> {
   const limit = Math.min(Math.max(safeNumber(args?.limite) || 10, 1), 50);
   try {
     const rows = await sql`
-      SELECT id, nome, sku_engenharia, materiais, resultado, criado_em, atualizado_em
+      SELECT id, nome, sku_engenharia, materiais, resultado, created_at, updated_at
       FROM planos_de_corte
-      ORDER BY criado_em DESC
+      ORDER BY created_at DESC
       LIMIT ${limit}
     `;
 
@@ -1359,7 +1359,7 @@ async function getPlanosCorteSalvos(args: any): Promise<AiToolResult> {
         sku_engenharia: row.sku_engenharia,
         chapas_necessarias: chapasNecessarias,
         aproveitamento,
-        criado_em: row.criado_em,
+        created_at: row.created_at,
       };
     });
 
@@ -1376,8 +1376,8 @@ async function getPlanosCorteSalvos(args: any): Promise<AiToolResult> {
         title: 'Planos de Corte',
       },
       table_data: buildTable(
-        ['Plano', 'SKU', 'Chapas', 'Aproveitamento', 'Criado em'],
-        mapped.map((row) => [row.nome, row.sku_engenharia || '-', row.chapas_necessarias, formatPercent(row.aproveitamento), formatDatePt(row.criado_em)]),
+        ['Plano', 'SKU', 'Chapas', 'Aproveitamento', 'Created at'],
+        mapped.map((row) => [row.nome, row.sku_engenharia || '-', row.chapas_necessarias, formatPercent(row.aproveitamento), formatDatePt(row.created_at)]),
       ),
       suggestions: makeSuggestions('getPlanosCorteSalvos'),
       meta: { total: mapped.length, planos: mapped },
@@ -1422,10 +1422,10 @@ async function getComparativoMensal(args: any, ctx: ToolExecutionContext): Promi
     WHERE created_at BETWEEN ${monthRefs[0].start} AND ${monthRefs[monthRefs.length - 1].end}
   `;
   const budgetRows = await sql`
-    SELECT COALESCE(o.atualizado_em, o.criado_em) as data_ref, o.valor_final::numeric as valor_final
+    SELECT COALESCE(o.updated_at, o.created_at) as data_ref, o.valor_final::numeric as valor_final
     FROM orcamentos o
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${monthRefs[0].start} AND ${monthRefs[monthRefs.length - 1].end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${monthRefs[0].start} AND ${monthRefs[monthRefs.length - 1].end}
   `;
 
   const monthly = monthRefs.map((monthRef) => {
@@ -1506,10 +1506,10 @@ async function getPrevisaoFaturamento(args: any, ctx: ToolExecutionContext): Pro
   `;
 
   const budgetRows = await sql`
-    SELECT COALESCE(o.atualizado_em, o.criado_em) as data_ref, o.valor_final::numeric as valor_final, o.cliente_id, o.id as orcamento_id
+    SELECT COALESCE(o.updated_at, o.created_at) as data_ref, o.valor_final::numeric as valor_final, o.cliente_id, o.id as orcamento_id
     FROM orcamentos o
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${monthRefs[0].start} AND ${monthRefs[monthRefs.length - 1].end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${monthRefs[0].start} AND ${monthRefs[monthRefs.length - 1].end}
   `;
 
   const currentRevenue = revenueRows.filter((row: any) => {
@@ -1588,7 +1588,7 @@ async function getMargemPorTipoProjeto(args: any, ctx: ToolExecutionContext): Pr
     FROM orcamentos o
     LEFT JOIN projects p ON p.id::text = o.projeto_id::text
     WHERE LOWER(COALESCE(o.status, '')) = 'aprovado'
-      AND COALESCE(o.atualizado_em, o.criado_em) BETWEEN ${start} AND ${end}
+      AND COALESCE(o.updated_at, o.created_at) BETWEEN ${start} AND ${end}
     GROUP BY 1
     ORDER BY receita_total DESC
   `;

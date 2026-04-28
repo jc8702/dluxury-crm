@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
-import { CheckSquare, ArrowLeft, ArrowRight, Edit2, Play, CheckCircle2, Trash2, Plus, X } from 'lucide-react';
+import { CheckSquare, ArrowLeft, ArrowRight, Edit2, Play, CheckCircle2, Trash2, Plus, X, MessageCircle } from 'lucide-react';
+import { WhatsAppService } from '../../modules/plano-corte/infrastructure/services/WhatsAppService';
 
 type StatusCol = "AGUARDANDO" | "PRODUCAO" | "MONTAGEM" | "PINTURA" | "INSPECAO" | "PRONTO" | "FINALIZADO";
 
@@ -109,6 +110,24 @@ const ProductionPanel: React.FC = () => {
       const updated = await api.production.updateStatus(op.op_id, novoStatus);
       if (updated) {
         setOps(prev => prev.map(o => o.op_id === op.op_id ? updated : o));
+        
+        // Notificações Inteligentes
+        if (novoStatus === "PRODUCAO") {
+          await WhatsAppService.notificarProducaoIniciada(
+            op.produto, // Simulado
+            "4799999-9999", 
+            op.produto
+          );
+        }
+
+        if (novoStatus === "PRONTO") {
+          await api.notificacoes.generate();
+          await WhatsAppService.notificarProjetoPronto(
+            op.produto, 
+            "4799999-9999", 
+            op.produto
+          );
+        }
       }
     } catch (e: any) {
       console.error('Erro ao atualizar status da OP', e);
@@ -163,12 +182,17 @@ const deleteOP = useCallback(async (op_id: string) => {
 
   const colunas: { id: StatusCol, label: string, color: string }[] = [
     { id: "AGUARDANDO", label: "Aguardando", color: "#6b7280" },
-    { id: "PRODUCAO", label: "Produção", color: "#f59e0b" },
-    { id: "MONTAGEM", label: "Montagem", color: "#3b82f6" },
+    { id: "PRODUCAO", label: "Produção / Corte", color: "#f59e0b" },
+    { id: "MONTAGEM", label: "Montagem / Acabamento", color: "#3b82f6" },
     { id: "INSPECAO", label: "Inspeção Final", color: "#ec4899" },
     { id: "PRONTO", label: "Pronto p/ Entrega", color: "#10b981" },
     { id: "FINALIZADO", label: "Finalizado", color: "#059669" }
   ];
+
+  const handleVerMapaCorte = (op: OrdemProducao) => {
+    // Redireciona para o plano de corte com o contexto do projeto/OP
+    window.location.hash = `/plano-de-corte?projetoId=${op.projeto_id || ''}&opId=${op.op_id}`;
+  };
 
   const defaultTasksByStatus: Record<string, string[]> = {
     "AGUARDANDO": [],
@@ -253,7 +277,34 @@ const deleteOP = useCallback(async (op_id: string) => {
               {op.data_prevista_entrega ? new Date(op.data_prevista_entrega).toLocaleDateString('pt-BR') : '--'}
             </span>
           </div>
+          {op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() && (
+            <div style={{ fontSize: '0.55rem', color: '#ef4444', fontWeight: 'bold', textAlign: 'right' }}>⚠️ EM ATRASO</div>
+          )}
         </div>
+
+        {/* Link para Mapa de Corte se estiver em Produção */}
+        {["PRODUCAO", "MONTAGEM"].includes(op.status) && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleVerMapaCorte(op); }}
+            style={{ 
+              width: '100%', 
+              background: 'rgba(212, 175, 55, 0.1)', 
+              border: '1px dashed #d4af37', 
+              color: '#d4af37', 
+              padding: '6px', 
+              borderRadius: '8px', 
+              fontSize: '0.65rem', 
+              fontWeight: '700',
+              marginTop: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px'
+            }}
+          >
+            <Edit2 size={10} /> VER MAPA DE CORTE
+          </button>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', gap: '4px' }}>

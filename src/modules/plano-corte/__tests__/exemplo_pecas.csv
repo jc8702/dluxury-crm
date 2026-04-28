@@ -1,0 +1,6 @@
+nome,largura_mm,altura_mm,quantidade,rotacionavel,fio_topo,fio_baixo,fio_esq,fio_dir
+Porta Armario,700,2100,2,sim,1,1,1,1
+Lateral Cozinha,550,800,4,sim,1,0,1,0
+Prateleira MDF,600,350,10,sim,1,0,0,0
+Tampo Mesa,1200,800,1,nao,1,1,1,1
+Fundo Gaveta,450,400,6,sim,0,0,0,0

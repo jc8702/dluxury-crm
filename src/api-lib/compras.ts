@@ -17,10 +17,10 @@ export async function handleCompras(req: any, res: any) {
           return res.status(200).json({ success: true, data: { ...pedido, itens } });
         }
         if (req.query.fornecedor_id) {
-          const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' ORDER BY p.criado_em DESC`;
+          const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' ORDER BY p.created_at DESC`;
           return res.status(200).json({ success: true, data: result });
         }
-        const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id ORDER BY p.criado_em DESC`;
+        const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id ORDER BY p.created_at DESC`;
         return res.status(200).json({ success: true, data: result });
       }
 
@@ -81,7 +81,7 @@ export async function handleCompras(req: any, res: any) {
             valor_total = COALESCE(${valorTotal}, valor_total),
             frete = COALESCE(${f.frete}, frete),
             observacoes = COALESCE(${f.observacoes}, observacoes),
-            atualizado_em = NOW()
+            updated_at = NOW()
           WHERE id = ${id} RETURNING *
         `;
         const pedido = result[0];
@@ -188,7 +188,7 @@ export async function handleCompras(req: any, res: any) {
           `;
 
           // 5. Atualizar estoque_atual em materiais
-          await sql`UPDATE materiais SET estoque_atual = estoque_atual + ${r.quantidade}, preco_custo = ${item.preco_unitario}, atualizado_em = NOW() WHERE id = ${item.material_id}`;
+          await sql`UPDATE materiais SET estoque_atual = estoque_atual + ${r.quantidade}, preco_custo = ${item.preco_unitario}, updated_at = NOW() WHERE id = ${item.material_id}`;
         }
 
         // 6. Atualizar status do pedido

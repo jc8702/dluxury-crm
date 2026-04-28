@@ -14,8 +14,8 @@ export const classesFinanceiras = pgTable('classes_financeiras', {
   ativa: boolean('ativa').default(true),
   dt_limite: timestamp('dt_limite'),
   permite_lancamento: boolean('permite_lancamento').default(true),
-  criado_em: timestamp('criado_em').defaultNow(),
-  atualizado_em: timestamp('atualizado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
 });
 
 // ──────────────────────────────────────────
@@ -33,7 +33,7 @@ export const contasInternas = pgTable('contas_internas', {
   saldo_atual: numeric('saldo_atual', { precision: 15, scale: 2 }).default('0'),
   data_saldo_inicial: timestamp('data_saldo_inicial'),
   ativa: boolean('ativa').default(true),
-  criado_em: timestamp('criado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
 });
 
 // ──────────────────────────────────────────
@@ -71,11 +71,11 @@ export const titulosReceber = pgTable('titulos_receber', {
   valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default('0'),
   observacoes: text('observacoes'),
 
-  criado_em: timestamp('criado_em').defaultNow(),
-  atualizado_em: timestamp('atualizado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
   // Auditoria / soft-delete
-  criado_por: uuid('criado_por'),
-  atualizado_por: uuid('atualizado_por'),
+  created_by: uuid('created_by'),
+  updated_by: uuid('updated_by'),
   deletado: boolean('deletado').default(false),
   excluido_em: timestamp('excluido_em'),
 });
@@ -117,10 +117,10 @@ export const titulosPagar = pgTable('titulos_pagar', {
   tipo_despesa: varchar('tipo_despesa', { length: 30 }),
   observacoes: text('observacoes'),
 
-  criado_em: timestamp('criado_em').defaultNow(),
-  atualizado_em: timestamp('atualizado_em').defaultNow(),
-  criado_por: uuid('criado_por'),
-  atualizado_por: uuid('atualizado_por'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+  created_by: uuid('created_by'),
+  updated_by: uuid('updated_by'),
   deletado: boolean('deletado').default(false),
   excluido_em: timestamp('excluido_em'),
 });
@@ -140,7 +140,7 @@ export const movimentacoesTesouraria = pgTable('movimentacoes_tesouraria', {
   descricao: varchar('descricao', { length: 500 }).notNull(),
   comprovante_url: varchar('comprovante_url', { length: 500 }),
   conciliado: boolean('conciliado').default(false),
-  criado_em: timestamp('criado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
 });
 
 // ──────────────────────────────────────────
@@ -158,9 +158,9 @@ export const baixas = pgTable('baixas', {
   data_baixa: timestamp('data_baixa').notNull(),
   conta_interna_id: uuid('conta_interna_id').references(() => contasInternas.id).notNull(),
   observacoes: text('observacoes'),
-  criado_em: timestamp('criado_em').defaultNow(),
-  criado_por: uuid('criado_por'),
-  atualizado_por: uuid('atualizado_por'),
+  created_at: timestamp('created_at').defaultNow(),
+  created_by: uuid('created_by'),
+  updated_by: uuid('updated_by'),
 });
 
 // ──────────────────────────────────────────
@@ -188,7 +188,7 @@ export const condicoesPagamento = pgTable('condicoes_pagamento', {
   entrada_percentual: numeric('entrada_percentual', { precision: 5, scale: 2 }).default('0'),
   juros_percentual: numeric('juros_percentual', { precision: 5, scale: 2 }).default('0'),
   ativo: boolean('ativo').default(true),
-  criado_em: timestamp('criado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
 });
 
 // ──────────────────────────────────────────
@@ -206,7 +206,7 @@ export const contasRecorrentes = pgTable('contas_recorrentes', {
   forma_pagamento_id: uuid('forma_pagamento_id').references(() => formasPagamento.id),
   conta_bancaria_id: uuid('conta_bancaria_id').references(() => contasInternas.id),
   ativa: boolean('ativa').default(true),
-  criado_em: timestamp('criado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
 });
 
 // Contadores para numeração de documentos e sequências por entidade
@@ -215,5 +215,5 @@ export const counters = pgTable('counters', {
   entidade: varchar('entidade', { length: 100 }).notNull(),
   chave: varchar('chave', { length: 100 }),
   seq: integer('seq').default(0),
-  criado_em: timestamp('criado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
 });

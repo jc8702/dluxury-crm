@@ -92,7 +92,7 @@ export class EventosRepository {
         responsavel_id = ${validated.responsavel_id}::TEXT,
         cor = ${validated.cor},
         lembrete_minutos = ${validated.lembrete_minutos},
-        atualizado_em = NOW()
+        updated_at = NOW()
       WHERE id::TEXT = ${id}::TEXT
       RETURNING *
     `;
@@ -110,7 +110,7 @@ export class EventosRepository {
       UPDATE eventos SET
         status_visita = ${status},
         resultado_visita = ${resultado || null},
-        atualizado_em = NOW()
+        updated_at = NOW()
       WHERE id::TEXT = ${id}::TEXT
       RETURNING *
     `;

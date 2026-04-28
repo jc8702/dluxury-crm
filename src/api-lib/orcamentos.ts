@@ -1,4 +1,4 @@
-import { sql, validateAuth } from './_db.js';
+import { sql, validateAuth, auditLog } from './_db.js';
 import { calculateBOM } from './_bomEngine.js';
 import { reserveStockForProject } from './_inventory.js';
 import { Orcamento } from './types.js';
@@ -11,7 +11,8 @@ export async function handleOrcamentos(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (id) {
-        const orc = (await sql`SELECT * FROM orcamentos WHERE id = ${id}`)[0];
+        const orc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+        if (!orc) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
         const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} ORDER BY id ASC`;
         return res.status(200).json({ success: true, data: { ...orc, itens: itms } });
       }
@@ -23,26 +24,25 @@ export async function handleOrcamentos(req: any, res: any) {
         FROM orcamentos o 
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text 
         LEFT JOIN projects p ON o.projeto_id::text = p.id::text
+        WHERE o.deleted_at IS NULL
         ORDER BY o.created_at DESC
       `;
       return res.status(200).json({ success: true, data: result });
     }
 
     if (req.method === 'POST') {
+      const { user } = validateAuth(req);
       const f = req.body;
       
-      // Nova Lógica de Numeração PRO-DIA-MES-ANO-REVISAO-CLIENTE
       const now = new Date();
       const dia = now.getDate().toString().padStart(2, '0');
       const mes = (now.getMonth() + 1).toString().padStart(2, '0');
       const ano = now.getFullYear();
       const dataStr = `${dia}${mes}${ano}`;
 
-      // Busca nome do cliente para o sufixo
       const client = (await sql`SELECT nome FROM clients WHERE id = ${f.cliente_id}`)[0];
       const clientSuffix = (client?.nome || 'AVULSO').split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-      // Contador de revisões para este prefixo no dia
       const prefix = `PRO-${dataStr}-REV`;
       const relatives = await sql`SELECT numero FROM orcamentos WHERE numero LIKE ${prefix + '%'}`;
       const revNum = relatives.length.toString().padStart(2, '0');
@@ -77,18 +77,28 @@ export async function handleOrcamentos(req: any, res: any) {
           await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total) VALUES (${orcId}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total})`;
         }
       }
+
+      await auditLog('orcamentos', orcId, 'CREATE', user?.id, null, orc[0]);
+
       return res.status(201).json({ success: true, data: { ...orc[0], itens: f.itens } });
     }
 
     if (req.method === 'PATCH') {
+      const { user } = validateAuth(req);
       const f = req.body;
-      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), projeto_id = COALESCE(${f.projeto_id}, projeto_id), visita_id = COALESCE(${f.visita_id}, visita_id), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), atualizado_em = NOW() WHERE id = ${id} RETURNING *`;
+      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
+
+      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), projeto_id = COALESCE(${f.projeto_id}, projeto_id), visita_id = COALESCE(${f.visita_id}, visita_id), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), updated_at = NOW() WHERE id = ${id} RETURNING *`;
+      
       if (Array.isArray(f.itens)) {
         await sql`DELETE FROM itens_orcamento WHERE orcamento_id = ${id}`;
         for (const itm of f.itens) {
           await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total) VALUES (${id}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total})`;
         }
       }
+
+      await auditLog('orcamentos', id, 'UPDATE', user?.id, before[0], orc[0]);
       if (f.status === 'aprovado') {
         const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL`;
         for (const itm of itms) {
@@ -144,7 +154,18 @@ export async function handleOrcamentos(req: any, res: any) {
     }
 
     if (req.method === 'DELETE') {
-      await sql`DELETE FROM orcamentos WHERE id = ${id}`;
+      const { user } = validateAuth(req);
+      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
+
+      // Soft Delete
+      await sql`UPDATE orcamentos SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      
+      // Soft Delete em títulos financeiros vinculados
+      await sql`UPDATE titulos_receber SET status = 'cancelado', deleted_at = CURRENT_TIMESTAMP WHERE orcamento_id = ${id}`;
+      
+      await auditLog('orcamentos', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
+
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -200,7 +221,7 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
           margem_minima_alerta = COALESCE(${f.margem_minima_alerta}, margem_minima_alerta),
           espessura_chapa_padrao = COALESCE(${f.espessura_chapa_padrao}, espessura_chapa_padrao),
           recuo_fundo_padrao = COALESCE(${f.recuo_fundo_padrao}, recuo_fundo_padrao),
-          atualizado_em = NOW() 
+          updated_at = NOW() 
         RETURNING *`;
       }
       if (type === 'ambiente' && id) result = await sql`UPDATE orcamento_ambientes SET nome = COALESCE(${f.nome}, nome), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} RETURNING *`;

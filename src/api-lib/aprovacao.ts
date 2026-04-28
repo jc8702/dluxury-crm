@@ -37,7 +37,7 @@ export async function handleAprovacao(req: any, res: any) {
           token_aprovacao = ${newToken},
           url_aprovacao = ${url},
           status = 'enviado',
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${orcamento_id}
         RETURNING *
       `;
@@ -56,7 +56,7 @@ export async function handleAprovacao(req: any, res: any) {
           aprovado_em = NOW(),
           aprovado_ip = ${ip},
           aprovado_nome = ${nome},
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE token_aprovacao = ${token}
         RETURNING id, numero
       `;
@@ -74,7 +74,7 @@ export async function handleAprovacao(req: any, res: any) {
           status = 'revisao_solicitada',
           recusado_em = NOW(),
           motivo_recusa = ${motivo},
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE token_aprovacao = ${token}
       `;
       return res.status(200).json({ success: true });

@@ -5,6 +5,10 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'process.env': {},
+    'global': 'window'
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

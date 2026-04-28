@@ -1,4 +1,4 @@
-import { sql, validateAuth } from './_db.js';
+import { sql, validateAuth, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
 import { Project } from './types.js';
 
@@ -57,22 +57,24 @@ export async function handleProjects(req: any, res: any) {
         try {
           // Migrar itens que ainda não estão no projects (usando titulo/ambiente como chave de unicidade simples para evitar duplicatas em massa)
           await sql`
-            INSERT INTO projects (client_name, cliente_nome, ambiente, title, status, observations, created_at, updated_at)
+            INSERT INTO projects (client_id, client_name, cliente_nome, ambiente, title, status, observations, created_at, updated_at)
             SELECT 
-              subtitle as client_name, 
-              subtitle as cliente_nome,
-              title as ambiente,
-              title as title,
-              status, 
-              observations, 
-              COALESCE(updated_at, NOW()), 
+              c.id::text as client_id,
+              COALESCE(ki.subtitle, ki.contact_name, 'Cliente Sem Nome') as client_name, 
+              COALESCE(ki.subtitle, ki.contact_name, 'Cliente Sem Nome') as cliente_nome,
+              COALESCE(ki.title, ki.label, 'Ambiente Sem Nome') as ambiente,
+              COALESCE(ki.title, ki.label, 'Projeto Sem Nome') as title,
+              ki.status, 
+              ki.observations, 
+              COALESCE(ki.updated_at, ki.created_at, NOW()), 
               NOW()
             FROM kanban_items ki
+            LEFT JOIN clients c ON TRIM(UPPER(c.nome)) = TRIM(UPPER(COALESCE(ki.subtitle, ki.contact_name)))
             WHERE (ki.type = 'project' OR ki.type IS NULL)
             AND NOT EXISTS (
               SELECT 1 FROM projects p 
-              WHERE p.ambiente = ki.title 
-              AND (p.client_name = ki.subtitle OR p.client_name = ki.contact_name)
+              WHERE TRIM(UPPER(p.ambiente)) = TRIM(UPPER(ki.title)) 
+              AND (TRIM(UPPER(p.client_name)) = TRIM(UPPER(ki.subtitle)) OR TRIM(UPPER(p.client_name)) = TRIM(UPPER(ki.contact_name)))
             )
             ON CONFLICT DO NOTHING
           `;
@@ -85,53 +87,77 @@ export async function handleProjects(req: any, res: any) {
       console.error('Database setup error in projects:', e);
     }
     if (req.method === 'GET') {
-      const { client_id, status } = req.query;
+      const { client_id, status, q } = req.query;
       
-      const query = client_id 
-        ? sql`
-            SELECT p.*, o.valor_final as valor_orcamento_atual
-            FROM projects p
-            LEFT JOIN (
-              SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-              FROM orcamentos
-              ORDER BY projeto_id, criado_em DESC
-            ) o ON p.id::text = o.projeto_id::text
-            WHERE p.client_id = ${client_id}
-            ORDER BY p.created_at DESC
-          `
-        : status 
-          ? sql`
-              SELECT p.*, o.valor_final as valor_orcamento_atual
-              FROM projects p
-              LEFT JOIN (
-                SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-                FROM orcamentos
-                ORDER BY projeto_id, criado_em DESC
-              ) o ON p.id::text = o.projeto_id::text
-              WHERE p.status = ${status}
-              ORDER BY p.created_at DESC
-            `
-          : sql`
-              SELECT 
-                p.*, 
-                COALESCE(p.client_name, p.cliente_nome) as client_name,
-                COALESCE(p.cliente_nome, p.client_name) as cliente_nome,
-                COALESCE(p.ambiente, p.title, p.titulo) as ambiente,
-                COALESCE(p.title, p.ambiente) as title,
-                o.valor_final as valor_orcamento_atual
-              FROM projects p
-              LEFT JOIN (
-                SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-                FROM orcamentos
-                ORDER BY projeto_id, created_at DESC
-              ) o ON p.id::text = o.projeto_id::text
-              ORDER BY p.updated_at DESC
-            `;
+      let query;
+      if (q) {
+        // Busca por TAG ou Nome (PRJ- autocomplete)
+        query = sql`
+          SELECT p.*, 
+                 COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
+                 c.nome as client_name
+          FROM projects p
+          LEFT JOIN clients c ON p.client_id = c.id::text
+          WHERE p.deleted_at IS NULL 
+          AND (p.tag ILIKE ${'%' + q + '%'} OR p.ambiente ILIKE ${'%' + q + '%'} OR c.nome ILIKE ${'%' + q + '%'})
+          ORDER BY p.updated_at DESC
+          LIMIT 10
+        `;
+      } else if (client_id) {
+        query = sql`
+          SELECT p.*, 
+                 COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
+                 o.valor_final as valor_orcamento_atual
+          FROM projects p
+          LEFT JOIN (
+            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+            FROM orcamentos
+            ORDER BY projeto_id, created_at DESC
+          ) o ON p.id::text = o.projeto_id::text
+          WHERE p.client_id = ${client_id} AND p.deleted_at IS NULL
+          ORDER BY p.created_at DESC
+        `;
+      } else if (status) {
+        query = sql`
+          SELECT p.*, 
+                 COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
+                 o.valor_final as valor_orcamento_atual
+          FROM projects p
+          LEFT JOIN (
+            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+            FROM orcamentos
+            ORDER BY projeto_id, created_at DESC
+          ) o ON p.id::text = o.projeto_id::text
+          WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.deleted_at IS NULL
+          ORDER BY p.created_at DESC
+        `;
+      } else {
+        query = sql`
+          SELECT 
+            p.*, 
+            COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
+            COALESCE(p.client_name, p.cliente_nome, c.nome) as client_name,
+            COALESCE(p.cliente_nome, p.client_name, c.nome) as cliente_nome,
+            COALESCE(p.ambiente, p.title, p.titulo) as ambiente,
+            COALESCE(p.title, p.ambiente) as title,
+            o.valor_final as valor_orcamento_atual
+          FROM projects p
+          LEFT JOIN clients c ON p.client_id = c.id::text
+          LEFT JOIN (
+            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
+            FROM orcamentos
+            ORDER BY projeto_id, created_at DESC
+          ) o ON p.id::text = o.projeto_id::text
+          WHERE p.deleted_at IS NULL
+          ORDER BY p.updated_at DESC
+        `;
+      }
 
       const result = await query;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
+      const { user } = validateAuth(req);
       const f = req.body;
       const tag = f.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       const result = await sql`
@@ -154,10 +180,19 @@ export async function handleProjects(req: any, res: any) {
           ${f.visita_id || f.visitaId}, 
           ${tag}
         ) RETURNING *`;
+      
+      await auditLog('projects', result[0].id, 'CREATE', user?.id, null, result[0]);
+      
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
+      const { user } = validateAuth(req);
+      const { id } = req.query;
       const f = req.body;
+      
+      const before = await sql`SELECT * FROM projects WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
+
       const r = await sql`
         UPDATE projects SET 
           client_id = COALESCE(${f.client_id || f.clientId}, client_id), 
@@ -175,15 +210,32 @@ export async function handleProjects(req: any, res: any) {
           orcamento_id = COALESCE(${f.orcamento_id || f.orcamentoId}, orcamento_id), 
           tag = COALESCE(${f.tag}, tag), 
           updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ${req.query.id} RETURNING *`;
+        WHERE id = ${id} RETURNING *`;
+
+      await auditLog('projects', id, 'UPDATE', user?.id, before[0], r[0]);
+
       if (r.length && f.status === 'concluido') {
-        const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${req.query.id}`;
+        const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id}`;
         for (const itm of itms) await writeOffStockForProject(itm.id);
       }
       return res.status(200).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {
-      await sql`DELETE FROM projects WHERE id = ${req.query.id}`;
+      const { user } = validateAuth(req);
+      const { id } = req.query;
+      
+      const before = await sql`SELECT * FROM projects WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
+
+      // Soft Delete: Marcar como deletado e registrar auditoria
+      await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      
+      // Limpar ordens de produção vinculadas (Hard delete ou Soft delete conforme política)
+      // Aqui usamos Soft Delete também nas OPs se houver a coluna
+      await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE projeto_id = ${id} OR metadata->>'projeto_id' = ${id}`;
+      
+      await auditLog('projects', id, 'DELETE', user?.id, before[0], { deleted_at: new Date().toISOString() });
+      
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -227,7 +279,7 @@ export async function handleEngineering(req: any, res: any) {
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao NUMERIC DEFAULT 150`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao NUMERIC DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS atualizado_em TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
     
     // Force Null em colunas legadas (hotfix industrial v6)
     try {
@@ -311,7 +363,7 @@ export async function handleEngineering(req: any, res: any) {
           valor_hora_padrao = COALESCE(${f.valor_hora_padrao}, valor_hora_padrao),
           preco_material_m3_padrao = COALESCE(${f.preco_material_m3_padrao}, preco_material_m3_padrao),
           regras_calculo = COALESCE(${f.regras_calculo ? JSON.stringify(f.regras_calculo) : null}::jsonb, regras_calculo),
-          atualizado_em = NOW()
+          updated_at = NOW()
         WHERE id = ${id}
         RETURNING *
       `;

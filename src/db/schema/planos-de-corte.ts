@@ -13,8 +13,9 @@ export const planosDeCorte = pgTable('planos_de_corte', {
   orcamento_id: uuid('orcamento_id'),
   ordem_producao_id: uuid('ordem_producao_id'),
   observacoes: text('observacoes'),
-  criado_em: timestamp('criado_em').defaultNow(),
-  atualizado_em: timestamp('atualizado_em').defaultNow(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+  deleted_at: timestamp('deleted_at'),
 });
 
 // 2. Tabela de Chapas (Estoque Industrial)
@@ -59,8 +60,9 @@ export const retalhosEstoque = pgTable('retalhos_estoque', {
   motivo_descarte: varchar('motivo_descarte', { length: 255 }),
   data_descarte: timestamp('data_descarte', { withTimezone: true }),
   localizacao: varchar('localizacao', { length: 100 }),
-  criado_em: timestamp('criado_em', { withTimezone: true }).defaultNow().notNull(),
-  atualizado_em: timestamp('atualizado_em', { withTimezone: true }).defaultNow().notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deleted_at: timestamp('deleted_at', { withTimezone: true }),
   usuario_criou: varchar('usuario_criou', { length: 100 }),
   usuario_atualizou: varchar('usuario_atualizou', { length: 100 }),
   metadata: jsonb('metadata').default({}),

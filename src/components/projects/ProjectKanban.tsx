@@ -248,6 +248,19 @@ const closeModal = () => {
             </select>
           </div>
 
+          <div style={{ padding: '1rem', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Identificador Único (TAG)</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: '900', color: '#d4af37' }}>
+                {editingItem?.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`}
+              </span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Status Atual</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--primary)' }}>{formData.status.toUpperCase()}</span>
+            </div>
+          </div>
+
           <div>
             <label style={labelStyle}>Responsável (Marceneiro)</label>
             <input style={inputStyle} placeholder="Ex: João"

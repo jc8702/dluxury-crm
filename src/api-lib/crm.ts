@@ -1,4 +1,4 @@
-import { sql, validateAuth } from './_db.js';
+import { sql, validateAuth, auditLog } from './_db.js';
 import { ApiResponse, Client, KanbanItem } from './types.js';
 
 export async function handleClients(req: any, res: any) {
@@ -7,7 +7,7 @@ export async function handleClients(req: any, res: any) {
     // const { authorized, error } = validateAuth(req);
     // if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM clients ORDER BY created_at DESC`;
+      const result = await sql`SELECT * FROM clients WHERE deleted_at IS NULL ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
@@ -31,6 +31,10 @@ export async function handleClients(req: any, res: any) {
           ${cnpjVal}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}
         ) RETURNING *
       `;
+
+      const { user } = validateAuth(req);
+      await auditLog('clients', result[0].id, 'CREATE', user?.id, null, result[0]);
+
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
@@ -38,6 +42,10 @@ export async function handleClients(req: any, res: any) {
       const f = req.body;
       const comodosStr = Array.isArray(f.comodos_interesse) ? f.comodos_interesse.join(', ') : (f.comodos_interesse || null);
       
+      const { user } = validateAuth(req);
+      const before = await sql`SELECT * FROM clients WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
+
       const result = await sql`
         UPDATE clients SET 
           nome = COALESCE(${f.nome}, nome), 
@@ -58,10 +66,27 @@ export async function handleClients(req: any, res: any) {
           situacao_cadastral = COALESCE(${f.status === 'ativo' ? 'ATIVA' : f.status === 'inativo' ? 'INATIVA' : null}, situacao_cadastral)
         WHERE id = ${id} RETURNING *
       `;
+
+      await auditLog('clients', id, 'UPDATE', user?.id, before[0], result[0]);
+
       return res.status(200).json({ success: true, data: result[0] });
     }
     if (req.method === 'DELETE') {
-      await sql`DELETE FROM clients WHERE id = ${req.query.id}`;
+      const { user } = validateAuth(req);
+      const { id } = req.query;
+      
+      const before = await sql`SELECT * FROM clients WHERE id = ${id}`;
+      if (!before.length) return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
+
+      // Soft Delete
+      await sql`UPDATE clients SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      
+      // Propagar Soft Delete para projetos e orçamentos vinculados
+      await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE client_id = ${id} OR client_id::text = ${id}`;
+      await sql`UPDATE orcamentos SET deleted_at = CURRENT_TIMESTAMP WHERE cliente_id = ${id} OR cliente_id::text = ${id}`;
+      
+      await auditLog('clients', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
+
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -83,7 +108,7 @@ export async function handleKanban(req: any, res: any) {
         LEFT JOIN (
           SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
           FROM orcamentos
-          ORDER BY projeto_id, criado_em DESC
+          ORDER BY projeto_id, created_at DESC
         ) o ON k.id::text = o.projeto_id::text
         ORDER BY k.updated_at DESC
       `;

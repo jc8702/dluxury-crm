@@ -19,8 +19,8 @@ export async function handleNotificacoes(req: any, res: any) {
       const limit = req.query.limit || 50;
       const unreadOnly = req.query.unread === 'true';
       const query = unreadOnly 
-        ? sql`SELECT * FROM notificacoes WHERE lida = false ORDER BY criado_em DESC LIMIT ${limit}`
-        : sql`SELECT * FROM notificacoes ORDER BY criado_em DESC LIMIT ${limit}`;
+        ? sql`SELECT * FROM notificacoes WHERE lida = false ORDER BY created_at DESC LIMIT ${limit}`
+        : sql`SELECT * FROM notificacoes ORDER BY created_at DESC LIMIT ${limit}`;
       
       const result = await query;
       return res.status(200).json({ success: true, data: result });
@@ -102,7 +102,7 @@ export async function gerarNotificacoesAutomaticas() {
       FROM orcamentos o
       JOIN clients c ON o.cliente_id::text = c.id::text
       WHERE o.status = 'enviado'
-      AND o.atualizado_em < NOW() - INTERVAL '7 days'
+      AND o.updated_at < NOW() - INTERVAL '7 days'
     `;
     for (const o of orcamentos) {
       const exists = await sql`
@@ -125,7 +125,7 @@ export async function gerarNotificacoesAutomaticas() {
       SELECT id, numero, titulo
       FROM chamados_garantia
       WHERE status IN ('aberto', 'agendado')
-      AND criado_em < NOW() - INTERVAL '3 days'
+      AND created_at < NOW() - INTERVAL '3 days'
     `;
     for (const g of garantias) {
       const exists = await sql`

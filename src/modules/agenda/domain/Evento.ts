@@ -52,8 +52,8 @@ export const EventoSchema = z.object({
   cor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Cor inválida").optional().nullable(),
   lembrete_minutos: z.number().int().min(0).optional().nullable(),
   
-  criado_em: z.date().optional(),
-  atualizado_em: z.date().optional(),
+  created_at: z.date().optional(),
+  updated_at: z.date().optional(),
 }).refine(data => data.data_fim > data.data_inicio, {
   message: "A data de fim deve ser posterior à data de início",
   path: ["data_fim"],

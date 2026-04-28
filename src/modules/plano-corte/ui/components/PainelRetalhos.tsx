@@ -28,20 +28,18 @@ export const PainelRetalhos: React.FC = () => {
     setLoading(true);
     try {
       const data = await retalhosRepository.listarEstoque();
-      // Aplicar filtros locais por enquanto para agilidade
       let filtrados = data;
       if (filtro.sku_chapa) filtrados = filtrados.filter(r => r.sku_chapa.includes(filtro.sku_chapa!));
       if (filtro.disponivel !== undefined) filtrados = filtrados.filter(r => r.disponivel === filtro.disponivel);
       
       setRetalhos(filtrados);
       
-      // Calcular stats
       const total = filtrados.length;
-      const area = filtrados.reduce((acc, r) => acc + (r.largura_mm * r.altura_mm), 0) / 1000000; // m2
+      const area = filtrados.reduce((acc, r) => acc + (r.largura_mm * r.altura_mm), 0) / 1000000;
       setStats({
         total,
         areaTotal: area,
-        economiaEstimada: area * 150 // R$ 150/m2 médio
+        economiaEstimada: area * 150
       });
     } catch (error) {
       console.error('Erro ao carregar retalhos:', error);
@@ -61,168 +59,175 @@ export const PainelRetalhos: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#0D1117] min-h-screen p-6 text-gray-200">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* HEADER & STATS */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Package className="text-[#E2AC00]" />
-            Estoque de Retalhos Reutilizáveis
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', letterSpacing: '-0.02em' }}>
+            <Package size={28} />
+            ESTOQUE DE RETALHOS
           </h1>
-          <p className="text-gray-400 mt-1">Gerencie as sobras de corte e otimize seu consumo de MDF</p>
+          <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Otimização e reuso de sobras de MDF industrial</p>
         </div>
 
-        <div className="flex gap-4">
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <StatCard 
-            label="Total Itens" 
+            label="TOTAL ITENS" 
             value={stats.total} 
-            icon={<Layers className="text-blue-400" />} 
+            icon={<Layers size={18} style={{ color: 'var(--info)' }} />} 
           />
           <StatCard 
-            label="Área Total" 
+            label="ÁREA TOTAL" 
             value={`${stats.areaTotal.toFixed(2)} m²`} 
-            icon={<Package className="text-green-400" />} 
+            icon={<Package size={18} style={{ color: 'var(--success)' }} />} 
           />
           <StatCard 
-            label="Economia" 
+            label="ECONOMIA" 
             value={`R$ ${stats.economiaEstimada.toLocaleString()}`} 
-            icon={<CheckCircle2 className="text-yellow-400" />} 
+            icon={<CheckCircle2 size={18} style={{ color: 'var(--warning)' }} />} 
           />
         </div>
       </div>
 
       {/* FILTROS */}
-      <div className="bg-[#161B22] p-4 rounded-xl border border-[#30363D] mb-6 flex flex-wrap gap-4 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+      <div className="glass" style={{ padding: '1.25rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Filtrar por SKU (MDF-BRANCO...)"
-            className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg py-2 pl-10 pr-4 focus:border-[#E2AC00] outline-none"
+            placeholder="Filtrar por SKU (ex: MDF-BRANCO-18)..."
+            className="input"
+            style={{ width: '100%', paddingLeft: '2.5rem' }}
             onChange={(e) => setFiltro({ ...filtro, sku_chapa: e.target.value })}
           />
         </div>
 
         <select 
-          className="bg-[#0D1117] border border-[#30363D] rounded-lg py-2 px-4 outline-none"
+          className="input"
+          style={{ minWidth: '150px' }}
           onChange={(e) => setFiltro({ ...filtro, disponivel: e.target.value === 'true' })}
         >
-          <option value="true">Disponíveis</option>
-          <option value="false">Todos</option>
+          <option value="true">DISPONÍVEIS</option>
+          <option value="false">TODOS OS REGISTROS</option>
         </select>
 
-        <button className="flex items-center gap-2 bg-[#21262D] hover:bg-[#30363D] px-4 py-2 rounded-lg transition-colors">
-          <Filter className="w-4 h-4" />
-          Mais Filtros
+        <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Filter size={16} />
+          FILTROS AVANÇADOS
         </button>
       </div>
 
       {/* TABELA */}
-      <div className="bg-[#161B22] rounded-xl border border-[#30363D] overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[#21262D] text-gray-400 text-sm uppercase tracking-wider">
-              <th className="px-6 py-4 font-semibold">Material / SKU</th>
-              <th className="px-6 py-4 font-semibold">Dimensões (mm)</th>
-              <th className="px-6 py-4 font-semibold">Origem</th>
-              <th className="px-6 py-4 font-semibold">Estado</th>
-              <th className="px-6 py-4 font-semibold">Data</th>
-              <th className="px-6 py-4 font-semibold text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#30363D]">
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  <div className="flex justify-center mb-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E2AC00]"></div>
-                  </div>
-                  Carregando estoque...
-                </td>
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Material / SKU</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Dimensões (mm)</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Origem</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Data</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'right' }}>Ações</th>
               </tr>
-            ) : retalhos.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  Nenhum retalho encontrado com os filtros atuais.
-                </td>
-              </tr>
-            ) : (
-              retalhos.map((retalho) => (
-                <tr key={retalho.id} className="hover:bg-[#1C2128] transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-white">{retalho.sku_chapa}</div>
-                    <div className="text-xs text-gray-500">{retalho.nome_material || 'MDF Industrial'}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#23863622] text-[#3fb950] px-2 py-0.5 rounded text-xs border border-[#23863644]">
-                        {retalho.largura_mm} x {retalho.altura_mm}
-                      </span>
-                      <span className="text-gray-500 text-xs">{retalho.espessura_mm}mm</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    <div className="flex items-center gap-1">
-                      {retalho.origem === 'sobra_plano_corte' ? <History className="w-3 h-3" /> : <Package className="w-3 h-3" />}
-                      {retalho.origem.replace('_', ' ')}
-                    </div>
-                    {retalho.projeto_origem && (
-                      <div className="text-[10px] text-gray-600 truncate max-w-[150px]">{retalho.projeto_origem}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {retalho.disponivel ? (
-                      <span className="flex items-center gap-1.5 text-xs text-green-400">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></div>
-                        Em Estoque
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div>
-                        Utilizado
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
-                    {new Date(retalho.criado_em).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 hover:bg-[#30363D] rounded-lg text-gray-400 hover:text-white transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                      {retalho.disponivel && (
-                        <button 
-                          onClick={() => handleDescarte(retalho.id)}
-                          className="p-2 hover:bg-red-900/30 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <div style={{ display: 'inline-block', width: '2rem', height: '2rem', border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }}></div>
+                    <p>Sincronizando estoque industrial...</p>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : retalhos.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Nenhum retalho disponível em estoque.
+                  </td>
+                </tr>
+              ) : (
+                retalhos.map((retalho) => (
+                  <tr key={retalho.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--text)' }}>{retalho.sku_chapa}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{retalho.nome_material || 'MDF PADRÃO'}</div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ background: 'var(--badge-success-bg)', color: 'var(--badge-success-text)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid var(--success-border)' }}>
+                          {retalho.largura_mm} x {retalho.altura_mm}
+                        </span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{retalho.espessura_mm}mm</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {retalho.origem === 'sobra_plano_corte' ? <History size={12} /> : <Package size={12} />}
+                        {retalho.origem.replace('_', ' ').toUpperCase()}
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      {retalho.disponivel ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--success)', fontWeight: '800' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
+                          DISPONÍVEL
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--border-strong)' }}></div>
+                          UTILIZADO
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {new Date(retalho.criado_em).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <button className="btn-icon" title="Ver Detalhes">
+                          <ExternalLink size={16} />
+                        </button>
+                        {retalho.disponivel && (
+                          <button 
+                            onClick={() => handleDescarte(retalho.id)}
+                            className="btn-icon" 
+                            style={{ color: 'var(--danger)' }}
+                            title="Descartar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* RODAPÉ INFO */}
-      <div className="mt-6 flex items-center gap-2 text-xs text-gray-500">
-        <AlertTriangle className="w-3 h-3 text-[#E2AC00]" />
-        <span>Retalhos menores que 300x300mm são automaticamente descartados pelo sistema para otimizar espaço.</span>
+      <div className="glass" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid var(--warning)' }}>
+        <AlertTriangle size={16} style={{ color: 'var(--warning)' }} />
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+          POLÍTICA DE DESCARTE: Retalhos menores que 300x300mm são automaticamente removidos para otimização de espaço físico.
+        </span>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };
 
 const StatCard: React.FC<{ label: string; value: string | number; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="bg-[#161B22] border border-[#30363D] p-4 rounded-xl min-w-[140px]">
-    <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+  <div className="card" style={{ padding: '1.25rem', minWidth: '160px', flex: 1 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
       {icon}
       {label}
     </div>
-    <div className="text-xl font-bold text-white">{value}</div>
+    <div style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text)' }}>{value}</div>
   </div>
 );

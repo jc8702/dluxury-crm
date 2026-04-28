@@ -56,7 +56,10 @@ export async function parseCSV(arquivo: File): Promise<PecaCSV[]> {
                          rotacionavelStr?.toLowerCase() === 'true' ||
                          rotacionavelStr === '1';
 
-    const fio_de_fita = (fitoT || fitoB || fitoE || fitoD) ? {
+    const fio_de_fita = (fitoT === '1' || fitoT?.toLowerCase() === 'sim' ||
+                         fitoB === '1' || fitoB?.toLowerCase() === 'sim' ||
+                         fitoE === '1' || fitoE?.toLowerCase() === 'sim' ||
+                         fitoD === '1' || fitoD?.toLowerCase() === 'sim') ? {
       topo: fitoT === '1' || fitoT?.toLowerCase() === 'sim',
       baixo: fitoB === '1' || fitoB?.toLowerCase() === 'sim',
       esquerda: fitoE === '1' || fitoE?.toLowerCase() === 'sim',

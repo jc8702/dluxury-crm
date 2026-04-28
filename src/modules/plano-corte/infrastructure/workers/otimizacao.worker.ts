@@ -1,62 +1,141 @@
 import { HybridOptimizer } from '../../domain/services/HybridOptimizer';
-import type { Peca, ResultadoOtimizacao } from '../../domain/types';
+import type { Peca, ResultadoOtimizacao } from '../../domain/services/MaxRectsOptimizer';
 
-interface WorkerInput {
-  pecas: Peca[];
-  chapas: { 
-    id: string; 
-    largura: number; 
-    altura: number; 
-    isRetalho?: boolean; 
-    grupoId: string; 
-  }[];
-  config: {
-    kerf: number;
-    iteracoes: number;
-    algoritmo: string;
+/**
+ * INTERFACE: Mensagem do worker (entrada)
+ */
+interface MensagemEntrada {
+  tipo: 'otimizar' | 'cancelar';
+  payload?: {
+    materiais: Array<{
+      sku: string;
+      largura_mm: number;
+      altura_mm: number;
+      pecas: Peca[];
+    }>;
+    kerf_mm?: number;
+    iteracoes?: number;
   };
 }
 
-self.onmessage = (e: MessageEvent<WorkerInput>) => {
-  const { pecas, chapas, config } = e.data;
+/**
+ * INTERFACE: Mensagem do worker (saída)
+ */
+interface MensagemSaida {
+  tipo: 'progresso' | 'resultado' | 'erro' | 'concluido';
+  material_sku?: string;
+  progresso?: number; // 0-100
+  resultado?: ResultadoOtimizacao;
+  erro?: string;
+  totalMateriais?: number;
+  materialAtual?: number;
+}
 
-  try {
-    const resultados: ResultadoOtimizacao[] = [];
-    let pecasRestantes = [...pecas];
-    const totalPecasInicial = pecas.length;
+/**
+ * ESTADO DO WORKER
+ */
+let cancelarOperacao = false;
 
-    for (const chapa of chapas) {
-      if (pecasRestantes.length === 0) break;
+/**
+ * EVENT LISTENER: Receber mensagens do thread principal
+ */
+self.onmessage = async (event: MessageEvent<MensagemEntrada>) => {
+  const { tipo, payload } = event.data;
 
-      const optimizer = new HybridOptimizer(chapa.largura, chapa.altura, config.kerf);
-      const res = optimizer.otimizar(pecasRestantes, config.iteracoes);
+  if (tipo === 'cancelar') {
+    cancelarOperacao = true;
+    self.postMessage({
+      tipo: 'concluido',
+      erro: 'Operação cancelada pelo usuário'
+    } as MensagemSaida);
+    return;
+  }
 
-      if (res.pecas_posicionadas.length > 0) {
-        res.chapa_id = chapa.id;
-        res.grupo_id = chapa.grupoId;
-        res.is_retalho = chapa.isRetalho || false;
-        
-        resultados.push(res);
-
-        // Remover peças encaixadas
-        const idsEncaixados = new Set(res.pecas_posicionadas.map(p => p.peca_id));
-        pecasRestantes = pecasRestantes.filter(p => !idsEncaixados.has(p.id));
-      }
-
-      // Reportar progresso
-      const porcentagem = Math.round(((totalPecasInicial - pecasRestantes.length) / totalPecasInicial) * 100);
-      self.postMessage({ type: 'PROGRESS', progress: porcentagem });
+  if (tipo === 'otimizar' && payload) {
+    try {
+      await processarOtimizacao(payload);
+    } catch (erro) {
+      self.postMessage({
+        tipo: 'erro',
+        erro: erro instanceof Error ? erro.message : 'Erro desconhecido'
+      } as MensagemSaida);
     }
-
-    self.postMessage({
-      type: 'SUCCESS',
-      payload: resultados
-    });
-
-  } catch (error: any) {
-    self.postMessage({
-      type: 'ERROR',
-      error: error.message
-    });
   }
 };
+
+/**
+ * PROCESSAR OTIMIZAÇÃO
+ * Pode ter múltiplos materiais (chapas) para otimizar
+ */
+async function processarOtimizacao(payload: {
+  materiais: Array<{
+    sku: string;
+    largura_mm: number;
+    altura_mm: number;
+    pecas: Peca[];
+  }>;
+  kerf_mm?: number;
+  iteracoes?: number;
+}): Promise<void> {
+  const {
+    materiais,
+    kerf_mm = 3,
+    iteracoes = 20
+  } = payload;
+
+  const totalMateriais = materiais.length;
+  cancelarOperacao = false;
+
+  for (let i = 0; i < materiais.length; i++) {
+    if (cancelarOperacao) {
+      break;
+    }
+
+    const material = materiais[i];
+
+    // Enviar: começando processamento deste material
+    self.postMessage({
+      tipo: 'progresso',
+      material_sku: material.sku,
+      progresso: Math.round((i / totalMateriais) * 100),
+      totalMateriais,
+      materialAtual: i + 1
+    } as MensagemSaida);
+
+    // Executar otimização
+    const optimizer = new HybridOptimizer(
+      material.largura_mm,
+      material.altura_mm,
+      kerf_mm
+    );
+
+    const resultado = optimizer.otimizar(material.pecas, iteracoes);
+
+    // Enviar: resultado para este material
+    self.postMessage({
+      tipo: 'resultado',
+      material_sku: material.sku,
+      resultado,
+      progresso: Math.round(((i + 1) / totalMateriais) * 100),
+      totalMateriais,
+      materialAtual: i + 1
+    } as MensagemSaida);
+
+    // Pequena pausa para não bloquear completamente a thread principal
+    // (permite que o navegador processe outras coisas)
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+
+  // Enviar: operação concluída
+  self.postMessage({
+    tipo: 'concluido',
+    progresso: 100,
+    totalMateriais,
+    materialAtual: totalMateriais
+  } as MensagemSaida);
+}
+
+/**
+ * EXPORTER: Para uso em testes ou Node.js
+ */
+export {};

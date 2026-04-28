@@ -1,50 +1,34 @@
-export interface Peca {
-  id: string;
-  nome: string;
-  largura_mm: number;
-  altura_mm: number;
-  quantidade: number;
-  rotacionavel?: boolean;
+import { Peca } from "../services/MaxRectsOptimizer";
+
+export interface PecaPosicionada extends Peca {
+  x: number;
+  y: number;
+  rotacionada: boolean;
   fio_de_fita?: {
-    topo: boolean;
-    baixo: boolean;
-    esquerda: boolean;
-    direita: boolean;
+    topo?: boolean;
+    baixo?: boolean;
+    esquerda?: boolean;
+    direita?: boolean;
   };
 }
 
-export interface ChapaMaterial {
-  sku: string;
-  largura_mm: number;
-  altura_mm: number;
-  espessura_mm?: number;
-  pecas: Peca[];
-}
-
-export interface PecaPosicionada {
-  peca_id: string;
-  nome: string;
-  x: number;
-  y: number;
-  largura: number;
-  altura: number;
-  rotacionada: boolean;
-  fio_de_fita?: any;
-}
-
 export interface LayoutChapa {
+  tipo: 'retalho' | 'chapa_inteira';
   chapa_sku: string;
-  indice_chapa: number;
-  largura_original_mm?: number;
-  altura_original_mm?: number;
+  retalho_id?: string;
+  indice_chapa?: number;
+  largura_original_mm: number;
+  altura_original_mm: number;
   pecas_posicionadas: PecaPosicionada[];
   area_aproveitada_mm2: number;
   area_desperdicada_mm2: number;
 }
 
 export interface ResultadoOtimizacao {
-  chapas_necessarias: number;
-  aproveitamento_percentual: number;
   layouts: LayoutChapa[];
+  retalhos_utilizados: number;
+  chapas_novas_utilizadas: number;
+  aproveitamento_percentual: number;
+  economia_retalhos_mm2: number;
   tempo_calculo_ms: number;
 }
