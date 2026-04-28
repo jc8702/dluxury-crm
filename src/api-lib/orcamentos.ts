@@ -15,7 +15,16 @@ export async function handleOrcamentos(req: any, res: any) {
         const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} ORDER BY id ASC`;
         return res.status(200).json({ success: true, data: { ...orc, itens: itms } });
       }
-      const result = await sql`SELECT o.*, c.nome as cliente_nome FROM orcamentos o LEFT JOIN clients c ON o.cliente_id::text = c.id::text ORDER BY o.criado_em DESC`;
+      const result = await sql`
+        SELECT 
+          o.*, 
+          c.nome as cliente_nome,
+          p.title as projeto_nome
+        FROM orcamentos o 
+        LEFT JOIN clients c ON o.cliente_id::text = c.id::text 
+        LEFT JOIN projects p ON o.projeto_id::text = p.id::text
+        ORDER BY o.created_at DESC
+      `;
       return res.status(200).json({ success: true, data: result });
     }
 
@@ -160,11 +169,11 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
         for (const amb of ambs) {
           amb.moveis = await sql`SELECT * FROM orcamento_moveis WHERE ambiente_id = ${amb.id} ORDER BY ordem ASC`;
           for (const mov of amb.moveis) {
-            mov.pecas = await sql`SELECT * FROM orcamento_pecas WHERE movel_id = ${mov.id} ORDER BY criado_em ASC`;
-            mov.ferragens = await sql`SELECT * FROM orcamento_ferragens WHERE movel_id = ${mov.id} ORDER BY criado_em ASC`;
+            mov.pecas = await sql`SELECT * FROM orcamento_pecas WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
+            mov.ferragens = await sql`SELECT * FROM orcamento_ferragens WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
           }
         }
-        const extras = await sql`SELECT * FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} ORDER BY criado_em ASC`;
+        const extras = await sql`SELECT * FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} ORDER BY created_at ASC`;
         return res.status(200).json({ success: true, data: { ambientes: ambs, extras } });
       }
     }

@@ -24,7 +24,7 @@ interface KanbanBoardProps {
   onDelete?: (id: string) => void;
 }
 
-const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit }) => {
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit, onDelete }) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {

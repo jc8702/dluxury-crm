@@ -186,7 +186,88 @@ export async function runInitDB() {
       valor_total DECIMAL(12,2),
       erp_product_id UUID,
       erp_parametros JSONB DEFAULT '{}',
-      criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 13.1 Technical Budget Tables
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS orcamento_ambientes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      nome TEXT NOT NULL,
+      ordem INTEGER DEFAULT 0,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS orcamento_moveis (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      ambiente_id UUID REFERENCES orcamento_ambientes(id) ON DELETE CASCADE,
+      nome TEXT NOT NULL,
+      tipo_movel TEXT,
+      largura_total_cm DECIMAL(10,2),
+      altura_total_cm DECIMAL(10,2),
+      profundidade_total_cm DECIMAL(10,2),
+      erp_product_id UUID,
+      observacoes TEXT,
+      ordem INTEGER DEFAULT 0,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS orcamento_pecas (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
+      material_id TEXT,
+      sku TEXT,
+      descricao_peca TEXT,
+      largura_cm DECIMAL(10,2),
+      altura_cm DECIMAL(10,2),
+      espessura_mm DECIMAL(10,2) DEFAULT 15,
+      quantidade INTEGER DEFAULT 1,
+      m2_unitario DECIMAL(12,4),
+      m2_total DECIMAL(12,4),
+      fator_perda_pct DECIMAL(5,2),
+      m2_com_perda DECIMAL(12,4),
+      preco_custo_m2 DECIMAL(12,2),
+      custo_total_peca DECIMAL(12,2),
+      metros_fita_borda DECIMAL(12,2),
+      fita_material_id TEXT,
+      sentido_veio TEXT DEFAULT 'longitudinal',
+      desconto_fita_mm DECIMAL(5,2) DEFAULT 0,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS orcamento_ferragens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
+      material_id TEXT,
+      sku TEXT,
+      descricao TEXT,
+      quantidade DECIMAL(12,2) DEFAULT 1,
+      unidade TEXT DEFAULT 'UN',
+      preco_custo_unitario DECIMAL(12,2),
+      custo_total DECIMAL(12,2),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS orcamento_custos_extras (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      descricao TEXT NOT NULL,
+      tipo TEXT,
+      forma_calculo TEXT,
+      percentual_ou_valor DECIMAL(12,2),
+      m2_total_referencia DECIMAL(12,4),
+      valor_calculado DECIMAL(12,2),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
 

@@ -46,18 +46,39 @@ export async function handleProjects(req: any, res: any) {
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS observations TEXT`.catch(() => {});
 
-      // Migração de emergência: Se projects estiver vazio, tenta puxar do kanban (tabela antiga)
-      const count = await sql`SELECT count(*) FROM projects`;
-      if (parseInt(count[0].count) === 0) {
+      // Migração de emergência: Se projects estiver vazio ou com poucos dados, tenta puxar do kanban_items (tabela antiga)
+      const countResult = await sql`SELECT count(*) FROM projects`;
+      const projectsCount = parseInt(countResult[0].count);
+      
+      const kanbanItemsCountResult = await sql`SELECT count(*) FROM kanban_items WHERE type = 'project' OR type IS NULL`;
+      const kanbanItemsCount = parseInt(kanbanItemsCountResult[0].count);
+
+      if (projectsCount < kanbanItemsCount) {
         try {
+          // Migrar itens que ainda não estão no projects (usando titulo/ambiente como chave de unicidade simples para evitar duplicatas em massa)
           await sql`
-            INSERT INTO projects (id, client_id, client_name, ambiente, status, observations, created_at, updated_at)
-            SELECT id::uuid, client_id, subtitle, title, status, observations, created_at, NOW()
-            FROM kanban
+            INSERT INTO projects (client_name, cliente_nome, ambiente, title, status, observations, created_at, updated_at)
+            SELECT 
+              subtitle as client_name, 
+              subtitle as cliente_nome,
+              title as ambiente,
+              title as title,
+              status, 
+              observations, 
+              COALESCE(updated_at, NOW()), 
+              NOW()
+            FROM kanban_items ki
+            WHERE (ki.type = 'project' OR ki.type IS NULL)
+            AND NOT EXISTS (
+              SELECT 1 FROM projects p 
+              WHERE p.ambiente = ki.title 
+              AND (p.client_name = ki.subtitle OR p.client_name = ki.contact_name)
+            )
             ON CONFLICT DO NOTHING
           `;
+          console.log('Migration from kanban_items completed successfully.');
         } catch (migErr) {
-          console.error('Migration from kanban failed:', migErr);
+          console.error('Migration from kanban_items failed:', migErr);
         }
       }
     } catch (e) {
@@ -102,7 +123,7 @@ export async function handleProjects(req: any, res: any) {
               LEFT JOIN (
                 SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
                 FROM orcamentos
-                ORDER BY projeto_id, criado_em DESC
+                ORDER BY projeto_id, created_at DESC
               ) o ON p.id::text = o.projeto_id::text
               ORDER BY p.updated_at DESC
             `;

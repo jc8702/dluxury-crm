@@ -59,7 +59,7 @@ export function CanvasAvancado({
   
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || canvas.offsetWidth === 0) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -106,10 +106,6 @@ export function CanvasAvancado({
     });
 
     ctx.restore();
-
-    // Desenhar estatísticas (overlay)
-    desenharEstatisticas(ctx, layout, pecas, chapaDimensoes, canvas.offsetWidth);
-
   }, [layout, pecas, viewport, hoveredPeca, showGrid, showMeasurements, chapaDimensoes]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -231,7 +227,7 @@ export function CanvasAvancado({
 
   const fitToScreen = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || canvas.offsetWidth === 0) return;
 
     const containerWidth = canvas.offsetWidth - REGUA_HEIGHT * 2;
     const containerHeight = canvas.offsetHeight - REGUA_HEIGHT * 2;
@@ -282,14 +278,14 @@ export function CanvasAvancado({
         onClick={handleClick}
       />
 
-      {/* TOOLBAR - CONTROLES DE ZOOM (Reposicionado para evitar sobreposição) */}
+      {/* TOOLBAR - CONTROLES DE ZOOM (Reposicionado para a ESQUERDA para evitar sobreposição com estatísticas) */}
       <div style={{
         position: 'absolute',
-        bottom: '5.5rem',
+        bottom: '1.5rem',
         right: '1.5rem',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '2px',
+        flexDirection: 'row',
+        gap: '4px',
         backgroundColor: 'var(--surface-overlay)',
         backdropFilter: 'blur(10px)',
         border: '1px solid var(--border-strong)',
@@ -298,16 +294,16 @@ export function CanvasAvancado({
         boxShadow: 'var(--shadow-md)',
         zIndex: 50
       }}>
-        <button onClick={zoomIn} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent' }} title="Zoom In">
-          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
+        <button onClick={zoomIn} className="btn" style={{ padding: '4px', minWidth: '32px', height: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Zoom In">
+          <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>+</span>
         </button>
-        <button onClick={zoomOut} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent' }} title="Zoom Out">
-          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>−</span>
+        <button onClick={zoomOut} className="btn" style={{ padding: '4px', minWidth: '32px', height: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Zoom Out">
+          <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>−</span>
         </button>
-        <button onClick={resetView} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent', fontSize: '0.9rem' }} title="Reset">
+        <button onClick={resetView} className="btn" style={{ padding: '4px', minWidth: '32px', height: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }} title="Reset">
           ↺
         </button>
-        <button onClick={fitToScreen} className="btn" style={{ padding: '8px', minWidth: '36px', height: '36px', background: 'transparent', fontSize: '0.9rem' }} title="Fit">
+        <button onClick={fitToScreen} className="btn" style={{ padding: '4px', minWidth: '32px', height: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }} title="Fit">
           ⊡
         </button>
       </div>
@@ -343,20 +339,49 @@ export function CanvasAvancado({
         )}
       </div>
 
-      {/* INFO ZOOM */}
+      {/* INFO ZOOM & ESTATÍSTICAS (Overlay HTML limpo) */}
       <div style={{
         position: 'absolute',
         bottom: '1.5rem',
         left: '1.5rem',
-        backgroundColor: 'var(--surface-overlay)',
-        border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius-xs)',
-        padding: '0.25rem 0.75rem',
-        fontSize: '0.7rem',
-        color: 'var(--text-secondary)',
-        boxShadow: 'var(--shadow-sm)'
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        zIndex: 40
       }}>
-        ZOOM: {(viewport.zoom * 100).toFixed(0)}%
+        <div style={{
+          backgroundColor: 'var(--surface-overlay)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.6rem 1rem',
+          fontSize: '0.7rem',
+          color: 'var(--text)',
+          boxShadow: 'var(--shadow-md)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <div style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>ESTATÍSTICAS DA CHAPA</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1.5rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>APROVEITAMENTO:</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--success)' }}>
+              {(() => {
+                const areaChapa = chapaDimensoes.largura * chapaDimensoes.altura;
+                const areaUsada = layout.area_aproveitada_mm2 || (layout as any).areaUsada || (pecas.reduce((acc: number, p: any) => acc + (p.largura * p.altura), 0));
+                return ((areaUsada / areaChapa) * 100).toFixed(1);
+              })()}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-muted)' }}>TOTAL DE PEÇAS:</span>
+            <span style={{ fontWeight: 'bold' }}>{pecas.length}</span>
+          </div>
+          <div style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-muted)' }}>ZOOM ATUAL:</span>
+            <span>{(viewport.zoom * 100).toFixed(0)}%</span>
+          </div>
+        </div>
       </div>
 
       {/* INFO PEÇA HOVER */}
@@ -526,14 +551,24 @@ function desenharPeca(
       );
     }
 
-    // Ícone de rotação
+    // Ícone de rotação (ajustado para ser fixo e discreto)
     if (peca.rotacionada) {
-      ctx.font = `${Math.max(10, 14 / zoom)}px sans-serif`;
+      const iconSize = Math.max(10, Math.min(14, 10 / zoom));
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.arc(peca.x + peca.largura - iconSize, peca.y + iconSize, iconSize * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.font = `${iconSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(
         '🔄',
-        peca.x + peca.largura - 15 / zoom,
-        peca.y + 15 / zoom
+        peca.x + peca.largura - iconSize,
+        peca.y + iconSize
       );
+      ctx.restore();
     }
   }
 
@@ -601,44 +636,7 @@ function desenharReguas(
   ctx.restore();
 }
 
-function desenharEstatisticas(
-  ctx: CanvasRenderingContext2D,
-  layout: LayoutChapa,
-  pecas: any[],
-  dimensoes: { largura: number; altura: number },
-  canvasWidth: number
-) {
-  const areaChapa = dimensoes.largura * dimensoes.altura;
-  const areaUsada = layout.area_aproveitada_mm2 || (layout as any).areaUsada || (pecas.reduce((acc, p) => acc + (p.largura * p.altura), 0));
-  const aproveitamento = (areaUsada / areaChapa) * 100;
-
-  ctx.save();
-  // Reposicionado para baixo esquerda para não conflitar com painel de GRID
-  ctx.fillStyle = 'rgba(10, 13, 20, 0.9)';
-  ctx.fillRect(REGUA_HEIGHT + 10, canvasWidth > 600 ? 50 : 80, 170, 70);
-  ctx.strokeStyle = 'var(--primary)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(REGUA_HEIGHT + 10, canvasWidth > 600 ? 50 : 80, 170, 70);
-
-  ctx.fillStyle = 'var(--primary)';
-  ctx.font = 'bold 10px Inter, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('ESTATÍSTICAS', REGUA_HEIGHT + 20, (canvasWidth > 600 ? 50 : 80) + 15);
-
-  ctx.font = '10px monospace';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(
-    `APROVEITAMENTO: ${aproveitamento.toFixed(1)}%`,
-    REGUA_HEIGHT + 20,
-    (canvasWidth > 600 ? 50 : 80) + 32
-  );
-  ctx.fillText(
-    `PEÇAS: ${pecas.length}`,
-    REGUA_HEIGHT + 20,
-    (canvasWidth > 600 ? 50 : 80) + 48
-  );
-
-  ctx.restore();
-}
+// Função removida em favor do overlay HTML
+function desenharEstatisticas() {}
 
 export default CanvasAvancado;

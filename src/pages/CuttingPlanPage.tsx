@@ -768,7 +768,7 @@ const CuttingPlanPage: React.FC = () => {
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s'
                 }}>
-                {s.tipo === 'retalho' ? 'Retalho' : `Chapa ${idx + 1}`} ({s.aproveitamentoPct.toFixed(1)}%)
+                {s.tipo === 'retalho' ? 'Retalho' : `Chapa ${idx + 1}`} ({Number(s.aproveitamentoPct || 0).toFixed(1)}%)
               </button>
             ))}
           </div>
@@ -778,8 +778,8 @@ const CuttingPlanPage: React.FC = () => {
               <CanvasAvancado 
                 layout={activeSuperficie} 
                 chapaDimensoes={{ 
-                  largura: activeGrupo?.larguraChapaMm || 2750, 
-                  altura: activeGrupo?.alturaChapaMm || 1830 
+                  largura: Number(activeGrupo?.larguraChapaMm || 2750), 
+                  altura: Number(activeGrupo?.alturaChapaMm || 1830) 
                 }} 
               />
             ) : (
@@ -796,7 +796,7 @@ const CuttingPlanPage: React.FC = () => {
             <div className="glass" style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', padding: '1.25rem', borderRadius: '16px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', border: '1px solid var(--border-strong)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Eficiência Geral</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success)' }}>{resultado.aproveitamentoGeral.toFixed(1)}%</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success)' }}>{Number(resultado.aproveitamentoGeral || 0).toFixed(1)}%</div>
               </div>
               <div style={{ height: '30px', width: '1px', background: 'var(--border)' }} />
               <div style={{ textAlign: 'center' }}>
