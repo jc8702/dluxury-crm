@@ -67,41 +67,52 @@ export class OtimizadorComRetalhos {
     // ─────────────────────────────────────────────────────────────────────────────
     // FASE 1: Tentar encaixar em retalhos disponíveis
     // ─────────────────────────────────────────────────────────────────────────────
+    try {
+      console.log(`[OTIMIZADOR] Buscando retalhos para SKU: ${chapa.sku}`);
+      const retalhos = await this.retalhosRepo.buscarRetalhosDisponiveis({
+        sku_chapa: chapa.sku,
+        area_min: 90000 // 300x300mm mínimo
+      });
 
-    const retalhos = await this.retalhosRepo.buscarRetalhosDisponiveis({
-      sku_chapa: chapa.sku,
-      area_min: 90000 // 300x300mm mínimo
-    });
+      console.log(`[OTIMIZADOR] ${retalhos.length} retalhos encontrados.`);
 
-    for (const retalho of retalhos) {
-      if (pecasRestantes.length === 0) break;
+      for (const retalho of retalhos) {
+        if (pecasRestantes.length === 0) break;
 
-      const resultado = await this.tentarEncaixarEmRetalho(
-        pecasRestantes,
-        retalho
-      );
-
-      if (resultado.pecas_posicionadas.length > 0) {
-        // Sucesso! Peças encaixaram no retalho
-        layouts.push({
-          tipo: 'retalho',
-          chapa_sku: retalho.sku_chapa,
-          retalho_id: retalho.id,
-          largura_original_mm: retalho.largura_mm,
-          altura_original_mm: retalho.altura_mm,
-          pecas_posicionadas: resultado.pecas_posicionadas,
-          area_aproveitada_mm2: resultado.area_usada,
-          area_desperdicada_mm2: resultado.area_total - resultado.area_usada
-        });
-
-        // Marcar retalho como utilizado
-        await this.retalhosRepo.usarRetalho(retalho.id, planoCorteId);
-
-        // Remover peças posicionadas da lista
-        pecasRestantes = pecasRestantes.filter(
-          p => !resultado.pecas_posicionadas.find(pp => pp.id === p.id)
+        const resultado = await this.tentarEncaixarEmRetalho(
+          pecasRestantes,
+          retalho
         );
+
+        if (resultado.pecas_posicionadas.length > 0) {
+          // Sucesso! Peças encaixaram no retalho
+          layouts.push({
+            tipo: 'retalho',
+            chapa_sku: retalho.sku_chapa,
+            retalho_id: retalho.id,
+            largura_original_mm: retalho.largura_mm,
+            altura_original_mm: retalho.altura_mm,
+            pecas_posicionadas: resultado.pecas_posicionadas,
+            area_aproveitada_mm2: resultado.area_usada,
+            area_desperdicada_mm2: resultado.area_total - resultado.area_usada
+          });
+
+          // Marcar retalho como utilizado (silenciosamente se falhar)
+          try {
+            await this.retalhosRepo.usarRetalho(retalho.id, planoCorteId);
+          } catch (e) {
+            console.error('[OTIMIZADOR] Erro ao marcar retalho como usado:', e);
+          }
+
+          // Remover peças posicionadas da lista
+          pecasRestantes = pecasRestantes.filter(
+            p => !resultado.pecas_posicionadas.find(pp => pp.id === p.id)
+          );
+        }
       }
+    } catch (err) {
+      console.error('[OTIMIZADOR] Falha ao buscar retalhos (Failover para chapas inteiras):', err);
+      // Não interrompe o fluxo, continua com pecasRestantes usando chapas inteiras
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
