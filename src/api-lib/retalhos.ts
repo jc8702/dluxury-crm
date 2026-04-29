@@ -35,11 +35,23 @@ export async function handleRetalhos(req: any, res: any) {
 
       case 'POST':
         // Criar novo retalho
+        const now = new Date();
         const [novo] = await db.insert(retalhosEstoque).values({
-          ...req.body,
-          created_at: new Date(),
-          updated_at: new Date(),
-          usuario_criou: req.user?.nome || 'Sistema'
+          largura_mm: req.body.largura_mm,
+          altura_mm: req.body.altura_mm,
+          espessura_mm: req.body.espessura_mm,
+          sku_chapa: req.body.sku_chapa,
+          origem: req.body.origem,
+          plano_corte_origem_id: req.body.plano_corte_origem_id,
+          projeto_origem: req.body.projeto_origem,
+          observacoes: req.body.observacoes,
+          localizacao: req.body.localizacao,
+          disponivel: req.body.disponivel ?? true,
+          descartado: req.body.descartado ?? false,
+          created_at: now,
+          updated_at: now,
+          usuario_criou: req.user?.nome || req.body.usuario_criou || 'Sistema',
+          metadata: req.body.metadata || {}
         }).returning();
         return res.status(201).json({ success: true, data: novo });
 

@@ -79,6 +79,7 @@ export class RetalhosRepository {
       return api.retalhos.create(input);
     }
     
+    const now = new Date();
     const result = await db.insert(retalhosEstoque).values({
       largura_mm: input.largura_mm,
       altura_mm: input.altura_mm,
@@ -91,7 +92,10 @@ export class RetalhosRepository {
       localizacao: input.localizacao,
       usuario_criou: input.usuario_criou || 'sistema',
       disponivel: true,
-      descartado: false
+      descartado: false,
+      created_at: now,
+      updated_at: now,
+      metadata: {}
     }).returning();
 
     return result[0] as unknown as Retalho;
