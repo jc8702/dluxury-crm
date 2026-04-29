@@ -496,34 +496,55 @@ async function handleListByFamilia(entities: Entities) {
 
 async function processUserMessage(message: string, history: any[] = []) {
   try {
-    console.log("API Key presente:", !!aiApiKey, aiApiKey ? aiApiKey.substring(0, 10) + "..." : "NÃO");
-    
-    const contextChat = history.length > 0 
-      ? `\n\nHistórico:\n${history.map(h => `${h.role === 'user' ? 'Usuário' : 'IA'}: ${h.content}`).join('\n')}` 
-      : '';
-    
-    const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days'`;
-    const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
-    const clientes = await sql`SELECT nome FROM clientes ORDER BY nome LIMIT 5`;
-    const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY created_at DESC LIMIT 5`;
-    
-    const dados = {
-      vendasMes: vendas[0]?.total || 0,
-      estoqueBaixo: estoque,
-      clientes: clientes,
-      ordensProducao: ops
-    };
+    // 1. Identificar a INTENÇÃO do usuário usando o LLM
+    const intent = await parseIntent(message, history);
+    console.log("INTENT IDENTIFICADA:", intent.type);
 
-    const { text } = await generateText({
-      model: modelFlash,
-      prompt: `Você é um assistente de ERP. Responda: "${message}". Dados: ${JSON.stringify(dados)}`
-    });
+    // 2. Despachar para o Handler Específico
+    switch (intent.type) {
+      case "SUGGEST_BOM":
+        return await handleSuggestBOM(intent.entities, message);
 
-    return { message: text };
+      case "CONFIRM_ACTION":
+        return await handleConfirmAction(history);
+
+      case "SUGGEST_CREATE_SKU":
+        return await handleSuggestCreateSKU(intent.entities);
+
+      case "ANALYZE_STOCK":
+        return await handleAnalyzeStock();
+
+      case "SEARCH_SKU":
+        return await handleSearch(intent.entities);
+
+      default:
+        // Fallback: Chat Genérico com Dados do Contexto
+        const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days'`;
+        const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
+        const clientes = await sql`SELECT nome FROM clientes ORDER BY nome LIMIT 5`;
+        const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY created_at DESC LIMIT 5`;
+        
+        const dados = {
+          vendasMes: vendas[0]?.total || 0,
+          estoqueBaixo: estoque,
+          clientes: clientes,
+          ordensProducao: ops
+        };
+
+        const { text } = await generateText({
+          model: modelFlash,
+          prompt: `Você é o Copiloto Industrial da D'Luxury. 
+          O usuário disse: "${message}". 
+          Dados atuais do ERP: ${JSON.stringify(dados)}.
+          Responda de forma profissional e útil.`
+        });
+
+        return { message: text };
+    }
     
   } catch (error) {
-    console.error("Erro Copilot:", error);
-    return { message: "Desculpe, houve um erro. Tente novamente." };
+    console.error("Erro fatal no ProcessUserMessage:", error);
+    return { message: "Desculpe, tive um problema técnico ao processar sua solicitação. Pode repetir?" };
   }
 }
 
