@@ -1,6 +1,5 @@
 import { ParseadorProjeto, TipoMovelEnum } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto';
-import { HybridOptimizer } from '../modules/plano-corte/domain/services/HybridOptimizer';
-import { CustosService, CustoCalculado } from '../modules/plano-corte/application/services/CustosService';
+import { ProcessadorProjeto } from '../modules/engenharia/application/usecases/ProcessadorProjeto';
 import { sql } from '../api-lib/_db';
 
 // --- 1. INTERFACES DE ENGENHARIA ---
@@ -188,33 +187,44 @@ export function otimizarCorte(pecas: Peca[]): PlanoCorte[] {
   return chapas;
 }
 
-export async function gerarProjetoCompleto(msg: string): Promise<ResultadoProjetoCompleto> {
-  const parseResult = ParseadorProjeto.parse(msg);
-  const projeto = interpretarProjeto(msg);
-  const pecas = await gerarPecas(projeto);
-  const corte = otimizarCorte(pecas);
+export async function gerarProjetoCompleto(msg: string): Promise<any> {
+  const processador = new ProcessadorProjeto(sql, console);
   
-  // Integração com CustosService Real (ME 3.4)
-  const analiseFinanceira = await CustosService.calcularCustoReal({
-    pecas: pecas.map(p => ({ largura: p.largura, altura: p.altura, espessura: p.espessura, material: p.material })),
-    acessorios: [
-      { sku: "FER-0001", quantidade: projeto.gavetas },
-      { sku: "FER-0002", quantidade: projeto.portas * 2 }
-    ]
+  const resultado = await processador.processar({
+    descricao_projeto: msg,
+    sku_chapa: "MDF-18MM-BRA",
+    usuario_id: "copilot-system",
+    opcoes: {
+      usar_retalhos: true,
+      iteracoes_otimizacao: 20
+    }
   });
 
+  if (!resultado.sucesso) {
+    throw new Error(resultado.erros.join('; '));
+  }
+
   return {
-    projeto,
-    pecas,
-    planoDeCorte: corte,
-    custo: analiseFinanceira.total_custo,
-    venda: {
-      custo: analiseFinanceira.total_custo,
-      preco: analiseFinanceira.preco_sugerido,
-      margem: analiseFinanceira.margem_contribuicao
+    projeto: {
+      tipo: resultado.projeto?.tipo_movel || "Móvel Customizado",
+      largura: resultado.projeto?.largura_mm,
+      altura: resultado.projeto?.altura_mm,
+      profundidade: resultado.projeto?.profundidade_mm,
+      espessura: 18,
+      gavetas: resultado.projeto?.customizacoes.gavetas,
+      portas: resultado.projeto?.customizacoes.portas
     },
-    analise_financeira: analiseFinanceira,
-    avisos: parseResult.avisos
+    pecas: resultado.pecas,
+    planoDeCorte: resultado.layouts,
+    custo: resultado.custos?.resumo.custo_total,
+    venda: {
+      custo: resultado.custos?.resumo.custo_total,
+      preco: resultado.custos?.preco_venda,
+      margem: resultado.custos?.margem.margem_minima_percentual
+    },
+    analise_financeira: resultado.custos,
+    avisos: resultado.avisos,
+    confianca: resultado.confianca_geral
   };
 }
 
