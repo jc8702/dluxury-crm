@@ -32,8 +32,8 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
           api.planoCorte.list(),
           api.projects.list()
         ]);
-        setPlanos(listaPlanos);
-        setProjetos(listaProjetos);
+        setPlanos(listaPlanos || []);
+        setProjetos(listaProjetos || []);
       } catch (err) {
         console.error('Erro ao carregar histórico:', err);
       } finally {
@@ -50,45 +50,45 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
   });
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className={`${STYLES.glass} w-full max-w-4xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden`}>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="card glass w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border-primary/20">
         
         {/* HEADER */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-600/20 rounded-lg text-emerald-500">
+        <div className="p-6 border-b border-border flex items-center justify-between bg-surface/50">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary rounded-xl text-primary-text">
               <Clock size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Histórico de Planos</h2>
-              <p className="text-xs text-slate-400">Visualize e recupere planos de corte aprovados</p>
+              <h2 className="text-xl font-black text-foreground uppercase tracking-tight">Histórico de Planos</h2>
+              <p className="text-xs text-muted-foreground font-medium uppercase opacity-60">Visualize e recupere planos de corte aprovados</p>
             </div>
           </div>
-          <button onClick={onFechar} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+          <button onClick={onFechar} className="btn btn-outline p-2 hover:bg-danger/10 hover:text-danger hover:border-danger transition-all">
             <X size={24} />
           </button>
         </div>
 
-        {/* FILTROS */}
-        <div className="p-6 bg-slate-900/50 border-b border-slate-800 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+        {/* FILTROS PADRONIZADOS */}
+        <div className="p-6 bg-surface/30 border-b border-border flex gap-4 items-center">
+          <div className="flex-1 relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
             <input 
               type="text" 
-              placeholder="Buscar por nome do plano..." 
+              placeholder="🔍 BUSCAR POR NOME DO PLANO..." 
               value={filtroTexto}
               onChange={e => setFiltroTexto(e.target.value)}
-              className={`${STYLES.input} w-full pl-10`}
+              className="input w-full pl-10"
             />
           </div>
-          <div className="w-64 relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+          <div className="w-72 relative group">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
             <select 
               value={filtroProjeto}
               onChange={e => setFiltroProjeto(e.target.value)}
-              className={`${STYLES.input} w-full pl-10 appearance-none`}
+              className="input w-full pl-10 appearance-none cursor-pointer"
             >
-              <option value="">Todos os Projetos</option>
+              <option value="">🗂️ TODOS OS PROJETOS</option>
               {projetos.map(proj => (
                 <option key={proj.id} value={proj.id}>{proj.nome}</option>
               ))}
@@ -96,70 +96,80 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
           </div>
         </div>
 
-        {/* LISTA */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+        {/* LISTA DE RESULTADOS */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar bg-surface/10">
           {loading ? (
-            <div className="h-40 flex items-center justify-center text-slate-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mr-3" />
-              Carregando histórico...
+            <div className="h-60 flex flex-col items-center justify-center text-muted-foreground gap-4">
+              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <p className="font-bold text-sm uppercase tracking-widest animate-pulse">Carregando histórico...</p>
             </div>
           ) : planosFiltrados.length > 0 ? (
             planosFiltrados.map(plano => (
               <div 
                 key={plano.id} 
                 onClick={() => onLoadPlan(plano)}
-                className={`${STYLES.card} p-5 flex items-center justify-between`}
+                className="card p-5 flex items-center justify-between hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group border-border/50"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-slate-500 group-hover:text-emerald-500 transition-colors">
-                    <FileText size={24} />
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-surface rounded-xl flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors border border-border">
+                    <FileText size={28} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-100 mb-1">{plano.nome}</h4>
-                    <div className="flex items-center gap-4 text-[10px] text-slate-500 uppercase tracking-wider">
-                      <span className="flex items-center gap-1">
-                        <Calendar size={12} /> {new Date(plano.created_at).toLocaleDateString()}
+                    <h4 className="font-black text-foreground text-lg mb-1 uppercase tracking-tight group-hover:text-primary transition-colors">{plano.nome}</h4>
+                    <div className="flex items-center gap-5 text-[11px] text-muted-foreground font-bold uppercase tracking-widest opacity-70">
+                      <span className="flex items-center gap-1.5 bg-surface/50 px-2 py-1 rounded">
+                        <Calendar size={12} className="text-primary" /> {new Date(plano.created_at).toLocaleDateString()}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Box size={12} /> {plano.resultado?.layouts?.length || 0} Chapas
+                      <span className="flex items-center gap-1.5 bg-surface/50 px-2 py-1 rounded">
+                        <Box size={12} className="text-primary" /> {plano.resultado?.layouts?.length || 0} Chapas
                       </span>
                       {plano.projeto_id && (
-                        <span className="text-emerald-500/70">
-                          PROJETO: {projetos.find(p => p.id === plano.projeto_id)?.nome || 'N/A'}
+                        <span className="text-primary/80 bg-primary/10 px-2 py-1 rounded">
+                          PROJETO: {projetos.find(p => p.id === plano.projeto_id)?.nome || 'Móvel Custom'}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <div className="text-lg font-black text-white">
+                    <div className="text-2xl font-black text-foreground tabular-nums">
                       {plano.resultado?.aproveitamento_percentual?.toFixed(1)}%
                     </div>
-                    <div className="text-[10px] text-slate-500 uppercase">Eficiência</div>
+                    <div className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter">Eficiência</div>
                   </div>
-                  <ChevronRight size={20} className="text-slate-600 group-hover:text-emerald-500 transition-all translate-x-0 group-hover:translate-x-1" />
+                  <div className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center group-hover:bg-primary group-hover:text-primary-text transition-all">
+                    <ChevronRight size={20} className="translate-x-0 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="h-60 flex flex-col items-center justify-center text-slate-600">
-              <FileText size={48} className="mb-4 opacity-20" />
-              <p>Nenhum plano encontrado com estes filtros.</p>
+            <div className="h-80 flex flex-col items-center justify-center text-muted-foreground text-center">
+              <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 opacity-20 border-4 border-dashed border-border">
+                <FileText size={48} />
+              </div>
+              <h3 className="text-xl font-black text-foreground/50 uppercase mb-2">Nenhum plano encontrado</h3>
+              <p className="text-sm max-w-xs mx-auto opacity-60">Não encontramos nenhum resultado para os filtros aplicados. Tente buscar por outro termo ou projeto.</p>
             </div>
           )}
         </div>
 
         {/* FOOTER */}
-        <div className="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-end">
-          <p className="text-[10px] text-slate-500 italic">D'Luxury Industrial ERP • Todos os dados salvos no Neon PostgreSQL</p>
+        <div className="p-4 bg-surface/80 border-t border-border flex items-center justify-between">
+          <div className="flex gap-4">
+             <span className="text-[9px] font-black uppercase text-primary tracking-widest bg-primary/10 px-2 py-1 rounded">V2.0 STABLE</span>
+             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">NEON POSTGRESQL</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase opacity-50 italic">D'Luxury Industrial ERP • Gerenciamento de Corte de Precisão</p>
         </div>
       </div>
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--primary); }
       `}</style>
     </div>
   );

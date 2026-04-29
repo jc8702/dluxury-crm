@@ -74,18 +74,45 @@ export default function PlanoCorteIndustrialPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [executionMode, setExecutionMode] = useState(false);
   const [pecasCortadas, setPecasCortadas] = useState<Set<string>>(new Set());
+  const [termoBusca, setTermoBusca] = useState('');
 
   const otimizador = useMemo(() => new OtimizadorComRetalhos(retalhosRepository), []);
 
   const handleOtimizar = useCallback(async () => {
-    if (pecas.length === 0) { alert('Adicione peças antes de otimizar.'); return; }
+    if (pecas.length === 0) {
+      alert('Adicione peças antes de otimizar.');
+      return;
+    }
+    
     setLoading(true);
+    setResultado(null); // Resetar resultado anterior
+
     try {
-      const res = await otimizador.otimizar(pecas, { largura_mm: chapaPadrao.largura, altura_mm: chapaPadrao.altura, sku: chapaPadrao.sku }, 'demo-id');
+      console.log('Iniciando otimização robusta...');
+      
+      // Chamada ao otimizador que gerencia retalhos e chapas
+      const res = await otimizador.otimizar(
+        pecas, 
+        { 
+          largura_mm: chapaPadrao.largura, 
+          altura_mm: chapaPadrao.altura, 
+          sku: chapaPadrao.sku,
+          espessura_mm: 18 // Padrão
+        }, 
+        'plano-' + Date.now()
+      );
+
+      if (!res || res.layouts.length === 0) {
+        throw new Error('O otimizador não retornou nenhum layout. Verifique as dimensões das peças.');
+      }
+
       setResultado(res);
       setActiveLayoutIdx(0);
+      
+      console.log('Otimização concluída com sucesso:', res);
     } catch (err: any) {
-      alert('Erro: ' + err.message);
+      console.error('Erro crítico na otimização:', err);
+      alert('ERRO NA OTIMIZAÇÃO: ' + (err.message || 'Erro interno no processamento. Verifique o console.'));
     } finally {
       setLoading(false);
     }
@@ -221,36 +248,62 @@ export default function PlanoCorteIndustrialPage() {
           
           <input 
             className="input" 
-            placeholder="BUSCAR PEÇA..." 
+            placeholder="🔍 BUSCAR POR NOME OU SKU..." 
             value={searchPeca}
             onChange={e => setSearchPeca(e.target.value)}
             style={{ fontSize: '0.75rem' }}
           />
 
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {pecas.filter(p => p.nome.toUpperCase().includes(searchPeca.toUpperCase())).map((p) => (
-              <div key={p.id} className="card" style={{ padding: '1rem', background: 'var(--surface-hover)' }}>
+            {pecas.filter(p => {
+              const termo = searchPeca.toUpperCase();
+              return p.nome.toUpperCase().includes(termo) || 
+                     (p.sku_chapa && p.sku_chapa.toUpperCase().includes(termo));
+            }).map((p) => (
+              <div key={p.id} className={`card ${executionMode ? 'opacity-80' : ''}`} style={{ padding: '1rem', background: 'var(--surface-hover)', border: executionMode ? '1px dashed var(--border)' : '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <input 
                     value={p.nome}
+                    disabled={executionMode}
                     onChange={e => handleUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
                     className="input-base"
-                    style={{ background: 'transparent', border: 'none', padding: 0, fontWeight: '700', fontSize: '0.8rem' }}
+                    style={{ background: 'transparent', border: 'none', padding: 0, fontWeight: '700', fontSize: '0.8rem', cursor: executionMode ? 'not-allowed' : 'text' }}
                   />
-                  <button onClick={() => handleRemovePeca(p.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                    <Trash2 size={14} />
-                  </button>
+                  {!executionMode && (
+                    <button onClick={() => handleRemovePeca(p.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LARGURA (MM)</label>
-                    <input type="number" value={p.largura} onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })} className="input" style={{ padding: '0.3rem' }} />
+                    <input 
+                      type="number" 
+                      disabled={executionMode}
+                      value={p.largura} 
+                      onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })} 
+                      className="input" 
+                      style={{ padding: '0.3rem', cursor: executionMode ? 'not-allowed' : 'text' }} 
+                    />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>ALTURA (MM)</label>
-                    <input type="number" value={p.altura} onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })} className="input" style={{ padding: '0.3rem' }} />
+                    <input 
+                      type="number" 
+                      disabled={executionMode}
+                      value={p.altura} 
+                      onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })} 
+                      className="input" 
+                      style={{ padding: '0.3rem', cursor: executionMode ? 'not-allowed' : 'text' }} 
+                    />
                   </div>
                 </div>
+                {executionMode && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.6rem', color: 'var(--primary)', fontWeight: '700' }}>
+                    🔒 BLOQUEADO PARA EXECUÇÃO
+                  </div>
+                )}
               </div>
             ))}
             {pecas.length === 0 && (

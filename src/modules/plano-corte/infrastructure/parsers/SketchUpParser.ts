@@ -16,7 +16,7 @@ export async function parseSketchUpDAE(arquivo: File): Promise<PecaSketchUp[]> {
   const parser = new DOMParser();
   const xml = parser.parseFromString(texto, 'text/xml');
 
-  const pecas: PecaSketchUp[] = [];
+  const pecasUnicas = new Map<string, PecaSketchUp>();
 
   // Buscar geometrias (nós <geometry>)
   const geometrias = xml.querySelectorAll('geometry');
@@ -31,24 +31,41 @@ export async function parseSketchUpDAE(arquivo: File): Promise<PecaSketchUp[]> {
 
     // Extrair vértices
     const vertices = extrairVertices(mesh);
-    if (vertices.length === 0) return;
+    if (vertices.length < 4) return; // Geometria inválida ou muito simples
 
     // Calcular dimensões (bounding box)
     const dimensoes = calcularDimensoes(vertices);
 
     // Assumir que a menor dimensão é a espessura
     const dims = [dimensoes.largura, dimensoes.altura, dimensoes.profundidade].sort((a, b) => a - b);
+    
+    const largura = Math.round(dims[2]);
+    const altura = Math.round(dims[1]);
+    const espessura = Math.round(dims[0]);
 
-    pecas.push({
-      nome,
-      largura_mm: Math.round(dims[2]),
-      altura_mm: Math.round(dims[1]),
-      espessura_mm: Math.round(dims[0]),
-      quantidade: 1
-    });
+    // Ignorar peças irrelevantes (menos de 5mm)
+    if (largura < 5 || altura < 5) return;
+
+    // Criar hash para deduplicação (largura_altura_espessura)
+    const hash = `${largura}_${altura}_${espessura}`;
+
+    if (pecasUnicas.has(hash)) {
+      // Se já existe, apenas incrementa a quantidade
+      const existente = pecasUnicas.get(hash)!;
+      existente.quantidade += 1;
+    } else {
+      // Nova peça única
+      pecasUnicas.set(hash, {
+        nome,
+        largura_mm: largura,
+        altura_mm: altura,
+        espessura_mm: espessura,
+        quantidade: 1
+      });
+    }
   });
 
-  return pecas;
+  return Array.from(pecasUnicas.values());
 }
 
 function limparNome(id: string): string {
