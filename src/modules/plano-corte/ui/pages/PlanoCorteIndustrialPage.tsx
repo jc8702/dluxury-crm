@@ -170,6 +170,13 @@ export default function PlanoCorteIndustrialPage() {
   };
 
   const handleUpdateChapa = (id: string, data: any) => {
+    const chapaAntiga = chapas.find(c => c.id === id);
+    if (chapaAntiga && data.sku && data.sku !== chapaAntiga.sku) {
+      // Propagar mudança de SKU para as peças vinculadas
+      setPecas(prev => prev.map(p => 
+        p.sku_chapa === chapaAntiga.sku ? { ...p, sku_chapa: data.sku } : p
+      ));
+    }
     setChapas(chapas.map(c => c.id === id ? { ...c, ...data } : c));
   };
 
@@ -453,63 +460,39 @@ export default function PlanoCorteIndustrialPage() {
               </button>
             </div>
 
-            <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto pr-2 custom-scrollbar">
               {chapas.map(chapa => (
                 <div 
                   key={chapa.id} 
-                  className={`p-4 rounded-2xl border transition-all relative group ${
-                    activeChapaId === chapa.id ? 'bg-primary/10 border-primary/40' : 'bg-black/20 border-border/40'
+                  onClick={() => setActiveChapaId(chapa.id)}
+                  className={`p-3 rounded-xl border transition-all relative group cursor-pointer ${
+                    activeChapaId === chapa.id ? 'bg-primary/10 border-primary/40 shadow-glow-sm' : 'bg-black/20 border-border/40'
                   }`}
                 >
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex justify-between items-start">
                     <div className="flex flex-col">
                       <input 
                         value={chapa.material} 
                         onChange={e => handleUpdateChapa(chapa.id, { material: e.target.value })}
-                        className="bg-transparent border-none p-0 text-[12px] font-black text-foreground focus:outline-none w-full uppercase tracking-tight"
+                        onClick={e => e.stopPropagation()}
+                        className="bg-transparent border-none p-0 text-[11px] font-black text-foreground focus:outline-none w-full uppercase"
                       />
-                      <span className="text-[10px] text-muted-foreground font-mono">{chapa.sku}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => handleAddPecaParaChapa(chapa.id)}
-                        className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
-                        title="Adicionar Peça a este material"
-                      >
-                        <Plus size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleRemoveChapa(chapa.id)}
-                        className="p-1.5 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all opacity-40 hover:opacity-100"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
-                      <span className="text-[8px] text-muted-foreground uppercase font-black block mb-1">Largura (MM)</span>
                       <input 
-                        type="number" 
-                        value={chapa.largura} 
-                        onChange={e => handleUpdateChapa(chapa.id, { largura: Number(e.target.value) })}
-                        className="bg-transparent border-none p-0 text-[14px] font-mono font-bold text-primary focus:outline-none w-full"
+                        value={chapa.sku} 
+                        onChange={e => handleUpdateChapa(chapa.id, { sku: e.target.value })}
+                        onClick={e => e.stopPropagation()}
+                        className="bg-transparent border-none p-0 text-[9px] font-mono text-primary/60 focus:outline-none w-full uppercase"
                       />
                     </div>
-                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
-                      <span className="text-[8px] text-muted-foreground uppercase font-black block mb-1">Altura (MM)</span>
-                      <input 
-                        type="number" 
-                        value={chapa.altura} 
-                        onChange={e => handleUpdateChapa(chapa.id, { altura: Number(e.target.value) })}
-                        className="bg-transparent border-none p-0 text-[14px] font-mono font-bold text-primary focus:outline-none w-full"
-                      />
-                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleRemoveChapa(chapa.id); }}
+                      className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
+                    >
+                      <Trash2 size={12} />
+                    </button>
                   </div>
-
                   {activeChapaId === chapa.id && (
-                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-primary rounded-full shadow-[0_0_15px_rgba(255,107,0,0.5)]" />
+                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full" />
                   )}
                 </div>
               ))}
@@ -570,16 +553,52 @@ export default function PlanoCorteIndustrialPage() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-center px-8">Nenhuma peça no inventário</span>
               </div>
             ) : (
-              Object.entries(pecasAgrupadas).map(([grupo, gpecas]) => (
-                <div key={grupo} className="space-y-2">
-                  <div className="flex items-center gap-2 px-1">
-                    <div className="w-1 h-1 rounded-full bg-primary" />
-                    <span className="text-[10px] font-black text-primary/80 uppercase tracking-[0.1em]">{grupo}</span>
-                    <div className="flex-1 h-px bg-primary/10" />
-                    <span className="text-[9px] font-bold text-muted-foreground">{gpecas.length}</span>
-                  </div>
-                  <div className="grid gap-2">
-                    {gpecas.map(p => (
+              Object.entries(pecasAgrupadas).map(([grupo, gpecas]) => {
+                const configChapa = chapas.find(c => c.sku === grupo) || chapas.find(c => c.material === grupo);
+                
+                return (
+                  <div key={grupo} className="space-y-3 bg-white/[0.01] p-2 rounded-2xl border border-white/5">
+                    <div className="flex flex-col gap-2 px-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-glow" />
+                          <span className="text-[11px] font-black text-primary uppercase tracking-[0.1em]">{grupo}</span>
+                          <span className="text-[9px] font-bold text-muted-foreground bg-white/5 px-1.5 rounded-md">{gpecas.length}</span>
+                        </div>
+                        <button 
+                          onClick={() => configChapa && handleAddPecaParaChapa(configChapa.id)}
+                          className="w-6 h-6 rounded-md bg-primary/20 text-primary border border-primary/20 hover:bg-primary/30 flex items-center justify-center transition-all"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+
+                      {configChapa && (
+                        <div className="grid grid-cols-2 gap-2 bg-black/40 p-2 rounded-xl border border-white/5">
+                          <div className="flex flex-col">
+                            <span className="text-[7px] text-muted-foreground uppercase font-black">Régua (L)</span>
+                            <input 
+                              type="number"
+                              value={configChapa.largura}
+                              onChange={e => handleUpdateChapa(configChapa.id, { largura: Number(e.target.value) })}
+                              className="bg-transparent border-none p-0 text-[12px] font-mono font-bold text-white/80 focus:outline-none w-full"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[7px] text-muted-foreground uppercase font-black">Régua (A)</span>
+                            <input 
+                              type="number"
+                              value={configChapa.altura}
+                              onChange={e => handleUpdateChapa(configChapa.id, { altura: Number(e.target.value) })}
+                              className="bg-transparent border-none p-0 text-[12px] font-mono font-bold text-white/80 focus:outline-none w-full"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid gap-2">
+                      {gpecas.map(p => (
                       <div key={p.id} className="group relative glass p-4 rounded-2xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all shadow-lg hover:shadow-primary/5">
                         <div className="flex flex-col">
                           <div className="flex justify-between items-start mb-2">
@@ -651,16 +670,16 @@ export default function PlanoCorteIndustrialPage() {
                 <button 
                   key={idx} 
                   onClick={() => setActiveLayoutIdx(idx)} 
-                  className={`flex items-center gap-2 h-7 px-3 rounded-full text-[10px] font-bold transition-all border whitespace-nowrap ${
+                  className={`flex items-center gap-2 h-8 px-4 rounded-xl text-[10px] font-black transition-all border whitespace-nowrap ${
                     activeLayoutIdx === idx 
-                      ? 'bg-primary border-primary-hover text-primary-foreground shadow-primary' 
+                      ? 'bg-primary border-primary-hover text-primary-foreground shadow-glow-sm' 
                       : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10 hover:text-foreground'
                   }`}
                 >
-                  <Layers size={12} />
-                  CHAPA {idx + 1}
-                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${activeLayoutIdx === idx ? 'bg-black/20 text-primary-foreground/60' : 'bg-black/40 text-muted-foreground'}`}>
-                    {l.tipo}
+                  <span className="opacity-50">#{idx + 1}</span>
+                  <span className="uppercase tracking-tight">{l.material_identificador || 'CHAPA'}</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${activeLayoutIdx === idx ? 'bg-black/20 text-white' : 'bg-black/40'}`}>
+                    {l.aproveitamento_percentual?.toFixed(1)}%
                   </span>
                 </button>
               ))}
