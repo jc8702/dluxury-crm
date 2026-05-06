@@ -110,7 +110,6 @@ export default function PlanoCorteIndustrialPage() {
 
       let layoutsTotais: any[] = [];
       let tempoTotal = 0;
-      let areaTotalPecas = 0;
 
       for (const [sku, listaPecas] of Object.entries(pecasAgrupadasLocal)) {
         if (listaPecas.length === 0) continue;
@@ -599,62 +598,63 @@ export default function PlanoCorteIndustrialPage() {
 
                     <div className="grid gap-2">
                       {gpecas.map(p => (
-                      <div key={p.id} className="group relative glass p-4 rounded-2xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all shadow-lg hover:shadow-primary/5">
-                        <div className="flex flex-col">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">{p.nome}</span>
-                              <span className="text-[9px] font-mono text-primary/60 truncate">{p.sku || 'SEM SKU'}</span>
+                        <div key={p.id} className="group relative glass p-4 rounded-2xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all shadow-lg hover:shadow-primary/5">
+                          <div className="flex flex-col">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex flex-col overflow-hidden">
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">{p.nome}</span>
+                                <span className="text-[9px] font-mono text-primary/60 truncate">{p.sku || 'SEM SKU'}</span>
+                              </div>
+                              <button 
+                                onClick={() => handleRemovePeca(p.id)}
+                                className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all text-muted-foreground"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                            <button 
-                              onClick={() => handleRemovePeca(p.id)}
-                              className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all text-muted-foreground"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            
+                            <div className="mb-3">
+                              <span className="text-[8px] font-black text-white/40 uppercase mb-1 block">Identificador</span>
+                              <input 
+                                placeholder="EX: LATERAL ESQUERDA"
+                                value={p.identificador || ''}
+                                onChange={e => handleUpdatePeca(p.id, { identificador: e.target.value.toUpperCase() })}
+                                className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1.5 text-[11px] font-bold focus:border-primary/40 outline-none transition-all"
+                              />
+                            </div>
                           </div>
-                          
-                          <div className="mb-3">
-                            <span className="text-[8px] font-black text-white/40 uppercase mb-1 block">Identificador</span>
-                            <input 
-                              placeholder="EX: LATERAL ESQUERDA"
-                              value={p.identificador || ''}
-                              onChange={e => handleUpdatePeca(p.id, { identificador: e.target.value.toUpperCase() })}
-                              className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1.5 text-[11px] font-bold focus:border-primary/40 outline-none transition-all"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-1 text-[10px] font-mono">
-                          <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
-                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Larg</span>
-                            <input 
-                              type="number"
-                              value={p.largura}
-                              onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
-                            />
-                          </div>
-                          <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
-                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Alt</span>
-                            <input 
-                              type="number"
-                              value={p.altura}
-                              onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
-                            />
-                          </div>
-                          <div className="bg-primary/5 p-2 rounded-xl border border-primary/20 text-center">
-                            <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Qtd</span>
-                            <input 
-                              type="number"
-                              value={p.quantidade || 1}
-                              onChange={e => handleUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary font-black text-center focus:outline-none w-full text-[12px]"
-                            />
+                          <div className="grid grid-cols-3 gap-2 mt-1 text-[10px] font-mono">
+                            <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
+                              <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Larg</span>
+                              <input 
+                                type="number"
+                                value={p.largura}
+                                onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })}
+                                className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
+                              />
+                            </div>
+                            <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
+                              <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Alt</span>
+                              <input 
+                                type="number"
+                                value={p.altura}
+                                onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })}
+                                className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
+                              />
+                            </div>
+                            <div className="bg-primary/5 p-2 rounded-xl border border-primary/20 text-center">
+                              <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Qtd</span>
+                              <input 
+                                type="number"
+                                value={p.quantidade || 1}
+                                onChange={e => handleUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
+                                className="bg-transparent border-none p-0 text-primary font-black text-center focus:outline-none w-full text-[12px]"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 );
               })
