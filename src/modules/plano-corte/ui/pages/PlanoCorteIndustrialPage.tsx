@@ -100,14 +100,21 @@ export default function PlanoCorteIndustrialPage() {
         
         const qty = Number(p.quantidade) || 1;
         for (let i = 0; i < qty; i++) {
-          pecasAgrupadasLocal[key].push({ ...p, id: `${p.id}-${i}`, nome: qty > 1 ? `${p.nome} (${i+1}/${qty})` : p.nome });
+          pecasAgrupadasLocal[key].push({ 
+            ...p, 
+            id: `${p.id}-${i}`, 
+            nome: qty > 1 ? `${p.identificador || p.nome} (${i+1}/${qty})` : (p.identificador || p.nome) 
+          });
         }
       });
 
       let layoutsTotais: any[] = [];
       let tempoTotal = 0;
+      let areaTotalPecas = 0;
 
       for (const [sku, listaPecas] of Object.entries(pecasAgrupadasLocal)) {
+        if (listaPecas.length === 0) continue;
+        
         const configChapa = chapas.find(c => c.sku === sku) || chapas[0];
         
         const res = await otimizador.otimizar(
@@ -117,11 +124,14 @@ export default function PlanoCorteIndustrialPage() {
           usarRetalhos
         );
         
-        layoutsTotais = [...layoutsTotais, ...res.layouts.map(l => ({ ...l, material_identificador: sku }))];
-        tempoTotal += res.estatisticas.tempo_ms;
+        if (res && res.layouts) {
+          layoutsTotais = [...layoutsTotais, ...res.layouts.map(l => ({ ...l, material_identificador: sku }))];
+          tempoTotal += (res as any).tempo_calculo_ms || (res as any).tempo_ms || 0;
+        }
       }
 
-      const resFinal: ResultadoOtimizacao = {
+      // Criar o resultado final adaptado para a UI
+      const resFinal: any = {
         id: crypto.randomUUID(),
         layouts: layoutsTotais,
         estatisticas: {
@@ -129,7 +139,9 @@ export default function PlanoCorteIndustrialPage() {
           area_aproveitada_mm2: layoutsTotais.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0),
           tempo_ms: tempoTotal,
           qtd_chapas: layoutsTotais.length,
-          aproveitamento_medio: layoutsTotais.reduce((acc, l) => acc + l.percentual_aproveitamento, 0) / (layoutsTotais.length || 1)
+          aproveitamento_medio: layoutsTotais.length > 0 
+            ? layoutsTotais.reduce((acc, l) => acc + (l.aproveitamento_percentual || 0), 0) / layoutsTotais.length 
+            : 0
         }
       };
 
@@ -139,6 +151,7 @@ export default function PlanoCorteIndustrialPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
       showToast(`FALHA NA OTIMIZAÇÃO: ${msg}`, 'error');
+      console.error('Erro na otimização:', err);
     } finally {
       setLoading(false);
     }
@@ -165,17 +178,20 @@ export default function PlanoCorteIndustrialPage() {
     setChapas(chapas.filter(c => c.id !== id));
   };
 
-  const handleAddPecaManual = () => {
-    const chapaAtiva = chapas.find(c => c.id === activeChapaId) || chapas[0];
+  const handleAddPecaParaChapa = (chapaId: string) => {
+    const chapa = chapas.find(c => c.id === chapaId);
+    if (!chapa) return;
+
     const novaPeca: Peca = { 
       id: `peca-${Date.now()}`, 
-      nome: `PEÇA ${pecas.length + 1}`, 
+      nome: 'NOVA PEÇA', 
+      identificador: '',
       largura: 500, 
       altura: 400, 
       rotacionavel: true,
       quantidade: 1,
-      sku_chapa: chapaAtiva.sku,
-      material: chapaAtiva.material
+      sku_chapa: chapa.sku,
+      material: chapa.material
     };
     setPecas([...pecas, novaPeca]);
   };
@@ -307,6 +323,7 @@ export default function PlanoCorteIndustrialPage() {
       id: `global-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       sku: item.sku || item.codigo_modelo || '',
       nome: item.nome || item.descricao || 'Peça do Catálogo',
+      identificador: '',
       largura: Number(item.largura_padrao || item.largura || 500),
       altura: Number(item.altura_padrao || item.altura || 400),
       rotacionavel: true,
@@ -436,74 +453,69 @@ export default function PlanoCorteIndustrialPage() {
               </button>
             </div>
 
-            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2 custom-scrollbar">
               {chapas.map(chapa => (
                 <div 
                   key={chapa.id} 
-                  onClick={() => setActiveChapaId(chapa.id)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
-                    activeChapaId === chapa.id ? 'bg-primary/10 border-primary/40' : 'bg-black/20 border-border/40 hover:border-primary/20'
+                  className={`p-4 rounded-2xl border transition-all relative group ${
+                    activeChapaId === chapa.id ? 'bg-primary/10 border-primary/40' : 'bg-black/20 border-border/40'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <input 
-                      value={chapa.material} 
-                      onChange={e => handleUpdateChapa(chapa.id, { material: e.target.value })}
-                      className="bg-transparent border-none p-0 text-[11px] font-bold text-foreground focus:outline-none w-full"
-                    />
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleRemoveChapa(chapa.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="flex justify-between items-center mb-3">
                     <div className="flex flex-col">
-                      <span className="text-[8px] text-muted-foreground uppercase font-black">Larg</span>
+                      <input 
+                        value={chapa.material} 
+                        onChange={e => handleUpdateChapa(chapa.id, { material: e.target.value })}
+                        className="bg-transparent border-none p-0 text-[12px] font-black text-foreground focus:outline-none w-full uppercase tracking-tight"
+                      />
+                      <span className="text-[10px] text-muted-foreground font-mono">{chapa.sku}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleAddPecaParaChapa(chapa.id)}
+                        className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+                        title="Adicionar Peça a este material"
+                      >
+                        <Plus size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleRemoveChapa(chapa.id)}
+                        className="p-1.5 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all opacity-40 hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[8px] text-muted-foreground uppercase font-black block mb-1">Largura (MM)</span>
                       <input 
                         type="number" 
                         value={chapa.largura} 
                         onChange={e => handleUpdateChapa(chapa.id, { largura: Number(e.target.value) })}
-                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none w-full"
+                        className="bg-transparent border-none p-0 text-[14px] font-mono font-bold text-primary focus:outline-none w-full"
                       />
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] text-muted-foreground uppercase font-black">Alt</span>
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[8px] text-muted-foreground uppercase font-black block mb-1">Altura (MM)</span>
                       <input 
                         type="number" 
                         value={chapa.altura} 
                         onChange={e => handleUpdateChapa(chapa.id, { altura: Number(e.target.value) })}
-                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none w-full"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] text-muted-foreground uppercase font-black">SKU</span>
-                      <input 
-                        value={chapa.sku} 
-                        onChange={e => handleUpdateChapa(chapa.id, { sku: e.target.value })}
-                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none uppercase w-full"
+                        className="bg-transparent border-none p-0 text-[14px] font-mono font-bold text-primary focus:outline-none w-full"
                       />
                     </div>
                   </div>
+
                   {activeChapaId === chapa.id && (
-                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full shadow-glow" />
+                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-primary rounded-full shadow-[0_0_15px_rgba(255,107,0,0.5)]" />
                   )}
                 </div>
               ))}
             </div>
 
             <div className="h-px bg-border/20 my-2" />
-
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Adicionar Peças</span>
-              <button 
-                onClick={handleAddPecaManual} 
-                className="w-6 h-6 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center transition-all"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
 
             <div className="relative group">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -568,54 +580,57 @@ export default function PlanoCorteIndustrialPage() {
                   </div>
                   <div className="grid gap-2">
                     {gpecas.map(p => (
-                      <div key={p.id} className="group relative glass p-3 rounded-xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                      <div key={p.id} className="group relative glass p-4 rounded-2xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all shadow-lg hover:shadow-primary/5">
                         <div className="flex flex-col">
-                          <div className="flex justify-between items-start">
-                            <input 
-                              value={p.nome}
-                              onChange={e => handleUpdatePeca(p.id, { nome: e.target.value })}
-                              className="bg-transparent border-none p-0 text-[11px] font-bold text-foreground focus:outline-none w-full group-hover:text-white transition-colors"
-                            />
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">{p.nome}</span>
+                              <span className="text-[9px] font-mono text-primary/60 truncate">{p.sku || 'SEM SKU'}</span>
+                            </div>
                             <button 
                               onClick={() => handleRemovePeca(p.id)}
-                              className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
+                              className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all text-muted-foreground"
                             >
-                              <Trash2 size={12} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
-                          <input 
-                            value={p.sku || ''}
-                            onChange={e => handleUpdatePeca(p.id, { sku: e.target.value })}
-                            placeholder="SKU PEÇA"
-                            className="bg-transparent border-none p-0 text-[9px] font-black text-primary/60 uppercase tracking-widest mt-0.5 focus:outline-none w-full"
-                          />
+                          
+                          <div className="mb-3">
+                            <span className="text-[8px] font-black text-white/40 uppercase mb-1 block">Identificador</span>
+                            <input 
+                              placeholder="EX: LATERAL ESQUERDA"
+                              value={p.identificador || ''}
+                              onChange={e => handleUpdatePeca(p.id, { identificador: e.target.value.toUpperCase() })}
+                              className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1.5 text-[11px] font-bold focus:border-primary/40 outline-none transition-all"
+                            />
+                          </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] font-mono">
-                          <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
-                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Larg</span>
+                        <div className="grid grid-cols-3 gap-2 mt-1 text-[10px] font-mono">
+                          <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
+                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Larg</span>
                             <input 
                               type="number"
                               value={p.largura}
                               onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full"
+                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
                             />
                           </div>
-                          <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
-                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Alt</span>
+                          <div className="bg-black/20 p-2 rounded-xl border border-border/40 text-center">
+                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Alt</span>
                             <input 
                               type="number"
                               value={p.altura}
                               onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full"
+                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full font-bold"
                             />
                           </div>
-                          <div className="bg-primary/5 p-1 rounded border border-primary/10 text-center">
-                            <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans">Qtd</span>
+                          <div className="bg-primary/5 p-2 rounded-xl border border-primary/20 text-center">
+                            <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans mb-1 font-black">Qtd</span>
                             <input 
                               type="number"
                               value={p.quantidade || 1}
                               onChange={e => handleUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
-                              className="bg-transparent border-none p-0 text-primary font-bold text-center focus:outline-none w-full"
+                              className="bg-transparent border-none p-0 text-primary font-black text-center focus:outline-none w-full text-[12px]"
                             />
                           </div>
                         </div>

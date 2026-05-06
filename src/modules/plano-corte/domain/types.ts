@@ -13,7 +13,8 @@ export interface FioDeFita {
 export interface Peca {
   id: string;
   sku?: string; // Código único da peça (opcional)
-  nome: string; // Descrição/Nome
+  nome: string; // Descrição/Nome (Catalog)
+  identificador?: string; // Nome Customizado (User)
   largura: number; // mm
   altura: number;  // mm
   rotacionavel: boolean;
@@ -21,6 +22,7 @@ export interface Peca {
   quantidade?: number;
   material?: string;
   sku_chapa?: string;
+  identificador_projeto?: string;
   observacoes?: string;
   metadata?: Record<string, any>;
 }
