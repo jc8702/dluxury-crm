@@ -3,10 +3,11 @@
  * Importa lista de peças de planilha Excel/CSV
  * 
  * Formato esperado:
- * nome,largura_mm,altura_mm,quantidade,rotacionavel,fio_topo,fio_baixo,fio_esq,fio_dir
+ * sku,nome,largura_mm,altura_mm,quantidade,rotacionavel,fio_topo,fio_baixo,fio_esq,fio_dir
  */
 
 export interface PecaCSV {
+  sku?: string;
   nome: string;
   largura_mm: number;
   altura_mm: number;
@@ -41,7 +42,7 @@ export async function parseCSV(arquivo: File): Promise<PecaCSV[]> {
       return;
     }
 
-    const [nome, larguraStr, alturaStr, quantidadeStr, rotacionavelStr, fitoT, fitoB, fitoE, fitoD] = colunas;
+    const [sku, nome, larguraStr, alturaStr, quantidadeStr, rotacionavelStr, fitoT, fitoB, fitoE, fitoD] = colunas;
 
     const largura = parseInt(larguraStr);
     const altura = parseInt(alturaStr);
@@ -67,6 +68,7 @@ export async function parseCSV(arquivo: File): Promise<PecaCSV[]> {
     } : undefined;
 
     pecas.push({
+      sku: sku || undefined,
       nome: nome || `Peça ${idx + 1}`,
       largura_mm: largura,
       altura_mm: altura,

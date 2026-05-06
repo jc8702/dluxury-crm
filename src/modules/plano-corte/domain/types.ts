@@ -12,7 +12,8 @@ export interface FioDeFita {
 
 export interface Peca {
   id: string;
-  nome: string;
+  sku?: string; // Código único da peça (opcional)
+  nome: string; // Descrição/Nome
   largura: number; // mm
   altura: number;  // mm
   rotacionavel: boolean;

@@ -10,10 +10,10 @@ async function runMigration() {
     const migration2 = fs.readFileSync('./src/db/migrations/phase5_industrial_stock.sql', 'utf8');
 
     console.log('Executando Fase 5.1...');
-    await sql(migration1);
+    await sql([migration1]);
     
     console.log('Executando Industrial Stock...');
-    await sql(migration2);
+    await sql([migration2]);
 
     console.log('✅ Migrações concluídas com sucesso!');
     process.exit(0);

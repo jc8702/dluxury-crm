@@ -132,14 +132,15 @@ export default function PlanoCorteIndustrialPage() {
   
   const handleImportarPecas = (pecasImportadas: any[]) => {
     const formatadas: Peca[] = pecasImportadas.map(p => ({
-      id: `imp-${Math.random().toString(36).substr(2, 9)}`,
+      id: p.id || `imp-${Math.random().toString(36).substr(2, 9)}`,
+      sku: p.sku || p.sku_peca || p.referencia || '', 
       nome: p.nome || p.descricao || 'PEÇA IMPORTADA',
-      largura: Number(p.largura_mm || p.largura || 0),
-      altura: Number(p.altura_mm || p.altura || 0),
-      rotacionavel: p.rotacionavel ?? true,
+      largura: Number(p.largura_mm || p.largura || p.larguraMm || 0),
+      altura: Number(p.altura_mm || p.altura || p.alturaMm || 0),
+      rotacionavel: p.rotacionavel ?? p.podeRotacionar ?? true,
       quantidade: Number(p.quantidade || 1),
-      sku_chapa: p.sku_chapa || chapaPadrao.sku,
-      material: p.material || 'MDF-18MM'
+      sku_chapa: p.sku_chapa || p.grupoMaterialId || chapaPadrao.sku,
+      material: p.material || p.grupoMaterialId || 'MDF-18MM'
     }));
     setPecas([...pecas, ...formatadas]);
     setShowImportModal(false);
@@ -192,10 +193,18 @@ export default function PlanoCorteIndustrialPage() {
     if (!s) return pecas;
     return pecas.filter(p => {
       const nome = (p.nome || '').toLowerCase();
-      const sku = ((p as any).sku_chapa || '').toLowerCase();
-      const mat = (p.material || '').toLowerCase();
+      const skuPeça = (p.sku || '').toLowerCase();
+      const skuChapa = (p.sku_chapa || '').toLowerCase();
+      const material = (p.material || '').toLowerCase();
       const id = (p.id || '').toLowerCase();
-      return nome.includes(s) || sku.includes(s) || mat.includes(s) || id.includes(s);
+      
+      return (
+        nome.includes(s) || 
+        skuPeça.includes(s) || 
+        skuChapa.includes(s) || 
+        material.includes(s) || 
+        id.includes(s)
+      );
     });
   }, [pecas, searchPeca]);
 
@@ -351,8 +360,16 @@ export default function PlanoCorteIndustrialPage() {
                 value={searchPeca} 
                 onChange={e => setSearchPeca(e.target.value)} 
                 placeholder="Buscar por nome ou SKU..." 
-                className="w-full h-9 pl-10 pr-4 bg-black/40 border border-border/40 rounded-lg text-[11px] focus:border-primary/50 focus:bg-black/60 outline-none transition-all" 
+                className="w-full h-9 pl-10 pr-10 bg-black/40 border border-border/40 rounded-lg text-[11px] focus:border-primary/50 focus:bg-black/60 outline-none transition-all" 
               />
+              {searchPeca && (
+                <button 
+                  onClick={() => setSearchPeca('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -374,14 +391,19 @@ export default function PlanoCorteIndustrialPage() {
                   <div className="grid gap-2">
                     {gpecas.map(p => (
                       <div key={p.id} className="group relative glass p-3 rounded-xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
-                        <div className="flex justify-between items-start">
-                          <span className="text-[11px] font-bold text-foreground group-hover:text-white transition-colors truncate pr-6">{p.nome}</span>
-                          <button 
-                            onClick={() => handleRemovePeca(p.id)}
-                            className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                        <div className="flex flex-col">
+                          <div className="flex justify-between items-start">
+                            <span className="text-[11px] font-bold text-foreground group-hover:text-white transition-colors truncate pr-6">{p.nome}</span>
+                            <button 
+                              onClick={() => handleRemovePeca(p.id)}
+                              className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                          {p.sku && (
+                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest mt-0.5">{p.sku}</span>
+                          )}
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] font-mono">
                           <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
