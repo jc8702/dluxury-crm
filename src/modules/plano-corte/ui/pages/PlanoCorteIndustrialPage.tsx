@@ -656,8 +656,8 @@ export default function PlanoCorteIndustrialPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </aside>
