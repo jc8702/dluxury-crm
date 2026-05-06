@@ -1,4 +1,5 @@
-import { MaxRectsOptimizer, type Peca, type ResultadoOtimizacao } from './MaxRectsOptimizer';
+import { Peca } from '../types';
+import { MaxRectsOptimizer, ResultadoOtimizacaoSimples } from './MaxRectsOptimizer';
 import { GuillotineOptimizer } from './GuillotineOptimizer';
 
 /**
@@ -32,8 +33,8 @@ export class HybridOptimizer {
    * @param iteracoes - Número de iterações (padrão: 20)
    * @returns Melhor resultado encontrado
    */
-  otimizar(pecas: Peca[], iteracoes: number = 20): ResultadoOtimizacao {
-    let melhorResultado: ResultadoOtimizacao | null = null;
+  otimizar(pecas: Peca[], iteracoes: number = 20): ResultadoOtimizacaoSimples {
+    let melhorResultado: ResultadoOtimizacaoSimples | null = null;
     let melhorAproveitamento = 0;
 
     // Iterar múltiplas vezes com variações
@@ -69,7 +70,7 @@ export class HybridOptimizer {
   private otimizarUmaIteracao(
     pecas: Peca[],
     indiceIteracao: number
-  ): ResultadoOtimizacao {
+  ): ResultadoOtimizacaoSimples {
     const heuristica = indiceIteracao % 5;
     const pecasOrdenadas = this.ordenarPecas(pecas, heuristica);
 

@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
-  Scissors, Plus, Save, Trash2, Maximize, ZoomIn, ZoomOut, 
-  Printer, FileText, Download, Layout, Layers, RefreshCcw,
-  Maximize2, Box, Info, Settings2, X, CheckCircle, ChevronRight
+  Scissors, Plus, Save, Trash2, RefreshCcw,
+  Box, Info, X, CheckCircle, ChevronRight,
+  FileUp, Search, Wallet, TrendingUp, History, 
+  ArrowUpCircle, ArrowDownCircle, Layout, Download,
+  Layers, Maximize2, Settings2, Printer, FileText
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { 
   PecaInput, 
   GrupoMaterial, 
-  ResultadoPlano
+  ResultadoPlano,
+  Superficie
 } from '../utils/planodeCorte';
 import { useCuttingWorker } from '../modules/plano-corte/infrastructure/hooks/useCuttingWorker';
 import { retalhosRepository } from '../modules/plano-corte/infrastructure/repositories/RetalhosRepository';
@@ -19,34 +22,59 @@ import { ImportadorEngenharia } from '../modules/plano-corte/ui/components/Impor
 import { ExportacaoModal } from '../modules/plano-corte/ui/components/ExportacaoModal';
 import { ImportacaoModal } from '../modules/plano-corte/ui/components/ImportacaoModal';
 import { PrintEtiquetas } from '../modules/plano-corte/ui/components/PrintEtiquetas';
-import { Search, FileUp } from 'lucide-react';
-
 import { ModalMaterial } from '../modules/plano-corte/ui/components/ModalMaterial';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
+import { Modal } from '../design-system/components/Modal';
+
+interface PlanoCorteData {
+  id?: string;
+  nome: string;
+  status: string;
+  materiais?: GrupoMaterial[];
+  resultado?: ResultadoPlano;
+  orcamento_id?: string;
+  projeto_id?: string;
+  visita_id?: string;
+  criado_em?: string;
+}
+
+interface ProjetoImport {
+  id: string;
+  title: string;
+  tag?: string;
+  status: string;
+  client_name?: string;
+  cliente_nome?: string;
+  subtitle?: string;
+  value: number;
+}
 
 const CuttingPlanPage: React.FC = () => {
   const { success, error, warning } = useToast();
   const [ConfirmDialogElement, confirmAction] = useConfirm();
   const navigate = useNavigate();
   const { calcular, isCalculating, progress } = useCuttingWorker();
+  
   const [loading, setLoading] = useState(false);
-  const [plano, setPlano] = useState<any>({ nome: 'Novo Plano de Corte', status: 'rascunho' });
+  const [plano, setPlano] = useState<PlanoCorteData>({ nome: 'Novo Plano de Corte', status: 'rascunho' });
   const [grupos, setGrupos] = useState<GrupoMaterial[]>([]);
   const [pecas, setPecas] = useState<PecaInput[]>([]);
   const [resultado, setResultado] = useState<ResultadoPlano | null>(null);
   const [activeGrupoIdx, setActiveGrupoIdx] = useState(0);
   const [activeChapaIdx, setActiveChapaIdx] = useState(0);
-  const [highlightPecaId, setHighlightPecaId] = useState<string | null>(null);
   const [kerf, setKerf] = useState(3);
+  
   const [showImportModal, setShowImportModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showIndustrialImport, setShowIndustrialImport] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [projetosParaImportar, setProjetosParaImportar] = useState<any[]>([]);
-  const [materiaisEstoque, setMateriaisEstoque] = useState<any[]>([]);
-  const [planosSalvos, setPlanosSalvos] = useState<any[]>([]);
   const [showPlanosModal, setShowPlanosModal] = useState(false);
+  
+  const [projetosParaImportar, setProjetosParaImportar] = useState<ProjetoImport[]>([]);
+  const [materiaisEstoque, setMateriaisEstoque] = useState<any[]>([]);
+  const [planosSalvos, setPlanosSalvos] = useState<PlanoCorteData[]>([]);
+  
   const [searchParams] = useSearchParams();
   const currentUrlId = searchParams.get('id');
 
@@ -62,7 +90,6 @@ const CuttingPlanPage: React.FC = () => {
       api.planoCorte.get(currentUrlId).then(res => {
         if (res) {
           setPlano(res);
-          // O resultado e materiais podem vir no JSONB
           if (res.materiais) setGrupos(res.materiais);
           if (res.resultado) setResultado(res.resultado);
         }
@@ -76,10 +103,9 @@ const CuttingPlanPage: React.FC = () => {
   useEffect(() => {
     if (showImportModal) {
       api.projects.list().then(res => {
-        // Trata como projeto qualquer item vindo do endpoint de projetos
         const prjs = (Array.isArray(res) ? res : []).map((p: any) => ({
           ...p,
-          type: 'project' // Garante que o frontend identifique como projeto
+          type: 'project'
         }));
         setProjetosParaImportar(prjs);
       }).catch(console.error);
@@ -116,7 +142,6 @@ const CuttingPlanPage: React.FC = () => {
       let currentPlanoId = plano.id || currentUrlId;
 
       if (!currentPlanoId) {
-        // Criar novo
         const createRes = await api.planoCorte.create({
           nome: plano.nome || 'Novo Plano',
           status: 'calculado',
@@ -126,16 +151,13 @@ const CuttingPlanPage: React.FC = () => {
         
         if (createRes && createRes.id) {
           currentPlanoId = createRes.id;
-          // IMPORTANTE: Atualiza o estado local imediatamente para destravar o botão
           setPlano(prev => ({ ...prev, id: currentPlanoId, status: 'calculado' }));
-          
           navigate(`/plano-de-corte?id=${currentPlanoId}`, { replace: true });
           success("Plano criado e salvo com sucesso!");
         } else {
           throw new Error('Falha ao registrar novo plano.');
         }
       } else {
-        // Atualizar existente
         const payload = {
           plano_id: currentPlanoId,
           materiais: grupos,
@@ -145,12 +167,11 @@ const CuttingPlanPage: React.FC = () => {
         const res = await api.planoCorte.save(payload);
         if (res) {
           success(`Plano atualizado com sucesso!`);
-          // Forçar atualização local do estado se necessário, mas o id já está na URL
           setPlano(prev => ({ ...prev, id: currentPlanoId, status: 'calculado' }));
         }
       }
 
-      // REGISTRAR NOVOS RETALHOS (DEPARA BLOCO 2)
+      // REGISTRAR NOVOS RETALHOS
       const areaMinima = 300 * 300;
       const sobrasAproveitaveis = resultado.sobrasGeradas.filter(s => 
         s.aproveitavel && (s.largura * s.altura >= areaMinima)
@@ -162,7 +183,6 @@ const CuttingPlanPage: React.FC = () => {
           const skuBase = grupo?.sku || 'MDF-GENERICO';
 
           try {
-            // Registrar na tabela específica de retalhos (Bloco 2)
             return await retalhosRepository.salvarRetalho({
               sku_chapa: skuBase,
               largura_mm: s.largura,
@@ -195,47 +215,40 @@ const CuttingPlanPage: React.FC = () => {
     }
 
     const isConfirmed = await confirmAction({
-      title: 'Aprovar Produção',
-      description: 'Deseja aprovar a produção? Isso irá baixar as chapas do estoque e gerar uma nova OP.'
+      title: 'APROVAR PRODUÇÃO',
+      description: 'CONFIRMA A APROVAÇÃO? ESTA AÇÃO REALIZA A BAIXA DE ESTOQUE E GERA A ORDEM DE PRODUÇÃO.'
     });
     if (!isConfirmed) return;
 
     setLoading(true);
     try {
-      // 1. Calcular consumo de chapas por SKU
       const consumo: Record<string, number> = {};
       resultado.grupos.forEach(g => {
         const sku = g.sku;
-        const qtd = g.superficies.filter(s => !s.is_retalho).length;
+        const qtd = g.superficies.filter(s => s.tipo === 'inteira').length;
         if (qtd > 0) {
           consumo[sku] = (consumo[sku] || 0) + qtd;
         }
       });
 
       const materiaisConsumidos = Object.entries(consumo).map(([sku, qtd]) => ({ sku, qtd }));
-
-      // 2. Chamar API para baixar estoque de chapas inteiras
       await api.planoCorte.aprovarProducao(materiaisConsumidos);
 
-      // 3. Baixar Retalhos Utilizados (Bloco 2)
       const retalhosUtilizadosIds: string[] = [];
       resultado.grupos.forEach(g => {
         g.superficies.forEach(s => {
-          // No otimizador, se chapa_id não for nulo e não for prefixo de chapa inteira, é o ID do retalho
-          if (s.id && !s.id.startsWith('sup-') && s.id.length > 20) {
-            retalhosUtilizadosIds.push(s.id);
+          if (s.retalhoId) {
+            retalhosUtilizadosIds.push(s.retalhoId);
           }
         });
       });
 
       if (retalhosUtilizadosIds.length > 0) {
-        console.log(`[RETALHOS] Baixando ${retalhosUtilizadosIds.length} retalhos...`);
         await Promise.all(retalhosUtilizadosIds.map(id => 
-          retalhosRepository.usarRetalho(id, plano.id)
+          retalhosRepository.usarRetalho(id, plano.id!)
         ));
       }
 
-      // 4. Criar Ordem de Produção (OP)
       const totalPecas = resultado.grupos.reduce((acc, g) => 
         acc + g.superficies.reduce((accS, s) => accS + s.pecasPositionadas.length, 0), 0
       );
@@ -257,11 +270,11 @@ const CuttingPlanPage: React.FC = () => {
         }
       });
 
-      success(`Produção aprovada! OP ${opId} gerada com sucesso e encaminhada para a linha de produção.`);
+      success(`PRODUÇÃO APROVADA! OP ${opId} GERADA COM SUCESSO.`);
       navigate('/producao');
     } catch (e) {
       console.error("Erro ao aprovar produção", e);
-      error("Falha ao aprovar produção.");
+      error("FALHA AO APROVAR PRODUÇÃO.");
     } finally {
       setLoading(false);
     }
@@ -322,17 +335,16 @@ const CuttingPlanPage: React.FC = () => {
     setGrupos(grupos.map(g => g.id === id ? { ...g, ...data } : g));
   };
 
-  const handleImportProjeto = async (prj: any) => {
+  const handleImportProjeto = async (prj: ProjetoImport) => {
     setLoading(true);
     try {
-      // 1. Buscar todos os orçamentos aprovados deste projeto
       const orcRes = await api.orcamentos.list();
       const approvedOrcs = (orcRes || []).filter((o: any) => 
         String(o.projeto_id) === String(prj.id) && o.status === 'aprovado'
       );
 
       if (approvedOrcs.length === 0) {
-        warning("Este projeto não possui orçamentos aprovados com detalhamento técnico.");
+        warning("Este projeto não possui orçamentos aprovados.");
         setLoading(false);
         return;
       }
@@ -341,16 +353,13 @@ const CuttingPlanPage: React.FC = () => {
       const novasPecas = [...pecas];
       let totalImportado = 0;
 
-      // 2. Para cada orçamento aprovado, buscar a árvore técnica e importar peças
       for (const orc of approvedOrcs) {
         const data = await api.orcamentoTecnico.getTree(orc.id);
         const tree = data.ambientes || [];
-        
-        let pecasParaProcessar = [];
+        let pecasParaProcessar: any[] = [];
 
         if (tree && Array.isArray(tree) && tree.length > 0) {
-          // Extrair da Árvore Técnica (Industrial)
-          tree.forEach(amb => {
+          tree.forEach((amb: any) => {
             amb.moveis?.forEach((mov: any) => {
               mov.pecas?.forEach((p: any) => {
                 pecasParaProcessar.push({
@@ -362,7 +371,6 @@ const CuttingPlanPage: React.FC = () => {
             });
           });
         } else {
-          // Fallback: Tentar itens do orçamento (Comercial)
           const fullOrc = await api.orcamentos.get(orc.id);
           const itens = fullOrc.itens || [];
           itens.forEach((itm: any) => {
@@ -375,7 +383,7 @@ const CuttingPlanPage: React.FC = () => {
                 sku: itm.material,
                 ambiente_nome: itm.ambiente || 'Geral',
                 movel_nome: itm.descricao,
-                espessura_mm: 15 // Default
+                espessura_mm: 15
               });
             }
           });
@@ -429,13 +437,10 @@ const CuttingPlanPage: React.FC = () => {
       setShowImportModal(false);
       
       if (totalImportado > 0) {
-        success(`${totalImportado} peças importadas com sucesso do projeto ${prj.title} (TAG: ${prj.tag || prj.id}).`);
-      } else {
-        warning("Nenhuma peça encontrada nos orçamentos aprovados deste projeto.");
+        success(`${totalImportado} peças importadas com sucesso!`);
       }
     } catch (e) { 
-      console.error("Erro ao importar projeto", e);
-      error("Falha ao importar peças do projeto.");
+      error("FALHA AO IMPORTAR PEÇAS.");
     } finally { 
       setLoading(false); 
     }
@@ -446,7 +451,6 @@ const CuttingPlanPage: React.FC = () => {
     const novasPecas = [...pecas];
 
     pecasImportadas.forEach(p => {
-      // Tentar encontrar ou criar grupo baseado no material (se disponível) ou padrão
       const skuMaterial = p.sku_chapa || 'MDF-PADRAO';
       let grupo = novosGrupos.find(g => g.sku === skuMaterial);
       
@@ -474,9 +478,8 @@ const CuttingPlanPage: React.FC = () => {
         alturaMm: p.altura_mm || p.altura,
         quantidade: p.quantidade || 1,
         podeRotacionar: p.rotacionavel ?? true,
-        grupoMaterialId: grupo.id,
-        fio_de_fita: p.fio_de_fita
-      } as any);
+        grupoMaterialId: grupo.id
+      });
     });
 
     setGrupos(novosGrupos);
@@ -489,7 +492,6 @@ const CuttingPlanPage: React.FC = () => {
     const novasPecas = [...pecas];
 
     pecasDae.forEach(peca => {
-      // Find or create group
       let grupo = novosGrupos.find(g => g.sku === peca.grupoMaterialId);
       if (!grupo) {
         grupo = {
@@ -524,235 +526,318 @@ const CuttingPlanPage: React.FC = () => {
   const activeResultadoGrupo = resultado?.grupos.find(g => g.grupoId === activeGrupo?.id);
   const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
 
-  // Estilos inline para compensar falta de Tailwind JIT e evitar tela preta
-  const styles = {
-    topBar: { padding: '1rem 1.5rem', background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' },
-    iconGold: { color: 'var(--primary)', width: '20px', height: '20px' },
-    mainTitle: { background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', padding: '4px', width: '300px', fontWeight: '800', fontSize: '1.2rem', color: 'var(--text)' },
-    sidebar: { width: '400px', background: 'var(--background)', borderRight: '1px solid var(--border)', overflowY: 'auto' as const, padding: '1.5rem', display: 'flex', flexDirection: 'column' as const, gap: '2rem' },
-    cardActive: { border: '1px solid var(--primary)', background: 'rgba(212, 175, 55, 0.05)' },
-    cardInactive: { border: '1px solid var(--border)', background: 'var(--surface)' },
-    deleteIcon: { color: 'var(--danger)', cursor: 'pointer', width: '16px', height: '16px' }
-  };
-
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--background)', color: 'var(--text)', overflow: 'hidden' }}>
+    <div className="flex flex-col h-screen bg-[#0A0A0A] text-white overflow-hidden animate-fade-in">
+      <ConfirmDialogElement />
       
-      {/* HEADER / ACTIONS */}
-      <div style={styles.topBar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Scissors style={styles.iconGold} />
-          <input 
-            value={plano?.nome || ''} 
-            onChange={e => setPlano({ ...plano, nome: e.target.value })}
-            style={styles.mainTitle}
-            placeholder="NOME DO PLANO"
-          />
-          <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '6px 12px', borderRadius: '8px' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)' }}>KERF:</span>
-            <input type="number" value={kerf} onChange={e => setKerf(Number(e.target.value))} style={{ width: '35px', background: 'transparent', border: 'none', color: 'var(--primary)', fontWeight: 'bold', outline: 'none' }} />
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>mm</span>
+      {/* HEADER INDUSTRIAL */}
+      <header className="flex items-center justify-between p-6 bg-black/40 border-b border-white/5 backdrop-blur-md z-30">
+        <div className="flex items-center gap-6">
+          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
+            <Scissors className="text-primary w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">Engenharia Industrial</span>
+              <span className="h-1 w-1 rounded-full bg-primary/40" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Plano de Corte</span>
+            </div>
+            <input 
+              value={plano?.nome || ''} 
+              onChange={e => setPlano({ ...plano, nome: e.target.value })}
+              className="bg-transparent border-none p-0 mt-1 text-2xl font-black italic tracking-tighter focus:outline-none focus:ring-0 w-[400px] text-white placeholder-white/20"
+              placeholder="NOME DO PLANO"
+            />
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={() => setShowPlanosModal(true)} className="btn btn-outline" style={{ border: '1px solid var(--primary)', color: 'var(--primary)' }}><Layout size={18} /> Planos Salvos</button>
-          <button onClick={() => setShowIndustrialImport(true)} className="btn btn-primary" style={{ background: 'var(--surface-light)', color: 'var(--text)', borderColor: 'var(--border)' }}><FileUp size={18} /> Importar Industrial</button>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-outline"><Box size={18} /> Projetos (TAG)</button>
-          <button onClick={handleCalcular} className="btn btn-primary" style={{ minWidth: '140px' }} disabled={isCalculating}>
-            {isCalculating ? <RefreshCcw size={18} className="animate-spin" /> : <RefreshCcw size={18} />} 
+        <div className="flex items-center gap-3">
+          <div className="glass flex items-center gap-3 px-4 h-12 rounded-2xl border border-white/10 mr-4">
+            <Settings2 size={16} className="text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">KERF:</span>
+            <input 
+              type="number" 
+              value={kerf} 
+              onChange={e => setKerf(Number(e.target.value))} 
+              className="w-10 bg-transparent border-none text-primary font-black text-sm outline-none focus:ring-0 p-0 text-center" 
+            />
+            <span className="text-[10px] font-bold text-muted-foreground">MM</span>
+          </div>
+
+          <button onClick={() => setShowPlanosModal(true)} className="btn btn-outline h-12 px-5 group">
+            <History className="w-4 h-4 mr-2 group-hover:rotate-[-45deg] transition-transform" /> HISTÓRICO
+          </button>
+          
+          <div className="h-8 w-[1px] bg-white/10 mx-2" />
+
+          <button onClick={() => setShowIndustrialImport(true)} className="btn btn-outline h-12 px-5 border-blue-500/20 text-blue-400 hover:bg-blue-500/10">
+            <FileUp size={18} className="mr-2" /> INDUSTRIAL
+          </button>
+          <button onClick={() => setShowImportModal(true)} className="btn btn-outline h-12 px-5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
+            <Box size={18} className="mr-2" /> PROJETOS
+          </button>
+          
+          <button 
+            onClick={handleCalcular} 
+            className="btn btn-primary h-12 px-6 font-black italic tracking-tight shadow-lg shadow-primary/20" 
+            disabled={isCalculating}
+          >
+            {isCalculating ? <RefreshCcw size={18} className="animate-spin mr-2" /> : <RefreshCcw size={18} className="mr-2" />} 
             {isCalculating ? `OTIMIZANDO (${progress}%)` : 'OTIMIZAR'}
           </button>
-          <button onClick={handleSave} className="btn btn-outline" disabled={loading}>
-            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar'}
+
+          <button onClick={handleSave} className="btn btn-outline h-12 px-5" disabled={loading}>
+            <Save size={18} className="mr-2" /> SALVAR
           </button>
+
           <button 
             onClick={handleAprovarProducao} 
-            className="btn btn-primary" 
+            className="btn h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black italic tracking-tight shadow-lg shadow-emerald-600/20 border-none" 
             disabled={loading || !resultado || !plano.id}
-            style={{ background: '#10B981', borderColor: '#10B981' }}
           >
-            <CheckCircle size={18} /> Aprovar Produção
+            <CheckCircle size={18} className="mr-2" /> APROVAR
           </button>
         </div>
-      </div>
+      </header>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <main className="flex-1 flex overflow-hidden">
         
-        {/* INPUT PANEL */}
-        <div style={styles.sidebar}>
+        {/* SIDEBAR DE INPUTS */}
+        <aside className="w-[420px] bg-black/20 border-r border-white/5 flex flex-col overflow-hidden backdrop-blur-sm">
           
           {/* MATERIAIS */}
-          <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '0.8rem', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>1. Materiais (Chapas)</h3>
+          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <Layers className="text-primary w-4 h-4" />
+                <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">01. MATERIAIS (CHAPAS)</h3>
+              </div>
               <button 
                 onClick={() => setShowMaterialModal(true)} 
-                className="btn btn-primary" 
-                style={{ width: '32px', height: '32px', padding: 0, borderRadius: '50%' }}
+                className="w-8 h-8 bg-primary/10 text-primary border border-primary/20 rounded-xl flex items-center justify-center hover:bg-primary/20 transition-all"
               >
-                <Plus size={20} />
+                <Plus size={18} />
               </button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-4">
               {grupos.map((g, idx) => (
                 <div 
                   key={g.id} 
                   onClick={() => setActiveGrupoIdx(idx)}
-                  className="card" 
-                  style={{ 
-                    padding: '1rem', 
-                    cursor: 'pointer',
-                    ...(activeGrupoIdx === idx ? styles.cardActive : styles.cardInactive)
-                  }}
+                  className={`glass-elevated group relative transition-all duration-300 p-5 rounded-[2rem] border cursor-pointer ${
+                    activeGrupoIdx === idx ? 'border-primary/40 bg-primary/5' : 'border-white/5 hover:border-white/20'
+                  }`}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ fontWeight: '800', fontSize: '0.95rem' }}>{g.nomeMaterial}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>SKU: {g.sku}</div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{g.sku}</div>
+                      <h4 className="text-base font-black italic tracking-tight">{g.nomeMaterial}</h4>
                     </div>
-                    <Trash2 
-                      style={styles.deleteIcon}
-                      onClick={(e) => { e.stopPropagation(); setGrupos(grupos.filter(x => x.id !== g.id)); }} 
-                    />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setGrupos(grupos.filter(x => x.id !== g.id)); }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   
-                  {/* Edição Rápida da Chapa */}
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>ALTURA (mm)</label>
-                      <input type="number" value={g.alturaChapaMm} onChange={e => updateGrupo(g.id, { alturaChapaMm: Number(e.target.value) })} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text)', fontWeight: '700', fontSize: '0.85rem' }} />
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/5">
+                    <div>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic block mb-1">ALTURA</span>
+                      <input 
+                        type="number" 
+                        value={g.alturaChapaMm} 
+                        onChange={e => updateGrupo(g.id, { alturaChapaMm: Number(e.target.value) })} 
+                        className="w-full bg-transparent border-none p-0 text-sm font-black text-white focus:ring-0" 
+                      />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>LARGURA (mm)</label>
-                      <input type="number" value={g.larguraChapaMm} onChange={e => updateGrupo(g.id, { larguraChapaMm: Number(e.target.value) })} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text)', fontWeight: '700', fontSize: '0.85rem' }} />
+                    <div>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest italic block mb-1">LARGURA</span>
+                      <input 
+                        type="number" 
+                        value={g.larguraChapaMm} 
+                        onChange={e => updateGrupo(g.id, { larguraChapaMm: Number(e.target.value) })} 
+                        className="w-full bg-transparent border-none p-0 text-sm font-black text-white focus:ring-0" 
+                      />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>ESP.(mm)</label>
-                      <input type="number" value={g.espessuraMm} onChange={e => updateGrupo(g.id, { espessuraMm: Number(e.target.value) })} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--primary)', fontWeight: '900', fontSize: '0.85rem' }} />
+                    <div>
+                      <span className="text-[9px] font-black text-primary uppercase tracking-widest italic block mb-1">ESP.</span>
+                      <input 
+                        type="number" 
+                        value={g.espessuraMm} 
+                        onChange={e => updateGrupo(g.id, { espessuraMm: Number(e.target.value) })} 
+                        className="w-full bg-transparent border-none p-0 text-sm font-black text-primary focus:ring-0" 
+                      />
                     </div>
                   </div>
                 </div>
               ))}
+              
               {grupos.length === 0 && (
-                <div style={{ padding: '2rem', textAlign: 'center', border: '2px dashed var(--border)', borderRadius: '12px', opacity: 0.5 }}>
-                  <Box size={24} style={{ margin: '0 auto 0.5rem' }} />
-                  <p style={{ fontSize: '0.8rem' }}>Nenhum material adicionado</p>
+                <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] opacity-30">
+                  <Box className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                  <p className="text-xs font-black uppercase tracking-widest italic">Nenhum material</p>
                 </div>
               )}
             </div>
-          </section>
+          </div>
 
-          {/* PEÇAS DO GRUPO ATIVO */}
+          {/* PEÇAS */}
           {activeGrupo && (
-            <section className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>2. Peças ({pecas.filter(p => p.grupoMaterialId === activeGrupo.id).length})</h3>
-                <button onClick={() => addPeca(activeGrupo.id)} className="btn btn-outline" style={{ padding: '4px 12px', fontSize: '0.7rem' }}>+ ADICIONAR</button>
+            <div className="h-[400px] border-t border-white/5 bg-black/40 p-6 flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <Scissors className="text-primary w-4 h-4" />
+                  <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
+                    02. PEÇAS ({pecas.filter(p => p.grupoMaterialId === activeGrupo.id).length})
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => addPeca(activeGrupo.id)}
+                  className="px-4 h-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all"
+                >
+                  + ADICIONAR
+                </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', paddingRight: '4px' }}>
+              
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                 {pecas.filter(p => p.grupoMaterialId === activeGrupo.id).map(p => (
-                  <div key={p.id} className="card" style={{ padding: '0.5rem 0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center', background: 'var(--surface)' }}>
+                  <div key={p.id} className="bg-white/5 hover:bg-white/10 border border-white/5 p-3 rounded-2xl flex items-center gap-4 transition-all group">
                     <input 
                       value={p.descricao} 
                       onChange={e => updatePeca(p.id, { descricao: e.target.value })} 
-                      style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text)', fontSize: '0.8rem', fontWeight: '600' }} 
+                      className="flex-1 bg-transparent border-none p-0 text-xs font-bold text-white focus:ring-0 truncate" 
                     />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <input type="number" value={p.larguraMm} onChange={e => updatePeca(p.id, { larguraMm: Number(e.target.value) })} style={{ width: '45px', textAlign: 'center', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '4px', padding: '4px', fontSize: '0.75rem' }} />
-                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>x</span>
-                      <input type="number" value={p.alturaMm} onChange={e => updatePeca(p.id, { alturaMm: Number(e.target.value) })} style={{ width: '45px', textAlign: 'center', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '4px', padding: '4px', fontSize: '0.75rem' }} />
+                    <div className="flex items-center gap-1">
+                      <input type="number" value={p.larguraMm} onChange={e => updatePeca(p.id, { larguraMm: Number(e.target.value) })} className="w-11 bg-black/40 border-none rounded-lg text-center text-[10px] font-bold p-1 focus:ring-1 focus:ring-primary/40" />
+                      <span className="text-[8px] text-white/20">×</span>
+                      <input type="number" value={p.alturaMm} onChange={e => updatePeca(p.id, { alturaMm: Number(e.target.value) })} className="w-11 bg-black/40 border-none rounded-lg text-center text-[10px] font-bold p-1 focus:ring-1 focus:ring-primary/40" />
                     </div>
-                    <input 
-                      type="number" 
-                      value={p.quantidade} 
-                      onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} 
-                      style={{ width: '30px', textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--primary)', fontWeight: '900', fontSize: '0.8rem' }} 
-                    />
-                    <Trash2 
-                      size={14} 
-                      style={{ color: 'var(--danger)', cursor: 'pointer', opacity: 0.5 }} 
+                    <div className="w-10 flex flex-col items-center">
+                      <span className="text-[7px] font-black text-primary opacity-50 uppercase tracking-tighter">QTD</span>
+                      <input 
+                        type="number" 
+                        value={p.quantidade} 
+                        onChange={e => updatePeca(p.id, { quantidade: Number(e.target.value) })} 
+                        className="w-full bg-transparent border-none p-0 text-center text-xs font-black text-primary focus:ring-0" 
+                      />
+                    </div>
+                    <button 
                       onClick={() => setPecas(pecas.filter(x => x.id !== p.id))}
-                    />
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
-        </div>
+        </aside>
 
-        {/* VISUALIZATION CANVAS */}
-        <div className="hide-on-print" style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-          {/* TAB DE CHAPAS */}
-          <div style={{ display: 'flex', background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: '40px', overflowX: 'auto' }}>
+        {/* ÁREA DE VISUALIZAÇÃO */}
+        <div className="flex-1 relative flex flex-col bg-black/60 overflow-hidden">
+          
+          {/* TABS DE CHAPAS */}
+          <div className="flex bg-black/40 border-b border-white/5 backdrop-blur-sm h-14 shrink-0 overflow-x-auto scrollbar-none">
             {activeResultadoGrupo?.superficies.map((s, idx) => (
               <button 
                 key={s.id} 
                 onClick={() => setActiveChapaIdx(idx)} 
-                style={{ 
-                  padding: '0 1.5rem', 
-                  fontSize: '0.75rem', 
-                  fontWeight: '800', 
-                  border: 'none', 
-                  cursor: 'pointer',
-                  background: activeChapaIdx === idx ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                  color: activeChapaIdx === idx ? 'var(--primary)' : 'var(--text-muted)',
-                  borderBottom: activeChapaIdx === idx ? '2px solid var(--primary)' : 'none',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s'
-                }}>
-                {s.tipo === 'retalho' ? 'Retalho' : `Chapa ${idx + 1}`} ({Number(s.aproveitamentoPct || 0).toFixed(1)}%)
+                className={`flex items-center px-8 h-full text-[10px] font-black uppercase tracking-widest italic border-r border-white/5 transition-all whitespace-nowrap ${
+                  activeChapaIdx === idx 
+                    ? 'bg-primary text-black' 
+                    : 'text-muted-foreground hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <div className="flex flex-col items-start leading-none">
+                  <span className="mb-1">{s.tipo === 'retalho' ? 'RETALHO' : `CHAPA ${idx + 1}`}</span>
+                  <span className={`text-[8px] ${activeChapaIdx === idx ? 'text-black/60' : 'text-primary/60'}`}>
+                    {Number(s.aproveitamentoPct || 0).toFixed(1)}% EFICIÊNCIA
+                  </span>
+                </div>
               </button>
             ))}
           </div>
 
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', position: 'relative' }}>
+          <div className="flex-1 flex items-center justify-center relative p-8">
             {activeSuperficie ? (
-              <CanvasAvancado 
-                layout={activeSuperficie} 
-                chapaDimensoes={{ 
-                  largura: Number(activeGrupo?.larguraChapaMm || 2750), 
-                  altura: Number(activeGrupo?.alturaChapaMm || 1830) 
-                }} 
-              />
+              <div className="w-full h-full flex items-center justify-center animate-pop-in">
+                <CanvasAvancado 
+                  layout={activeSuperficie} 
+                  chapaDimensoes={{ 
+                    largura: Number(activeGrupo?.larguraChapaMm || 2750), 
+                    altura: Number(activeGrupo?.alturaChapaMm || 1830) 
+                  }} 
+                />
+              </div>
             ) : (
-              <div style={{ textAlign: 'center', opacity: 0.15, marginTop: '20vh' }}>
-                <Scissors size={140} style={{ margin: '0 auto 1.5rem', color: 'var(--primary)' }} />
-                <p style={{ fontSize: '1.2rem', fontWeight: '900', letterSpacing: '0.2em' }}>AGUARDANDO OTIMIZAÇÃO</p>
-                <p style={{ fontSize: '0.8rem', fontWeight: '600' }}>Adicione materiais e peças para começar.</p>
+              <div className="text-center space-y-6 opacity-20 group">
+                <div className="relative inline-block">
+                  <div className="absolute inset-0 bg-primary blur-[80px] rounded-full opacity-20 group-hover:opacity-40 transition-opacity" />
+                  <Scissors size={140} className="relative text-primary animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black italic tracking-[0.3em] uppercase">Aguardando Engenharia</h2>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+                    Configure os materiais e peças no painel lateral
+                  </p>
+                </div>
               </div>
             )}
           </div>
           
-          {/* RESUMO RÁPIDO BOTTOM */}
+          {/* PAINEL DE MÉTRICAS BOTTOM */}
           {resultado && (
-            <div className="glass" style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', padding: '1.25rem', borderRadius: '16px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', border: '1px solid var(--border-strong)' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Eficiência Geral</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success)' }}>{Number(resultado.aproveitamentoGeral || 0).toFixed(1)}%</div>
-              </div>
-              <div style={{ height: '30px', width: '1px', background: 'var(--border)' }} />
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Chapas Usadas</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>{resultado.totalChapasInteiras}</div>
-              </div>
-              <div style={{ height: '30px', width: '1px', background: 'var(--border)' }} />
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Peças Processadas</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>{resultado.totalPecasPositionadas}</div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={() => setShowExportModal(true)} className="btn btn-primary" style={{ height: '40px', padding: '0 2rem' }}>
-                  <Download size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> EXPORTAR PRODUÇÃO
+            <div className="p-8 pb-10">
+              <div className="glass-elevated bg-primary/5 rounded-[2.5rem] border border-primary/20 p-8 flex items-center justify-between backdrop-blur-xl shadow-2xl shadow-black/40 animate-slide-up">
+                <div className="flex gap-12">
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic flex items-center gap-2">
+                      <TrendingUp className="w-3 h-3 text-primary" /> EFICIÊNCIA GLOBAL
+                    </div>
+                    <div className="text-4xl font-black italic tracking-tighter text-primary">
+                      {Number(resultado.aproveitamentoGeral || 0).toFixed(1)}%
+                    </div>
+                  </div>
+                  
+                  <div className="w-[1px] h-12 bg-white/10" />
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic flex items-center gap-2">
+                      <Box className="w-3 h-3 text-blue-400" /> CONSUMO DE CHAPAS
+                    </div>
+                    <div className="text-4xl font-black italic tracking-tighter">
+                      {resultado.totalChapasInteiras} <span className="text-sm text-muted-foreground ml-1">UNIDADES</span>
+                    </div>
+                  </div>
+
+                  <div className="w-[1px] h-12 bg-white/10" />
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic flex items-center gap-2">
+                      <CheckCircle className="w-3 h-3 text-emerald-400" /> PEÇAS PROCESSADAS
+                    </div>
+                    <div className="text-4xl font-black italic tracking-tighter">
+                      {resultado.totalPecasPositionadas}
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowExportModal(true)} 
+                  className="btn btn-primary h-16 px-10 font-black italic text-lg tracking-tight shadow-xl shadow-primary/20 flex items-center gap-4"
+                >
+                  <Download size={24} /> EXPORTAR PRODUÇÃO
                 </button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* MODAL: EXPORTAÇÃO (NOVO) */}
+      {/* MODAL: EXPORTAÇÃO */}
       {showExportModal && resultado && (
         <ExportacaoModal
           resultado={resultado}
@@ -764,41 +849,53 @@ const CuttingPlanPage: React.FC = () => {
         />
       )}
 
-      {/* MODAL: PLANOS SALVOS (NOVO) */}
-      {showPlanosModal && (
-        <div className="modal-overlay" onClick={() => setShowPlanosModal(false)}>
-          <div className="modal-content animate-pop-in" style={{ width: '600px' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Layout className="text-[#E2AC00]" /> Planos de Corte Salvos
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '500px', overflowY: 'auto' }}>
-              {(planosSalvos || []).map(p => (
-                <div 
-                  key={p.id} 
-                  className="card hover-scale" 
-                  style={{ padding: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-hover)' }}
-                  onClick={() => {
-                    navigate(`/plano-de-corte?id=${p.id}`);
-                    setShowPlanosModal(false);
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '800' }}>{p.nome}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Salvo em: {p.criado_em ? new Date(p.criado_em).toLocaleString() : 'N/A'}
-                    </div>
+      {/* MODAL: HISTÓRICO DE PLANOS */}
+      <Modal isOpen={showPlanosModal} onClose={() => setShowPlanosModal(false)} title="HISTÓRICO DE ENGENHARIA" width="700px">
+        <div className="space-y-6 p-4">
+          <div className="relative">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-50" />
+            <input 
+              className="w-full bg-black/60 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:border-primary/50 transition-all" 
+              placeholder="Pesquisar planos salvos..."
+            />
+          </div>
+
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {(planosSalvos || []).map(p => (
+              <div 
+                key={p.id} 
+                className="glass-elevated group p-6 rounded-[2rem] border border-white/5 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all flex justify-between items-center"
+                onClick={() => {
+                  navigate(`/plano-de-corte?id=${p.id}`);
+                  setShowPlanosModal(false);
+                }}
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-[8px] font-black px-2 py-0.5 bg-white/10 rounded text-muted-foreground uppercase tracking-widest">ID: {p.id?.slice(-6)}</span>
+                    <h4 className="text-lg font-black italic tracking-tight group-hover:text-primary transition-colors">{p.nome}</h4>
                   </div>
-                  <ChevronRight size={18} style={{ color: 'var(--primary)' }} />
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <History className="w-3 h-3" /> {p.criado_em ? new Date(p.criado_em).toLocaleString() : 'Data não informada'}
+                  </div>
                 </div>
-              ))}
-              {(!planosSalvos || planosSalvos.length === 0) && <p style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>Nenhum plano encontrado no histórico.</p>}
-            </div>
-            <button className="btn btn-outline mt-6" style={{ width: '100%' }} onClick={() => setShowPlanosModal(false)}>FECHAR</button>
+                <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center group-hover:border-primary/30 group-hover:text-primary transition-all">
+                  <ChevronRight size={20} />
+                </div>
+              </div>
+            ))}
+            
+            {(!planosSalvos || planosSalvos.length === 0) && (
+              <div className="p-20 text-center opacity-30">
+                <History size={48} className="mx-auto mb-4" />
+                <p className="text-sm font-black uppercase tracking-widest italic">Nenhum registro encontrado</p>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </Modal>
 
-      {/* MODAL: SELEÇÃO DE MATERIAL (NOVO) */}
+      {/* MODAL: SELEÇÃO DE MATERIAL */}
       {showMaterialModal && (
         <ModalMaterial 
           materiais={materiaisEstoque} 
@@ -816,87 +913,89 @@ const CuttingPlanPage: React.FC = () => {
         />
       )}
 
-      {/* MODAL: IMPORTAR PEÇAS */}
-      {showImportModal && (
-        <div className="modal-overlay hide-on-print" onClick={() => setShowImportModal(false)} onKeyDown={(e) => { if ((e as any).key === 'Escape') setShowImportModal(false); }} tabIndex={-1}>
-          <div className="modal-content animate-pop-in" style={{ width: '700px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '900' }}>Importar Peças</h2>
-              <button onClick={() => setShowImportModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
+      {/* MODAL: IMPORTAR PROJETOS */}
+      <Modal isOpen={showImportModal} onClose={() => setShowImportModal(false)} title="IMPORTAR ENGENHARIA (TAG)" width="1200px">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-4">
+          
+          {/* Opção 1: Arquivos Externos */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                <FileUp className="text-blue-400 w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-black italic uppercase tracking-widest text-blue-400">01. Arquivos CAD / Engineering</h3>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-              
-              {/* Importador 3D (CAD/SketchUp/Promob) */}
-              <section>
-                <h3 className="font-bold text-xs mb-3 text-slate-500 uppercase tracking-widest">Opção 1: Arquivo de Engenharia</h3>
-                <ImportadorEngenharia onImport={handleImportDae} />
-              </section>
-
-              {/* Importador de Projetos (CRM) */}
-              <section>
-                <h3 className="font-bold text-xs mb-3 text-slate-500 uppercase tracking-widest">Opção 2: Projetos do Sistema (TAG)</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
-                  {(projetosParaImportar || []).map(p => (
-                    <div 
-                      key={p.id} 
-                      onClick={() => handleImportProjeto(p)} 
-                      className="card hover-scale" 
-                      style={{ 
-                        padding: '1.25rem', 
-                        cursor: 'pointer', 
-                        border: '1px solid var(--border)',
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          fontWeight: '900', 
-                          background: 'var(--primary)', 
-                          color: '#000', 
-                          padding: '2px 8px', 
-                          borderRadius: '4px' 
-                        }}>
-                          {p.tag || `PRJ-${p.id}`}
-                        </span>
-                        <span className="badge" style={{ fontSize: '0.6rem', opacity: 0.8 }}>{p.status}</span>
-                      </div>
-                      
-                      <div>
-                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', textTransform: 'uppercase' }}>
-                          {p.title}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '600' }}>
-                           👤 {p.client_name || p.cliente_nome || p.subtitle || 'Cliente não identificado'}
-                        </div>
-                      </div>
-
-                      {p.value > 0 && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          Valor Estimado: R$ {Number(p.value).toLocaleString('pt-BR')}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {(!projetosParaImportar || projetosParaImportar.length === 0) && (
-                    <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>
-                      <p className="text-sm">Nenhum projeto encontrado.</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-              
+            <div className="glass-elevated p-8 rounded-[2.5rem] border border-white/5 bg-blue-500/[0.02]">
+              <ImportadorEngenharia onImport={handleImportDae} />
+              <p className="text-[10px] text-muted-foreground mt-6 text-center leading-relaxed uppercase tracking-widest font-bold">
+                Suporte nativo para arquivos .DAE, .XML e .CSV exportados do SketchUp, Promob e TopSolid.
+              </p>
             </div>
           </div>
+
+          {/* Opção 2: CRM/ERP */}
+          <div className="space-y-6 flex flex-col h-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
+                <Box className="text-emerald-400 w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-black italic uppercase tracking-widest text-emerald-400">02. Projetos do Sistema (TAG)</h3>
+            </div>
+            
+            <div className="flex-1 glass-elevated p-6 rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col bg-emerald-500/[0.02]">
+              <div className="mb-6 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 opacity-50" />
+                <input className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-xs font-bold" placeholder="Pesquisar por TAG ou Cliente..." />
+              </div>
+
+              <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+                {(projetosParaImportar || []).map(p => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => handleImportProjeto(p)} 
+                    className="group bg-black/40 border border-white/5 hover:border-emerald-500/40 p-5 rounded-[2rem] cursor-pointer transition-all flex flex-col gap-4"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black px-3 py-1 bg-emerald-500 text-black rounded-lg uppercase tracking-tighter italic">
+                        {p.tag || `PRJ-${p.id}`}
+                      </span>
+                      <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{p.status}</span>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-lg font-black italic tracking-tighter uppercase group-hover:text-emerald-400 transition-colors">
+                        {p.title}
+                      </h4>
+                      <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mt-1">
+                         👤 {p.client_name || p.cliente_nome || 'Cliente Interno'}
+                      </p>
+                    </div>
+
+                    <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                      <div className="text-[10px] font-bold text-muted-foreground">VALOR ESTIMADO</div>
+                      <div className="text-base font-black italic text-emerald-400">R$ {Number(p.value).toLocaleString('pt-BR')}</div>
+                    </div>
+                  </div>
+                ))}
+                
+                {(!projetosParaImportar || projetosParaImportar.length === 0) && (
+                  <div className="p-20 text-center opacity-30">
+                    <Box size={40} className="mx-auto mb-4" />
+                    <p className="text-xs font-black uppercase tracking-widest italic">Nenhum projeto identificado</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
         </div>
-      )}
+        <div className="p-4 pt-0">
+           <button className="btn btn-outline w-full h-14 font-black italic tracking-widest mt-6" onClick={() => setShowImportModal(false)}>VOLTAR PARA ENGENHARIA</button>
+        </div>
+      </Modal>
 
       <PrintEtiquetas resultado={resultado} />
-
       {ConfirmDialogElement}
     </div>
   );

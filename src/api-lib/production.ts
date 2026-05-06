@@ -283,22 +283,22 @@ async function getProductionMetrics(res: any) {
   });
 
   const leadTimeMedio = tempos.length > 0 
-    ? (tempos.reduce((a, b) => a + b, 0) / tempos.length) 
+    ? (tempos.reduce((a: any, b: any) => a + b, 0) / tempos.length) 
     : 0;
 
   // Novas métricas de previsão
-  const opsAtrasadas = pendentes.filter(o => 
+  const opsAtrasadas = pendentes.filter((o: any) => 
     o.data_prevista_entrega && new Date(o.data_prevista_entrega).getTime() < agora
   ).length;
 
-  const totalMinutosFila = pendentes.reduce((acc, o) => 
+  const totalMinutosFila = pendentes.reduce((acc: any, o: any) => 
     acc + (o.tempo_previsto_corte || 0) + (o.tempo_previsto_montagem || 0), 0
   );
 
   const metrics = {
     totalOPs: allOps.length,
     finalizadas: finalizadas.length,
-    emProducao: allOps.filter(o => o.status !== "PENDENTE" && o.status !== "FINALIZADA").length,
+    emProducao: allOps.filter((o: any) => o.status !== "PENDENTE" && o.status !== "FINALIZADA").length,
     leadTimeMedio: parseFloat(leadTimeMedio.toFixed(2)),
     taxaEficiencia: allOps.length > 0 ? (finalizadas.length / allOps.length) * 100 : 0,
     // Previsão

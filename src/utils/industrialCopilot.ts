@@ -1,6 +1,7 @@
 import { ParseadorProjeto, TipoMovelEnum } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto';
 import { ProcessadorProjeto } from '../modules/engenharia/application/usecases/ProcessadorProjeto';
 import { sql } from '../api-lib/_db';
+import { HybridOptimizer } from '../modules/plano-corte/domain/services/HybridOptimizer';
 
 // --- 1. INTERFACES DE ENGENHARIA ---
 
@@ -40,7 +41,7 @@ export interface ResultadoProjetoCompleto {
     preco: number;
     margem: number;
   };
-  analise_financeira?: CustoCalculado;
+  analise_financeira?: any;
   avisos: string[];
 }
 
@@ -167,7 +168,7 @@ export function otimizarCorte(pecas: Peca[]): PlanoCorte[] {
 
     chapas.push({
       chapaId: chapaCount++,
-      pecas: resultado.pecas_posicionadas.map(p => ({
+      pecas: resultado.pecas_posicionadas.map((p: any) => ({
         nome: p.id,
         largura: p.largura,
         altura: p.altura,

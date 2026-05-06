@@ -1,6 +1,6 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
-import { Project } from './types.js';
+import type { Project } from './types.js';
 
 export async function handleProjects(req: any, res: any) {
   try {

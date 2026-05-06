@@ -148,8 +148,8 @@ export default function App() {
               <AuthBypass>
                 <Routes>
                   {/* Rotas Públicas */}
-                  <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
-                  <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
+                  <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
+                  <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
                   
                   {/* Rotas Principais */}
                   <Route path="/" element={<Layout />}>

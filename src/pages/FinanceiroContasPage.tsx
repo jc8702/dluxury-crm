@@ -4,19 +4,51 @@ import { useToast } from '../context/ToastContext';
 import { Modal } from '../design-system/components/Modal';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 import { api } from '../lib/api';
-import { Download, Filter, RefreshCw, Plus, Edit2, FileText, Search, X, Repeat, AlertCircle, Trash2, Lock } from 'lucide-react';
+import { 
+  Download, Filter, RefreshCw, Plus, Edit2, 
+  FileText, Search, X, Repeat, AlertCircle, 
+  Trash2, Lock, ArrowUpCircle, ArrowDownCircle,
+  History, Wallet, Building2, Banknote, TrendingUp, TrendingDown,
+  ChevronRight, Calendar, Info
+} from 'lucide-react';
+import { 
+  ContaInterna, 
+  MovimentacaoExtrato, 
+  ExtratoPayload, 
+  Fechamento, 
+  FormTransferencia,
+  TipoContaInterna
+} from '../modules/financeiro/domain/types';
+
+interface ContaForm {
+  nome: string;
+  tipo: TipoContaInterna;
+  banco_codigo: string;
+  agencia: string;
+  conta: string;
+  saldo_inicial: number;
+}
 
 const FinanceiroContasPage = () => {
   const [ConfirmDialogElement, confirm] = useConfirm();
-  const { success, error, warning } = useToast();
-  const [contas, setContas] = useState<any[]>([]);
+  const { success, error } = useToast();
+  
+  const [contas, setContas] = useState<ContaInterna[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ nome: '', tipo: 'conta_corrente', banco_codigo: '', agencia: '', conta: '', saldo_inicial: 0 });
+  const [editing, setEditing] = useState<ContaInterna | null>(null);
+  
+  const [form, setForm] = useState<ContaForm>({ 
+    nome: '', 
+    tipo: 'conta_corrente', 
+    banco_codigo: '', 
+    agencia: '', 
+    conta: '', 
+    saldo_inicial: 0 
+  });
   
   // Extrato state
-  const [extrato, setExtrato] = useState<any>(null);
+  const [extrato, setExtrato] = useState<ExtratoPayload | null>(null);
   const [showExtrato, setShowExtrato] = useState(false);
   const [extratoLoading, setExtratoLoading] = useState(false);
   const [extratoContaNome, setExtratoContaNome] = useState('');
@@ -29,7 +61,7 @@ const FinanceiroContasPage = () => {
 
   // Transferência
   const [showTransferencia, setShowTransferencia] = useState(false);
-  const [transferForm, setTransferForm] = useState({
+  const [transferForm, setTransferForm] = useState<FormTransferencia>({
     conta_origem_id: '',
     conta_destino_id: '',
     valor: '',
@@ -41,11 +73,11 @@ const FinanceiroContasPage = () => {
   
   // Fechamentos
   const [showFechamento, setShowFechamento] = useState(false);
-  const [fechamentos, setFechamentos] = useState<any[]>([]);
+  const [fechamentos, setFechamentos] = useState<Fechamento[]>([]);
   const [fechamentoForm, setFechamentoForm] = useState({ 
     mes: new Date().getMonth() + 1, 
     ano: new Date().getFullYear(), 
-    status: 'fechado', 
+    status: 'fechado' as const, 
     observacoes: '' 
   });
 
@@ -89,9 +121,9 @@ const FinanceiroContasPage = () => {
     setIsOpen(true); 
   };
   
-  const openEdit = (c: any) => { 
+  const openEdit = (c: ContaInterna) => { 
     setEditing(c); 
-    setForm({ nome: c.nome, tipo: c.tipo, banco_codigo: c.banco_codigo, agencia: c.agencia, conta: c.conta, saldo_inicial: c.saldo_inicial }); 
+    setForm({ nome: c.nome, tipo: c.tipo, banco_codigo: c.banco_codigo || '', agencia: c.agencia || '', conta: c.conta || '', saldo_inicial: c.saldo_inicial }); 
     setIsOpen(true); 
   };
 
@@ -106,18 +138,18 @@ const FinanceiroContasPage = () => {
 
   const doDelete = async (id: string, nome: string) => {
     const isConfirmed = await confirm({
-      title: 'Excluir Conta',
-      description: `TEM CERTEZA QUE DESEJA EXCLUIR A CONTA "${nome.toUpperCase()}"?\nESTA AÇÃO NÃO PODE SER DESFEITA.`
+      title: 'EXCLUIR CONTA',
+      description: `CONFIRMA A EXCLUSÃO DA CONTA "${nome.toUpperCase()}"?\nESTA OPERAÇÃO É IRREVERSÍVEL.`
     });
     if (!isConfirmed) return;
     try {
       await api.financeiro.contasInternas.delete(id);
       fetchContas();
-      success('Conta excluída com sucesso!');
-    } catch (e: any) { error(e.message || 'Erro ao excluir'); }
+      success('Conta removida do sistema.');
+    } catch (e: any) { error(e.message || 'Falha ao excluir'); }
   };
 
-  const openExtrato = async (conta: any) => {
+  const openExtrato = async (conta: ContaInterna) => {
     setExtratoContaNome(conta.nome);
     setExtratoLoading(true);
     setShowExtrato(true);
@@ -131,7 +163,6 @@ const FinanceiroContasPage = () => {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       const json = await res.json();
-      // A API retorna { success: true, data: { conta, saldo_inicial, extrato: [] } }
       const payload = json.data ?? json;
       setExtrato(payload);
     } catch (e) { 
@@ -140,7 +171,7 @@ const FinanceiroContasPage = () => {
     }
     setExtratoLoading(false);
   };
-  // Filtrar extrato
+
   const extratoFiltrado = useMemo(() => {
     if (!extrato?.extrato) return [];
     let items = [...extrato.extrato];
@@ -169,7 +200,6 @@ const FinanceiroContasPage = () => {
     return items;
   }, [extrato, filtroDataInicio, filtroDataFim, filtroTipo, filtroBusca]);
 
-  // Totais filtrados
   const extratoTotais = useMemo(() => {
     let entradas = 0, saidas = 0;
     extratoFiltrado.forEach(m => {
@@ -223,534 +253,564 @@ const FinanceiroContasPage = () => {
     setTransferLoading(false);
   };
 
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            Contas Internas
+    <div className="p-8 max-w-[1600px] mx-auto animate-fade-in pb-20">
+      <ConfirmDialogElement />
+
+      {/* Header Industrial */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-white/5 pb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+              <Wallet className="text-primary w-6 h-6" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">Tesouraria Corporativa</span>
+          </div>
+          <h1 className="text-5xl font-black italic tracking-tighter">
+            CONTAS <span className="text-primary underline decoration-primary/30 underline-offset-8">INTERNAS</span>
           </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>Caixas, contas bancárias e extratos</p>
+          <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
+            Consolidação de saldos bancários, caixas operacionais e investimentos. Gestão de liquidez em tempo real com auditoria de extratos.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-outline" onClick={fetchContas} style={{ height: '48px' }}>
-            <RefreshCw /> ATUALIZAR
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <button className="btn btn-outline h-12 px-6 group" onClick={fetchContas}>
+            <RefreshCw className={`w-4 h-4 mr-2 transition-transform group-hover:rotate-180 ${loading ? 'animate-spin' : ''}`} /> ATUALIZAR
           </button>
           <button 
-            className="btn btn-outline" 
+            className="btn btn-outline h-12 px-6 border-blue-500/30 text-blue-400 hover:bg-blue-500/10" 
             onClick={() => { setTransferErro(''); setShowTransferencia(true); }}
-            style={{ height: '48px', color: 'hsl(var(--info))', borderColor: 'hsl(var(--info))' }}
             disabled={contas.length < 2}
           >
-            <Repeat /> TRANSFERIR
+            <Repeat className="w-4 h-4 mr-2" /> TRANSFERIR
           </button>
           <button 
-            className="btn btn-outline" 
+            className="btn btn-outline h-12 px-6 border-orange-500/30 text-orange-400 hover:bg-orange-500/10" 
             onClick={() => setShowFechamento(true)}
-            style={{ height: '48px', color: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning))' }}
           >
-            <Lock /> FECHAMENTOS
+            <Lock className="w-4 h-4 mr-2" /> FECHAMENTOS
           </button>
-          <button className="btn btn-primary" onClick={openNew} style={{ height: '48px', padding: '0 1.5rem' }}>
-            <Plus /> NOVA CONTA
+          <button className="btn btn-primary h-12 px-8 font-black italic tracking-tight shadow-lg shadow-primary/20" onClick={openNew}>
+            <Plus className="w-5 h-5 mr-2" /> NOVA CONTA
           </button>
         </div>
       </div>
 
-      {/* Cards de Contas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+      {/* Grid de Contas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {loading ? (
-          <div className="card glass" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1' }}>
-            <div style={{ display: 'inline-block', width: '2rem', height: '2rem', border: '3px solid hsl(var(--border))', borderTopColor: 'hsl(var(--primary))', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          </div>
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-elevated p-8 rounded-[2rem] border border-white/5 h-64 animate-pulse" />
+          ))
         ) : contas.length === 0 ? (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1', color: 'hsl(var(--muted-foreground))' }}>
-            Nenhuma conta cadastrada.
+          <div className="col-span-full glass-elevated p-32 text-center rounded-[3rem] border border-dashed border-white/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
+            <div className="relative z-10">
+              <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20">
+                <Building2 className="w-12 h-12" />
+              </div>
+              <h3 className="text-2xl font-black italic tracking-tight mb-3">TESOURARIA VAZIA</h3>
+              <p className="text-muted-foreground mb-10 max-w-md mx-auto font-medium">
+                Sua infraestrutura financeira ainda não possui contas ativas. Configure seus caixas ou contas bancárias para iniciar a gestão.
+              </p>
+              <button className="btn btn-primary px-12 h-14 font-black italic" onClick={openNew}>ADICIONAR PRIMEIRA CONTA</button>
+            </div>
           </div>
-        ) : contas.map(c => (
-          <div key={c.id} className="card glass hover-scale animate-fade-in" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid hsl(var(--border))' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                    {c.tipo?.replace(/_/g, ' ')}
+        ) : contas.map(c => {
+          const isPos = Number(c.saldo_atual || 0) >= 0;
+          return (
+            <div key={c.id} className="glass-elevated group hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full border border-white/5 relative">
+              {/* Status Glow */}
+              <div className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-10 transition-opacity group-hover:opacity-20 ${isPos ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              
+              <div className="p-8 flex-1 relative z-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${
+                        c.tipo === 'caixa' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' :
+                        c.tipo === 'aplicacao' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                        'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      }`}>
+                        {c.tipo?.replace(/_/g, ' ')}
+                      </span>
+                      {c.banco_codigo && <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">BCO: {c.banco_codigo}</span>}
+                    </div>
+                    <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-primary transition-colors truncate max-w-[220px] mt-2">
+                      {c.nome}
+                    </h3>
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{c.nome}</div>
-                  {c.banco_codigo && (
-                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>
-                      BCO {c.banco_codigo} • AG {c.agencia} • CC {c.conta}
+                  <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center text-primary font-black text-2xl shadow-inner group-hover:border-primary/30 transition-all">
+                    {(c.nome || 'C').charAt(0)}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-1 flex items-center gap-2">
+                      SALDO DISPONÍVEL <ChevronRight className="w-3 h-3 text-primary opacity-50" />
+                    </div>
+                    <div className={`text-4xl font-black tracking-tighter italic ${isPos ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {fmt(Number(c.saldo_atual || 0))}
+                    </div>
+                  </div>
+
+                  {c.agencia && (
+                    <div className="flex gap-4 pt-4 border-t border-white/5">
+                      <div className="flex-1">
+                        <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Agência</div>
+                        <div className="text-sm font-mono font-black">{c.agencia}</div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Conta</div>
+                        <div className="text-sm font-mono font-black">{c.conta}</div>
+                      </div>
                     </div>
                   )}
                 </div>
-                <div style={{ 
-                  width: '40px', height: '40px', borderRadius: '50%', 
-                  background: 'var(--icon-bg)', color: 'var(--icon-color)', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  fontSize: '1rem', fontWeight: 800 
-                }}>
-                  {(c.nome || 'C').charAt(0)}
-                </div>
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: Number(c.saldo_atual) >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
-                R$ {Number(c.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+
+              <div className="flex border-t border-white/5 bg-black/40 p-2 gap-2">
+                <button 
+                  className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                  onClick={() => openEdit(c)}
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-muted-foreground" /> EDITAR
+                </button>
+                <button 
+                  className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+                  onClick={() => openExtrato(c)}
+                >
+                  <History className="w-4 h-4" /> EXTRATO
+                </button>
+                <button 
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all"
+                  onClick={() => doDelete(c.id, c.nome)}
+                  title="EXCLUIR CONTA"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>Saldo Atual</div>
             </div>
-            <div style={{ display: 'flex', borderTop: '1px solid hsl(var(--border))' }}>
-              <button 
-                className="btn" 
-                onClick={() => openEdit(c)} 
-                style={{ flex: 1, borderRadius: 0, padding: '0.85rem', fontSize: '0.8rem', borderRight: '1px solid hsl(var(--border))' }}
-              >
-                <Edit2 style={{ fontSize: '0.85rem' }} /> EDITAR
-              </button>
-              <button 
-                className="btn" 
-                onClick={() => openExtrato(c)} 
-                style={{ flex: 1, borderRadius: 0, padding: '0.85rem', fontSize: '0.8rem', color: 'hsl(var(--primary))', borderRight: '1px solid hsl(var(--border))' }}
-              >
-                <FileText style={{ fontSize: '0.85rem' }} /> EXTRATO
-              </button>
-              <button 
-                className="btn" 
-                onClick={() => doDelete(c.id, c.nome)} 
-                style={{ width: '50px', borderRadius: 0, padding: '0.85rem', fontSize: '0.8rem', color: 'hsl(var(--destructive))' }}
-                title="EXCLUIR CONTA"
-                aria-label={`Excluir conta ${c.nome}`}
-              >
-                <Trash2 />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal Nova/Editar Conta */}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'Editar Conta' : 'Nova Conta'} width="550px">
-        <div style={{ display: 'grid', gap: '1.25rem' }}>
-          <div>
-            <label className="label-base">Nome da Conta</label>
-            <input className="input-base" value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} placeholder="Ex: Itaú Conta Corrente" />
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'REVISÃO DE CONTA' : 'ABERTURA DE CONTA'} width="600px">
+        <div className="space-y-8 p-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic">IDENTIFICAÇÃO OPERACIONAL</label>
+            <input 
+              className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 text-lg font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner" 
+              value={form.nome} 
+              onChange={e => setForm({...form, nome: e.target.value})} 
+              placeholder="Ex: ITAÚ EMPRESARIAL" 
+            />
           </div>
-          <div className="grid-2">
+
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="label-base">Tipo</label>
-              <select className="input-base" value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
-                <option value="conta_corrente">Conta Corrente</option>
-                <option value="poupanca">Poupança</option>
-                <option value="caixa">Caixa</option>
-                <option value="aplicacao">Aplicação</option>
-              </select>
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">TIPO DE ATIVO</label>
+              <div className="relative">
+                <select 
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold" 
+                  value={form.tipo} 
+                  onChange={e => setForm({...form, tipo: e.target.value as TipoContaInterna})}
+                >
+                  <option value="conta_corrente">CONTA CORRENTE</option>
+                  <option value="poupanca">POUPANÇA</option>
+                  <option value="caixa">CAIXA INTERNO</option>
+                  <option value="aplicacao">APLICAÇÃO/INVESTIMENTO</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rotate-90 text-primary pointer-events-none" />
+              </div>
             </div>
             <div>
-              <label className="label-base">Código do Banco</label>
-              <input className="input-base" value={form.banco_codigo} onChange={e => setForm({...form, banco_codigo: e.target.value})} placeholder="Ex: 341" />
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">CÓDIGO BANCO</label>
+              <input 
+                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+                value={form.banco_codigo} 
+                onChange={e => setForm({...form, banco_codigo: e.target.value})} 
+                placeholder="Ex: 341, 001..." 
+              />
             </div>
           </div>
-          <div className="grid-2">
+
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="label-base">Agência</label>
-              <input className="input-base" placeholder="0001" value={form.agencia} onChange={e => setForm({...form, agencia: e.target.value})} />
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">AGÊNCIA</label>
+              <input 
+                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+                placeholder="0001" 
+                value={form.agencia} 
+                onChange={e => setForm({...form, agencia: e.target.value})} 
+              />
             </div>
             <div>
-              <label className="label-base">Conta</label>
-              <input className="input-base" placeholder="12345-6" value={form.conta} onChange={e => setForm({...form, conta: e.target.value})} />
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">NÚMERO DA CONTA</label>
+              <input 
+                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+                placeholder="12345-6" 
+                value={form.conta} 
+                onChange={e => setForm({...form, conta: e.target.value})} 
+              />
             </div>
           </div>
-          <div>
-            <label className="label-base">Saldo Inicial (R$)</label>
-            <input type="number" className="input-base" value={form.saldo_inicial} onChange={e => setForm({...form, saldo_inicial: Number(e.target.value)})} />
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={() => setIsOpen(false)}>CANCELAR</button>
-            <button className="btn btn-primary" onClick={save}>SALVAR</button>
+
+          {!editing && (
+            <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 block italic text-center">APORTE INICIAL DE CAPITAL</label>
+              <div className="relative">
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-primary opacity-50">R$</span>
+                <input 
+                  type="number" 
+                  className="w-full bg-black/40 border border-primary/20 rounded-2xl pl-14 pr-6 py-5 text-3xl font-black focus:outline-none focus:border-primary transition-all font-mono text-primary italic tracking-tighter" 
+                  value={form.saldo_inicial} 
+                  onChange={e => setForm({...form, saldo_inicial: Number(e.target.value)})} 
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-4 pt-4">
+            <button className="flex-1 btn btn-outline h-14 font-black italic" onClick={() => setIsOpen(false)}>DESCARTAR</button>
+            <button className="flex-[2] btn btn-primary h-14 font-black italic text-lg" onClick={save}>FINALIZAR CONFIGURAÇÃO</button>
           </div>
         </div>
       </Modal>
 
-      {/* Modal Transferência entre Contas */}
-      <Modal isOpen={showTransferencia} onClose={() => setShowTransferencia(false)} title="Transferência entre Contas" width="520px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ 
-            padding: '0.75rem 1rem', background: 'rgba(59,130,246,0.08)', 
-            borderRadius: 'var(--radius-sm)', borderLeft: '4px solid hsl(var(--info))',
-            fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))'
-          }}>
-            <strong>Como funciona:</strong> O valor é debitado da conta de origem e creditado na conta de destino. A operação é registrada no extrato de ambas as contas.
+      {/* Modal Transferência */}
+      <Modal isOpen={showTransferencia} onClose={() => setShowTransferencia(false)} title="MOVIMENTAÇÃO DE TESOURARIA" width="600px">
+        <div className="space-y-8 p-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[2rem] flex gap-4 items-start">
+            <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
+            <p className="text-[11px] text-blue-200/70 font-medium leading-relaxed uppercase tracking-wider">
+              <strong>Transferência entre contas:</strong> O valor será debitado da origem e creditado no destino instantaneamente, gerando lançamentos auditáveis em ambos os extratos.
+            </p>
           </div>
 
-          <div>
-            <label className="label-base">Conta de Origem</label>
-            <select 
-              className="input-base" 
-              value={transferForm.conta_origem_id}
-              onChange={e => setTransferForm({...transferForm, conta_origem_id: e.target.value})}
-            >
-              <option value="">Selecione a conta de origem...</option>
-              {contas.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.nome} — R$ {Number(c.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="label-base">Conta de Destino</label>
-            <select 
-              className="input-base" 
-              value={transferForm.conta_destino_id}
-              onChange={e => setTransferForm({...transferForm, conta_destino_id: e.target.value})}
-            >
-              <option value="">Selecione a conta de destino...</option>
-              {contas.filter(c => c.id !== transferForm.conta_origem_id).map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.nome} — R$ {Number(c.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-primary/20 border border-primary/40 rounded-full flex items-center justify-center z-10 hidden md:flex">
+               <ChevronRight className="w-5 h-5 text-primary" />
+             </div>
             <div>
-              <label className="label-base">Valor (R$)</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">CONTA ORIGEM</label>
+              <select 
+                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
+                value={transferForm.conta_origem_id}
+                onChange={e => setTransferForm({...transferForm, conta_origem_id: e.target.value})}
+              >
+                <option value="">SELECIONAR...</option>
+                {contas.map(c => (
+                  <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">CONTA DESTINO</label>
+              <select 
+                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
+                value={transferForm.conta_destino_id}
+                onChange={e => setTransferForm({...transferForm, conta_destino_id: e.target.value})}
+              >
+                <option value="">SELECIONAR...</option>
+                {contas.filter(c => c.id !== transferForm.conta_origem_id).map(c => (
+                  <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic text-center">VALOR DO REPASSE</label>
               <input 
-                type="number" min="0.01" step="0.01"
-                className="input-base" 
-                placeholder="0,00"
+                type="number" 
+                className="w-full bg-transparent border-b-2 border-primary/30 rounded-none text-center text-3xl font-black focus:outline-none focus:border-primary transition-all font-mono text-primary italic tracking-tighter" 
                 value={transferForm.valor}
                 onChange={e => setTransferForm({...transferForm, valor: e.target.value})}
+                placeholder="0,00"
               />
             </div>
-            <div>
-              <label className="label-base">Data</label>
-              <input 
-                type="date" 
-                className="input-base" 
-                value={transferForm.data_movimento}
-                onChange={e => setTransferForm({...transferForm, data_movimento: e.target.value})}
-              />
+            <div className="flex flex-col justify-end">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">DATA DA OPERAÇÃO</label>
+              <div className="relative">
+                <input 
+                  type="date" 
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-bold" 
+                  value={transferForm.data_movimento}
+                  onChange={e => setTransferForm({...transferForm, data_movimento: e.target.value})}
+                />
+                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none" />
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="label-base">Descrição / Histórico</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">MEMORIAL DESCRITIVO / OBSERVAÇÃO</label>
             <input 
-              className="input-base" 
-              placeholder="Ex: Aplicação financeira, reserva de caixa..."
+              className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-bold" 
+              placeholder="EX: REFORÇO DE CAIXA, PAGAMENTO DE TAXAS..."
               value={transferForm.descricao}
               onChange={e => setTransferForm({...transferForm, descricao: e.target.value})}
             />
           </div>
 
           {transferErro && (
-            <div style={{ 
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.75rem', background: 'rgba(239,68,68,0.1)', 
-              borderRadius: 'var(--radius-sm)', color: 'hsl(var(--destructive))', fontSize: '0.85rem'
-            }}>
-              <AlertCircle /> {transferErro}
+            <div className="flex items-center gap-4 p-5 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs font-black uppercase tracking-widest italic animate-bounce">
+              <AlertCircle className="w-5 h-5 shrink-0" /> {transferErro}
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={() => setShowTransferencia(false)}>CANCELAR</button>
+          <div className="flex gap-4 pt-4">
+            <button className="flex-1 btn btn-outline h-14 font-black italic" onClick={() => setShowTransferencia(false)}>DESCARTAR</button>
             <button 
-              className="btn btn-primary" 
+              className="flex-[2] btn btn-primary h-14 font-black italic text-lg shadow-lg shadow-primary/20" 
               onClick={doTransferencia}
               disabled={transferLoading}
-              style={{ minWidth: '140px' }}
             >
-              {transferLoading ? 'TRANSFERINDO...' : <><Repeat /> CONFIRMAR</>}
+              {transferLoading ? 'PROCESSANDO...' : 'EXECUTAR TRANSFERÊNCIA'}
             </button>
           </div>
         </div>
       </Modal>
 
-      {/* Modal Extrato Completo */}
-      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`Extrato — ${extratoContaNome}`} width="1100px">
+      {/* Modal Extrato */}
+      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`EXTRATO ANALÍTICO — ${extratoContaNome.toUpperCase()}`} width="1300px">
         {extratoLoading ? (
-          <div style={{ height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ marginTop: '1rem', color: 'hsl(var(--muted-foreground))' }}><TableSkeleton rows={8} cols={4} /></div>
-            </div>
+          <div className="h-[600px] p-8 space-y-8 animate-pulse">
+            <div className="grid grid-cols-4 gap-4 h-32 bg-white/5 rounded-3xl" />
+            <div className="h-full bg-white/5 rounded-3xl" />
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            
-            {/* Resumo Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-              <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid hsl(var(--info))' }}>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))', letterSpacing: '0.04em' }}>Saldo Anterior</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem' }}>
-                  R$ {Number(extrato?.saldo_inicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          <div className="space-y-10 p-4">
+            {/* Resumo Industrial */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Saldo Anterior', value: extrato?.saldo_inicial || 0, color: 'text-white/60', border: 'border-white/10', icon: <History className="w-4 h-4" /> },
+                { label: 'Total Entradas', value: extratoTotais.entradas, color: 'text-emerald-500', border: 'border-emerald-500/30', icon: <ArrowUpCircle className="w-4 h-4" /> },
+                { label: 'Total Saídas', value: extratoTotais.saidas, color: 'text-red-500', border: 'border-red-500/30', icon: <ArrowDownCircle className="w-4 h-4" />, isNeg: true },
+                { label: 'Saldo Projetado', value: extrato?.conta?.saldo_atual || 0, color: 'text-primary', border: 'border-primary/40', icon: <TrendingUp className="w-4 h-4" />, highlight: true },
+              ].map((card, i) => (
+                <div key={i} className={`glass-elevated p-6 rounded-[2rem] border-l-4 ${card.border} relative overflow-hidden`}>
+                  {card.highlight && <div className="absolute inset-0 bg-primary/5" />}
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-3 flex items-center gap-2">
+                    {card.icon} {card.label}
+                  </p>
+                  <p className={`text-2xl font-black italic tracking-tighter ${card.color}`}>
+                    {card.isNeg ? '- ' : card.value > 0 && i !== 0 && i !== 3 ? '+ ' : ''}{fmt(card.value)}
+                  </p>
                 </div>
-                <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.2rem' }}>Antes do 1º lançamento</div>
-              </div>
-              <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid hsl(var(--success))' }}>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))', letterSpacing: '0.04em' }}>Total Entradas</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'hsl(var(--success))' }}>
-                  + R$ {extratoTotais.entradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid hsl(var(--destructive))' }}>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))', letterSpacing: '0.04em' }}>Total Saídas</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'hsl(var(--destructive))' }}>
-                  - R$ {extratoTotais.saidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid hsl(var(--primary))' }}>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))', letterSpacing: '0.04em' }}>Saldo Atual</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'hsl(var(--primary))' }}>
-                  R$ {Number(extrato?.conta?.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Barra de Filtros */}
-            <div style={{ 
-              display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end',
-              padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-sm)',
-              border: '1px solid hsl(var(--border))'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem' }}>
-                <Filter /> FILTROS:
-              </div>
-              <div style={{ flex: '0 0 auto' }}>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>De</label>
-                <input 
-                  type="date" className="input-base" 
-                  value={filtroDataInicio} 
-                  onChange={e => setFiltroDataInicio(e.target.value)}
-                  style={{ width: '150px', padding: '0.45rem 0.6rem', fontSize: '0.8rem' }}
-                />
-              </div>
-              <div style={{ flex: '0 0 auto' }}>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>Até</label>
-                <input 
-                  type="date" className="input-base" 
-                  value={filtroDataFim} 
-                  onChange={e => setFiltroDataFim(e.target.value)}
-                  style={{ width: '150px', padding: '0.45rem 0.6rem', fontSize: '0.8rem' }}
-                />
-              </div>
-              <div style={{ flex: '0 0 auto' }}>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>Tipo</label>
-                <select 
-                  className="input-base" 
-                  value={filtroTipo} 
-                  onChange={e => setFiltroTipo(e.target.value as any)}
-                  style={{ width: '140px', padding: '0.45rem 0.6rem', fontSize: '0.8rem' }}
-                >
-                  <option value="todos">Todos</option>
-                  <option value="entrada">Entradas</option>
-                  <option value="saida">Saídas</option>
-                </select>
-              </div>
-              <div style={{ flex: 1, minWidth: '160px' }}>
-                <label className="label-base" style={{ fontSize: '0.65rem' }}>Buscar</label>
-                <div style={{ position: 'relative' }}>
-                  <Search style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem' }} />
+            {/* Filtros e Ações */}
+            <div className="flex flex-col xl:flex-row gap-6 items-end bg-black/20 p-8 rounded-[2.5rem] border border-white/5">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">PESQUISA DINÂMICA</label>
+                <div className="relative">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-50" />
                   <input 
-                    type="text" className="input-base" 
-                    placeholder="Buscar descrição..." 
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:border-primary/50 transition-all" 
+                    placeholder="Filtrar por descrição, origem ou tipo de operação..."
                     value={filtroBusca}
                     onChange={e => setFiltroBusca(e.target.value)}
-                    style={{ paddingLeft: '2rem', padding: '0.45rem 0.6rem 0.45rem 2rem', fontSize: '0.8rem' }}
                   />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {(filtroDataInicio || filtroDataFim || filtroTipo !== 'todos' || filtroBusca) && (
-                  <button 
-                    className="btn btn-outline" 
-                    onClick={() => { setFiltroDataInicio(''); setFiltroDataFim(''); setFiltroTipo('todos'); setFiltroBusca(''); }}
-                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
+              <div className="w-full md:w-64 space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">FLUXO</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm font-black italic appearance-none focus:outline-none focus:border-primary/50 uppercase"
+                    value={filtroTipo}
+                    onChange={e => setFiltroTipo(e.target.value as any)}
                   >
-                    <X /> LIMPAR
-                  </button>
-                )}
-                <button 
-                  className="btn btn-outline" 
-                  onClick={exportCSV}
-                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
-                >
-                  <Download /> CSV
+                    <option value="todos">TODOS OS LANÇAMENTOS</option>
+                    <option value="entrada">ENTRADAS (+) </option>
+                    <option value="saida">SAÍDAS (-) </option>
+                  </select>
+                  <Filter className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-50 pointer-events-none" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="btn btn-outline h-[58px] px-8 font-black italic tracking-widest group" onClick={exportCSV}>
+                  <Download className="w-5 h-5 mr-2 group-hover:-translate-y-1 transition-transform" /> CSV
+                </button>
+                <button className="btn btn-primary h-[58px] px-8 font-black italic tracking-widest" onClick={() => window.print()}>
+                  <FileText className="w-5 h-5 mr-2" /> PDF
                 </button>
               </div>
             </div>
 
-            {/* Info Filtro */}
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-              {extratoTotais.qtd} movimentação(ões) encontrada(s)
-              {(filtroDataInicio || filtroDataFim || filtroTipo !== 'todos' || filtroBusca) && ' com filtros aplicados'}
-            </div>
-
-            {/* Tabela do Extrato */}
-            <div style={{ maxHeight: '50vh', overflowY: 'auto', borderRadius: 'var(--radius-sm)', border: '1px solid hsl(var(--border))' }}>
-              <table>
-                <thead style={{ position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 10 }}>
-                  <tr>
-                    <th style={{ width: '100px' }}>Data</th>
-                    <th>Descrição</th>
-                    <th style={{ width: '90px' }}>Tipo</th>
-                    <th style={{ width: '80px' }}>Origem</th>
-                    <th style={{ textAlign: 'right', width: '130px' }}>Valor</th>
-                    <th style={{ textAlign: 'right', width: '130px' }}>Saldo</th>
-                    <th style={{ textAlign: 'center', width: '60px' }}>✔</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {extratoFiltrado.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} style={{ padding: 0 }}>
-                        <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
-                          Nenhuma movimentação encontrada.
-                        </div>
-                      </td>
+            {/* Tabela de Extrato */}
+            <div className="glass-elevated rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl relative">
+              <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
+                <table className="w-full text-left border-collapse">
+                  <thead className="sticky top-0 bg-[#0A0A0A] z-20">
+                    <tr className="border-b border-white/10">
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Data de Efetivação</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Memorial / Descrição</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Módulo Origem</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">Valor Operacional</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">Saldo Progressivo</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-center">Auditoria</th>
                     </tr>
-                  ) : extratoFiltrado.map((m: any, idx: number) => {
-                    const isPositive = Number(m.valor) > 0;
-                    return (
-                      <tr key={m.id || idx} style={{ opacity: m.conferido ? 0.7 : 1 }}>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                          {new Date(m.data).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 500 }}>{m.descricao || (m.tipo === 'recebimento' ? 'Recebimento de Título' : m.tipo === 'pagamento' ? 'Pagamento de Título' : m.tipo)}</div>
-                        </td>
-                        <td>
-                          <span className="badge" style={{ 
-                            background: isPositive ? 'rgba(34,197,94,0.15)' : 'hsl(var(--destructive)/0.15)', 
-                            color: isPositive ? '#22c55e' : 'hsl(var(--destructive))',
-                            fontSize: '0.65rem'
-                          }}>
-                            {isPositive ? 'ENTRADA' : 'SAÍDA'}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase' }}>
-                          {m.origem}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: isPositive ? '#22c55e' : 'hsl(var(--destructive))' }}>
-                          {isPositive ? '+' : ''} R$ {Math.abs(Number(m.valor)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 600, fontFamily: 'monospace' }}>
-                          R$ {Number(m.saldo_momento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                           <input 
-                             type="checkbox" 
-                             checked={!!m.conferido}
-                             onChange={async () => {
-                               try {
-                                 await api.financeiro.conferencia.toggle({
-                                   id: m.id,
-                                   origem: m.origem,
-                                   conferido: !m.conferido
-                                 });
-                                 // Refresh local
-                                 const newExtrato = { ...extrato };
-                                 const item = newExtrato.extrato.find((item: any) => item.id === m.id);
-                                 if (item) item.conferido = !m.conferido;
-                                 setExtrato(newExtrato);
-                                 success(m.conferido ? 'Conferência removida' : 'Lançamento conferido');
-                               } catch (err) {
-                                 error('Erro ao atualizar conferência');
-                               }
-                             }}
-                             style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'hsl(var(--success))' }}
-                           />
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {extratoFiltrado.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-8 py-32 text-center">
+                          <Info className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] italic">Nenhum lançamento identificado para os filtros aplicados</p>
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    ) : extratoFiltrado.map((m, i) => {
+                      const isPos = Number(m.valor) > 0;
+                      return (
+                        <tr key={m.id || i} className={`group transition-colors hover:bg-white/[0.02] ${m.conferido ? 'opacity-40 grayscale' : ''}`}>
+                          <td className="px-8 py-5 text-xs font-mono font-bold tracking-widest text-muted-foreground">{new Date(m.data).toLocaleDateString('pt-BR')}</td>
+                          <td className="px-8 py-5">
+                            <div className="text-sm font-black italic tracking-tight group-hover:text-primary transition-colors">{m.descricao || m.tipo}</div>
+                            <div className="text-[9px] font-bold text-white/20 uppercase tracking-widest mt-1">{m.tipo}</div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <span className="text-[10px] font-black bg-primary/5 border border-primary/20 px-3 py-1 rounded-lg text-primary italic uppercase tracking-wider">{m.origem}</span>
+                          </td>
+                          <td className={`px-8 py-5 text-right font-black font-mono text-base tracking-tighter ${isPos ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {isPos ? '+' : '-'} {fmt(Math.abs(Number(m.valor)))}
+                          </td>
+                          <td className="px-8 py-5 text-right font-bold font-mono text-xs text-muted-foreground/60">
+                            {fmt(Number(m.saldo_momento))}
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex justify-center">
+                              <button 
+                                onClick={() => {
+                                  api.financeiro.conferencia.toggle({ id: m.id, origem: m.origem, conferido: !m.conferido })
+                                    .then(() => {
+                                      const newExtrato = { ...extrato! };
+                                      const item = newExtrato.extrato.find(it => it.id === m.id);
+                                      if (item) item.conferido = !m.conferido;
+                                      setExtrato(newExtrato);
+                                      success(m.conferido ? 'CONFERÊNCIA REVOGADA' : 'LANÇAMENTO AUDITADO');
+                                    });
+                                }}
+                                className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center group/check ${m.conferido ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-white/10 hover:border-primary/50'}`}
+                              >
+                                {m.conferido ? <X className="w-5 h-5 font-black" /> : <ChevronRight className="w-5 h-5 opacity-0 group-hover/check:opacity-100 transition-opacity" />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem' }}>
-              <button className="btn btn-outline" onClick={() => window.print()} style={{ fontSize: '0.8rem' }}>
-                IMPRIMIR
-              </button>
-              <button className="btn btn-primary" onClick={() => setShowExtrato(false)}>
-                FECHAR EXTRATO
-              </button>
+            <div className="flex justify-end pt-4">
+              <button className="btn btn-primary px-16 h-14 font-black italic text-lg" onClick={() => setShowExtrato(false)}>FECHAR AUDITORIA</button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* Modal Fechamentos */}
-      <Modal isOpen={showFechamento} onClose={() => setShowFechamento(false)} title="Gestão de Fechamentos Financeiros" width="600px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ padding: '1rem', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', borderLeft: '4px solid hsl(var(--warning))' }}>
-            <p style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
-              <strong>Atenção:</strong> Ao fechar um período, lançamentos e baixas com data de vencimento/movimento naquele mês serão <strong>bloqueados</strong>. 
-              Isso garante que o saldo final do mês não seja alterado após a conferência.
-            </p>
+      <Modal isOpen={showFechamento} onClose={() => setShowFechamento(false)} title="FECHAMENTOS DE CICLO" width="750px">
+        <div className="space-y-10 p-4">
+          <div className="bg-orange-500/5 border border-orange-500/20 p-8 rounded-[2.5rem] flex gap-6 items-start relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />
+            <AlertCircle className="w-10 h-10 text-orange-500 shrink-0 mt-1 animate-pulse" />
+            <div className="relative z-10">
+              <h4 className="text-base font-black text-orange-400 mb-2 italic uppercase tracking-widest">PROTOCOLO DE SEGURANÇA</h4>
+              <p className="text-xs text-orange-200/60 font-medium leading-relaxed uppercase tracking-widest">
+                O fechamento de período é uma ação crítica que <strong>BLOQUEIA</strong> permanentemente qualquer alteração em lançamentos retroativos. Certifique-se de que todas as contas foram auditadas e conferidas antes de selar o mês.
+              </p>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', alignItems: 'flex-end', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-             <div>
-               <label className="label-base">Mês</label>
-               <select className="input-base" value={fechamentoForm.mes} onChange={e => setFechamentoForm({...fechamentoForm, mes: Number(e.target.value)})}>
-                 {Array.from({length: 12}).map((_, i) => <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('pt-BR', {month: 'long'})}</option>)}
-               </select>
-             </div>
-             <div>
-               <label className="label-base">Ano</label>
-               <select className="input-base" value={fechamentoForm.ano} onChange={e => setFechamentoForm({...fechamentoForm, ano: Number(e.target.value)})}>
-                 {[2024, 2025, 2026, 2027].map(a => <option key={a} value={a}>{a}</option>)}
-               </select>
-             </div>
-             <button className="btn btn-primary" onClick={saveFechamento}>FECHAR MÊS</button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-black/40 p-8 rounded-[2.5rem] border border-white/5 shadow-inner">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">MÊS DE REFERÊNCIA</label>
+              <div className="relative">
+                <select 
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 appearance-none font-black italic uppercase text-sm"
+                  value={fechamentoForm.mes}
+                  onChange={e => setFechamentoForm({...fechamentoForm, mes: Number(e.target.value)})}
+                >
+                  {Array.from({length: 12}).map((_, i) => (
+                    <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}).toUpperCase()}</option>
+                  ))}
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rotate-90 text-primary pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">ANO BASE</label>
+              <div className="relative">
+                <select 
+                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 appearance-none font-black text-sm"
+                  value={fechamentoForm.ano}
+                  onChange={e => setFechamentoForm({...fechamentoForm, ano: Number(e.target.value)})}
+                >
+                  {[2024, 2025, 2026, 2027].map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rotate-90 text-primary pointer-events-none" />
+              </div>
+            </div>
+            <button className="btn btn-primary h-[58px] font-black italic tracking-tight text-base" onClick={saveFechamento}>EFETUAR LACRE</button>
           </div>
 
           <div>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>Histórico de Fechamentos</h4>
-            <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-              <table className="table-base">
-                <thead>
+            <h4 className="text-[11px] font-black mb-6 flex items-center gap-3 uppercase tracking-[0.3em] text-muted-foreground italic">
+              <Lock className="w-4 h-4 text-primary" /> LINHA DO TEMPO DE SEGURANÇA
+            </h4>
+            <div className="glass-elevated rounded-[2rem] overflow-hidden border border-white/5">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 border-b border-white/5">
                   <tr>
-                    <th>Competência</th>
-                    <th>Status</th>
-                    <th>Data</th>
-                    <th>Ações</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">Ciclo Mensal</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">Status de Integridade</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest text-right">Ações de Gestor</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {fechamentos.map(f => (
-                    <tr key={f.id}>
-                      {(() => {
-                        const status = String(f.status || '').toLowerCase();
-                        return (
-                          <>
-                            <td style={{ fontWeight: 600 }}>{new Date(2000, f.mes-1).toLocaleString('pt-BR', {month: 'long'})} / {f.ano}</td>
-                            <td>
-                              <span className="badge" style={{ background: status === 'fechado' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: status === 'fechado' ? 'hsl(var(--destructive))' : '#22c55e' }}>
-                                {String(f.status || '').toUpperCase()}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: '0.8rem' }}>{new Date(f.data_fechamento).toLocaleDateString('pt-BR')}</td>
-                            <td>
-                              <button className="btn btn-ghost" style={{ padding: '4px 8px', color: '#22c55e' }} onClick={async () => {
-                                const ok = await confirm({
-                                  title: 'Reabrir Período',
-                                  description: 'Deseja realmente reabrir este período?',
-                                  variant: 'warning',
-                                  confirmLabel: 'Reabrir'
-                                });
-                                if (ok) {
-                                   api.financeiro.fechamentos.save({ ...f, status: 'aberto' }).then(fetchFechamentos);
-                                }
-                              }}>Reabrir</button>
-                            </td>
-                          </>
-                        );
-                      })()}
+                <tbody className="divide-y divide-white/5">
+                  {fechamentos.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-8 py-12 text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest italic opacity-50">Nenhum ciclo fechado identificado</td>
+                    </tr>
+                  ) : fechamentos.map(f => (
+                    <tr key={f.id} className="hover:bg-white/[0.02] group transition-colors">
+                      <td className="px-8 py-5 font-black italic tracking-tight text-base capitalize">
+                        {new Date(2000, f.mes-1).toLocaleString('pt-BR', {month: 'long'})} <span className="text-primary">/ {f.ano}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border ${
+                          f.status === 'fechado' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                        }`}>
+                          {f.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <button 
+                          className="text-[10px] font-black text-primary hover:text-white uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
+                          onClick={async () => {
+                            const ok = await confirm({ 
+                              title: 'REABRIR PERÍODO', 
+                              description: 'ESTA AÇÃO PERMITIRÁ ALTERAÇÕES RETROATIVAS. CONFIRMAR DESBLOQUEIO?' 
+                            });
+                            if (ok) api.financeiro.fechamentos.save({ ...f, status: 'aberto' }).then(fetchFechamentos);
+                          }}
+                        >
+                          REABRIR CICLO
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -759,9 +819,6 @@ const FinanceiroContasPage = () => {
           </div>
         </div>
       </Modal>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <ConfirmDialogElement />
     </div>
   );
 };

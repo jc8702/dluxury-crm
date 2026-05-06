@@ -51,7 +51,7 @@ export async function runHardeningMigration() {
   for (const step of steps) {
     try {
       await step;
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Migration Step Warning:', e.message);
     }
   }

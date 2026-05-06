@@ -1,9 +1,9 @@
-import { ParseadorProjeto, type ProjeParsed } from '../../plano-corte/infrastructure/parsers/ParseadorProjeto';
-import { HybridOptimizer } from '../../plano-corte/domain/services/HybridOptimizer';
-import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico';
-import { RetalhosRepository, type RetalhoDisponivel } from '../../plano-corte/infrastructure/repositories/RetalhosRepository';
-import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService';
-import type { Peca } from '../../plano-corte/domain/services/MaxRectsOptimizer';
+import { ParseadorProjeto, type ProjeParsed } from '../../plano-corte/infrastructure/parsers/ParseadorProjeto.js';
+import { HybridOptimizer } from '../../plano-corte/domain/services/HybridOptimizer.js';
+import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico.js';
+import { RetalhosRepository, type RetalhoDisponivel } from '../../plano-corte/infrastructure/repositories/RetalhosRepository.js';
+import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService.js';
+import type { Peca } from '../../plano-corte/domain/services/MaxRectsOptimizer.js';
 
 /**
  * INTERFACE: Entrada do processador
@@ -69,7 +69,7 @@ export class ProcessadorProjeto {
   private db: unknown;
   private logger: Console | unknown;
 
-  constructor(db: unknown, logger: Console | unknown) {
+  constructor(db: any, logger: any) {
     this.db = db;
     this.logger = logger;
   }
@@ -88,7 +88,7 @@ export class ProcessadorProjeto {
     };
 
     try {
-      this.logger.info(`[PROCESSADOR] Iniciando processamento: "${requisicao.descricao_projeto}"`);
+      (this.logger as any).info(`[PROCESSADOR] Iniciando processamento: "${requisicao.descricao_projeto}"`);
       
       // 1. PARSE
       const parseResult = ParseadorProjeto.parse(requisicao.descricao_projeto);

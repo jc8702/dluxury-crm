@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Modal } from '../design-system/components/Modal';
-import { Plus, CheckCircle, Trash2, ArrowDownLeft, Calendar, ChevronDown, ChevronRight, Edit2, Printer, TrendingUp } from 'lucide-react';
-import { MessageCircle } from 'lucide-react';
+import { Plus, CheckCircle, Trash2, ArrowDownLeft, Calendar, ChevronDown, ChevronRight, Edit2, Printer, TrendingUp, MessageCircle } from 'lucide-react';
 import { WhatsAppService } from '../modules/plano-corte/infrastructure/services/WhatsAppService';
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
+import { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroTitulosReceberPage() {
   const { success, error, warning } = useToast();
   const [ConfirmDialogElement, confirmAction] = useConfirm();
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<Titulo[]>([]);
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [total, setTotal] = useState(0);
   const [clientsMap, setClientsMap] = useState<Record<string,string>>({});
   const [loading, setLoading] = useState(false);
-  const [baixaModal, setBaixaModal] = useState<any>(null);
-  const [reciboModal, setReciboModal] = useState<any>(null);
-  const [contas, setContas] = useState<any[]>([]);
+  const [baixaModal, setBaixaModal] = useState<Titulo | null>(null);
+  const [reciboModal, setReciboModal] = useState<Titulo | null>(null);
+  const [contas, setContas] = useState<ContaInterna[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const [editModal, setEditModal] = useState<any>(null);
-  const [antecipacaoModal, setAntecipacaoModal] = useState<any>(null);
+  const [editModal, setEditModal] = useState<Titulo | null>(null);
+  const [antecipacaoModal, setAntecipacaoModal] = useState<Titulo | null>(null);
   const [taxaAntecipacao, setTaxaAntecipacao] = useState(3.5); // Taxa mensal padrão
 
   const [stats, setStats] = useState({
@@ -126,40 +126,37 @@ export default function FinanceiroTitulosReceberPage() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="p-8 max-w-[1600px] mx-auto animate-fade-in">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '2.5rem', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <ArrowDownLeft />
-            Títulos a Receber
-          </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>Gestão de recebimentos e fluxo de entrada</p>
-        </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <button 
-            className="btn btn-primary"
-            style={{ height: '48px', padding: '0 1.5rem', borderRadius: 'var(--radius-md)' }}
-            onClick={() => window.location.hash = '#/financeiro/titulos-receber/wizard'}
-          >
-            <Plus /> NOVO RECEBIMENTO
-          </button>
+          <h1 className="text-4xl font-black tracking-tighter flex items-center gap-3 uppercase italic">
+            <ArrowDownLeft className="text-primary w-10 h-10" />
+            Títulos a <span className="text-primary">Receber</span>
+          </h1>
+          <p className="text-muted-foreground mt-1 font-medium italic">Gestão estratégica de recebíveis e fluxo de caixa industrial</p>
         </div>
+        <button 
+          className="btn-primary h-14 px-8 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+          onClick={() => window.location.hash = '#/financeiro/titulos-receber/wizard'}
+        >
+          <Plus size={24} /> NOVO RECEBIMENTO
+        </button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid-3" style={{ marginBottom: '2.5rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {[
-          { label: 'Total a Receber', value: stats.totalAberto, color: 'hsl(var(--info))', icon: ArrowDownLeft },
-          { label: 'Total Recebido', value: stats.totalRecebido, color: 'hsl(var(--success))', icon: CheckCircle },
-          { label: 'Em Atraso', value: stats.totalVencido, color: 'hsl(var(--destructive))', icon: Calendar },
+          { label: 'Total a Receber', value: stats.totalAberto, color: 'text-blue-400', border: 'border-blue-500/50', icon: ArrowDownLeft },
+          { label: 'Total Recebido', value: stats.totalRecebido, color: 'text-emerald-400', border: 'border-emerald-500/50', icon: CheckCircle },
+          { label: 'Em Atraso', value: stats.totalVencido, color: 'text-red-400', border: 'border-red-500/50', icon: Calendar },
         ].map((stat, i) => (
-          <div key={i} className="card glass animate-fade-in" style={{ padding: '1.5rem', borderLeft: `4px solid ${stat.color}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span className="label-base" style={{ margin: 0 }}>{stat.label}</span>
-              <stat.icon style={{ color: stat.color, fontSize: '1.25rem' }} />
+          <div key={i} className={`glass-elevated p-6 animate-fade-in border-l-4 ${stat.border}`}>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-black tracking-widest text-muted-foreground uppercase">{stat.label}</span>
+              <stat.icon className={`${stat.color}`} size={20} />
             </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>
+            <div className={`text-3xl font-black tracking-tight ${stat.color}`}>
               R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -169,152 +166,147 @@ export default function FinanceiroTitulosReceberPage() {
       {/* Table Card */}
       <div className="card animate-pop-in" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table>
+      {/* Table Card */}
+      <div className="glass-elevated overflow-hidden mb-10">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr>
-                <th>Título</th>
-                <th>Cliente</th>
-                <th style={{ textAlign: 'right' }}>Valor Original</th>
-                <th>Vencimento</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'center' }}>Ações</th>
+              <tr className="border-b border-white/5 bg-white/[0.02]">
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">Título</th>
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">Cliente</th>
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase text-right">Valor Original</th>
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">Vencimento</th>
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">Status</th>
+                <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase text-center">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {loading ? (
                 <TableSkeleton rows={5} cols={6} />
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: 0 }}>
-                     <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
-                        Nenhum lançamento encontrado.
-                     </div>
+                  <td colSpan={6} className="px-6 py-20 text-center">
+                    <p className="text-muted-foreground font-medium italic">Nenhum lançamento encontrado no período.</p>
                   </td>
                 </tr>
               ) : (
                 Object.entries(
-                  rows.reduce((acc: any, r) => {
+                  rows.reduce((acc: Record<string, Titulo[]>, r) => {
                     const cid = r.cliente_id || 'unknown';
                     if (!acc[cid]) acc[cid] = [];
                     acc[cid].push(r);
                     return acc;
                   }, {})
-                ).map(([cid, groupRows]: [string, any]) => {
+                ).map(([cid, groupRows]: [string, Titulo[]]) => {
                   const isExpanded = expandedGroups[cid];
                   const clientName = clientsMap[cid] || 'NÃO IDENTIFICADO';
-                  const totalGroup = groupRows.reduce((sum: number, r: any) => sum + Number(r.valor_original), 0);
+                  const totalGroup = groupRows.reduce((sum, r) => sum + Number(r.valor_original), 0);
                   
                   return (
                     <React.Fragment key={cid}>
                       {/* Group Header Row */}
                       <tr 
                         onClick={() => setExpandedGroups(prev => ({ ...prev, [cid]: !prev[cid] }))}
-                        style={{ background: 'hsl(var(--surface-elevated))', cursor: 'pointer', borderLeft: '4px solid hsl(var(--primary))' }}
+                        className="bg-white/[0.03] cursor-pointer hover:bg-white/[0.05] transition-colors border-l-4 border-primary"
                       >
-                        <td colSpan={2} style={{ fontWeight: 800, color: 'hsl(var(--foreground))' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            {isExpanded ? <ChevronDown /> : <ChevronRight />}
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
+                        <td colSpan={2} className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            {isExpanded ? <ChevronDown className="text-primary" /> : <ChevronRight className="text-primary" />}
+                            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black shadow-inner">
                               {clientName.charAt(0).toUpperCase()}
                             </div>
-                            {clientName}
-                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', fontWeight: 400, marginLeft: '0.5rem' }}>
-                              ({groupRows.length} títulos)
-                            </span>
+                            <div>
+                              <div className="font-black tracking-tight text-lg text-white">{clientName}</div>
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{groupRows.length} títulos pendentes</div>
+                            </div>
                           </div>
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'hsl(var(--primary))' }}>
-                          R$ {totalGroup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td colSpan={3}>
-                           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '1rem' }}>
-                            <button 
-                              className="btn btn-outline" 
-                              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'hsl(var(--destructive))', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                              title="Excluir árvore de títulos"
-                              onClick={async (e) => { 
-                                e.stopPropagation(); 
-                                const isConfirmed = await confirmAction({
-                                  title: 'Excluir Todos os Títulos',
-                                  description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE CLIENTE?`
-                                });
-                                if(isConfirmed) {
-                                  api.financeiro.titulosReceber.deleteBatch(cid).then(() => {
-                                    load(page);
-                                  });
-                                }
-                              }}
-                              aria-label={`Excluir todos os títulos do cliente ${clientName}`}
-                            >
-                              <Trash2 /> EXCLUIR TUDO
-                            </button>
+                        <td className="px-6 py-4 text-right">
+                          <div className="text-primary font-black text-lg">
+                            R$ {totalGroup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </div>
+                        </td>
+                        <td colSpan={3} className="px-6 py-4 text-right">
+                          <button 
+                            className="text-[10px] font-black tracking-widest text-red-400/70 hover:text-red-400 transition-colors uppercase flex items-center gap-1 ml-auto group"
+                            onClick={async (e) => { 
+                              e.stopPropagation(); 
+                              const isConfirmed = await confirmAction({
+                                title: 'Excluir Lote Industrial',
+                                description: `ATENÇÃO: Deseja realmente excluir todos os ${groupRows.length} títulos deste cliente? Esta ação não pode ser desfeita.`
+                              });
+                              if(isConfirmed) {
+                                api.financeiro.titulosReceber.deleteBatch(cid).then(() => load(page));
+                              }
+                            }}
+                          >
+                            <Trash2 size={12} className="group-hover:scale-110 transition-transform" /> EXCLUIR LOTE
+                          </button>
                         </td>
                       </tr>
 
                       {/* Detail Rows */}
-                      {isExpanded && groupRows.map((r: any) => (
-                        <tr key={r.id} style={{ background: 'transparent' }}>
-                          <td style={{ paddingLeft: '3rem', fontFamily: 'monospace', fontWeight: 700, color: 'hsl(var(--primary))' }}>{r.numero_titulo}</td>
-                          <td style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>Individual</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'hsl(var(--foreground))' }}>
+                      {isExpanded && groupRows.map((r) => (
+                        <tr key={r.id} className="hover:bg-white/[0.02] transition-colors group">
+                          <td className="px-6 py-4 pl-20">
+                            <span className="font-mono font-bold text-primary tracking-tighter text-sm opacity-80 group-hover:opacity-100">#{r.numero_titulo}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-[11px] text-muted-foreground font-medium italic">Lançamento Direto</span>
+                          </td>
+                          <td className="px-6 py-4 text-right font-black text-white italic">
                             R$ {Number(r.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                              <Calendar style={{ opacity: 0.5 }} />
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                              <Calendar size={14} className="opacity-50" />
                               {new Date(r.data_vencimento).toLocaleDateString()}
                             </div>
                           </td>
-                          <td>
-                            <span className="badge" style={getStatusStyle(r.status, r.data_vencimento)}>
-                              {r.status === 'pago' ? 'LIQUIDADO' : (new Date(r.data_vencimento) < new Date() ? 'ATRASADO' : 'ABERTO')}
-                            </span>
+                          <td className="px-6 py-4">
+                            {(() => {
+                              const style = getStatusStyle(r.status, r.data_vencimento);
+                              return (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-sm" style={style}>
+                                  {r.status === 'pago' ? 'LIQUIDADO' : (new Date(r.data_vencimento) < new Date() ? 'EM ATRASO' : 'ABERTO')}
+                                </span>
+                              );
+                            })()}
                           </td>
-                          <td>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px' }}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
                                 title="Editar"
-                                aria-label={`Editar título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); setEditModal(r); }}
                               >
-                                <Edit2 />
+                                <Edit2 size={16} />
                               </button>
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px' }}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-20 transition-all"
                                 title="Baixar Título"
-                                aria-label={`Baixar título ${r.numero_titulo}`}
                                 disabled={r.status === 'pago'}
                                 onClick={(e) => { e.stopPropagation(); setBaixaModal(r); }}
                               >
-                                <CheckCircle />
+                                <CheckCircle size={16} />
                               </button>
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--destructive))' }}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 transition-all"
                                 title="Excluir"
-                                aria-label={`Excluir título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); doDelete(r.id); }}
                               >
-                                <Trash2 />
+                                <Trash2 size={16} />
                               </button>
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--primary))' }}
-                                title="Ver Recibo"
-                                aria-label={`Ver recibo do título ${r.numero_titulo}`}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
+                                title="Recibo"
                                 onClick={(e) => { e.stopPropagation(); setReciboModal(r); }}
                               >
-                                <Printer />
+                                <Printer size={16} />
                               </button>
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: '#25D366' }}
-                                title="Enviar Cobrança WhatsApp"
-                                aria-label={`Enviar cobrança do título ${r.numero_titulo} pelo WhatsApp`}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-[#25D366] hover:bg-[#25D366]/20 transition-all"
+                                title="WhatsApp"
                                 onClick={async (e) => { 
                                   e.stopPropagation(); 
                                   const msg = r.status === 'pago' ? 'Obrigado pelo pagamento!' : 
@@ -324,14 +316,13 @@ export default function FinanceiroTitulosReceberPage() {
                                     "4799999-9999", 
                                     `Título ${r.numero_titulo} - ${msg}`
                                   );
-                                  success('Mensagem de cobrança enviada com sucesso!');
+                                  success('Mensagem enviada!');
                                 }}
                               >
                                 <MessageCircle size={16} />
                               </button>
                               <button 
-                                className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--primary))' }}
+                                className="p-2 rounded-lg bg-white/5 border border-white/10 text-primary hover:bg-primary/20 disabled:opacity-20 transition-all"
                                 title="Simular Antecipação"
                                 disabled={r.status === 'pago'}
                                 onClick={(e) => { e.stopPropagation(); setAntecipacaoModal(r); }}
@@ -348,6 +339,7 @@ export default function FinanceiroTitulosReceberPage() {
               )}
             </tbody>
           </table>
+        </div>
         </div>
 
         {/* Modal Antecipação */}
@@ -423,71 +415,140 @@ export default function FinanceiroTitulosReceberPage() {
         </Modal>
 
         {/* Footer with items count */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--table-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', color: 'hsl(var(--muted-foreground))' }}>
-          <div>Mostrando {rows.length} de {total} lançamentos</div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-             <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem' }} disabled={page === 1} onClick={() => setPage(page-1)}>Anterior</button>
-             <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem' }} disabled={page * perPage >= total} onClick={() => setPage(page+1)}>Próxima</button>
+        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-black text-muted-foreground uppercase tracking-widest">
+          <div>Exibindo <span className="text-white font-black">{rows.length}</span> de <span className="text-white font-black">{total}</span> títulos industriais</div>
+          <div className="flex gap-2">
+             <button className="btn-outline h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic" disabled={page === 1} onClick={() => setPage(page-1)}>Anterior</button>
+             <button className="btn-outline h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic" disabled={page * perPage >= total} onClick={() => setPage(page+1)}>Próxima</button>
           </div>
         </div>
       </div>
 
-      {/* Modal Baixa */}
-      <Modal isOpen={!!baixaModal} onClose={() => setBaixaModal(null)} title="Registrar Recebimento">
-        <div style={{ minWidth: '400px' }}>
-          {(() => {
+      {/* Modal Antecipação */}
+      <Modal isOpen={!!antecipacaoModal} onClose={() => setAntecipacaoModal(null)} title="Simulador de Antecipação Industrial">
+        <div className="min-w-[450px] p-2">
+          {antecipacaoModal && (() => {
             const hoje = new Date();
-            const venc = new Date(baixaModal?.data_vencimento);
-            const atraso = Math.max(0, Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24)));
-            const valorAberto = Number(baixaModal?.valor_aberto || 0);
+            const venc = new Date(antecipacaoModal.data_vencimento);
+            const diasParaVencer = Math.max(0, Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)));
+            const valorOriginal = Number(antecipacaoModal.valor_aberto || 0);
             
-            // Lógica de Automação (Senior ERP Style)
-            const multaPerc = atraso > 0 ? 0.02 : 0; // 2% multa
-            const jurosDiarioPerc = 0.00033; // ~1% ao mês
+            const taxaMensal = taxaAntecipacao / 100;
+            const taxaDiaria = taxaMensal / 30;
+            const valorDesconto = valorOriginal * (taxaDiaria * diasParaVencer);
+            const taxaFixa = valorOriginal * 0.005; 
+            const valorLiquido = valorOriginal - valorDesconto - taxaFixa;
+
+            return (
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Taxa Mensal de Desconto (%)</label>
+                  <input 
+                    type="number" 
+                    className="input-base" 
+                    value={taxaAntecipacao} 
+                    onChange={e => setTaxaAntecipacao(Number(e.target.value))}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1 italic">Média corporativa D'Luxury: 2.8% a 4.5%</p>
+                </div>
+
+                <div className="glass-elevated p-6 rounded-xl space-y-3 bg-primary/5 border border-primary/20">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Valor Bruto</span>
+                    <span className="font-bold text-white italic text-lg tracking-tighter">R$ {valorOriginal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Prazo Industrial</span>
+                    <span className="font-bold text-primary italic uppercase tracking-tighter">{diasParaVencer} dias</span>
+                  </div>
+                  <div className="flex justify-between items-center text-red-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Desconto Bancário</span>
+                    <span className="font-bold italic">- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-red-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Taxas Administrativas (0.5%)</span>
+                    <span className="font-bold italic">- R$ {taxaFixa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">Valor Líquido</span>
+                    <span className="text-3xl font-black text-primary italic tracking-tighter">R$ {valorLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 justify-end">
+                  <button className="btn-outline px-6 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest" onClick={() => setAntecipacaoModal(null)}>FECHAR</button>
+                  <button className="btn-primary px-6 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest shadow-lg shadow-primary/20" onClick={async () => {
+                    const isConfirmed = await confirmAction({
+                      title: 'Efetivar Antecipação Industrial',
+                      description: 'A antecipação gera uma despesa financeira imediata. Deseja registrar a baixa com este valor líquido?'
+                    });
+                    if(isConfirmed) {
+                      success('Fluxo de antecipação registrado na DRE com sucesso!');
+                      setAntecipacaoModal(null);
+                    }
+                  }}>EFETIVAR ANTECIPAÇÃO</button>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </Modal>
+
+      {/* Modal Baixa */}
+      <Modal isOpen={!!baixaModal} onClose={() => setBaixaModal(null)} title="Registrar Recebimento Industrial">
+        <div className="min-w-[450px] p-2">
+          {baixaModal && (() => {
+            const hoje = new Date();
+            const venc = new Date(baixaModal.data_vencimento);
+            const atraso = Math.max(0, Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24)));
+            const valorAberto = Number(baixaModal.valor_aberto || 0);
+            
+            const multaPerc = atraso > 0 ? 0.02 : 0; 
+            const jurosDiarioPerc = 0.00033; 
             const valorMulta = valorAberto * multaPerc;
             const valorJuros = valorAberto * jurosDiarioPerc * atraso;
             const valorTotal = valorAberto + valorMulta + valorJuros;
 
             return (
-              <>
-                <div style={{ background: 'var(--surface-hover)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span className="label-base" style={{ margin: 0 }}>Valor Original</span>
-                    <span style={{ fontWeight: 600 }}>R$ {valorAberto.toFixed(2)}</span>
+              <div className="space-y-6">
+                <div className="glass-elevated p-6 rounded-xl space-y-3 bg-emerald-500/5 border border-emerald-500/20">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Valor Original</span>
+                    <span className="font-bold text-white italic text-lg tracking-tighter">R$ {valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                   {atraso > 0 && (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
-                        <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Multa (2% - {atraso} dias)</span>
-                        <span style={{ fontWeight: 600 }}>+ R$ {valorMulta.toFixed(2)}</span>
+                      <div className="flex justify-between items-center text-red-400">
+                        <span className="text-[11px] font-bold uppercase tracking-wider">Multa (2% - {atraso} dias)</span>
+                        <span className="font-bold italic">+ R$ {valorMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
-                        <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Juros (1%/mês)</span>
-                        <span style={{ fontWeight: 600 }}>+ R$ {valorJuros.toFixed(2)}</span>
+                      <div className="flex justify-between items-center text-red-400">
+                        <span className="text-[11px] font-bold uppercase tracking-wider">Juros (1%/mês)</span>
+                        <span className="font-bold italic">+ R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                     </>
                   )}
-                  <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>VALOR TOTAL</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'hsl(var(--success))' }}>R$ {valorTotal.toFixed(2)}</span>
+                  <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                    <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.2em]">Valor Total</span>
+                    <span className="text-3xl font-black text-emerald-400 italic tracking-tighter">R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
                 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label className="label-base">Conta Bancária / Destino</label>
-                  <select id="conta-interna-id" className="input-base">
-                    <option value="">Selecione uma conta...</option>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Conta Bancária de Destino</label>
+                  <select id="conta-interna-id-receber" className="input-base">
+                    <option value="">Selecione a conta corporativa...</option>
                     {contas.map(c => (
-                      <option key={c.id} value={c.id}>{c.nome} (Saldo: R$ {Number(c.saldo_atual).toFixed(2)})</option>
+                      <option key={c.id} value={c.id}>{c.nome.toUpperCase()} - SALDO: R$ {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</option>
                     ))}
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                  <button className="btn btn-outline" onClick={() => setBaixaModal(null)}>CANCELAR</button>
-                  <button className="btn btn-primary" onClick={async () => {
+                <div className="flex gap-4 justify-end">
+                  <button className="btn-outline px-6 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest" onClick={() => setBaixaModal(null)}>CANCELAR</button>
+                  <button className="btn-primary px-6 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest shadow-lg shadow-primary/20" onClick={async () => {
                     try {
-                      const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
+                      const contaId = (document.getElementById('conta-interna-id-receber') as HTMLSelectElement).value;
                       if (!contaId) throw new Error('Selecione uma conta');
                       
                       await api.financeiro.titulosReceber.baixar(baixaModal.id, {
@@ -500,37 +561,37 @@ export default function FinanceiroTitulosReceberPage() {
                       });
                       setBaixaModal(null);
                       load(page);
-                      success('Recebimento registrado com sucesso!');
+                      success('Recebimento corporativo registrado com sucesso!');
                     } catch (err: any) {
                       error(err.message || 'Erro ao registrar baixa');
                     }
                   }}>CONFIRMAR RECEBIMENTO</button>
                 </div>
-              </>
+              </div>
             );
           })()}
         </div>
       </Modal>
 
       {/* Modal Edição Individual */}
-      <Modal isOpen={!!editModal} onClose={() => setEditModal(null)} title="Editar Título" width="600px">
-        <div style={{ padding: '0.5rem' }}>
-          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
-            <div>
-              <label className="label-base" style={{ wordBreak: 'break-word' }}>Número do Título</label>
+      <Modal isOpen={!!editModal} onClose={() => setEditModal(null)} title="Manutenção de Título Industrial" width="650px">
+        <div className="p-4 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Número do Título</label>
               <input 
                 type="text" 
-                className="input-base" 
+                className="input-base font-mono font-bold" 
                 value={editModal?.numero_titulo || ''} 
-                onChange={e => setEditModal({...editModal, numero_titulo: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, numero_titulo: e.target.value})}
               />
             </div>
-            <div>
-              <label className="label-base">Status</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Status Operacional</label>
               <select 
-                className="input-base" 
+                className="input-base uppercase font-bold" 
                 value={editModal?.status || ''} 
-                onChange={e => setEditModal({...editModal, status: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, status: e.target.value as any})}
               >
                 <option value="aberto">ABERTO / PENDENTE</option>
                 <option value="pago">LIQUIDADO</option>
@@ -539,51 +600,51 @@ export default function FinanceiroTitulosReceberPage() {
             </div>
           </div>
 
-          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
-            <div>
-              <label className="label-base" style={{ wordBreak: 'break-word' }}>Valor Original (R$)</label>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Valor Original (R$)</label>
               <input 
                 type="number" 
-                className="input-base" 
+                className="input-base font-bold italic" 
                 value={editModal?.valor_original || 0} 
-                onChange={e => setEditModal({...editModal, valor_original: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, valor_original: Number(e.target.value)})}
               />
             </div>
-            <div>
-              <label className="label-base" style={{ wordBreak: 'break-word' }}>Data de Vencimento</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Data de Vencimento</label>
               <input 
                 type="date" 
-                className="input-base" 
+                className="input-base font-bold" 
                 value={editModal?.data_vencimento ? new Date(editModal.data_vencimento).toISOString().split('T')[0] : ''} 
-                onChange={e => setEditModal({...editModal, data_vencimento: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, data_vencimento: e.target.value})}
               />
             </div>
           </div>
 
-          <div className="grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
-            <div>
-              <label className="label-base" style={{ wordBreak: 'break-word' }}>Taxa Finan. (%)</label>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Taxa Financeira (%)</label>
               <input 
                 type="number" 
                 className="input-base" 
                 value={editModal?.taxa_financeira || 0} 
-                onChange={e => setEditModal({...editModal, taxa_financeira: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, taxa_financeira: Number(e.target.value)})}
               />
             </div>
-            <div>
-              <label className="label-base" style={{ wordBreak: 'break-word' }}>Custo Finan. (R$)</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Custo Financeiro (R$)</label>
               <input 
                 type="number" 
                 className="input-base" 
                 value={editModal?.valor_custo_financeiro || 0} 
-                onChange={e => setEditModal({...editModal, valor_custo_financeiro: e.target.value})}
+                onChange={e => editModal && setEditModal({...editModal, valor_custo_financeiro: Number(e.target.value)})}
               />
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-            <button className="btn btn-outline" onClick={() => setEditModal(null)}>CANCELAR</button>
-            <button className="btn btn-primary" onClick={saveEdit}>SALVAR ALTERAÇÕES</button>
+          <div className="flex gap-4 justify-end pt-6 border-t border-white/5">
+            <button className="btn-outline px-8 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest" onClick={() => setEditModal(null)}>CANCELAR</button>
+            <button className="btn-primary px-8 py-3 rounded-xl uppercase font-black italic text-xs tracking-widest" onClick={saveEdit}>SALVAR ALTERAÇÕES</button>
           </div>
         </div>
       </Modal>
@@ -591,15 +652,13 @@ export default function FinanceiroTitulosReceberPage() {
       <ReciboModal 
         isOpen={!!reciboModal} 
         onClose={() => setReciboModal(null)} 
-        titulo={reciboModal} 
+        titulo={reciboModal as any} 
         tipo="receber" 
         beneficiarioOuPagador={reciboModal ? clientsMap[reciboModal.cliente_id] || 'Cliente' : ''} 
       />
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
       {ConfirmDialogElement}
+      </div>
     </div>
   );
 }

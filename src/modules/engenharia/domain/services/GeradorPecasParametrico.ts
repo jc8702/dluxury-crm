@@ -1,4 +1,4 @@
-import type { Peca } from '../../../plano-corte/domain/services/MaxRectsOptimizer';
+import type { Peca } from '../../../plano-corte/domain/services/MaxRectsOptimizer.js';
 import { create, all } from 'mathjs';
 
 const math = create(all);
@@ -114,7 +114,7 @@ export class GeradorPecasParametrico {
     const avisos: string[] = [];
 
     try {
-      this.logger.info(`[GERADOR] Carregando template: ${tipo_slug}`);
+      (this.logger as any).info(`[GERADOR] Carregando template: ${tipo_slug}`);
       const template = await this.buscarTemplate(tipo_slug);
 
       if (!template) {
@@ -151,8 +151,8 @@ export class GeradorPecasParametrico {
 
       return { sucesso: true, pecas, ferragens, erros, avisos };
 
-    } catch (erro) {
-      this.logger.error(`[GERADOR] Erro ao gerar peças:`, erro);
+    } catch (erro: any) {
+      (this.logger as any).error(`[GERADOR] Erro ao gerar peças:`, erro);
       return {
         sucesso: false,
         pecas: [],
@@ -233,8 +233,8 @@ export class GeradorPecasParametrico {
     try {
       const res = math.evaluate(formula, contexto);
       return typeof res === 'number' ? res : 0;
-    } catch (e) {
-      this.logger.error(`Erro na fórmula ${formula}`, e);
+    } catch (e: any) {
+      (this.logger as any).error(`Erro na fórmula ${formula}`, e);
       return 0;
     }
   }

@@ -67,3 +67,18 @@ export const retalhosEstoque = pgTable('retalhos_estoque', {
   usuario_atualizou: varchar('usuario_atualizou', { length: 100 }),
   metadata: jsonb('metadata').default({}),
 });
+
+// 5. Tabela de Movimentações de Estoque Industrial
+export const movimentacoesEstoque = pgTable('movimentacoes_estoque', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tipo: varchar('tipo', { length: 30 }).notNull(), // 'entrada', 'saida', 'uso_plano', 'perda'
+  item_tipo: varchar('item_tipo', { length: 20 }).notNull(), // 'chapa', 'retalho'
+  chapa_id: uuid('chapa_id'),
+  retalho_id: uuid('retalho_id'),
+  plano_corte_id: uuid('plano_corte_id'),
+  quantidade: integer('quantidade').default(1),
+  motivo: text('motivo'),
+  created_at: timestamp('created_at').defaultNow(),
+  usuario_id: varchar('usuario_id', { length: 100 }),
+});
+

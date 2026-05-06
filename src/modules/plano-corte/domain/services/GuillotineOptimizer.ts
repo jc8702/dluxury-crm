@@ -1,8 +1,6 @@
-import type { 
-  Peca, 
-  PecaPosicionada, 
-  ResultadoOtimizacao 
-} from './MaxRectsOptimizer';
+import { Peca, PecaPosicionada } from '../types';
+import { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer';
+
 
 /**
  * CLASSE: Guillotine Optimizer — Best Fit Decreasing
@@ -24,7 +22,7 @@ export class GuillotineOptimizer {
     this.kerf_mm = kerf;
   }
 
-  otimizar(pecas: Peca[]): ResultadoOtimizacao {
+  otimizar(pecas: Peca[]): ResultadoOtimizacaoSimples {
     const inicio = performance.now();
 
     const pecasOrdenadas = [...pecas].sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
@@ -65,6 +63,8 @@ export class GuillotineOptimizer {
         // Posicionar
         pecas_posicionadas.push({
           ...peca,
+          largura: rotacionada ? peca.altura : peca.largura,
+          altura: rotacionada ? peca.largura : peca.altura,
           x: faixa.x,
           y: faixa.y,
           rotacionada
@@ -114,7 +114,8 @@ export class GuillotineOptimizer {
       area_usada,
       area_total,
       area_desperdicada: area_total - area_usada,
-      tempo_ms: Math.round(performance.now() - inicio)
+      tempo_ms: Math.round(performance.now() - inicio),
+      espacos_vazios: faixasLivres
     };
   }
 }

@@ -57,34 +57,37 @@ export default function FinanceiroDREPage() {
   const toggleSection = (key: string) => setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   const Block = ({ 
-    label, value, margin, color, isNegative, sublabel, children, sectionKey 
+    label, value, margin, colorClass, isNegative, sublabel, children, sectionKey 
   }: { 
-    label: string; value: number; margin?: number; color: string; isNegative?: boolean; sublabel?: string; children?: React.ReactNode; sectionKey?: string;
+    label: string; value: number; margin?: number; colorClass: string; isNegative?: boolean; sublabel?: string; children?: React.ReactNode; sectionKey?: string;
   }) => (
-    <div style={{ borderLeft: `4px solid ${color}`, padding: '1rem 1.5rem', background: 'hsl(var(--surface-elevated))', borderRadius: '0 8px 8px 0', marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className={`glass-elevated border-l-4 ${colorClass} p-6 rounded-r-2xl mb-4 transition-all hover:bg-white/[0.04] group`}>
+      <div className="flex justify-between items-center">
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-          {sublabel && <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.1rem' }}>{sublabel}</div>}
+          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic mb-1 opacity-70">{label}</div>
+          {sublabel && <div className="text-[10px] text-muted-foreground italic font-medium opacity-50">{sublabel}</div>}
         </div>
-        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div className="text-right flex items-center gap-8">
           {margin !== undefined && (
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: margin >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
-              {fmtPct(margin)}
+            <div className={`text-xs font-black italic ${margin >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+              {fmtPct(margin)} MARGEM
             </div>
           )}
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: isNegative ? 'hsl(var(--destructive))' : color }}>
+          <div className={`text-2xl font-black italic tracking-tighter ${isNegative ? 'text-red-500' : 'text-white'}`}>
             {isNegative ? '(' : ''}{fmt(Math.abs(value))}{isNegative ? ')' : ''}
           </div>
           {sectionKey && children && (
-            <button onClick={() => toggleSection(sectionKey)} style={{ background: 'none', border: 'none', color: 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: '0.8rem' }}>
-              {expandedSections[sectionKey] ? '▲' : '▼'}
+            <button 
+              onClick={() => toggleSection(sectionKey)} 
+              className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+            >
+              <TrendingUp className={`w-4 h-4 transition-transform ${expandedSections[sectionKey] ? 'rotate-90' : ''}`} />
             </button>
           )}
         </div>
       </div>
       {sectionKey && expandedSections[sectionKey] && children && (
-        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--border))' }}>
+        <div className="mt-4 pt-4 border-t border-white/5 space-y-1">
           {children}
         </div>
       )}
@@ -92,188 +95,250 @@ export default function FinanceiroDREPage() {
   );
 
   const LineItem = ({ label, value, isNegative }: { label: string; value: number; isNegative?: boolean }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid hsl(var(--surface-hover))', fontSize: '0.85rem' }}>
-      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
-      <span style={{ fontWeight: 600, color: isNegative ? 'hsl(var(--destructive))' : 'hsl(var(--success))', fontFamily: 'monospace' }}>
-        {isNegative ? '(' : ''}{fmt(Math.abs(value))}{isNegative ? ')' : ''}
+    <div className="flex justify-between items-center py-2 px-4 hover:bg-white/5 rounded-lg transition-colors group">
+      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider group-hover:text-white transition-colors">{label}</span>
+      <span className={`text-xs font-black italic tracking-tight ${isNegative ? 'text-red-400' : 'text-emerald-400'}`}>
+        {isNegative ? '-' : '+'} {fmt(Math.abs(value))}
       </span>
     </div>
   );
 
   const Divider = ({ label }: { label: string }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0 1rem' }}>
-      <div style={{ flex: 1, height: '1px', background: 'hsl(var(--border))' }} />
-      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
-      <div style={{ flex: 1, height: '1px', background: 'hsl(var(--border))' }} />
+    <div className="flex items-center gap-4 my-8 first:mt-0">
+      <div className="h-px bg-white/5 flex-1" />
+      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] italic opacity-40">{label}</span>
+      <div className="h-px bg-white/5 flex-1" />
     </div>
   );
 
   return (
-    <div className="page-container anim-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="p-8 max-w-[1600px] mx-auto min-h-screen space-y-8">
+      {/* Header Corporativo e Controles */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <PieChart style={{ color: 'hsl(var(--accent))' }} /> DRE — DEMONSTRAÇÃO DO RESULTADO
+          <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
+            <PieChart className="text-primary w-10 h-10" />
+            DRE CORPORATIVO
           </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>Apuração de lucro e desempenho financeiro no período</p>
+          <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
+            Demonstração do Resultado do Exercício
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Toggle Regime */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Toggle Regime Industrial */}
           <button
             onClick={() => {
               const novoRegime = regime === 'competencia' ? 'caixa' : 'competencia';
               setRegime(novoRegime);
               loadDRE(periodo.inicio, periodo.fim, novoRegime);
             }}
-            className="btn btn-outline"
-            style={{ fontSize: '0.8rem', gap: '0.5rem' }}
+            className="btn-outline h-12 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-3 group transition-all"
           >
-            {regime === 'competencia' ? <ToggleLeft /> : <ToggleRight />}
-            REGIME: {regime === 'competencia' ? 'COMPETÊNCIA' : 'CAIXA'}
+            {regime === 'competencia' ? <ToggleLeft className="w-5 h-5 text-muted-foreground" /> : <ToggleRight className="w-5 h-5 text-primary" />}
+            <span className={regime === 'caixa' ? 'text-primary' : 'text-muted-foreground'}>
+              REGIME: {regime === 'competencia' ? 'COMPETÊNCIA' : 'CAIXA'}
+            </span>
           </button>
 
-          {/* Período */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input type="date" className="input-base" style={{ fontSize: '0.8rem', padding: '0.5rem' }} value={periodo.inicio}
-              onChange={e => setPeriodo(p => ({ ...p, inicio: e.target.value }))} />
-            <span style={{ color: 'hsl(var(--muted-foreground))' }}>até</span>
-            <input type="date" className="input-base" style={{ fontSize: '0.8rem', padding: '0.5rem' }} value={periodo.fim}
-              onChange={e => setPeriodo(p => ({ ...p, fim: e.target.value }))} />
-            <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}>
-              <Calendar /> APLICAR
+          {/* Filtro de Período Industrial */}
+          <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-white/5">
+            <input 
+              type="date" 
+              className="bg-transparent border-none text-[11px] font-black text-white px-4 py-2 uppercase italic focus:ring-0 w-40" 
+              value={periodo.inicio}
+              onChange={e => setPeriodo(p => ({ ...p, inicio: e.target.value }))} 
+            />
+            <span className="text-[10px] font-black text-muted-foreground opacity-50 italic">ATÉ</span>
+            <input 
+              type="date" 
+              className="bg-transparent border-none text-[11px] font-black text-white px-4 py-2 uppercase italic focus:ring-0 w-40" 
+              value={periodo.fim}
+              onChange={e => setPeriodo(p => ({ ...p, fim: e.target.value }))} 
+            />
+            <button 
+              className="btn-primary h-10 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-2"
+              onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}
+            >
+              <Calendar className="w-4 h-4" /> APLICAR
             </button>
           </div>
         </div>
       </div>
-
       {loading ? (
-        <div className="card glass">
-          <TableSkeleton rows={10} cols={3} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 opacity-20">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="h-20 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-60 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-60 bg-white/5 rounded-xl animate-pulse" />
+          </div>
+          <div className="lg:col-span-4 space-y-4">
+            <div className="h-96 bg-white/5 rounded-xl animate-pulse" />
+          </div>
         </div>
       ) : !data ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'hsl(var(--muted-foreground))' }}>Sem dados para o período selecionado</div>
+        <div className="glass-elevated p-20 rounded-3xl text-center">
+          <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
+          <p className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">Sem dados operacionais para o período</p>
+        </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           
           {/* DRE Principal */}
-          <div>
-            <Divider label="RECEITAS" />
+          <div className="lg:col-span-8">
+            <Divider label="FLUXO DE ENTRADAS" />
 
-            <Block label="RECEITA BRUTA" value={data.receita_bruta} color="hsl(var(--success))" sectionKey="receitas"
-              sublabel="Vendas + Serviços + Outras Receitas">
+            <Block 
+              label="RECEITA BRUTA TOTAL" 
+              value={data.receita_bruta} 
+              colorClass="border-emerald-500" 
+              sectionKey="receitas"
+              sublabel="Consolidação de Vendas e Serviços Industriais"
+            >
               {data.detalhes?.receitas?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} />)}
             </Block>
 
-            <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(34,197,94,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 700 }}>= RECEITA LÍQUIDA</span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: 'hsl(var(--success))' }}>{fmt(data.receita_liquida)}</span>
+            <div className="p-5 px-8 mb-8 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex justify-between items-center group transition-all hover:bg-emerald-500/15">
+              <span className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.3em] italic flex items-center gap-2">
+                <Minus className="w-4 h-4 opacity-40 rotate-90" /> RECEITA LÍQUIDA OPERACIONAL
+              </span>
+              <span className="text-2xl font-black text-emerald-500 italic tracking-tighter">{fmt(data.receita_liquida)}</span>
             </div>
 
-            <Divider label="CUSTOS DIRETOS" />
+            <Divider label="CUSTOS DE PRODUÇÃO" />
 
-            <Block label="MATÉRIA-PRIMA E MÃO DE OBRA" value={data.detalhes?.custos_diretos?.reduce((s, r) => s + r.valor, 0) || 0}
-              color="hsl(var(--warning))" isNegative sectionKey="custos"
-              sublabel="Classes 2.1 (Material) e 2.2 (Mão de Obra)">
+            <Block 
+              label="MATÉRIA-PRIMA & MÃO DE OBRA" 
+              value={data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0}
+              colorClass="border-orange-500" 
+              isNegative 
+              sectionKey="custos"
+              sublabel="Custos Diretos Atribuíveis (Classes 2.1 e 2.2)"
+            >
               {data.detalhes?.custos_diretos?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
-            <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: data.lucro_bruto >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 700 }}>= LUCRO BRUTO <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>({fmtPct(data.margem_bruta)} de margem)</span></span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.lucro_bruto >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>{fmt(data.lucro_bruto)}</span>
+            <div className={`p-5 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.lucro_bruto >= 0 ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] italic flex flex-col">
+                <span className={data.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500'}>LUCRO BRUTO INDUSTRIAL</span>
+                <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-widest mt-1">Margem de Contribuição: {fmtPct(data.margem_bruta)}</span>
+              </span>
+              <span className={`text-2xl font-black italic tracking-tighter ${data.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{fmt(data.lucro_bruto)}</span>
             </div>
 
-            <Divider label="DESPESAS OPERACIONAIS" />
+            <Divider label="ESTRUTURA OPERACIONAL" />
 
-            <Block label="OPERACIONAIS + COMERCIAL + LOGÍSTICA" value={(data.detalhes?.despesas_operacionais?.reduce((s, r) => s + r.valor, 0)) || 0}
-              color="hsl(var(--destructive))" isNegative sectionKey="despesasOp"
-              sublabel="Classes 2.3, 2.4 e 2.5">
+            <Block 
+              label="DESPESAS COMERCIAIS & LOGÍSTICA" 
+              value={(data.detalhes?.despesas_operacionais?.reduce((s: any, r: any) => s + r.valor, 0)) || 0}
+              colorClass="border-red-500" 
+              isNegative 
+              sectionKey="despesasOp"
+              sublabel="Apoio de Vendas, Fretes e Marketing"
+            >
               {data.detalhes?.despesas_operacionais?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
-            <Block label="DESPESAS ADMINISTRATIVAS" value={(data.detalhes?.despesas_administrativas?.reduce((s, r) => s + r.valor, 0)) || 0}
-              color="hsl(var(--destructive))" isNegative sectionKey="despesasAdmin"
-              sublabel="Classe 2.6 (Impostos, Contador, Seguros...)">
+            <Block 
+              label="DESPESAS ADMINISTRATIVAS" 
+              value={(data.detalhes?.despesas_administrativas?.reduce((s: any, r: any) => s + r.valor, 0)) || 0}
+              colorClass="border-red-500" 
+              isNegative 
+              sectionKey="despesasAdmin"
+              sublabel="Custos Fixos de Gestão e Suporte"
+            >
               {data.detalhes?.despesas_administrativas?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
-            <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: data.ebitda >= 0 ? 'rgba(59,130,246,0.08)' : 'rgba(239,68,68,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 700 }}>= EBITDA <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>({fmtPct(data.margem_ebitda)} de margem)</span></span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.ebitda >= 0 ? 'hsl(var(--info))' : 'hsl(var(--destructive))' }}>{fmt(data.ebitda)}</span>
+            <div className={`p-6 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.ebitda >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-red-500/10 border-red-500/20'}`}>
+              <span className="text-[11px] font-black uppercase tracking-[0.3em] italic flex flex-col">
+                <span className={data.ebitda >= 0 ? 'text-primary' : 'text-red-500'}>EBITDA (LAJIDA)</span>
+                <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-widest mt-1">Margem EBITDA: {fmtPct(data.margem_ebitda)}</span>
+              </span>
+              <span className={`text-3xl font-black italic tracking-tighter ${data.ebitda >= 0 ? 'text-primary' : 'text-red-500'}`}>{fmt(data.ebitda)}</span>
             </div>
 
-            <Divider label="RESULTADO FINANCEIRO" />
+            <Divider label="FINALIZAÇÃO FINANCEIRA" />
 
-            <Block label="RESULTADO FINANCEIRO LÍQUIDO" value={data.detalhes?.resultado_financeiro?.saldo || 0}
-              color={data.detalhes?.resultado_financeiro?.saldo >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
+            <Block 
+              label="RESULTADO FINANCEIRO LÍQUIDO" 
+              value={data.detalhes?.resultado_financeiro?.saldo || 0}
+              colorClass={data.detalhes?.resultado_financeiro?.saldo >= 0 ? 'border-emerald-500' : 'border-red-500'}
               isNegative={(data.detalhes?.resultado_financeiro?.saldo || 0) < 0}
-              sublabel="Receitas financeiras - Despesas financeiras"
+              sublabel="Impacto de Juros, Taxas e Rendimentos"
             />
 
-            <div style={{ 
-              padding: '1.25rem 1.5rem', marginTop: '1.5rem',
-              background: data.lucro_liquido >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', 
-              borderRadius: '12px', border: `2px solid ${data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}`,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))' }}>= LUCRO LÍQUIDO DO PERÍODO</div>
-                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Margem Líquida: {fmtPct(data.margem_liquida)}</div>
+            <div className={`p-10 px-12 mt-12 rounded-[2rem] border-2 flex flex-col md:flex-row justify-between items-center relative overflow-hidden transition-all ${data.lucro_liquido >= 0 ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-red-500/5 border-red-500/30'}`}>
+              {/* Background Glow */}
+              <div className={`absolute -right-20 -top-20 w-64 h-64 blur-[120px] rounded-full opacity-20 ${data.lucro_liquido >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              
+              <div className="z-10 text-center md:text-left mb-6 md:mb-0">
+                <div className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2 opacity-60">LUCRO LÍQUIDO OPERACIONAL</div>
+                <div className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">
+                  Margem Líquida Final: <span className={data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500'}>{fmtPct(data.margem_liquida)}</span>
+                </div>
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 900, color: data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
+              <div className={`z-10 text-6xl font-black italic tracking-tighter ${data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                 {fmt(data.lucro_liquido)}
               </div>
             </div>
           </div>
 
-          {/* Painel de Margens */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="card glass" style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', marginBottom: '1rem' }}>
-                PAINEL DE MARGENS
+          {/* Sidebar de Inteligência Financeira */}
+          <div className="lg:col-span-4 space-y-8 sticky top-8">
+            <div className="glass-elevated p-8 rounded-3xl border border-white/5 space-y-8">
+              <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" /> PAINEL DE MARGENS
               </div>
+              
               {[
-                { label: 'Margem Bruta', value: data.margem_bruta, color: 'hsl(var(--warning))' },
-                { label: 'EBITDA', value: data.margem_ebitda, color: 'hsl(var(--info))' },
-                { label: 'Margem Líquida', value: data.margem_liquida, color: data.margem_liquida >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' },
+                { label: 'Margem Bruta', value: data.margem_bruta, color: 'text-orange-500', bg: 'bg-orange-500' },
+                { label: 'Margem EBITDA', value: data.margem_ebitda, color: 'text-primary', bg: 'bg-primary' },
+                { label: 'Margem Líquida', value: data.margem_liquida, color: data.margem_liquida >= 0 ? 'text-emerald-500' : 'text-red-500', bg: data.margem_liquida >= 0 ? 'bg-emerald-500' : 'bg-red-500' },
               ].map((m, i) => (
-                <div key={i} style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'hsl(var(--muted-foreground))' }}>{m.label}</span>
-                    <span style={{ fontWeight: 700, color: m.color }}>{fmtPct(m.value)}</span>
+                <div key={i} className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{m.label}</span>
+                    <span className={`text-xl font-black italic tracking-tight ${m.color}`}>{fmtPct(m.value)}</span>
                   </div>
-                  <div style={{ height: '8px', background: 'var(--surface-hover)', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.min(Math.max(Math.abs(m.value), 0), 100)}%`, background: m.color, borderRadius: '999px', transition: 'width 0.8s' }} />
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden p-[2px]">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${m.bg}`} 
+                      style={{ width: `${Math.min(Math.max(Math.abs(m.value), 0), 100)}%` }} 
+                    />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="card glass" style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', marginBottom: '1rem' }}>
-                RESUMO EXECUTIVO
-              </div>
+            <div className="glass-elevated p-8 rounded-3xl border border-white/5 space-y-6">
+              <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50">RESUMO EXECUTIVO</div>
               {[
-                { label: 'Receita Bruta', value: data.receita_bruta, icon: <TrendingUp />, color: 'hsl(var(--success))' },
-                { label: 'Total Custos', value: (data.detalhes?.custos_diretos?.reduce((s, r) => s + r.valor, 0) || 0), icon: <Minus />, color: 'hsl(var(--warning))' },
-                { label: 'Total Despesas', value: (data.detalhes?.despesas_operacionais?.reduce((s, r) => s + r.valor, 0) || 0) + (data.detalhes?.despesas_administrativas?.reduce((s, r) => s + r.valor, 0) || 0), icon: <TrendingDown />, color: 'hsl(var(--destructive))' },
-                { label: 'Resultado', value: data.lucro_liquido, icon: null, color: data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' },
+                { label: 'Receita Bruta', value: data.receita_bruta, icon: <TrendingUp className="w-4 h-4" />, color: 'text-emerald-500' },
+                { label: 'Custos Diretos', value: (data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0), icon: <Minus className="w-4 h-4" />, color: 'text-orange-500' },
+                { label: 'Total Despesas', value: (data.detalhes?.despesas_operacionais?.reduce((s: any, r: any) => s + r.valor, 0) || 0) + (data.detalhes?.despesas_administrativas?.reduce((s: any, r: any) => s + r.valor, 0) || 0), icon: <TrendingDown className="w-4 h-4" />, color: 'text-red-500' },
+                { label: 'Resultado', value: data.lucro_liquido, icon: null, color: data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500' },
               ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.85rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: item.color }}>{item.icon}<span style={{ color: 'hsl(var(--muted-foreground))' }}>{item.label}</span></div>
-                  <span style={{ fontWeight: 700, fontFamily: 'monospace', color: item.color }}>{fmt(item.value)}</span>
+                <div key={i} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 group transition-all hover:bg-white/[0.02]">
+                  <div className={`flex items-center gap-3 ${item.color} text-[11px] font-black italic uppercase tracking-wider`}>
+                    {item.icon}
+                    <span className="text-muted-foreground group-hover:text-white transition-colors">{item.label}</span>
+                  </div>
+                  <span className={`text-sm font-black italic tracking-tight ${item.color}`}>{fmt(item.value)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="card glass" style={{ padding: '1.25rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>REGIME DE APURAÇÃO</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>
-                {regime === 'competencia' ? '📊 COMPETÊNCIA' : '💰 CAIXA'}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem' }}>
-                {regime === 'competencia' ? 'Reconhece na emissão/vencimento' : 'Reconhece na data de pagamento'}
-              </div>
+            <div className="glass-elevated p-6 rounded-3xl border border-primary/20 bg-primary/5 text-center relative overflow-hidden">
+               <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
+               <div className="text-[10px] font-black text-primary uppercase tracking-[0.3em] italic mb-2">MODO DE APURAÇÃO</div>
+               <div className="text-xl font-black text-white italic tracking-tighter flex items-center justify-center gap-2">
+                 {regime === 'competencia' ? <TrendingUp className="w-5 h-5 text-primary" /> : <Minus className="w-5 h-5 text-primary rotate-90" />}
+                 {regime === 'competencia' ? 'ESTRATÉGIA COMPETÊNCIA' : 'REALIDADE CAIXA'}
+               </div>
+               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-3 opacity-60 leading-relaxed">
+                 {regime === 'competencia' ? 'Reconhecimento contábil por emissão de fatura/vencimento' : 'Reconhecimento efetivo por entrada e saída de numerário'}
+               </p>
             </div>
           </div>
         </div>

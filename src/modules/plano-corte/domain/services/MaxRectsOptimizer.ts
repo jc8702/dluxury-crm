@@ -1,53 +1,16 @@
-/**
- * INTERFACE: Peça a ser cortada
- */
-export interface Peca {
-  id: string;
-  nome: string;
-  largura: number; // em mm
-  altura: number;  // em mm
-  rotacionavel: boolean;
-  fio_de_fita?: {
-    topo?: boolean;
-    baixo?: boolean;
-    esquerda?: boolean;
-    direita?: boolean;
-  };
-  quantidade?: number;
-  observacoes?: string;
-}
+import { Peca, PecaPosicionada, Retangulo } from '../types';
 
-/**
- * INTERFACE: Peça posicionada (resultado)
- */
-export interface PecaPosicionada extends Peca {
-  x: number; // coordenada X na chapa
-  y: number; // coordenada Y na chapa
-  rotacionada: boolean;
-}
-
-/**
- * INTERFACE: Resultado da otimização
- */
-export interface ResultadoOtimizacao {
+export interface ResultadoOtimizacaoSimples {
   pecas_posicionadas: PecaPosicionada[];
   pecas_rejeitadas: Peca[];
-  aproveitamento: number; // percentual 0-100
-  area_usada: number; // mm²
-  area_total: number; // mm²
-  area_desperdicada: number; // mm²
+  aproveitamento: number;
+  area_usada: number;
+  area_total: number;
+  area_desperdicada: number;
   tempo_ms: number;
+  espacos_vazios: Retangulo[];
 }
 
-/**
- * CLASSE: Retângulo usado internamente
- */
-interface Retangulo {
-  x: number;
-  y: number;
-  largura: number;
-  altura: number;
-}
 
 /**
  * CLASSE: MaxRects Optimizer — Best Short Side Fit
@@ -66,13 +29,13 @@ export class MaxRectsOptimizer {
   constructor(largura: number, altura: number, kerf: number = 3) {
     this.largura_chapa = largura;
     this.altura_chapa = altura;
-    this.kerf_mm = kerf;
+    this.kerf_mm = Math.max(0, kerf); // Garantir kerf positivo
   }
 
   /**
    * MÉTODO PÚBLICO: Otimizar posicionamento
    */
-  otimizar(pecas: Peca[]): ResultadoOtimizacao {
+  otimizar(pecas: Peca[]): ResultadoOtimizacaoSimples {
     const inicio = performance.now();
     
     // Ordenar peças por área decrescente (heurística)
@@ -102,19 +65,24 @@ export class MaxRectsOptimizer {
         const { posicao, rotacionada } = melhorEncaixe;
         
         // Adicionar peça posicionada
+        const larguraFinal = melhorEncaixe.rotacionada ? peca.altura : peca.largura;
+        const alturaFinal = melhorEncaixe.rotacionada ? peca.largura : peca.altura;
+
         pecas_posicionadas.push({
           ...peca,
-          x: posicao.x,
-          y: posicao.y,
-          rotacionada
+          largura: larguraFinal,
+          altura: alturaFinal,
+          x: melhorEncaixe.posicao.x,
+          y: melhorEncaixe.posicao.y,
+          rotacionada: melhorEncaixe.rotacionada
         });
 
-        // Remover espaço usado e adicionar novos espaços vazios
+        // Atualizar espaços vazios com as dimensões finais
         this.atualizarEspacosVazios(
           espacosVazios,
-          posicao,
-          rotacionada ? peca.altura : peca.largura,
-          rotacionada ? peca.largura : peca.altura
+          melhorEncaixe.posicao,
+          larguraFinal,
+          alturaFinal
         );
       } else {
         pecas_rejeitadas.push(peca);
@@ -138,7 +106,8 @@ export class MaxRectsOptimizer {
       area_usada,
       area_total,
       area_desperdicada: area_total - area_usada,
-      tempo_ms: Math.round(tempo_ms * 100) / 100
+      tempo_ms: Math.round(tempo_ms * 100) / 100,
+      espacos_vazios: espacosVazios
     };
   }
 
@@ -229,6 +198,12 @@ export class MaxRectsOptimizer {
       largura: largura + this.kerf_mm, 
       altura: altura + this.kerf_mm 
     };
+    
+    // Log para depuração de sobreposição
+    if (this.kerf_mm > 0) {
+       // Otimização: se o kerf for muito grande, avisar
+       if (this.kerf_mm > 20) console.warn('[MAXRECTS] Kerf muito alto:', this.kerf_mm);
+    }
 
     const novosEspacos: Retangulo[] = [];
     
@@ -303,7 +278,8 @@ export class MaxRectsOptimizer {
 
   private podarEspacosRedundantes(espacos: Retangulo[]): Retangulo[] {
     // 1. Remover espaços muito pequenos
-    let filtrados = espacos.filter(e => e.largura >= 1 && e.altura >= 1);
+    const filtrados = espacos.filter(e => e.largura >= 1 && e.altura >= 1);
+    const paraRemover = new Set<number>();
 
     // 2. Remover espaços que estão totalmente contidos em outros
     for (let i = 0; i < filtrados.length; i++) {
@@ -317,13 +293,13 @@ export class MaxRectsOptimizer {
         if (a.x >= b.x && a.y >= b.y && 
             a.x + a.largura <= b.x + b.largura && 
             a.y + a.altura <= b.y + b.altura) {
-          (filtrados[i] as any).contido = true;
+          paraRemover.add(i);
           break;
         }
       }
     }
 
-    return filtrados.filter(e => !(e as any).contido);
+    return filtrados.filter((_, idx) => !paraRemover.has(idx));
   }
 }
 

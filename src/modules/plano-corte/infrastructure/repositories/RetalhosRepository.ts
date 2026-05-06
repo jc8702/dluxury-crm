@@ -15,9 +15,14 @@ export class RetalhosRepository {
    */
   async buscarRetalhosDisponiveis(filtros?: FiltrosRetalho): Promise<RetalhoDisponivel[]> {
     // Se estiver no Browser e sem DB direto, usa a API
-    if (typeof window !== 'undefined' && !db) {
-      const query = new URLSearchParams(filtros as any).toString();
-      return api.retalhos.list(query) as any;
+    if (typeof window !== 'undefined' && (!db || !db.select)) {
+      const queryParams = new URLSearchParams();
+      if (filtros) {
+        Object.entries(filtros).forEach(([key, value]) => {
+          if (value !== undefined) queryParams.append(key, String(value));
+        });
+      }
+      return api.retalhos.list(queryParams.toString()) as unknown as RetalhoDisponivel[];
     }
 
     const conditions = [
@@ -42,7 +47,7 @@ export class RetalhosRepository {
     }
 
     if (filtros?.origem) {
-      conditions.push(eq(retalhosEstoque.origem, filtros.origem));
+      conditions.push(eq(retalhosEstoque.origem, filtros.origem as any)); // Drizzle enum match
     }
 
     const result = await db.select({
@@ -75,8 +80,8 @@ export class RetalhosRepository {
    * Cria um novo retalho no estoque
    */
   async salvarRetalho(input: CriarRetalhoInput): Promise<Retalho> {
-    if (typeof window !== 'undefined' && !db) {
-      return api.retalhos.create(input);
+    if (typeof window !== 'undefined' && (!db || !db.insert)) {
+      return api.retalhos.create(input) as unknown as Retalho;
     }
     
     const now = new Date();
@@ -106,7 +111,7 @@ export class RetalhosRepository {
    * Marca retalho como utilizado em um plano de corte
    */
   async usarRetalho(retalhoId: string, planoCorteId: string): Promise<void> {
-    if (typeof window !== 'undefined' && !db) {
+    if (typeof window !== 'undefined' && (!db || !db.update)) {
       await api.retalhos.update(retalhoId, { utilizado_em_id: planoCorteId }, 'usar');
       return;
     }
@@ -143,7 +148,6 @@ export class RetalhosRepository {
 
   /**
    * LISTAR ESTOQUE COMPLETO
-   * Retorna todos os retalhos (disponíveis, usados, descartados)
    */
   async listarEstoque(filtros?: FiltrosRetalho): Promise<Retalho[]> {
     const conditions = [];
@@ -170,23 +174,32 @@ export class RetalhosRepository {
 
   /**
    * OBTER ESTATÍSTICAS
-   * Retorna resumo do estoque por SKU
    */
-  async obterEstatisticas(): Promise<any[]> {
+  async obterEstatisticas(): Promise<Array<{
+    sku_chapa: string;
+    total_retalhos: number;
+    disponiveis: number;
+    utilizados: number;
+    descartados: number;
+    area_total_disponivel_mm2: number;
+    area_media_mm2: number;
+  }>> {
+    if (!db || !db.select) return [];
+
     const result = await db.select({
       sku_chapa: retalhosEstoque.sku_chapa,
-      total_retalhos: sql`count(*)`,
-      disponiveis: sql`sum(case when ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
-      utilizados: sql`sum(case when ${retalhosEstoque.disponivel} = false and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
-      descartados: sql`sum(case when ${retalhosEstoque.descartado} = true then 1 else 0 end)`,
-      area_total_disponivel_mm2: sql`sum(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`,
-      area_media_mm2: sql`avg(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`
+      total_retalhos: sql<number>`count(*)`,
+      disponiveis: sql<number>`sum(case when ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
+      utilizados: sql<number>`sum(case when ${retalhosEstoque.disponivel} = false and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
+      descartados: sql<number>`sum(case when ${retalhosEstoque.descartado} = true then 1 else 0 end)`,
+      area_total_disponivel_mm2: sql<number>`sum(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`,
+      area_media_mm2: sql<number>`avg(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`
     })
     .from(retalhosEstoque)
     .groupBy(retalhosEstoque.sku_chapa)
     .orderBy(retalhosEstoque.sku_chapa);
 
-    return result;
+    return result as any;
   }
 }
 

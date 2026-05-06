@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, Layers, Printer, X, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Layers, Printer, X, FileSpreadsheet, Loader2 } from 'lucide-react';
 import type { ResultadoPlano, Superficie } from '../../../../utils/planodeCorte';
 import { exportarMapaCorte } from '../../application/usecases/ExportarMapaCorte';
 import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas';
@@ -152,82 +152,87 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay hide-on-print" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1}>
-      <div className="modal-content animate-pop-in" style={{ width: '650px', background: 'var(--surface)' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <div className="glass-elevated w-full max-w-2xl overflow-hidden rounded-3xl border border-border/40 shadow-2xl animate-in zoom-in duration-300">
+        <div className="p-8 border-b border-border/40 flex items-center justify-between bg-card/40">
           <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--text)' }}>Central de Exportação</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Escolha o formato de saída para produção industrial</p>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">CENTRAL DE EXPORTAÇÃO</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Escolha o formato de saída para produção industrial</p>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+          >
+            <X size={28} />
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <div className="p-8 grid grid-cols-2 gap-6 bg-card/20">
           
           {/* Mapa de Corte */}
-          <div className="card hover-scale" onClick={handleExportMapaPDF} style={{ cursor: isExporting ? 'wait' : 'pointer', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.75rem', borderRadius: '8px', color: 'var(--primary)' }}>
-                <Download size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Mapa de Corte (PDF)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Escala 1:8 em formato A3 para montagem.</p>
-              </div>
+          <button 
+            onClick={handleExportMapaPDF} 
+            disabled={isExporting}
+            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-primary/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+          >
+            <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform border border-primary/20">
+              <Download size={28} />
             </div>
-          </div>
+            <h3 className="font-black text-foreground group-hover:text-primary transition-colors tracking-tight">MAPA DE CORTE (PDF)</h3>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Escala 1:8 em formato A3 para montagem.</p>
+          </button>
 
           {/* Etiquetas */}
-          <div className="card hover-scale" onClick={handleExportEtiquetas} style={{ cursor: isExporting ? 'wait' : 'pointer', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.75rem', borderRadius: '8px', color: '#3B82F6' }}>
-                <Printer size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Etiquetas (Térmica)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Etiquetas 100x50mm com QR Code industrial.</p>
-              </div>
+          <button 
+            onClick={handleExportEtiquetas} 
+            disabled={isExporting}
+            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-info/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+          >
+            <div className="w-14 h-14 bg-info/10 rounded-xl flex items-center justify-center text-info mb-4 group-hover:scale-110 transition-transform border border-info/20">
+              <Printer size={28} />
             </div>
-          </div>
+            <h3 className="font-black text-foreground group-hover:text-info transition-colors tracking-tight">ETIQUETAS (TÉRMICA)</h3>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Etiquetas 100x50mm com QR Code industrial.</p>
+          </button>
 
           {/* G-Code CNC */}
-          <div className="card hover-scale" onClick={handleExportGCode} style={{ cursor: isExporting ? 'wait' : 'pointer', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border)', opacity: activeSuperficie ? 1 : 0.5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '8px', color: '#10B981' }}>
-                <Layers size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Arquivo CNC (G-Code)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  {activeSuperficie ? `Chapa atual (${activeSuperficie.id})` : 'Selecione uma chapa no painel primeiro.'}
-                </p>
-              </div>
+          <button 
+            onClick={handleExportGCode} 
+            disabled={isExporting || !activeSuperficie}
+            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-success/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+          >
+            <div className="w-14 h-14 bg-success/10 rounded-xl flex items-center justify-center text-success mb-4 group-hover:scale-110 transition-transform border border-success/20">
+              <Layers size={28} />
             </div>
-          </div>
+            <h3 className="font-black text-foreground group-hover:text-success transition-colors tracking-tight">ARQUIVO CNC (G-CODE)</h3>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">
+              {activeSuperficie ? `CHAPA ATUAL (${activeSuperficie.id})` : 'SELECIONE UMA CHAPA NO PAINEL PRIMEIRO.'}
+            </p>
+          </button>
 
           {/* Lista de Produção (CSV) */}
-          <div className="card hover-scale" onClick={handleExportCSV} style={{ cursor: isExporting ? 'wait' : 'pointer', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: 'rgba(236, 72, 153, 0.1)', padding: '0.75rem', borderRadius: '8px', color: '#EC4899' }}>
-                <FileSpreadsheet size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Lista de Peças (CSV)</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Lista bruta para ERPs e sistemas externos.</p>
-              </div>
+          <button 
+            onClick={handleExportCSV} 
+            disabled={isExporting}
+            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-pink-500/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+          >
+            <div className="w-14 h-14 bg-pink-500/10 rounded-xl flex items-center justify-center text-pink-500 mb-4 group-hover:scale-110 transition-transform border border-pink-500/20">
+              <FileSpreadsheet size={28} />
             </div>
-          </div>
+            <h3 className="font-black text-foreground group-hover:text-pink-500 transition-colors tracking-tight">LISTA DE PEÇAS (CSV)</h3>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Lista bruta para ERPs e sistemas externos.</p>
+          </button>
 
         </div>
         
         {isExporting && (
-          <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-            Gerando arquivo industrial, aguarde...
+          <div className="p-6 bg-primary/5 border-t border-border/40 flex items-center justify-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-xs font-black text-primary uppercase tracking-widest">Gerando arquivo industrial, aguarde...</span>
           </div>
         )}
       </div>
     </div>
   );
 };
+

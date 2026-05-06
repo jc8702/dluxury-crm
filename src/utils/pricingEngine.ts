@@ -5,7 +5,7 @@
 
 // --- 1. MODELOS (TYPES / INTERFACES) ---
 
-import { PricingConfigSchema } from './pricingConfig.js';
+import type { PricingConfigSchema } from './pricingConfig.js';
 
 export interface SKUConsumo {
   skuId: string;

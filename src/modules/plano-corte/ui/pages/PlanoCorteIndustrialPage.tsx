@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import { HistoricoModal } from '../components/HistoricoModal';
+import { ExportacaoModal } from '../components/ExportacaoModal';
 import { api } from '@/lib/api';
 import { CanvasAvancado } from '../components/CanvasAvancado';
 import { ImportacaoModal } from '../components/ImportacaoModal';
@@ -19,25 +20,36 @@ import { retalhosRepository } from '../../infrastructure/repositories/RetalhosRe
 import { OtimizadorComRetalhos } from '../../domain/services/OtimizadorComRetalhos';
 import { InsumosService } from '../../application/services/InsumosService';
 import { EngineeringService } from '../../application/services/EngineeringService';
-import { ThermalPrinterService } from '../../infrastructure/services/ThermalPrinterService';
 import { ScrapScoringService } from '../../domain/services/ScrapScoringService';
 import type { Peca, ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
 
 // ────────────────────────────────────────────────────────────────────────────────
-// CONFIGURAÇÕES E ESTILOS
+// COMPONENTES AUXILIARES
 // ────────────────────────────────────────────────────────────────────────────────
 
-const ESPESSURAS_PADRAO = [6, 15, 18, 25];
-const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
+const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info', onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
 
-const STYLES = {
-  glass: "glass rounded-xl",
-  card: "card bg-surface border-border",
-  cardActive: "card border-primary shadow-primary",
-  input: "input",
-  buttonPrimary: "btn btn-primary",
-  buttonSecondary: "btn btn-outline",
-  buttonOutline: "btn btn-outline"
+  const config = {
+    success: { icon: CheckCircle, class: 'bg-success/10 border-success/20 text-success' },
+    error: { icon: X, class: 'bg-destructive/10 border-destructive/20 text-destructive' },
+    info: { icon: Clock, class: 'bg-info/10 border-info/20 text-info' }
+  };
+
+  const { icon: Icon, class: colorClass } = config[type];
+
+  return (
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border glass animate-in fade-in slide-in-from-bottom-4 duration-300 ${colorClass}`}>
+      <Icon size={18} />
+      <span className="text-sm font-medium">{message}</span>
+      <button onClick={onClose} className="ml-2 hover:opacity-70 transition-opacity">
+        <X size={14} />
+      </button>
+    </div>
+  );
 };
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -49,131 +61,153 @@ export default function PlanoCorteIndustrialPage() {
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [chapaPadrao, setChapaPadrao] = useState({ largura: 2750, altura: 1830, sku: 'MDF-PADRAO' });
   const [kerf, setKerf] = useState(3);
-  const [resultado, setResultado] = useState<any | null>(null);
+  const [resultado, setResultado] = useState<ResultadoOtimizacao | null>(null);
   const [activeLayoutIdx, setActiveLayoutIdx] = useState(0);
-  
+  const [usarRetalhos, setUsarRetalhos] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [planoNome, setPlanoNome] = useState('NOVO PLANO DE CORTE');
+  const [searchPeca, setSearchPeca] = useState('');
+  const [showHistorico, setShowHistorico] = useState(false);
+  const [executionMode, setExecutionMode] = useState(false);
+  const [pecasCortadas, setPecasCortadas] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => setToast({ message, type });
+
   const activeLayout = useMemo(() => {
     return resultado?.layouts?.[activeLayoutIdx] || null;
   }, [resultado, activeLayoutIdx]);
 
-  const [loading, setLoading] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [planoNome, setPlanoNome] = useState('NOVO PLANO DE CORTE');
-  const [searchPeca, setSearchPeca] = useState('');
-  
-  const [cncConfig, setCncConfig] = useState({
-    velocidadeCorte: 4500,
-    profundidadeTotal: -18.5,
-    profundidadePasso: 9.5,
-    velocidadeMergulho: 1200,
-    alturaSeguranca: 10,
-    spindleRPM: 18000,
-    leadInMm: 5
-  });
-  const [showCncSettings, setShowCncSettings] = useState(false);
-  const [showHistorico, setShowHistorico] = useState(false);
-  const [executionMode, setExecutionMode] = useState(false);
-  const [pecasCortadas, setPecasCortadas] = useState<Set<string>>(new Set());
-  const [termoBusca, setTermoBusca] = useState('');
-
   const otimizador = useMemo(() => new OtimizadorComRetalhos(retalhosRepository), []);
 
+  // --- LÓGICA ---
   const handleOtimizar = useCallback(async () => {
-    if (pecas.length === 0) {
-      alert('Adicione peças antes de otimizar.');
-      return;
-    }
+    if (pecas.length === 0) return showToast('Adicione peças antes de otimizar.', 'error');
     
     setLoading(true);
-    setResultado(null); // Resetar resultado anterior
-
     try {
-      console.log('Iniciando otimização robusta...');
-      
-      // Chamada ao otimizador que gerencia retalhos e chapas
-      const res = await otimizador.otimizar(
-        pecas, 
-        { 
-          largura_mm: chapaPadrao.largura, 
-          altura_mm: chapaPadrao.altura, 
-          sku: chapaPadrao.sku,
-          espessura_mm: 18 // Padrão
-        }, 
-        'plano-' + Date.now()
-      );
+      const pecasExpandidas: Peca[] = [];
+      pecas.forEach(p => {
+        const qty = (p as any).quantidade || 1;
+        for (let i = 0; i < qty; i++) {
+          pecasExpandidas.push({ ...p, id: `${p.id}-${i}`, nome: qty > 1 ? `${p.nome} (${i+1}/${qty})` : p.nome });
+        }
+      });
 
-      if (!res || res.layouts.length === 0) {
-        throw new Error('O otimizador não retornou nenhum layout. Verifique as dimensões das peças.');
-      }
+      const res = await otimizador.otimizar(
+        pecasExpandidas, 
+        { largura_mm: chapaPadrao.largura, altura_mm: chapaPadrao.altura, sku: chapaPadrao.sku, espessura_mm: 18 }, 
+        crypto.randomUUID(),
+        usarRetalhos
+      );
 
       setResultado(res);
       setActiveLayoutIdx(0);
-      
-      console.log('Otimização concluída com sucesso:', res);
-    } catch (err: any) {
-      console.error('Erro crítico na otimização:', err);
-      // Feedback mais amigável e detalhado
-      const errorMsg = err.message || 'Erro interno no processamento.';
-      alert(`⚠️ FALHA NA OTIMIZAÇÃO\n\nMotivo: ${errorMsg}\n\nVerifique se os materiais estão cadastrados e as dimensões das peças são válidas.`);
+      showToast('Otimização concluída com sucesso!', 'success');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      showToast(`FALHA NA OTIMIZAÇÃO: ${msg}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [pecas, chapaPadrao, otimizador]);
+  }, [pecas, chapaPadrao, otimizador, usarRetalhos]);
 
   const handleAddPecaManual = () => {
-    const novaPeca: Peca = { id: `peca-${Date.now()}`, nome: `PEÇA ${pecas.length + 1}`, largura: 500, altura: 400, rotacionavel: true };
+    const novaPeca: Peca = { 
+      id: `peca-${Date.now()}`, 
+      nome: `PEÇA ${pecas.length + 1}`, 
+      largura: 500, 
+      altura: 400, 
+      rotacionavel: true,
+      quantidade: 1,
+      sku_chapa: chapaPadrao.sku,
+      material: 'MDF-18MM'
+    };
     setPecas([...pecas, novaPeca]);
   };
 
   const handleRemovePeca = (id: string) => setPecas(pecas.filter(p => p.id !== id));
-  const handleUpdatePeca = (id: string, data: Partial<Peca>) => setPecas(pecas.map(p => p.id === id ? { ...p, ...data } : p));
-
+  
   const handleImportarPecas = (pecasImportadas: any[]) => {
-    const formatadas = pecasImportadas.map(p => ({
+    const formatadas: Peca[] = pecasImportadas.map(p => ({
       id: `imp-${Math.random().toString(36).substr(2, 9)}`,
       nome: p.nome || p.descricao || 'PEÇA IMPORTADA',
-      largura: p.largura_mm || p.largura || 0,
-      altura: p.altura_mm || p.altura || 0,
-      rotacionavel: p.rotacionavel ?? true
+      largura: Number(p.largura_mm || p.largura || 0),
+      altura: Number(p.altura_mm || p.altura || 0),
+      rotacionavel: p.rotacionavel ?? true,
+      quantidade: Number(p.quantidade || 1),
+      sku_chapa: p.sku_chapa || chapaPadrao.sku,
+      material: p.material || 'MDF-18MM'
     }));
     setPecas([...pecas, ...formatadas]);
     setShowImportModal(false);
-  };
-
-  const handleExportarPDF = () => resultado && exportarMapaCorte(resultado);
-  const handleExportarEtiquetas = () => {
-    if (!resultado) return;
-    const pecasTodas = resultado.layouts.flatMap(l => l.pecas_posicionadas);
-    exportarEtiquetas(pecasTodas, 'PLANO-001');
-  };
-
-  const handleExportarCNC = () => {
-    if (!resultado) return;
-    const layout = resultado.layouts[activeLayoutIdx];
-    const gcode = exportarCNC(layout, cncConfig);
-    salvarArquivoCNC(gcode, `cnc-chapa-${activeLayoutIdx + 1}.nc`);
   };
 
   const handleAprovarProducao = async () => {
     if (!resultado) return;
     setLoading(true);
     try {
-      await api.planoCorte.save({ nome: planoNome, materiais: [{ sku: chapaPadrao.sku, largura: chapaPadrao.largura, altura: chapaPadrao.altura }], resultado, kerf_mm: kerf });
-      const materiaisConsumidos = resultado.layouts.map(l => ({ sku: l.chapa_sku, tipo: l.tipo, id_retalho: l.retalho_id, area_mm2: l.largura_original_mm * l.altura_original_mm }));
-      const todasPecas = resultado.layouts.flatMap(l => l.pecas_posicionadas);
-      const ferragens = EngineeringService.calcularFerragens(todasPecas);
-      await api.planoCorte.aprovarProducao(materiaisConsumidos);
-      try {
-        await InsumosService.baixarFerragens(ferragens);
-        await InsumosService.verificarENotificarFalta(materiaisConsumidos);
-      } catch (e) { console.error(e); }
-      alert('PRODUÇÃO APROVADA COM SUCESSO!');
-    } catch (err: any) {
-      alert('ERRO AO APROVAR: ' + err.message);
+      const materiaisConsumidos = resultado.layouts.map((l: any) => ({ 
+        sku: l.chapa_sku, 
+        tipo: l.tipo, 
+        qtd: 1,
+        id_retalho: l.retalho_id,
+        plano_id: l.plano_id || crypto.randomUUID(),
+        chapa_id: l.chapa_id // Se disponível
+      }));
+
+      // Coletar sobras (retalhos que serão gerados no estoque)
+      const retalhosGerados: any[] = [];
+      resultado.layouts.forEach((l: any) => {
+        if (l.espacos_livres) {
+          l.espacos_livres.forEach((s: any) => {
+            // Regra industrial: Sobras >= 300x300mm são consideradas retalhos reutilizáveis
+            if (s.largura >= 300 && s.altura >= 300) {
+              retalhosGerados.push({
+                largura_mm: s.largura,
+                altura_mm: s.altura,
+                espessura_mm: 18, // Espessura padrão ou vinda da chapa
+                sku_chapa: l.chapa_sku,
+                plano_corte_id: l.plano_id || crypto.randomUUID()
+              });
+            }
+          });
+        }
+      });
+
+      await api.planoCorte.aprovarProducao(materiaisConsumidos, retalhosGerados);
+      showToast('PRODUÇÃO APROVADA E ESTOQUE SINCRONIZADO!', 'success');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      showToast('ERRO: ' + msg, 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  const pecasFiltradas = useMemo(() => {
+    const s = (searchPeca || '').trim().toLowerCase();
+    if (!s) return pecas;
+    return pecas.filter(p => {
+      const nome = (p.nome || '').toLowerCase();
+      const sku = ((p as any).sku_chapa || '').toLowerCase();
+      const mat = (p.material || '').toLowerCase();
+      const id = (p.id || '').toLowerCase();
+      return nome.includes(s) || sku.includes(s) || mat.includes(s) || id.includes(s);
+    });
+  }, [pecas, searchPeca]);
+
+  const pecasAgrupadas = useMemo(() => {
+    const grupos: Record<string, typeof pecas> = {};
+    pecasFiltradas.forEach(p => {
+      const key = (p as any).sku_chapa || (p as any).material || 'GERAL';
+      if (!grupos[key]) grupos[key] = [];
+      grupos[key].push(p);
+    });
+    return grupos;
+  }, [pecasFiltradas]);
 
   const togglePecaCortada = (pecaId: string) => {
     const newSet = new Set(pecasCortadas);
@@ -182,10 +216,19 @@ export default function PlanoCorteIndustrialPage() {
     setPecasCortadas(newSet);
   };
 
+  const handleLayoutChange = (novoLayout: any) => {
+    if (!resultado) return;
+    const novosLayouts = [...resultado.layouts];
+    novosLayouts[activeLayoutIdx] = novoLayout;
+    setResultado({ ...resultado, layouts: novosLayouts });
+  };
+
   const recomendacaoRetalho = useMemo(() => {
     if (!resultado || !resultado.layouts[activeLayoutIdx]) return null;
     const layout = resultado.layouts[activeLayoutIdx];
-    return ScrapScoringService.avaliar(layout.largura_original_mm, layout.altura_original_mm * (1 - (layout.area_aproveitada_mm2 / (layout.largura_original_mm * layout.altura_original_mm))));
+    const areaTotal = layout.largura_original_mm * layout.altura_original_mm;
+    const sobraMm2 = areaTotal - layout.area_aproveitada_mm2;
+    return ScrapScoringService.avaliar(layout.largura_original_mm, layout.altura_original_mm, sobraMm2);
   }, [resultado, activeLayoutIdx]);
 
   const handleLoadPlanFromHistory = (plan: any) => {
@@ -194,372 +237,330 @@ export default function PlanoCorteIndustrialPage() {
     setShowHistorico(false);
   };
 
+  // --- RENDER ---
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30">
       
-      {/* HEADER */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ padding: '0.75rem', background: 'var(--primary)', borderRadius: '12px' }}>
-            <Scissors size={24} style={{ color: 'var(--primary-text)' }} />
+      {/* HEADER INDUSTRIAL */}
+      <header className="h-16 px-6 flex items-center justify-between border-b border-border/40 bg-card/80 backdrop-blur-md z-30">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-primary/10">
+            <Scissors size={20} className="text-primary" />
           </div>
           <div>
-            <input 
-              className="input-base"
-              style={{ fontSize: '1.5rem', fontWeight: '800', width: '400px', background: 'transparent', border: 'none', borderBottom: '2px solid var(--border)' }}
-              value={planoNome}
-              onChange={e => setPlanoNome(e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>📦 {pecas.length} PEÇAS</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>📑 {resultado?.layouts.length || 0} CHAPAS</span>
-            </div>
+            <h1 className="text-xs font-black tracking-[0.2em] text-primary uppercase">Industrial Cutting</h1>
+            <p className="text-[10px] text-muted-foreground font-bold tracking-wider">{planoNome}</p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="flex items-center gap-2">
           <button 
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold bg-white/5 hover:bg-white/10 border border-border/40 transition-all uppercase tracking-widest active:scale-95"
+            onClick={() => setShowImportModal(true)}
+          >
+            <FileUp size={14} className="text-info" />
+            Importar
+          </button>
+          
+          <button 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold border transition-all uppercase tracking-widest active:scale-95 ${
+              executionMode 
+                ? 'bg-success/20 border-success/30 text-success' 
+                : 'bg-white/5 border-border/40 hover:bg-white/10'
+            }`}
             onClick={() => setExecutionMode(!executionMode)}
-            className={`btn ${executionMode ? 'btn-primary' : 'btn-outline'}`}
-            style={{ 
-              background: executionMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-              color: executionMode ? 'var(--primary-text)' : 'var(--text)',
-              borderColor: 'var(--primary)',
-              fontWeight: '700',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
           >
-            <CheckCircle size={16} /> {executionMode ? 'EXECUÇÃO ATIVA' : 'MODO EXECUÇÃO'}
+            <Cpu size={14} className={executionMode ? 'animate-pulse' : ''} />
+            {executionMode ? 'Modo Execução' : 'Modo Projeto'}
           </button>
+
+          <div className="h-6 w-px bg-border/40 mx-2" />
+
           <button 
-            onClick={() => setShowImportModal(true)} 
-            className="btn btn-outline"
-            style={{ 
-              background: 'rgba(255,255,255,0.05)',
-              borderColor: 'var(--border-strong)',
-              fontWeight: '700',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
+            className="group relative flex items-center gap-3 px-6 py-2 rounded-lg text-[10px] font-black bg-primary hover:bg-primary-hover text-primary-foreground transition-all uppercase tracking-[0.15em] shadow-primary hover:shadow-glow active:scale-95 disabled:opacity-30 disabled:grayscale disabled:pointer-events-none"
+            onClick={handleOtimizar}
+            disabled={loading || pecas.length === 0}
           >
-            <FileUp size={16} /> IMPORTAR
+            {loading ? (
+              <RefreshCcw size={14} className="animate-spin" />
+            ) : (
+              <Settings2 size={14} />
+            )}
+            {loading ? 'Calculando...' : 'Otimizar Agora'}
           </button>
+
           <button 
-            onClick={handleOtimizar} 
-            disabled={loading || pecas.length === 0} 
-            className="btn btn-primary"
-            style={{ 
-              minWidth: '180px',
-              fontWeight: '800',
-              padding: '0.6rem 1.5rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 4px 12px rgba(226, 172, 0, 0.2)'
-            }}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-border/40 transition-all"
+            onClick={() => setShowHistorico(true)}
+            title="Histórico"
           >
-            {loading ? <RefreshCcw className="animate-spin" size={16} /> : <Cpu size={16} />}
-            {loading ? 'OTIMIZANDO...' : 'OTIMIZAR AGORA'}
-          </button>
-          <button 
-            onClick={() => setShowHistorico(true)} 
-            className="btn btn-outline"
-            style={{ 
-              background: 'rgba(255,255,255,0.05)',
-              borderColor: 'var(--border-strong)',
-              fontWeight: '700',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <Clock size={16} /> HISTÓRICO
+            <Clock size={18} className="text-muted-foreground" />
           </button>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem', height: 'calc(100vh - 250px)' }}>
+      {/* GRID PRINCIPAL 3 COLUNAS */}
+      <main className="flex-1 grid grid-cols-[320px_1fr_320px] overflow-hidden">
         
-        {/* SIDEBAR LISTA DE PEÇAS */}
-        <aside className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: '700' }}>LISTA DE PEÇAS</h4>
-            <button 
-              onClick={handleAddPecaManual} 
-              className="btn btn-outline" 
-              style={{ 
-                padding: '0.4rem', 
-                background: 'rgba(255,255,255,0.05)', 
-                borderColor: 'var(--primary)',
-                color: 'var(--primary)',
-                borderRadius: '6px'
-              }}
-              title="Adicionar Peça Manualmente"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-          
-          <input 
-            className="input" 
-            placeholder="🔍 BUSCAR POR NOME OU SKU..." 
-            value={searchPeca}
-            onChange={e => setSearchPeca(e.target.value)}
-            style={{ fontSize: '0.75rem' }}
-          />
-
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {pecas.filter(p => {
-              const termo = searchPeca.toUpperCase();
-              return p.nome.toUpperCase().includes(termo) || 
-                     (p.sku_chapa && p.sku_chapa.toUpperCase().includes(termo));
-            }).map((p) => (
-              <div key={p.id} className={`card ${executionMode ? 'opacity-80' : ''}`} style={{ padding: '1rem', background: 'var(--surface-hover)', border: executionMode ? '1px dashed var(--border)' : '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <input 
-                    value={p.nome}
-                    disabled={executionMode}
-                    onChange={e => handleUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
-                    className="input-base"
-                    style={{ background: 'transparent', border: 'none', padding: 0, fontWeight: '700', fontSize: '0.8rem', cursor: executionMode ? 'not-allowed' : 'text' }}
-                  />
-                  {!executionMode && (
-                    <button onClick={() => handleRemovePeca(p.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LARGURA (MM)</label>
-                    <input 
-                      type="number" 
-                      disabled={executionMode}
-                      value={p.largura} 
-                      onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })} 
-                      className="input" 
-                      style={{ padding: '0.3rem', cursor: executionMode ? 'not-allowed' : 'text' }} 
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>ALTURA (MM)</label>
-                    <input 
-                      type="number" 
-                      disabled={executionMode}
-                      value={p.altura} 
-                      onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })} 
-                      className="input" 
-                      style={{ padding: '0.3rem', cursor: executionMode ? 'not-allowed' : 'text' }} 
-                    />
-                  </div>
-                </div>
-                {executionMode && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.6rem', color: 'var(--primary)', fontWeight: '700' }}>
-                    🔒 BLOQUEADO PARA EXECUÇÃO
-                  </div>
-                )}
-              </div>
-            ))}
-            {pecas.length === 0 && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3, textAlign: 'center' }}>
-                <Box size={48} />
-                <p style={{ fontSize: '0.8rem', marginTop: '1rem' }}>NENHUMA PEÇA<br/>ADICIONADA</p>
-              </div>
-            )}
-          </div>
-
-          <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: '700' }}>KERF (SERRA)</span>
-              <input type="number" value={kerf} onChange={e => setKerf(Number(e.target.value))} className="input" style={{ width: '60px', padding: '0.2rem 0.5rem' }} />
+        {/* COLUNA 1: PEÇAS (LISTAGEM) */}
+        <aside className="bg-card/40 border-r border-border/40 flex flex-col overflow-hidden backdrop-blur-sm">
+          <div className="p-5 border-b border-border/40 flex flex-col gap-4 bg-white/[0.01]">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Painéis & Medidas</span>
+              <button 
+                onClick={handleAddPecaManual} 
+                className="w-6 h-6 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center transition-all"
+              >
+                <Plus size={14} />
+              </button>
             </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Largura</label>
+                <input 
+                  type="number" 
+                  value={chapaPadrao.largura} 
+                  onChange={e => setChapaPadrao({...chapaPadrao, largura: Number(e.target.value)})} 
+                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono" 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Altura</label>
+                <input 
+                  type="number" 
+                  value={chapaPadrao.altura} 
+                  onChange={e => setChapaPadrao({...chapaPadrao, altura: Number(e.target.value)})} 
+                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono" 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Kerf</label>
+                <input 
+                  type="number" 
+                  value={kerf} 
+                  onChange={e => setKerf(Number(e.target.value))} 
+                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono text-primary" 
+                />
+              </div>
+            </div>
+
+            <div className="relative group">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input 
+                value={searchPeca} 
+                onChange={e => setSearchPeca(e.target.value)} 
+                placeholder="Buscar por nome ou SKU..." 
+                className="w-full h-9 pl-10 pr-4 bg-black/40 border border-border/40 rounded-lg text-[11px] focus:border-primary/50 focus:bg-black/60 outline-none transition-all" 
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            {pecasFiltradas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 opacity-20 gap-3 text-muted-foreground">
+                <Layers size={40} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-center px-8">Nenhuma peça no inventário</span>
+              </div>
+            ) : (
+              Object.entries(pecasAgrupadas).map(([grupo, gpecas]) => (
+                <div key={grupo} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="w-1 h-1 rounded-full bg-primary" />
+                    <span className="text-[10px] font-black text-primary/80 uppercase tracking-[0.1em]">{grupo}</span>
+                    <div className="flex-1 h-px bg-primary/10" />
+                    <span className="text-[9px] font-bold text-muted-foreground">{gpecas.length}</span>
+                  </div>
+                  <div className="grid gap-2">
+                    {gpecas.map(p => (
+                      <div key={p.id} className="group relative glass p-3 rounded-xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[11px] font-bold text-foreground group-hover:text-white transition-colors truncate pr-6">{p.nome}</span>
+                          <button 
+                            onClick={() => handleRemovePeca(p.id)}
+                            className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] font-mono">
+                          <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
+                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Larg</span>
+                            <span className="text-primary/80">{p.largura}</span>
+                          </div>
+                          <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
+                            <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Alt</span>
+                            <span className="text-primary/80">{p.altura}</span>
+                          </div>
+                          <div className="bg-primary/5 p-1 rounded border border-primary/10 text-center">
+                            <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans">Qtd</span>
+                            <span className="text-primary font-bold">{(p as any).quantidade || 1}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </aside>
 
-        {/* ÁREA DO CANVAS / VISUALIZAÇÃO */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          
-          {/* TABS DE CHAPAS */}
+        {/* COLUNA 2: CANVAS (VISUALIZAÇÃO) */}
+        <section className="relative flex flex-col bg-background overflow-hidden">
           {resultado && (
-            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-              {resultado.layouts.map((l, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveLayoutIdx(idx)}
-                  className={`chapa-tab ${activeLayoutIdx === idx ? 'active' : ''}`}
-                  style={{
-                    background: activeLayoutIdx === idx ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                    color: activeLayoutIdx === idx ? 'var(--primary-text)' : 'var(--text)',
-                    border: '1px solid',
-                    borderColor: activeLayoutIdx === idx ? 'var(--primary)' : 'var(--border)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    fontWeight: '700',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap'
-                  }}
+            <div className="h-12 bg-card/60 border-b border-border/40 flex gap-2 px-4 items-center overflow-x-auto custom-scrollbar no-scrollbar">
+              {resultado.layouts.map((l: any, idx: number) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setActiveLayoutIdx(idx)} 
+                  className={`flex items-center gap-2 h-7 px-3 rounded-full text-[10px] font-bold transition-all border whitespace-nowrap ${
+                    activeLayoutIdx === idx 
+                      ? 'bg-primary border-primary-hover text-primary-foreground shadow-primary' 
+                      : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                  }`}
                 >
-                  CHAPA {idx + 1} <span style={{ opacity: 0.7, fontSize: '0.65rem' }}>[{l.tipo.toUpperCase()}]</span>
+                  <Layers size={12} />
+                  CHAPA {idx + 1}
+                  <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${activeLayoutIdx === idx ? 'bg-black/20 text-primary-foreground/60' : 'bg-black/40 text-muted-foreground'}`}>
+                    {l.tipo}
+                  </span>
                 </button>
               ))}
             </div>
           )}
-
-          <div className="card glass" style={{ flex: 1, position: 'relative', overflow: 'hidden', padding: 0 }}>
-            {activeLayout ? (
-              <CanvasAvancado 
-                layout={activeLayout}
-                chapaDimensoes={{ largura: activeLayout.largura_original_mm, altura: activeLayout.altura_original_mm }}
-                executionMode={executionMode}
-                pecasCortadasIds={pecasCortadas}
-                onPecaClick={(p) => executionMode && togglePecaCortada(p.id)}
-                recomendacaoRetalho={recomendacaoRetalho || undefined}
-              />
-            ) : (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
-                <Layout size={64} style={{ marginBottom: '1.5rem' }} />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>AGUARDANDO OTIMIZAÇÃO</h3>
-                <p style={{ fontSize: '0.9rem' }}>ADICIONE AS PEÇAS E CLIQUE EM OTIMIZAR AGORA.</p>
+          
+          <div className="flex-1 relative bg-[radial-gradient(hsl(var(--muted-foreground)/0.15)_1px,transparent_1px)] [background-size:20px_20px] [background-position:center]">
+            <div className="absolute inset-0 flex items-center justify-center p-8">
+              <div className="w-full h-full glass rounded-2xl border border-border/40 overflow-hidden shadow-2xl flex items-center justify-center bg-background/40">
+                <CanvasAvancado 
+                  layout={activeLayout}
+                  chapaDimensoes={{ largura: chapaPadrao.largura, altura: chapaPadrao.altura }}
+                  executionMode={executionMode}
+                  pecasCortadasIds={pecasCortadas}
+                  onPecaClick={(p) => executionMode && togglePecaCortada(p.id)}
+                  recomendacaoRetalho={recomendacaoRetalho || undefined}
+                  onLayoutChange={handleLayoutChange}
+                />
               </div>
-            )}
+            </div>
 
-            {/* OVERLAY DE STATS */}
-            {activeLayout && (
-              <div style={{ position: 'absolute', bottom: '1.5rem', left: '1.5rem', padding: '1.5rem', background: 'rgba(10,13,20,0.9)', borderRadius: '14px', border: '1px solid var(--border)', minWidth: '220px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>EFICIÊNCIA</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--primary)' }}>
-                    {((activeLayout.area_aproveitada_mm2 / (activeLayout.largura_original_mm * activeLayout.altura_original_mm)) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', background: 'var(--primary)', width: `${(activeLayout.area_aproveitada_mm2 / (activeLayout.largura_original_mm * activeLayout.altura_original_mm)) * 100}%`, borderRadius: '2px' }} />
-                </div>
-              </div>
-            )}
+            {/* FLOATING TOOLS */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl bg-card/90 backdrop-blur-xl border border-border/40 shadow-2xl z-20">
+              <button className="p-2.5 rounded-xl hover:bg-white/10 text-muted-foreground hover:text-primary transition-all"><ZoomIn size={18} /></button>
+              <button className="p-2.5 rounded-xl hover:bg-white/10 text-muted-foreground hover:text-primary transition-all"><ZoomOut size={18} /></button>
+              <div className="h-6 w-px bg-border/40 mx-1" />
+              <button className="p-2.5 rounded-xl hover:bg-white/10 text-muted-foreground hover:text-primary transition-all"><Maximize2 size={18} /></button>
+              <button 
+                className="p-2.5 rounded-xl hover:bg-white/10 text-muted-foreground hover:text-primary transition-all" 
+                title="Exportar Produção"
+                onClick={() => setShowExportModal(true)}
+              >
+                <Download size={18} />
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* SIDEBAR DIREITA: RESUMO */}
-        {resultado && (
-          <aside className="card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: '800' }}>RESUMO DO PLANO</h4>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ padding: '1rem', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '0.6rem', color: 'var(--success)' }}>ECONOMIA EST.</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>R$ {(resultado.economia_retalhos_mm2 / 1000000 * 120).toFixed(2)}</div>
-              </div>
-
-              <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>CHAPAS NOVAS</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: '800' }}>{resultado.chapas_novas_utilizadas} UNIDADES</div>
-              </div>
-            </div>
-
-            <div style={{ flex: 1 }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button 
-                onClick={handleExportarPDF} 
-                className="btn btn-outline" 
-                style={{ 
-                  width: '100%', 
-                  justifyContent: 'flex-start', 
-                  gap: '10px', 
-                  padding: '0.75rem 1rem', 
-                  background: 'rgba(255,255,255,0.05)',
-                  borderColor: 'var(--border-strong)',
-                  fontWeight: '600'
-                }}
-              >
-                <FileText size={16} /> MAPA DE CORTE (PDF)
-              </button>
-              <button 
-                onClick={handleExportarEtiquetas} 
-                className="btn btn-outline" 
-                style={{ 
-                  width: '100%', 
-                  justifyContent: 'flex-start', 
-                  gap: '10px', 
-                  padding: '0.75rem 1rem', 
-                  background: 'rgba(255,255,255,0.05)',
-                  borderColor: 'var(--border-strong)',
-                  fontWeight: '600'
-                }}
-              >
-                <Printer size={16} /> ETIQUETAS
-              </button>
-              <button 
-                onClick={handleExportarCNC} 
-                className="btn btn-outline" 
-                style={{ 
-                  width: '100%', 
-                  justifyContent: 'flex-start', 
-                  gap: '10px', 
-                  padding: '0.75rem 1rem', 
-                  background: 'rgba(255,255,255,0.05)',
-                  borderColor: 'var(--border-strong)',
-                  fontWeight: '600'
-                }}
-              >
-                <Cpu size={16} /> ARQUIVO CNC (.NC)
-              </button>
-            </div>
-
-            <button 
-              onClick={handleAprovarProducao}
-              disabled={loading}
-              className="btn btn-primary"
-              style={{ 
-                width: '100%', 
-                padding: '1.25rem', 
-                fontSize: '1rem',
-                fontWeight: '900',
-                letterSpacing: '0.05em',
-                boxShadow: '0 8px 24px rgba(226, 172, 0, 0.3)',
-                textTransform: 'uppercase',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px'
-              }}
-            >
-              {loading ? <RefreshCcw className="animate-spin" /> : <CheckCircle size={20} />}
-              {loading ? 'PROCESSANDO...' : 'APROVAR PRODUÇÃO'}
-            </button>
-          </aside>
-        )}
-      </div>
-
-      {showImportModal && (
-        <ImportacaoModal onImportar={handleImportarPecas} onFechar={() => setShowImportModal(false)} />
-      )}
-
-      {showCncSettings && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '400px' }}>
-             {/* ... conteúdo CNC ... */}
-             <button onClick={() => setShowCncSettings(false)} className="btn btn-primary w-full">FECHAR</button>
+        {/* COLUNA 3: RESUMO & AÇÕES */}
+        <aside className="bg-card/40 border-l border-border/40 flex flex-col p-6 gap-8 overflow-y-auto backdrop-blur-sm">
+          <div className="space-y-1">
+            <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Resumo Analítico</h4>
+            <div className="h-1 w-10 bg-primary rounded-full" />
           </div>
-        </div>
-      )}
+          
+          {recomendacaoRetalho && (
+            <div className={`relative overflow-hidden group p-5 rounded-2xl border transition-all ${
+              recomendacaoRetalho.recomendacao === 'GUARDAR' 
+                ? 'bg-success/5 border-success/20 shadow-lg shadow-success/5' 
+                : 'bg-destructive/5 border-destructive/20 shadow-lg shadow-destructive/5'
+            }`}>
+              <div className="absolute -top-6 -right-6 opacity-[0.05] group-hover:scale-110 transition-transform duration-700">
+                {recomendacaoRetalho.recomendacao === 'GUARDAR' ? <Save size={80} /> : <Trash2 size={80} />}
+              </div>
+              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
+                <Box size={12} className="text-primary" />
+                Veredito de Reuso
+              </div>
+              <div className={`text-2xl font-black mb-2 tracking-tight ${
+                recomendacaoRetalho.recomendacao === 'GUARDAR' ? 'text-success' : 'text-destructive'
+              }`}>
+                {recomendacaoRetalho.recomendacao}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed italic border-l-2 border-border/40 pl-3">
+                "{recomendacaoRetalho.justificativa}"
+              </p>
+            </div>
+          )}
 
-      {showHistorico && (
-        <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlanFromHistory} />
+          <div className="space-y-3">
+            <div className="group p-4 rounded-xl border border-border/40 bg-white/[0.01] hover:bg-white/[0.03] transition-all">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Chapas</span>
+                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded">Utilização</span>
+              </div>
+              <div className="text-2xl font-black text-foreground">
+                {resultado?.layouts.length || 0} <span className="text-xs font-bold text-muted-foreground ml-1">UNIDADES</span>
+              </div>
+            </div>
+
+            <div className="group p-4 rounded-xl border border-border/40 bg-success/5 hover:bg-success/10 transition-all">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Eficiência</span>
+                <span className="text-[10px] font-black text-success bg-success/10 px-2 py-0.5 rounded">Economia</span>
+              </div>
+              <div className="text-2xl font-black text-success">
+                {resultado ? Math.round(resultado.aproveitamento_medio || 0) : 0}% 
+                <span className="text-[10px] font-bold text-muted-foreground ml-2 uppercase font-sans">Aproveitamento</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1" />
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button 
+                className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-border/40 text-[10px] font-black uppercase tracking-widest transition-all"
+                onClick={() => setShowExportModal(true)}
+              >
+                <Printer size={16} />
+                Mapa
+              </button>
+              <button 
+                className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-border/40 text-[10px] font-black uppercase tracking-widest transition-all"
+                onClick={() => setShowExportModal(true)}
+              >
+                <FileText size={16} />
+                Etiquetas
+              </button>
+            </div>
+            
+            <button 
+              className="w-full h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-hover hover:brightness-110 text-primary-foreground font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale disabled:pointer-events-none flex items-center justify-center gap-3"
+              onClick={handleAprovarProducao} 
+              disabled={!resultado || loading}
+            >
+              {loading ? <RefreshCcw size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+              {loading ? 'Processando...' : 'Aprovar Produção'}
+            </button>
+          </div>
+        </aside>
+      </main>
+
+      {/* MODALS & TOASTS */}
+      {showImportModal && <ImportacaoModal onImportar={handleImportarPecas} onFechar={() => setShowImportModal(false)} />}
+      {showExportModal && resultado && (
+        <ExportacaoModal 
+          resultado={resultado} 
+          planoNome={planoNome} 
+          activeSuperficie={activeLayout} 
+          activeChapaIdx={activeLayoutIdx}
+          onClose={() => setShowExportModal(false)} 
+        />
       )}
+      {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlanFromHistory} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Peca } from '../../plano-corte/domain/services/MaxRectsOptimizer';
+import type { Peca } from '../../plano-corte/domain/services/MaxRectsOptimizer.js';
 
 /**
  * INTERFACE: Entrada para cálculo de custos
@@ -149,15 +149,15 @@ export class CustosService {
         detalhes
       };
 
-      this.logger.info(
+      (this.logger as any).info(
         `[CUSTOS] Projeto: R$ ${custoTotal.toFixed(2)} custo → ` +
         `R$ ${preco_venda.toFixed(2)} venda (${markup.toFixed(2)}x)`
       );
 
       return resultado;
 
-    } catch (erro) {
-      this.logger.error('[CUSTOS] Erro ao calcular custos:', erro);
+    } catch (erro: any) {
+      (this.logger as any).error('[CUSTOS] Erro ao calcular custos:', erro);
       throw erro;
     }
   }

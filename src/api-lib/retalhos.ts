@@ -56,7 +56,7 @@ export async function handleRetalhos(req: any, res: any) {
               created_at, updated_at, metadata
             ) VALUES (
               ${largura_mm}, ${altura_mm}, ${espessura_mm}, ${sku_chapa}, ${origem}, 
-              ${plano_corte_origem_id}, ${projeto_origem || null}, ${observacoes || null}, 
+              ${plano_corte_origem_id || null}, ${projeto_origem || null}, ${observacoes || null}, 
               ${localizacao || 'Geral'}, ${disponivel ?? true}, ${descartado ?? false}, ${usuario_criou}, 
               ${now}, ${now}, ${JSON.stringify(metadata || {})}
             ) RETURNING *

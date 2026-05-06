@@ -1,5 +1,5 @@
 import { db } from './drizzle-db.js';
-import { planosDeCorte, erpChapas, erpSkusEngenharia } from '../db/schema/planos-de-corte.js';
+import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
 import { eq, ilike, or, isNull, and } from 'drizzle-orm';
 import { auditLog, sql, validateAuth } from './_db.js';
 
@@ -45,17 +45,80 @@ export async function handlePlanoCorte(req: any, res: any) {
           
           return res.status(201).json({ success: true, data: novo });
         } else if (action === 'aprovar_producao') {
-          // Decrementar Estoque
-          const { materiais_consumidos } = req.body; // Array de { sku, qtd }
+          const { user } = validateAuth(req);
+          const { materiais_consumidos, retalhos_gerados } = req.body;
           
+          // 1. Processar Materiais Consumidos
           for (const item of materiais_consumidos) {
-            // Logica: update erp_chapas set estoque = estoque - qtd where sku = sku
-            // Como nossa tabela erpChapas é simples, supomos que 'preco_unitario' ou outro campo guarde o estoque se fosse real
-            // Por enquanto, faremos o log e um update dummy se o campo existir
-            console.log(`[CONSUMO INDUSTRIAL] SKU: ${item.sku} | QTD: ${item.qtd}`);
+            if (item.id_retalho) {
+              // Uso de Retalho Existente
+              await db.update(retalhosEstoque)
+                .set({ 
+                  disponivel: false, 
+                  utilizado_em_id: item.plano_id, 
+                  data_utilizacao: new Date(),
+                  updated_at: new Date()
+                })
+                .where(eq(retalhosEstoque.id, item.id_retalho));
+
+              await db.insert(movimentacoesEstoque).values({
+                tipo: 'uso_plano',
+                item_tipo: 'retalho',
+                retalho_id: item.id_retalho,
+                plano_corte_id: item.plano_id,
+                quantidade: 1,
+                motivo: 'Consumo em produção',
+                usuario_id: user?.id
+              });
+            } else {
+              // Uso de Chapa Inteira
+              await db.execute(sql`
+                UPDATE erp_chapas 
+                SET estoque = COALESCE(estoque, 0) - ${item.qtd || 1} 
+                WHERE sku = ${item.sku}
+              `);
+
+              await db.insert(movimentacoesEstoque).values({
+                tipo: 'uso_plano',
+                item_tipo: 'chapa',
+                chapa_id: item.chapa_id, // Idealmente passar o ID
+                plano_corte_id: item.plano_id,
+                quantidade: item.qtd || 1,
+                motivo: `Consumo SKU: ${item.sku}`,
+                usuario_id: user?.id
+              });
+            }
           }
 
-          return res.status(200).json({ success: true, message: 'Produção aprovada e estoque reservado.' });
+          // 2. Gerar Novos Retalhos (Sobras Reutilizáveis)
+          if (retalhos_gerados && Array.isArray(retalhos_gerados)) {
+            for (const r of retalhos_gerados) {
+              const [novoRetalho] = await db.insert(retalhosEstoque).values({
+                largura_mm: r.largura_mm,
+                altura_mm: r.altura_mm,
+                espessura_mm: r.espessura_mm,
+                sku_chapa: r.sku_chapa,
+                origem: 'sobra_plano_corte',
+                plano_corte_origem_id: r.plano_corte_id,
+                usuario_criou: user?.id || 'sistema',
+                disponivel: true,
+                descartado: false,
+                metadata: { automatico: true }
+              }).returning();
+
+              await db.insert(movimentacoesEstoque).values({
+                tipo: 'entrada',
+                item_tipo: 'retalho',
+                retalho_id: novoRetalho.id,
+                plano_corte_id: r.plano_corte_id,
+                quantidade: 1,
+                motivo: 'Geração automática de sobra',
+                usuario_id: user?.id
+              });
+            }
+          }
+
+          return res.status(200).json({ success: true, message: 'Produção aprovada, estoque baixado e sobras registradas.' });
         } else {
           const { user } = validateAuth(req);
           const { plano_id, materiais, resultado, KPIs } = req.body;
@@ -76,7 +139,6 @@ export async function handlePlanoCorte(req: any, res: any) {
         }
 
       case 'PUT':
-        // Atualização genérica
         const [upd] = await db.update(planosDeCorte)
           .set({ ...req.body, updated_at: new Date() })
           .where(eq(planosDeCorte.id, id))

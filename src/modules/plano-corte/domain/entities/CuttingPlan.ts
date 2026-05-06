@@ -12,6 +12,13 @@ export interface PecaPosicionada extends Peca {
   };
 }
 
+export interface RetalhoEspaco {
+  largura: number;
+  altura: number;
+  x: number;
+  y: number;
+}
+
 export interface LayoutChapa {
   tipo: 'retalho' | 'chapa_inteira';
   chapa_sku: string;
@@ -22,6 +29,7 @@ export interface LayoutChapa {
   pecas_posicionadas: PecaPosicionada[];
   area_aproveitada_mm2: number;
   area_desperdicada_mm2: number;
+  espacos_livres?: RetalhoEspaco[];
 }
 
 export interface ResultadoOtimizacao {

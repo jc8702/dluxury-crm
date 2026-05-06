@@ -5,7 +5,7 @@
  * Gera comandos ZPL/TSPL para impressão instantânea sem PDF.
  */
 
-import { PecaPosicionada } from '../../domain/types';
+import type { PecaPosicionada } from '../../domain/types';
 
 export class ThermalPrinterService {
   /**
