@@ -1,7 +1,8 @@
 import { jsPDF } from 'jspdf';
+import { Superficie, PecaPositionada } from '../../../utils/planodeCorte';
 
 export class ExportadorPDF {
-  static async exportarPlano(superficies: any[], nomePlano: string) {
+  static async exportarPlano(superficies: Superficie[], nomePlano: string) {
     // A4 landscape: 297 x 210 mm
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 

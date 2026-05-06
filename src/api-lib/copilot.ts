@@ -2,7 +2,7 @@ import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject, tool } from 'ai';
 import { z } from 'zod';
-import { gerarProjetoCompleto, gerarOP } from '../utils/industrialCopilot.js';
+import { gerarProjetoCompleto, gerarOrdemProducao } from '../utils/industrialCopilot.js';
 
 const aiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATION_AI_API_KEY;
 const google = createGoogleGenerativeAI({ 
@@ -373,10 +373,10 @@ async function handleConfirmAction(history: any[]) {
   const isSKU = content.includes("Sugestão de Cadastro") || content.includes("material");
 
   if (isSKU) {
-    const lines = lastAiMessage.content.split('\n');
-    const descricao = lines.find(l => l.includes("Descrição:"))?.split('** ')[1] || '';
-    const familia = lines.find(l => l.includes("Família:"))?.split('** ')[1] || '';
-    const unidade = lines.find(l => l.includes("Unidade:"))?.split('** ')[1] || 'UN';
+    const lines: string[] = String(lastAiMessage.content).split('\n');
+    const descricao = lines.find((l: string) => l.includes("Descrição:"))?.split('** ')[1] || '';
+    const familia = lines.find((l: string) => l.includes("Família:"))?.split('** ')[1] || '';
+    const unidade = lines.find((l: string) => l.includes("Unidade:"))?.split('** ')[1] || 'UN';
 
     const sku = await SKUService.create({ descricao, familia, unidade });
     return { message: `✅ Perfeito! Item cadastrado com sucesso.\n\n**SKU:** ${sku.skuId}\n**Descrição:** ${sku.descricao}\n\n[EVENT_EMIT_SKU_CRIADO]` };
@@ -402,9 +402,9 @@ async function handleConfirmAction(history: any[]) {
     opReport += `#### 📋 Resumo de Materiais Consolidados:\n`;
     // Materiais agora vêm do objeto OP atualizado
     // Como simplificamos na OP, vamos iterar sobre as peças para mostrar o resumo
-    const materiaisUnicos = [...new Set(op.pecas.map(p => p.material))];
+    const materiaisUnicos = [...new Set(op.pecas.map((p: any) => p.material))];
     materiaisUnicos.forEach(mat => {
-       const qtd = op.pecas.filter(p => p.material === mat).length;
+       const qtd = op.pecas.filter((p: any) => p.material === mat).length;
        opReport += `- ${mat}: **${qtd} peças**\n`;
     });
 
@@ -425,7 +425,7 @@ async function handleSuggestBOM(entities: Entities, originalMessage: string) {
   report += `\n---\n\n`;
 
   report += `#### 🪚 Plano de Corte (Nesting Real)\n`;
-  planoDeCorte.forEach(chapa => {
+  planoDeCorte.forEach((chapa: any) => {
     report += `- **Chapa #${chapa.chapaId}** (2750x1840): **${chapa.aproveitamento}%** de aproveitamento real\n`;
   });
   report += `\n---\n\n`;
@@ -434,7 +434,7 @@ async function handleSuggestBOM(entities: Entities, originalMessage: string) {
   report += `| Peça | Dimensões (mm) | Material | \n`;
   report += `| :--- | :--- | :--- | \n`;
   
-  pecas.forEach(p => {
+  pecas.forEach((p: any) => {
     report += `| ${p.nome} | ${p.largura} x ${p.altura} | ${p.material} ${p.espessura}mm |\n`;
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import Modal from '../ui/Modal';
+import { Modal } from '../../design-system/components/Modal';
 import { useAppContext } from '../../context/AppContext';
 import type { ProjectStatus } from '../../context/AppContext';
 

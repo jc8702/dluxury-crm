@@ -1,6 +1,6 @@
 import React from 'react';
 import DataTable from '../ui/DataTable';
-import Modal from '../ui/Modal';
+import { Modal } from '../../design-system/components/Modal';
 import { useAppContext } from '../../context/AppContext';
 import type { Project, ProjectStatus } from '../../context/AppContext';
 
@@ -205,7 +205,7 @@ const Dashboard: React.FC = () => {
         <div className="card">
           <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Origem dos Leads</h3>
           {origemCounts.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum cliente cadastrado.</p>
+            <div className="empty-state" style={{ padding: '2rem' }}>Nenhum cliente cadastrado.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {origemCounts.map(o => {
@@ -232,7 +232,7 @@ const Dashboard: React.FC = () => {
         <div className="card">
           <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Projetos Recentes</h3>
           {recentProjects.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nenhum projeto cadastrado.</p>
+            <div className="empty-state" style={{ padding: '2rem' }}>Nenhum projeto cadastrado.</div>
           ) : (
             <DataTable
               headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}

@@ -3,14 +3,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils';
 
 const cardVariants = cva(
-  'rounded-2xl border bg-[#0D1117] text-white shadow-sm',
+  'rounded-2xl border bg-card text-card-foreground shadow-sm',
   {
     variants: {
       variant: {
-        default: 'border-white/10',
-        primary: 'border-[#00A99D]/20 bg-[#00A99D]/5',
-        warning: 'border-[#E2AC00]/20 bg-[#E2AC00]/5',
-        danger: 'border-red-500/20 bg-red-500/5',
+        default: 'border-border',
+        primary: 'border-primary/20 bg-primary/5',
+        warning: 'border-warning/20 bg-warning/5',
+        danger: 'border-destructive/20 bg-destructive/5',
       },
       padding: {
         none: '',

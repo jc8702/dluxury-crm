@@ -1,7 +1,7 @@
 import { sql, extractAndVerifyToken } from './_db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AuthenticatedUser, ApiResponse } from './types.js';
+import type { AuthenticatedUser, ApiResponse } from './types.js';
 
 const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
 

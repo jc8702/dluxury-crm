@@ -1,22 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import Modal from '../components/ui/Modal';
-import { 
-  FiPlus, 
-  FiFilter, 
-  FiCheckCircle, 
-  FiTrash2, 
-  FiArrowUpRight, 
-  FiCalendar,
-  FiTruck,
-  FiChevronDown,
-  FiChevronRight,
-  FiEdit2, FiPrinter, FiRefreshCw, FiFileText,
-  FiSquare, FiCheckSquare, FiLayers
-} from 'react-icons/fi';
+import { Modal } from '../design-system/components/Modal';
+import { Plus, Filter, CheckCircle, Trash2, ArrowUpRight, Calendar, Truck, ChevronDown, ChevronRight, Edit2, Printer, RefreshCw, FileText, Square, CheckSquare, Layers } from 'lucide-react';
 import ReciboModal from '../components/ReciboModal';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../hooks/useConfirm';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroTitulosPagarPage() {
+  const { success, error, warning } = useToast();
+  const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -104,18 +97,23 @@ export default function FinanceiroTitulosPagarPage() {
       });
       setBaixaModal(null);
       load(page);
+      success('Pagamento registrado com sucesso!');
     } catch (err: any) {
-      alert(err.message || 'Erro ao registrar pagamento');
+      error(err.message || 'Erro ao registrar pagamento');
     }
   };
 
   const doDelete = async (id: string) => {
-    if (!confirm('Confirma exclusão do título?')) return;
+    const isConfirmed = await confirmAction({
+      title: 'Excluir Título',
+      description: 'Confirma exclusão do título?'
+    });
+    if (!isConfirmed) return;
     try {
       await api.financeiro.titulosPagar.delete(id);
       load(page);
     } catch (err: any) {
-      alert(err.message || 'Erro ao excluir');
+      error(err.message || 'Erro ao excluir');
     }
   };
 
@@ -134,8 +132,8 @@ export default function FinanceiroTitulosPagarPage() {
   };
 
   const handleBaixaLote = async () => {
-    if (!loteData.conta_interna_id) { alert('Selecione a conta de pagamento'); return; }
-    if (selectedIds.size === 0) { alert('Nenhum título selecionado'); return; }
+    if (!loteData.conta_interna_id) { warning('Selecione a conta de pagamento'); return; }
+    if (selectedIds.size === 0) { warning('Nenhum título selecionado'); return; }
     setLoteLoading(true);
     let ok = 0, fail = 0;
     for (const id of selectedIds) {
@@ -151,7 +149,7 @@ export default function FinanceiroTitulosPagarPage() {
     setLoteLoading(false);
     setLoteModal(false);
     setSelectedIds(new Set());
-    alert(`${ok} títulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
+    success(`${ok} títulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
     load(page);
   };
 
@@ -168,8 +166,9 @@ export default function FinanceiroTitulosPagarPage() {
       });
       setEditModal(null);
       load(page);
+      success('Alterações salvas com sucesso');
     } catch (err: any) {
-      alert(err.message || 'Erro ao salvar alterações');
+      error(err.message || 'Erro ao salvar alterações');
     }
   };
 
@@ -185,7 +184,7 @@ export default function FinanceiroTitulosPagarPage() {
       <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '2.5rem', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiArrowUpRight style={{ color: 'var(--danger)' }} />
+            <ArrowUpRight />
             Títulos a Pagar
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Gestão de obrigações e fluxo de saída</p>
@@ -197,7 +196,7 @@ export default function FinanceiroTitulosPagarPage() {
               style={{ background: '#f59e0b', fontSize: '0.85rem' }}
               onClick={() => setLoteModal(true)}
             >
-              <FiLayers /> PAGAR {selectedIds.size} EM LOTE
+              <Layers /> PAGAR {selectedIds.size} EM LOTE
             </button>
           )}
           <button 
@@ -205,7 +204,7 @@ export default function FinanceiroTitulosPagarPage() {
             style={{ fontSize: '0.8rem' }}
             onClick={selectAllAbertos}
           >
-            <FiCheckSquare /> SELECIONAR ABERTOS
+            <CheckSquare /> SELECIONAR ABERTOS
           </button>
           {selectedIds.size > 0 && (
             <button className="btn btn-outline" style={{ fontSize: '0.8rem' }} onClick={() => setSelectedIds(new Set())}>
@@ -217,7 +216,7 @@ export default function FinanceiroTitulosPagarPage() {
             style={{ height: '48px', padding: '0 1.5rem', borderRadius: 'var(--radius-md)', background: 'var(--danger)' }}
             onClick={() => window.location.hash = '#/financeiro/titulos-pagar/wizard'}
           >
-            <FiPlus /> NOVO PAGAMENTO
+            <Plus /> NOVO PAGAMENTO
           </button>
         </div>
       </div>
@@ -225,9 +224,9 @@ export default function FinanceiroTitulosPagarPage() {
       {/* Stats Grid */}
       <div className="grid-3" style={{ marginBottom: '2.5rem' }}>
         {[
-          { label: 'Total a Pagar', value: stats.totalAberto, color: 'var(--danger)', icon: FiArrowUpRight },
-          { label: 'Total Pago', value: stats.totalPago, color: 'var(--success)', icon: FiCheckCircle },
-          { label: 'Vencido', value: stats.totalVencido, color: 'var(--danger)', icon: FiCalendar },
+          { label: 'Total a Pagar', value: stats.totalAberto, color: 'var(--danger)', icon: ArrowUpRight },
+          { label: 'Total Pago', value: stats.totalPago, color: 'var(--success)', icon: CheckCircle },
+          { label: 'Vencido', value: stats.totalVencido, color: 'var(--danger)', icon: Calendar },
         ].map((stat, i) => (
           <div key={i} className="card glass animate-fade-in" style={{ padding: '1.5rem', borderLeft: `4px solid ${stat.color}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -257,15 +256,13 @@ export default function FinanceiroTitulosPagarPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '4rem' }}>
-                    <div style={{ display: 'inline-block', width: '2rem', height: '2rem', border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  </td>
-                </tr>
+                <TableSkeleton rows={5} cols={6} />
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-                    Nenhum lançamento encontrado.
+                  <td colSpan={6} style={{ padding: 0 }}>
+                    <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
+                      Nenhum título encontrado.
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -290,7 +287,7 @@ export default function FinanceiroTitulosPagarPage() {
                       >
                         <td colSpan={2} style={{ fontWeight: 800, color: 'var(--text)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
+                            {isExpanded ? <ChevronDown /> : <ChevronRight />}
                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
                               {supplierName.charAt(0).toUpperCase()}
                             </div>
@@ -309,16 +306,21 @@ export default function FinanceiroTitulosPagarPage() {
                               className="btn btn-outline" 
                               style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                               title="Excluir árvore de títulos"
-                              onClick={(e) => { 
+                              onClick={async (e) => { 
                                 e.stopPropagation(); 
-                                if(confirm(`DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE FORNECEDOR?`)) {
+                                const isConfirmed = await confirmAction({
+                                  title: 'Excluir Todos os Títulos',
+                                  description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE FORNECEDOR?`
+                                });
+                                if(isConfirmed) {
                                   api.financeiro.titulosPagar.deleteBatch(sid).then(() => {
-                                    loadData();
+                                    load(page);
                                   });
                                 }
                               }}
+                              aria-label={`Excluir todos os títulos do fornecedor ${supplierName}`}
                             >
-                              <FiTrash2 /> EXCLUIR TUDO
+                              <Trash2 /> EXCLUIR TUDO
                             </button>
                           </div>
                         </td>
@@ -334,7 +336,7 @@ export default function FinanceiroTitulosPagarPage() {
                           </td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                              <FiCalendar style={{ opacity: 0.5 }} />
+                              <Calendar style={{ opacity: 0.5 }} />
                               {new Date(r.data_vencimento).toLocaleDateString()}
                             </div>
                           </td>
@@ -349,34 +351,38 @@ export default function FinanceiroTitulosPagarPage() {
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px' }}
                                 title="Editar"
+                                aria-label={`Editar título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); setEditModal(r); }}
                               >
-                                <FiEdit2 />
+                                <Edit2 />
                               </button>
                               <button 
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px' }}
                                 title="Pagar Título"
+                                aria-label={`Pagar título ${r.numero_titulo}`}
                                 disabled={r.status === 'pago'}
                                 onClick={(e) => { e.stopPropagation(); setBaixaModal(r); }}
                               >
-                                <FiArrowUpRight />
+                                <ArrowUpRight />
                               </button>
                               <button 
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--danger)' }}
                                 title="Excluir"
+                                aria-label={`Excluir título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); doDelete(r.id); }}
                               >
-                                <FiTrash2 />
+                                <Trash2 />
                               </button>
                               <button 
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--primary)' }}
                                 title="Ver Recibo"
+                                aria-label={`Ver recibo do título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); setReciboModal(r); }}
                               >
-                                <FiPrinter />
+                                <Printer />
                               </button>
                             </div>
                           </td>
@@ -468,8 +474,9 @@ export default function FinanceiroTitulosPagarPage() {
                       });
                       setBaixaModal(null);
                       load(page);
+                      success('Pagamento registrado com sucesso!');
                     } catch (err: any) {
-                      alert(err.message || 'Erro ao registrar pagamento');
+                      error(err.message || 'Erro ao registrar pagamento');
                     }
                   }}>CONFIRMAR PAGAMENTO</button>
                 </div>
@@ -600,6 +607,7 @@ export default function FinanceiroTitulosPagarPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+      {ConfirmDialogElement}
     </div>
   );
 }

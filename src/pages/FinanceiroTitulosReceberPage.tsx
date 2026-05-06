@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import Modal from '../components/ui/Modal';
-import { 
-  FiPlus, 
-  FiFilter, 
-  FiCheckCircle, 
-  FiTrash2, 
-  FiArrowDownLeft, 
-  FiCalendar,
-  FiMoreVertical,
-  FiChevronDown,
-  FiChevronRight,
-  FiEdit2, FiPrinter, FiRefreshCw, FiFileText, FiTrendingUp, FiMessageCircle
-} from 'react-icons/fi';
+import { Modal } from '../design-system/components/Modal';
+import { Plus, CheckCircle, Trash2, ArrowDownLeft, Calendar, ChevronDown, ChevronRight, Edit2, Printer, TrendingUp } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { WhatsAppService } from '../modules/plano-corte/infrastructure/services/WhatsAppService';
 import ReciboModal from '../components/ReciboModal';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../hooks/useConfirm';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroTitulosReceberPage() {
+  const { success, error, warning } = useToast();
+  const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage] = useState(10);
   const [total, setTotal] = useState(0);
   const [clientsMap, setClientsMap] = useState<Record<string,string>>({});
   const [loading, setLoading] = useState(false);
@@ -90,30 +85,19 @@ export default function FinanceiroTitulosReceberPage() {
 
   useEffect(() => { load(page); }, [page]);
 
-  const confirmarBaixa = async () => {
-    try {
-      const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
-      if (!contaId) throw new Error('Selecione uma conta');
-      
-      await api.financeiro.titulosReceber.baixar(baixaModal.id, {
-        valor_baixa: baixaModal.valor_aberto,
-        conta_interna_id: contaId,
-        data_baixa: new Date()
-      });
-      setBaixaModal(null);
-      load(page);
-    } catch (err: any) {
-      alert(err.message || 'Erro ao registrar baixa');
-    }
-  };
+
 
   const doDelete = async (id: string) => {
-    if (!confirm('Confirma exclusão do título?')) return;
+    const isConfirmed = await confirmAction({
+      title: 'Excluir Título',
+      description: 'Confirma exclusão do título?'
+    });
+    if (!isConfirmed) return;
     try {
       await api.financeiro.titulosReceber.delete(id);
       load(page);
     } catch (err: any) {
-      alert(err.message || 'Erro ao excluir');
+      error(err.message || 'Erro ao excluir');
     }
   };
 
@@ -129,15 +113,16 @@ export default function FinanceiroTitulosReceberPage() {
       });
       setEditModal(null);
       load(page);
+      success('Alterações salvas com sucesso');
     } catch (err: any) {
-      alert(err.message || 'Erro ao salvar alterações');
+      error(err.message || 'Erro ao salvar alterações');
     }
   };
 
   const getStatusStyle = (status: string, vencimento: string) => {
     if (status === 'pago') return { background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' };
-    if (new Date(vencimento) < new Date()) return { background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' };
-    return { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' };
+    if (new Date(vencimento) < new Date()) return { background: 'rgba(239, 68, 68, 0.15)', color: 'hsl(var(--destructive))' };
+    return { background: 'rgba(245, 158, 11, 0.15)', color: 'hsl(var(--warning))' };
   };
 
   return (
@@ -146,10 +131,10 @@ export default function FinanceiroTitulosReceberPage() {
       <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '2.5rem', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiArrowDownLeft style={{ color: 'var(--success)' }} />
+            <ArrowDownLeft />
             Títulos a Receber
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Gestão de recebimentos e fluxo de entrada</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>Gestão de recebimentos e fluxo de entrada</p>
         </div>
         <div>
           <button 
@@ -157,7 +142,7 @@ export default function FinanceiroTitulosReceberPage() {
             style={{ height: '48px', padding: '0 1.5rem', borderRadius: 'var(--radius-md)' }}
             onClick={() => window.location.hash = '#/financeiro/titulos-receber/wizard'}
           >
-            <FiPlus /> NOVO RECEBIMENTO
+            <Plus /> NOVO RECEBIMENTO
           </button>
         </div>
       </div>
@@ -165,9 +150,9 @@ export default function FinanceiroTitulosReceberPage() {
       {/* Stats Grid */}
       <div className="grid-3" style={{ marginBottom: '2.5rem' }}>
         {[
-          { label: 'Total a Receber', value: stats.totalAberto, color: 'var(--info)', icon: FiArrowDownLeft },
-          { label: 'Total Recebido', value: stats.totalRecebido, color: 'var(--success)', icon: FiCheckCircle },
-          { label: 'Em Atraso', value: stats.totalVencido, color: 'var(--danger)', icon: FiCalendar },
+          { label: 'Total a Receber', value: stats.totalAberto, color: 'hsl(var(--info))', icon: ArrowDownLeft },
+          { label: 'Total Recebido', value: stats.totalRecebido, color: 'hsl(var(--success))', icon: CheckCircle },
+          { label: 'Em Atraso', value: stats.totalVencido, color: 'hsl(var(--destructive))', icon: Calendar },
         ].map((stat, i) => (
           <div key={i} className="card glass animate-fade-in" style={{ padding: '1.5rem', borderLeft: `4px solid ${stat.color}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -197,15 +182,13 @@ export default function FinanceiroTitulosReceberPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '4rem' }}>
-                    <div style={{ display: 'inline-block', width: '2rem', height: '2rem', border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  </td>
-                </tr>
+                <TableSkeleton rows={5} cols={6} />
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-                    Nenhum lançamento encontrado.
+                  <td colSpan={6} style={{ padding: 0 }}>
+                     <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
+                        Nenhum lançamento encontrado.
+                     </div>
                   </td>
                 </tr>
               ) : (
@@ -226,39 +209,44 @@ export default function FinanceiroTitulosReceberPage() {
                       {/* Group Header Row */}
                       <tr 
                         onClick={() => setExpandedGroups(prev => ({ ...prev, [cid]: !prev[cid] }))}
-                        style={{ background: 'rgba(255,255,255,0.03)', cursor: 'pointer', borderLeft: '4px solid var(--primary)' }}
+                        style={{ background: 'hsl(var(--surface-elevated))', cursor: 'pointer', borderLeft: '4px solid hsl(var(--primary))' }}
                       >
-                        <td colSpan={2} style={{ fontWeight: 800, color: 'var(--text)' }}>
+                        <td colSpan={2} style={{ fontWeight: 800, color: 'hsl(var(--foreground))' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
+                            {isExpanded ? <ChevronDown /> : <ChevronRight />}
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
                               {clientName.charAt(0).toUpperCase()}
                             </div>
                             {clientName}
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '0.5rem' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', fontWeight: 400, marginLeft: '0.5rem' }}>
                               ({groupRows.length} títulos)
                             </span>
                           </div>
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--primary)' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'hsl(var(--primary))' }}>
                           R$ {totalGroup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                         <td colSpan={3}>
                            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '1rem' }}>
                             <button 
                               className="btn btn-outline" 
-                              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', color: 'hsl(var(--destructive))', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                               title="Excluir árvore de títulos"
-                              onClick={(e) => { 
+                              onClick={async (e) => { 
                                 e.stopPropagation(); 
-                                if(confirm(`DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE CLIENTE?`)) {
+                                const isConfirmed = await confirmAction({
+                                  title: 'Excluir Todos os Títulos',
+                                  description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS PENDENTES DESTE CLIENTE?`
+                                });
+                                if(isConfirmed) {
                                   api.financeiro.titulosReceber.deleteBatch(cid).then(() => {
                                     load(page);
                                   });
                                 }
                               }}
+                              aria-label={`Excluir todos os títulos do cliente ${clientName}`}
                             >
-                              <FiTrash2 /> EXCLUIR TUDO
+                              <Trash2 /> EXCLUIR TUDO
                             </button>
                           </div>
                         </td>
@@ -267,14 +255,14 @@ export default function FinanceiroTitulosReceberPage() {
                       {/* Detail Rows */}
                       {isExpanded && groupRows.map((r: any) => (
                         <tr key={r.id} style={{ background: 'transparent' }}>
-                          <td style={{ paddingLeft: '3rem', fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)' }}>{r.numero_titulo}</td>
-                          <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Individual</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text)' }}>
+                          <td style={{ paddingLeft: '3rem', fontFamily: 'monospace', fontWeight: 700, color: 'hsl(var(--primary))' }}>{r.numero_titulo}</td>
+                          <td style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>Individual</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'hsl(var(--foreground))' }}>
                             R$ {Number(r.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                              <FiCalendar style={{ opacity: 0.5 }} />
+                              <Calendar style={{ opacity: 0.5 }} />
                               {new Date(r.data_vencimento).toLocaleDateString()}
                             </div>
                           </td>
@@ -289,39 +277,44 @@ export default function FinanceiroTitulosReceberPage() {
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px' }}
                                 title="Editar"
+                                aria-label={`Editar título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); setEditModal(r); }}
                               >
-                                <FiEdit2 />
+                                <Edit2 />
                               </button>
                               <button 
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px' }}
                                 title="Baixar Título"
+                                aria-label={`Baixar título ${r.numero_titulo}`}
                                 disabled={r.status === 'pago'}
                                 onClick={(e) => { e.stopPropagation(); setBaixaModal(r); }}
                               >
-                                <FiCheckCircle />
+                                <CheckCircle />
                               </button>
                               <button 
                                 className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--danger)' }}
+                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--destructive))' }}
                                 title="Excluir"
+                                aria-label={`Excluir título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); doDelete(r.id); }}
                               >
-                                <FiTrash2 />
+                                <Trash2 />
                               </button>
                               <button 
                                 className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'var(--primary)' }}
+                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--primary))' }}
                                 title="Ver Recibo"
+                                aria-label={`Ver recibo do título ${r.numero_titulo}`}
                                 onClick={(e) => { e.stopPropagation(); setReciboModal(r); }}
                               >
-                                <FiPrinter />
+                                <Printer />
                               </button>
                               <button 
                                 className="btn btn-outline" 
                                 style={{ padding: '0.5rem', width: '36px', height: '36px', color: '#25D366' }}
                                 title="Enviar Cobrança WhatsApp"
+                                aria-label={`Enviar cobrança do título ${r.numero_titulo} pelo WhatsApp`}
                                 onClick={async (e) => { 
                                   e.stopPropagation(); 
                                   const msg = r.status === 'pago' ? 'Obrigado pelo pagamento!' : 
@@ -331,19 +324,19 @@ export default function FinanceiroTitulosReceberPage() {
                                     "4799999-9999", 
                                     `Título ${r.numero_titulo} - ${msg}`
                                   );
-                                  alert('Mensagem de cobrança enviada com sucesso!');
+                                  success('Mensagem de cobrança enviada com sucesso!');
                                 }}
                               >
                                 <MessageCircle size={16} />
                               </button>
                               <button 
                                 className="btn btn-outline" 
-                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: '#8b5cf6' }}
+                                style={{ padding: '0.5rem', width: '36px', height: '36px', color: 'hsl(var(--primary))' }}
                                 title="Simular Antecipação"
                                 disabled={r.status === 'pago'}
                                 onClick={(e) => { e.stopPropagation(); setAntecipacaoModal(r); }}
                               >
-                                <FiTrendingUp size={16} />
+                                <TrendingUp size={16} />
                               </button>
                             </div>
                           </td>
@@ -383,7 +376,7 @@ export default function FinanceiroTitulosReceberPage() {
                       value={taxaAntecipacao} 
                       onChange={e => setTaxaAntecipacao(Number(e.target.value))}
                     />
-                    <small style={{ color: 'var(--text-muted)' }}>Média do mercado: 2.8% a 4.5%</small>
+                    <small style={{ color: 'hsl(var(--muted-foreground))' }}>Média do mercado: 2.8% a 4.5%</small>
                   </div>
 
                   <div style={{ background: 'var(--surface-hover)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
@@ -395,26 +388,30 @@ export default function FinanceiroTitulosReceberPage() {
                       <span className="label-base" style={{ margin: 0 }}>Prazo</span>
                       <span style={{ fontWeight: 600 }}>{diasParaVencer} dias</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
                       <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Desconto Bancário</span>
                       <span style={{ fontWeight: 600 }}>- R$ {valorDesconto.toFixed(2)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
                       <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Taxas/IOF (0.5%)</span>
                       <span style={{ fontWeight: 600 }}>- R$ {taxaFixa.toFixed(2)}</span>
                     </div>
-                    <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>VALOR LÍQUIDO</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#8b5cf6' }}>R$ {valorLiquido.toFixed(2)}</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'hsl(var(--primary))' }}>R$ {valorLiquido.toFixed(2)}</span>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                     <button className="btn btn-outline" onClick={() => setAntecipacaoModal(null)}>FECHAR</button>
-                    <button className="btn btn-primary" style={{ background: '#8b5cf6' }} onClick={() => {
-                      if(confirm('Atenção: A antecipação gera uma despesa financeira. Deseja registrar a baixa com este valor líquido?')) {
+                    <button className="btn btn-primary" style={{ background: 'hsl(var(--primary))' }} onClick={async () => {
+                      const isConfirmed = await confirmAction({
+                        title: 'Efetivar Antecipação',
+                        description: 'Atenção: A antecipação gera uma despesa financeira. Deseja registrar a baixa com este valor líquido?'
+                      });
+                      if(isConfirmed) {
                         // Lógica de baixa com desconto...
-                        alert('Funcionalidade de registro de antecipação integrada com sucesso!');
+                        success('Funcionalidade de registro de antecipação integrada com sucesso!');
                         setAntecipacaoModal(null);
                       }
                     }}>EFETIVAR ANTECIPAÇÃO</button>
@@ -426,7 +423,7 @@ export default function FinanceiroTitulosReceberPage() {
         </Modal>
 
         {/* Footer with items count */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--table-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--table-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', color: 'hsl(var(--muted-foreground))' }}>
           <div>Mostrando {rows.length} de {total} lançamentos</div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
              <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem' }} disabled={page === 1} onClick={() => setPage(page-1)}>Anterior</button>
@@ -460,19 +457,19 @@ export default function FinanceiroTitulosReceberPage() {
                   </div>
                   {atraso > 0 && (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
                         <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Multa (2% - {atraso} dias)</span>
                         <span style={{ fontWeight: 600 }}>+ R$ {valorMulta.toFixed(2)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--danger)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'hsl(var(--destructive))' }}>
                         <span className="label-base" style={{ margin: 0, color: 'inherit' }}>Juros (1%/mês)</span>
                         <span style={{ fontWeight: 600 }}>+ R$ {valorJuros.toFixed(2)}</span>
                       </div>
                     </>
                   )}
-                  <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 900, fontSize: '0.85rem' }}>VALOR TOTAL</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--success)' }}>R$ {valorTotal.toFixed(2)}</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'hsl(var(--success))' }}>R$ {valorTotal.toFixed(2)}</span>
                   </div>
                 </div>
                 
@@ -503,8 +500,9 @@ export default function FinanceiroTitulosReceberPage() {
                       });
                       setBaixaModal(null);
                       load(page);
+                      success('Recebimento registrado com sucesso!');
                     } catch (err: any) {
-                      alert(err.message || 'Erro ao registrar baixa');
+                      error(err.message || 'Erro ao registrar baixa');
                     }
                   }}>CONFIRMAR RECEBIMENTO</button>
                 </div>
@@ -601,6 +599,7 @@ export default function FinanceiroTitulosReceberPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+      {ConfirmDialogElement}
     </div>
   );
 }

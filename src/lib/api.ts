@@ -23,7 +23,6 @@ export async function apiCall<T>(
   }
 
   if (import.meta.env.DEV) {
-    console.log(`[API REQUEST] ${method} ${url}`, body);
   }
 
   const res = await fetch(url, {
@@ -42,7 +41,6 @@ export async function apiCall<T>(
   
   // Log de auditoria para ambiente dev
   if (import.meta.env.DEV) {
-    console.log(`[API RESPONSE] ${method} ${action}:`, json);
   }
 
   // Se a resposta seguir o padrão { success, data }, retornamos apenas o data

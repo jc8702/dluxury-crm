@@ -17,6 +17,8 @@ import {
   Info
 } from 'lucide-react';
 import { api } from '../../../lib/api';
+import { useToast } from '../../../context/ToastContext';
+import { TableSkeleton } from '../../../design-system/components/Skeleton';
 import SearchableSelect from '../../ui/SearchableSelect';
 import { 
   calcularM2Peca, 
@@ -270,8 +272,12 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
     fontSize: '0.8rem'
   };
 
-  if (loading && tree.ambientes.length === 0) {
-    return <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>Carregando Compositor...</div>;
+  if (loading) {
+    return (
+      <div style={{ display: 'grid', gap: '1rem', padding: '2rem' }}>
+         <TableSkeleton rows={8} cols={4} />
+      </div>
+    );
   }
 
   useEscClose(onClose);

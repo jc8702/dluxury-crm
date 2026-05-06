@@ -1,6 +1,5 @@
 import { useEffect, useRef, ReactNode } from 'react';
 import { X } from 'lucide-react';
-import { tokens } from '../tokens';
 
 interface ModalProps {
   isOpen: boolean;
@@ -112,17 +111,17 @@ export function Modal({
     >
       <div
         ref={modalRef}
-        className={`bg-[#0D1117] border border-white/10 rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
+        className={`bg-card border border-border rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#0D1117] border-b border-white/10 p-6 flex items-center justify-between z-10">
-          <h2 id="modal-title" className="text-xl font-semibold text-white">
+        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between z-10">
+          <h2 id="modal-title" className="text-xl font-semibold text-foreground">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="text-white/40 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />

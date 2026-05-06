@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DataTable from '../ui/DataTable';
-import Modal from '../ui/Modal';
+import { Modal } from '../../design-system/components/Modal';
 import { useAppContext } from '../../context/AppContext';
 import type { Billing } from '../../context/AppContext';
 

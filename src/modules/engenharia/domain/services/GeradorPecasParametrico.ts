@@ -94,11 +94,11 @@ export interface ResultadoGeracaoPecas {
  * Gera listas de peças e ferragens a partir de templates técnicos parametrizáveis.
  */
 export class GeradorPecasParametrico {
-  private db: any;
-  private logger: any;
+  private db: unknown;
+  private logger: Console | unknown;
   private cache_templates: Map<string, TemplateTipoMovel> = new Map();
 
-  constructor(db: any, logger?: any) {
+  constructor(db: unknown, logger?: Console | unknown) {
     this.db = db;
     this.logger = logger || console;
   }
@@ -201,7 +201,7 @@ export class GeradorPecasParametrico {
     };
   }
 
-  private gerarPecasDoTemplate(templ: any, contexto: Record<string, number>): Peca[] {
+  private gerarPecasDoTemplate(templ: TemplateTipoMovel['template_pecas'][number], contexto: Record<string, number>): Peca[] {
     const pecas: Peca[] = [];
     const largura = templ.formula_largura ? Math.round(this.avaliarFormula(templ.formula_largura, contexto)) : contexto['P_LARGURA'];
     const altura = templ.formula_altura ? Math.round(this.avaliarFormula(templ.formula_altura, contexto)) : contexto['P_ALTURA'];
@@ -221,7 +221,7 @@ export class GeradorPecasParametrico {
     return pecas;
   }
 
-  private calcularFerragens(ferragens_templ: any[], contexto: Record<string, number>) {
+  private calcularFerragens(ferragens_templ: TemplateTipoMovel['ferragens_padrao'], contexto: Record<string, number>) {
     return ferragens_templ.map(f => ({
       sku: f.sku,
       descricao: f.descricao,

@@ -1,6 +1,5 @@
 import { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { tokens } from '../tokens';
 import { cn } from '../utils';
 
 const buttonVariants = cva(
@@ -8,11 +7,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-[#00A99D] text-white hover:bg-[#008A7E] focus:ring-[#00A99D]',
-        secondary: 'bg-[#E2AC00] text-white hover:bg-[#C99500] focus:ring-[#E2AC00]',
-        outline: 'border-2 border-[#00A99D] text-[#00A99D] hover:bg-[#00A99D]/10',
-        ghost: 'text-white/60 hover:text-white hover:bg-white/10',
-        danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
+        primary: 'bg-primary text-primary-foreground hover:bg-primary-hover focus:ring-ring',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-ring',
+        outline: 'border-2 border-primary text-primary hover:bg-primary/10',
+        ghost: 'text-foreground/60 hover:text-foreground hover:bg-foreground/10',
+        danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive',
       },
       size: {
         sm: 'px-3 py-1.5 text-sm rounded-lg',

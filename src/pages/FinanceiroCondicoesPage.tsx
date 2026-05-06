@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import Modal from '../components/ui/Modal';
+import { Modal } from '../design-system/components/Modal';
+import { CreditCard, Plus, Save, Trash2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 import { api } from '../lib/api';
 
 const FinanceiroCondicoesPage: React.FC = () => {
+  const { success, error } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -14,8 +18,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
 
   const openNew = () => { setEditing(null); setForm({ nome: '', descricao: '', parcelas: 1, entrada_percentual: 0, juros_percentual: 0 }); setIsOpen(true); };
   const openEdit = (f: any) => { setEditing(f); setForm({ nome: f.nome, descricao: f.descricao, parcelas: f.parcelas, entrada_percentual: f.entrada_percentual, juros_percentual: f.juros_percentual }); setIsOpen(true); };
-
-  const save = async () => { try { if (editing) await api.financeiro.condicoesPagamento.update({ id: editing.id, ...form }); else await api.financeiro.condicoesPagamento.create(form); setIsOpen(false); fetch(); } catch(e: any) { alert(e.message || 'Erro'); } };
+  const save = async () => { try { if (editing) await api.financeiro.condicoesPagamento.update({ id: editing.id, ...form }); else await api.financeiro.condicoesPagamento.create(form); setIsOpen(false); fetch(); success('Salvo com sucesso!'); } catch(e: any) { error(e.message || 'Erro'); } };
 
   return (
     <div style={{ padding: '1.5rem' }}>
@@ -27,11 +30,17 @@ const FinanceiroCondicoesPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="card">
-        {loading ? <div style={{ padding: '2rem' }}>Carregando...</div> : (
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {loading ? (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+             <tbody>
+                <TableSkeleton rows={3} cols={3} />
+             </tbody>
+          </table>
+        ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid hsl(var(--border))' }}>
                 <th style={{ padding: '0.75rem' }}>Nome</th>
                 <th style={{ padding: '0.75rem' }}>Parcelas</th>
                 <th style={{ padding: '0.75rem' }}>Entrada %</th>
@@ -41,7 +50,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
             </thead>
             <tbody>
               {items.map(f => (
-                <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <tr key={f.id} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
                   <td style={{ padding: '0.75rem' }}>{f.nome}</td>
                   <td style={{ padding: '0.75rem' }}>{f.parcelas}</td>
                   <td style={{ padding: '0.75rem' }}>{Number(f.entrada_percentual || 0).toFixed(2)}%</td>

@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { PedidoCompra, Material } from '../api-lib/types';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../hooks/useConfirm';
+import { CardSkeleton } from '../design-system/components/Skeleton';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
@@ -83,7 +86,11 @@ const ComprasPage: React.FC = () => {
 
       <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '1.5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '4rem' }}>Carregando...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         ) : activeTab === 'sugestoes' ? (
           <SugestoesGrid sugestoes={sugestoes} onAction={() => fetchData()} />
         ) : (
@@ -143,8 +150,10 @@ const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ s
       <tbody>
         {sugestoes.length === 0 ? (
           <tr>
-            <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-              Estoque saudável. Nenhuma sugestão de compra pendente.
+            <td colSpan={5} style={{ padding: 0 }}>
+              <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
+                Estoque saudável. Nenhuma sugestão de compra pendente.
+              </div>
             </td>
           </tr>
         ) : (
@@ -229,6 +238,8 @@ const PedidosTable: React.FC<{ pedidos: any[]; onView: (p: any) => void; getStat
 );
 
 const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => void }> = ({ pedido, onClose, onSave }) => {
+  const { success, error: toastError } = useToast();
+  const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [formData, setFormData] = useState<any>(pedido || {
     fornecedor_id: '',
     status: 'rascunho',
@@ -299,22 +310,28 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
       } else {
         await api.compras.createPedido(formData);
       }
+      success('Pedido salvo com sucesso!');
       onSave();
-    } catch (error) {
-      alert('Erro ao salvar pedido');
+    } catch (error: any) {
+      toastError(error.message || 'Erro ao salvar pedido');
     }
   };
 
   const handleDeletePedido = useCallback(async () => {
-    if (!pedido?.id) return alert('Pedido não salvo ainda');
-    if (!confirm('Deseja excluir este Pedido de Compra?')) return;
+    if (!pedido?.id) return toastError('Pedido não salvo ainda');
+    const isConfirmed = await confirmAction({
+      title: 'Excluir Pedido',
+      description: 'Deseja excluir este Pedido de Compra?'
+    });
+    if (!isConfirmed) return;
     try {
       await fetch(`/api/compras?id=${encodeURIComponent(pedido.id)}&type=pedidos`, { method: 'DELETE' });
+      success('Pedido excluído com sucesso!');
       onSave();
     } catch (e: any) {
-      alert('Erro ao excluir pedido: ' + e.message);
+      toastError('Erro ao excluir pedido: ' + e.message);
     }
-  }, [pedido, onSave]);
+  }, [pedido, onSave, confirmAction, toastError, success]);
 
   return (
     <div className="modal-overlay" onClick={onClose} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
@@ -418,7 +435,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                 </thead>
                 <tbody>
                   {formData.itens?.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Adicione itens ao pedido</td></tr>
+                    <tr><td colSpan={5} style={{ padding: 0 }}><div className="empty-state" style={{ border: 'none', borderRadius: 0, padding: '2rem' }}>Adicione itens ao pedido</div></td></tr>
                   ) : (
                     formData.itens?.map((itm: any, idx: number) => (
                       <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
@@ -460,6 +477,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
           <button className="btn-secondary" onClick={onClose}>Cancelar</button>
           <button className="btn-primary" onClick={handleSave}>Salvar Pedido</button>
         </div>
+        {ConfirmDialogElement}
       </div>
     </div>
   );

@@ -112,7 +112,9 @@ export default function PlanoCorteIndustrialPage() {
       console.log('Otimização concluída com sucesso:', res);
     } catch (err: any) {
       console.error('Erro crítico na otimização:', err);
-      alert('ERRO NA OTIMIZAÇÃO: ' + (err.message || 'Erro interno no processamento. Verifique o console.'));
+      // Feedback mais amigável e detalhado
+      const errorMsg = err.message || 'Erro interno no processamento.';
+      alert(`⚠️ FALHA NA OTIMIZAÇÃO\n\nMotivo: ${errorMsg}\n\nVerifique se os materiais estão cadastrados e as dimensões das peças são válidas.`);
     } finally {
       setLoading(false);
     }
@@ -219,17 +221,68 @@ export default function PlanoCorteIndustrialPage() {
           <button 
             onClick={() => setExecutionMode(!executionMode)}
             className={`btn ${executionMode ? 'btn-primary' : 'btn-outline'}`}
+            style={{ 
+              background: executionMode ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+              color: executionMode ? 'var(--primary-text)' : 'var(--text)',
+              borderColor: 'var(--primary)',
+              fontWeight: '700',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
           >
             <CheckCircle size={16} /> {executionMode ? 'EXECUÇÃO ATIVA' : 'MODO EXECUÇÃO'}
           </button>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-outline">
+          <button 
+            onClick={() => setShowImportModal(true)} 
+            className="btn btn-outline"
+            style={{ 
+              background: 'rgba(255,255,255,0.05)',
+              borderColor: 'var(--border-strong)',
+              fontWeight: '700',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
             <FileUp size={16} /> IMPORTAR
           </button>
-          <button onClick={handleOtimizar} disabled={loading || pecas.length === 0} className="btn btn-primary">
+          <button 
+            onClick={handleOtimizar} 
+            disabled={loading || pecas.length === 0} 
+            className="btn btn-primary"
+            style={{ 
+              minWidth: '180px',
+              fontWeight: '800',
+              padding: '0.6rem 1.5rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 12px rgba(226, 172, 0, 0.2)'
+            }}
+          >
             {loading ? <RefreshCcw className="animate-spin" size={16} /> : <Cpu size={16} />}
             {loading ? 'OTIMIZANDO...' : 'OTIMIZAR AGORA'}
           </button>
-          <button onClick={() => setShowHistorico(true)} className="btn btn-outline">
+          <button 
+            onClick={() => setShowHistorico(true)} 
+            className="btn btn-outline"
+            style={{ 
+              background: 'rgba(255,255,255,0.05)',
+              borderColor: 'var(--border-strong)',
+              fontWeight: '700',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
             <Clock size={16} /> HISTÓRICO
           </button>
         </div>
@@ -241,7 +294,18 @@ export default function PlanoCorteIndustrialPage() {
         <aside className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: '700' }}>LISTA DE PEÇAS</h4>
-            <button onClick={handleAddPecaManual} className="btn btn-outline" style={{ padding: '0.4rem' }}>
+            <button 
+              onClick={handleAddPecaManual} 
+              className="btn btn-outline" 
+              style={{ 
+                padding: '0.4rem', 
+                background: 'rgba(255,255,255,0.05)', 
+                borderColor: 'var(--primary)',
+                color: 'var(--primary)',
+                borderRadius: '6px'
+              }}
+              title="Adicionar Peça Manualmente"
+            >
               <Plus size={16} />
             </button>
           </div>
@@ -333,8 +397,21 @@ export default function PlanoCorteIndustrialPage() {
                   key={idx}
                   onClick={() => setActiveLayoutIdx(idx)}
                   className={`chapa-tab ${activeLayoutIdx === idx ? 'active' : ''}`}
+                  style={{
+                    background: activeLayoutIdx === idx ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                    color: activeLayoutIdx === idx ? 'var(--primary-text)' : 'var(--text)',
+                    border: '1px solid',
+                    borderColor: activeLayoutIdx === idx ? 'var(--primary)' : 'var(--border)',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    fontWeight: '700',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  CHAPA {idx + 1} <span style={{ opacity: 0.5 }}>({l.tipo})</span>
+                  CHAPA {idx + 1} <span style={{ opacity: 0.7, fontSize: '0.65rem' }}>[{l.tipo.toUpperCase()}]</span>
                 </button>
               ))}
             </div>
@@ -394,14 +471,50 @@ export default function PlanoCorteIndustrialPage() {
 
             <div style={{ flex: 1 }} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button onClick={handleExportarPDF} className="btn btn-outline" style={{ width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button 
+                onClick={handleExportarPDF} 
+                className="btn btn-outline" 
+                style={{ 
+                  width: '100%', 
+                  justifyContent: 'flex-start', 
+                  gap: '10px', 
+                  padding: '0.75rem 1rem', 
+                  background: 'rgba(255,255,255,0.05)',
+                  borderColor: 'var(--border-strong)',
+                  fontWeight: '600'
+                }}
+              >
                 <FileText size={16} /> MAPA DE CORTE (PDF)
               </button>
-              <button onClick={handleExportarEtiquetas} className="btn btn-outline" style={{ width: '100%' }}>
+              <button 
+                onClick={handleExportarEtiquetas} 
+                className="btn btn-outline" 
+                style={{ 
+                  width: '100%', 
+                  justifyContent: 'flex-start', 
+                  gap: '10px', 
+                  padding: '0.75rem 1rem', 
+                  background: 'rgba(255,255,255,0.05)',
+                  borderColor: 'var(--border-strong)',
+                  fontWeight: '600'
+                }}
+              >
                 <Printer size={16} /> ETIQUETAS
               </button>
-              <button onClick={handleExportarCNC} className="btn btn-outline" style={{ width: '100%' }}>
+              <button 
+                onClick={handleExportarCNC} 
+                className="btn btn-outline" 
+                style={{ 
+                  width: '100%', 
+                  justifyContent: 'flex-start', 
+                  gap: '10px', 
+                  padding: '0.75rem 1rem', 
+                  background: 'rgba(255,255,255,0.05)',
+                  borderColor: 'var(--border-strong)',
+                  fontWeight: '600'
+                }}
+              >
                 <Cpu size={16} /> ARQUIVO CNC (.NC)
               </button>
             </div>
@@ -410,10 +523,22 @@ export default function PlanoCorteIndustrialPage() {
               onClick={handleAprovarProducao}
               disabled={loading}
               className="btn btn-primary"
-              style={{ width: '100%', padding: '1.25rem', fontSize: '1rem' }}
+              style={{ 
+                width: '100%', 
+                padding: '1.25rem', 
+                fontSize: '1rem',
+                fontWeight: '900',
+                letterSpacing: '0.05em',
+                boxShadow: '0 8px 24px rgba(226, 172, 0, 0.3)',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
+              }}
             >
               {loading ? <RefreshCcw className="animate-spin" /> : <CheckCircle size={20} />}
-              APROVAR PRODUÇÃO
+              {loading ? 'PROCESSANDO...' : 'APROVAR PRODUÇÃO'}
             </button>
           </aside>
         )}

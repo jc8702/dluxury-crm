@@ -7,11 +7,14 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Notificacao } from '../api-lib/types';
+import { useToast } from '../context/ToastContext';
+import { CardSkeleton } from '../design-system/components/Skeleton';
 
 const NotificacoesPage: React.FC = () => {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'todas' | 'não_lidas'>('todas');
+  const { error: toastError } = useToast();
 
   useEffect(() => {
     fetchNotificacoes();
@@ -34,7 +37,7 @@ const NotificacoesPage: React.FC = () => {
       await api.notificacoes.markAllRead();
       fetchNotificacoes();
     } catch (error) {
-      alert('Erro ao marcar todas como lidas');
+      toastError('Erro ao marcar todas como lidas');
     }
   };
 
@@ -103,12 +106,18 @@ const NotificacoesPage: React.FC = () => {
 
         <div style={{ minHeight: '400px' }}>
           {loading ? (
-            <div style={{ padding: '4rem', textAlign: 'center' }}>Carregando...</div>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
           ) : notificacoes.length === 0 ? (
-            <div style={{ padding: '6rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <CheckCircle size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-                <h3 style={{ margin: 0 }}>Tudo em dia!</h3>
-                <p style={{ margin: '0.5rem 0 0' }}>Nenhuma notificação {filter === 'não_lidas' ? 'pendente' : 'registrada'}.</p>
+            <div className="empty-state">
+                <CheckCircle size={48} />
+                <div>
+                  <h3 style={{ margin: 0 }}>Tudo em dia!</h3>
+                  <p style={{ margin: '0.5rem 0 0' }}>Nenhuma notificação {filter === 'não_lidas' ? 'pendente' : 'registrada'}.</p>
+                </div>
             </div>
           ) : (
             notificacoes.map((n) => (

@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { 
-  FiArrowLeft, 
-  FiCheck, 
-  FiArrowRight,
-  FiLoader,
-  FiInfo,
-  FiAlertCircle
-} from 'react-icons/fi';
+import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
 export default function FinanceiroTitulosReceberWizard() {
+  const { success, error } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
@@ -79,7 +74,7 @@ export default function FinanceiroTitulosReceberWizard() {
         setPreview(res.data?.parcelas || res.parcelas || []);
         setStep(3);
       } catch (err: any) {
-        alert('Erro ao calcular parcelas. Verifique os dados preenchidos.');
+        error('Erro ao calcular parcelas. Verifique os dados preenchidos.');
       } finally {
         setLoading(false);
       }
@@ -105,10 +100,10 @@ export default function FinanceiroTitulosReceberWizard() {
         valor_custo_financeiro: valorCustoFinanceiro,
         rateio: formData.showRateio ? formData.rateios : []
       });
-      alert('Títulos gerados com sucesso!');
+      success('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-receber';
     } catch (err: any) {
-      alert('Erro ao salvar títulos: ' + (err.message || ''));
+      error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
       setLoading(false);
     }
@@ -139,7 +134,7 @@ export default function FinanceiroTitulosReceberWizard() {
         <div>
           <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Número do Documento / Título
-            <FiInfo title="Gerado automaticamente. Pode editar para o número da NF." />
+            <Info title="Gerado automaticamente. Pode editar para o número da NF." />
           </label>
           <input type="text" className="input-base" value={formData.numero_titulo}
             onChange={e => setFormData({ ...formData, numero_titulo: e.target.value })}
@@ -179,7 +174,7 @@ export default function FinanceiroTitulosReceberWizard() {
         {/* Taxa Financeira – Sempre disponível para ajuste manual */}
         <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--warning, #f59e0b)', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--warning, #f59e0b)', fontWeight: 700, fontSize: '0.9rem' }}>
-            <FiAlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
+            <AlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
             <div>
@@ -340,7 +335,7 @@ export default function FinanceiroTitulosReceberWizard() {
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <button className="btn btn-outline" style={{ marginBottom: '2rem' }}
         onClick={() => window.location.hash = '#/financeiro/titulos-receber'}>
-        <FiArrowLeft /> VOLTAR PARA LISTAGEM
+        <ArrowLeft /> VOLTAR PARA LISTAGEM
       </button>
 
       <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
@@ -357,7 +352,7 @@ export default function FinanceiroTitulosReceberWizard() {
                 fontWeight: 800, border: '2px solid',
                 borderColor: step >= s ? 'var(--primary)' : 'var(--border)'
               }}>
-                {step > s ? <FiCheck /> : s}
+                {step > s ? <Check /> : s}
               </div>
             </div>
           ))}
@@ -379,12 +374,12 @@ export default function FinanceiroTitulosReceberWizard() {
             <button className="btn btn-primary"
               disabled={loading || !formData.cliente_id || !formData.classe_financeira_id}
               onClick={handleNext}>
-              {loading ? <FiLoader className="animate-spin" /> : <>PRÓXIMO <FiArrowRight /></>}
+              {loading ? <Loader className="animate-spin" /> : <>PRÓXIMO <ArrowRight /></>}
             </button>
           ) : (
             <button className="btn btn-primary" style={{ background: 'var(--success)' }}
               disabled={loading} onClick={handleSave}>
-              {loading ? <FiLoader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
+              {loading ? <Loader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
             </button>
           )}
         </div>

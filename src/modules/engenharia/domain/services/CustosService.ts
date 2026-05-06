@@ -91,10 +91,10 @@ export interface ResultadoCustos {
  * Implementa cálculo de custos industriais reais.
  */
 export class CustosService {
-  private db: any;
-  private logger: any;
+  private db: unknown;
+  private logger: Console | unknown;
 
-  constructor(db: any, logger?: any) {
+  constructor(db: unknown, logger?: Console | unknown) {
     this.db = db;
     this.logger = logger || console;
   }
@@ -282,7 +282,7 @@ export class CustosService {
     };
   }
 
-  private calcularAproveitamentoParaLayout(layouts: any[], area_chapa: number): number {
+  private calcularAproveitamentoParaLayout(layouts: CalculoCustoInput['layouts'], area_chapa: number): number {
     const area_usada = layouts.reduce((sum, l) => sum + l.area_aproveitada_mm2, 0);
     return area_chapa > 0 ? (area_usada / area_chapa) * 100 : 0;
   }

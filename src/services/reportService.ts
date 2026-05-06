@@ -1,7 +1,7 @@
-import { jsPDF } from 'jspdf';
+﻿import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
-// Estender jsPDF com autoTable (necessário para TS)
+// Estender jsPDF com autoTable (necessÃ¡rio para TS)
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -10,7 +10,7 @@ declare module 'jspdf' {
 
 export const reportService = {
   /**
-   * Gera o Romaneio de Produção (Oficina)
+   * Gera o Romaneio de ProduÃ§Ã£o (Oficina)
    */
   async generateRomaneioProducao(projetoNome: string, itens: any[]) {
     const doc = new jsPDF();
@@ -23,11 +23,11 @@ export const reportService = {
     
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
-    doc.text('ROMANEIO TÉCNICO DE PRODUÇÃO', 105, 30, { align: 'center' });
+    doc.text('ROMANEIO TÃ‰CNICO DE PRODUÃ‡ÃƒO', 105, 30, { align: 'center' });
     
     doc.setFontSize(10);
     doc.text(`Projeto: ${projetoNome}`, 14, 45);
-    doc.text(`Emissão: ${date}`, 14, 50);
+    doc.text(`EmissÃ£o: ${date}`, 14, 50);
     doc.line(14, 55, 196, 55);
 
     // Tabela de Itens
@@ -47,16 +47,16 @@ export const reportService = {
     });
 
     // Footer
-    const finalY = (doc as any).lastAutoTable.finalY + 20;
+    const _finalY = (doc as any).lastAutoTable._finalY + 20;
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text('Este documento contém especificações técnicas proprietárias da D\'Luxury Móveis.', 105, 285, { align: 'center' });
+    doc.text('Este documento contÃ©m especificaÃ§Ãµes tÃ©cnicas proprietÃ¡rias da D\'Luxury MÃ³veis.', 105, 285, { align: 'center' });
 
     doc.save(`Romaneio_${projetoNome.replace(/\s/g, '_')}.pdf`);
   },
 
   /**
-   * Gera Análise de Rentabilidade
+   * Gera AnÃ¡lise de Rentabilidade
    */
   async generateMapaCustos(dados: any[]) {
     const doc = new jsPDF();
@@ -64,7 +64,7 @@ export const reportService = {
 
     doc.setFontSize(20);
     doc.setTextColor(212, 175, 55);
-    doc.text('RELATÓRIO DE RENTABILIDADE INDUSTRIAL', 105, 20, { align: 'center' });
+    doc.text('RELATÃ“RIO DE RENTABILIDADE INDUSTRIAL', 105, 20, { align: 'center' });
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
@@ -72,7 +72,7 @@ export const reportService = {
 
     doc.autoTable({
       startY: 40,
-      head: [['Projeto', 'Cliente', 'Ambiente', 'Módulos', 'Custo Material (R$)']],
+      head: [['Projeto', 'Cliente', 'Ambiente', 'MÃ³dulos', 'Custo Material (R$)']],
       body: dados.map(d => [
         `PRJ-${d.project_id.substring(0,6).toUpperCase()}`,
         d.cliente,

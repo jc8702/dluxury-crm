@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { FiAlertCircle, FiCalendar, FiUser, FiClock, FiMail, FiPhone, FiFilter, FiX } from 'react-icons/fi';
+import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, X } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroAgingPage() {
+  const { warning } = useToast();
   const [data, setData] = useState<{ summary: any[], details: any[] }>({ summary: [], details: [] });
   const [loading, setLoading] = useState(false);
   const [modo, setModo] = useState<'receber' | 'pagar'>('receber');
@@ -44,7 +47,7 @@ export default function FinanceiroAgingPage() {
     if (email) {
       window.open(`mailto:${email}?subject=${subject}&body=${body}`);
     } else {
-      alert('E-mail não encontrado para este cliente/fornecedor');
+      warning('E-mail não encontrado para este cliente/fornecedor');
     }
   };
 
@@ -60,7 +63,7 @@ export default function FinanceiroAgingPage() {
       const cleanPhone = telefone.replace(/\D/g, '');
       window.open(`https://wa.me/55${cleanPhone}?text=${mensagem}`, '_blank');
     } else {
-      alert('Telefone não encontrado para este cliente/fornecedor');
+      warning('Telefone não encontrado para este cliente/fornecedor');
     }
   };
 
@@ -88,7 +91,7 @@ export default function FinanceiroAgingPage() {
       <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiAlertCircle style={{ color: modo === 'receber' ? 'var(--warning)' : 'var(--danger)' }} />
+            <AlertCircle style={{ color: modo === 'receber' ? 'var(--warning)' : 'var(--danger)' }} />
             Aging / {modo === 'receber' ? (historico ? 'HISTÓRICO RECEBER' : 'Inadimplência') : (historico ? 'HISTÓRICO PAGAR' : 'Dívidas')}
           </h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
@@ -120,7 +123,7 @@ export default function FinanceiroAgingPage() {
               color: historico ? 'black' : 'var(--text-muted)',
               fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem'
             }}>
-            <FiFilter size={14} />{historico ? 'HISTÓRICO' : 'VENCIDOS'}
+            <Filter />{historico ? 'HISTÓRICO' : 'VENCIDOS'}
           </button>
         </div>
       </div>
@@ -171,9 +174,15 @@ export default function FinanceiroAgingPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>Carregando...</td></tr>
+                <TableSkeleton rows={3} cols={6} />
               ) : data.details.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Nenhum título vencido encontrado. Parabéns!</td></tr>
+                <tr>
+                  <td colSpan={6} style={{ padding: 0 }}>
+                    <div className="empty-state" style={{ border: 'none', borderRadius: 0, color: 'var(--success)' }}>
+                      Nenhum título vencido encontrado. Parabéns!
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 data.details.map((t, i) => {
                   const diasAtraso = Math.floor((new Date().getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
@@ -182,7 +191,7 @@ export default function FinanceiroAgingPage() {
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
-                            <FiUser />
+                            <User />
                           </div>
                           <div>
                             <div style={{ fontWeight: 700 }}>{t.entidade_nome || (modo === 'receber' ? 'Cliente' : 'Fornecedor') + ' não identificado'}</div>
@@ -193,7 +202,7 @@ export default function FinanceiroAgingPage() {
                       <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.numero_titulo}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <FiCalendar style={{ opacity: 0.5 }} />
+                          <Calendar style={{ opacity: 0.5 }} />
                           {new Date(t.data_vencimento).toLocaleDateString('pt-BR')}
                         </div>
                       </td>
@@ -207,9 +216,9 @@ export default function FinanceiroAgingPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="E-mail Cobrança" onClick={() => handleEmail(t)}><FiMail /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="WhatsApp" onClick={() => handleWhatsApp(t)}><FiPhone /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="Histórico" onClick={() => handleHistory(t)}><FiClock /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="E-mail Cobrança" onClick={() => handleEmail(t)}><Mail /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="WhatsApp" onClick={() => handleWhatsApp(t)}><Phone /></button>
+                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="Histórico" onClick={() => handleHistory(t)}><Clock /></button>
                         </div>
                       </td>
                     </tr>
@@ -235,7 +244,7 @@ export default function FinanceiroAgingPage() {
           <div className="card" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
               <h3>Histórico de Pagamentos</h3>
-              <button onClick={() => setShowHistoryModal(false)} className="btn btn-outline" style={{ padding: '0.5rem' }}><FiX /></button>
+              <button onClick={() => setShowHistoryModal(false)} className="btn btn-outline" style={{ padding: '0.5rem' }}><X /></button>
             </div>
             {selectedItem && (
               <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '8px' }}>

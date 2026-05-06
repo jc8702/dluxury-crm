@@ -1,5 +1,7 @@
+import { Superficie } from '../../../utils/planodeCorte';
+
 export class ExportadorGCode {
-  static gerarGCodeString(superficie: any, index: number, kerf: number): string {
+  static gerarGCodeString(superficie: Superficie, index: number, kerf: number): string {
     let gcode = `(Plano de Corte - Chapa ${index + 1})\n`;
     gcode += `(Dimensões: ${superficie.largura} x ${superficie.altura} mm)\n`;
     gcode += `G21 (Metrico)\nG90 (Absoluto)\nG0 Z50 (Seguranca)\n`;
@@ -10,7 +12,7 @@ export class ExportadorGCode {
     const passDepth = 6;
     const thickness = 15; // mock para exemplo
 
-    superficie.pecasPositionadas.forEach((peca: any) => {
+    superficie.pecasPositionadas.forEach((peca) => {
       gcode += `(Peca: ${peca.descricao} - ${peca.largura}x${peca.altura})\n`;
       const x1 = peca.x;
       const y1 = peca.y;
@@ -34,7 +36,7 @@ export class ExportadorGCode {
     return gcode;
   }
 
-  static exportarChapa(superficie: any, index: number, kerf: number) {
+  static exportarChapa(superficie: Superficie, index: number, kerf: number) {
     const gcode = this.gerarGCodeString(superficie, index, kerf);
     
     // Fallback if document is undefined (e.g. running in Node.js for tests)

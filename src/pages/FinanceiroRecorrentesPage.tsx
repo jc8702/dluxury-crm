@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import Modal from '../components/ui/Modal';
-import { 
-  FiRepeat, FiPlus, FiTrash2, FiEdit2, FiCheckCircle, 
-  FiXCircle, FiCalendar, FiDollarSign, FiPlay, FiSettings
-} from 'react-icons/fi';
+import { Modal } from '../design-system/components/Modal';
+import { Repeat, Plus, Trash2, Edit2, CheckCircle, XCircle, Play } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../hooks/useConfirm';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroRecorrentesPage() {
+  const { success, error, warning } = useToast();
+  const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -91,18 +93,23 @@ export default function FinanceiroRecorrentesPage() {
       }
       setIsOpen(false);
       load();
+      success('Configuração salva com sucesso!');
     } catch (e: any) {
-      alert(e.message || 'Erro ao salvar');
+      error(e.message || 'Erro ao salvar');
     }
   };
 
   const doDelete = async (id: string) => {
-    if (!window.confirm('Excluir esta configuração de conta recorrente?')) return;
+    const isConfirmed = await confirmAction({
+      title: 'Excluir Configuração',
+      description: 'Excluir esta configuração de conta recorrente?'
+    });
+    if (!isConfirmed) return;
     try {
       await api.financeiro.contasRecorrentes.delete(id);
       load();
     } catch (e: any) {
-      alert(e.message || 'Erro ao excluir');
+      error(e.message || 'Erro ao excluir');
     }
   };
 
@@ -110,10 +117,10 @@ export default function FinanceiroRecorrentesPage() {
     try {
       setLoading(true);
       await api.financeiro.contasRecorrentes.gerarMes(gerarMes, gerarAno);
-      alert('Títulos gerados com sucesso no Contas a Pagar!');
+      success('Títulos gerados com sucesso no Contas a Pagar!');
       setGerarModal(false);
     } catch (e: any) {
-      alert(e.message || 'Erro ao gerar títulos');
+      error(e.message || 'Erro ao gerar títulos');
     } finally {
       setLoading(false);
     }
@@ -124,16 +131,16 @@ export default function FinanceiroRecorrentesPage() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiRepeat style={{ color: 'var(--primary)' }} /> CONTAS RECORRENTES
+            <Repeat /> CONTAS RECORRENTES
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Configuração de despesas fixas e geração automática mensal</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Configuração de despesas fixas e geração automática mensal</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-outline" onClick={() => setGerarModal(true)}>
-            <FiPlay /> GERAR TÍTULOS DO MÊS
+            <Play /> GERAR TÍTULOS DO MÊS
           </button>
           <button className="btn btn-primary" onClick={openNew}>
-            <FiPlus /> NOVA CONFIGURAÇÃO
+            <Plus /> NOVA CONFIGURAÇÃO
           </button>
         </div>
       </div>
@@ -153,21 +160,25 @@ export default function FinanceiroRecorrentesPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Carregando...</td></tr>
+              <TableSkeleton rows={4} cols={7} />
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>Nenhuma conta recorrente configurada.</td></tr>
+              <tr>
+                 <td colSpan={7} style={{ padding: 0 }}>
+                    <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>Nenhuma conta recorrente configurada.</div>
+                 </td>
+              </tr>
             ) : rows.map(r => (
               <tr key={r.id}>
                 <td style={{ textAlign: 'center' }}>
                   {r.ativa ? (
-                    <FiCheckCircle style={{ color: 'var(--success)', fontSize: '1.2rem' }} title="Ativa" />
+                    <CheckCircle style={{ color: 'hsl(var(--success))', fontSize: '1.2rem' }} title="Ativa" />
                   ) : (
-                    <FiXCircle style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }} title="Inativa" />
+                    <XCircle style={{ color: 'hsl(var(--muted-foreground))', fontSize: '1.2rem' }} title="Inativa" />
                   )}
                 </td>
                 <td>
                   <div style={{ fontWeight: 700 }}>{r.descricao.toUpperCase()}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}</div>
                 </td>
                 <td style={{ fontWeight: 600 }}>Todo dia {r.dia_vencimento}</td>
                 <td>{classes.find(c => c.id === r.classe_financeira_id)?.nome || '---'}</td>
@@ -177,8 +188,22 @@ export default function FinanceiroRecorrentesPage() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-outline" style={{ padding: '0.4rem' }} onClick={() => handleEdit(r)}><FiEdit2 /></button>
-                    <button className="btn btn-outline" style={{ padding: '0.4rem', color: 'var(--danger)' }} onClick={() => doDelete(r.id)}><FiTrash2 /></button>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem' }} 
+                      onClick={() => handleEdit(r)}
+                      aria-label={`Editar conta recorrente ${r.descricao}`}
+                    >
+                      <Edit2 />
+                    </button>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem', color: 'hsl(var(--destructive))' }} 
+                      onClick={() => doDelete(r.id)}
+                      aria-label={`Excluir conta recorrente ${r.descricao}`}
+                    >
+                      <Trash2 />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -267,7 +292,7 @@ export default function FinanceiroRecorrentesPage() {
 
       {/* Modal de Geração */}
       <Modal isOpen={gerarModal} onClose={() => setGerarModal(false)} title="Gerar Títulos Mensais" width="400px">
-        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>
           Este processo irá criar lançamentos automáticos no <strong>Contas a Pagar</strong> baseados em todas as configurações ativas acima.
         </p>
 
@@ -293,6 +318,7 @@ export default function FinanceiroRecorrentesPage() {
           </button>
         </div>
       </Modal>
+      {ConfirmDialogElement}
     </div>
   );
 }

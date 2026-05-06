@@ -5,6 +5,8 @@
  * Gera comandos ZPL/TSPL para impressão instantânea sem PDF.
  */
 
+import { PecaPosicionada } from '../../domain/types';
+
 export class ThermalPrinterService {
   /**
    * Conecta à impressora via WebUSB
@@ -32,7 +34,7 @@ export class ThermalPrinterService {
   /**
    * Gera e envia comando ZPL para etiqueta de peça
    */
-  static async imprimirEtiquetaPeca(peca: any, planoNome: string) {
+  static async imprimirEtiquetaPeca(peca: PecaPosicionada, planoNome: string) {
     const zpl = `
       ^XA
       ^CF0,30
@@ -41,7 +43,7 @@ export class ThermalPrinterService {
       ^FO50,100^FDPeça: ${peca.nome}^FS
       ^FO50,150^FDMassa: ${peca.largura}x${peca.altura}mm^FS
       ^FO50,200^FDBordas: ${this.formatarBordas(peca.fio_de_fita)}^FS
-      ^FO50,260^BQN,2,4^FDQA,${peca.id}^FS
+      ^FO50,260^BQN,2,4^FDQA,${peca.peca_id}^FS
       ^XZ
     `;
 
@@ -50,7 +52,7 @@ export class ThermalPrinterService {
     return zpl;
   }
 
-  private static formatarBordas(fita: any) {
+  private static formatarBordas(fita: { topo?: boolean; baixo?: boolean; esquerda?: boolean; direita?: boolean } | undefined | null) {
     if (!fita) return 'Nenhuma';
     const bordas = [];
     if (fita.topo) bordas.push('T');

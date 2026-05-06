@@ -34,26 +34,40 @@ export async function handleRetalhos(req: any, res: any) {
         }
 
       case 'POST':
-        // Criar novo retalho
-        const now = new Date();
-        const [novo] = await db.insert(retalhosEstoque).values({
-          largura_mm: req.body.largura_mm,
-          altura_mm: req.body.altura_mm,
-          espessura_mm: req.body.espessura_mm,
-          sku_chapa: req.body.sku_chapa,
-          origem: req.body.origem,
-          plano_corte_origem_id: req.body.plano_corte_origem_id,
-          projeto_origem: req.body.projeto_origem,
-          observacoes: req.body.observacoes,
-          localizacao: req.body.localizacao,
-          disponivel: req.body.disponivel ?? true,
-          descartado: req.body.descartado ?? false,
-          created_at: now,
-          updated_at: now,
-          usuario_criou: req.user?.nome || req.body.usuario_criou || 'Sistema',
-          metadata: req.body.metadata || {}
-        }).returning();
-        return res.status(201).json({ success: true, data: novo });
+        // Criar novo retalho usando SQL direto para evitar erros de mapeamento do Drizzle
+        try {
+          const { 
+            largura_mm, altura_mm, espessura_mm, sku_chapa, origem, 
+            plano_corte_origem_id, projeto_origem, observacoes, 
+            localizacao, disponivel, descartado, metadata 
+          } = req.body;
+
+          const usuario_criou = req.user?.nome || req.body.usuario_criou || 'Sistema';
+          const now = new Date().toISOString();
+
+          // Usando o utilitário sql importado de _db.js para uma query direta e segura
+          const { sql: rawSql } = await import('./_db.js');
+          
+          const result = await (rawSql as any)`
+            INSERT INTO retalhos_estoque (
+              largura_mm, altura_mm, espessura_mm, sku_chapa, origem, 
+              plano_corte_origem_id, projeto_origem, observacoes, 
+              localizacao, disponivel, descartado, usuario_criou, 
+              created_at, updated_at, metadata
+            ) VALUES (
+              ${largura_mm}, ${altura_mm}, ${espessura_mm}, ${sku_chapa}, ${origem}, 
+              ${plano_corte_origem_id}, ${projeto_origem || null}, ${observacoes || null}, 
+              ${localizacao || 'Geral'}, ${disponivel ?? true}, ${descartado ?? false}, ${usuario_criou}, 
+              ${now}, ${now}, ${JSON.stringify(metadata || {})}
+            ) RETURNING *
+          `;
+
+          const novo = Array.isArray(result) ? result[0] : result;
+          return res.status(201).json({ success: true, data: novo });
+        } catch (dbErr: any) {
+          console.error('DATABASE_INSERT_ERROR:', dbErr);
+          throw dbErr;
+        }
 
       case 'PATCH':
         // Atualizar retalho (usar ou descartar)

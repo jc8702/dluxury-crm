@@ -25,9 +25,28 @@ dist-ssr
 
 .vercel
 .env
+.env.*
 .env*.local
+
+# Scratch / Debug
 scratch/
 test-*.js
 verify-*.js
 check-*.cjs
 list-*.cjs
+
+# Artefatos temporários
+*.zip
+env.txt
+build_output.txt
+unused_vars.txt
+artifacts/
+.gemini/
+
+# Scripts de migração one-off
+migrate_*.ts
+fix-*.ts
+emergency_*.mjs
+scratch_*.js
+scratch_*.mjs
+scratch_*.cjs

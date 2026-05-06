@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '../../design-system/components/Card';
 import { api } from '../../lib/api';
+import { CardSkeleton } from '../../design-system/components/Skeleton';
 
 interface Metrics {
   totalOPs: number;
@@ -32,7 +34,14 @@ const ProductionDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Carregando KPI industriais...</div>;
+  if (loading) return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+       <CardSkeleton />
+       <CardSkeleton />
+       <CardSkeleton />
+       <CardSkeleton />
+    </div>
+  );
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>

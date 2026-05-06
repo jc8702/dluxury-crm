@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -141,57 +142,59 @@ export default function App() {
   return (
     <AppProvider>
       <ErrorBoundary>
-        <HashRouter>
-          <Suspense fallback={<LoadingScreen />}>
-            <AuthBypass>
-              <Routes>
-                {/* Rotas Públicas */}
-                <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
-                <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
-                
-                {/* Rotas Principais */}
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/painel" replace />} />
-                  <Route path="painel" element={<DashboardPage />} />
-                  <Route path="clientes" element={<ClientsPage />} />
-                  <Route path="orcamentos" element={<OrcamentosPage />} />
-                  <Route path="projetos" element={<ProjectsPage />} />
-                  <Route path="producao" element={<ProductionPage />} />
-                   <Route path="plano-de-corte" element={<CuttingPlanPage />} />
-                   <Route path="plano-de-corte-demo" element={<PlanoCorteDemoPage />} />
-                   <Route path="retalhos" element={<RetalhosPage />} />
-                   <Route path="visitas" element={<VisitsPage />} />
-                  <Route path="calendario" element={<CalendarioPage />} />
-                  <Route path="pos-venda" element={<PosVendaPage />} />
-                  <Route path="estoque" element={<InventoryPage />} />
-                  <Route path="fornecedores" element={<SuppliersPage />} />
-                  <Route path="engenharia" element={<EngineeringPage />} />
-                  <Route path="pecas" element={<SKUsPage />} />
-                  <Route path="relatorios" element={<ReportsPage />} />
-                  <Route path="financeiro" element={<FinancePage />} />
-                  <Route path="financeiro/classes" element={<FinanceClassesPage />} />
-                  <Route path="financeiro/contas" element={<FinanceContasPage />} />
-                  <Route path="financeiro/formas" element={<FinanceFormasPage />} />
-                  <Route path="financeiro/condicoes" element={<FinanceCondicoesPage />} />
-                  <Route path="financeiro/titulos-receber" element={<FinanceTitulosReceberPage />} />
-                  <Route path="financeiro/titulos-receber/wizard" element={<FinanceTitulosReceberWizard />} />
-                  <Route path="financeiro/titulos-pagar" element={<FinanceTitulosPagarPage />} />
-                  <Route path="financeiro/titulos-pagar/wizard" element={<FinanceTitulosPagarWizard />} />
-                  <Route path="financeiro/dre" element={<FinanceDREPage />} />
-                  <Route path="financeiro/aging" element={<FinanceAgingPage />} />
-                  <Route path="financeiro/fluxo-caixa" element={<FinanceFluxoCaixaPage />} />
-                  <Route path="financeiro/recorrentes" element={<FinanceRecorrentesPage />} />
-                  <Route path="financeiro/conciliacao" element={<FinanceConciliacaoPage />} />
-                  <Route path="configuracoes" element={<SettingsPage />} />
-                  <Route path="notificacoes" element={<NotificacoesPage />} />
-                  <Route path="compras" element={<ComprasPage />} />
-                </Route>
+        <ToastProvider>
+          <HashRouter>
+            <Suspense fallback={<LoadingScreen />}>
+              <AuthBypass>
+                <Routes>
+                  {/* Rotas Públicas */}
+                  <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
+                  <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage /></Suspense>} />
+                  
+                  {/* Rotas Principais */}
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="/painel" replace />} />
+                    <Route path="painel" element={<DashboardPage />} />
+                    <Route path="clientes" element={<ClientsPage />} />
+                    <Route path="orcamentos" element={<OrcamentosPage />} />
+                    <Route path="projetos" element={<ProjectsPage />} />
+                    <Route path="producao" element={<ProductionPage />} />
+                     <Route path="plano-de-corte" element={<CuttingPlanPage />} />
+                     <Route path="plano-de-corte-demo" element={<PlanoCorteDemoPage />} />
+                     <Route path="retalhos" element={<RetalhosPage />} />
+                     <Route path="visitas" element={<VisitsPage />} />
+                    <Route path="calendario" element={<CalendarioPage />} />
+                    <Route path="pos-venda" element={<PosVendaPage />} />
+                    <Route path="estoque" element={<InventoryPage />} />
+                    <Route path="fornecedores" element={<SuppliersPage />} />
+                    <Route path="engenharia" element={<EngineeringPage />} />
+                    <Route path="pecas" element={<SKUsPage />} />
+                    <Route path="relatorios" element={<ReportsPage />} />
+                    <Route path="financeiro" element={<FinancePage />} />
+                    <Route path="financeiro/classes" element={<FinanceClassesPage />} />
+                    <Route path="financeiro/contas" element={<FinanceContasPage />} />
+                    <Route path="financeiro/formas" element={<FinanceFormasPage />} />
+                    <Route path="financeiro/condicoes" element={<FinanceCondicoesPage />} />
+                    <Route path="financeiro/titulos-receber" element={<FinanceTitulosReceberPage />} />
+                    <Route path="financeiro/titulos-receber/wizard" element={<FinanceTitulosReceberWizard />} />
+                    <Route path="financeiro/titulos-pagar" element={<FinanceTitulosPagarPage />} />
+                    <Route path="financeiro/titulos-pagar/wizard" element={<FinanceTitulosPagarWizard />} />
+                    <Route path="financeiro/dre" element={<FinanceDREPage />} />
+                    <Route path="financeiro/aging" element={<FinanceAgingPage />} />
+                    <Route path="financeiro/fluxo-caixa" element={<FinanceFluxoCaixaPage />} />
+                    <Route path="financeiro/recorrentes" element={<FinanceRecorrentesPage />} />
+                    <Route path="financeiro/conciliacao" element={<FinanceConciliacaoPage />} />
+                    <Route path="configuracoes" element={<SettingsPage />} />
+                    <Route path="notificacoes" element={<NotificacoesPage />} />
+                    <Route path="compras" element={<ComprasPage />} />
+                  </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </AuthBypass>
-          </Suspense>
-        </HashRouter>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AuthBypass>
+            </Suspense>
+          </HashRouter>
+        </ToastProvider>
       </ErrorBoundary>
     </AppProvider>
   );

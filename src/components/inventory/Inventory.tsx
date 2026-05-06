@@ -150,12 +150,14 @@ const Inventory: React.FC = () => {
               <button 
                 onClick={() => setViewMode('grid')}
                 style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'grid' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)' }}
+                aria-label="Visualização em Grade"
               >
                 <LayoutGrid size={18} />
               </button>
               <button 
                 onClick={() => setViewMode('table')}
                 style={{ all: 'unset', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', background: viewMode === 'table' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)' }}
+                aria-label="Visualização em Lista"
               >
                 <List size={18} />
               </button>
@@ -221,9 +223,24 @@ const Inventory: React.FC = () => {
                           </span>
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button onClick={() => handleEdit(m)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '1rem', marginRight: '0.75rem' }} title="Editar">✎</button>
-                          <button onClick={() => handleOpenMov(m)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', marginRight: '0.5rem' }}>Movimentar</button>
-                          <button onClick={() => handleDelete(m)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }} title="Excluir">🗑</button>
+                          <button 
+                            onClick={() => handleEdit(m)} 
+                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '1rem', marginRight: '0.75rem' }} 
+                            title="Editar"
+                            aria-label={`Editar material ${m.nome}`}
+                          >✎</button>
+                          <button 
+                            onClick={() => handleOpenMov(m)} 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', marginRight: '0.5rem' }}
+                            aria-label={`Registrar movimentação para ${m.nome}`}
+                          >Movimentar</button>
+                          <button 
+                            onClick={() => handleDelete(m)} 
+                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '1rem' }} 
+                            title="Excluir"
+                            aria-label={`Excluir material ${m.nome}`}
+                          >🗑</button>
                         </td>
                       </tr>
                     );

@@ -193,8 +193,8 @@ export async function handleCompras(req: any, res: any) {
 
         // 6. Atualizar status do pedido
         const allItens = await sql`SELECT quantidade_pedida, quantidade_recebida FROM pedido_compra_itens WHERE pedido_id = ${pedido_id}`;
-        const totalPedida = allItens.reduce((acc, i) => acc + Number(i.quantidade_pedida), 0);
-        const totalRecebida = allItens.reduce((acc, i) => acc + Number(i.quantidade_recebida), 0);
+        const totalPedida = allItens.reduce((acc: number, i: any) => acc + Number(i.quantidade_pedida), 0);
+        const totalRecebida = allItens.reduce((acc: number, i: any) => acc + Number(i.quantidade_recebida), 0);
         
         let pStatus = 'parcialmente_recebido';
         if (totalRecebida >= totalPedida) pStatus = 'recebido';

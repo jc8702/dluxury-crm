@@ -52,7 +52,11 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
       
       // Regras de qualidade
-      'no-unused-vars': 'off', // Desligado pois o TS tem它的
+      'no-unused-vars': 'off', // Desligado pois usamos a regra do typescript-eslint
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_' 
+      }],
       'no-console': 'warn',
       'eqeqeq': ['error', 'always'],
       

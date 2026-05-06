@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../lib/api';
-import { FiPieChart, FiToggleLeft, FiToggleRight, FiTrendingUp, FiTrendingDown, FiMinus, FiCalendar } from 'react-icons/fi';
+
+import { PieChart, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = (v: number) => `${(v || 0).toFixed(1)}%`;
@@ -60,30 +61,30 @@ export default function FinanceiroDREPage() {
   }: { 
     label: string; value: number; margin?: number; color: string; isNegative?: boolean; sublabel?: string; children?: React.ReactNode; sectionKey?: string;
   }) => (
-    <div style={{ borderLeft: `4px solid ${color}`, padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0 8px 8px 0', marginBottom: '1rem' }}>
+    <div style={{ borderLeft: `4px solid ${color}`, padding: '1rem 1.5rem', background: 'hsl(var(--surface-elevated))', borderRadius: '0 8px 8px 0', marginBottom: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-          {sublabel && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{sublabel}</div>}
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+          {sublabel && <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.1rem' }}>{sublabel}</div>}
         </div>
         <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           {margin !== undefined && (
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: margin >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: margin >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
               {fmtPct(margin)}
             </div>
           )}
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: isNegative ? 'var(--danger)' : color }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: isNegative ? 'hsl(var(--destructive))' : color }}>
             {isNegative ? '(' : ''}{fmt(Math.abs(value))}{isNegative ? ')' : ''}
           </div>
           {sectionKey && children && (
-            <button onClick={() => toggleSection(sectionKey)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}>
+            <button onClick={() => toggleSection(sectionKey)} style={{ background: 'none', border: 'none', color: 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: '0.8rem' }}>
               {expandedSections[sectionKey] ? '▲' : '▼'}
             </button>
           )}
         </div>
       </div>
       {sectionKey && expandedSections[sectionKey] && children && (
-        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--border))' }}>
           {children}
         </div>
       )}
@@ -91,9 +92,9 @@ export default function FinanceiroDREPage() {
   );
 
   const LineItem = ({ label, value, isNegative }: { label: string; value: number; isNegative?: boolean }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
-      <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span style={{ fontWeight: 600, color: isNegative ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid hsl(var(--surface-hover))', fontSize: '0.85rem' }}>
+      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
+      <span style={{ fontWeight: 600, color: isNegative ? 'hsl(var(--destructive))' : 'hsl(var(--success))', fontFamily: 'monospace' }}>
         {isNegative ? '(' : ''}{fmt(Math.abs(value))}{isNegative ? ')' : ''}
       </span>
     </div>
@@ -101,9 +102,9 @@ export default function FinanceiroDREPage() {
 
   const Divider = ({ label }: { label: string }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0 1rem' }}>
-      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
-      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+      <div style={{ flex: 1, height: '1px', background: 'hsl(var(--border))' }} />
+      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>{label}</span>
+      <div style={{ flex: 1, height: '1px', background: 'hsl(var(--border))' }} />
     </div>
   );
 
@@ -112,9 +113,9 @@ export default function FinanceiroDREPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiPieChart style={{ color: '#a855f7' }} /> DRE — DEMONSTRAÇÃO DO RESULTADO
+            <PieChart style={{ color: 'hsl(var(--accent))' }} /> DRE — DEMONSTRAÇÃO DO RESULTADO
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Apuração de lucro e desempenho financeiro no período</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>Apuração de lucro e desempenho financeiro no período</p>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -128,7 +129,7 @@ export default function FinanceiroDREPage() {
             className="btn btn-outline"
             style={{ fontSize: '0.8rem', gap: '0.5rem' }}
           >
-            {regime === 'competencia' ? <FiToggleLeft /> : <FiToggleRight />}
+            {regime === 'competencia' ? <ToggleLeft /> : <ToggleRight />}
             REGIME: {regime === 'competencia' ? 'COMPETÊNCIA' : 'CAIXA'}
           </button>
 
@@ -136,20 +137,22 @@ export default function FinanceiroDREPage() {
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <input type="date" className="input-base" style={{ fontSize: '0.8rem', padding: '0.5rem' }} value={periodo.inicio}
               onChange={e => setPeriodo(p => ({ ...p, inicio: e.target.value }))} />
-            <span style={{ color: 'var(--text-muted)' }}>até</span>
+            <span style={{ color: 'hsl(var(--muted-foreground))' }}>até</span>
             <input type="date" className="input-base" style={{ fontSize: '0.8rem', padding: '0.5rem' }} value={periodo.fim}
               onChange={e => setPeriodo(p => ({ ...p, fim: e.target.value }))} />
             <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}>
-              <FiCalendar /> APLICAR
+              <Calendar /> APLICAR
             </button>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Calculando DRE...</div>
+        <div className="card glass">
+          <TableSkeleton rows={10} cols={3} />
+        </div>
       ) : !data ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Sem dados para o período selecionado</div>
+        <div style={{ textAlign: 'center', padding: '4rem', color: 'hsl(var(--muted-foreground))' }}>Sem dados para o período selecionado</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem' }}>
           
@@ -157,52 +160,52 @@ export default function FinanceiroDREPage() {
           <div>
             <Divider label="RECEITAS" />
 
-            <Block label="RECEITA BRUTA" value={data.receita_bruta} color="var(--success)" sectionKey="receitas"
+            <Block label="RECEITA BRUTA" value={data.receita_bruta} color="hsl(var(--success))" sectionKey="receitas"
               sublabel="Vendas + Serviços + Outras Receitas">
               {data.detalhes?.receitas?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} />)}
             </Block>
 
             <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(34,197,94,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span style={{ fontWeight: 700 }}>= RECEITA LÍQUIDA</span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: 'var(--success)' }}>{fmt(data.receita_liquida)}</span>
+              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: 'hsl(var(--success))' }}>{fmt(data.receita_liquida)}</span>
             </div>
 
             <Divider label="CUSTOS DIRETOS" />
 
             <Block label="MATÉRIA-PRIMA E MÃO DE OBRA" value={data.detalhes?.custos_diretos?.reduce((s, r) => s + r.valor, 0) || 0}
-              color="#f59e0b" isNegative sectionKey="custos"
+              color="hsl(var(--warning))" isNegative sectionKey="custos"
               sublabel="Classes 2.1 (Material) e 2.2 (Mão de Obra)">
               {data.detalhes?.custos_diretos?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
             <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: data.lucro_bruto >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 700 }}>= LUCRO BRUTO <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({fmtPct(data.margem_bruta)} de margem)</span></span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.lucro_bruto >= 0 ? 'var(--success)' : 'var(--danger)' }}>{fmt(data.lucro_bruto)}</span>
+              <span style={{ fontWeight: 700 }}>= LUCRO BRUTO <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>({fmtPct(data.margem_bruta)} de margem)</span></span>
+              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.lucro_bruto >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>{fmt(data.lucro_bruto)}</span>
             </div>
 
             <Divider label="DESPESAS OPERACIONAIS" />
 
             <Block label="OPERACIONAIS + COMERCIAL + LOGÍSTICA" value={(data.detalhes?.despesas_operacionais?.reduce((s, r) => s + r.valor, 0)) || 0}
-              color="#ef4444" isNegative sectionKey="despesasOp"
+              color="hsl(var(--destructive))" isNegative sectionKey="despesasOp"
               sublabel="Classes 2.3, 2.4 e 2.5">
               {data.detalhes?.despesas_operacionais?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
             <Block label="DESPESAS ADMINISTRATIVAS" value={(data.detalhes?.despesas_administrativas?.reduce((s, r) => s + r.valor, 0)) || 0}
-              color="#ef4444" isNegative sectionKey="despesasAdmin"
+              color="hsl(var(--destructive))" isNegative sectionKey="despesasAdmin"
               sublabel="Classe 2.6 (Impostos, Contador, Seguros...)">
               {data.detalhes?.despesas_administrativas?.map((r, i) => <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />)}
             </Block>
 
             <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: data.ebitda >= 0 ? 'rgba(59,130,246,0.08)' : 'rgba(239,68,68,0.08)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 700 }}>= EBITDA <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({fmtPct(data.margem_ebitda)} de margem)</span></span>
-              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.ebitda >= 0 ? '#3b82f6' : 'var(--danger)' }}>{fmt(data.ebitda)}</span>
+              <span style={{ fontWeight: 700 }}>= EBITDA <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>({fmtPct(data.margem_ebitda)} de margem)</span></span>
+              <span style={{ fontWeight: 900, fontFamily: 'monospace', color: data.ebitda >= 0 ? 'hsl(var(--info))' : 'hsl(var(--destructive))' }}>{fmt(data.ebitda)}</span>
             </div>
 
             <Divider label="RESULTADO FINANCEIRO" />
 
             <Block label="RESULTADO FINANCEIRO LÍQUIDO" value={data.detalhes?.resultado_financeiro?.saldo || 0}
-              color={data.detalhes?.resultado_financeiro?.saldo >= 0 ? 'var(--success)' : 'var(--danger)'}
+              color={data.detalhes?.resultado_financeiro?.saldo >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
               isNegative={(data.detalhes?.resultado_financeiro?.saldo || 0) < 0}
               sublabel="Receitas financeiras - Despesas financeiras"
             />
@@ -210,14 +213,14 @@ export default function FinanceiroDREPage() {
             <div style={{ 
               padding: '1.25rem 1.5rem', marginTop: '1.5rem',
               background: data.lucro_liquido >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', 
-              borderRadius: '12px', border: `2px solid ${data.lucro_liquido >= 0 ? 'var(--success)' : 'var(--danger)'}`,
+              borderRadius: '12px', border: `2px solid ${data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}`,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center'
             }}>
               <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>= LUCRO LÍQUIDO DO PERÍODO</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Margem Líquida: {fmtPct(data.margem_liquida)}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))' }}>= LUCRO LÍQUIDO DO PERÍODO</div>
+                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Margem Líquida: {fmtPct(data.margem_liquida)}</div>
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 900, color: data.lucro_liquido >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 900, color: data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
                 {fmt(data.lucro_liquido)}
               </div>
             </div>
@@ -226,17 +229,17 @@ export default function FinanceiroDREPage() {
           {/* Painel de Margens */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="card glass" style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', marginBottom: '1rem' }}>
                 PAINEL DE MARGENS
               </div>
               {[
-                { label: 'Margem Bruta', value: data.margem_bruta, color: '#f59e0b' },
-                { label: 'EBITDA', value: data.margem_ebitda, color: '#3b82f6' },
-                { label: 'Margem Líquida', value: data.margem_liquida, color: data.margem_liquida >= 0 ? 'var(--success)' : 'var(--danger)' },
+                { label: 'Margem Bruta', value: data.margem_bruta, color: 'hsl(var(--warning))' },
+                { label: 'EBITDA', value: data.margem_ebitda, color: 'hsl(var(--info))' },
+                { label: 'Margem Líquida', value: data.margem_liquida, color: data.margem_liquida >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' },
               ].map((m, i) => (
                 <div key={i} style={{ marginBottom: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{m.label}</span>
+                    <span style={{ color: 'hsl(var(--muted-foreground))' }}>{m.label}</span>
                     <span style={{ fontWeight: 700, color: m.color }}>{fmtPct(m.value)}</span>
                   </div>
                   <div style={{ height: '8px', background: 'var(--surface-hover)', borderRadius: '999px', overflow: 'hidden' }}>
@@ -247,28 +250,28 @@ export default function FinanceiroDREPage() {
             </div>
 
             <div className="card glass" style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', marginBottom: '1rem' }}>
                 RESUMO EXECUTIVO
               </div>
               {[
-                { label: 'Receita Bruta', value: data.receita_bruta, icon: <FiTrendingUp />, color: 'var(--success)' },
-                { label: 'Total Custos', value: (data.detalhes?.custos_diretos?.reduce((s, r) => s + r.valor, 0) || 0), icon: <FiMinus />, color: '#f59e0b' },
-                { label: 'Total Despesas', value: (data.detalhes?.despesas_operacionais?.reduce((s, r) => s + r.valor, 0) || 0) + (data.detalhes?.despesas_administrativas?.reduce((s, r) => s + r.valor, 0) || 0), icon: <FiTrendingDown />, color: 'var(--danger)' },
-                { label: 'Resultado', value: data.lucro_liquido, icon: null, color: data.lucro_liquido >= 0 ? 'var(--success)' : 'var(--danger)' },
+                { label: 'Receita Bruta', value: data.receita_bruta, icon: <TrendingUp />, color: 'hsl(var(--success))' },
+                { label: 'Total Custos', value: (data.detalhes?.custos_diretos?.reduce((s, r) => s + r.valor, 0) || 0), icon: <Minus />, color: 'hsl(var(--warning))' },
+                { label: 'Total Despesas', value: (data.detalhes?.despesas_operacionais?.reduce((s, r) => s + r.valor, 0) || 0) + (data.detalhes?.despesas_administrativas?.reduce((s, r) => s + r.valor, 0) || 0), icon: <TrendingDown />, color: 'hsl(var(--destructive))' },
+                { label: 'Resultado', value: data.lucro_liquido, icon: null, color: data.lucro_liquido >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' },
               ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: item.color }}>{item.icon}<span style={{ color: 'var(--text-secondary)' }}>{item.label}</span></div>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid hsl(var(--border))', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: item.color }}>{item.icon}<span style={{ color: 'hsl(var(--muted-foreground))' }}>{item.label}</span></div>
                   <span style={{ fontWeight: 700, fontFamily: 'monospace', color: item.color }}>{fmt(item.value)}</span>
                 </div>
               ))}
             </div>
 
             <div className="card glass" style={{ padding: '1.25rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>REGIME DE APURAÇÃO</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>REGIME DE APURAÇÃO</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>
                 {regime === 'competencia' ? '📊 COMPETÊNCIA' : '💰 CAIXA'}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem' }}>
                 {regime === 'competencia' ? 'Reconhece na emissão/vencimento' : 'Reconhece na data de pagamento'}
               </div>
             </div>

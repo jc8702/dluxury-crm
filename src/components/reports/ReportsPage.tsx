@@ -159,8 +159,8 @@ const ReportsPage: React.FC = () => {
                     <tbody>
                       {reportData.length === 0 ? (
                         <tr>
-                          <td colSpan={10} style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                             Nenhum dado encontrado para o filtro selecionado.
+                          <td colSpan={10} style={{ padding: 0 }}>
+                             <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>Nenhum dado encontrado para o filtro selecionado.</div>
                           </td>
                         </tr>
                       ) : (

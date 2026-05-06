@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { FiUpload, FiRefreshCw, FiCheckCircle, FiXCircle, FiLink, FiAlertTriangle } from 'react-icons/fi';
+import { Upload, RefreshCw, CheckCircle, XCircle, Link, AlertTriangle } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
@@ -36,7 +37,7 @@ function parseOFX(content: string): OFXTransaction[] {
     const fitid = getVal('FITID');
     const dtposted = getVal('DTPOSTED');
     const trnamt = getVal('TRNAMT');
-    const trntype = getVal('TRNTYPE');
+    const _trntype = getVal('_trntype');
     const memo = getVal('MEMO') || getVal('NAME') || '';
     
     if (!fitid || !trnamt) continue;
@@ -62,7 +63,7 @@ function parseOFX(content: string): OFXTransaction[] {
 
 function autoMatch(ofxTxns: OFXTransaction[], internals: InternalEntry[]): OFXTransaction[] {
   return ofxTxns.map(txn => {
-    // Tentar match por valor exato + tipo compatível (±3 dias de tolerância)
+    // Tentar match por valor exato + tipo compatÃ­vel (Â±3 dias de tolerÃ¢ncia)
     const txnDate = new Date(txn.date);
     const isCredit = txn.type === 'CREDIT';
     
@@ -82,6 +83,7 @@ function autoMatch(ofxTxns: OFXTransaction[], internals: InternalEntry[]): OFXTr
 }
 
 export default function FinanceiroConciliacaoPage() {
+  const { success, error: toastError, warning } = useToast();
   const [ofxTxns, setOfxTxns] = useState<OFXTransaction[]>([]);
   const [internals, setInternals] = useState<InternalEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,9 +100,9 @@ export default function FinanceiroConciliacaoPage() {
     try {
       const content = await file.text();
       const parsed = parseOFX(content);
-      if (parsed.length === 0) throw new Error('Arquivo OFX inválido ou sem transações');
+      if (parsed.length === 0) throw new Error('Arquivo OFX invÃ¡lido ou sem transaÃ§Ãµes');
       
-      // Carregar títulos pendentes
+      // Carregar tÃ­tulos pendentes
       const [recRes, pagRes] = await Promise.all([
         fetch('/api/financeiro/titulos-receber?status=aberto', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
         fetch('/api/financeiro/titulos-pagar?status=aberto', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
@@ -132,10 +134,10 @@ export default function FinanceiroConciliacaoPage() {
 
   const persistConciliacao = async () => {
     const matched = ofxTxns.filter(t => t.status === 'matched' || t.status === 'manual');
-    if (matched.length === 0) { alert('Nenhuma transação conciliada para persistir.'); return; }
+    if (matched.length === 0) { warning('Nenhuma transação conciliada para persistir.'); return; }
     setPersistindo(true);
     try {
-      // Marcar como conferidos no backend via endpoint de conferência
+      // Marcar como conferidos no backend via endpoint de conferÃªncia
       for (const txn of matched) {
         if (txn.matchedTitulo) {
           await fetch('/api/financeiro/conferencia', {
@@ -146,6 +148,7 @@ export default function FinanceiroConciliacaoPage() {
         }
       }
       setPersisted(true);
+      success('Conciliação persistida com sucesso!');
     } finally {
       setPersistindo(false);
     }
@@ -162,13 +165,13 @@ export default function FinanceiroConciliacaoPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiRefreshCw style={{ color: '#06b6d4' }} /> CONCILIAÇÃO BANCÁRIA
+            <RefreshCw /> CONCILIAÇÃO BANCÁRIA
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Importe seu extrato OFX e compare com os lançamentos internos</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>Importe seu extrato OFX e compare com os lanÃ§amentos internos</p>
         </div>
         {ofxTxns.length > 0 && (
           <button className="btn btn-primary" onClick={persistConciliacao} disabled={persistindo || persisted}>
-            {persisted ? <><FiCheckCircle /> CONCILIADO!</> : persistindo ? '⏳ Salvando...' : <><FiCheckCircle /> PERSISTIR CONCILIAÇÃO</>}
+            {persisted ? <><CheckCircle /> CONCILIADO!</> : persistindo ? 'â ³ Salvando...' : <><CheckCircle /> PERSISTIR CONCILIAÃ‡ÃƒO</>}
           </button>
         )}
       </div>
@@ -176,33 +179,33 @@ export default function FinanceiroConciliacaoPage() {
       {/* Upload */}
       <div 
         className="card glass"
-        style={{ border: '2px dashed var(--border)', padding: '3rem', textAlign: 'center', cursor: 'pointer', marginBottom: '2rem', transition: '0.2s' }}
+        style={{ border: '2px dashed hsl(var(--border))', padding: '3rem', textAlign: 'center', cursor: 'pointer', marginBottom: '2rem', transition: '0.2s' }}
         onClick={() => fileRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--primary)'; }}
-        onDragLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-        onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--border)'; const file = e.dataTransfer.files[0]; if (file) handleFile(file); }}
+        onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'hsl(var(--primary))'; }}
+        onDragLeave={e => { e.currentTarget.style.borderColor = 'hsl(var(--border))'; }}
+        onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'hsl(var(--border))'; const file = e.dataTransfer.files[0]; if (file) handleFile(file); }}
       >
         <input ref={fileRef} type="file" accept=".ofx,.OFX" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
-        <FiUpload style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '0.75rem' }} />
+        <Upload style={{ fontSize: '2.5rem', color: 'hsl(var(--primary))', marginBottom: '0.75rem' }} />
         <p style={{ fontWeight: 700 }}>{loading ? 'Processando...' : 'Arraste seu arquivo OFX aqui ou clique para selecionar'}</p>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Compatível com todos os bancos brasileiros</p>
-        {error && <p style={{ color: 'var(--danger)', marginTop: '0.75rem', fontWeight: 700 }}>{error}</p>}
+        <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.35rem' }}>CompatÃ­vel com todos os bancos brasileiros</p>
+        {error && <p style={{ color: 'hsl(var(--destructive))', marginTop: '0.75rem', fontWeight: 700 }}>{error}</p>}
       </div>
 
       {ofxTxns.length > 0 && (
         <>
-          {/* Métricas */}
+          {/* MÃ©tricas */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
             {[
-              { label: 'Total Importado', value: ofxTxns.length, color: 'var(--primary)', sub: `${fmt(ofxTxns.reduce((s, t) => s + t.amount, 0))} total` },
-              { label: 'Conciliadas', value: matched.length, color: 'var(--success)', sub: `${matchRate}% de match` },
-              { label: 'Pendentes', value: unmatched.length, color: 'var(--warning)', sub: 'Sem correspondência' },
-              { label: 'Ignoradas', value: ignored.length, color: 'var(--text-muted)', sub: 'Descartadas' },
+              { label: 'Total Importado', value: ofxTxns.length, color: 'hsl(var(--primary))', sub: `${fmt(ofxTxns.reduce((s, t) => s + t.amount, 0))} total` },
+              { label: 'Conciliadas', value: matched.length, color: 'hsl(var(--success))', sub: `${matchRate}% de match` },
+              { label: 'Pendentes', value: unmatched.length, color: 'hsl(var(--warning))', sub: 'Sem correspondÃªncia' },
+              { label: 'Ignoradas', value: ignored.length, color: 'hsl(var(--muted-foreground))', sub: 'Descartadas' },
             ].map((m, i) => (
               <div key={i} className="card glass" style={{ padding: '1rem', borderLeft: `3px solid ${m.color}` }}>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{m.label}</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{m.label}</div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 900, color: m.color }}>{m.value}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.sub}</div>
+                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>{m.sub}</div>
               </div>
             ))}
           </div>
@@ -210,25 +213,25 @@ export default function FinanceiroConciliacaoPage() {
           {/* Barra de progresso */}
           <div className="card glass" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              <span>PROGRESSO DA CONCILIAÇÃO</span>
-              <span style={{ color: Number(matchRate) >= 80 ? 'var(--success)' : Number(matchRate) >= 50 ? 'var(--warning)' : 'var(--danger)' }}>{matchRate}%</span>
+              <span>PROGRESSO DA CONCILIAÃ‡ÃƒO</span>
+              <span style={{ color: Number(matchRate) >= 80 ? 'hsl(var(--success))' : Number(matchRate) >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))' }}>{matchRate}%</span>
             </div>
             <div style={{ height: '8px', background: 'var(--surface-hover)', borderRadius: '999px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${matchRate}%`, background: Number(matchRate) >= 80 ? 'var(--success)' : Number(matchRate) >= 50 ? 'var(--warning)' : 'var(--danger)', borderRadius: '999px', transition: '0.5s' }} />
+              <div style={{ height: '100%', width: `${matchRate}%`, background: Number(matchRate) >= 80 ? 'hsl(var(--success))' : Number(matchRate) >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))', borderRadius: '999px', transition: '0.5s' }} />
             </div>
           </div>
 
           {/* Listagem */}
           <div className="card glass" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.9rem' }}>
-              TRANSAÇÕES DO EXTRATO OFX
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid hsl(var(--border))', fontWeight: 700, fontSize: '0.9rem' }}>
+              TRANSAÃ‡Ã•ES DO EXTRATO OFX
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    {['DATA', 'DESCRIÇÃO', 'TIPO', 'VALOR', 'STATUS', 'CORRESPONDÊNCIA', 'AÇÕES'].map(h => (
-                      <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  <tr style={{ background: 'hsl(var(--surface-elevated))' }}>
+                    {['DATA', 'DESCRIÃ‡ÃƒO', 'TIPO', 'VALOR', 'STATUS', 'CORRESPONDÃŠNCIA', 'AÃ‡Ã•ES'].map(h => (
+                      <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', borderBottom: '1px solid hsl(var(--border))' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -241,36 +244,36 @@ export default function FinanceiroConciliacaoPage() {
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={txn.memo}>{txn.memo}</div>
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px', background: txn.type === 'CREDIT' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: txn.type === 'CREDIT' ? 'var(--success)' : 'var(--danger)' }}>
-                            {txn.type === 'CREDIT' ? 'ENTRADA' : 'SAÍDA'}
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px', background: txn.type === 'CREDIT' ? 'rgba(34,197,94,0.15)' : 'hsl(var(--destructive)/0.15)', color: txn.type === 'CREDIT' ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
+                            {txn.type === 'CREDIT' ? 'ENTRADA' : 'SAÃDA'}
                           </span>
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: txn.type === 'CREDIT' ? 'var(--success)' : 'var(--danger)' }}>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: txn.type === 'CREDIT' ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}>
                           {txn.type === 'CREDIT' ? '+' : '-'} {fmt(txn.amount)}
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
-                          {txn.status === 'matched' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(34,197,94,0.15)', color: 'var(--success)', fontWeight: 700 }}><FiCheckCircle style={{ verticalAlign: 'middle' }} /> AUTO</span>}
-                          {txn.status === 'manual' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', fontWeight: 700 }}><FiLink style={{ verticalAlign: 'middle' }} /> MANUAL</span>}
-                          {txn.status === 'unmatched' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(245,158,11,0.15)', color: 'var(--warning)', fontWeight: 700 }}><FiAlertTriangle style={{ verticalAlign: 'middle' }} /> PENDENTE</span>}
-                          {txn.status === 'ignored' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(107,114,128,0.15)', color: 'var(--text-muted)', fontWeight: 700 }}>IGNORADO</span>}
+                          {txn.status === 'matched' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(34,197,94,0.15)', color: 'hsl(var(--success))', fontWeight: 700 }}><CheckCircle style={{ verticalAlign: 'middle' }} /> AUTO</span>}
+                          {txn.status === 'manual' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(59,130,246,0.15)', color: 'hsl(var(--info))', fontWeight: 700 }}><Link style={{ verticalAlign: 'middle' }} /> MANUAL</span>}
+                          {txn.status === 'unmatched' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(245,158,11,0.15)', color: 'hsl(var(--warning))', fontWeight: 700 }}><AlertTriangle /> PENDENTE</span>}
+                          {txn.status === 'ignored' && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(107,114,128,0.15)', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>IGNORADO</span>}
                         </td>
-                        <td style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                          {txn.matchedTitulo || '—'}
+                        <td style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))' }}>
+                          {txn.matchedTitulo || 'â€”'}
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
                           <div style={{ display: 'flex', gap: '0.4rem' }}>
                             {txn.status === 'unmatched' && (
                               <>
                                 <button onClick={() => setManualMatch(manualMatch === txn.id ? null : txn.id)} className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}>
-                                  <FiLink /> Vincular
+                                  <Link /> Vincular
                                 </button>
-                                <button onClick={() => ignoreTransaction(txn.id)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer', padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                  <FiXCircle /> Ignorar
+                                <button onClick={() => ignoreTransaction(txn.id)} style={{ background: 'none', border: '1px solid hsl(var(--border))', borderRadius: '6px', cursor: 'pointer', padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>
+                                  <XCircle /> Ignorar
                                 </button>
                               </>
                             )}
                             {(txn.status === 'matched' || txn.status === 'manual') && (
-                              <button onClick={() => setOfxTxns(prev => prev.map(t => t.id === txn.id ? { ...t, status: 'unmatched', matched: false, matchedTitulo: undefined } : t))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', color: 'var(--danger)' }}>
+                              <button onClick={() => setOfxTxns(prev => prev.map(t => t.id === txn.id ? { ...t, status: 'unmatched', matched: false, matchedTitulo: undefined } : t))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.7rem', color: 'hsl(var(--destructive))' }}>
                                 Desfazer
                               </button>
                             )}
@@ -282,7 +285,7 @@ export default function FinanceiroConciliacaoPage() {
                       {manualMatch === txn.id && (
                         <tr>
                           <td colSpan={7} style={{ padding: '0.75rem 1.5rem', background: 'rgba(59,130,246,0.06)', borderBottom: '2px solid rgba(59,130,246,0.2)' }}>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.75rem', color: '#3b82f6' }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.75rem', color: 'hsl(var(--info))' }}>
                               VINCULAR MANUALMENTE: {txn.memo} ({fmt(txn.amount)})
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
@@ -290,16 +293,16 @@ export default function FinanceiroConciliacaoPage() {
                                 .filter(e => txn.type === 'CREDIT' ? e.tipo === 'receber' : e.tipo === 'pagar')
                                 .map(entry => (
                                   <button key={entry.id} onClick={() => doManualMatch(txn.id, entry.id)} style={{
-                                    padding: '0.6rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card-bg)',
+                                    padding: '0.6rem 0.75rem', border: '1px solid hsl(var(--border))', borderRadius: '8px', background: 'hsl(var(--surface))',
                                     cursor: 'pointer', textAlign: 'left', fontSize: '0.78rem', transition: '0.15s'
                                   }}>
                                     <div style={{ fontWeight: 700 }}>{entry.numero}</div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{fmt(entry.valor)} • {entry.data}</div>
+                                    <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.72rem' }}>{fmt(entry.valor)} â€¢ {entry.data}</div>
                                   </button>
                                 ))
                               }
                               {internals.filter(e => txn.type === 'CREDIT' ? e.tipo === 'receber' : e.tipo === 'pagar').length === 0 && (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Nenhum título compatível disponível</span>
+                                <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.82rem' }}>Nenhum tÃ­tulo compatÃ­vel disponÃ­vel</span>
                               )}
                             </div>
                           </td>

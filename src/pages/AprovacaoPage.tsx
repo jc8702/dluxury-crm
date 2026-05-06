@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, AlertCircle, FileText, 
   XCircle, Send, ShieldCheck, Clock, 
@@ -28,14 +28,14 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
       const data = await api.aprovacao.getPublico(token);
       setOrcamento(data);
     } catch (err: any) {
-      setError(err.message || 'Link inválido ou expirado.');
+      setError(err.message || 'Link invÃ¡lido ou expirado.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async () => {
-    if (!formName) return alert('Por favor, informe seu nome para assinar a aprovação.');
+    if (!formName) return alert('Por favor, informe seu nome para assinar a aprovaÃ§Ã£o.');
     try {
       await api.aprovacao.aprovar(token, { nome: formName });
       setSuccess('approved');
@@ -45,7 +45,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
   };
 
   const handleReject = async () => {
-    if (!formReason) return alert('Por favor, informe o motivo da revisão.');
+    if (!formReason) return alert('Por favor, informe o motivo da revisÃ£o.');
     try {
       await api.aprovacao.recusar(token, { motivo: formReason });
       setSuccess('rejected');
@@ -91,11 +91,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
             </div>
             <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem', color: '#E2AC00' }}>Proposta Aprovada!</h1>
             <p style={{ fontSize: '1.1rem', color: 'rgba(255,b255,255,0.8)', marginBottom: '2rem' }}>
-              Obrigado, <strong>{formName}</strong>. Recebemos sua aprovação formal do orçamento <strong>{orcamento.numero}</strong>.
+              Obrigado, <strong>{formName}</strong>. Recebemos sua aprovaÃ§Ã£o formal do orÃ§amento <strong>{orcamento.numero}</strong>.
             </p>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px dashed rgba(255,b255,255,0.2)' }}>
+            <div style={{ background: 'hsl(var(--surface-hover))', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px dashed rgba(255,b255,255,0.2)' }}>
                 <p style={{ fontSize: '0.8rem', color: 'rgba(255,b255,255,0.4)', margin: '0 0 0.5rem 0' }}>Selo de Autenticidade Digital</p>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--primary)' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'hsl(var(--primary))' }}>
                     ID: {orcamento.id}<br/>
                     IP: REGISTRADO<br/>
                     TIMESTAMP: {new Date().toLocaleString('pt-BR')}
@@ -105,8 +105,8 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
         ) : (
           <>
             <AlertCircle size={80} color="#F59E0B" style={{ marginBottom: '2rem' }} />
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>Revisão Solicitada</h1>
-            <p style={{ color: 'rgba(255,b255,255,0.8)' }}>Sua solicitação foi enviada para nossa equipe comercial interna. Em breve entraremos em contato.</p>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>RevisÃ£o Solicitada</h1>
+            <p style={{ color: 'rgba(255,b255,255,0.8)' }}>Sua solicitaÃ§Ã£o foi enviada para nossa equipe comercial interna. Em breve entraremos em contato.</p>
           </>
         )}
       </div>
@@ -132,7 +132,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
           {/* Top Info */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span style={{ background: '#E2AC0020', color: '#E2AC00', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Orçamento {orcamento.numero}</span>
+              <span style={{ background: '#E2AC0020', color: '#E2AC00', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>OrÃ§amento {orcamento.numero}</span>
               <h1 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '1rem 0 0.5rem 0' }}>Proposta Comercial</h1>
               <p style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={16} /> Emitido em {new Date(orcamento.criado_em).toLocaleDateString('pt-BR')}</p>
             </div>
@@ -152,7 +152,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#F8FAFC', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: '1rem 1.5rem' }}>Descrição do Item / Ambiente</th>
+                    <th style={{ textAlign: 'left', padding: '1rem 1.5rem' }}>DescriÃ§Ã£o do Item / Ambiente</th>
                     <th style={{ textAlign: 'center', padding: '1rem' }}>Qtd</th>
                     <th style={{ textAlign: 'right', padding: '1rem 1.5rem' }}>Total</th>
                   </tr>
@@ -181,7 +181,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
                     </div>
                     {orcamento.adicional_urgencia_pct > 0 && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#EF4444' }}>
-                            <span>Adicional Urgência</span>
+                            <span>Adicional UrgÃªncia</span>
                             <span>+{orcamento.adicional_urgencia_pct}%</span>
                         </div>
                     )}
@@ -194,15 +194,15 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
             </div>
           </section>
 
-          {/* Condições */}
+          {/* CondiÃ§Ãµes */}
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
              <section>
                 <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ShieldCheck size={18} className="text-primary" /> Condições de Pagamento
+                    <ShieldCheck size={18} className="text-primary" /> CondiÃ§Ãµes de Pagamento
                 </h3>
                 <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>{orcamento.condicao?.nome || 'A combinar'}</p>
-                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>Prazos sujeitos a aprovação de crédito.</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>Prazos sujeitos a aprovaÃ§Ã£o de crÃ©dito.</p>
                 </div>
              </section>
              <section>
@@ -210,26 +210,26 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
                    <MapPin size={18} className="text-primary" /> Prazo de Entrega
                 </h3>
                 <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                    <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>{orcamento.prazo_entrega_dias || 45} dias úteis</p>
-                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>Após a medição final e aprovação técnica.</p>
+                    <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>{orcamento.prazo_entrega_dias || 45} dias Ãºteis</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>ApÃ³s a mediÃ§Ã£o final e aprovaÃ§Ã£o tÃ©cnica.</p>
                 </div>
              </section>
           </div>
 
           {orcamento.observacoes && (
             <section>
-                <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1rem' }}>Observações Adicionais</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1rem' }}>ObservaÃ§Ãµes Adicionais</h3>
                 <div style={{ background: 'rgba(226, 172, 0, 0.05)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(226, 172, 0, 0.2)', fontSize: '0.9rem', color: '#665c3b', lineHeight: '1.6' }}>
                     {orcamento.observacoes}
                 </div>
             </section>
           )}
 
-          {/* Ações Finais */}
+          {/* AÃ§Ãµes Finais */}
           <section style={{ borderTop: '2px solid #E2E8F0', paddingTop: '3rem', marginTop: '1rem' }}>
             <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '1rem' }}>Pronto para começar seu projeto?</h2>
-                <p style={{ color: '#64748B', marginBottom: '2.5rem' }}>Ao aprovar esta proposta, você concorda com as condições descritas acima e autoriza o início das etapas técnicas.</p>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '1rem' }}>Pronto para comeÃ§ar seu projeto?</h2>
+                <p style={{ color: '#64748B', marginBottom: '2.5rem' }}>Ao aprovar esta proposta, vocÃª concorda com as condiÃ§Ãµes descritas acima e autoriza o inÃ­cio das etapas tÃ©cnicas.</p>
                 
                 {action === 'idle' && (
                     <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
@@ -245,7 +245,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
                             className="btn-secondary" 
                             style={{ padding: '1rem 2rem', fontSize: '1rem', borderRadius: '30px' }}
                         >
-                            Solicitar Revisão
+                            Solicitar RevisÃ£o
                         </button>
                     </div>
                 )}
@@ -274,7 +274,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
                     <div className="animate-fade-in" style={{ background: 'white', padding: '2rem', borderRadius: '16px', border: '2px solid #EF4444', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
                         <h4 style={{ margin: '0 0 1.5rem' }}>O que deseja revisar?</h4>
                         <div className="form-group" style={{ textAlign: 'left' }}>
-                            <label>Motivo ou Comentário</label>
+                            <label>Motivo ou ComentÃ¡rio</label>
                             <textarea 
                                 placeholder="Descreva aqui o que precisa ser ajustado..." 
                                 value={formReason} 
@@ -283,7 +283,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
                             />
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                            <button onClick={handleReject} className="btn-primary" style={{ flex: 1, background: '#EF4444', height: '50px' }}>ENVIAR SOLICITAÇÃO</button>
+                            <button onClick={handleReject} className="btn-primary" style={{ flex: 1, background: '#EF4444', height: '50px' }}>ENVIAR SOLICITAÃ‡ÃƒO</button>
                             <button onClick={() => setAction('idle')} className="btn-secondary">Voltar</button>
                         </div>
                     </div>
@@ -295,8 +295,8 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
       </div>
 
       <footer style={{ background: '#0D2137', padding: '3rem 2rem', color: 'rgba(255,b255,255,0.4)', textAlign: 'center', fontSize: '0.8rem' }}>
-          <p>© {new Date().getFullYear()} D'Luxury CRM Industrial. Todos os direitos reservados.</p>
-          <p style={{ marginTop: '0.5rem' }}>Este documento é eletrônico e possui validade jurídica respaldada pelos termos de uso da plataforma.</p>
+          <p>Â© {new Date().getFullYear()} D'Luxury CRM Industrial. Todos os direitos reservados.</p>
+          <p style={{ marginTop: '0.5rem' }}>Este documento Ã© eletrÃ´nico e possui validade jurÃ­dica respaldada pelos termos de uso da plataforma.</p>
       </footer>
 
       <style>{`

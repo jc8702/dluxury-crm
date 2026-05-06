@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Settings2, Plus, Zap, Box, Ruler, Loader2, Save, X } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../hooks/useConfirm';
+import { CardSkeleton } from '../../design-system/components/Skeleton';
 import { api } from '../../lib/api';
-import Modal from '../ui/Modal';
+import { Modal } from '../../design-system/components/Modal';
 import DataTable from '../ui/DataTable';
 import SearchableSelect from '../ui/SearchableSelect';
 
@@ -115,9 +118,11 @@ const EngineeringPage: React.FC = () => {
 
       <div className="card" style={{ padding: '0' }}>
         {loading ? (
-          <div style={{ padding: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)' }}>
-            <Loader2 className="animate-spin" /> Carregando engenharia...
-          </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', padding: '1rem' }}>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
         ) : (
           <DataTable 
             headers={['Nome', 'Modelo', 'Descrição', 'Criado em', 'Ações']}

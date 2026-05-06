@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import Modal from '../components/ui/Modal';
-import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronRight, FiLayers, FiActivity } from 'react-icons/fi';
+import { Modal } from '../design-system/components/Modal';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronRight, Layers, Activity } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../hooks/useConfirm';
+import { CardSkeleton } from '../design-system/components/Skeleton';
 
 interface ClasseFinanceira {
   id: string;
@@ -86,8 +89,13 @@ function TreeNode({
         onMouseLeave={e => (e.currentTarget.style.background = depth === 0 ? 'rgba(255,255,255,0.04)' : 'transparent')}
       >
         {/* Expand toggle */}
-        <button onClick={() => setExpanded(e => !e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {hasChildren ? (expanded ? <FiChevronDown /> : <FiChevronRight />) : <span style={{ width: '14px' }} />}
+        <button 
+          onClick={() => setExpanded(e => !e)} 
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          aria-label={expanded ? `Recolher ${node.nome}` : `Expandir ${node.nome}`}
+          aria-expanded={expanded}
+        >
+          {hasChildren ? (expanded ? <ChevronDown /> : <ChevronRight />) : <span style={{ width: '14px' }} />}
         </button>
 
         {/* Código */}
@@ -110,14 +118,26 @@ function TreeNode({
           
           {usage > 0 && (
             <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '999px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <FiActivity style={{ fontSize: '0.6rem' }} /> {usage} título{usage !== 1 ? 's' : ''}
+              <Activity style={{ fontSize: '0.6rem' }} /> {usage} título{usage !== 1 ? 's' : ''}
             </span>
           )}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '0.25rem', opacity: 0.7 }}>
-            <button onClick={() => onEdit(node)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '0.25rem' }}><FiEdit2 size={13} /></button>
-            <button onClick={() => onDelete(node.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '0.25rem' }}><FiTrash2 size={13} /></button>
+            <button 
+              onClick={() => onEdit(node)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '0.25rem' }}
+              aria-label={`Editar classe ${node.nome}`}
+            >
+              <Edit2 size={13} />
+            </button>
+            <button 
+              onClick={() => onDelete(node.id)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '0.25rem' }}
+              aria-label={`Excluir classe ${node.nome}`}
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
         </div>
       </div>
@@ -131,6 +151,8 @@ function TreeNode({
 }
 
 export default function FinanceiroClassesPage() {
+  const { success, error, warning } = useToast();
+  const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [classes, setClasses] = useState<ClasseFinanceira[]>([]);
   const [tree, setTree] = useState<ClasseFinanceira[]>([]);
   const [usageMap, setUsageMap] = useState<Record<string, number>>({});
@@ -152,13 +174,20 @@ export default function FinanceiroClassesPage() {
   useEffect(() => { load(); }, []);
 
   const handleSeed = async () => {
-    if (!window.confirm('Isso vai criar o plano de contas padrão para marcenaria. Continuar?')) return;
+    const isConfirmed = await confirmAction({
+      title: 'Criar Plano de Contas Padrão',
+      description: 'Isso vai criar o plano de contas padrão para marcenaria. Continuar?'
+    });
+    if (!isConfirmed) return;
     setSeeding(true);
     try {
       for (const classe of TIPOS_MARCENARIA) {
         await api.financeiro.classesFinanceiras.create({ ...classe, ativa: true, permite_lancamento: true });
       }
       await load();
+      success('Plano de contas criado com sucesso!');
+    } catch (err: any) {
+      error(err.message || 'Erro ao criar plano de contas');
     } finally {
       setSeeding(false);
     }
@@ -166,19 +195,33 @@ export default function FinanceiroClassesPage() {
 
   const handleSave = async () => {
     if (!modal) return;
-    if (modal.id) {
-      await api.financeiro.classesFinanceiras.update({ ...modal });
-    } else {
-      await api.financeiro.classesFinanceiras.create(modal);
+    try {
+      if (modal.id) {
+        await api.financeiro.classesFinanceiras.update({ ...modal });
+      } else {
+        await api.financeiro.classesFinanceiras.create(modal);
+      }
+      setModal(null);
+      await load();
+      success('Classe salva com sucesso!');
+    } catch (err: any) {
+      error(err.message || 'Erro ao salvar classe');
     }
-    setModal(null);
-    await load();
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Excluir esta classe financeira?')) return;
-    await api.financeiro.classesFinanceiras.delete(id);
-    await load();
+    const isConfirmed = await confirmAction({
+      title: 'Excluir Classe',
+      description: 'Excluir esta classe financeira?'
+    });
+    if (!isConfirmed) return;
+    try {
+      await api.financeiro.classesFinanceiras.delete(id);
+      await load();
+      success('Classe excluída com sucesso!');
+    } catch (err: any) {
+      error(err.message || 'Erro ao excluir classe');
+    }
   };
 
   const isReceita = (c: ClasseFinanceira) => c.tipo === 'receita' || c.natureza === 'credora' || c.codigo?.startsWith('1');
@@ -193,7 +236,7 @@ export default function FinanceiroClassesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <FiLayers style={{ color: 'var(--primary)' }} /> PLANO DE CONTAS
+            <Layers style={{ color: 'var(--primary)' }} /> PLANO DE CONTAS
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Hierarquia financeira de receitas e despesas</p>
         </div>
@@ -204,7 +247,7 @@ export default function FinanceiroClassesPage() {
             </button>
           )}
           <button className="btn btn-primary" onClick={() => setModal({})} style={{ fontSize: '0.85rem' }}>
-            <FiPlus /> NOVA CLASSE
+            <Plus /> NOVA CLASSE
           </button>
         </div>
       </div>
@@ -226,14 +269,13 @@ export default function FinanceiroClassesPage() {
       {/* Árvore */}
       <div className="card glass" style={{ overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando classes...</div>
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         ) : tree.length === 0 ? (
-          <div style={{ padding: '4rem', textAlign: 'center' }}>
-            <FiLayers style={{ fontSize: '3rem', color: 'var(--text-muted)', marginBottom: '1rem' }} />
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Nenhuma classe cadastrada</p>
-            <button className="btn btn-primary" onClick={handleSeed} disabled={seeding}>
-              {seeding ? 'Criando...' : '✨ Criar Plano de Contas para Marcenaria'}
-            </button>
+          <div className="empty-state">
+            Nenhuma classe financeira encontrada.
           </div>
         ) : (
           <>
@@ -303,6 +345,7 @@ export default function FinanceiroClassesPage() {
           </div>
         </Modal>
       )}
+      {ConfirmDialogElement}
     </div>
   );
 }

@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { 
-  FiArrowLeft, 
-  FiCheck, 
-  FiArrowRight,
-  FiLoader,
-  FiInfo,
-  FiAlertCircle
-} from 'react-icons/fi';
+import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { CardSkeleton } from '../design-system/components/Skeleton';
 
 // Meios que exigem campo de taxa financeira
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
 export default function FinanceiroTitulosPagarWizard() {
+  const { success, error } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingOCs, setLoadingOCs] = useState(false);
@@ -121,7 +117,7 @@ export default function FinanceiroTitulosPagarWizard() {
         setPreview(res.data?.parcelas || res.parcelas || []);
         setStep(3);
       } catch (err: any) {
-        alert('Erro ao calcular parcelas. Verifique os dados preenchidos.');
+        error('Erro ao calcular parcelas. Verifique os dados preenchidos.');
       } finally {
         setLoading(false);
       }
@@ -149,10 +145,10 @@ export default function FinanceiroTitulosPagarWizard() {
         valor_custo_financeiro: valorCustoFinanceiro,
         rateio: formData.showRateio ? formData.rateios : []
       });
-      alert('Títulos gerados com sucesso!');
+      success('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-pagar';
     } catch (err: any) {
-      alert('Erro ao salvar títulos: ' + (err.message || ''));
+      error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
       setLoading(false);
     }
@@ -188,7 +184,7 @@ export default function FinanceiroTitulosPagarWizard() {
                 <label className="label-base">Selecionar Ordem de Compra</label>
                 {loadingOCs ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem' }}>
-                    <FiLoader className="animate-spin" /> Carregando OCs...
+                    <Loader className="animate-spin" /> Carregando OCs...
                   </div>
                 ) : pedidos.length > 0 ? (
                   <select className="input-base" value={formData.pedido_compra_id}
@@ -221,7 +217,7 @@ export default function FinanceiroTitulosPagarWizard() {
         <div>
           <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Número da Duplicata / Título
-            <FiInfo title="Gerado automaticamente. Pode editar para colocar o número da NF." />
+            <Info title="Gerado automaticamente. Pode editar para colocar o número da NF." />
           </label>
           <input type="text" className="input-base" value={formData.numero_titulo}
             onChange={e => setFormData({ ...formData, numero_titulo: e.target.value })}
@@ -271,7 +267,7 @@ export default function FinanceiroTitulosPagarWizard() {
         {/* Taxa Financeira – Sempre disponível para ajuste manual */}
         <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--warning, #f59e0b)', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--warning, #f59e0b)', fontWeight: 700, fontSize: '0.9rem' }}>
-            <FiAlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
+            <AlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
             <div>
@@ -285,10 +281,19 @@ export default function FinanceiroTitulosPagarWizard() {
               </div>
             </div>
             <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>VALOR TOTAL COM TAXAS</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
-                R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
+              {loading ? (
+                <div style={{ display: 'grid', gap: '1rem', padding: '1rem' }}>
+                   <CardSkeleton />
+                   <CardSkeleton />
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>VALOR TOTAL COM TAXAS</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
+                    R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -432,7 +437,7 @@ export default function FinanceiroTitulosPagarWizard() {
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <button className="btn btn-outline" style={{ marginBottom: '2rem' }}
         onClick={() => window.location.hash = '#/financeiro/titulos-pagar'}>
-        <FiArrowLeft /> VOLTAR PARA LISTAGEM
+        <ArrowLeft /> VOLTAR PARA LISTAGEM
       </button>
 
       <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
@@ -449,7 +454,7 @@ export default function FinanceiroTitulosPagarWizard() {
                 fontWeight: 800, border: '2px solid',
                 borderColor: step >= s ? 'var(--danger)' : 'var(--border)'
               }}>
-                {step > s ? <FiCheck /> : s}
+                {step > s ? <Check /> : s}
               </div>
             </div>
           ))}
@@ -471,12 +476,12 @@ export default function FinanceiroTitulosPagarWizard() {
             <button className="btn btn-primary" style={{ background: 'var(--danger)' }}
               disabled={loading || !formData.fornecedor_id || !formData.classe_financeira_id}
               onClick={handleNext}>
-              {loading ? <FiLoader className="animate-spin" /> : <>PRÓXIMO <FiArrowRight /></>}
+              {loading ? <Loader className="animate-spin" /> : <>PRÓXIMO <ArrowRight /></>}
             </button>
           ) : (
             <button className="btn btn-primary" style={{ background: 'var(--success)' }}
               disabled={loading} onClick={handleSave}>
-              {loading ? <FiLoader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
+              {loading ? <Loader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
             </button>
           )}
         </div>

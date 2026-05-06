@@ -6,6 +6,7 @@ import {
   ChevronRight, ExternalLink, Trash2, Box, X, Clock
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { CardSkeleton } from '../../../../design-system/components/Skeleton';
 
 interface HistoricoModalProps {
   onLoadPlan: (plan: any) => void;
@@ -99,9 +100,10 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
         {/* LISTA DE RESULTADOS */}
         <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar bg-surface/10">
           {loading ? (
-            <div className="h-60 flex flex-col items-center justify-center text-muted-foreground gap-4">
-              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-              <p className="font-bold text-sm uppercase tracking-widest animate-pulse">Carregando histórico...</p>
+            <div className="flex flex-col gap-3">
+               <CardSkeleton />
+               <CardSkeleton />
+               <CardSkeleton />
             </div>
           ) : planosFiltrados.length > 0 ? (
             planosFiltrados.map(plano => (

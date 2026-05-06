@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Modal from '../components/ui/Modal';
+import { Modal } from '../design-system/components/Modal';
 import { api } from '../lib/api';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from '../design-system/components/Skeleton';
 
 const FinanceiroFormasPage: React.FC = () => {
+  const { success, error } = useToast();
   const [formas, setFormas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +19,7 @@ const FinanceiroFormasPage: React.FC = () => {
   const openEdit = (f: any) => { setEditing(f); setForm({ nome: f.nome, tipo: f.tipo, taxa_percentual: f.taxa_percentual, prazo_compensacao_dias: f.prazo_compensacao_dias }); setIsOpen(true); };
 
   const save = async () => {
-    try { if (editing) await api.financeiro.formasPagamento.update({ id: editing.id, ...form }); else await api.financeiro.formasPagamento.create(form); setIsOpen(false); fetch(); } catch(e: any) { alert(e.message || 'Erro'); }
+    try { if (editing) await api.financeiro.formasPagamento.update({ id: editing.id, ...form }); else await api.financeiro.formasPagamento.create(form); setIsOpen(false); fetch(); success('Salvo com sucesso!'); } catch(e: any) { error(e.message || 'Erro'); }
   };
 
   return (
@@ -29,11 +32,17 @@ const FinanceiroFormasPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="card">
-        {loading ? <div style={{ padding: '2rem' }}>Carregando...</div> : (
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {loading ? (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+             <tbody>
+                <TableSkeleton rows={3} cols={2} />
+             </tbody>
+          </table>
+        ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid hsl(var(--border))' }}>
                 <th style={{ padding: '0.75rem' }}>Nome</th>
                 <th style={{ padding: '0.75rem' }}>Tipo</th>
                 <th style={{ padding: '0.75rem' }}>Taxa %</th>
@@ -42,7 +51,7 @@ const FinanceiroFormasPage: React.FC = () => {
             </thead>
             <tbody>
               {formas.map(f => (
-                <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <tr key={f.id} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
                   <td style={{ padding: '0.75rem' }}>{f.nome}</td>
                   <td style={{ padding: '0.75rem' }}>{f.tipo}</td>
                   <td style={{ padding: '0.75rem' }}>{Number(f.taxa_percentual || 0).toFixed(2)}%</td>

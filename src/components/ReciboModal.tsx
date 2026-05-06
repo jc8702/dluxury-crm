@@ -1,6 +1,6 @@
 import React from 'react';
-import Modal from './ui/Modal';
-import { FiPrinter, FiX, FiCheckCircle } from 'react-icons/fi';
+import { Modal } from '../design-system/components/Modal';
+import { Printer, X, CheckCircle } from 'lucide-react';
 
 interface ReciboModalProps {
   isOpen: boolean;
@@ -93,10 +93,10 @@ const ReciboModal: React.FC<ReciboModalProps> = ({ isOpen, onClose, titulo, tipo
 
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
         <button className="btn btn-outline" onClick={onClose}>
-          <FiX /> FECHAR
+          <X /> FECHAR
         </button>
         <button className="btn btn-primary" onClick={handlePrint}>
-          <FiPrinter /> IMPRIMIR RECIBO
+          <Printer /> IMPRIMIR RECIBO
         </button>
       </div>
     </Modal>

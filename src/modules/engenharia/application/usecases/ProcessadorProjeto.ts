@@ -2,7 +2,7 @@ import { ParseadorProjeto, type ProjeParsed } from '../../plano-corte/infrastruc
 import { HybridOptimizer } from '../../plano-corte/domain/services/HybridOptimizer';
 import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico';
 import { RetalhosRepository, type RetalhoDisponivel } from '../../plano-corte/infrastructure/repositories/RetalhosRepository';
-import { CustosService } from '../../domain/services/CustosService';
+import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService';
 import type { Peca } from '../../plano-corte/domain/services/MaxRectsOptimizer';
 
 /**
@@ -41,16 +41,19 @@ export interface ResultadoProcessamento {
   layouts?: Array<{
     tipo: 'retalho' | 'chapa_inteira';
     chapa_sku: string;
-    pecas_posicionadas: any[];
+    pecas_posicionadas: Peca[];
     area_aproveitada_mm2: number;
-    area_desperdicada_mm2: number;
+    area_desperdicada_mm2?: number;
+    retalho_id?: number | string;
+    largura_original_mm: number;
+    altura_original_mm: number;
   }>;
   aproveitamento_percentual?: number;
   retalhos_utilizados?: number;
   chapas_novas_utilizadas?: number;
   
   // Custos
-  custos?: any; // Tipado pelo CustosService
+  custos?: ResultadoCustos; // Tipado pelo CustosService
   
   // Metadados
   tempo_processamento_ms: number;
@@ -63,10 +66,10 @@ export interface ResultadoProcessamento {
  * Orquestra todo o fluxo de um projeto desde a entrada textual até o custo final.
  */
 export class ProcessadorProjeto {
-  private db: any;
-  private logger: any;
+  private db: unknown;
+  private logger: Console | unknown;
 
-  constructor(db: any, logger: any) {
+  constructor(db: unknown, logger: Console | unknown) {
     this.db = db;
     this.logger = logger;
   }
@@ -187,8 +190,8 @@ export class ProcessadorProjeto {
     sku_chapa: string,
     retalhos: RetalhoDisponivel[],
     iteracoes: number
-  ): Promise<any[]> {
-    const layouts: any[] = [];
+  ): Promise<NonNullable<ResultadoProcessamento['layouts']>> {
+    const layouts: NonNullable<ResultadoProcessamento['layouts']> = [];
     let pecasRestantes = [...pecas];
     const repo = new RetalhosRepository(this.db);
 
@@ -241,7 +244,7 @@ export class ProcessadorProjeto {
     return layouts;
   }
 
-  private calcularAproveitamentoMedio(layouts: any[]): number {
+  private calcularAproveitamentoMedio(layouts: NonNullable<ResultadoProcessamento['layouts']>): number {
     const totalArea = layouts.reduce((sum, l) => sum + l.largura_original_mm * l.altura_original_mm, 0);
     const areaUsada = layouts.reduce((sum, l) => sum + l.area_aproveitada_mm2, 0);
     return totalArea > 0 ? (areaUsada / totalArea) * 100 : 0;

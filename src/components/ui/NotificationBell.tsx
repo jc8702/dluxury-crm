@@ -84,6 +84,9 @@ const NotificationBell: React.FC = () => {
     <div style={{ position: 'relative' }} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={`Notificações ${unreadCount > 0 ? `(${unreadCount} não lidas)` : ''}`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         style={{
           background: 'none',
           border: 'none',

@@ -235,6 +235,7 @@ const deleteOP = useCallback(async (op_id: string) => {
               onClick={(e) => { e.stopPropagation(); deleteOP(op.op_id); }}
               style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, opacity: 0.6, display: 'flex', alignItems: 'center' }}
               title="Excluir OP"
+              aria-label={`Excluir ordem de produção ${op.op_id}`}
             >
               <Trash2 size={10} />
             </button>
@@ -309,7 +310,7 @@ const deleteOP = useCallback(async (op_id: string) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', gap: '4px' }}>
             {col.id !== "AGUARDANDO" && (
-              <button onClick={() => updateStatus(op, 'voltar')} className="btn-icon" style={{ padding: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.03)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button onClick={() => updateStatus(op, 'voltar')} className="btn-icon" style={{ padding: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.03)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} aria-label={`Voltar status da OP ${op.op_id}`}>
                 <ArrowLeft size={12} />
               </button>
             )}
@@ -427,10 +428,10 @@ const deleteOP = useCallback(async (op_id: string) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#d4af37' }}>DETALHES DA ORDEM #{editingOP.op_id}</h3>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => deleteOP(editingOP.op_id)} disabled={deleting} style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '8px 10px', borderRadius: '10px', cursor: 'pointer' }}>
+                <button onClick={() => deleteOP(editingOP.op_id)} disabled={deleting} style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '8px 10px', borderRadius: '10px', cursor: 'pointer' }} aria-label={`Excluir OP ${editingOP.op_id}`}>
                   <Trash2 size={14} />&nbsp;EXCLUIR
                 </button>
-                <button onClick={() => setEditingOP(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text)', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button onClick={() => setEditingOP(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text)', padding: '8px', borderRadius: '8px', cursor: 'pointer' }} aria-label="Fechar edição">
                   <X size={18} />
                 </button>
               </div>
@@ -485,7 +486,7 @@ const deleteOP = useCallback(async (op_id: string) => {
                         <button onClick={() => {
                           const newCheck = (editingOP.checklist || []).filter((_, i) => i !== idx);
                           setEditingOP({...editingOP, checklist: newCheck});
-                        }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                        }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} aria-label="Remover item do checklist">
                           <Trash2 size={14} />
                         </button>
                       </div>

@@ -1,16 +1,94 @@
+import { ALLOWED_ORIGINS } from '../src/api-lib/config.js';
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
+  '/api/auth': { max: 10, windowMs: 60_000 },       // 10 req/min para auth
+  '/api/init-db': { max: 3, windowMs: 300_000 },    // 3 req/5min para init
+  default: { max: 100, windowMs: 60_000 },          // 100 req/min default
+};
+
+function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfter?: number } {
+  // Find matching rate limit rule
+  let rule = RATE_LIMITS.default;
+  for (const [prefix, r] of Object.entries(RATE_LIMITS)) {
+    if (path.startsWith(prefix)) {
+      rule = r;
+      break;
+    }
+  }
+
+  const now = Date.now();
+  const key = `${ip}:${path.startsWith('/api/auth') ? 'auth' : path.startsWith('/api/init-db') ? 'init' : 'default'}`;
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + rule.windowMs });
+    return { allowed: true };
+  }
+
+  entry.count++;
+  if (entry.count > rule.max) {
+    return { allowed: false, retryAfter: Math.ceil((entry.resetTime - now) / 1000) };
+  }
+
+  return { allowed: true };
+}
+
+function cleanupRateLimitMap() {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}
+
+// Cleanup old entries every 5 minutes
+setInterval(cleanupRateLimitMap, 5 * 60_000);
+
+function getClientIP(req: any): string {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
+    || req.headers['x-real-ip'] 
+    || req.socket?.remoteAddress 
+    || 'unknown';
+}
+
+function getCorsOrigin(req: any): string {
+  const requestOrigin = req.headers['origin'];
+  if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+  return ALLOWED_ORIGINS[0] || '';
+}
 
 export default async function handler(req: any, res: any) {
-  // CORS Setup
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS - restringir a origens conhecidas
+  const corsOrigin = getCorsOrigin(req);
+  if (corsOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const url = req.url || '';
-  const cleanUrl = url.split('?')[0];
+  // Rate limiting
+  const clientIP = getClientIP(req);
+  const cleanUrl = (req.url || '').split('?')[0];
+  const rateResult = checkRateLimit(clientIP, cleanUrl);
+  if (!rateResult.allowed) {
+    res.setHeader('Retry-After', String(rateResult.retryAfter || 60));
+    return res.status(429).json({ 
+      success: false, 
+      error: 'Muitas requisições. Tente novamente em alguns segundos.',
+      retryAfter: rateResult.retryAfter 
+    });
+  }
 
-  console.log(`[ROUTER] Request: ${req.method} ${cleanUrl}`);
+  console.log(`[ROUTER] Request: ${req.method} ${cleanUrl} from ${clientIP}`);
 
   try {
     // Roteamento Dinâmico (Lazy Loading)
@@ -127,24 +205,20 @@ export default async function handler(req: any, res: any) {
       const { handleEngenhariaSKUs } = await import('../src/api-lib/planocorte.js');
       return await handleEngenhariaSKUs(req, res);
     }
-    if (cleanUrl.startsWith('/api/billings') || cleanUrl.startsWith('/api/financeiro') && cleanUrl.includes('type=dRE')) {
+    if (cleanUrl.startsWith('/api/billings')) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
-    }
-    if (cleanUrl.startsWith('/api/goals')) {
-      const { handleGoals } = await import('../src/api-lib/crm.js');
-      return await handleGoals(req, res);
     }
     if (cleanUrl.startsWith('/api/forn')) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');
       return await handleEstoque(req, res);
     }
-    if (cleanUrl.startsWith('/api/condicoes-pagamento')) {
-      const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
-      return await handleFinanceiro(req, res);
-    }
 
+    // Endpoint init-db - apenas em desenvolvimento
     if (cleanUrl.startsWith('/api/init-db')) {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ success: false, error: 'Endpoint desabilitado em produção' });
+      }
       const { runInitDB } = await import('../src/api-lib/_init.js');
       const result = await runInitDB();
       return res.status(200).json(result);

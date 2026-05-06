@@ -74,8 +74,20 @@ const FornecedoresPage: React.FC = () => {
                 <Truck size={24} />
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => handleEdit(f)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}><Edit2 size={16} /></button>
-                <button onClick={() => handleDelete(f.id)} style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)' }}><Trash2 size={16} /></button>
+                <button 
+                  onClick={() => handleEdit(f)} 
+                  style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  aria-label={`Editar fornecedor ${f.nome}`}
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(f.id)} 
+                  style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)' }}
+                  aria-label={`Excluir fornecedor ${f.nome}`}
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
 

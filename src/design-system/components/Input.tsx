@@ -3,13 +3,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../utils';
 
 const inputVariants = cva(
-  'flex w-full rounded-xl border bg-[#1F2937] px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0D1117] disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
+  'flex w-full rounded-xl border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
   {
     variants: {
       variant: {
-        default: 'border-white/10 focus:ring-[#00A99D]',
-        error: 'border-red-500/50 focus:ring-red-500 text-red-100',
-        success: 'border-green-500/50 focus:ring-green-500',
+        default: 'border-border focus:ring-ring',
+        error: 'border-destructive/50 focus:ring-destructive text-destructive-foreground',
+        success: 'border-success/50 focus:ring-success',
       },
       inputSize: {
         sm: 'px-3 py-1.5 text-xs',
@@ -42,7 +42,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="mb-2 block text-sm font-medium text-white/90"
+            className="mb-2 block text-sm font-medium text-foreground/90"
           >
             {label}
           </label>
@@ -58,12 +58,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-red-400">
+          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-destructive">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p className="mt-1.5 text-xs text-white/40">{helperText}</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">{helperText}</p>
         )}
       </div>
     );

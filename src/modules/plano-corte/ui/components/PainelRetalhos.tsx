@@ -141,8 +141,10 @@ export const PainelRetalhos: React.FC = () => {
                 </tr>
               ) : retalhos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    Nenhum retalho disponível em estoque.
+                  <td colSpan={6} style={{ padding: 0 }}>
+                    <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
+                      Nenhum retalho disponível em estoque.
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -184,7 +186,7 @@ export const PainelRetalhos: React.FC = () => {
                     </td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                        <button className="btn-icon" title="Ver Detalhes">
+                        <button className="btn-icon" title="Ver Detalhes" aria-label={`Ver detalhes do retalho ${retalho.sku_chapa}`}>
                           <ExternalLink size={16} />
                         </button>
                         {retalho.disponivel && (
@@ -193,6 +195,7 @@ export const PainelRetalhos: React.FC = () => {
                             className="btn-icon" 
                             style={{ color: 'var(--danger)' }}
                             title="Descartar"
+                            aria-label={`Descartar retalho ${retalho.sku_chapa}`}
                           >
                             <Trash2 size={16} />
                           </button>
