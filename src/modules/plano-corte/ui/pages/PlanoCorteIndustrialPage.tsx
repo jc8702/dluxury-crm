@@ -59,7 +59,10 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
 export default function PlanoCorteIndustrialPage() {
   // --- ESTADO ---
   const [pecas, setPecas] = useState<Peca[]>([]);
-  const [chapaPadrao, setChapaPadrao] = useState({ largura: 2750, altura: 1830, sku: 'MDF-PADRAO' });
+  const [chapas, setChapas] = useState([
+    { id: 'chapa-1', largura: 2750, altura: 1830, sku: 'MDF-BRANCO-18', material: 'MDF 18mm Branco TX' }
+  ]);
+  const [activeChapaId, setActiveChapaId] = useState('chapa-1');
   const [kerf, setKerf] = useState(3);
   const [resultado, setResultado] = useState<ResultadoOtimizacao | null>(null);
   const [activeLayoutIdx, setActiveLayoutIdx] = useState(0);
@@ -90,33 +93,80 @@ export default function PlanoCorteIndustrialPage() {
     
     setLoading(true);
     try {
-      const pecasExpandidas: Peca[] = [];
+      const pecasAgrupadasLocal: Record<string, Peca[]> = {};
       pecas.forEach(p => {
-        const qty = (p as any).quantidade || 1;
+        const key = p.sku_chapa || 'GERAL';
+        if (!pecasAgrupadasLocal[key]) pecasAgrupadasLocal[key] = [];
+        
+        const qty = Number(p.quantidade) || 1;
         for (let i = 0; i < qty; i++) {
-          pecasExpandidas.push({ ...p, id: `${p.id}-${i}`, nome: qty > 1 ? `${p.nome} (${i+1}/${qty})` : p.nome });
+          pecasAgrupadasLocal[key].push({ ...p, id: `${p.id}-${i}`, nome: qty > 1 ? `${p.nome} (${i+1}/${qty})` : p.nome });
         }
       });
 
-      const res = await otimizador.otimizar(
-        pecasExpandidas, 
-        { largura_mm: chapaPadrao.largura, altura_mm: chapaPadrao.altura, sku: chapaPadrao.sku, espessura_mm: 18 }, 
-        crypto.randomUUID(),
-        usarRetalhos
-      );
+      let layoutsTotais: any[] = [];
+      let tempoTotal = 0;
 
-      setResultado(res);
+      for (const [sku, listaPecas] of Object.entries(pecasAgrupadasLocal)) {
+        const configChapa = chapas.find(c => c.sku === sku) || chapas[0];
+        
+        const res = await otimizador.otimizar(
+          listaPecas, 
+          { largura_mm: configChapa.largura, altura_mm: configChapa.altura, sku: configChapa.sku, espessura_mm: 18 }, 
+          crypto.randomUUID(),
+          usarRetalhos
+        );
+        
+        layoutsTotais = [...layoutsTotais, ...res.layouts.map(l => ({ ...l, material_identificador: sku }))];
+        tempoTotal += res.estatisticas.tempo_ms;
+      }
+
+      const resFinal: ResultadoOtimizacao = {
+        id: crypto.randomUUID(),
+        layouts: layoutsTotais,
+        estatisticas: {
+          area_total_mm2: layoutsTotais.reduce((acc, l) => acc + (l.largura_original_mm * l.altura_original_mm), 0),
+          area_aproveitada_mm2: layoutsTotais.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0),
+          tempo_ms: tempoTotal,
+          qtd_chapas: layoutsTotais.length,
+          aproveitamento_medio: layoutsTotais.reduce((acc, l) => acc + l.percentual_aproveitamento, 0) / (layoutsTotais.length || 1)
+        }
+      };
+
+      setResultado(resFinal);
       setActiveLayoutIdx(0);
-      showToast('Otimização concluída com sucesso!', 'success');
+      showToast('Otimização Multi-Material concluída!', 'success');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
       showToast(`FALHA NA OTIMIZAÇÃO: ${msg}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [pecas, chapaPadrao, otimizador, usarRetalhos]);
+  }, [pecas, chapas, otimizador, usarRetalhos]);
+
+  const handleAddChapa = () => {
+    const novaChapa = { 
+      id: `chapa-${Date.now()}`, 
+      largura: 2750, 
+      altura: 1830, 
+      sku: `NOVA-CHAPA-${chapas.length + 1}`, 
+      material: 'Novo Material' 
+    };
+    setChapas([...chapas, novaChapa]);
+    setActiveChapaId(novaChapa.id);
+  };
+
+  const handleUpdateChapa = (id: string, data: any) => {
+    setChapas(chapas.map(c => c.id === id ? { ...c, ...data } : c));
+  };
+
+  const handleRemoveChapa = (id: string) => {
+    if (chapas.length === 1) return showToast('Mantenha ao menos uma chapa.', 'info');
+    setChapas(chapas.filter(c => c.id !== id));
+  };
 
   const handleAddPecaManual = () => {
+    const chapaAtiva = chapas.find(c => c.id === activeChapaId) || chapas[0];
     const novaPeca: Peca = { 
       id: `peca-${Date.now()}`, 
       nome: `PEÇA ${pecas.length + 1}`, 
@@ -124,10 +174,14 @@ export default function PlanoCorteIndustrialPage() {
       altura: 400, 
       rotacionavel: true,
       quantidade: 1,
-      sku_chapa: chapaPadrao.sku,
-      material: 'MDF-18MM'
+      sku_chapa: chapaAtiva.sku,
+      material: chapaAtiva.material
     };
     setPecas([...pecas, novaPeca]);
+  };
+
+  const handleUpdatePeca = (id: string, data: Partial<Peca>) => {
+    setPecas(pecas.map(p => p.id === id ? { ...p, ...data } : p));
   };
 
   const handleRemovePeca = (id: string) => setPecas(pecas.filter(p => p.id !== id));
@@ -141,7 +195,7 @@ export default function PlanoCorteIndustrialPage() {
       altura: Number(p.altura_mm || p.altura || p.alturaMm || 0),
       rotacionavel: p.rotacionavel ?? p.podeRotacionar ?? true,
       quantidade: Number(p.quantidade || 1),
-      sku_chapa: p.sku_chapa || p.grupoMaterialId || chapaPadrao.sku,
+      sku_chapa: p.sku_chapa || p.grupoMaterialId || chapas[0].sku,
       material: p.material || p.grupoMaterialId || 'MDF-18MM'
     }));
     setPecas([...pecas, ...formatadas]);
@@ -257,7 +311,7 @@ export default function PlanoCorteIndustrialPage() {
       altura: Number(item.altura_padrao || item.altura || 400),
       rotacionavel: true,
       quantidade: 1,
-      sku_chapa: chapaPadrao.sku,
+      sku_chapa: chapas.find(c => c.id === activeChapaId)?.sku || chapas[0].sku,
       material: item.nome || 'MDF-18MM'
     };
     setPecas([...pecas, novaPeca]);
@@ -373,43 +427,82 @@ export default function PlanoCorteIndustrialPage() {
         <aside className="bg-card/40 border-r border-border/40 flex flex-col overflow-hidden backdrop-blur-sm">
           <div className="p-5 border-b border-border/40 flex flex-col gap-4 bg-white/[0.01]">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Painéis & Medidas</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Modelos de Chapa</span>
+              <button 
+                onClick={handleAddChapa} 
+                className="w-6 h-6 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center transition-all"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+              {chapas.map(chapa => (
+                <div 
+                  key={chapa.id} 
+                  onClick={() => setActiveChapaId(chapa.id)}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer relative group ${
+                    activeChapaId === chapa.id ? 'bg-primary/10 border-primary/40' : 'bg-black/20 border-border/40 hover:border-primary/20'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <input 
+                      value={chapa.material} 
+                      onChange={e => handleUpdateChapa(chapa.id, { material: e.target.value })}
+                      className="bg-transparent border-none p-0 text-[11px] font-bold text-foreground focus:outline-none w-full"
+                    />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleRemoveChapa(chapa.id); }}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive rounded transition-all"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-muted-foreground uppercase font-black">Larg</span>
+                      <input 
+                        type="number" 
+                        value={chapa.largura} 
+                        onChange={e => handleUpdateChapa(chapa.id, { largura: Number(e.target.value) })}
+                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-muted-foreground uppercase font-black">Alt</span>
+                      <input 
+                        type="number" 
+                        value={chapa.altura} 
+                        onChange={e => handleUpdateChapa(chapa.id, { altura: Number(e.target.value) })}
+                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-muted-foreground uppercase font-black">SKU</span>
+                      <input 
+                        value={chapa.sku} 
+                        onChange={e => handleUpdateChapa(chapa.id, { sku: e.target.value })}
+                        className="bg-black/40 border border-border/20 rounded px-1 text-[10px] font-mono focus:border-primary/50 outline-none uppercase w-full"
+                      />
+                    </div>
+                  </div>
+                  {activeChapaId === chapa.id && (
+                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full shadow-glow" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="h-px bg-border/20 my-2" />
+
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Adicionar Peças</span>
               <button 
                 onClick={handleAddPecaManual} 
                 className="w-6 h-6 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 flex items-center justify-center transition-all"
               >
                 <Plus size={14} />
               </button>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Largura</label>
-                <input 
-                  type="number" 
-                  value={chapaPadrao.largura} 
-                  onChange={e => setChapaPadrao({...chapaPadrao, largura: Number(e.target.value)})} 
-                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono" 
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Altura</label>
-                <input 
-                  type="number" 
-                  value={chapaPadrao.altura} 
-                  onChange={e => setChapaPadrao({...chapaPadrao, altura: Number(e.target.value)})} 
-                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono" 
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Kerf</label>
-                <input 
-                  type="number" 
-                  value={kerf} 
-                  onChange={e => setKerf(Number(e.target.value))} 
-                  className="w-full h-8 px-2 bg-black/40 border border-border/40 rounded-md text-[11px] focus:border-primary/50 outline-none transition-all font-mono text-primary" 
-                />
-              </div>
             </div>
 
             <div className="relative group">
@@ -478,7 +571,11 @@ export default function PlanoCorteIndustrialPage() {
                       <div key={p.id} className="group relative glass p-3 rounded-xl border border-border/40 hover:border-primary/30 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
                         <div className="flex flex-col">
                           <div className="flex justify-between items-start">
-                            <span className="text-[11px] font-bold text-foreground group-hover:text-white transition-colors truncate pr-6">{p.nome}</span>
+                            <input 
+                              value={p.nome}
+                              onChange={e => handleUpdatePeca(p.id, { nome: e.target.value })}
+                              className="bg-transparent border-none p-0 text-[11px] font-bold text-foreground focus:outline-none w-full group-hover:text-white transition-colors"
+                            />
                             <button 
                               onClick={() => handleRemovePeca(p.id)}
                               className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive rounded-md transition-all text-muted-foreground"
@@ -486,22 +583,40 @@ export default function PlanoCorteIndustrialPage() {
                               <Trash2 size={12} />
                             </button>
                           </div>
-                          {p.sku && (
-                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest mt-0.5">{p.sku}</span>
-                          )}
+                          <input 
+                            value={p.sku || ''}
+                            onChange={e => handleUpdatePeca(p.id, { sku: e.target.value })}
+                            placeholder="SKU PEÇA"
+                            className="bg-transparent border-none p-0 text-[9px] font-black text-primary/60 uppercase tracking-widest mt-0.5 focus:outline-none w-full"
+                          />
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] font-mono">
                           <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
                             <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Larg</span>
-                            <span className="text-primary/80">{p.largura}</span>
+                            <input 
+                              type="number"
+                              value={p.largura}
+                              onChange={e => handleUpdatePeca(p.id, { largura: Number(e.target.value) })}
+                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full"
+                            />
                           </div>
                           <div className="bg-black/20 p-1 rounded border border-border/40 text-center">
                             <span className="text-muted-foreground text-[8px] block uppercase leading-tight font-sans">Alt</span>
-                            <span className="text-primary/80">{p.altura}</span>
+                            <input 
+                              type="number"
+                              value={p.altura}
+                              onChange={e => handleUpdatePeca(p.id, { altura: Number(e.target.value) })}
+                              className="bg-transparent border-none p-0 text-primary/80 text-center focus:outline-none w-full"
+                            />
                           </div>
                           <div className="bg-primary/5 p-1 rounded border border-primary/10 text-center">
                             <span className="text-primary/50 text-[8px] block uppercase leading-tight font-sans">Qtd</span>
-                            <span className="text-primary font-bold">{(p as any).quantidade || 1}</span>
+                            <input 
+                              type="number"
+                              value={p.quantidade || 1}
+                              onChange={e => handleUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
+                              className="bg-transparent border-none p-0 text-primary font-bold text-center focus:outline-none w-full"
+                            />
                           </div>
                         </div>
                       </div>
@@ -542,7 +657,10 @@ export default function PlanoCorteIndustrialPage() {
               <div className="w-full h-full glass rounded-2xl border border-border/40 overflow-hidden shadow-2xl flex items-center justify-center bg-background/40">
                 <CanvasAvancado 
                   layout={activeLayout}
-                  chapaDimensoes={{ largura: chapaPadrao.largura, altura: chapaPadrao.altura }}
+                  chapaDimensoes={{ 
+                    largura: chapas.find(c => c.sku === activeLayout?.material_identificador)?.largura || chapas[0].largura, 
+                    altura: chapas.find(c => c.sku === activeLayout?.material_identificador)?.altura || chapas[0].altura 
+                  }}
                   executionMode={executionMode}
                   pecasCortadasIds={pecasCortadas}
                   onPecaClick={(p) => executionMode && togglePecaCortada(p.id)}
