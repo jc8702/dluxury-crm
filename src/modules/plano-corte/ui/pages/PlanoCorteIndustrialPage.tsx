@@ -73,6 +73,8 @@ export default function PlanoCorteIndustrialPage() {
   const [executionMode, setExecutionMode] = useState(false);
   const [pecasCortadas, setPecasCortadas] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
+  const [globalResults, setGlobalResults] = useState<any[]>([]);
+  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => setToast({ message, type });
 
@@ -207,6 +209,62 @@ export default function PlanoCorteIndustrialPage() {
       );
     });
   }, [pecas, searchPeca]);
+
+  // --- BUSCA GLOBAL (API) ---
+  useEffect(() => {
+    const s = (searchPeca || '').trim();
+    if (s.length < 2) {
+      setGlobalResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingGlobal(true);
+      try {
+        // Busca em múltiplas fontes simultaneamente
+        const [engResults, skuResults] = await Promise.all([
+          api.engineering.list({ q: s }).catch(() => []),
+          api.skus.list().then(res => 
+            res.filter((item: any) => 
+              (item.sku || '').toLowerCase().includes(s.toLowerCase()) || 
+              (item.nome || '').toLowerCase().includes(s.toLowerCase())
+            )
+          ).catch(() => [])
+        ]);
+
+        const combined = [
+          ...engResults.map((r: any) => ({ ...r, source: 'Engenharia', type: 'module' })),
+          ...skuResults.map((r: any) => ({ ...r, source: 'Catálogo SKUs', type: 'material' }))
+        ];
+        
+        setGlobalResults(combined.slice(0, 5)); // Limitar a 5 resultados para não poluir
+      } catch (err) {
+        console.error('Erro na busca global:', err);
+      } finally {
+        setIsSearchingGlobal(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchPeca]);
+
+  const handleAddFromGlobal = (item: any) => {
+    const novaPeca: Peca = {
+      id: `global-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      sku: item.sku || item.codigo_modelo || '',
+      nome: item.nome || item.descricao || 'Peça do Catálogo',
+      largura: Number(item.largura_padrao || item.largura || 500),
+      altura: Number(item.altura_padrao || item.altura || 400),
+      rotacionavel: true,
+      quantidade: 1,
+      sku_chapa: chapaPadrao.sku,
+      material: item.nome || 'MDF-18MM'
+    };
+    setPecas([...pecas, novaPeca]);
+    setSearchPeca('');
+    setGlobalResults([]);
+    showToast(`Adicionado: ${novaPeca.nome}`, 'success');
+  };
 
   const pecasAgrupadas = useMemo(() => {
     const grupos: Record<string, typeof pecas> = {};
@@ -362,19 +420,46 @@ export default function PlanoCorteIndustrialPage() {
                 placeholder="Buscar por nome ou SKU..." 
                 className="w-full h-9 pl-10 pr-10 bg-black/40 border border-border/40 rounded-lg text-[11px] focus:border-primary/50 focus:bg-black/60 outline-none transition-all" 
               />
+              {isSearchingGlobal && (
+                <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                  <RefreshCcw size={12} className="animate-spin text-primary" />
+                </div>
+              )}
               {searchPeca && (
                 <button 
-                  onClick={() => setSearchPeca('')}
+                  onClick={() => { setSearchPeca(''); setGlobalResults([]); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X size={14} />
                 </button>
               )}
+
+              {/* RESULTADOS GLOBAIS FLUTUANTES */}
+              {globalResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 glass-elevated border border-primary/20 rounded-xl overflow-hidden shadow-2xl animate-in slide-in-from-top-2 duration-200">
+                  <div className="bg-primary/10 px-3 py-1.5 border-b border-primary/10">
+                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">Encontrado no Catálogo</span>
+                  </div>
+                  {globalResults.map((res, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleAddFromGlobal(res)}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-primary/5 border-b border-border/20 last:border-0 transition-colors text-left group"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-foreground group-hover:text-primary transition-colors">{res.nome || res.descricao}</span>
+                        <span className="text-[9px] font-black text-muted-foreground uppercase">{res.sku || res.codigo_modelo || 'SEM SKU'} • {res.source}</span>
+                      </div>
+                      <Plus size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-            {pecasFiltradas.length === 0 ? (
+            {pecasFiltradas.length === 0 && globalResults.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 opacity-20 gap-3 text-muted-foreground">
                 <Layers size={40} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-center px-8">Nenhuma peça no inventário</span>
