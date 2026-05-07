@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import * as schema from '../db/schema/planos-de-corte.js';
+import * as schema from '../db/schema/index.js';
 
 const databaseUrl = (
   (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') || 

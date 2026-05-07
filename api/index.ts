@@ -221,6 +221,14 @@ export default async function handler(req: any, res: any) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
     }
+    if (cleanUrl.startsWith('/api/orcamentos-pro')) {
+      const { handleOrcamentosPro } = await import('../src/api-lib/orcamentos_pro.js');
+      return await handleOrcamentosPro(req, res);
+    }
+    if (cleanUrl.startsWith('/api/importar-projeto')) {
+      const { handleImportarProjeto } = await import('../src/api-lib/importacao-projetos.js');
+      return await handleImportarProjeto(req, res);
+    }
     if (cleanUrl.startsWith('/api/forn')) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');
       return await handleEstoque(req, res);
