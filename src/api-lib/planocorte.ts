@@ -269,19 +269,18 @@ export async function handleImportarDesenho(req: any, res: any) {
       text = extractedFromDXF;
     } else {
       // Extrair texto do PDF (Fases 1-4)
-      const data = await pdf(buffer);
-      text = data.text;
+      try {
+        const data = await pdf(buffer);
+        text = data.text;
+      } catch (pdfErr: any) {
+        console.error('[API] Erro no pdf-parse:', pdfErr);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Erro técnico ao processar o PDF. Verifique o formato do arquivo.',
+          details: pdfErr.message 
+        });
+      }
     }
-    
-    const pecas: any[] = [];
-    const lines = text.split('\n');
-    
-    // Lista de materiais comuns para detecção (Fase 2)
-    const materialKeywords = [
-      'MDF', 'MDP', 'COMPENSADO', 'BRANCO', 'GRAFITE', 'CARVALHO', 
-      'FREIJO', 'LOUREIRO', 'PRETO', 'CINZA', 'CANELA', 'AMARULA', 
-      'GELATO', 'NOVAES', 'GIANDUIA', 'TITANIO', 'CHUMBO'
-    ];
     
     const pecas: any[] = [];
     const lines = text.split('\n');

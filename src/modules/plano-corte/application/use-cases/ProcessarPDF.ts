@@ -22,13 +22,22 @@ export class ProcessarPDF {
           const result = reader.result as string;
           resolve(result.split(',')[1]); // Remove o prefixo data:application/pdf;base64,
         };
-        reader.onerror = reject;
+        reader.onerror = (err) => {
+          console.error('[IMPORT ERROR] Falha na leitura do arquivo:', err);
+          reject(new Error('Erro ao ler o arquivo selecionado.'));
+        };
         reader.readAsDataURL(file);
       });
 
       // 2. Chamar API de Importação (Fase 1-5)
       const { api } = await import('../../../../lib/api');
-      const pecasExtraidas = await api.planoCorte.importarDesenho(base64, file.name);
+      let pecasExtraidas;
+      try {
+        pecasExtraidas = await api.planoCorte.importarDesenho(base64, file.name);
+      } catch (apiErr: any) {
+        console.error('[IMPORT ERROR] Falha na API de importação:', apiErr);
+        throw new Error(`Serviço de extração indisponível: ${apiErr.message}`);
+      }
 
       if (!pecasExtraidas || pecasExtraidas.length === 0) {
         throw new Error('Nenhuma peça identificada no arquivo. Verifique se o PDF contém texto legível.');
@@ -53,10 +62,21 @@ export class ProcessarPDF {
       // Criar uma "chapa" para cada espessura encontrada
       for (const [esp, pecas] of Object.entries(porEspessura)) {
         const espessuraNum = parseFloat(esp);
+        const materialSugerido = pecas[0]?.material || '';
         
-        // Tentar buscar uma chapa real no estoque para essa espessura
-        const resultadosBusca = await this.chapaRepo.buscarPorSKU(`MDF ${espessuraNum}MM`);
-        const chapaEstoque = resultadosBusca[0];
+        // Tentar buscar uma chapa real no estoque (Busca inteligente: Material + Espessura)
+        const queryBusca = materialSugerido 
+          ? `${materialSugerido} ${espessuraNum}MM`
+          : `MDF ${espessuraNum}MM`;
+          
+        const resultadosBusca = await this.chapaRepo.buscarPorSKU(queryBusca);
+        let chapaEstoque = resultadosBusca.find(c => c.espessura === espessuraNum);
+        
+        // Fallback: busca apenas pela espessura se a busca específica falhar
+        if (!chapaEstoque) {
+          const fallbackBusca = await this.chapaRepo.buscarPorSKU(`${espessuraNum}MM`);
+          chapaEstoque = fallbackBusca.find(c => c.espessura === espessuraNum);
+        }
 
         const novaChapa: ChapaSelecionada = {
           id: `ch_imp_${Math.random().toString(36).substr(2, 9)}`,
