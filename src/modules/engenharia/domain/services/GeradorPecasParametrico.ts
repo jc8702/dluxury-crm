@@ -1,4 +1,4 @@
-import type { Peca } from '../../../plano-corte/domain/services/MaxRectsOptimizer.js';
+import type { Peca } from '../../plano-corte/domain/types';
 import { create, all } from 'mathjs';
 
 const math = create(all);

@@ -72,11 +72,34 @@ export interface BaixaTitulo {
   data_baixa: Date | string;
 }
 
+export interface ProximoVencimento {
+  numero_titulo: string;
+  data_vencimento: string;
+  valor: number;
+  tipo: 'pagar' | 'receber';
+}
+
+export interface Inadimplente {
+  cliente_nome: string;
+  total_vencido: number;
+  dias_atraso: number;
+}
+
+export interface DespesaPorClasse {
+  classe: string;
+  total: number;
+}
+
 export interface KPIFinanceiro {
   a_pagar_30d: number;
   vencidos_total: number;
   capital_de_giro: number;
   a_receber_30d: number;
+  proximos_vencimentos?: ProximoVencimento[];
+  top5_inadimplentes?: Inadimplente[];
+  despesas_por_classe?: DespesaPorClasse[];
+  contas?: Array<{ nome: string; saldo_atual: number }>;
+  saldo_total: number;
 }
 
 export interface CapitalGiroHistorico {

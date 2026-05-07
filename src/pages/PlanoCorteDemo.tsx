@@ -2,7 +2,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { HybridOptimizer, MaxRectsOptimizer, GuillotineOptimizer } from '@/modules/plano-corte/domain/services';
-import type { Peca, ResultadoOtimizacao } from '@/modules/plano-corte/domain/services/MaxRectsOptimizer';
+import type { Peca, ResultadoOtimizacaoSimples as ResultadoOtimizacao } from '@/modules/plano-corte/domain/services/MaxRectsOptimizer';
+import type { Peca as PecaDominio } from '@/modules/plano-corte/domain/types';
 
 type AlgoritmoTipo = 'maxrects' | 'guillotine' | 'hybrid';
 
@@ -14,7 +15,7 @@ interface EstadoOtimizacao {
   algoritmo: AlgoritmoTipo;
 }
 
-const PECAS_EXEMPLO: Peca[] = [
+const PECAS_EXEMPLO: PecaDominio[] = [
   {
     id: 'porta-frente-1',
     nome: 'Porta Guarda-Roupa (Frente)',
@@ -341,9 +342,9 @@ export function PlanoCorteDemo() {
                 </h3>
 
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {estado.resultado.pecas_posicionadas.map((peca, idx) => (
+                  {estado.resultado.pecas_posicionadas.map((peca: any, idx: number) => (
                     <div
-                      key={peca.peca_id}
+                      key={peca.id}
                       className="flex justify-between items-center p-3 bg-slate-700 rounded-lg text-sm"
                     >
                       <div className="flex-1">

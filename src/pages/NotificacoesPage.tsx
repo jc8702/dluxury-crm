@@ -77,7 +77,7 @@ const NotificacoesPage: React.FC = () => {
           <p style={{ color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>Alertas automáticos do sistema e monitoramento de prazos críticos.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn-secondary" onClick={() => api.notificacoes.generate().then(fetchNotificacoes)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button className="btn-secondary" onClick={() => (api.notificacoes as any).generate().then(fetchNotificacoes)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <RefreshCw size={18} /> Forçar Verificação
             </button>
             <button className="btn-primary" onClick={markAllRead} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -165,7 +165,7 @@ const NotificacoesPage: React.FC = () => {
                       {n.titulo}
                     </h4>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Clock size={12} /> {new Date(n.criado_em!).toLocaleString('pt-BR')}
+                      <Clock size={12} /> {new Date(n.created_at!).toLocaleString('pt-BR')}
                     </span>
                   </div>
                   <p style={{ margin: '0.5rem 0 1rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>

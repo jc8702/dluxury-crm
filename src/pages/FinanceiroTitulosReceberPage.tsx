@@ -102,6 +102,7 @@ export default function FinanceiroTitulosReceberPage() {
   };
 
   const saveEdit = async () => {
+    if (!editModal) return;
     try {
       await api.financeiro.titulosReceber.update(editModal.id, {
         numero_titulo: editModal.numero_titulo,
@@ -191,7 +192,7 @@ export default function FinanceiroTitulosReceberPage() {
                 </tr>
               ) : (
                 Object.entries(
-                  rows.reduce((acc: Record<string, Titulo[]>, r) => {
+                  rows.reduce((acc: Record<string, Titulo[]>, r: Titulo) => {
                     const cid = r.cliente_id || 'unknown';
                     if (!acc[cid]) acc[cid] = [];
                     acc[cid].push(r);
@@ -346,10 +347,11 @@ export default function FinanceiroTitulosReceberPage() {
         <Modal isOpen={!!antecipacaoModal} onClose={() => setAntecipacaoModal(null)} title="Simulador de Antecipação">
           <div style={{ minWidth: '400px' }}>
             {(() => {
+              if (!antecipacaoModal) return null;
               const hoje = new Date();
-              const venc = new Date(antecipacaoModal?.data_vencimento);
+              const venc = new Date(antecipacaoModal.data_vencimento);
               const diasParaVencer = Math.max(0, Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)));
-              const valorOriginal = Number(antecipacaoModal?.valor_aberto || 0);
+              const valorOriginal = Number(antecipacaoModal.valor_aberto || 0);
               
               // Cálculo de Antecipação (Ex: 3.5% ao mês + 0.5% IOF/Taxa)
               const taxaMensal = taxaAntecipacao / 100;
@@ -557,7 +559,7 @@ export default function FinanceiroTitulosReceberPage() {
                         valor_multa: valorMulta,
                         valor_juros: valorJuros,
                         conta_interna_id: contaId,
-                        data_baixa: new Date()
+                        data_baixa: new Date().toISOString()
                       });
                       setBaixaModal(null);
                       load(page);

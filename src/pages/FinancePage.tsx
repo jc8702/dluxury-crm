@@ -11,7 +11,7 @@ import {
   PieChart, Pie, Cell, Legend, ReferenceLine
 } from 'recharts';
 import { CardSkeleton, TableSkeleton } from '../design-system/components/Skeleton';
-import { KPIFinanceiro, CapitalGiroHistorico } from '../modules/financeiro/domain/types';
+import type { KPIFinanceiro, CapitalGiroHistorico } from '../modules/financeiro/domain/types';
 
 // ────────────────────────────────────────────────────────────────────────────────
 // UTILS
