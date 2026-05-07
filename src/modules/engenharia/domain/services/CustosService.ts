@@ -1,4 +1,4 @@
-import type { Peca } from '../../plano-corte/domain/types';
+import type { Peca } from '../../plano-corte/domain/types.js';
 
 /**
  * INTERFACE: Entrada para cálculo de custos
