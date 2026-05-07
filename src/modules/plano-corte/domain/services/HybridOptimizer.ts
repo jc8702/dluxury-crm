@@ -57,7 +57,8 @@ export class HybridOptimizer {
         area_usada: 0,
         area_total: this.largura_chapa * this.altura_chapa,
         area_desperdicada: this.largura_chapa * this.altura_chapa,
-        tempo_ms: 0
+        tempo_ms: 0,
+        espacos_vazios: []
       };
     }
 
