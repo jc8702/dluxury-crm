@@ -2,9 +2,6 @@ import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
 
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
@@ -254,31 +251,53 @@ export async function handleImportarDesenho(req: any, res: any) {
     if (isDXF) {
       // Parse básico de DXF (Fase 5) - Extrai strings de texto (Group Codes 1 e 3)
       const rawText = buffer.toString('utf8');
-      const dxfLines = rawText.split(/\r?\n/); // Suporte a Windows e Linux line endings
+      const dxfLines = rawText.split(/\r?\n/);
       let extractedFromDXF = '';
       for (let i = 0; i < dxfLines.length; i++) {
         const line = dxfLines[i].trim();
-        // 1 = Texto Simples, 3 = Texto Estendido (MTEXT)
         if (line === '1' || line === '3') { 
           const val = (dxfLines[i+1] || '').trim();
-          if (val && !val.startsWith('$')) { // Ignora metadados de variáveis
+          if (val && !val.startsWith('$')) {
             extractedFromDXF += val + '\n';
           }
         }
       }
       text = extractedFromDXF;
     } else {
-      // Extrair texto do PDF (Fases 1-4)
+      // Extrair texto do PDF (Fases 1-4) usando carregamento dinâmico e fallback
       try {
-        const data = await pdf(buffer);
+        const { createRequire } = await import('module');
+        const require = createRequire(import.meta.url);
+        const pdfParser = require('pdf-parse');
+        
+        const data = await pdfParser(buffer);
         text = data.text;
       } catch (pdfErr: any) {
-        console.error('[API] Erro no pdf-parse:', pdfErr);
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Erro técnico ao processar o PDF. Verifique o formato do arquivo.',
-          details: pdfErr.message 
-        });
+        console.warn('[API] Falha no pdf-parse, tentando pdfjs-dist como fallback...', pdfErr.message);
+        try {
+          const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+          const loadingTask = pdfjs.getDocument({ 
+            data: new Uint8Array(buffer),
+            useSystemFonts: true,
+            disableFontFace: true
+          });
+          const pdfDoc = await loadingTask.promise;
+          let fullText = '';
+          for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map((item: any) => 'str' in item ? item.str : '').join(' ') + '\n';
+          }
+          text = fullText;
+          console.log('[API] Extração via pdfjs-dist concluída.');
+        } catch (fallbackErr: any) {
+          console.error('[API] Falha total na extração de PDF:', fallbackErr);
+          return res.status(500).json({ 
+            success: false, 
+            error: 'Não foi possível ler este arquivo PDF. Verifique se ele contém texto selecionável ou tente exportar em DXF.',
+            details: fallbackErr.message 
+          });
+        }
       }
     }
     
