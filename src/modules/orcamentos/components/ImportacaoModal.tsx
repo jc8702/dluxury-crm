@@ -14,23 +14,25 @@ export function ImportacaoModal({ isOpen, onClose }: { isOpen: boolean, onClose:
         setStatus('uploading');
         
         try {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const base64 = event.target?.result?.toString().split(',')[1];
-                const type = file.name.endsWith('.pdf') ? 'PDF' : 'SKETCHUP';
-                
-                const response = await api.importador.importar(type, { 
-                    content: base64,
-                    fileName: file.name
-                });
-                
-                setResults(response);
-                setStatus('success');
-            };
-            reader.readAsDataURL(file);
-        } catch (err) {
+            const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result?.toString().split(',')[1] || '');
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            const type = file.name.endsWith('.pdf') ? 'PDF' : 'SKETCHUP';
+            
+            const response = await api.importador.importar(type, { 
+                content: base64,
+                fileName: file.name
+            });
+            
+            setResults(response);
+            setStatus('success');
+        } catch (err: any) {
             console.error('Erro na importação:', err);
-            alert('Falha ao processar arquivo.');
+            alert('Falha ao processar arquivo: ' + (err.message || 'Erro desconhecido'));
             setStatus('idle');
         }
     };
