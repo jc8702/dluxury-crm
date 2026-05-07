@@ -3,119 +3,146 @@ import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface ExportData {
-    numeroOrcamento: string;
-    cliente: {
-        nome: string;
-        cidade: string;
-        uf: string;
-    };
-    itens: Array<{
-        nome: string;
-        quantidade: number;
-        precoVenda: number;
-    }>;
-    resumo: {
-        totalCusto: number;
-        margem: number;
-        totalVenda: number;
-        desconto: number;
-    };
-    condicoes: string;
-}
+export const exportBudgetToPDF = (orcamento: any) => {
+    if (!orcamento) return;
 
-export const exportBudgetToPDF = (data: ExportData) => {
     const doc = new jsPDF() as any;
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // 1. HEADER & LOGO
-    doc.setFillColor(31, 31, 31); // Dark gray/black
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setFillColor(15, 15, 15); // Black-ish
+    doc.rect(0, 0, pageWidth, 45, 'F');
     
     doc.setTextColor(255, 102, 0); // Orange
-    doc.setFontSize(24);
+    doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
-    doc.text('D\'LUXURY', 15, 25);
+    doc.text('D\'LUXURY', 20, 28);
     
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('DESIGN & EXCELÊNCIA INDUSTRIAL', 15, 32);
+    doc.text('DESIGN & EXCELÊNCIA INDUSTRIAL', 20, 36);
 
-    doc.setFontSize(12);
-    doc.text(`ORÇAMENTO: #${data.numeroOrcamento}`, pageWidth - 15, 25, { align: 'right' });
-    doc.text(format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }), pageWidth - 15, 32, { align: 'right' });
-
-    // 2. CLIENT INFO
-    doc.setTextColor(31, 31, 31);
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('DADOS DO CLIENTE', 15, 55);
+    doc.text(`ORÇAMENTO: #${orcamento.numeroOrcamento}`, pageWidth - 20, 25, { align: 'right' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }), pageWidth - 20, 33, { align: 'right' });
+
+    // 2. CLIENT INFO
+    doc.setTextColor(15, 15, 15);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DADOS DO CLIENTE', 20, 60);
     
     doc.setDrawColor(255, 102, 0);
-    doc.setLineWidth(0.5);
-    doc.line(15, 57, 60, 57);
+    doc.setLineWidth(0.8);
+    doc.line(20, 62, 50, 62);
 
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Nome/Razão Social: ${data.cliente.nome}`, 15, 65);
-    doc.text(`Localidade: ${data.cliente.cidade} - ${data.cliente.uf}`, 15, 71);
+    doc.setTextColor(60, 60, 60);
+    
+    const clienteNome = orcamento.cliente?.nome || 'NÃO INFORMADO';
+    const clienteLocal = orcamento.cliente ? `${orcamento.cliente.cidade || ''} - ${orcamento.cliente.uf || ''}` : '---';
+
+    doc.text(`Nome / Razão Social:`, 20, 72);
+    doc.setTextColor(15, 15, 15);
+    doc.setFont('helvetica', 'bold');
+    doc.text(clienteNome, 60, 72);
+    
+    doc.setTextColor(60, 60, 60);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Localidade:`, 20, 78);
+    doc.setTextColor(15, 15, 15);
+    doc.text(clienteLocal, 60, 78);
+
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Validade da Proposta:`, 20, 84);
+    doc.setTextColor(15, 15, 15);
+    doc.text(`${orcamento.validadeDias} dias`, 60, 84);
 
     // 3. ITEMS TABLE
+    const tableBody = (orcamento.itens || []).map((item: any) => [
+        { content: item.skuEngenharia?.nome || 'ITEM SEM NOME', styles: { fontStyle: 'bold' } },
+        item.quantidade,
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.custoUnitarioCalculado) * (1 + Number(orcamento.margemLucroPercentual) / 100)),
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valorVendaCalculado || (Number(item.custoUnitarioCalculado) * item.quantidade * (1 + Number(orcamento.margemLucroPercentual) / 100)))
+    ]);
+
     doc.autoTable({
-        startY: 85,
-        head: [['ITEM / PRODUTO DE ENGENHARIA', 'QTD', 'VALOR UNIT.', 'TOTAL']],
-        body: data.itens.map(item => [
-            item.nome,
-            item.quantidade,
-            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.precoVenda),
-            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.precoVenda * item.quantidade)
-        ]),
-        headStyles: { fillColor: [31, 31, 31], textColor: [255, 102, 0], fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        styles: { fontSize: 10, cellPadding: 5 },
+        startY: 95,
+        head: [['MÓDULO / SKU ENGENHARIA', 'QTD', 'VALOR UNIT.', 'TOTAL']],
+        body: tableBody,
+        headStyles: { 
+            fillColor: [15, 15, 15], 
+            textColor: [255, 102, 0], 
+            fontSize: 10,
+            fontStyle: 'bold',
+            cellPadding: 5
+        },
+        bodyStyles: { 
+            fontSize: 9,
+            cellPadding: 4,
+            textColor: [40, 40, 40]
+        },
+        alternateRowStyles: { 
+            fillColor: [250, 250, 250] 
+        },
         columnStyles: {
-            1: { halign: 'center' },
-            2: { halign: 'right' },
-            3: { halign: 'right' }
-        }
+            1: { halign: 'center', width: 20 },
+            2: { halign: 'right', width: 40 },
+            3: { halign: 'right', width: 40 }
+        },
+        margin: { left: 20, right: 20 }
     });
 
     // 4. FINANCIAL SUMMARY
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
     
+    // Total Box
     doc.setFillColor(255, 102, 0);
-    doc.rect(pageWidth - 90, finalY, 75, 45, 'F');
+    doc.rect(pageWidth - 95, finalY, 75, 35, 'F');
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.text('SUBTOTAL:', pageWidth - 85, finalY + 10);
-    doc.text(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.resumo.totalVenda + data.resumo.desconto), pageWidth - 20, finalY + 10, { align: 'right' });
-
-    doc.text('DESCONTO:', pageWidth - 85, finalY + 20);
-    doc.text(`- ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.resumo.desconto)}`, pageWidth - 20, finalY + 20, { align: 'right' });
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL FINAL:', pageWidth - 85, finalY + 35);
-    doc.text(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.resumo.totalVenda), pageWidth - 20, finalY + 35, { align: 'right' });
-
-    // 5. CONDITIONS
-    doc.setTextColor(31, 31, 31);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CONDIÇÕES E PAGAMENTO', 15, finalY + 10);
-    
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    const splitText = doc.splitTextToSize(data.condicoes || 'Pagamento conforme acordado. Validade de 15 dias.', 80);
-    doc.text(splitText, 15, finalY + 18);
+    doc.text('TOTAL DA PROPOSTA', pageWidth - 85, finalY + 12);
 
-    // 6. FOOTER
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Este documento é uma proposta técnica comercial baseada em BOM de engenharia.', pageWidth / 2, 285, { align: 'center' });
-    doc.text('D\'Luxury CRM Industrial - Processamento Automatizado', pageWidth / 2, 290, { align: 'center' });
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    const totalVendaStr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(orcamento.valorTotalVenda));
+    doc.text(totalVendaStr, pageWidth - 85, finalY + 25);
 
-    doc.save(`Orcamento_${data.numeroOrcamento}.pdf`);
+    // Condições
+    doc.setTextColor(15, 15, 15);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('OBSERVAÇÕES E CONDIÇÕES', 20, finalY + 10);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    const condicoes = [
+        `- Proposta válida por ${orcamento.validadeDias} dias.`,
+        `- Taxa financeira inclusa: ${orcamento.taxaFinanceiraPercentual}%.`,
+        `- Itens baseados em explosão de BOM industrial.`,
+        `- Prazo de entrega a combinar conforme cronograma de produção.`
+    ];
+    doc.text(condicoes, 20, finalY + 18);
+
+    // 5. FOOTER
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(240, 240, 240);
+    doc.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+    
+    doc.setFontSize(7);
+    doc.setTextColor(180, 180, 180);
+    doc.text('D\'LUXURY AMBIENTES - SISTEMA DE GESTÃO INDUSTRIAL ERP', pageWidth / 2, pageHeight - 15, { align: 'center' });
+    doc.text('Documento gerado eletronicamente. Proposta sujeita a análise técnica final.', pageWidth / 2, pageHeight - 11, { align: 'center' });
+
+    doc.save(`Proposta_DLuxury_${orcamento.numeroOrcamento}.pdf`);
 };

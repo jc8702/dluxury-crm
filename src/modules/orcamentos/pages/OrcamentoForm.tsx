@@ -70,6 +70,20 @@ export default function OrcamentoForm() {
         );
     }
 
+    if (error && !orcamento) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 gap-6 text-center">
+                <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl max-w-md">
+                    <p className="text-red-500 font-bold mb-2">Erro ao carregar orçamento</p>
+                    <p className="text-zinc-500 text-sm">{error}</p>
+                </div>
+                <Button variant="outline" className="border-zinc-800" onClick={() => window.location.reload()}>
+                    Tentar Novamente
+                </Button>
+            </div>
+        );
+    }
+
     if (!orcamentoId && !orcamento) {
         return (
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8">
@@ -100,9 +114,9 @@ export default function OrcamentoForm() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
-                            Orçamento <span className="text-orange-500">{orcamento.numeroOrcamento}</span>
+                            Orçamento <span className="text-orange-500">{orcamento?.numeroOrcamento || '...'}</span>
                         </h1>
-                        <p className="text-zinc-500 text-sm mt-1">Status: <span className="text-orange-500 font-bold">{orcamento.status}</span></p>
+                        <p className="text-zinc-500 text-sm mt-1">Status: <span className="text-orange-500 font-bold">{orcamento?.status || 'CARREGANDO'}</span></p>
                     </div>
                 </div>
                 <div className="flex gap-4">
@@ -133,7 +147,7 @@ export default function OrcamentoForm() {
                                     <label className="text-[10px] uppercase font-bold text-zinc-600">Cliente</label>
                                     <select 
                                         className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-all appearance-none"
-                                        value={orcamento.clienteId || ''}
+                                        value={orcamento?.clienteId || ''}
                                         onChange={(e) => setHeader({ clienteId: e.target.value })}
                                     >
                                         <option value="">Selecione um cliente...</option>
@@ -147,7 +161,7 @@ export default function OrcamentoForm() {
                                     <Input 
                                         type="number" 
                                         className="bg-zinc-900 border-zinc-800 h-12 rounded-xl text-orange-500 font-black text-lg focus:border-orange-500" 
-                                        value={orcamento.margemLucroPercentual}
+                                        value={orcamento?.margemLucroPercentual || 0}
                                         onBlur={(e) => setHeader({ margemLucroPercentual: e.target.value })}
                                     />
                                 </div>
@@ -156,7 +170,7 @@ export default function OrcamentoForm() {
                                     <Input 
                                         type="number" 
                                         className="bg-zinc-900 border-zinc-800 h-12 rounded-xl" 
-                                        value={orcamento.taxaFinanceiraPercentual}
+                                        value={orcamento?.taxaFinanceiraPercentual || 0}
                                         onBlur={(e) => setHeader({ taxaFinanceiraPercentual: e.target.value })}
                                     />
                                 </div>
@@ -165,7 +179,7 @@ export default function OrcamentoForm() {
                                     <Input 
                                         type="number" 
                                         className="bg-zinc-900 border-zinc-800 h-12 rounded-xl" 
-                                        value={orcamento.validadeDias}
+                                        value={orcamento?.validadeDias || 0}
                                         onBlur={(e) => setHeader({ validadeDias: e.target.value })}
                                     />
                                 </div>
@@ -213,7 +227,7 @@ export default function OrcamentoForm() {
                         </div>
                     </div>
 
-                    {!orcamento.itens || orcamento.itens.length === 0 ? (
+                    {!orcamento?.itens || orcamento.itens.length === 0 ? (
                         <div className="border-2 border-dashed border-zinc-900 rounded-3xl p-24 text-center bg-zinc-950/30">
                             <div className="bg-zinc-900 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
                                 <Layers className="w-10 h-10 text-zinc-700 -rotate-12" />
@@ -291,9 +305,9 @@ export default function OrcamentoForm() {
 
             {/* Rodapé com Resumo Financeiro Real-Time */}
             <ResumoFinanceiro resumo={{
-                custoTotal: Number(orcamento.valorTotalCusto),
-                vendaTotal: Number(orcamento.valorTotalVenda),
-                margemReal: Number(orcamento.valorTotalVenda) - Number(orcamento.valorTotalCusto)
+                custoTotal: Number(orcamento?.valorTotalCusto || 0),
+                vendaTotal: Number(orcamento?.valorTotalVenda || 0),
+                margemReal: Number(orcamento?.valorTotalVenda || 0) - Number(orcamento?.valorTotalCusto || 0)
             }} />
 
             <ImportacaoModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
