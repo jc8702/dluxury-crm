@@ -1,7 +1,7 @@
 import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
-import { eq, ilike, or, isNull, and } from 'drizzle-orm';
-import { auditLog, sql, validateAuth } from './_db.js';
+import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
+import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
@@ -121,7 +121,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           // 3. Criar Ordem de Produção (Problem 5)
           const op_id = `OP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
           
-          await sql`
+          await rawSql`
             INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at)
             VALUES (
               gen_random_uuid(), 
@@ -199,9 +199,8 @@ export async function handleChapas(req: any, res: any) {
         .where(or(
           ilike(erpChapas.sku, term), 
           ilike(erpChapas.nome, term),
-          // Busca por descrição parcial (caso o termo seja parte de 'MDF Branco')
           sql`LOWER(${erpChapas.nome}) LIKE LOWER(${term})`,
-          sql`LOWER(${erpChapas.sku}) = LOWER(${termText})` // SKU Exato
+          sql`LOWER(${erpChapas.sku}) = LOWER(${termText})`
         ));
       return res.status(200).json({ success: true, data: results });
     }
