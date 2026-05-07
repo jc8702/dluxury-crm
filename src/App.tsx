@@ -6,7 +6,6 @@ import { ToastProvider } from './context/ToastContext';
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
-const OrcamentosPage = lazy(() => import('./pages/OrcamentosPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProductionPage = lazy(() => import('./pages/ProductionPage'));
 const CuttingPlanPage = lazy(() => import('./modules/plano-corte/ui/pages/PlanoCorteIndustrialPage'));
@@ -138,6 +137,8 @@ function AuthBypass({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import OrcamentoForm from './modules/orcamentos/pages/OrcamentoForm';
+
 export default function App() {
   return (
     <AppProvider>
@@ -156,7 +157,7 @@ export default function App() {
                     <Route index element={<Navigate to="/painel" replace />} />
                     <Route path="painel" element={<DashboardPage />} />
                     <Route path="clientes" element={<ClientsPage />} />
-                    <Route path="orcamentos" element={<OrcamentosPage />} />
+                    <Route path="orcamentos" element={<OrcamentoForm />} />
                     <Route path="projetos" element={<ProjectsPage />} />
                     <Route path="producao" element={<ProductionPage />} />
                      <Route path="plano-de-corte" element={<CuttingPlanPage />} />

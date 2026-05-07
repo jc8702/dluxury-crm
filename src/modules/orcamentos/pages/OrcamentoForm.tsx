@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/design-system/components';
 import { 
     Calculator, FileText, Upload, Plus, Trash2, 
     ChevronDown, ChevronUp, Layers, CheckCircle2, FileDown 
 } from 'lucide-react';
 import { useOrcamento } from '../hooks/useOrcamento';
-import { ListaExplodidaGrid } from './ListaExplodidaGrid';
-import { ImportacaoModal } from './ImportacaoModal';
-import { exportBudgetToPDF } from '../services/export-pdf.js';
+import { ListaExplodidaGrid } from '../components/ListaExplodidaGrid';
+import { ImportacaoModal } from '../components/ImportacaoModal';
+import { ResumoFinanceiro } from '../components/ResumoFinanceiro';
+import { exportBudgetToPDF } from '../services/export-pdf';
 
-export function OrcamentoForm() {
+export default function OrcamentoForm() {
     const { header, setHeader, itens, addItem, removeItem, resumo } = useOrcamento();
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [expandedItem, setExpandedItem] = useState<string | null>(null);
@@ -74,22 +71,22 @@ export function OrcamentoForm() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6">
                     <div className="space-y-2">
-                        <Label>Cliente</Label>
+                        <label className="text-sm font-medium text-zinc-400">Cliente</label>
                         <select className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white focus:ring-orange-500">
                             <option>Selecione um cliente...</option>
                             <option>D'Luxury Ambientes LTDA</option>
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Nº Orçamento</Label>
+                        <label className="text-sm font-medium text-zinc-400">Nº Orçamento</label>
                         <Input disabled placeholder="PRO-20260507-0001" className="bg-zinc-950 border-zinc-800" />
                     </div>
                     <div className="space-y-2">
-                        <Label>Validade (Dias)</Label>
+                        <label className="text-sm font-medium text-zinc-400">Validade (Dias)</label>
                         <Input type="number" defaultValue={15} className="bg-zinc-950 border-zinc-800" />
                     </div>
                     <div className="space-y-2">
-                        <Label>Margem de Lucro (%)</Label>
+                        <label className="text-sm font-medium text-zinc-400">Margem de Lucro (%)</label>
                         <Input 
                             type="number" 
                             value={header.margemLucroPercentual} 

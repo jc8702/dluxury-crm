@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/design-system/components';
 import { Send, FileDown, Save } from 'lucide-react';
 
 export function ResumoFinanceiro({ resumo }: { resumo: any }) {

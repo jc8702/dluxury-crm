@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Modal, Button } from '@/design-system/components';
 import { Upload, FileCode, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export function ImportacaoModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
@@ -12,13 +11,12 @@ export function ImportacaoModal({ open, onOpenChange }: { open: boolean, onOpenC
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-zinc-900 border-zinc-800 text-white">
-                <DialogHeader>
-                    <DialogTitle className="text-xl flex items-center gap-2">
-                        <Upload className="w-5 h-5 text-orange-500" /> Importar Projeto
-                    </DialogTitle>
-                </DialogHeader>
+        <Modal 
+            isOpen={open} 
+            onClose={() => onOpenChange(false)} 
+            title="Importar Projeto"
+            size="md"
+        >
 
                 <div className="py-8">
                     {status === 'idle' && (
@@ -67,7 +65,6 @@ export function ImportacaoModal({ open, onOpenChange }: { open: boolean, onOpenC
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <p>O parser utiliza Inteligência Artificial para mapear descrições de componentes do SketchUp para seu estoque. Verifique os preços e quantidades antes de enviar.</p>
                 </div>
-            </DialogContent>
-        </Dialog>
+        </Modal>
     );
 }
