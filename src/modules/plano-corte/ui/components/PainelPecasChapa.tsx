@@ -99,6 +99,20 @@ export function PainelPecasChapa({
                     />
                   </div>
                 </div>
+                
+                {/* Campo Material - Fase 2 */}
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">Material / Acabamento</label>
+                  <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
+                    <input
+                      type="text"
+                      value={p.material || ''}
+                      onChange={e => onUpdatePeca(p.id, { material: e.target.value.toUpperCase() })}
+                      className="bg-transparent text-[10px] text-white/50 font-bold w-full focus:outline-none uppercase"
+                      placeholder="MDF BRANCO, GRAFITE, ETC."
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-[#333] flex items-center justify-between">

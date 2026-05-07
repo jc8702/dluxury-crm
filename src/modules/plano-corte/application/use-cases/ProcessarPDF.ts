@@ -10,13 +10,31 @@ export class ProcessarPDF {
 
   async executar(file: File): Promise<ProjetoCorte> {
     try {
-      // MOCK para o Demo PDF (evita erro de arrayBuffer em objeto falso)
+      // MOCK para o Demo PDF
       if (file.name === 'PROJETO_DEMO_DLUXURY.pdf') {
         return this.gerarProjetoDemo();
       }
 
-      const dados = await this.parser.parsearArquivo(file);
-      
+      // 1. Converter arquivo para Base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove o prefixo data:application/pdf;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // 2. Chamar API de Importação (Fase 1-5)
+      const { api } = await import('../../../../lib/api');
+      const pecasExtraidas = await api.planoCorte.importarDesenho(base64, file.name);
+
+      if (!pecasExtraidas || pecasExtraidas.length === 0) {
+        throw new Error('Nenhuma peça identificada no arquivo. Verifique se o PDF contém texto legível.');
+      }
+
+      // 3. Estruturar o projeto
       const projeto: ProjetoCorte = {
         id: `proj_${Date.now()}`,
         nome: file.name.replace('.pdf', '').toUpperCase(),
@@ -25,42 +43,46 @@ export class ProcessarPDF {
         status: 'rascunho'
       };
 
-      if (dados.length === 0) {
-        throw new Error('Nenhum dado estruturado encontrado no PDF. O formato pode não ser compatível.');
-      }
+      // Agrupar peças por espessura (já que não temos material na Fase 1)
+      const porEspessura: Record<number, any[]> = {};
+      pecasExtraidas.forEach((p: any) => {
+        if (!porEspessura[p.espessura]) porEspessura[p.espessura] = [];
+        porEspessura[p.espessura].push(p);
+      });
 
-      for (const d of dados) {
-        const resultadosBusca = await this.chapaRepo.buscarPorSKU(d.material);
-        const chapaEstoque = resultadosBusca.find(c => 
-          c.espessura === d.espessura && 
-          (Math.abs(c.largura - d.largura) < 100 || Math.abs(c.altura - d.altura) < 100)
-        ) || resultadosBusca[0];
+      // Criar uma "chapa" para cada espessura encontrada
+      for (const [esp, pecas] of Object.entries(porEspessura)) {
+        const espessuraNum = parseFloat(esp);
+        
+        // Tentar buscar uma chapa real no estoque para essa espessura
+        const resultadosBusca = await this.chapaRepo.buscarPorSKU(`MDF ${espessuraNum}MM`);
+        const chapaEstoque = resultadosBusca[0];
 
         const novaChapa: ChapaSelecionada = {
-          id: `ch_pdf_${Math.random().toString(36).substr(2, 9)}`,
-          sku_chapa: chapaEstoque?.sku || 'SKU-GENERICO',
-          nome_exibicao: d.material.toUpperCase(),
-          largura_mm: d.largura || chapaEstoque?.largura || 2750,
-          altura_mm: d.altura || chapaEstoque?.altura || 1840,
-          espessura_mm: d.espessura,
+          id: `ch_imp_${Math.random().toString(36).substr(2, 9)}`,
+          sku_chapa: chapaEstoque?.sku || `MDF-GEN-${espessuraNum}`,
+          nome_exibicao: `MDF ${espessuraNum}MM (IMPORTADO)`,
+          largura_mm: chapaEstoque?.largura || 2750,
+          altura_mm: chapaEstoque?.altura || 1840,
+          espessura_mm: espessuraNum,
           preco_unitario: chapaEstoque?.preco || 0,
           criada_em: new Date(),
-          pecas: d.pecas.map(p => ({
-            id: `pc_pdf_${Math.random().toString(36).substr(2, 9)}`,
+          pecas: pecas.map((p: any) => ({
+            id: p.id,
             nome: p.nome,
             largura: p.largura,
-            altura: p.altura,
+            altura: p.comprimento,
             quantidade: p.quantidade,
-            rotacionavel: true,
-            sku_chapa: chapaEstoque?.sku || 'SKU-GENERICO'
+            rotacionavel: true
           }))
         };
         projeto.chapas.push(novaChapa);
       }
+
       return projeto;
     } catch (error: any) {
-      console.error('Erro ao processar PDF:', error);
-      throw new Error(error.message || 'Falha ao processar arquivo PDF. Verifique se o formato é compatível.');
+      console.error('Erro ao processar desenho:', error);
+      throw new Error(error.message || 'Falha ao processar arquivo. Verifique o formato.');
     }
   }
 

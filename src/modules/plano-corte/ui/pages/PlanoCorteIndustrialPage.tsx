@@ -371,10 +371,10 @@ export default function PlanoCorteIndustrialPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-3 px-6 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-[#333] cursor-pointer transition-all group">
+          <label id="btn-importar-desenho" className="flex items-center gap-3 px-6 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-[#333] cursor-pointer transition-all group">
             <Upload size={18} className="text-[#666] group-hover:text-[#FFA500]" />
-            <span className="text-xs font-black uppercase tracking-widest text-[#888] group-hover:text-white">Importar PDF</span>
-            <input type="file" className="hidden" accept=".pdf" onChange={handleImportPDF} />
+            <span className="text-xs font-black uppercase tracking-widest text-[#888] group-hover:text-white">IMPORTAR DESENHO PDF</span>
+            <input type="file" className="hidden" accept=".pdf,.dxf" onChange={handleImportPDF} />
           </label>
 
           <button 

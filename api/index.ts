@@ -193,6 +193,10 @@ export default async function handler(req: any, res: any) {
       const { handleNotificacoes } = await import('../src/api-lib/notificacoes.js');
       return await handleNotificacoes(req, res);
     }
+    if (cleanUrl.startsWith('/api/plano-corte/importar-desenho')) {
+      const { handleImportarDesenho } = await import('../src/api-lib/planocorte.js');
+      return await handleImportarDesenho(req, res);
+    }
     if (cleanUrl.startsWith('/api/plano-corte')) {
       const { handlePlanoCorte } = await import('../src/api-lib/planocorte.js');
       return await handlePlanoCorte(req, res);

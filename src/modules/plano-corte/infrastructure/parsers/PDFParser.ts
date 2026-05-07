@@ -1,9 +1,13 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configuração do Worker para pdfjs-dist (Vite/Browser compatível)
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  const version = pdfjsLib.version || '5.7.284';
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+if (typeof window !== 'undefined') {
+  try {
+    const version = (pdfjsLib as any).version || '4.0.379'; // Versão estável fallback
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+  } catch (e) {
+    console.error('[PDFParser] Erro ao configurar Worker:', e);
+  }
 }
 
 export interface PecaExtraida {
@@ -58,22 +62,23 @@ export class PDFParser {
     console.log('[PDFParser] Iniciando extração de dados do texto (comprimento:', texto.length, ')');
     
     // Regex ultra-flexível para materiais
-    // Padrão: (Nome Material) ... (Espessura) MM ... (Largura) x (Altura)
-    // Suporta: "MDF BRANCO 18MM 2750x1840", "CHAPA MDF 15 MM - 2750 X 1830"
-    const materialRegex = /([A-Z0-9\s._-]+?)\s+(\d{1,2})\s*MM\s+.*?(\d{3,4})\s*[\sxX*]+\s*(\d{3,4})/gi;
+    // Padrão: (Nome Material) ... (Espessura) [MM] ... (Largura) x (Altura)
+    const materialRegex = /([A-ZÀ-Ú0-9\s._-]+?)\s+(\d{1,2})\s*(?:MM)?\s+.*?(\d{3,4})\s*[\sxX* ]+\s*(\d{3,4})/gi;
     
     let match;
     const blocos: { index: number, info: any }[] = [];
     
-    while ((match = materialRegex.exec(texto)) !== null) {
-      const materialNome = match[1].trim().replace(/\n/g, ' ');
-      // Ignorar se o nome for apenas números (provavelmente não é um material)
-      if (/^\d+$/.test(materialNome)) continue;
+    // Normalizar texto: remove excesso de espaços e quebras, mas mantém fôlego para tabelas
+    const textoNormalizado = texto.replace(/\s{2,}/g, ' ').replace(/\n/g, ' ');
+
+    while ((match = materialRegex.exec(textoNormalizado)) !== null) {
+      const materialNome = match[1].trim();
+      if (/^\d+$/.test(materialNome) || materialNome.length < 3) continue;
 
       blocos.push({
         index: match.index,
         info: {
-          material: materialNome,
+          material: materialNome.toUpperCase(),
           espessura: parseInt(match[2]),
           largura: parseInt(match[3]),
           altura: parseInt(match[4])
@@ -81,45 +86,48 @@ export class PDFParser {
       });
     }
 
-    console.log('[PDFParser] Potenciais materiais encontrados:', blocos.length);
-
     if (blocos.length === 0) {
-      console.warn('[PDFParser] Nenhum material padrão encontrado. Tentando detecção de dimensões soltas...');
-      // Fallback: Tentar encontrar qualquer coisa que pareça uma chapa (ex: 2750x1840 ou 2750 x 1840)
-      const fallbackRegex = /(\d{4})\s*[\sxX*]+\s*(\d{4})/g;
+      console.warn('[PDFParser] Fallback: Detectando dimensões soltas...');
+      const fallbackRegex = /(\d{4})\s*[\sxX* ]+\s*(\d{4})/g;
       let fMatch;
-      while ((fMatch = fallbackRegex.exec(texto)) !== null) {
+      while ((fMatch = fallbackRegex.exec(textoNormalizado)) !== null) {
+         const snippet = textoNormalizado.substring(Math.max(0, fMatch.index - 40), fMatch.index);
+         const materialProvavel = snippet.split(' ').filter(s => s.length > 2).pop() || 'MATERIAL';
+
          blocos.push({
           index: fMatch.index,
           info: {
-            material: 'MATERIAL GENÉRICO',
+            material: materialProvavel.toUpperCase(),
             espessura: 18,
             largura: parseInt(fMatch[1]),
             altura: parseInt(fMatch[2])
           }
-        });
+         });
       }
     }
 
     if (blocos.length === 0) {
-       throw new Error('PDF sem tabelas de peças ou materiais detectadas. Certifique-se que o PDF contém dados de plano de corte legíveis.');
+       throw new Error('Não foi possível identificar materiais. O PDF deve conter dimensões (ex: 2750x1840).');
     }
 
     for (let i = 0; i < blocos.length; i++) {
       const inicio = blocos[i].index;
-      const fim = blocos[i+1] ? blocos[i+1].index : texto.length;
-      const textoBloco = texto.substring(inicio, fim);
+      const fim = blocos[i+1] ? blocos[i+1].index : textoNormalizado.length;
+      const textoBloco = textoNormalizado.substring(inicio, fim);
       
       const pecas: PecaExtraida[] = [];
-      // Regex para peças: Nome ... Largura x Altura ... Qtd
-      // Suporta: "LATERAL 720x550 4", "BASE 600 X 550 (2)", "PRATELEIRA 567*530 QTD: 6"
-      const pecaRegex = /([A-Z0-9\s._-]+?)\s+(\d{2,4})\s*[\sxX*]+\s*(\d{2,4})\s*(?:[\s(]*(\d+)[\s)]*|QTD:\s*(\d+))/gi;
+      // Regex de Peças: Nome (com acentos) | Medida | Medida | Qtd
+      const pecaRegex = /([A-ZÀ-Ú0-9\s._-]+?)\s+(\d{2,4})\s*[\sxX* ]+\s*(\d{2,4})(?:\s*(?:[\s(]*(\d+)[\s)]*|QTD:\s*(\d+)))?/gi;
       
       let pMatch;
       while ((pMatch = pecaRegex.exec(textoBloco)) !== null) {
-        const nome = pMatch[1].trim().replace(/\n/g, ' ');
-        // Evitar pegar o próprio material como peça
-        if (nome === blocos[i].info.material || nome.length < 2) continue;
+        let nomeRaw = pMatch[1].trim();
+        
+        if (nomeRaw.toUpperCase().includes(blocos[i].info.material) || /^\d+$/.test(nomeRaw) || nomeRaw.length < 2) continue;
+
+        // Limpeza inteligente: pega apenas o final do nome se for um snippet de tabela
+        const palavras = nomeRaw.split(' ');
+        const nome = palavras.slice(-3).join(' ').toUpperCase();
 
         const qtd = parseInt(pMatch[4] || pMatch[5] || '1');
 
@@ -131,8 +139,6 @@ export class PDFParser {
         });
       }
 
-      console.log(`[PDFParser] Peças extraídas para ${blocos[i].info.material}:`, pecas.length);
-
       if (pecas.length > 0) {
         chapas.push({
           ...blocos[i].info,
@@ -142,7 +148,7 @@ export class PDFParser {
     }
 
     if (chapas.length === 0) {
-      throw new Error('Materiais identificados, mas nenhuma peça válida foi encontrada dentro de cada material.');
+      throw new Error('Materiais encontrados, mas nenhuma lista de peças detectada abaixo deles.');
     }
 
     return chapas;

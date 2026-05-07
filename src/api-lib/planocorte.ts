@@ -2,6 +2,9 @@ import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdf = require('pdf-parse');
 
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
@@ -227,5 +230,180 @@ export async function handleEngenhariaSKUs(req: any, res: any) {
     return res.status(200).json({ success: true, data: all });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * IMPORTAÇÃO DE DESENHO TÉCNICO (FASE 1 - EXTRAÇÃO DE TEXTO)
+ */
+export async function handleImportarDesenho(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).end();
+  
+  try {
+    const { fileBase64 } = req.body;
+    if (!fileBase64) return res.status(400).json({ success: false, error: 'Arquivo não fornecido' });
+    
+    // Decodificar Base64
+    const { fileName } = req.body;
+    const buffer = Buffer.from(fileBase64, 'base64');
+    let text = '';
+    
+    // Detectar se é DXF (pela extensão ou cabeçalho '0')
+    const isDXF = fileName?.toLowerCase().endsWith('.dxf') || (buffer.length > 4 && buffer.toString('utf8', 0, 1).trim() === '0');
+
+    if (isDXF) {
+      // Parse básico de DXF (Fase 5) - Extrai strings de texto (Group Codes 1 e 3)
+      const rawText = buffer.toString('utf8');
+      const dxfLines = rawText.split(/\r?\n/); // Suporte a Windows e Linux line endings
+      let extractedFromDXF = '';
+      for (let i = 0; i < dxfLines.length; i++) {
+        const line = dxfLines[i].trim();
+        // 1 = Texto Simples, 3 = Texto Estendido (MTEXT)
+        if (line === '1' || line === '3') { 
+          const val = (dxfLines[i+1] || '').trim();
+          if (val && !val.startsWith('$')) { // Ignora metadados de variáveis
+            extractedFromDXF += val + '\n';
+          }
+        }
+      }
+      text = extractedFromDXF;
+    } else {
+      // Extrair texto do PDF (Fases 1-4)
+      const data = await pdf(buffer);
+      text = data.text;
+    }
+    
+    const pecas: any[] = [];
+    const lines = text.split('\n');
+    
+    // Lista de materiais comuns para detecção (Fase 2)
+    const materialKeywords = [
+      'MDF', 'MDP', 'COMPENSADO', 'BRANCO', 'GRAFITE', 'CARVALHO', 
+      'FREIJO', 'LOUREIRO', 'PRETO', 'CINZA', 'CANELA', 'AMARULA', 
+      'GELATO', 'NOVAES', 'GIANDUIA', 'TITANIO', 'CHUMBO'
+    ];
+    
+    const pecas: any[] = [];
+    const lines = text.split('\n');
+    
+    // Lista de materiais comuns para detecção (Fase 2)
+    const materialKeywords = [
+      'MDF', 'MDP', 'COMPENSADO', 'BRANCO', 'GRAFITE', 'CARVALHO', 
+      'FREIJO', 'LOUREIRO', 'PRETO', 'CINZA', 'CANELA', 'AMARULA', 
+      'GELATO', 'NOVAES', 'GIANDUIA', 'TITANIO', 'CHUMBO'
+    ];
+    
+    /**
+     * Regex para identificar padrões de peças e dimensões:
+     * Padrão 1: Nome + L x A x E (Fase 1)
+     */
+    const regexDimensoes = /(?:([a-zA-ZÀ-ÿ0-9\s\-_]{2,})[:\-\s]+)?(\d+(?:[.,]\d+)?)\s*[xX*]\s*(\d+(?:[.,]\d+)?)\s*[xX*]\s*(\d+(?:[.,]\d+)?)/;
+    
+    /**
+     * Regex para Tabelas (Fase 3): 
+     * Procura por linhas com 4 ou 5 números isolados (ID, Largura, Altura, Espessura, Qtd)
+     * Ex: "001  Base  600  550  18  2"
+     */
+    const regexTabela = /(?:(\d+)\s+)?([a-zA-ZÀ-ÿ0-9\s\-_]{3,})\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)(?:\s+(\d+))?/;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+
+      // 1. Tenta Padrão de Dimensões Explícitas (LxAxE)
+      let match = trimmedLine.match(regexDimensoes);
+      
+      // 2. Se não achou, tenta Padrão de Tabela (ID | Nome | L | A | E)
+      if (!match) {
+        match = trimmedLine.match(regexTabela);
+        if (match) {
+          const nome = match[2]?.trim();
+          const largura = match[3];
+          const comprimento = match[4];
+          const espessura = match[5];
+          const quantidade = match[6] || '1';
+
+          pecas.push({
+            id: Math.random().toString(36).substring(2, 9),
+            nome: nome || `Item ${match[1] || pecas.length + 1}`,
+            largura: parseFloat(largura.replace(',', '.')),
+            comprimento: parseFloat(comprimento.replace(',', '.')),
+            espessura: parseFloat(espessura.replace(',', '.')),
+            quantidade: parseInt(quantidade),
+            material: '' 
+          });
+          
+          const lastPeca = pecas[pecas.length - 1];
+          const upperLine = trimmedLine.toUpperCase();
+          for (const kw of materialKeywords) {
+            if (upperLine.includes(kw)) {
+              lastPeca.material = kw;
+              break;
+            }
+          }
+          continue;
+        }
+      }
+
+      // 3. Fase 4: Detecção de Cotas Soltas (Proximidade)
+      // Se a linha tem apenas números seguidos de 'mm' ou dimensões soltas
+      if (!match) {
+        const regexCotasSoltas = /(\d+(?:[.,]\d+)?)\s*(?:mm|MM)/g;
+        const cotas = [...trimmedLine.matchAll(regexCotasSoltas)];
+        if (cotas.length >= 2) {
+          pecas.push({
+            id: Math.random().toString(36).substring(2, 9),
+            nome: `Peça Cota ${pecas.length + 1}`,
+            largura: parseFloat(cotas[0][1].replace(',', '.')),
+            comprimento: parseFloat(cotas[1][1].replace(',', '.')),
+            espessura: cotas[2] ? parseFloat(cotas[2][1].replace(',', '.')) : 18,
+            quantidade: 1,
+            material: ''
+          });
+          continue;
+        }
+      }
+
+      // Processamento final se houver match nos padrões 1 ou 2
+      if (match) {
+        const nomeFinal = match[1]?.trim() || `Peça ${pecas.length + 1}`;
+        
+        // Identificar material na linha (Fase 2)
+        const upperLine = line.toUpperCase();
+        let materialDetectado = '';
+        for (const kw of materialKeywords) {
+          if (upperLine.includes(kw)) {
+            const index = upperLine.indexOf(kw);
+            materialDetectado = upperLine.substring(index, index + 20).split(/[:\d\-\*xX]/)[0].trim();
+            break;
+          }
+        }
+
+        pecas.push({
+          id: Math.random().toString(36).substring(2, 9),
+          nome: nomeFinal,
+          largura: parseFloat(match[2].replace(',', '.')),
+          comprimento: parseFloat(match[3].replace(',', '.')),
+          espessura: parseFloat(match[4].replace(',', '.')),
+          quantidade: 1,
+          material: materialDetectado || '' 
+        });
+      }
+    }
+    
+    // Filtrar peças inválidas (muito pequenas ou erro de parse)
+    const pecasValidas = pecas.filter(p => p.largura > 10 && p.comprimento > 10);
+    
+    console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas de PDF.`);
+    
+    return res.status(200).json({ 
+      success: true, 
+      data: pecasValidas,
+      count: pecasValidas.length,
+      debug: { textLength: text.length }
+    });
+  } catch (err: any) {
+    console.error('IMPORT_DESENHO_ERROR:', err);
+    return res.status(500).json({ success: false, error: 'Erro ao processar PDF: ' + err.message });
   }
 }
