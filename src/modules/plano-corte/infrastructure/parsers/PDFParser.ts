@@ -1,9 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// O worker deve ser configurado no lado do cliente (Vite)
-// Geralmente feito no ponto de entrada ou aqui mesmo se for compatível
+// Configuração do Worker para pdfjs-dist (Vite/Browser compatível)
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  const version = pdfjsLib.version || '5.7.284';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
 }
 
 export interface PecaExtraida {
@@ -29,65 +29,96 @@ export class PDFParser {
   }
 
   private async extrairTexto(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
-    let fullText = '';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        useWorkerFetch: true,
+        isEvalSupported: false 
+      });
+      const pdf = await loadingTask.promise;
+      let fullText = '';
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item: any) => item.str).join(' ');
-      fullText += pageText + '\n';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+
+      return fullText;
+    } catch (err) {
+      console.error('[PDFParser] Erro na extração de texto:', err);
+      throw new Error('Não foi possível ler o texto do PDF. O arquivo pode estar protegido ou corrompido.');
     }
-
-    return fullText;
   }
 
   private extrairDados(texto: string): ChapaExtraida[] {
     const chapas: ChapaExtraida[] = [];
+    console.log('[PDFParser] Iniciando extração de dados do texto (comprimento:', texto.length, ')');
     
-    // Este parser é otimizado para o padrão comum de exportação de sistemas CAD/CAM
-    // Procura por blocos de materiais e suas respectivas peças
-    
-    // 1. Identificar blocos de materiais (ex: "MDF BRANCO 18MM 2750x1840")
-    // Regex sugerida: Material + Espessura + Dimensões
-    const materialRegex = /([A-Z0-9\s-]+)\s+(\d+)\s*MM\s+(\d+)\s*[xX*]\s*(\d+)/gi;
+    // Regex mais flexível para materiais
+    // Padrão: Nome Material ... Espessura MM ... Largura x Altura
+    const materialRegex = /([A-Z0-9\s._-]+)\s+(\d+)\s*MM\s+.*?(\d{3,4})\s*[xX*]\s*(\d{3,4})/gi;
     
     let match;
-    const blocos: { texto: string, info: any }[] = [];
+    const blocos: { index: number, info: any }[] = [];
     
     while ((match = materialRegex.exec(texto)) !== null) {
       blocos.push({
+        index: match.index,
         info: {
-          material: match[1].trim(),
+          material: match[1].trim().replace(/\n/g, ' '),
           espessura: parseInt(match[2]),
           largura: parseInt(match[3]),
           altura: parseInt(match[4])
-        },
-        texto: texto.substring(match.index) // Pegar o texto a partir deste material
+        }
       });
     }
 
-    // 2. Para cada bloco, extrair peças até o próximo material
+    console.log('[PDFParser] Materiais encontrados:', blocos.length);
+
+    if (blocos.length === 0) {
+      // Fallback: Tentar encontrar qualquer coisa que pareça uma chapa (ex: 2750x1840)
+      const fallbackRegex = /(\d{4})\s*[xX*]\s*(\d{4})/g;
+      const fMatch = fallbackRegex.exec(texto);
+      if (fMatch) {
+        blocos.push({
+          index: 0,
+          info: {
+            material: 'MATERIAL EXTRAÍDO',
+            espessura: 18,
+            largura: parseInt(fMatch[1]),
+            altura: parseInt(fMatch[2])
+          }
+        });
+      }
+    }
+
     for (let i = 0; i < blocos.length; i++) {
-      const fimBloco = blocos[i+1] ? texto.indexOf(blocos[i+1].info.material) : texto.length;
-      const textoBloco = texto.substring(texto.indexOf(blocos[i].info.material), fimBloco);
+      const inicio = blocos[i].index;
+      const fim = blocos[i+1] ? blocos[i+1].index : texto.length;
+      const textoBloco = texto.substring(inicio, fim);
       
       const pecas: PecaExtraida[] = [];
-      // Regex para Peças: "Nome ou ID" + Dimensões (Largura x Altura) + Quantidade
-      // Ex: "LATERAL ESQUERDA 700 x 500 (2)"
-      const pecaRegex = /([A-Z0-9\s._-]+)\s+(\d+)\s*[xX*]\s*(\d+)\s*\((\d+)\)/gi;
+      // Regex mais robusta para peças
+      // Padrão: Nome ... Largura x Altura ... (Quantidade) ou Qtd: X
+      const pecaRegex = /([A-Z0-9\s._-]+?)\s+(\d{2,4})\s*[xX*]\s*(\d{2,4})\s*[\s(]*(\d+)[\s)]*/gi;
       
       let pMatch;
       while ((pMatch = pecaRegex.exec(textoBloco)) !== null) {
+        const nome = pMatch[1].trim().replace(/\n/g, ' ');
+        if (nome === blocos[i].info.material) continue;
+
         pecas.push({
-          nome: pMatch[1].trim(),
+          nome: nome || 'PEÇA',
           largura: parseInt(pMatch[2]),
           altura: parseInt(pMatch[3]),
           quantidade: parseInt(pMatch[4])
         });
       }
+
+      console.log(`[PDFParser] Peças no bloco ${i}:`, pecas.length);
 
       if (pecas.length > 0) {
         chapas.push({
@@ -95,12 +126,6 @@ export class PDFParser {
           pecas
         });
       }
-    }
-
-    // Se falhar o parsing por blocos, tenta um modo fallback (apenas lista de peças)
-    if (chapas.length === 0) {
-      console.warn('Falha no parsing estruturado. Tentando modo lista única.');
-      // ... implementação simplificada ...
     }
 
     return chapas;

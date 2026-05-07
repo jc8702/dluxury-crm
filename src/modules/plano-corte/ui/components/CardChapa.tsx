@@ -11,46 +11,43 @@ interface CardChapaProps {
 
 export function CardChapa({ chapa, onAdicionar, jaAdicionada }: CardChapaProps) {
   return (
-    <div className="bg-[#242424] border border-[#404040] rounded-lg overflow-hidden transition-all hover:border-[#FFA500] hover:shadow-[0_4px_12px_rgba(255,165,0,0.2)] flex flex-col h-full">
-      {/* Imagem */}
-      <div className="aspect-square bg-[#1a1a1a] flex items-center justify-center text-5xl">
+    <div className="bg-[#242424] border border-[#404040] rounded-lg overflow-hidden transition-all hover:border-[#FFA500] hover:shadow-[0_4px_12px_rgba(255,165,0,0.2)] flex items-center p-3 gap-4">
+      {/* Imagem Compacta */}
+      <div className="w-16 h-16 bg-[#1a1a1a] rounded flex items-center justify-center text-2xl flex-shrink-0">
         {chapa.imagem_url ? (
-          <img src={chapa.imagem_url} alt={chapa.material} className="w-full h-full object-cover" />
+          <img src={chapa.imagem_url} alt={chapa.material} className="w-full h-full object-cover rounded" />
         ) : (
           <span role="img" aria-label="board">📦</span>
         )}
       </div>
-
++
       {/* Info */}
-      <div className="p-4 flex-1 flex flex-col">
-        <h4 className="m-0 mb-2 text-base font-semibold text-[#FFA500] uppercase truncate">
-          {chapa.material} {chapa.espessura}MM
-        </h4>
-
-        <p className="m-0 text-xs text-[#888] font-mono">{chapa.sku}</p>
-
-        <div className="my-2 text-[13px] text-[#ccc] flex items-center gap-1">
-          <span>📐 {chapa.largura} × {chapa.altura} mm</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-1">
+          <h4 className="m-0 text-sm font-bold text-[#FFA500] uppercase truncate pr-2">
+            {chapa.material}
+          </h4>
+          <span className="text-[10px] font-bold text-[#10B981] whitespace-nowrap">R$ {chapa.preco.toFixed(0)}</span>
         </div>
 
-        <div className="mt-auto flex items-baseline gap-2 mb-4">
-          <span className="text-lg font-bold text-[#10B981]">R$ {chapa.preco.toFixed(2)}</span>
-          <span className="text-xs text-[#888]">por unidade</span>
+        <div className="flex items-center gap-2 text-[10px] text-[#888] mb-2">
+          <span className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10">{chapa.espessura}MM</span>
+          <span>{chapa.largura}×{chapa.altura} mm</span>
         </div>
 
-        {/* Botão */}
         <button
-          className={`w-full p-3 rounded font-bold transition-all text-xs uppercase tracking-wider ${
+          className={`w-full py-1.5 rounded font-black transition-all text-[9px] uppercase tracking-widest ${
             jaAdicionada 
               ? 'bg-[#404040] text-[#888] cursor-not-allowed' 
-              : 'bg-[#FF6B35] text-white cursor-pointer hover:bg-[#FF7F4D]'
+              : 'bg-[#FFA500]/10 text-[#FFA500] border border-[#FFA500]/20 hover:bg-[#FFA500] hover:text-black'
           }`}
           onClick={onAdicionar}
           disabled={jaAdicionada}
         >
-          {jaAdicionada ? '✅ JÁ ADICIONADA' : '➕ USAR CHAPA'}
+          {jaAdicionada ? 'ADICIONADA' : 'USAR CHAPA'}
         </button>
       </div>
     </div>
+
   );
 }

@@ -73,6 +73,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
           <Search size={18} />
         </div>
         <input
+          id="sku-search-input"
           type="text"
           placeholder="BUSCAR MATERIAL POR SKU (EX: MDF-BRANCO-18)..."
           value={termoBusca}
@@ -89,7 +90,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
       {/* Resultados */}
       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
         {resultados.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="flex flex-col gap-4">
             {resultados.map(chapa => (
               <CardChapa
                 key={chapa.id}

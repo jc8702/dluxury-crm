@@ -152,9 +152,17 @@ export default function PlanoCorteIndustrialPage() {
         };
       })
     }));
-  }, []);
+    // Limpar resultado se houver alteração técnica
+    if (resultados[chapaId]) {
+      setResultados(prev => {
+        const { [chapaId]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [resultados]);
 
   const handleAddPeca = useCallback((chapaId: string) => {
+    console.log('[Industrial] Adicionando peça na chapa:', chapaId);
     const novaPeca: Peca = {
       id: `peca_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       nome: 'NOVA PEÇA',
@@ -164,14 +172,22 @@ export default function PlanoCorteIndustrialPage() {
       rotacionavel: true
     };
 
-    setProjeto(prev => ({
-      ...prev,
-      chapas: prev.chapas.map(c => {
+    setProjeto(prev => {
+      const novasChapas = prev.chapas.map(c => {
         if (c.id !== chapaId) return c;
         return { ...c, pecas: [...c.pecas, novaPeca] };
-      })
-    }));
-  }, []);
+      });
+      console.log('[Industrial] Novas chapas:', novasChapas);
+      return { ...prev, chapas: novasChapas };
+    });
+
+    if (resultados[chapaId]) {
+      setResultados(prev => {
+        const { [chapaId]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [resultados]);
 
   const handleRemovePeca = useCallback((chapaId: string, pecaId: string) => {
     setProjeto(prev => ({
@@ -443,6 +459,13 @@ export default function PlanoCorteIndustrialPage() {
               chapaAtiva={chapaAtiva}
               onSelecionarChapa={setChapaAtivaId}
               onRemoverChapa={handleRemoverChapa}
+              onNovaAba={() => {
+                const searchInput = document.getElementById('sku-search-input');
+                if (searchInput) {
+                  searchInput.focus();
+                  searchInput.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
             />
           </div>
         </aside>

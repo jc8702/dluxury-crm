@@ -9,13 +9,15 @@ interface AbasProps {
   chapaAtiva: ChapaSelecionada | null;
   onSelecionarChapa: (chapaId: string) => void;
   onRemoverChapa: (chapaId: string) => void;
+  onNovaAba?: () => void;
 }
 
 export function AbasProjetoChapaS({
   chapas,
   chapaAtiva,
   onSelecionarChapa,
-  onRemoverChapa
+  onRemoverChapa,
+  onNovaAba
 }: AbasProps) {
   return (
     <div className="w-full">
@@ -52,8 +54,11 @@ export function AbasProjetoChapaS({
           </div>
         ))}
 
-        {chapas.length > 0 && (
-          <button className="flex items-center gap-2 px-4 py-2 text-[#444] hover:text-[#FFA500] transition-colors">
+        {chapas.length > 0 && onNovaAba && (
+          <button 
+            onClick={onNovaAba}
+            className="flex items-center gap-2 px-4 py-2 text-[#444] hover:text-[#FFA500] transition-colors"
+          >
             <Plus size={18} />
             <span className="text-[9px] font-black uppercase tracking-widest">Nova Aba</span>
           </button>
