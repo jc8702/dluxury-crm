@@ -1,9 +1,9 @@
-import { ParseadorProjeto, type ProjeParsed } from '../../plano-corte/infrastructure/parsers/ParseadorProjeto';
-import { HybridOptimizer } from '../../plano-corte/domain/services/HybridOptimizer';
-import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico';
-import { RetalhosRepository, type RetalhoDisponivel } from '../../plano-corte/infrastructure/repositories/RetalhosRepository';
-import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService';
-import type { Peca } from '../../plano-corte/domain/types';
+import { ParseadorProjeto, type ProjeParsed } from '../../plano-corte/infrastructure/parsers/ParseadorProjeto.js';
+import { HybridOptimizer } from '../../plano-corte/domain/services/HybridOptimizer.js';
+import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico.js';
+import { RetalhosRepository, type RetalhoDisponivel } from '../../plano-corte/infrastructure/repositories/RetalhosRepository.js';
+import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService.js';
+import type { Peca } from '../../plano-corte/domain/types.js';
 
 /**
  * INTERFACE: Entrada do processador

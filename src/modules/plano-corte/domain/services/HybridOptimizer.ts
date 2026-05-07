@@ -1,6 +1,6 @@
-import { Peca } from '../types';
-import { MaxRectsOptimizer, ResultadoOtimizacaoSimples } from './MaxRectsOptimizer';
-import { GuillotineOptimizer } from './GuillotineOptimizer';
+import { Peca } from '../types.js';
+import { MaxRectsOptimizer, ResultadoOtimizacaoSimples } from './MaxRectsOptimizer.js';
+import { GuillotineOptimizer } from './GuillotineOptimizer.js';
 
 /**
  * CLASSE: Hybrid Optimizer — Multi-iteração

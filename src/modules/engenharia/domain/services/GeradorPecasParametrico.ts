@@ -1,4 +1,4 @@
-import type { Peca } from '../../plano-corte/domain/types.js';
+import type { Peca } from '../../../plano-corte/domain/types.js';
 import { create, all } from 'mathjs';
 
 const math = create(all);
