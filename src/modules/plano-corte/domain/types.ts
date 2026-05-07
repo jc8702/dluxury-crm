@@ -95,6 +95,10 @@ export interface ProjetoCorte {
   cliente?: string;
   chapas: ChapaSelecionada[]; // Lista de materiais/abas no projeto
   status: 'rascunho' | 'aprovado' | 'producao';
+  projeto_id?: string;
+  orcamento_id?: string;
+  visita_id?: string;
+  ordem_producao_id?: string;
   originario_pdf?: boolean;
   criado_em: Date;
 }

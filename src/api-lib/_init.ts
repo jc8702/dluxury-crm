@@ -60,10 +60,11 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
-  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS visita_id TEXT`);
-  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
-  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
-  await safeSql(sql`ALTER TABLE planos_corte ADD COLUMN IF NOT EXISTS ordem_producao_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS ordem_producao_id TEXT`);
+  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`);

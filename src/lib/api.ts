@@ -311,8 +311,8 @@ export const api = {
     create: (data: any) => apiCall<any>('plano-corte?action=criar_plano', 'POST', data),
     save: (data: any) => apiCall<any>('plano-corte?action=salvar_resultado_corte', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`plano-corte?id=${id}`, 'PUT', data),
-    aprovarProducao: (materiais_consumidos: any[], retalhos_gerados?: any[]) => 
-      apiCall<any>('plano-corte?action=aprovar_producao', 'POST', { materiais_consumidos, retalhos_gerados }),
+    aprovarProducao: (materiais_consumidos: any[], retalhos_gerados: any[] = [], meta: any = {}) => 
+      apiCall<any>('plano-corte?action=aprovar_producao', 'POST', { materiais_consumidos, retalhos_gerados, ...meta }),
   },
   cuttingPlan: {
     list: () => apiCall<any[]>('production?type=cutting_plan_list'),

@@ -20,7 +20,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
   // Buscar chapas por SKU
   useEffect(() => {
     const s = termoBusca.trim();
-    if (s.length < 2) {
+    if (s.length < 1) {
       setResultados([]);
       return;
     }
@@ -38,7 +38,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
       }
     };
 
-    const timer = setTimeout(buscar, 400);
+    const timer = setTimeout(buscar, 300);
     return () => clearTimeout(timer);
   }, [termoBusca, repo]);
 

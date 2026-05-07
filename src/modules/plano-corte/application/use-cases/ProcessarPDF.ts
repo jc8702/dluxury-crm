@@ -73,7 +73,7 @@ export class ProcessarPDF {
       chapas: [
         {
           id: 'demo_ch_1',
-          sku_chapa: 'MDF-BRANCO-18',
+          sku_chapa: 'MDF-BRA-18',
           nome_exibicao: 'MDF BRANCO 18MM',
           largura_mm: 2750,
           altura_mm: 1840,
@@ -82,7 +82,19 @@ export class ProcessarPDF {
           criada_em: new Date(),
           pecas: [
             { id: 'dp1', nome: 'LATERAL GABINETE', largura: 720, altura: 550, quantidade: 4, rotacionavel: true },
-            { id: 'dp2', nome: 'BASE GABINETE', largura: 600, altura: 550, quantidade: 2, rotacionavel: true },
+            { id: 'dp2', nome: 'BASE GABINETE', largura: 600, altura: 550, quantidade: 2, rotacionavel: true }
+          ]
+        },
+        {
+          id: 'demo_ch_2',
+          sku_chapa: 'CHP-CAR-15',
+          nome_exibicao: 'CHAPA CARVALHO 15MM',
+          largura_mm: 2750,
+          altura_mm: 1840,
+          espessura_mm: 15,
+          preco_unitario: 285,
+          criada_em: new Date(),
+          pecas: [
             { id: 'dp3', nome: 'PRATELEIRA', largura: 567, altura: 530, quantidade: 6, rotacionavel: true },
             { id: 'dp4', nome: 'TAMPO', largura: 1200, altura: 600, quantidade: 1, rotacionavel: true }
           ]

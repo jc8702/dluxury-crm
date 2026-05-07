@@ -57,18 +57,23 @@ export class PDFParser {
     const chapas: ChapaExtraida[] = [];
     console.log('[PDFParser] Iniciando extração de dados do texto (comprimento:', texto.length, ')');
     
-    // Regex mais flexível para materiais
-    // Padrão: Nome Material ... Espessura MM ... Largura x Altura
-    const materialRegex = /([A-Z0-9\s._-]+)\s+(\d+)\s*MM\s+.*?(\d{3,4})\s*[xX*]\s*(\d{3,4})/gi;
+    // Regex ultra-flexível para materiais
+    // Padrão: (Nome Material) ... (Espessura) MM ... (Largura) x (Altura)
+    // Suporta: "MDF BRANCO 18MM 2750x1840", "CHAPA MDF 15 MM - 2750 X 1830"
+    const materialRegex = /([A-Z0-9\s._-]+?)\s+(\d{1,2})\s*MM\s+.*?(\d{3,4})\s*[\sxX*]+\s*(\d{3,4})/gi;
     
     let match;
     const blocos: { index: number, info: any }[] = [];
     
     while ((match = materialRegex.exec(texto)) !== null) {
+      const materialNome = match[1].trim().replace(/\n/g, ' ');
+      // Ignorar se o nome for apenas números (provavelmente não é um material)
+      if (/^\d+$/.test(materialNome)) continue;
+
       blocos.push({
         index: match.index,
         info: {
-          material: match[1].trim().replace(/\n/g, ' '),
+          material: materialNome,
           espessura: parseInt(match[2]),
           largura: parseInt(match[3]),
           altura: parseInt(match[4])
@@ -76,17 +81,18 @@ export class PDFParser {
       });
     }
 
-    console.log('[PDFParser] Materiais encontrados:', blocos.length);
+    console.log('[PDFParser] Potenciais materiais encontrados:', blocos.length);
 
     if (blocos.length === 0) {
-      // Fallback: Tentar encontrar qualquer coisa que pareça uma chapa (ex: 2750x1840)
-      const fallbackRegex = /(\d{4})\s*[xX*]\s*(\d{4})/g;
-      const fMatch = fallbackRegex.exec(texto);
-      if (fMatch) {
-        blocos.push({
-          index: 0,
+      console.warn('[PDFParser] Nenhum material padrão encontrado. Tentando detecção de dimensões soltas...');
+      // Fallback: Tentar encontrar qualquer coisa que pareça uma chapa (ex: 2750x1840 ou 2750 x 1840)
+      const fallbackRegex = /(\d{4})\s*[\sxX*]+\s*(\d{4})/g;
+      let fMatch;
+      while ((fMatch = fallbackRegex.exec(texto)) !== null) {
+         blocos.push({
+          index: fMatch.index,
           info: {
-            material: 'MATERIAL EXTRAÍDO',
+            material: 'MATERIAL GENÉRICO',
             espessura: 18,
             largura: parseInt(fMatch[1]),
             altura: parseInt(fMatch[2])
@@ -95,30 +101,37 @@ export class PDFParser {
       }
     }
 
+    if (blocos.length === 0) {
+       throw new Error('PDF sem tabelas de peças ou materiais detectadas. Certifique-se que o PDF contém dados de plano de corte legíveis.');
+    }
+
     for (let i = 0; i < blocos.length; i++) {
       const inicio = blocos[i].index;
       const fim = blocos[i+1] ? blocos[i+1].index : texto.length;
       const textoBloco = texto.substring(inicio, fim);
       
       const pecas: PecaExtraida[] = [];
-      // Regex mais robusta para peças
-      // Padrão: Nome ... Largura x Altura ... (Quantidade) ou Qtd: X
-      const pecaRegex = /([A-Z0-9\s._-]+?)\s+(\d{2,4})\s*[xX*]\s*(\d{2,4})\s*[\s(]*(\d+)[\s)]*/gi;
+      // Regex para peças: Nome ... Largura x Altura ... Qtd
+      // Suporta: "LATERAL 720x550 4", "BASE 600 X 550 (2)", "PRATELEIRA 567*530 QTD: 6"
+      const pecaRegex = /([A-Z0-9\s._-]+?)\s+(\d{2,4})\s*[\sxX*]+\s*(\d{2,4})\s*(?:[\s(]*(\d+)[\s)]*|QTD:\s*(\d+))/gi;
       
       let pMatch;
       while ((pMatch = pecaRegex.exec(textoBloco)) !== null) {
         const nome = pMatch[1].trim().replace(/\n/g, ' ');
-        if (nome === blocos[i].info.material) continue;
+        // Evitar pegar o próprio material como peça
+        if (nome === blocos[i].info.material || nome.length < 2) continue;
+
+        const qtd = parseInt(pMatch[4] || pMatch[5] || '1');
 
         pecas.push({
           nome: nome || 'PEÇA',
           largura: parseInt(pMatch[2]),
           altura: parseInt(pMatch[3]),
-          quantidade: parseInt(pMatch[4])
+          quantidade: qtd
         });
       }
 
-      console.log(`[PDFParser] Peças no bloco ${i}:`, pecas.length);
+      console.log(`[PDFParser] Peças extraídas para ${blocos[i].info.material}:`, pecas.length);
 
       if (pecas.length > 0) {
         chapas.push({
@@ -126,6 +139,10 @@ export class PDFParser {
           pecas
         });
       }
+    }
+
+    if (chapas.length === 0) {
+      throw new Error('Materiais identificados, mas nenhuma peça válida foi encontrada dentro de cada material.');
     }
 
     return chapas;

@@ -118,7 +118,29 @@ export async function handlePlanoCorte(req: any, res: any) {
             }
           }
 
-          return res.status(200).json({ success: true, message: 'Produção aprovada, estoque baixado e sobras registradas.' });
+          // 3. Criar Ordem de Produção (Problem 5)
+          const op_id = `OP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          
+          await db.execute(sql`
+            INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at)
+            VALUES (
+              gen_random_uuid(), 
+              ${op_id}, 
+              ${req.body.nome_projeto || 'PLANO DE CORTE'}, 
+              'AGUARDANDO', 
+              ${req.body.projeto_id || null}, 
+              ${req.body.orcamento_id || null}, 
+              ${req.body.visita_id || null},
+              NOW(),
+              NOW()
+            )
+          `);
+
+          return res.status(200).json({ 
+            success: true, 
+            message: 'Produção aprovada! Ordem de Produção gerada e estoque atualizado.',
+            data: { op_id }
+          });
         } else {
           const { user } = validateAuth(req);
           const { plano_id, materiais, resultado, KPIs } = req.body;
@@ -174,7 +196,13 @@ export async function handleChapas(req: any, res: any) {
       const term = `%${termText}%`;
       const results = await db.select()
         .from(erpChapas)
-        .where(or(ilike(erpChapas.sku, term), ilike(erpChapas.nome, term)));
+        .where(or(
+          ilike(erpChapas.sku, term), 
+          ilike(erpChapas.nome, term),
+          // Busca por descrição parcial (caso o termo seja parte de 'MDF Branco')
+          sql`LOWER(${erpChapas.nome}) LIKE LOWER(${term})`,
+          sql`LOWER(${erpChapas.sku}) = LOWER(${termText})` // SKU Exato
+        ));
       return res.status(200).json({ success: true, data: results });
     }
     const all = await db.select().from(erpChapas);

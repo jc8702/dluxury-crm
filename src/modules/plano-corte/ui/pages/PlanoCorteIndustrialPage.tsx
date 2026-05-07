@@ -258,7 +258,10 @@ export default function PlanoCorteIndustrialPage() {
           perChapa: resultados,
           totalAproveitamento: Object.values(resultados).reduce((acc, curr) => acc + curr.aproveitamento_percentual, 0) / (Object.values(resultados).length || 1)
         },
-        status: projeto.status
+        status: projeto.status,
+        projeto_id: projeto.projeto_id,
+        orcamento_id: projeto.orcamento_id,
+        visita_id: projeto.visita_id
       };
 
       const res = await api.planoCorte.create(payload);
@@ -325,11 +328,17 @@ export default function PlanoCorteIndustrialPage() {
         });
       });
 
-      const res = await api.planoCorte.aprovarProducao(materiais_consumidos, retalhos_gerados);
+      const res = await api.planoCorte.aprovarProducao(materiais_consumidos, retalhos_gerados, {
+        nome_projeto: projeto.nome,
+        projeto_id: projeto.projeto_id,
+        orcamento_id: projeto.orcamento_id,
+        visita_id: projeto.visita_id
+      });
 
       if (res) {
+        const opId = res.data?.op_id || 'N/A';
         setProjeto(prev => ({ ...prev, status: 'producao' }));
-        showToast('Produção aprovada! Estoque atualizado e sobras registradas.', 'success');
+        showToast(`Produção aprovada! OP: ${opId}. Estoque atualizado e sobras registradas.`, 'success');
       }
     } catch (err: any) {
       showToast(`Erro na aprovação: ${err.message}`, 'error');
