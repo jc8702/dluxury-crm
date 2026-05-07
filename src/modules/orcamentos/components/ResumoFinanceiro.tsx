@@ -1,38 +1,52 @@
 import React from 'react';
-import { Button } from '@/design-system/components';
-import { Send, FileDown, Save } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
 
-export function ResumoFinanceiro({ resumo }: { resumo: any }) {
-    const format = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+interface ResumoFinanceiroProps {
+    resumo: {
+        custoTotal: number;
+        vendaTotal: number;
+        margemReal: number;
+    };
+}
+
+export function ResumoFinanceiro({ resumo }: ResumoFinanceiroProps) {
+    const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    const margemPercentual = resumo.vendaTotal > 0 ? (resumo.margemReal / resumo.vendaTotal) * 100 : 0;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 h-24 bg-zinc-950 border-t border-zinc-800 backdrop-blur-md z-50 flex items-center px-12 shadow-2xl">
-            <div className="flex-1 flex gap-12">
-                <div>
-                    <div className="text-[10px] uppercase text-zinc-500 font-bold tracking-widest mb-1">Custo Total de Produção</div>
-                    <div className="text-xl font-bold text-white">{format(resumo.custoTotal)}</div>
+        <div className="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-2xl border-t border-zinc-900 p-6 z-50">
+            <div className="max-w-[1600px] mx-auto flex items-center justify-between">
+                <div className="flex gap-12">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
+                            <Calculator className="w-3 h-3" /> Custo Total (BOM)
+                        </span>
+                        <span className="text-2xl font-black text-white italic">{formatter.format(resumo.custoTotal)}</span>
+                    </div>
+                    
+                    <div className="flex flex-col border-l border-zinc-900 pl-12">
+                        <span className="text-[10px] uppercase font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3 text-emerald-500" /> Margem Realizada
+                        </span>
+                        <div className="flex items-baseline gap-3">
+                            <span className="text-2xl font-black text-emerald-500 italic">{formatter.format(resumo.margemReal)}</span>
+                            <span className="text-sm font-bold text-zinc-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                {margemPercentual.toFixed(1)}%
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div className="text-[10px] uppercase text-zinc-500 font-bold tracking-widest mb-1">Margem Realizada</div>
-                    <div className="text-xl font-bold text-emerald-500">{format(resumo.margemReal)}</div>
-                </div>
-                <div className="h-10 w-px bg-zinc-800 my-auto" />
-                <div>
-                    <div className="text-[10px] uppercase text-orange-500 font-black tracking-widest mb-1">VALOR FINAL DE VENDA</div>
-                    <div className="text-2xl font-black text-white">{format(resumo.vendaTotal)}</div>
-                </div>
-            </div>
 
-            <div className="flex gap-3">
-                <Button variant="outline" className="border-zinc-700">
-                    <Save className="w-4 h-4 mr-2" /> Salvar Rascunho
-                </Button>
-                <Button variant="outline" className="border-zinc-700">
-                    <FileDown className="w-4 h-4 mr-2" /> PDF do Cliente
-                </Button>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8">
-                    <Send className="w-4 h-4 mr-2" /> Enviar Orçamento
-                </Button>
+                <div className="flex items-center gap-10">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] uppercase font-black text-orange-500 tracking-widest mb-1 flex items-center gap-1 justify-end">
+                            <DollarSign className="w-3 h-3" /> Valor Final de Venda
+                        </span>
+                        <span className="text-5xl font-black text-white italic tracking-tighter drop-shadow-lg">
+                            {formatter.format(resumo.vendaTotal)}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     );

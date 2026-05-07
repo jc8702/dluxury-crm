@@ -307,8 +307,13 @@ export const api = {
   },
   orcamentosPro: {
     list: () => apiCall<any[]>('orcamentos-pro'),
-    get: (id: string) => apiCall<any>(`orcamentos-pro?id=${id}`),
     create: (data: any) => apiCall<any>('orcamentos-pro', 'POST', data),
+    get: (id: string) => apiCall<any>(`orcamentos-pro?id=${id}`),
+    update: (id: string, data: any) => apiCall<any>(`orcamentos-pro?id=${id}`, 'PUT', data),
+    addItem: (id: string, skuEngenhariaId: string, quantidade: number) => 
+      apiCall<any>(`orcamentos-pro?id=${id}&action=add-item`, 'PUT', { skuEngenhariaId, quantidade }),
+    updateBOM: (id: string, bomId: string, quantidadeAjustada: number) => 
+      apiCall<any>(`orcamentos-pro?id=${id}&action=update-bom`, 'PUT', { bomId, quantidadeAjustada }),
     explode: (skuId: string, qtd: number) => apiCall<any[]>(`orcamentos-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
   },
   importador: {

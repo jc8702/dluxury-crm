@@ -4,56 +4,97 @@ import {
     bomEngenhariaMontagem, bomMontagemComponente,
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import { auditLog, validateAuth } from './_db.js';
 
 /**
- * SERVIÇO DE ORÇAMENTOS PROFISSIONAIS
+ * SERVIÇO DE ORÇAMENTOS PROFISSIONAIS - INTEGRADO
  */
 
 /**
- * Explode um SKU de Engenharia em seus componentes finais via BOM
+ * Explode um SKU de Engenharia usando CTE Recursivo para máxima performance
  */
 export async function explodirBOM(skuEngId: string, qtdItem: number = 1) {
-    // 1. Buscar montagens ligadas a este SKU Engenharia
-    const montagens = await db.select({
-        montagemId: bomEngenhariaMontagem.skuMontagemId,
-        qtdMontagem: bomEngenhariaMontagem.quantidade,
-    }).from(bomEngenhariaMontagem)
-    .where(eq(bomEngenhariaMontagem.skuEngenhariaId, skuEngId));
+    const query = sql`
+        WITH RECURSIVE bom_recursivo AS (
+            -- Nível 1: SKU Engenharia → SKU Montagem
+            SELECT 
+                bem.sku_montagem_id,
+                bem.quantidade::numeric as quantidade_acumulada,
+                1 AS nivel
+            FROM bom_engenharia_montagem bem
+            WHERE bem.sku_engenharia_id = ${skuEngId}
+            
+            UNION ALL
+            
+            -- Nível 2: SKU Montagem → Componentes (Suporta n níveis se houver sub-montagens futuramente)
+            -- Nota: Na estrutura atual temos apenas 2 níveis, mas o CTE recursivo é escalável.
+            SELECT 
+                bmc.sku_componente_id as sku_montagem_id, -- Placeholder para recursão se necessário
+                (br.quantidade_acumulada * bmc.quantidade * (1 + bmc.perda_percentual/100))::numeric,
+                br.nivel + 1
+            FROM bom_recursivo br
+            JOIN bom_montagem_componente bmc ON bmc.sku_montagem_id = br.sku_montagem_id
+        )
+        SELECT 
+            br.sku_montagem_id as sku_componente_id,
+            SUM(br.quantidade_acumulada) as quantidade_total,
+            sc.nome,
+            sc.preco_unitario
+        FROM bom_recursivo br
+        JOIN sku_componente sc ON sc.id = br.sku_montagem_id
+        WHERE br.nivel = 2  -- Apenas componentes finais
+        GROUP BY br.sku_montagem_id, sc.nome, sc.preco_unitario;
+    `;
 
-    const listaComponentes: any[] = [];
+    const result = await db.execute(query);
+    const rows = result.rows as any[];
 
-    for (const m of montagens) {
-        if (!m.montagemId) continue;
+    return rows.map(r => ({
+        skuComponenteId: r.sku_componente_id,
+        nome: r.nome,
+        quantidadeCalculada: Number(r.quantidade_total) * qtdItem,
+        custoUnitario: Number(r.preco_unitario),
+        custoTotal: Number(r.quantidade_total) * qtdItem * Number(r.preco_unitario)
+    }));
+}
 
-        // 2. Buscar componentes desta montagem
-        const componentes = await db.select({
-            compId: bomMontagemComponente.skuComponenteId,
-            qtdComp: bomMontagemComponente.quantidade,
-            perda: bomMontagemComponente.perdaPercentual,
-            nome: skuComponente.nome,
-            preco: skuComponente.precoUnitario,
-        }).from(bomMontagemComponente)
-        .innerJoin(skuComponente, eq(bomMontagemComponente.skuComponenteId, skuComponente.id))
-        .where(eq(bomMontagemComponente.skuMontagemId, m.montagemId));
-
-        for (const c of componentes) {
-            const qtdFinal = Number(m.qtdMontagem) * Number(c.qtdComp) * qtdItem;
-            // Aplicar perda
-            const qtdComPerda = qtdFinal * (1 + Number(c.perda) / 100);
-
-            listaComponentes.push({
-                skuComponenteId: c.compId,
-                nome: c.nome,
-                quantidadeCalculada: qtdComPerda,
-                custoUnitario: Number(c.preco),
-                custoTotal: qtdComPerda * Number(c.preco)
-            });
-        }
+/**
+ * Recalcula todos os totais de um orçamento (Custo e Venda)
+ */
+async function recalcularOrcamento(orcId: string) {
+    // 1. Atualizar custos de cada item baseado na lista explodida
+    const itensOrc = await db.select().from(orcamentoItens).where(eq(orcamentoItens.orcamentoId, orcId));
+    
+    for (const item of itensOrc) {
+        const explodida = await db.select().from(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, item.id));
+        const custoItem = explodida.reduce((sum, c) => sum + (Number(c.quantidadeAjustada) * Number(c.custoUnitario)), 0);
+        
+        await db.update(orcamentoItens)
+            .set({ custoUnitarioCalculado: custoItem.toString() })
+            .where(eq(orcamentoItens.id, item.id));
     }
 
-    return listaComponentes;
+    // 2. Atualizar totais do cabeçalho
+    const orc = await db.query.orcamentos.findFirst({ where: eq(orcamentos.id, orcId) });
+    if (!orc) return;
+
+    const itensAtualizados = await db.select().from(orcamentoItens).where(eq(orcamentoItens.orcamentoId, orcId));
+    const custoTotal = itensAtualizados.reduce((sum, i) => sum + (Number(i.custoUnitarioCalculado) * Number(i.quantidade)), 0);
+    
+    const margem = 1 + (Number(orc.margemLucroPercentual) / 100);
+    const taxa = 1 + (Number(orc.taxaFinanceiraPercentual) / 100);
+    const desc = 1 - (Number(orc.descontoPercentual) / 100);
+
+    const vendaTotal = (custoTotal * margem * taxa * desc);
+
+    await db.update(orcamentos)
+        .set({ 
+            valorTotalCusto: custoTotal.toString(),
+            valorTotalVenda: vendaTotal.toString(),
+            updatedAt: new Date()
+        })
+        .where(eq(orcamentos.id, orcId));
 }
 
 export async function handleOrcamentosPro(req: any, res: any) {
@@ -63,37 +104,34 @@ export async function handleOrcamentosPro(req: any, res: any) {
     const { method } = req;
     const url = new URL(req.url, 'http://localhost');
     const id = url.searchParams.get('id');
+    const action = url.searchParams.get('action');
 
     try {
         if (method === 'GET') {
-            const action = url.searchParams.get('action');
-            
             if (action === 'explode') {
                 const skuId = url.searchParams.get('skuId');
                 const qtd = Number(url.searchParams.get('qtd') || 1);
-                if (!skuId) return res.status(400).json({ success: false, error: 'skuId é obrigatório' });
-                
-                const componentes = await explodirBOM(skuId, qtd);
+                const componentes = await explodirBOM(skuId!, qtd);
                 return res.status(200).json({ success: true, data: componentes });
             }
 
             if (id) {
-                const orc = await db.query.orcamentos.findFirst({
+                const data = await db.query.orcamentos.findFirst({
                     where: eq(orcamentos.id, id),
                     with: {
                         itens: {
                             with: {
                                 listaExplodida: {
-                                    with: {
-                                        componente: true
-                                    }
-                                }
+                                    with: { componente: true }
+                                },
+                                skuEngenharia: true
                             }
                         }
                     }
                 });
-                return res.status(200).json({ success: true, data: orc });
+                return res.status(200).json({ success: true, data });
             }
+
             const list = await db.select().from(orcamentos).orderBy(sql`${orcamentos.createdAt} DESC`);
             return res.status(200).json({ success: true, data: list });
         }
@@ -101,28 +139,25 @@ export async function handleOrcamentosPro(req: any, res: any) {
         if (method === 'POST') {
             const { header, itens } = req.body;
 
-            // 1. Criar cabeçalho
+            // Criar orçamento
             const [newOrc] = await db.insert(orcamentos).values({
                 ...header,
                 numeroOrcamento: `PRO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`,
                 status: 'RASCUNHO'
             }).returning();
 
-            // 2. Processar itens e explodir BOM
-            for (const item of itens) {
+            // Adicionar itens e explodir BOM
+            for (const item of (itens || [])) {
                 const [newItem] = await db.insert(orcamentoItens).values({
                     orcamentoId: newOrc.id,
                     skuEngenhariaId: item.skuEngenhariaId,
-                    quantidade: item.quantidade,
-                    observacoes: item.observacoes
+                    quantidade: item.quantidade
                 }).returning();
 
-                // EXPLOSÃO AUTOMÁTICA DO BOM
-                const componentes = await explodirBOM(item.skuEngenhariaId, Number(item.quantidade));
-                
-                if (componentes.length > 0) {
+                const comps = await explodirBOM(item.skuEngenhariaId, 1);
+                if (comps.length > 0) {
                     await db.insert(orcamentoListaExplodida).values(
-                        componentes.map(c => ({
+                        comps.map(c => ({
                             orcamentoItemId: newItem.id,
                             skuComponenteId: c.skuComponenteId,
                             quantidadeCalculada: c.quantidadeCalculada.toString(),
@@ -134,25 +169,59 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 }
             }
 
+            await recalcularOrcamento(newOrc.id);
             await auditLog('ORCAMENTO_PRO', newOrc.id, 'CREATE', auth.user?.id || 'system');
+            
+            return res.status(201).json({ success: true, data: { id: newOrc.id, numeroOrcamento: newOrc.numeroOrcamento } });
+        }
 
-            // Retornar o orçamento completo criado
-            const fullOrc = await db.query.orcamentos.findFirst({
-                where: eq(orcamentos.id, newOrc.id),
-                with: {
-                    itens: {
-                        with: {
-                            listaExplodida: {
-                                with: {
-                                    componente: true
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+        if (method === 'PUT') {
+            if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
 
-            return res.status(201).json({ success: true, data: fullOrc });
+            if (action === 'update-bom') {
+                const { bomId, quantidadeAjustada } = req.body;
+                await db.update(orcamentoListaExplodida)
+                    .set({ quantidadeAjustada: quantidadeAjustada.toString(), editado: true })
+                    .where(eq(orcamentoListaExplodida.id, bomId));
+                
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === 'add-item') {
+                const { skuEngenhariaId, quantidade } = req.body;
+                const [newItem] = await db.insert(orcamentoItens).values({
+                    orcamentoId: id,
+                    skuEngenhariaId,
+                    quantidade
+                }).returning();
+
+                const comps = await explodirBOM(skuEngenhariaId, 1);
+                await db.insert(orcamentoListaExplodida).values(
+                    comps.map(c => ({
+                        orcamentoItemId: newItem.id,
+                        skuComponenteId: c.skuComponenteId,
+                        quantidadeCalculada: c.quantidadeCalculada.toString(),
+                        quantidadeAjustada: c.quantidadeCalculada.toString(),
+                        custoUnitario: c.custoUnitario.toString(),
+                        origem: 'BOM'
+                    }))
+                );
+
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            // Update Header
+            await db.update(orcamentos).set(req.body).where(eq(orcamentos.id, id));
+            await recalcularOrcamento(id);
+            return res.status(200).json({ success: true });
+        }
+
+        if (method === 'DELETE') {
+            if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
+            await db.delete(orcamentos).where(eq(orcamentos.id, id));
+            return res.status(200).json({ success: true });
         }
 
         return res.status(405).json({ success: false, error: 'Método não permitido' });
