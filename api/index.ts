@@ -1,5 +1,13 @@
 import { ALLOWED_ORIGINS } from '../src/api-lib/config.js';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
+
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 

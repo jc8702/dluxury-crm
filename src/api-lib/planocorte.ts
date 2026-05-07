@@ -249,22 +249,27 @@ export async function handleImportarDesenho(req: any, res: any) {
     const isDXF = fileName?.toLowerCase().endsWith('.dxf') || (buffer.length > 4 && buffer.toString('utf8', 0, 1).trim() === '0');
 
     if (isDXF) {
-      // Parse básico de DXF (Fase 5) - Extrai strings de texto (Group Codes 1 e 3)
-      const rawText = buffer.toString('utf8');
+      // Parse otimizado de DXF (Fase 5)
+      const rawText = buffer.toString('utf-8');
       const dxfLines = rawText.split(/\r?\n/);
       let extractedFromDXF = '';
-      for (let i = 0; i < dxfLines.length; i++) {
+      
+      // Limite de 500k linhas para evitar travamento em arquivos gigantescos
+      const maxLines = Math.min(dxfLines.length, 500000);
+      
+      for (let i = 0; i < maxLines; i++) {
         const line = dxfLines[i].trim();
+        // Group Codes: 1 (Texto), 3 (Texto Adicional), 100 (Subclasse)
         if (line === '1' || line === '3') { 
           const val = (dxfLines[i+1] || '').trim();
-          if (val && !val.startsWith('$')) {
+          if (val && val.length > 1 && !val.startsWith('$')) {
             extractedFromDXF += val + '\n';
           }
         }
       }
       text = extractedFromDXF;
     } else {
-      // Extrair texto do PDF (Fases 1-4) usando carregamento dinâmico e fallback
+      // Extrair texto do PDF (Fases 1-4) com Fallback Robusto
       try {
         const { createRequire } = await import('module');
         const require = createRequire(import.meta.url);
@@ -273,28 +278,33 @@ export async function handleImportarDesenho(req: any, res: any) {
         const data = await pdfParser(buffer);
         text = data.text;
       } catch (pdfErr: any) {
-        console.warn('[API] Falha no pdf-parse, tentando pdfjs-dist como fallback...', pdfErr.message);
+        console.warn('[API] Falha no pdf-parse, usando PDF.js Engine...', pdfErr.message);
         try {
           const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
           const loadingTask = pdfjs.getDocument({ 
             data: new Uint8Array(buffer),
             useSystemFonts: true,
-            disableFontFace: true
+            disableFontFace: true,
+            isEvalSupported: false
           });
           const pdfDoc = await loadingTask.promise;
           let fullText = '';
           for (let i = 1; i <= pdfDoc.numPages; i++) {
             const page = await pdfDoc.getPage(i);
             const textContent = await page.getTextContent();
-            fullText += textContent.items.map((item: any) => 'str' in item ? item.str : '').join(' ') + '\n';
+            // Filtrar apenas itens que possuem texto real
+            const pageText = textContent.items
+              .map((item: any) => ('str' in item ? item.str : ''))
+              .filter(s => s.trim().length > 0)
+              .join(' ');
+            fullText += pageText + '\n';
           }
           text = fullText;
-          console.log('[API] Extração via pdfjs-dist concluída.');
         } catch (fallbackErr: any) {
-          console.error('[API] Falha total na extração de PDF:', fallbackErr);
+          console.error('[API] Falha crítica na extração de PDF:', fallbackErr);
           return res.status(500).json({ 
             success: false, 
-            error: 'Não foi possível ler este arquivo PDF. Verifique se ele contém texto selecionável ou tente exportar em DXF.',
+            error: 'Este PDF não contém dados de texto extraíveis (pode ser uma imagem). Tente usar o arquivo DXF original.',
             details: fallbackErr.message 
           });
         }
