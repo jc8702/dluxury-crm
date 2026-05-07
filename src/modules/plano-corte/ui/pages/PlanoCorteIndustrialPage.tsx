@@ -261,13 +261,11 @@ export default function PlanoCorteIndustrialPage() {
         status: projeto.status
       };
 
-      const res = await api.post('/api/plano-corte?action=criar_plano', payload);
+      const res = await api.planoCorte.create(payload);
       
-      if (res.success) {
-        setProjeto(prev => ({ ...prev, id: res.data.id }));
+      if (res) {
+        setProjeto(prev => ({ ...prev, id: res.id }));
         showToast('Projeto salvo com sucesso no banco de dados!', 'success');
-      } else {
-        throw new Error(res.error);
       }
     } catch (err: any) {
       showToast(`Erro ao salvar: ${err.message}`, 'error');
@@ -327,16 +325,11 @@ export default function PlanoCorteIndustrialPage() {
         });
       });
 
-      const res = await api.post('/api/plano-corte?action=aprovar_producao', {
-        materiais_consumidos,
-        retalhos_gerados
-      });
+      const res = await api.planoCorte.aprovarProducao(materiais_consumidos, retalhos_gerados);
 
-      if (res.success) {
+      if (res) {
         setProjeto(prev => ({ ...prev, status: 'producao' }));
         showToast('Produção aprovada! Estoque atualizado e sobras registradas.', 'success');
-      } else {
-        throw new Error(res.error);
       }
     } catch (err: any) {
       showToast(`Erro na aprovação: ${err.message}`, 'error');
@@ -454,19 +447,21 @@ export default function PlanoCorteIndustrialPage() {
 
           <div className="flex-1 flex flex-col overflow-hidden">
             <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em] mb-4">Projeto por Chapas</span>
-            <AbasProjetoChapaS 
-              chapas={projeto.chapas}
-              chapaAtiva={chapaAtiva}
-              onSelecionarChapa={setChapaAtivaId}
-              onRemoverChapa={handleRemoverChapa}
-              onNovaAba={() => {
-                const searchInput = document.getElementById('sku-search-input');
-                if (searchInput) {
-                  searchInput.focus();
-                  searchInput.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            />
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2 max-h-[450px]">
+              <AbasProjetoChapaS 
+                chapas={projeto.chapas}
+                chapaAtiva={chapaAtiva}
+                onSelecionarChapa={setChapaAtivaId}
+                onRemoverChapa={handleRemoverChapa}
+                onNovaAba={() => {
+                  const searchInput = document.getElementById('sku-search-input');
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              />
+            </div>
           </div>
         </aside>
 
@@ -505,7 +500,12 @@ export default function PlanoCorteIndustrialPage() {
                       <FileText size={14} /> Etiquetas
                     </button>
                   </div>
-                  <button className="w-full h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10">
+                  <button 
+                    onClick={handleAprovarProducao}
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     Aprovar Produção
                   </button>
                 </div>

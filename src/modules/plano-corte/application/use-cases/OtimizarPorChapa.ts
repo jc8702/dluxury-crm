@@ -2,22 +2,15 @@ import { MaxRectsOptimizer } from '../../domain/services/MaxRectsOptimizer';
 import { ChapaSelecionada, Peca, ResultadoOtimizacaoPorChapa } from '../../domain/types';
 
 export class OtimizarPorChapa {
-  private optimizer: MaxRectsOptimizer;
-
-  constructor(kerf: number = 3) {
-    this.optimizer = new MaxRectsOptimizer(kerf);
-  }
 
   async executar(chapa: ChapaSelecionada, pecas: Peca[]): Promise<ResultadoOtimizacaoPorChapa> {
     const startTime = performance.now();
 
+    // Instanciar o otimizador com as dimensões da chapa atual
+    const optimizer = new MaxRectsOptimizer(chapa.largura_mm, chapa.altura_mm, 3);
+
     // Preparar peças para o algoritmo
-    // O MaxRectsOptimizer.otimizar espera (pecas: Peca[], chapaLargura: number, chapaAltura: number)
-    const resultadoRaw = this.optimizer.otimizar(
-      pecas,
-      chapa.largura_mm,
-      chapa.altura_mm
-    );
+    const resultadoRaw = optimizer.otimizar(pecas);
 
     return {
       chapa_id: chapa.id,

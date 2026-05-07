@@ -20,11 +20,18 @@ const sqlInstance = (strings: any, ...values: any[]) => {
     _neonInstance = neon(dbUrl);
   }
 
-  // NÃO normalizar - manter casing original
+  // Se for chamado como tagged template
   if (Array.isArray(strings)) {
-    return _neonInstance(strings, ...values);
+    return _neonInstance(strings as any, ...values);
   }
+  // Se for chamado como função (legado ou raw string)
   return _neonInstance(strings);
+};
+
+// Atribuição de propriedades dinâmicas
+(sqlInstance as any).query = (strings: any, ...values: any[]) => {
+  if (!_neonInstance) _neonInstance = neon(dbUrl);
+  return _neonInstance.query(strings, ...values);
 };
 
 // Atribuição de propriedades dinâmicas
