@@ -1,13 +1,7 @@
 
 import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, index, check } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { users } from "./auth"; // Preciso descobrir onde users está definido
-import { clients } from "./clients"; // E clients
-import { projects } from "./projects"; // E projects
-
-// Como não encontrei os arquivos auth, clients e projects em src/db/schema,
-// vou assumir que eles podem não existir como esquemas Drizzle ou estão em outro lugar.
-// Se eu não os encontrar, vou definir as tabelas de referência de forma mínima ou usar raw UUID/INT.
+// Referências externas são tratadas via colunas raw para evitar dependências circulares ou quebra de build
 
 export const tipoEventoEnum = ["visita", "reuniao", "compromisso", "deadline", "outro"] as const;
 export const objetivoVisitaEnum = ["apresentacao", "medicao", "instalacao", "pos_venda", "outro"] as const;
