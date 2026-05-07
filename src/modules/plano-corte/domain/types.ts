@@ -75,3 +75,35 @@ export interface FiltrosRetalho {
   descartado?: boolean;
   origem?: string;
 }
+
+export interface ChapaSelecionada {
+  id: string;
+  sku_chapa: string;
+  nome_exibicao: string; // "MDF Branco 18mm"
+  largura_mm: number;
+  altura_mm: number;
+  espessura_mm: number;
+  preco_unitario: number;
+  imagem_url?: string;
+  criada_em: Date;
+  pecas: Peca[]; // Peças vinculadas a esta chapa específica
+}
+
+export interface ProjetoCorte {
+  id: string;
+  nome: string; // Nome do projeto/cliente
+  cliente?: string;
+  chapas: ChapaSelecionada[]; // Lista de materiais/abas no projeto
+  status: 'rascunho' | 'aprovado' | 'producao';
+  originario_pdf?: boolean;
+  criado_em: Date;
+}
+
+export interface ResultadoOtimizacaoPorChapa {
+  chapa_id: string;
+  layouts: LayoutChapa[];
+  aproveitamento_percentual: number;
+  chapas_necessarias: number;
+  tempo_calculo_ms: number;
+  retalhos_utilizados: number;
+}
