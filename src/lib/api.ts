@@ -305,6 +305,15 @@ export const api = {
     generatePDF: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-pdf', payload }),
     forecastDemand: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
   },
+  orcamentosPro: {
+    list: () => apiCall<any[]>('orcamentos-pro'),
+    get: (id: string) => apiCall<any>(`orcamentos-pro?id=${id}`),
+    create: (data: any) => apiCall<any>('orcamentos-pro', 'POST', data),
+    explode: (skuId: string, qtd: number) => apiCall<any[]>(`orcamentos-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
+  },
+  importador: {
+    importar: (type: 'PDF' | 'SKETCHUP', payload: any) => apiCall<any>('importar-projeto', 'POST', { type, ...payload }),
+  },
   planoCorte: {
     list: () => apiCall<any[]>('plano-corte'),
     get: (id: string) => apiCall<any>(`plano-corte?id=${id}`),

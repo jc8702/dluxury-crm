@@ -66,6 +66,17 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
     try {
         if (method === 'GET') {
+            const action = url.searchParams.get('action');
+            
+            if (action === 'explode') {
+                const skuId = url.searchParams.get('skuId');
+                const qtd = Number(url.searchParams.get('qtd') || 1);
+                if (!skuId) return res.status(400).json({ success: false, error: 'skuId é obrigatório' });
+                
+                const componentes = await explodirBOM(skuId, qtd);
+                return res.status(200).json({ success: true, data: componentes });
+            }
+
             if (id) {
                 const orc = await db.query.orcamentos.findFirst({
                     where: eq(orcamentos.id, id),
