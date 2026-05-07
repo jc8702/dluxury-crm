@@ -69,7 +69,7 @@ export const retalhosEstoque = pgTable('retalhos_estoque', {
 });
 
 // 5. Tabela de Movimentações de Estoque Industrial
-export const movimentacoesEstoque = pgTable('movimentacoes_estoque', {
+export const movimentacoesEstoque = pgTable('erp_movimentacoes_industrial', {
   id: uuid('id').defaultRandom().primaryKey(),
   tipo: varchar('tipo', { length: 30 }).notNull(), // 'entrada', 'saida', 'uso_plano', 'perda'
   item_tipo: varchar('item_tipo', { length: 20 }).notNull(), // 'chapa', 'retalho'
