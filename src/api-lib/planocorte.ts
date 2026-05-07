@@ -121,7 +121,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           // 3. Criar Ordem de Produção (Problem 5)
           const op_id = `OP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
           
-          await db.execute(sql`
+          await sql`
             INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at)
             VALUES (
               gen_random_uuid(), 
@@ -134,7 +134,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               NOW(),
               NOW()
             )
-          `);
+          `;
 
           return res.status(200).json({ 
             success: true, 
