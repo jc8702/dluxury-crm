@@ -251,7 +251,11 @@ export default async function handler(req: any, res: any) {
     console.warn(`[ROUTER] 404 - No route matched for: ${cleanUrl}`);
     return res.status(404).json({ success: false, error: 'Rota da API não encontrada', path: cleanUrl });
   } catch (err: any) {
-    console.error('API Router Error:', err.message);
-    return res.status(500).json({ success: false, error: 'Erro interno no servidor da API', details: err.message });
+    console.error('API Router Error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message || 'Erro interno no servidor da API', 
+      details: err.stack
+    });
   }
 }
