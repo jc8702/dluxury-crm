@@ -300,10 +300,22 @@ export async function handleEngineering(req: any, res: any) {
     if (req.method === 'GET') {
       const term = req.query.q as string;
       let result;
+      
+      // Nova estrutura de orçamentos pro
       if (term) {
-        result = await sql`SELECT * FROM erp_product_bom WHERE nome ILIKE ${'%' + term + '%'} OR codigo_modelo ILIKE ${'%' + term + '%'} ORDER BY created_at DESC`;
+        result = await sql`
+          SELECT id, nome, codigo, categoria, tipo_produto as tipo
+          FROM sku_engenharia 
+          WHERE nome ILIKE ${'%' + term + '%'} 
+          OR codigo ILIKE ${'%' + term + '%'} 
+          ORDER BY created_at DESC
+        `;
       } else {
-        result = await sql`SELECT * FROM erp_product_bom ORDER BY created_at DESC`;
+        result = await sql`
+          SELECT id, nome, codigo, categoria, tipo_produto as tipo
+          FROM sku_engenharia 
+          ORDER BY created_at DESC
+        `;
       }
       return res.status(200).json({ success: true, data: result });
     }

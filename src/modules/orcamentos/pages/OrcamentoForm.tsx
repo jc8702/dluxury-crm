@@ -18,7 +18,7 @@ export default function OrcamentoForm() {
 
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
-        removeItem, updateItemExplosion, error 
+        importItems, removeItem, updateItemExplosion, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -310,7 +310,11 @@ export default function OrcamentoForm() {
                 margemReal: Number(orcamento?.valorTotalVenda || 0) - Number(orcamento?.valorTotalCusto || 0)
             }} />
 
-            <ImportacaoModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+            <ImportacaoModal 
+                isOpen={isImportModalOpen} 
+                onClose={() => setIsImportModalOpen(false)} 
+                onAddItems={(items) => importItems(items)}
+            />
         </div>
     );
 }

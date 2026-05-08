@@ -1,4 +1,4 @@
-import { Peca, PecaPosicionada, Retangulo } from '../types.js';
+import type { Peca, PecaPosicionada, Retangulo } from '../types.js';
 
 export interface ResultadoOtimizacaoSimples {
   pecas_posicionadas: PecaPosicionada[];

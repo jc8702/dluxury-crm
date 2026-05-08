@@ -11,7 +11,7 @@ import {
   History, Wallet, Building2, Banknote, TrendingUp, TrendingDown,
   ChevronRight, Calendar, Info
 } from 'lucide-react';
-import { 
+import type { 
   ContaInterna, 
   MovimentacaoExtrato, 
   ExtratoPayload, 

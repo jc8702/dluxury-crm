@@ -1,6 +1,6 @@
 import { PDFParser } from '../../infrastructure/parsers/PDFParser';
 import { ChapaRepository } from '../../infrastructure/repositories/ChapaRepository';
-import { ProjetoCorte, ChapaSelecionada } from '../../domain/types';
+import type { ProjetoCorte, ChapaSelecionada } from '../../domain/types';
 
 export class ProcessarPDF {
   constructor(
@@ -43,45 +43,46 @@ export class ProcessarPDF {
         throw new Error('Nenhuma peça identificada no arquivo. Verifique se o PDF contém texto legível.');
       }
 
-      // 3. Estruturar o projeto
+      // 3. Estruturar o projeto com agrupamento por Material + Espessura (Fase 2.1)
       const projeto: ProjetoCorte = {
         id: `proj_${Date.now()}`,
         nome: file.name.replace('.pdf', '').toUpperCase(),
         chapas: [],
         criado_em: new Date(),
-        status: 'rascunho'
+        status: 'rascunho',
+        originario_pdf: true
       };
 
-      // Agrupar peças por espessura (já que não temos material na Fase 1)
-      const porEspessura: Record<number, any[]> = {};
+      const agrupamentos: Record<string, any[]> = {};
       pecasExtraidas.forEach((p: any) => {
-        if (!porEspessura[p.espessura]) porEspessura[p.espessura] = [];
-        porEspessura[p.espessura].push(p);
+        const key = `${p.material || 'GENERICO'}_${p.espessura}MM`;
+        if (!agrupamentos[key]) agrupamentos[key] = [];
+        agrupamentos[key].push(p);
       });
 
-      // Criar uma "chapa" para cada espessura encontrada
-      for (const [esp, pecas] of Object.entries(porEspessura)) {
-        const espessuraNum = parseFloat(esp);
-        const materialSugerido = pecas[0]?.material || '';
+      // Criar uma "chapa" para cada agrupamento encontrado
+      for (const [key, pecas] of Object.entries(agrupamentos)) {
+        const materialDetectado = pecas[0]?.material || '';
+        const espessuraNum = pecas[0]?.espessura || 18;
         
-        // Tentar buscar uma chapa real no estoque (Busca inteligente: Material + Espessura)
-        const queryBusca = materialSugerido 
-          ? `${materialSugerido} ${espessuraNum}MM`
+        // Tentar buscar uma chapa real no estoque
+        const queryBusca = materialDetectado 
+          ? `${materialDetectado} ${espessuraNum}MM`
           : `MDF ${espessuraNum}MM`;
           
         const resultadosBusca = await this.chapaRepo.buscarPorSKU(queryBusca);
         let chapaEstoque = resultadosBusca.find(c => c.espessura === espessuraNum);
         
-        // Fallback: busca apenas pela espessura se a busca específica falhar
+        // Fallback: se não achar pelo material, busca pela espessura e pega a primeira disponível
         if (!chapaEstoque) {
           const fallbackBusca = await this.chapaRepo.buscarPorSKU(`${espessuraNum}MM`);
-          chapaEstoque = fallbackBusca.find(c => c.espessura === espessuraNum);
+          chapaEstoque = fallbackBusca.find(c => c.espessura === espessuraNum) || fallbackBusca[0];
         }
 
         const novaChapa: ChapaSelecionada = {
           id: `ch_imp_${Math.random().toString(36).substr(2, 9)}`,
-          sku_chapa: chapaEstoque?.sku || `MDF-GEN-${espessuraNum}`,
-          nome_exibicao: `MDF ${espessuraNum}MM (IMPORTADO)`,
+          sku_chapa: chapaEstoque?.sku || `${materialDetectado || 'MDF'}-${espessuraNum}`,
+          nome_exibicao: chapaEstoque?.nome || `${materialDetectado || 'MDF'} ${espessuraNum}MM (IMPORTADO)`,
           largura_mm: chapaEstoque?.largura || 2750,
           altura_mm: chapaEstoque?.altura || 1840,
           espessura_mm: espessuraNum,
@@ -89,10 +90,11 @@ export class ProcessarPDF {
           criada_em: new Date(),
           pecas: pecas.map((p: any) => ({
             id: p.id,
-            nome: p.nome,
+            nome: p.nome.toUpperCase(),
             largura: p.largura,
             altura: p.comprimento,
-            quantidade: p.quantidade,
+            quantidade: p.quantidade || 1,
+            material: materialDetectado,
             rotacionavel: true
           }))
         };

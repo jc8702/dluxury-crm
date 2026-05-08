@@ -68,6 +68,20 @@ export function useOrcamento(id?: string) {
         }
     }, [id, carregar]);
 
+    const importItems = useCallback(async (items: any[]) => {
+        if (!id) return;
+        setLoading(true);
+        try {
+            await api.orcamentosPro.importItems(id, items);
+            await carregar(id);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [id, carregar]);
+
     const removerItem = useCallback(async (itemId: string) => {
         // Implementar no backend se necessário, por ora mock ou simplificado
         console.log('Remover item', itemId);
@@ -80,6 +94,7 @@ export function useOrcamento(id?: string) {
         inicializar,
         setHeader,
         addItem,
+        importItems,
         removerItem,
         updateItemExplosion,
         recarregar: () => id && carregar(id)

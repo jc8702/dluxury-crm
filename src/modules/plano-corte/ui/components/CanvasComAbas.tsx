@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CanvasAvancado } from './CanvasAvancado';
-import { ChapaSelecionada, ResultadoOtimizacaoPorChapa } from '../../domain/types';
+import type { ChapaSelecionada, ResultadoOtimizacaoPorChapa } from '../../domain/types';
 import { Box } from 'lucide-react';
 
 interface CanvasComAbasProps {

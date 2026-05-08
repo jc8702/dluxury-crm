@@ -351,6 +351,20 @@ export default function PlanoCorteIndustrialPage() {
   return (
     <div className="h-screen flex flex-col bg-[#0A0A0A] text-white overflow-hidden font-sans">
       
+      {/* GLOBAL LOADING OVERLAY */}
+      {loading && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full border-t-2 border-[#FFA500] animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Scissors size={32} className="text-[#FFA500] animate-pulse" />
+            </div>
+          </div>
+          <h2 className="mt-8 text-xl font-black tracking-[0.2em] uppercase text-white animate-pulse">Processando Inteligência Industrial</h2>
+          <p className="mt-2 text-[10px] font-bold text-[#888] uppercase tracking-widest">Extraindo dados e otimizando layout...</p>
+        </div>
+      )}
+
       {/* HEADER */}
       <header className="h-16 px-8 flex items-center justify-between border-b border-[#222] bg-[#111] z-30">
         <div className="flex items-center gap-6">

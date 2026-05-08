@@ -3,9 +3,10 @@ import { Modal, Button } from '@/design-system/components';
 import { Upload, CheckCircle2, AlertCircle, FileDigit } from 'lucide-react';
 import { api } from '@/lib/api';
 
-export function ImportacaoModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+export function ImportacaoModal({ isOpen, onClose, onAddItems }: { isOpen: boolean, onClose: () => void, onAddItems: (items: any[]) => Promise<void> }) {
     const [status, setStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
-    const [results, setResults] = useState<any>(null);
+    const [results, setResults] = useState<any[] | null>(null);
+    const [isAdding, setIsAdding] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -34,6 +35,19 @@ export function ImportacaoModal({ isOpen, onClose }: { isOpen: boolean, onClose:
             console.error('Erro na importação:', err);
             alert('Falha ao processar arquivo: ' + (err.message || 'Erro desconhecido'));
             setStatus('idle');
+        }
+    };
+
+    const handleAdd = async () => {
+        if (!results) return;
+        setIsAdding(true);
+        try {
+            await onAddItems(results);
+            onClose();
+        } catch (err) {
+            alert('Erro ao adicionar itens ao orçamento');
+        } finally {
+            setIsAdding(false);
         }
     };
 
@@ -83,8 +97,12 @@ export function ImportacaoModal({ isOpen, onClose }: { isOpen: boolean, onClose:
                                 <div className="flex justify-between"><span>Confiabilidade:</span> <span className="text-orange-500 font-bold">Alta</span></div>
                             </div>
                         </div>
-                        <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onClose()}>
-                            Adicionar ao Orçamento
+                        <Button 
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12" 
+                            onClick={handleAdd}
+                            disabled={isAdding}
+                        >
+                            {isAdding ? 'Adicionando...' : 'Adicionar ao Orçamento'}
                         </Button>
                     </div>
                 )}

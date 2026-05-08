@@ -314,6 +314,8 @@ export const api = {
       apiCall<any>(`orcamentos-pro?id=${id}&action=add-item`, 'PUT', { skuEngenhariaId, quantidade }),
     updateBOM: (id: string, bomId: string, quantidadeAjustada: number) => 
       apiCall<any>(`orcamentos-pro?id=${id}&action=update-bom`, 'PUT', { bomId, quantidadeAjustada }),
+    importItems: (id: string, items: any[]) => 
+      apiCall<any>(`orcamentos-pro?id=${id}&action=import-items`, 'PUT', { items }),
     explode: (skuId: string, qtd: number) => apiCall<any[]>(`orcamentos-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
   },
   importador: {

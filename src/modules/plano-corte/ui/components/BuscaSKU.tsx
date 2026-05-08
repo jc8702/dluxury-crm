@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { ChapaRepository, Chapa } from '../../infrastructure/repositories/ChapaRepository';
-import { ChapaSelecionada } from '../../domain/types';
+import { ChapaRepository } from '../../infrastructure/repositories/ChapaRepository';
+import type { Chapa } from '../../infrastructure/repositories/ChapaRepository';
+import type { ChapaSelecionada } from '../../domain/types';
 import { CardChapa } from './CardChapa';
 import { Search, Loader2 } from 'lucide-react';
 

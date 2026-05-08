@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Chapa } from '../../infrastructure/repositories/ChapaRepository';
+import type { Chapa } from '../../infrastructure/repositories/ChapaRepository';
 
 interface CardChapaProps {
   chapa: Chapa;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { X, Plus, Layers } from 'lucide-react';
-import { ChapaSelecionada } from '../../domain/types';
+import type { ChapaSelecionada } from '../../domain/types';
 
 interface AbasProps {
   chapas: ChapaSelecionada[];

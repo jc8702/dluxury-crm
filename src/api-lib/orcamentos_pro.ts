@@ -197,16 +197,48 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 }).returning();
 
                 const comps = await explodirBOM(skuEngenhariaId, 1);
-                await db.insert(orcamentoListaExplodida).values(
-                    comps.map(c => ({
+                if (comps.length > 0) {
+                    await db.insert(orcamentoListaExplodida).values(
+                        comps.map(c => ({
+                            orcamentoItemId: newItem.id,
+                            skuComponenteId: c.skuComponenteId,
+                            quantidadeCalculada: c.quantidadeCalculada.toString(),
+                            quantidadeAjustada: c.quantidadeCalculada.toString(),
+                            custoUnitario: c.custoUnitario.toString(),
+                            origem: 'BOM'
+                        }))
+                    );
+                }
+
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === 'import-items') {
+                const { items } = req.body; // Array de { sku_componente_id, quantidade, custoUnitario }
+                
+                // Criar um item de orçamento genérico para os itens importados
+                const [newItem] = await db.insert(orcamentoItens).values({
+                    orcamentoId: id,
+                    skuEngenhariaId: null, // Sem SKU de engenharia (módulo)
+                    quantidade: 1,
+                    observacoes: 'ITENS IMPORTADOS VIA PROJETO'
+                }).returning();
+
+                const entries = items
+                    .filter((it: any) => it.match_sugerido)
+                    .map((it: any) => ({
                         orcamentoItemId: newItem.id,
-                        skuComponenteId: c.skuComponenteId,
-                        quantidadeCalculada: c.quantidadeCalculada.toString(),
-                        quantidadeAjustada: c.quantidadeCalculada.toString(),
-                        custoUnitario: c.custoUnitario.toString(),
-                        origem: 'BOM'
-                    }))
-                );
+                        skuComponenteId: it.match_sugerido.sku_componente_id,
+                        quantidadeCalculada: it.quantidade.toString(),
+                        quantidadeAjustada: it.quantidade.toString(),
+                        custoUnitario: (it.match_sugerido.custoUnitario || 0).toString(),
+                        origem: 'IMPORT'
+                    }));
+
+                if (entries.length > 0) {
+                    await db.insert(orcamentoListaExplodida).values(entries);
+                }
 
                 await recalcularOrcamento(id);
                 return res.status(200).json({ success: true });

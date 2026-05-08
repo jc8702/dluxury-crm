@@ -1,5 +1,6 @@
 import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
+import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 
@@ -211,7 +212,7 @@ export async function handleChapas(req: any, res: any) {
   }
 }
 
-// --- 3. Handler de Engenharia ---
+// --- 3. Handler de Engenharia (Integrado com Orçamentos Pro) ---
 export async function handleEngenhariaSKUs(req: any, res: any) {
   const { q } = req.query || {};
   try {
@@ -219,13 +220,14 @@ export async function handleEngenhariaSKUs(req: any, res: any) {
     if (termText) {
       const term = `%${termText}%`;
       const results = await db.select()
-        .from(erpSkusEngenharia)
-        .where(or(ilike(erpSkusEngenharia.sku, term), ilike(erpSkusEngenharia.nome, term)));
+        .from(skuEngenharia)
+        .where(or(ilike(skuEngenharia.codigo, term), ilike(skuEngenharia.nome, term)));
       return res.status(200).json({ success: true, data: results });
     }
-    const all = await db.select().from(erpSkusEngenharia).limit(20);
+    const all = await db.select().from(skuEngenharia).limit(50);
     return res.status(200).json({ success: true, data: all });
   } catch (err: any) {
+    console.error('ERRO_ENGENHARIA_SKUS:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -269,42 +271,48 @@ export async function handleImportarDesenho(req: any, res: any) {
       }
       text = extractedFromDXF;
     } else {
-      // Extrair texto do PDF (Fases 1-4) com Fallback Robusto
+      // Extrair texto do PDF (Fases 1-4) com PDF.js Engine (Mais estável em Serverless)
       try {
-        const { createRequire } = await import('module');
-        const require = createRequire(import.meta.url);
-        const pdfParser = require('pdf-parse');
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        const loadingTask = pdfjs.getDocument({ 
+          data: new Uint8Array(buffer),
+          useSystemFonts: true,
+          disableFontFace: true,
+          isEvalSupported: false
+        });
         
-        const data = await pdfParser(buffer);
-        text = data.text;
+        const pdfDoc = await loadingTask.promise;
+        let fullText = '';
+        
+        // Limitar processamento a 20 páginas para evitar timeout em arquivos gigantes
+        const pagesToProcess = Math.min(pdfDoc.numPages, 20);
+        
+        for (let i = 1; i <= pagesToProcess; i++) {
+          const page = await pdfDoc.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => ('str' in item ? item.str : ''))
+            .filter(s => s.trim().length > 0)
+            .join(' ');
+          fullText += pageText + '\n';
+        }
+        text = fullText;
+
+        if (!text.trim()) throw new Error('PDF sem conteúdo de texto extraível');
+
       } catch (pdfErr: any) {
-        console.warn('[API] Falha no pdf-parse, usando PDF.js Engine...', pdfErr.message);
+        console.warn('[API] Falha no PDF.js, tentando fallback pdf-parse...', pdfErr.message);
         try {
-          const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-          const loadingTask = pdfjs.getDocument({ 
-            data: new Uint8Array(buffer),
-            useSystemFonts: true,
-            disableFontFace: true,
-            isEvalSupported: false
-          });
-          const pdfDoc = await loadingTask.promise;
-          let fullText = '';
-          for (let i = 1; i <= pdfDoc.numPages; i++) {
-            const page = await pdfDoc.getPage(i);
-            const textContent = await page.getTextContent();
-            // Filtrar apenas itens que possuem texto real
-            const pageText = textContent.items
-              .map((item: any) => ('str' in item ? item.str : ''))
-              .filter(s => s.trim().length > 0)
-              .join(' ');
-            fullText += pageText + '\n';
-          }
-          text = fullText;
+          const { createRequire } = await import('module');
+          const require = createRequire(import.meta.url);
+          const pdfParser = require('pdf-parse');
+          const data = await pdfParser(buffer);
+          text = data.text;
         } catch (fallbackErr: any) {
           console.error('[API] Falha crítica na extração de PDF:', fallbackErr);
           return res.status(500).json({ 
             success: false, 
-            error: 'Este PDF não contém dados de texto extraíveis (pode ser uma imagem). Tente usar o arquivo DXF original.',
+            error: 'Este PDF não contém dados de texto extraíveis. Tente usar o arquivo DXF original.',
             details: fallbackErr.message 
           });
         }
@@ -314,36 +322,40 @@ export async function handleImportarDesenho(req: any, res: any) {
     const pecas: any[] = [];
     const lines = text.split('\n');
     
-    // Lista de materiais comuns para detecção (Fase 2)
+    // Lista expandida de materiais e acabamentos industriais (Fase 2.1)
     const materialKeywords = [
-      'MDF', 'MDP', 'COMPENSADO', 'BRANCO', 'GRAFITE', 'CARVALHO', 
-      'FREIJO', 'LOUREIRO', 'PRETO', 'CINZA', 'CANELA', 'AMARULA', 
-      'GELATO', 'NOVAES', 'GIANDUIA', 'TITANIO', 'CHUMBO'
+      'MDF', 'MDP', 'COMPENSADO', 'OSB', 'HDF',
+      'BRANCO', 'GRAFITE', 'CARVALHO', 'FREIJO', 'LOUREIRO', 
+      'PRETO', 'CINZA', 'CANELA', 'AMARULA', 'GELATO', 'NOVAES', 
+      'GIANDUIA', 'TITANIO', 'CHUMBO', 'CAPRI', 'EBANO', 'MARFIM',
+      'CEDRO', 'IMBUIA', 'WENGUE', 'NOCE', 'LARICE', 'CALCATA'
     ];
     
     /**
-     * Regex para identificar padrões de peças e dimensões:
-     * Padrão 1: Nome + L x A x E (Fase 1)
+     * Regex para identificar padrões de peças e dimensões (LxAxE)
+     * Suporta: "Peça: 800x600x18", "Base 800 * 600 * 18", "Lateral 800 x 600 x 18"
      */
-    const regexDimensoes = /(?:([a-zA-ZÀ-ÿ0-9\s\-_]{2,})[:\-\s]+)?(\d+(?:[.,]\d+)?)\s*[xX*]\s*(\d+(?:[.,]\d+)?)\s*[xX*]\s*(\d+(?:[.,]\d+)?)/;
+    const regexDimensoes = /(?:([a-zA-ZÀ-ÿ0-9\s\-_]{2,})[:\-\s]+)?(\d+(?:[.,]\d+)?)\s*(?:mm|cm)?\s*[xX*]\s*(\d+(?:[.,]\d+)?)\s*(?:mm|cm)?\s*[xX*]\s*(\d+(?:[.,]\d+)?)\s*(?:mm|cm)?/;
     
     /**
      * Regex para Tabelas (Fase 3): 
-     * Procura por linhas com 4 ou 5 números isolados (ID, Largura, Altura, Espessura, Qtd)
-     * Ex: "001  Base  600  550  18  2"
+     * Suporta linhas de softwares como CorteCloud, Promob, SketchUp
      */
     const regexTabela = /(?:(\d+)\s+)?([a-zA-ZÀ-ÿ0-9\s\-_]{3,})\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)(?:\s+(\d+))?/;
 
     for (const line of lines) {
       const trimmedLine = line.trim();
-      if (!trimmedLine) continue;
+      if (!trimmedLine || trimmedLine.length < 5) continue;
 
-      // 1. Tenta Padrão de Dimensões Explícitas (LxAxE)
-      let match = trimmedLine.match(regexDimensoes);
+      // Limpeza de ruído de PDF (caracteres de controle)
+      const cleanLine = trimmedLine.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+
+      // 1. Tenta Padrão de Dimensões Explícitas
+      let match = cleanLine.match(regexDimensoes);
       
-      // 2. Se não achou, tenta Padrão de Tabela (ID | Nome | L | A | E)
+      // 2. Se não achou, tenta Padrão de Tabela
       if (!match) {
-        match = trimmedLine.match(regexTabela);
+        match = cleanLine.match(regexTabela);
         if (match) {
           const nome = match[2]?.trim();
           const largura = match[3];
@@ -352,7 +364,7 @@ export async function handleImportarDesenho(req: any, res: any) {
           const quantidade = match[6] || '1';
 
           pecas.push({
-            id: Math.random().toString(36).substring(2, 9),
+            id: `p-${Math.random().toString(36).substring(2, 7)}`,
             nome: nome || `Item ${match[1] || pecas.length + 1}`,
             largura: parseFloat(largura.replace(',', '.')),
             comprimento: parseFloat(comprimento.replace(',', '.')),
@@ -362,7 +374,7 @@ export async function handleImportarDesenho(req: any, res: any) {
           });
           
           const lastPeca = pecas[pecas.length - 1];
-          const upperLine = trimmedLine.toUpperCase();
+          const upperLine = cleanLine.toUpperCase();
           for (const kw of materialKeywords) {
             if (upperLine.includes(kw)) {
               lastPeca.material = kw;
@@ -373,42 +385,25 @@ export async function handleImportarDesenho(req: any, res: any) {
         }
       }
 
-      // 3. Fase 4: Detecção de Cotas Soltas (Proximidade)
-      // Se a linha tem apenas números seguidos de 'mm' ou dimensões soltas
-      if (!match) {
-        const regexCotasSoltas = /(\d+(?:[.,]\d+)?)\s*(?:mm|MM)/g;
-        const cotas = [...trimmedLine.matchAll(regexCotasSoltas)];
-        if (cotas.length >= 2) {
-          pecas.push({
-            id: Math.random().toString(36).substring(2, 9),
-            nome: `Peça Cota ${pecas.length + 1}`,
-            largura: parseFloat(cotas[0][1].replace(',', '.')),
-            comprimento: parseFloat(cotas[1][1].replace(',', '.')),
-            espessura: cotas[2] ? parseFloat(cotas[2][1].replace(',', '.')) : 18,
-            quantidade: 1,
-            material: ''
-          });
-          continue;
-        }
-      }
-
-      // Processamento final se houver match nos padrões 1 ou 2
+      // 3. Processamento Final (Match de Dimensões)
       if (match) {
         const nomeFinal = match[1]?.trim() || `Peça ${pecas.length + 1}`;
         
-        // Identificar material na linha (Fase 2)
-        const upperLine = line.toUpperCase();
+        // Detecção inteligente de material
+        const upperLine = cleanLine.toUpperCase();
         let materialDetectado = '';
         for (const kw of materialKeywords) {
           if (upperLine.includes(kw)) {
-            const index = upperLine.indexOf(kw);
-            materialDetectado = upperLine.substring(index, index + 20).split(/[:\d\-\*xX]/)[0].trim();
+            // Pega a palavra do material e possivelmente o próximo termo (ex: MDF BRANCO)
+            const parts = upperLine.split(/\s+/);
+            const idx = parts.findIndex(p => p.includes(kw));
+            materialDetectado = parts.slice(idx, idx + 2).join(' ').replace(/[:\d\-\*xX]/g, '').trim();
             break;
           }
         }
 
         pecas.push({
-          id: Math.random().toString(36).substring(2, 9),
+          id: `p-${Math.random().toString(36).substring(2, 7)}`,
           nome: nomeFinal,
           largura: parseFloat(match[2].replace(',', '.')),
           comprimento: parseFloat(match[3].replace(',', '.')),
@@ -419,16 +414,25 @@ export async function handleImportarDesenho(req: any, res: any) {
       }
     }
     
-    // Filtrar peças inválidas (muito pequenas ou erro de parse)
-    const pecasValidas = pecas.filter(p => p.largura > 10 && p.comprimento > 10);
+    // Filtragem e Normalização (Fase 5)
+    // - Remove peças com dimensões irreais
+    // - Ordena para que Largura seja sempre a maior dimensão (orientação de fibra padrão)
+    const pecasValidas = pecas
+      .filter(p => p.largura > 5 && p.comprimento > 5 && p.espessura > 0)
+      .map(p => {
+        if (p.comprimento > p.largura) {
+          return { ...p, largura: p.comprimento, comprimento: p.largura };
+        }
+        return p;
+      });
     
-    console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas de PDF.`);
+    console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas.`);
     
     return res.status(200).json({ 
       success: true, 
       data: pecasValidas,
       count: pecasValidas.length,
-      debug: { textLength: text.length }
+      debug: { textLength: text.length, rawCount: pecas.length }
     });
   } catch (err: any) {
     console.error('IMPORT_DESENHO_ERROR:', err);

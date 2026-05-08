@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Plus, Trash2, Scissors } from 'lucide-react';
-import { Peca } from '../../domain/types';
+import type { Peca } from '../../domain/types';
 
 interface PainelPecasChapaProps {
   chapaId: string;

@@ -5,7 +5,7 @@ import { Plus, Filter, CheckCircle, Trash2, ArrowUpRight, Calendar, Truck, Chevr
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
-import { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
+import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroTitulosPagarPage() {

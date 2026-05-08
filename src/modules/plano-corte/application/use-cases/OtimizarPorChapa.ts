@@ -1,5 +1,5 @@
 import { MaxRectsOptimizer } from '../../domain/services/MaxRectsOptimizer';
-import { ChapaSelecionada, Peca, ResultadoOtimizacaoPorChapa } from '../../domain/types';
+import type { ChapaSelecionada, Peca, ResultadoOtimizacaoPorChapa } from '../../domain/types';
 
 export class OtimizarPorChapa {
 

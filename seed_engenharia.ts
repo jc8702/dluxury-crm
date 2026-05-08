@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { db } from './src/api-lib/drizzle-db.js';
 import { 
     skuEngenharia, skuMontagem, skuComponente, 
@@ -62,16 +63,16 @@ async function seed() {
     // 3. BOM Montagens -> Componentes
     if (mont1 && comp1 && comp2) {
         await db.insert(bomMontagemComponente).values([
-            { skuMontagemId: mont1.id, skuComponenteId: comp1.id, quantidade: '2.4', perdaPercentual: '10.00' }, // Laterais, base, teto
-            { skuMontagemId: mont1.id, skuComponenteId: comp2.id, quantidade: '0.6', perdaPercentual: '5.00' },  // Fundo
+            { skuMontagemId: mont1.id, skuComponenteId: comp1.id, quantidade: '2.4', perdaPercentual: '10.00' }, 
+            { skuMontagemId: mont1.id, skuComponenteId: comp2.id, quantidade: '0.6', perdaPercentual: '5.00' },
         ]);
     }
 
     if (mont2 && comp1 && comp3 && comp4) {
         await db.insert(bomMontagemComponente).values([
-            { skuMontagemId: mont2.id, skuComponenteId: comp1.id, quantidade: '0.5', perdaPercentual: '15.00' }, // Folha da porta
-            { skuMontagemId: mont2.id, skuComponenteId: comp3.id, quantidade: '2.0', perdaPercentual: '0.00' },  // Dobradiças
-            { skuMontagemId: mont2.id, skuComponenteId: comp4.id, quantidade: '0.6', perdaPercentual: '2.00' },  // Puxador
+            { skuMontagemId: mont2.id, skuComponenteId: comp1.id, quantidade: '0.5', perdaPercentual: '15.00' }, 
+            { skuMontagemId: mont2.id, skuComponenteId: comp3.id, quantidade: '2.0', perdaPercentual: '0.00' },
+            { skuMontagemId: mont2.id, skuComponenteId: comp4.id, quantidade: '0.6', perdaPercentual: '2.00' },
         ]);
     }
 
@@ -83,18 +84,11 @@ async function seed() {
         tipoProduto: 'Aéreo'
     }).onConflictDoNothing().returning();
 
-    const [eng2] = await db.insert(skuEngenharia).values({
-        codigo: 'ENG-DOR-001',
-        nome: 'Módulo Closet 1 Gaveta 600x2100',
-        categoria: 'Dormitório',
-        tipoProduto: 'Closet'
-    }).onConflictDoNothing().returning();
-
     // 5. BOM Engenharia -> Montagens
     if (eng1 && mont1 && mont2) {
         await db.insert(bomEngenhariaMontagem).values([
             { skuEngenhariaId: eng1.id, skuMontagemId: mont1.id, quantidade: '1' },
-            { skuEngenhariaId: eng1.id, skuMontagemId: mont2.id, quantidade: '2' }, // 2 portas
+            { skuEngenhariaId: eng1.id, skuMontagemId: mont2.id, quantidade: '2' },
         ]);
     }
 
