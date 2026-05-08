@@ -303,18 +303,30 @@ export async function handleEngineering(req: any, res: any) {
       
       // Nova estrutura de orçamentos pro
       if (term) {
-        result = await sql`
-          SELECT id, nome, codigo, categoria, tipo_produto as tipo
+        // Busca hibrida: Engenharia (Módulos) + Componentes (Estoque)
+        const engResult = await sql`
+          SELECT id, nome, codigo, categoria, tipo_produto as tipo, 'MODULO' as origem
           FROM sku_engenharia 
           WHERE nome ILIKE ${'%' + term + '%'} 
           OR codigo ILIKE ${'%' + term + '%'} 
-          ORDER BY created_at DESC
+          LIMIT 10
         `;
+        
+        const compResult = await sql`
+          SELECT id, nome, codigo, tipo, 'COMPONENTE' as origem
+          FROM sku_componente 
+          WHERE nome ILIKE ${'%' + term + '%'} 
+          OR codigo ILIKE ${'%' + term + '%'} 
+          LIMIT 10
+        `;
+        
+        result = [...engResult, ...compResult];
       } else {
         result = await sql`
-          SELECT id, nome, codigo, categoria, tipo_produto as tipo
+          SELECT id, nome, codigo, categoria, tipo_produto as tipo, 'MODULO' as origem
           FROM sku_engenharia 
           ORDER BY created_at DESC
+          LIMIT 20
         `;
       }
       return res.status(200).json({ success: true, data: result });

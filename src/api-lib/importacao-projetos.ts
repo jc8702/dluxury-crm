@@ -1,4 +1,4 @@
-import pdf from 'pdf-parse';
+// import pdf from 'pdf-parse'; // Removido por incompatibilidade ESM/Vercel
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
 import { ilike, or } from 'drizzle-orm';
@@ -6,7 +6,7 @@ import { ilike, or } from 'drizzle-orm';
 /**
  * SERVIÇO DE IMPORTAÇÃO DE PROJETOS (SKETCHUP / PDF)
  * Refatorado para máxima estabilidade em ambientes serverless (Vercel)
- * Utilizando pdf-parse com tratamento de erros robusto.
+ * Utilizando PDF.js para extração de texto robusta.
  */
 
 export class ImportadorProjeto {
@@ -17,17 +17,28 @@ export class ImportadorProjeto {
         try {
             console.log('[IMPORTADOR] Iniciando parse de PDF, tamanho:', buffer.length);
             
-            // pdf-parse pode falhar em alguns ambientes se não houver um pagerender customizado
-            // ou se houver problemas com fontes. Usamos a opção padrão.
-            // pdf-parse com pagerender simplificado para evitar deadlocks
-            const data = await pdf(buffer, {
-                pagerender: (pageData: any) => {
-                    return pageData.getTextContent().then((textContent: any) => {
-                        return textContent.items.map((item: any) => item.str).join(' ');
-                    });
-                }
+            // Usando PDF.js para extração de texto
+            const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+            const loadingTask = pdfjs.getDocument({ 
+                data: new Uint8Array(buffer),
+                useSystemFonts: true,
+                disableFontFace: true,
+                isEvalSupported: false
             });
-            const text = data.text;
+            
+            const pdfDoc = await loadingTask.promise;
+            let text = '';
+            
+            for (let i = 1; i <= Math.min(pdfDoc.numPages, 10); i++) {
+                const page = await pdfDoc.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items
+                    .map((item: any) => ('str' in item ? item.str : ''))
+                    .join(' ');
+                text += pageText + '\n';
+            }
+            
+            if (!text || text.trim().length === 0) {
             
             if (!text || text.trim().length === 0) {
                 console.warn('[IMPORTADOR] Nenhum texto extraído do PDF.');

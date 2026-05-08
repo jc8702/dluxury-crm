@@ -3,7 +3,7 @@ import { ALLOWED_ORIGINS } from '../src/api-lib/config.js';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '20mb',
+      sizeLimit: '50mb',
     },
   },
 };

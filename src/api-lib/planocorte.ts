@@ -301,21 +301,12 @@ export async function handleImportarDesenho(req: any, res: any) {
         if (!text.trim()) throw new Error('PDF sem conteúdo de texto extraível');
 
       } catch (pdfErr: any) {
-        console.warn('[API] Falha no PDF.js, tentando fallback pdf-parse...', pdfErr.message);
-        try {
-          const { createRequire } = await import('module');
-          const require = createRequire(import.meta.url);
-          const pdfParser = require('pdf-parse');
-          const data = await pdfParser(buffer);
-          text = data.text;
-        } catch (fallbackErr: any) {
-          console.error('[API] Falha crítica na extração de PDF:', fallbackErr);
-          return res.status(500).json({ 
-            success: false, 
-            error: 'Este PDF não contém dados de texto extraíveis. Tente usar o arquivo DXF original.',
-            details: fallbackErr.message 
-          });
-        }
+        console.error('[API] Falha crítica na extração de PDF:', pdfErr);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Este PDF não contém dados de texto extraíveis. Tente usar o arquivo DXF original.',
+          details: pdfErr.message 
+        });
       }
     }
     

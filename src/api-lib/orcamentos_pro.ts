@@ -189,25 +189,51 @@ export async function handleOrcamentosPro(req: any, res: any) {
             }
 
             if (action === 'add-item') {
-                const { skuEngenhariaId, quantidade } = req.body;
-                const [newItem] = await db.insert(orcamentoItens).values({
-                    orcamentoId: id,
-                    skuEngenhariaId,
-                    quantidade
-                }).returning();
+                const { skuId, quantidade } = req.body;
+                
+                // Verificar se é um módulo (Engenharia)
+                const isEng = await db.query.skuEngenharia.findFirst({ where: eq(skuEngenharia.id, skuId) });
+                
+                if (isEng) {
+                    const [newItem] = await db.insert(orcamentoItens).values({
+                        orcamentoId: id,
+                        skuEngenhariaId: skuId,
+                        quantidade
+                    }).returning();
 
-                const comps = await explodirBOM(skuEngenhariaId, 1);
-                if (comps.length > 0) {
-                    await db.insert(orcamentoListaExplodida).values(
-                        comps.map(c => ({
+                    const comps = await explodirBOM(skuId, 1);
+                    if (comps.length > 0) {
+                        await db.insert(orcamentoListaExplodida).values(
+                            comps.map(c => ({
+                                orcamentoItemId: newItem.id,
+                                skuComponenteId: c.skuComponenteId,
+                                quantidadeCalculada: c.quantidadeCalculada.toString(),
+                                quantidadeAjustada: c.quantidadeCalculada.toString(),
+                                custoUnitario: c.custoUnitario.toString(),
+                                origem: 'BOM'
+                            }))
+                        );
+                    }
+                } else {
+                    // Verificar se é um componente (Estoque)
+                    const isComp = await db.query.skuComponente.findFirst({ where: eq(skuComponente.id, skuId) });
+                    if (isComp) {
+                        const [newItem] = await db.insert(orcamentoItens).values({
+                            orcamentoId: id,
+                            skuEngenhariaId: null,
+                            quantidade: 1,
+                            observacoes: `ITEM AVULSO: ${isComp.nome}`
+                        }).returning();
+
+                        await db.insert(orcamentoListaExplodida).values({
                             orcamentoItemId: newItem.id,
-                            skuComponenteId: c.skuComponenteId,
-                            quantidadeCalculada: c.quantidadeCalculada.toString(),
-                            quantidadeAjustada: c.quantidadeCalculada.toString(),
-                            custoUnitario: c.custoUnitario.toString(),
-                            origem: 'BOM'
-                        }))
-                    );
+                            skuComponenteId: isComp.id,
+                            quantidadeCalculada: quantidade.toString(),
+                            quantidadeAjustada: quantidade.toString(),
+                            custoUnitario: isComp.precoUnitario?.toString() || '0',
+                            origem: 'DIRECT'
+                        });
+                    }
                 }
 
                 await recalcularOrcamento(id);

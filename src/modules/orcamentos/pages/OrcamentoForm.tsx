@@ -29,13 +29,24 @@ export default function OrcamentoForm() {
 
     useEffect(() => {
         api.clients.list().then(setClients).catch(console.error);
-        api.engineering.list().then(setSkus).catch(console.error);
 
-        // Se não houver ID, inicializar um novo rascunho automaticamente (opcional, ou esperar ação do usuário)
-        if (!orcamentoId && !orcamento) {
-            // inicializar({ margemLucroPercentual: 30 }); // Exemplo
-        }
+        // Busca inicial de SKUs (limitada)
+        api.engineering.list().then(setSkus).catch(console.error);
     }, [orcamentoId]);
+
+    // Busca de SKU reativa (Debounced simplificado)
+    useEffect(() => {
+        if (searchTerm.length > 2) {
+            const timer = setTimeout(() => {
+                api.engineering.list({ q: searchTerm })
+                    .then(setSkus)
+                    .catch(console.error);
+            }, 300);
+            return () => clearTimeout(timer);
+        } else if (searchTerm.length === 0) {
+            api.engineering.list().then(setSkus).catch(console.error);
+        }
+    }, [searchTerm]);
 
     const handleCreateDraft = async () => {
         try {
@@ -156,33 +167,30 @@ export default function OrcamentoForm() {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Margem de Lucro (%)</label>
-                                    <Input 
-                                        type="number" 
-                                        className="bg-zinc-900 border-zinc-800 h-12 rounded-xl text-orange-500 font-black text-lg focus:border-orange-500" 
-                                        value={orcamento?.margemLucroPercentual || 0}
-                                        onBlur={(e) => setHeader({ margemLucroPercentual: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Taxa Financeira (%)</label>
-                                    <Input 
-                                        type="number" 
-                                        className="bg-zinc-900 border-zinc-800 h-12 rounded-xl" 
-                                        value={orcamento?.taxaFinanceiraPercentual || 0}
-                                        onBlur={(e) => setHeader({ taxaFinanceiraPercentual: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Validade (Dias)</label>
-                                    <Input 
-                                        type="number" 
-                                        className="bg-zinc-900 border-zinc-800 h-12 rounded-xl" 
-                                        value={orcamento?.validadeDias || 0}
-                                        onBlur={(e) => setHeader({ validadeDias: e.target.value })}
-                                    />
-                                </div>
+                                <Input 
+                                    label="Margem de Lucro (%)"
+                                    type="number"
+                                    value={orcamento?.margemLucroPercentual || 0}
+                                    onChange={(e) => setHeader({ margemLucroPercentual: parseFloat(e.target.value) || 0 })}
+                                    onBlur={(e) => setHeader({ margemLucroPercentual: parseFloat(e.target.value) || 0 })}
+                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
+                                />
+                                <Input 
+                                    label="Taxa Financeira (%)"
+                                    type="number"
+                                    value={orcamento?.taxaFinanceiraPercentual || 0}
+                                    onChange={(e) => setHeader({ taxaFinanceiraPercentual: parseFloat(e.target.value) || 0 })}
+                                    onBlur={(e) => setHeader({ taxaFinanceiraPercentual: parseFloat(e.target.value) || 0 })}
+                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
+                                />
+                                <Input 
+                                    label="Validade (Dias)"
+                                    type="number"
+                                    value={orcamento?.validadeDias || 0}
+                                    onChange={(e) => setHeader({ validadeDias: parseInt(e.target.value) || 0 })}
+                                    onBlur={(e) => setHeader({ validadeDias: parseInt(e.target.value) || 0 })}
+                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -208,18 +216,31 @@ export default function OrcamentoForm() {
                             />
                             
                             {searchTerm && (
-                                <div className="absolute top-full right-0 mt-3 w-full bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl bg-zinc-950/90">
-                                    {skus.filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase())).map(sku => (
+                                <div className="absolute top-full right-0 mt-3 w-full bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl bg-zinc-950/90 max-h-[400px] overflow-y-auto">
+                                    {skus.length === 0 ? (
+                                        <div className="p-8 text-center text-zinc-500 text-xs italic">Nenhum SKU encontrado para "{searchTerm}"</div>
+                                    ) : skus.map(sku => (
                                         <button 
-                                            key={sku.id}
+                                            key={`${sku.origem}-${sku.id}`}
                                             className="w-full text-left px-5 py-4 hover:bg-orange-600 transition-all flex justify-between items-center border-b border-zinc-900 group"
-                                            onClick={() => handleAddSku(sku)}
+                                            onClick={() => {
+                                                addItem(sku.id, 1);
+                                                setSearchTerm('');
+                                            }}
                                         >
-                                            <div>
-                                                <div className="font-black text-white group-hover:text-white">{sku.nome}</div>
-                                                <div className="text-[10px] text-zinc-500 uppercase group-hover:text-orange-200">{sku.codigo || sku.sku}</div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${sku.origem === 'MODULO' ? 'bg-orange-500 text-black' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                        {sku.origem}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-white group-hover:text-black transition-colors">{sku.nome}</span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-500 group-hover:text-black/70 font-mono">{sku.codigo}</span>
                                             </div>
-                                            <Plus className="w-5 h-5 text-zinc-500 group-hover:text-white" />
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-bold text-zinc-600 group-hover:text-black/50 uppercase tracking-tighter">{sku.tipo}</span>
+                                                <Plus className="w-4 h-4 text-orange-500 group-hover:text-black" />
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
