@@ -1,8 +1,8 @@
-import { db } from '../../../../api-lib/drizzle-db';
-import { retalhosEstoque } from '../../../../db/schema/planos-de-corte';
+import { db } from '../../../../api-lib/drizzle-db.js';
+import { retalhosEstoque } from '../../../../db/schema/planos-de-corte.js';
 import { eq, and, gte, sql, desc, asc } from 'drizzle-orm';
-import type { Retalho, RetalhoDisponivel, CriarRetalhoInput, FiltrosRetalho } from '../../domain/entities/Retalho';
-import { api } from '../../../../lib/api';
+import type { Retalho, RetalhoDisponivel, CriarRetalhoInput, FiltrosRetalho } from '../../domain/entities/Retalho.js';
+import { api } from '../../../../lib/api.js';
 
 /**
  * REPOSITÓRIO DE RETALHOS

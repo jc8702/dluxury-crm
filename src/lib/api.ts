@@ -22,7 +22,10 @@ export async function apiCall<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  if (import.meta.env.DEV) {
+  // @ts-ignore
+  const isDev = typeof process !== 'undefined' ? process.env.NODE_ENV === 'development' : (import.meta as any).env?.DEV;
+
+  if (isDev) {
   }
 
   const res = await fetch(url, {
@@ -40,7 +43,7 @@ export async function apiCall<T>(
   const json: any = await res.json();
   
   // Log de auditoria para ambiente dev
-  if (import.meta.env.DEV) {
+  if (isDev) {
   }
 
   // Se a resposta seguir o padrão { success, data }, retornamos apenas o data
