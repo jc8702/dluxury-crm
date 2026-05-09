@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useOrcamento } from '../hooks/useOrcamento';
 import { ListaExplodidaGrid } from '../components/ListaExplodidaGrid';
-import { ImportacaoModal } from '../components/ImportacaoModal';
+import { ImportarProjeto } from '../components/ImportarProjeto';
 import { ResumoFinanceiro } from '../components/ResumoFinanceiro';
 import { exportBudgetToPDF } from '../services/export-pdf';
 import { api } from '@/lib/api';
@@ -331,10 +331,11 @@ export default function OrcamentoForm() {
                 margemReal: Number(orcamento?.valorTotalVenda || 0) - Number(orcamento?.valorTotalCusto || 0)
             }} />
 
-            <ImportacaoModal 
+            <ImportarProjeto 
                 isOpen={isImportModalOpen} 
                 onClose={() => setIsImportModalOpen(false)} 
                 onAddItems={(items) => importItems(items)}
+                orcamentoId={orcamentoId || ''}
             />
         </div>
     );

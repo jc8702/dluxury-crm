@@ -1,14 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Configuração do Worker para pdfjs-dist (Vite/Browser compatível)
-if (typeof window !== 'undefined') {
-  try {
-    const version = (pdfjsLib as any).version || '4.0.379'; // Versão estável fallback
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
-  } catch (e) {
-    console.error('[PDFParser] Erro ao configurar Worker:', e);
-  }
-}
+// Configuração do Worker (Vite compatível)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export interface PecaExtraida {
   nome: string;

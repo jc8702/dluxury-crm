@@ -44,12 +44,12 @@ import { OtimizarPorChapa } from '../../application/use-cases/OtimizarPorChapa';
 import { ProcessarPDF } from '../../application/use-cases/ProcessarPDF';
 
 // Tipos
-import { 
+import type { 
   ProjetoCorte, 
   ChapaSelecionada, 
   Peca, 
   ResultadoOtimizacaoPorChapa 
-} from '../../domain/types';
+} from '../../domain/types.js';
 
 // ────────────────────────────────────────────────────────────────────────────────
 // COMPONENTES AUXILIARES

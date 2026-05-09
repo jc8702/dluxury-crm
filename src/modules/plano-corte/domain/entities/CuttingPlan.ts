@@ -1,4 +1,4 @@
-import { Peca } from "../services/MaxRectsOptimizer";
+import type { Peca } from "../types.js";
 
 export interface PecaPosicionada extends Peca {
   x: number;

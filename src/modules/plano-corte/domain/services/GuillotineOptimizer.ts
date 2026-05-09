@@ -1,5 +1,5 @@
-import { Peca, PecaPosicionada } from '../types.js';
-import { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer.js';
+import type { Peca, PecaPosicionada } from '../types.js';
+import type { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer.js';
 
 
 /**

@@ -1,6 +1,6 @@
 import { PDFParser } from '../../infrastructure/parsers/PDFParser';
 import { ChapaRepository } from '../../infrastructure/repositories/ChapaRepository';
-import type { ProjetoCorte, ChapaSelecionada } from '../../domain/types';
+import type { ProjetoCorte, ChapaSelecionada } from '../../domain/types.js';
 
 export class ProcessarPDF {
   constructor(

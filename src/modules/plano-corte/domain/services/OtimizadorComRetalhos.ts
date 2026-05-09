@@ -1,6 +1,6 @@
-import { HybridOptimizer } from './HybridOptimizer';
-import { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer';
-import { Peca, LayoutChapa, ResultadoOtimizacao, ChapaMaterial, Retangulo } from '../types';
+import { HybridOptimizer } from './HybridOptimizer.js';
+import type { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer.js';
+import type { Peca, LayoutChapa, ResultadoOtimizacao, ChapaMaterial, Retangulo } from '../types.js';
 import type { RetalhosRepository } from '../../infrastructure/repositories/RetalhosRepository';
 import type { RetalhoDisponivel } from '../entities/Retalho';
 

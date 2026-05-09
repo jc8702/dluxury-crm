@@ -319,7 +319,7 @@ export const api = {
     explode: (skuId: string, qtd: number) => apiCall<any[]>(`orcamentos-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
   },
   importador: {
-    importar: (type: 'PDF' | 'SKETCHUP', payload: any) => apiCall<any>('importar-projeto', 'POST', { type, ...payload }),
+    importar: (type: 'PDF' | 'SKETCHUP' | 'PDF_JSON', payload: any) => apiCall<any>('importar-projeto', 'POST', { type, ...payload }),
   },
   planoCorte: {
     list: () => apiCall<any[]>('plano-corte'),

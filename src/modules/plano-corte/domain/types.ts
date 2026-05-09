@@ -111,3 +111,9 @@ export interface ResultadoOtimizacaoPorChapa {
   tempo_calculo_ms: number;
   retalhos_utilizados: number;
 }
+export interface ChapaMaterial {
+  sku: string;
+  largura_mm: number;
+  altura_mm: number;
+  espessura_mm: number;
+}
