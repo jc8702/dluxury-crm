@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { ComponenteImportado } from './GenericCSVParser';
+import type { ComponenteImportado } from './GenericCSVParser.js';
 
 /**
  * CutListParser - Parser específico para CSVs exportados pelo plugin CutList (SketchUp)

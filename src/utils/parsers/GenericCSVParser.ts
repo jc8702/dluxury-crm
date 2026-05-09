@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { CSVDetector, CSVMapping } from './CSVDetector';
+import { CSVDetector, type CSVMapping } from './CSVDetector.js';
 
 export interface ComponenteImportado {
     nome: string;

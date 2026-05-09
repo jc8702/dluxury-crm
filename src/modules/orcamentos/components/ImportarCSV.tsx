@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Modal, Button } from '@/design-system/components';
 import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { GenericCSVParser, ComponenteImportado } from '../../../utils/parsers/GenericCSVParser';
-import { CutListParser } from '../../../utils/parsers/CutListParser';
-import { CSVDetector } from '../../../utils/parsers/CSVDetector';
+import { GenericCSVParser, type ComponenteImportado } from '../../../utils/parsers/GenericCSVParser.js';
+import { CutListParser } from '../../../utils/parsers/CutListParser.js';
+import { CSVDetector } from '../../../utils/parsers/CSVDetector.js';
 import Papa from 'papaparse';
 
 export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: { 
