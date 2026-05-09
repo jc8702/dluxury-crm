@@ -1,7 +1,7 @@
-import { ParseadorProjeto, TipoMovelEnum } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto';
-import { ProcessadorProjeto } from '../modules/engenharia/application/usecases/ProcessadorProjeto';
-import { sql } from '../api-lib/_db';
-import { HybridOptimizer } from '../modules/plano-corte/domain/services/HybridOptimizer';
+import { ParseadorProjeto, TipoMovelEnum } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto.js';
+import { ProcessadorProjeto } from '../modules/engenharia/application/usecases/ProcessadorProjeto.js';
+import { sql } from '../api-lib/_db.js';
+import { HybridOptimizer } from '../modules/plano-corte/domain/services/HybridOptimizer.js';
 
 // --- 1. INTERFACES DE ENGENHARIA ---
 

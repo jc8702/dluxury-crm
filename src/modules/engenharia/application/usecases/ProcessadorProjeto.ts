@@ -1,7 +1,8 @@
 import { ParseadorProjeto, type ProjeParsed } from '../../../plano-corte/infrastructure/parsers/ParseadorProjeto.js';
 import { HybridOptimizer } from '../../../plano-corte/domain/services/HybridOptimizer.js';
 import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico.js';
-import { RetalhosRepository, type RetalhoDisponivel } from '../../../plano-corte/infrastructure/repositories/RetalhosRepository.js';
+import { RetalhosRepository } from '../../../plano-corte/infrastructure/repositories/RetalhosRepository.js';
+import type { RetalhoDisponivel } from '../../../plano-corte/domain/entities/Retalho.js';
 import { CustosService, type ResultadoCustos } from '../../domain/services/CustosService.js';
 import type { Peca } from '../../../plano-corte/domain/types.js';
 
@@ -126,7 +127,7 @@ export class ProcessadorProjeto {
       // 3. BUSCAR RETALHOS
       let retalhosDisponiveis: RetalhoDisponivel[] = [];
       if (requisicao.opcoes?.usar_retalhos !== false) {
-        const repo = new RetalhosRepository(this.db);
+        const repo = new RetalhosRepository();
         retalhosDisponiveis = await repo.buscarRetalhosDisponiveis({
           sku_chapa: requisicao.sku_chapa,
           disponivel: true,
@@ -193,7 +194,7 @@ export class ProcessadorProjeto {
   ): Promise<NonNullable<ResultadoProcessamento['layouts']>> {
     const layouts: NonNullable<ResultadoProcessamento['layouts']> = [];
     let pecasRestantes = [...pecas];
-    const repo = new RetalhosRepository(this.db);
+    const repo = new RetalhosRepository();
 
     // 1. Tentar retalhos
     const retalhosOrdenados = retalhos.sort((a, b) => a.dias_estoque - b.dias_estoque);
