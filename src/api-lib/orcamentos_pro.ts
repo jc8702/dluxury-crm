@@ -243,27 +243,31 @@ export async function handleOrcamentosPro(req: any, res: any) {
             if (action === 'import-items') {
                 const { items } = req.body; // Array de { sku_componente_id, quantidade, custoUnitario }
                 
-                // Criar um item de orçamento genérico para os itens importados
-                const [newItem] = await db.insert(orcamentoItens).values({
-                    orcamentoId: id,
-                    skuEngenhariaId: null, // Sem SKU de engenharia (módulo)
-                    quantidade: 1,
-                    observacoes: 'ITENS IMPORTADOS VIA PROJETO'
-                }).returning();
+                for (const it of items) {
+                    const skuId = it.produto_id || it.match_sugerido?.sku_componente_id;
+                    if (!skuId) continue;
 
-                const entries = items
-                    .filter((it: any) => it.match_sugerido)
-                    .map((it: any) => ({
+                    const [newItem] = await db.insert(orcamentoItens).values({
+                        orcamentoId: id,
+                        skuEngenhariaId: null,
+                        nomeCustomizado: it.nome,
+                        quantidade: it.quantidade,
+                        largura: it.largura?.toString(),
+                        altura: it.altura?.toString(),
+                        espessura: it.espessura?.toString(),
+                        custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || 0).toString(),
+                        observacoes: `Importado de projeto: ${it.nome}`
+                    }).returning();
+
+                    // Adiciona na lista explodida (BOM) do item
+                    await db.insert(orcamentoListaExplodida).values({
                         orcamentoItemId: newItem.id,
-                        skuComponenteId: it.match_sugerido.sku_componente_id,
-                        quantidadeCalculada: it.quantidade.toString(),
-                        quantidadeAjustada: it.quantidade.toString(),
-                        custoUnitario: (it.match_sugerido.custoUnitario || 0).toString(),
+                        skuComponenteId: skuId,
+                        quantidadeCalculada: '1', // Cada peça é 1 unidade do SKU base
+                        quantidadeAjustada: '1',
+                        custoUnitario: (it.match_sugerido?.custoUnitario || 0).toString(),
                         origem: 'IMPORT'
-                    }));
-
-                if (entries.length > 0) {
-                    await db.insert(orcamentoListaExplodida).values(entries);
+                    });
                 }
 
                 await recalcularOrcamento(id);

@@ -16,6 +16,9 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
     const [status, setStatus] = useState<'idle' | 'parsing' | 'review' | 'saving'>('idle');
     const [items, setItems] = useState<ComponenteImportado[]>([]);
     const [detectedFormat, setDetectedFormat] = useState<'CutList' | 'Generic' | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [activeSearchIdx, setActiveSearchIdx] = useState<number | null>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -68,22 +71,42 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
     const handleSave = async () => {
         setStatus('saving');
         try {
-            const response = await fetch('/api/orcamentos/importar-itens', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orcamento_id: orcamentoId, itens: items })
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                await onAddItems(result.data);
-                onClose();
-            }
+            // Apenas passamos os itens para o componente pai (OrcamentoForm)
+            // O pai usará o hook importItems que já lida com a persistência correta
+            await onAddItems(items);
+            onClose();
         } catch (err) {
-            alert('Erro ao salvar itens');
+            console.error('[ImportarCSV] Erro ao salvar:', err);
+            alert('Erro ao adicionar itens ao orçamento');
         } finally {
             setStatus('review');
         }
+    };
+
+    const handleSearchSKU = async (query: string) => {
+        setSearchQuery(query);
+        if (query.length > 2) {
+            try {
+                const results = await api.engineering.list({ q: query });
+                setSearchResults(results);
+            } catch (err) {
+                console.error(err);
+            }
+        } else {
+            setSearchResults([]);
+        }
+    };
+
+    const selectSKU = (idx: number, sku: any) => {
+        setItems(prev => prev.map((item, i) => i === idx ? {
+            ...item,
+            produto_id: sku.id,
+            sku_encontrado: sku.codigo,
+            status: 'encontrado'
+        } : item));
+        setActiveSearchIdx(null);
+        setSearchQuery('');
+        setSearchResults([]);
     };
 
     const removeItem = (idx: number) => {
@@ -145,11 +168,51 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
                                             </td>
                                             <td className="p-3 text-center">{item.quantidade}</td>
                                             <td className="p-3 text-zinc-500">{item.material || '-'}</td>
-                                            <td className="p-3">
-                                                {item.sku_encontrado ? (
-                                                    <span className="text-orange-500 font-bold">{item.sku_encontrado}</span>
+                                            <td className="p-3 relative">
+                                                {activeSearchIdx === idx ? (
+                                                    <div className="absolute inset-0 z-50 bg-zinc-950 p-1 flex flex-col border border-orange-500 rounded-lg">
+                                                        <div className="flex items-center gap-2 px-2 py-1 border-b border-zinc-800">
+                                                            <Search className="w-3 h-3 text-zinc-500" />
+                                                            <input 
+                                                                autoFocus
+                                                                className="bg-transparent text-[10px] text-white outline-none w-full"
+                                                                placeholder="Buscar SKU..."
+                                                                value={searchQuery}
+                                                                onChange={(e) => handleSearchSKU(e.target.value)}
+                                                            />
+                                                            <button onClick={() => setActiveSearchIdx(null)} className="text-zinc-500 hover:text-white">×</button>
+                                                        </div>
+                                                        <div className="flex-1 overflow-y-auto max-h-[150px]">
+                                                            {searchResults.map(sku => (
+                                                                <button 
+                                                                    key={sku.id}
+                                                                    onClick={() => selectSKU(idx, sku)}
+                                                                    className="w-full text-left p-2 hover:bg-orange-600 text-[9px] border-b border-zinc-900 group"
+                                                                >
+                                                                    <div className="font-bold text-white group-hover:text-black">{sku.nome}</div>
+                                                                    <div className="text-zinc-500 group-hover:text-black/70">{sku.codigo}</div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 ) : (
-                                                    <span className="text-zinc-700 italic">Não encontrado</span>
+                                                    <div className="flex items-center justify-between group">
+                                                        {item.sku_encontrado ? (
+                                                            <span className="text-orange-500 font-bold">{item.sku_encontrado}</span>
+                                                        ) : (
+                                                            <span className="text-zinc-700 italic">Não encontrado</span>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => {
+                                                                setActiveSearchIdx(idx);
+                                                                setSearchQuery('');
+                                                                setSearchResults([]);
+                                                            }}
+                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-800 rounded transition-all"
+                                                        >
+                                                            <Search className="w-3.5 h-3.5 text-orange-500" />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="p-3">

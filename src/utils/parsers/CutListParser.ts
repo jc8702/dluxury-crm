@@ -50,13 +50,13 @@ export class CutListParser {
           delimiter,
           header: true,
           skipEmptyLines: true,
-          complete: (results) => {
+            complete: (results) => {
             const components: ComponenteImportado[] = results.data.map((row: any, index) => {
-              const largura = this.parseSketchUpDimension(row['Comprimento']);
-              const altura = this.parseSketchUpDimension(row['Largura']);
-              const espessura = this.parseEspessura(row['Material']);
-              const quantidade = parseInt(row['Quantidade']) || 1;
-              const nome = row['Fundo']?.trim() || `Peça sem nome (linha ${index + 1})`;
+              const largura = this.parseSketchUpDimension(row['Comprimento'] || row['Length']);
+              const altura = this.parseSketchUpDimension(row['Largura'] || row['Width']);
+              const espessura = this.parseEspessura(row['Material'] || row['Thickness']);
+              const quantidade = parseInt(row['Quantidade'] || row['Quantity']) || 1;
+              const nome = (row['Fundo'] || row['Description'] || row['Name'] || row['Componente'])?.trim() || `Peça sem nome (linha ${index + 1})`;
 
               // Validações de escala (warnings)
               if (largura > 0 && (largura < 10 || largura > 10000)) {

@@ -23,20 +23,31 @@ export class CSVDetector {
      * Detecta se o CSV é do plugin CutList (SketchUp)
      */
     static isCutList(headers: string[], dataSample: any[]): boolean {
-        const requiredHeaders = ['Comprimento', 'Largura', 'Fundo', 'Material'];
-        const hasHeaders = requiredHeaders.every(h => headers.includes(h));
+        // Headers comuns do CutList (PT e EN)
+        const cutListHeaders = [
+            'Comprimento', 'Largura', 'Fundo', 'Material', 'Quantidade',
+            'Length', 'Width', 'Description', 'Quantity'
+        ];
         
-        if (!hasHeaders) return false;
-
-        // Verifica se os valores têm sufixo "mm" (ex: "87000mm")
+        const matchingHeaders = headers.filter(h => cutListHeaders.includes(h));
+        
+        // Se tiver pelo menos 3 headers característicos, é provável que seja CutList
+        if (matchingHeaders.length < 3) return false;
+        
+        // Verifica se os valores têm sufixo "mm" OU se são números muito grandes (décimos de mm)
         const sampleRow = dataSample[0];
         if (!sampleRow) return false;
 
-        const hasMMSuffix = ['Comprimento', 'Largura', 'Material'].some(h => 
+        const hasMMSuffix = headers.some(h => 
             String(sampleRow[h]).toLowerCase().includes('mm')
         );
 
-        return hasMMSuffix;
+        const hasHugeNumbers = ['Comprimento', 'Largura', 'Length', 'Width'].some(h => {
+            const val = parseFloat(String(sampleRow[h]).replace(/[^\d.,]/g, ''));
+            return val > 10000; // Valores em décimos de mm são geralmente > 10000 para peças > 10cm
+        });
+
+        return hasMMSuffix || hasHugeNumbers;
     }
 
     static mapColumns(headers: string[]): CSVMapping {
