@@ -1,5 +1,5 @@
-import { db } from '../api-lib/drizzle-db.js';
-import { orcamentoItens, skuComponente } from '../db/schema/engenharia-orcamentos.js';
+import { db } from '../../src/api-lib/drizzle-db.js';
+import { orcamentoItens, skuComponente } from '../../src/db/schema/engenharia-orcamentos.js';
 import { eq } from 'drizzle-orm';
 
 /**

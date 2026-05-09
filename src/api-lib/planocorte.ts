@@ -277,8 +277,7 @@ export async function handleImportarDesenho(req: any, res: any) {
         const loadingTask = pdfjs.getDocument({ 
           data: new Uint8Array(buffer),
           useSystemFonts: true,
-          disableFontFace: true,
-          isEvalSupported: false
+          disableFontFace: true
         });
         
         const pdfDoc = await loadingTask.promise;
