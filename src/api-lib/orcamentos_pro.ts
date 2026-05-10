@@ -541,6 +541,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 }
 
                 await recalcularOrcamento(id);
+                console.log(`✅ [API PRO] SKU atualizado com sucesso para o item ${itemId}. Custo recalculado.`);
                 return res.status(200).json({ success: true });
             }
 

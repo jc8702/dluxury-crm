@@ -473,8 +473,15 @@ export default function OrcamentoForm() {
                                                     onBlur={(e) => updateItem(item.id, { nomeCustomizado: e.target.value })}
                                                     placeholder="NOME DO ITEM"
                                                 />
-                                                <span className="text-[10px] uppercase text-zinc-600 font-black tracking-widest">
+                                                <span className="text-[10px] uppercase text-zinc-600 font-black tracking-widest flex items-center gap-2">
                                                     {item.skuEngenharia?.codigo || item.listaExplodida?.[0]?.componente?.codigo || item.material || 'ITEM IMPORTADO / AVULSO'}
+                                                    
+                                                    {/* DESCRIÇÃO DO SKU SELECIONADO */}
+                                                    {(item.skuEngenharia?.nome || item.listaExplodida?.[0]?.componente?.nome) && (
+                                                        <span className="text-[10px] text-orange-500 font-bold italic normal-case border-l border-zinc-800 pl-2">
+                                                            {item.skuEngenharia?.nome || item.listaExplodida?.[0]?.componente?.nome}
+                                                        </span>
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
