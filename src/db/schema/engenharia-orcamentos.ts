@@ -89,6 +89,7 @@ export const orcamentoItens = pgTable('orcamento_itens', {
     largura: varchar('largura', { length: 20 }),
     altura: varchar('altura', { length: 20 }),
     espessura: varchar('espessura', { length: 20 }),
+    material: varchar('material', { length: 255 }),
     custoUnitarioCalculado: decimal('custo_unitario_calculado', { precision: 12, scale: 2 }),
     precoVendaUnitario: decimal('preco_venda_unitario', { precision: 12, scale: 2 }),
     observacoes: text('observacoes'),

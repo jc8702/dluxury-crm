@@ -68,16 +68,33 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
         }
     };
 
-    const handleSave = async () => {
-        setStatus('saving');
+    const updateItem = (idx: number, updates: Partial<ComponenteImportado>) => {
+        setItems(prev => prev.map((item, i) => i === idx ? { ...item, ...updates } : item));
+    };
+
+    const handleConfirmarImportacao = async () => {
         try {
-            // Apenas passamos os itens para o componente pai (OrcamentoForm)
-            // O pai usará o hook importItems que já lida com a persistência correta
-            await onAddItems(items);
+            setStatus('saving');
+            console.log('[ImportarCSV] Confirmando importação de', items.length, 'itens');
+            
+            // Validação básica: garantir que todos tenham nome e quantidade
+            const validItems = items.filter(i => (i.nome || i.Designação) && (i.quantidade || i.Qtd) > 0);
+            
+            if (validItems.length === 0) {
+                alert('Nenhum item válido para importar.');
+                setStatus('review');
+                return;
+            }
+
+            await onAddItems(validItems);
             onClose();
-        } catch (err) {
-            console.error('[ImportarCSV] Erro ao salvar:', err);
-            alert('Erro ao adicionar itens ao orçamento');
+            
+            const unmapped = items.filter(i => !i.produto_id).length;
+            alert(`Sucesso! ${validItems.length} itens importados.${unmapped > 0 ? `\nNota: ${unmapped} itens estão sem SKU definido e precisarão ser vinculados manualmente no orçamento.` : ''}`);
+
+        } catch (error: any) {
+            console.error('❌ [ImportarCSV] Erro:', error);
+            alert(`Erro ao importar: ${error.message}`);
         } finally {
             setStatus('review');
         }
@@ -85,7 +102,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
 
     const handleSearchSKU = async (query: string) => {
         setSearchQuery(query);
-        if (query.length > 2) {
+        if (query.length > 1) {
             try {
                 const results = await api.engineering.list({ q: query });
                 setSearchResults(results);
@@ -98,12 +115,11 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
     };
 
     const selectSKU = (idx: number, sku: any) => {
-        setItems(prev => prev.map((item, i) => i === idx ? {
-            ...item,
+        updateItem(idx, {
             produto_id: sku.id,
             sku_encontrado: sku.codigo,
             status: 'encontrado'
-        } : item));
+        });
         setActiveSearchIdx(null);
         setSearchQuery('');
         setSearchResults([]);
@@ -114,132 +130,204 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Importar CSV do SketchUp" size="xl">
-            <div className="py-4">
+        <Modal isOpen={isOpen} onClose={onClose} title="Importar Projeto do SketchUp (CSV)" size="xl">
+            <div className="py-2">
                 {status === 'idle' && (
-                    <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-12 text-center hover:border-orange-500 transition-all cursor-pointer relative">
+                    <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-16 text-center hover:border-orange-500 transition-all cursor-pointer relative group bg-zinc-900/20">
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} accept=".csv" />
-                        <FileSpreadsheet className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
-                        <p className="text-white font-bold">Arraste seu CSV do SketchUp aqui</p>
-                        <p className="text-xs text-zinc-500 mt-2">Suporta CutList Bridge e Generate Report</p>
+                        <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform border border-zinc-800 group-hover:border-orange-500/50">
+                            <Upload className="w-8 h-8 text-zinc-500 group-hover:text-orange-500" />
+                        </div>
+                        <h3 className="text-xl text-white font-bold mb-2">Selecione o arquivo CSV</h3>
+                        <p className="text-zinc-500 max-w-sm mx-auto">
+                            Arraste ou clique para carregar o relatório do SketchUp (CutList Bridge ou Generate Report).
+                        </p>
+                        <div className="mt-8 flex items-center justify-center gap-4 text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
+                            <span className="flex items-center gap-1.5"><FileSpreadsheet className="w-3 h-3" /> UTF-8 ou Latin1</span>
+                            <span className="w-1 h-1 rounded-full bg-zinc-800"></span>
+                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Detecção Automática</span>
+                        </div>
                     </div>
                 )}
 
                 {status === 'parsing' && (
-                    <div className="py-20 text-center animate-pulse">
-                        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-zinc-400">Analisando componentes e dimensões...</p>
+                    <div className="py-24 text-center">
+                        <div className="w-12 h-12 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+                        <h3 className="text-lg text-white font-medium">Processando dados...</h3>
+                        <p className="text-zinc-500 mt-2">Mapeando componentes e buscando SKUs compatíveis.</p>
                     </div>
                 )}
 
                 {status === 'review' && (
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 p-3 rounded-xl mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                                <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] text-orange-500 font-bold uppercase tracking-wider">
+                                    {detectedFormat === 'CutList' ? 'SketchUp CutList' : 'CSV Genérico'}
+                                </div>
+                                <div className="text-xs text-zinc-500">
+                                    {items.length} componentes encontrados
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs text-zinc-400">Formato Detectado</p>
-                                <p className="text-sm text-white font-bold">
-                                    {detectedFormat === 'CutList' ? 'CutList (SketchUp) - Dimensões convertidas' : 'CSV Genérico'}
-                                </p>
-                            </div>
+                            <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white" onClick={() => setStatus('idle')}>
+                                Trocar arquivo
+                            </Button>
                         </div>
 
-                        <div className="max-h-[400px] overflow-y-auto border border-zinc-800 rounded-xl">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-zinc-900 text-zinc-500 sticky top-0">
-                                    <tr>
-                                        <th className="p-3">Nome</th>
-                                        <th className="p-3">L x A x E</th>
-                                        <th className="p-3 text-center">Qtd</th>
-                                        <th className="p-3">Material</th>
-                                        <th className="p-3">Match SKU</th>
-                                        <th className="p-3">Status</th>
-                                        <th className="p-3"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-zinc-900">
-                                    {items.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-3 text-white font-medium">{item.nome}</td>
-                                            <td className="p-3 font-mono text-zinc-400">
-                                                {item.largura}x{item.altura}x{item.espessura}
-                                            </td>
-                                            <td className="p-3 text-center">{item.quantidade}</td>
-                                            <td className="p-3 text-zinc-500">{item.material || '-'}</td>
-                                            <td className="p-3 relative">
-                                                {activeSearchIdx === idx ? (
-                                                    <div className="absolute inset-0 z-50 bg-zinc-950 p-1 flex flex-col border border-orange-500 rounded-lg">
-                                                        <div className="flex items-center gap-2 px-2 py-1 border-b border-zinc-800">
-                                                            <Search className="w-3 h-3 text-zinc-500" />
-                                                            <input 
-                                                                autoFocus
-                                                                className="bg-transparent text-[10px] text-white outline-none w-full"
-                                                                placeholder="Buscar SKU..."
-                                                                value={searchQuery}
-                                                                onChange={(e) => handleSearchSKU(e.target.value)}
-                                                            />
-                                                            <button onClick={() => setActiveSearchIdx(null)} className="text-zinc-500 hover:text-white">×</button>
-                                                        </div>
-                                                        <div className="flex-1 overflow-y-auto max-h-[150px]">
-                                                            {searchResults.map(sku => (
-                                                                <button 
-                                                                    key={sku.id}
-                                                                    onClick={() => selectSKU(idx, sku)}
-                                                                    className="w-full text-left p-2 hover:bg-orange-600 text-[9px] border-b border-zinc-900 group"
-                                                                >
-                                                                    <div className="font-bold text-white group-hover:text-black">{sku.nome}</div>
-                                                                    <div className="text-zinc-500 group-hover:text-black/70">{sku.codigo}</div>
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center justify-between group">
-                                                        {item.sku_encontrado ? (
-                                                            <span className="text-orange-500 font-bold">{item.sku_encontrado}</span>
-                                                        ) : (
-                                                            <span className="text-zinc-700 italic">Não encontrado</span>
-                                                        )}
-                                                        <button 
-                                                            onClick={() => {
-                                                                setActiveSearchIdx(idx);
-                                                                setSearchQuery('');
-                                                                setSearchResults([]);
-                                                            }}
-                                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-800 rounded transition-all"
-                                                        >
-                                                            <Search className="w-3.5 h-3.5 text-orange-500" />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-3">
-                                                {item.status === 'encontrado' ? (
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                ) : (
-                                                    <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                                                )}
-                                            </td>
-                                            <td className="p-3 text-right">
-                                                <button onClick={() => removeItem(idx)} className="text-zinc-600 hover:text-red-500 transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </td>
+                        <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
+                            <div className="max-h-[450px] overflow-y-auto">
+                                <table className="w-full text-left text-[11px]">
+                                    <thead className="bg-zinc-950/50 text-zinc-500 uppercase text-[9px] font-bold tracking-wider sticky top-0 z-10">
+                                        <tr>
+                                            <th className="p-4 border-b border-zinc-800">Designação</th>
+                                            <th className="p-4 border-b border-zinc-800 text-center">Qtd</th>
+                                            <th className="p-4 border-b border-zinc-800 text-center">Comp</th>
+                                            <th className="p-4 border-b border-zinc-800 text-center">Larg</th>
+                                            <th className="p-4 border-b border-zinc-800 text-center">Esp</th>
+                                            <th className="p-4 border-b border-zinc-800">Material</th>
+                                            <th className="p-4 border-b border-zinc-800 min-w-[140px]">SKU Banco</th>
+                                            <th className="p-4 border-b border-zinc-800 text-right">Ações</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-zinc-800/50">
+                                        {items.map((item, idx) => (
+                                            <tr key={idx} className="group hover:bg-white/[0.02] transition-colors">
+                                                <td className="p-2 pl-4">
+                                                    <input 
+                                                        className="bg-transparent border-none outline-none text-white w-full focus:bg-zinc-800/50 rounded px-1 transition-all"
+                                                        value={item.nome}
+                                                        onChange={(e) => updateItem(idx, { nome: e.target.value })}
+                                                    />
+                                                </td>
+                                                <td className="p-2 text-center">
+                                                    <input 
+                                                        type="number"
+                                                        className="bg-transparent border-none outline-none text-orange-500 font-bold w-12 text-center focus:bg-zinc-800/50 rounded transition-all"
+                                                        value={item.quantidade}
+                                                        onChange={(e) => updateItem(idx, { quantidade: parseFloat(e.target.value) || 1 })}
+                                                    />
+                                                </td>
+                                                <td className="p-2 text-center">
+                                                    <input 
+                                                        className="bg-transparent border-none outline-none text-zinc-400 w-16 text-center focus:bg-zinc-800/50 rounded transition-all"
+                                                        value={item.altura || ''}
+                                                        placeholder="-"
+                                                        onChange={(e) => updateItem(idx, { altura: parseFloat(e.target.value) || null })}
+                                                    />
+                                                </td>
+                                                <td className="p-2 text-center">
+                                                    <input 
+                                                        className="bg-transparent border-none outline-none text-zinc-400 w-16 text-center focus:bg-zinc-800/50 rounded transition-all"
+                                                        value={item.largura || ''}
+                                                        placeholder="-"
+                                                        onChange={(e) => updateItem(idx, { largura: parseFloat(e.target.value) || null })}
+                                                    />
+                                                </td>
+                                                <td className="p-2 text-center">
+                                                    <input 
+                                                        className="bg-transparent border-none outline-none text-zinc-400 w-12 text-center focus:bg-zinc-800/50 rounded transition-all"
+                                                        value={item.espessura || ''}
+                                                        placeholder="-"
+                                                        onChange={(e) => updateItem(idx, { espessura: parseFloat(e.target.value) || null })}
+                                                    />
+                                                </td>
+                                                <td className="p-2">
+                                                    <input 
+                                                        className="bg-transparent border-none outline-none text-zinc-500 w-full focus:bg-zinc-800/50 rounded px-1 transition-all italic"
+                                                        value={item.material || ''}
+                                                        placeholder="A definir"
+                                                        onChange={(e) => updateItem(idx, { material: e.target.value })}
+                                                    />
+                                                </td>
+                                                <td className="p-2 relative">
+                                                    {activeSearchIdx === idx ? (
+                                                        <div className="absolute inset-x-0 top-0 z-50 bg-zinc-950 p-2 flex flex-col border border-orange-500 shadow-2xl rounded-lg -mt-1">
+                                                            <div className="flex items-center gap-2 px-2 py-1 mb-1 border-b border-zinc-800">
+                                                                <Search className="w-3 h-3 text-zinc-500" />
+                                                                <input 
+                                                                    autoFocus
+                                                                    className="bg-transparent text-[10px] text-white outline-none w-full"
+                                                                    placeholder="Buscar por nome ou código..."
+                                                                    value={searchQuery}
+                                                                    onChange={(e) => handleSearchSKU(e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <div className="overflow-y-auto max-h-[180px] custom-scrollbar">
+                                                                {searchResults.length > 0 ? searchResults.map(sku => (
+                                                                    <button 
+                                                                        key={sku.id}
+                                                                        onClick={() => selectSKU(idx, sku)}
+                                                                        className="w-full text-left p-2 hover:bg-orange-500/20 rounded-md transition-all group/btn"
+                                                                    >
+                                                                        <div className="font-bold text-white text-[10px]">{sku.nome}</div>
+                                                                        <div className="text-zinc-500 text-[9px] flex justify-between">
+                                                                            <span>{sku.codigo}</span>
+                                                                            <span className="text-orange-500 opacity-0 group-hover/btn:opacity-100 font-bold">VINCULAR</span>
+                                                                        </div>
+                                                                    </button>
+                                                                )) : searchQuery.length > 1 && (
+                                                                    <div className="p-4 text-center text-zinc-600 italic text-[10px]">Nenhum SKU encontrado</div>
+                                                                )}
+                                                            </div>
+                                                            <Button size="sm" variant="ghost" className="mt-1 h-6 text-[9px]" onClick={() => setActiveSearchIdx(null)}>Cancelar</Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-between p-1 hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer group/sku" 
+                                                             onClick={() => setActiveSearchIdx(idx)}>
+                                                            <div className="flex flex-col">
+                                                                {item.sku_encontrado ? (
+                                                                    <span className="text-emerald-500 font-bold flex items-center gap-1">
+                                                                        {item.sku_encontrado}
+                                                                        <CheckCircle2 className="w-3 h-3" />
+                                                                    </span>
+                                                                ) : item.sku_informado ? (
+                                                                    <span className="text-zinc-400 line-through opacity-50">{item.sku_informado}</span>
+                                                                ) : (
+                                                                    <span className="text-zinc-600 italic">Pendente</span>
+                                                                )}
+                                                            </div>
+                                                            <Search className="w-3 h-3 text-zinc-700 group-hover/sku:text-orange-500 transition-colors" />
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-2 pr-4 text-right">
+                                                    <button onClick={() => removeItem(idx)} className="p-2 text-zinc-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div className="flex justify-between items-center p-4 bg-zinc-950 rounded-xl border border-zinc-900">
-                            <div className="text-xs text-zinc-500">
-                                <span className="text-emerald-500 font-bold">{items.filter(i => i.status === 'encontrado').length}</span> itens mapeados automaticamente.
+                        <div className="flex justify-between items-center p-6 bg-zinc-950 rounded-2xl border border-zinc-900 shadow-xl">
+                            <div className="flex gap-6">
+                                <div className="flex flex-col">
+                                    <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider">Mapeados</span>
+                                    <span className="text-xl text-emerald-500 font-black">
+                                        {items.filter(i => i.produto_id).length}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider">Pendentes</span>
+                                    <span className="text-xl text-amber-500 font-black">
+                                        {items.filter(i => !i.produto_id).length}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex gap-3">
-                                <Button variant="outline" onClick={() => setStatus('idle')}>Trocar Arquivo</Button>
-                                <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleSave}>Confirmar Importação</Button>
+                            <div className="flex gap-4">
+                                <Button variant="outline" className="px-8 border-zinc-800 text-zinc-400 hover:text-white" onClick={onClose} disabled={status === 'saving'}>
+                                    Cancelar
+                                </Button>
+                                <Button 
+                                    className="bg-orange-600 hover:bg-orange-700 px-8 font-bold text-white shadow-lg shadow-orange-900/20 disabled:opacity-50" 
+                                    onClick={handleConfirmarImportacao}
+                                    disabled={status === 'saving'}
+                                >
+                                    {status === 'saving' ? 'Importando...' : 'Adicionar ao Orçamento'}
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -248,3 +336,4 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
         </Modal>
     );
 }
+

@@ -48,16 +48,26 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
         }
     };
 
-    const handleAdd = async () => {
+    const handleConfirmarImportacao = async () => {
         if (!results) return;
         setIsAdding(true);
         try {
+            console.log('[ImportarProjeto] Confirmando importação de', results.length, 'itens');
+            console.log('[ImportarProjeto] Orçamento ID:', orcamentoId);
+
+            // Chamar callback que vem do pai (importItems do hook)
             await onAddItems(results);
+
+            // Fechar modal
             onClose();
+
             setStatus('idle');
             setResults(null);
-        } catch (err) {
-            alert('Erro ao adicionar itens ao orçamento');
+            
+            alert(`${results.length} itens importados com sucesso!`);
+        } catch (error: any) {
+            console.error('❌ [ImportarProjeto] Erro:', error);
+            alert(`Erro ao importar: ${error.message}`);
         } finally {
             setIsAdding(false);
         }
@@ -126,7 +136,7 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
                                     <div className="flex justify-between"><span>Mapeados:</span> <span className="text-emerald-500 font-bold">{results?.filter((r: any) => r.match_sugerido).length || 0}</span></div>
                                 </div>
                             </div>
-                            <Button className="w-full bg-orange-600 h-12" onClick={handleAdd} disabled={isAdding}>
+                            <Button className="w-full bg-orange-600 h-12" onClick={handleConfirmarImportacao} disabled={isAdding}>
                                 {isAdding ? 'Adicionando...' : 'Adicionar ao Orçamento'}
                             </Button>
                         </div>

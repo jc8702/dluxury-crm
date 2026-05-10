@@ -56,23 +56,36 @@ export class CSVDetector {
             quantidade: null, material: null, sku: null
         };
 
+        // Sanitização agressiva para encodings corrompidos (UTF-8 lido como ISO-8859-1)
+        const sanitizedHeaders = headers.map(h => 
+            String(h)
+                .replace(/A§A£o/g, 'ão')
+                .replace(/A§A£/g, 'ã')
+                .replace(/Aª/g, 'ê')
+                .replace(/A¡/g, 'á')
+                .replace(/A©/g, 'é')
+                .replace(/A\*/g, 'í')
+                .replace(/A³/g, 'ó')
+                .trim()
+        );
+
         const patterns = {
-            nome: [/name/i, /component/i, /nome/i, /componente/i, /peça/i, /peca/i, /description/i, /descrição/i, /função/i, /funcao/i, /funo/i, /part/i, /desc/i],
-            largura: [/length/i, /largura/i, /l$/i, /comprimento/i, /dim1/i, /comp/i, /lenght/i],
-            altura: [/width/i, /altura/i, /w$/i, /profundidade/i, /dim2/i, /alt/i],
-            espessura: [/thickness/i, /espessura/i, /e$/i, /depth/i, /dim3/i, /esp/i, /thick/i],
-            quantidade: [/quantity/i, /quantidade/i, /qtd/i, /qty/i, /count/i, /quant/i],
-            material: [/material/i, /acabamento/i, /finish/i, /textura/i, /wood/i, /mat/i],
-            sku: [/sku/i, /code/i, /código/i, /codigo/i, /id/i, /part number/i]
+            nome: [/designação/i, /designacao/i, /designaA§A£o/i, /^nome$/i, /component/i, /^peça$/i, /^peca$/i, /^description$/i, /^descrição$/i, /^descriA§A£o$/i, /^função$/i, /^part$/i],
+            largura: [/^comprimento$/i, /^length$/i, /^largura$/i, /^l$/i, /^dim1$/i, /^comp$/i],
+            altura: [/^largura$/i, /^width$/i, /^altura$/i, /^w$/i, /^profundidade$/i, /^dim2$/i, /^alt$/i],
+            espessura: [/^espessura$/i, /^thickness$/i, /^e$/i, /^depth$/i, /^dim3$/i, /^esp$/i],
+            quantidade: [/^quantidade$/i, /^quantity$/i, /^qtd$/i, /^qty$/i, /^count$/i],
+            material: [/descrição do material/i, /descricao do material/i, /descriA§A£o do material/i, /^material$/i, /^acabamento$/i, /^finish$/i, /^wood$/i],
+            sku: [/^sku$/i, /^code$/i, /^código$/i, /^codigo$/i, /^id$/i, /part number/i]
         };
 
-        headers.forEach(header => {
-            const h = header.trim();
-            for (const [key, regexes] of Object.entries(patterns)) {
-                if (regexes.some(r => r.test(h)) && !mapping[key as keyof CSVMapping]) {
-                    mapping[key as keyof CSVMapping] = h;
+        sanitizedHeaders.forEach((header, index) => {
+            Object.keys(patterns).forEach(key => {
+                const patternList = patterns[key as keyof typeof patterns];
+                if (patternList.some(p => p.test(header))) {
+                    mapping[key as keyof typeof mapping] = headers[index]; // Mantém o nome original para o parser buscar no objeto
                 }
-            }
+            });
         });
 
         return mapping;

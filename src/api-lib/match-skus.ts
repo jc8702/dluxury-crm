@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, ilike, or, sql } from 'drizzle-orm';
 
 /**
  * Endpoint para buscar SKUs no banco baseado nos dados do CSV/PDF
@@ -19,11 +19,23 @@ export async function handleMatchSKUs(req: any, res: any) {
 
             // 1. Busca por SKU informado
             if (item.sku_informado) {
+                const skuLimpo = String(item.sku_informado).trim();
+                
+                // Primeiro tenta na tabela industrial (sku_componente)
                 const results = await db.select()
                     .from(skuComponente)
-                    .where(eq(skuComponente.codigo, item.sku_informado))
+                    .where(ilike(skuComponente.codigo, skuLimpo))
                     .limit(1);
-                if (results.length > 0) match = results[0];
+                
+                if (results.length > 0) {
+                    match = results[0];
+                } else {
+                    // Se não achar, tenta na tabela comercial (materiais) via raw SQL
+                    const resMateriais = await db.execute(sql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE sku ILIKE ${skuLimpo} LIMIT 1`);
+                    if (resMateriais.rows.length > 0) {
+                        match = resMateriais.rows[0];
+                    }
+                }
             }
 
             // 2. Busca por Nome (Fuzzy/ILike) se não achou por SKU

@@ -68,24 +68,63 @@ export function useOrcamento(id?: string) {
         }
     }, [id, carregar]);
 
-    const importItems = useCallback(async (items: any[]) => {
-        if (!id) return;
-        setLoading(true);
+    const importItems = useCallback(async (itens: any[]) => {
+        if (!id) {
+            throw new Error('Orçamento não inicializado');
+        }
+
         try {
-            await api.orcamentosPro.importItems(id, items);
+            console.log('[useOrcamento] Importando itens:', itens.length);
+
+            const response = await fetch('/api/orcamentos/importar-itens', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orcamento_id: id,
+                    itens: itens
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao importar');
+            }
+
+            const result = await response.json();
+            console.log(`✅ [useOrcamento] ${result.itens_inseridos} itens importados`);
+
+            // Recarregar orçamento completo
+            await carregar(id);
+
+            return result;
+        } catch (error: any) {
+            console.error('❌ [useOrcamento] Erro na importação:', error);
+            setError(error.message);
+            throw error;
+        }
+    }, [id, carregar]);
+
+    const updateItem = useCallback(async (itemId: string, updates: any) => {
+        if (!id) return;
+        try {
+            await api.orcamentosPro.updateItem(id, itemId, updates);
             await carregar(id);
         } catch (err: any) {
             console.error(err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
         }
     }, [id, carregar]);
 
     const removerItem = useCallback(async (itemId: string) => {
-        // Implementar no backend se necessário, por ora mock ou simplificado
-        console.log('Remover item', itemId);
-    }, []);
+        if (!id) return;
+        try {
+            await api.orcamentosPro.deleteItem(id, itemId);
+            await carregar(id);
+        } catch (err: any) {
+            console.error(err);
+        }
+    }, [id, carregar]);
 
     return {
         orcamento,
@@ -95,6 +134,7 @@ export function useOrcamento(id?: string) {
         setHeader,
         addItem,
         importItems,
+        updateItem,
         removerItem,
         updateItemExplosion,
         recarregar: () => id && carregar(id)

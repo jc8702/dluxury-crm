@@ -62,36 +62,49 @@ export async function explodirBOM(skuEngId: string, qtdItem: number = 1) {
 /**
  * Recalcula todos os totais de um orçamento (Custo e Venda)
  */
-async function recalcularOrcamento(orcId: string) {
+export async function recalcularOrcamento(orcId: string) {
+    console.log(`🔄 [RECALCULO] Iniciando para orç: ${orcId}`);
     // 1. Atualizar custos de cada item baseado na lista explodida
     const itensOrc = await db.select().from(orcamentoItens).where(eq(orcamentoItens.orcamentoId, orcId));
     
     for (const item of itensOrc) {
         const explodida = await db.select().from(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, item.id));
-        const custoItem = explodida.reduce((sum, c) => sum + (Number(c.quantidadeAjustada) * Number(c.custoUnitario)), 0);
+        const custoItem = explodida.reduce((sum, c) => {
+            const val = (Number(c.quantidadeAjustada || 0) * Number(c.custoUnitario || 0));
+            return sum + (isNaN(val) ? 0 : val);
+        }, 0);
         
         await db.update(orcamentoItens)
-            .set({ custoUnitarioCalculado: custoItem.toString() })
+            .set({ custoUnitarioCalculado: custoItem.toFixed(2) })
             .where(eq(orcamentoItens.id, item.id));
     }
 
     // 2. Atualizar totais do cabeçalho
     const orc = await db.query.orcamentos.findFirst({ where: eq(orcamentos.id, orcId) });
-    if (!orc) return;
+    if (!orc) {
+        console.warn(`⚠️ [RECALCULO] Orçamento ${orcId} não encontrado.`);
+        return;
+    }
 
     const itensAtualizados = await db.select().from(orcamentoItens).where(eq(orcamentoItens.orcamentoId, orcId));
-    const custoTotal = itensAtualizados.reduce((sum, i) => sum + (Number(i.custoUnitarioCalculado) * Number(i.quantidade)), 0);
+    const custoTotal = itensAtualizados.reduce((sum, i) => {
+        const val = (Number(i.custoUnitarioCalculado || 0) * Number(i.quantidade || 0));
+        return sum + (isNaN(val) ? 0 : val);
+    }, 0);
     
-    const margem = 1 + (Number(orc.margemLucroPercentual) / 100);
-    const taxa = 1 + (Number(orc.taxaFinanceiraPercentual) / 100);
-    const desc = 1 - (Number(orc.descontoPercentual) / 100);
+    const margem = 1 + (Number(orc.margemLucroPercentual || 0) / 100);
+    const taxa = 1 + (Number(orc.taxaFinanceiraPercentual || 0) / 100);
+    const desc = 1 - (Number(orc.descontoPercentual || 0) / 100);
 
-    const vendaTotal = (custoTotal * margem * taxa * desc);
+    let vendaTotal = (custoTotal * margem * taxa * desc);
+    if (isNaN(vendaTotal)) vendaTotal = 0;
+
+    console.log(`📊 [RECALCULO] Custo Total: ${custoTotal} | Venda Total: ${vendaTotal}`);
 
     await db.update(orcamentos)
         .set({ 
-            valorTotalCusto: custoTotal.toString(),
-            valorTotalVenda: vendaTotal.toString(),
+            valorTotalCusto: custoTotal.toFixed(2),
+            valorTotalVenda: vendaTotal.toFixed(2),
             updatedAt: new Date()
         })
         .where(eq(orcamentos.id, orcId));
@@ -255,6 +268,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         largura: it.largura?.toString(),
                         altura: it.altura?.toString(),
                         espessura: it.espessura?.toString(),
+                        material: it.material || it.Material,
                         custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || 0).toString(),
                         observacoes: `Importado de projeto: ${it.nome}`
                     }).returning();
@@ -270,6 +284,20 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     });
                 }
 
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === 'update-item') {
+                const { itemId, ...updates } = req.body;
+                await db.update(orcamentoItens).set(updates).where(eq(orcamentoItens.id, itemId));
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === 'delete-item') {
+                const { itemId } = req.body;
+                await db.delete(orcamentoItens).where(eq(orcamentoItens.id, itemId));
                 await recalcularOrcamento(id);
                 return res.status(200).json({ success: true });
             }
