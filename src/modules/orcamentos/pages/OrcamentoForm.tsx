@@ -12,7 +12,7 @@ import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { exportBudgetToPDF } from '../services/export-pdf';
 import { api } from '@/lib/api';
 import { debounce } from 'lodash';
-import { SKUAutocomplete } from '../components/SKUAutocomplete';
+import { SKUAutocomplete } from '@/modules/orcamentos/components/SKUAutocomplete';
 import { Info } from 'lucide-react';
 
 export default function OrcamentoForm() {
