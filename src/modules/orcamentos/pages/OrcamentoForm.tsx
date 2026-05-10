@@ -461,7 +461,7 @@ export default function OrcamentoForm() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-6">
                                             <div className="w-12 h-12 rounded-2xl bg-orange-600/10 flex items-center justify-center text-orange-500 font-black text-xl italic shadow-inner">
-                                                {item.skuEngenharia?.codigo?.slice(0, 3) || 'ITM'}
+                                                {item.skuEngenharia?.codigo?.slice(0, 3) || item.listaExplodida?.[0]?.componente?.codigo?.slice(0, 3) || 'ITM'}
                                             </div>
                                             <div className="flex flex-col gap-1">
                                                 <input 
@@ -472,7 +472,7 @@ export default function OrcamentoForm() {
                                                     placeholder="NOME DO ITEM"
                                                 />
                                                 <span className="text-[10px] uppercase text-zinc-600 font-black tracking-widest">
-                                                    {item.skuEngenharia?.codigo || 'ITEM IMPORTADO / AVULSO'}
+                                                    {item.skuEngenharia?.codigo || item.listaExplodida?.[0]?.componente?.codigo || 'ITEM IMPORTADO / AVULSO'}
                                                 </span>
                                             </div>
                                         </div>
