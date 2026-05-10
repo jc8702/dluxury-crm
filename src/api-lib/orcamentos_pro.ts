@@ -132,6 +132,44 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 return res.status(200).json({ success: true, data: componentes });
             }
 
+            if (action === 'search-skus') {
+                const query = url.searchParams.get('q') || '';
+                const limit = parseInt(url.searchParams.get('limit') || '10');
+                
+                if (query.length < 2) return res.status(200).json({ success: true, data: [] });
+
+                console.log(`🔍 [API PRO] Buscando SKUs para: "${query}"`);
+
+                // Busca em Componentes Industriais
+                const comps = await db.select({ 
+                    id: skuComponente.id, 
+                    codigo: skuComponente.codigo, 
+                    nome: skuComponente.nome, 
+                    preco: skuComponente.precoUnitario 
+                })
+                .from(skuComponente)
+                .where(or(ilike(skuComponente.codigo, `%${query}%`), ilike(skuComponente.nome, `%${query}%`)))
+                .limit(limit);
+
+                // Busca em Engenharia (Módulos)
+                const engs = await db.select({ 
+                    id: skuEngenharia.id, 
+                    codigo: skuEngenharia.codigo, 
+                    nome: skuEngenharia.nome 
+                })
+                .from(skuEngenharia)
+                .where(or(ilike(skuEngenharia.codigo, `%${query}%`), ilike(skuEngenharia.nome, `%${query}%`)))
+                .limit(limit);
+
+                const finalData = [
+                    ...comps.map(c => ({ ...c, preco: Number(c.preco || 0), tipo: 'COMPONENTE' })),
+                    ...engs.map(e => ({ ...e, preco: 0, tipo: 'ENGENHARIA' }))
+                ];
+
+                console.log(`✅ [API PRO] Encontrados ${finalData.length} resultados.`);
+                return res.status(200).json({ success: true, data: finalData });
+            }
+
             if (id) {
                 console.log(`🔍 [API PRO] Buscando orçamento: ${id}`);
                 let result = await db.query.orcamentos.findFirst({

@@ -49,7 +49,8 @@ export const SKUAutocomplete: React.FC<SKUAutocompleteProps> = ({ value, onSelec
             const response = await fetch(`/api/orcamentos-pro?action=search-skus&q=${encodeURIComponent(query)}`);
             const result = await response.json();
             if (result.success) {
-                setSuggestions(result.data);
+                console.log('✅ SKUs encontrados:', result.data);
+                setSuggestions(result.data || []);
                 setIsOpen(true);
             }
         } catch (error) {
@@ -106,12 +107,12 @@ export const SKUAutocomplete: React.FC<SKUAutocompleteProps> = ({ value, onSelec
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${sku.tipo === 'ENGENHARIA' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
                                         {sku.tipo === 'ENGENHARIA' ? <Layers className="w-5 h-5" /> : <Package className="w-5 h-5" />}
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-white font-black text-sm group-hover:text-orange-500 transition-colors">
-                                            {sku.codigo}
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-white font-black text-sm group-hover:text-orange-500 transition-colors truncate">
+                                            {sku.codigo || 'S/ COD'}
                                         </span>
-                                        <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-tight">
-                                            {sku.nome}
+                                        <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-tight truncate">
+                                            {sku.nome || 'S/ NOME'}
                                         </span>
                                     </div>
                                 </div>
