@@ -386,35 +386,12 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
             if (action === 'import-items') {
                 const { items } = req.body; 
-                console.log(`📥 [API PRO] Iniciando importação em lote de ${items?.length} itens para o orçamento ${id}`);
+                console.log(`📥 [API PRO] Iniciando importação de ${items?.length} itens para o orçamento ${id}`);
                 
                 try {
-                    // 1. Preparar itens para inserção em lote
-                    const itemsToInsert = items.map((it: any) => {
-                        const qtd = parseFloat(it.quantidade || 1);
-                        return {
-                            orcamentoId: id,
-                            skuEngenhariaId: null,
-                            nomeCustomizado: (it.nome || 'Item sem nome').slice(0, 250),
-                            quantidade: (isNaN(qtd) ? 1 : qtd).toString(),
-                            largura: it.largura?.toString().slice(0, 20) || null,
-                            altura: it.altura?.toString().slice(0, 20) || null,
-                            espessura: it.espessura?.toString().slice(0, 20) || null,
-                            material: (it.material || '').slice(0, 250),
-                            skuComponenteId: it.produto_id || it.match_sugerido?.sku_componente_id || null,
-                            skuCodigo: (it.sku_codigo || it.match_sugerido?.sku_codigo || '').slice(0, 100),
-                            skuDescricao: it.sku_descricao || it.match_sugerido?.sku_descricao || null,
-                            custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || it.custoUnitario || 0).toString(),
-                            observacoes: `Importado via CSV`
-                        };
-                    });
-
-                    // 2. Inserir itens
-                    const insertedItens = await db.insert(orcamentoItens).values(itemsToInsert).returning();
-                    console.log(`✅ [API PRO] ${insertedItens.length} registros inseridos em orcamento_itens`);
-
-                    // 3. Criar lista explodida (BOM) para itens que possuem SKU vinculado e são COMPONENTES INDUSTRIAIS
-                    const bomToInsert = [];
+                    const insertedItens = [];
+                    
+                    // 1. Coletar todos os IDs de SKU para busca otimizada
                     const skuIdsToCheck = items
                         .map((it: any) => it.produto_id || it.match_sugerido?.sku_componente_id || null)
                         .filter(Boolean);
@@ -423,67 +400,81 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     const validMaterialData = new Map<string, any>();
                     
                     if (skuIdsToCheck.length > 0) {
-                        // Busca em Componentes Industriais
                         const validComps = await db.select()
                             .from(skuComponente)
                             .where(inArray(skuComponente.id, skuIdsToCheck));
                         validComps.forEach(c => validComponentData.set(c.id, c));
 
-                        // Busca em Materiais Comerciais (como fallback para identificação)
+                        // Busca em Materiais Comerciais via SQL puro (evitando dependências circulares de schema)
                         const materials = await db.execute(dsql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE id::text IN (${dsql.join(skuIdsToCheck.map(id => dsql`${id}`), dsql.raw(','))})`);
                         materials.rows.forEach((m: any) => validMaterialData.set(m.id, m));
                     }
 
-                    for (let i = 0; i < insertedItens.length; i++) {
-                        const originalItem = items[i];
-                        const skuId = originalItem.produto_id || originalItem.match_sugerido?.sku_componente_id || null;
-                        
-                        const skuData = skuId ? (validComponentData.get(skuId) || validMaterialData.get(skuId)) : null;
-                        
-                        if (skuData) {
-                            const precoDb = Number(skuData.precoUnitario || 0);
-                            const skuCodigo = skuData.codigo || originalItem.match_sugerido?.nome || '';
+                    // 2. Inserir itens um a um
+                    for (const originalItem of items) {
+                        const qtd = parseFloat(originalItem.quantidade || 1);
+                        const itemData = {
+                            orcamentoId: id,
+                            skuEngenhariaId: null,
+                            nomeCustomizado: (originalItem.nome || 'Item sem nome').slice(0, 250),
+                            quantidade: (isNaN(qtd) ? 1 : qtd).toString(),
+                            largura: originalItem.largura?.toString().slice(0, 20) || null,
+                            altura: originalItem.altura?.toString().slice(0, 20) || null,
+                            espessura: originalItem.espessura?.toString().slice(0, 20) || null,
+                            material: (originalItem.material || '').slice(0, 250),
+                            skuComponenteId: originalItem.produto_id || originalItem.match_sugerido?.sku_componente_id || null,
+                            skuCodigo: (originalItem.sku_codigo || originalItem.match_sugerido?.sku_codigo || '').slice(0, 100),
+                            skuDescricao: (originalItem.sku_descricao || '').slice(0, 500),
+                            custoUnitarioCalculado: (originalItem.match_sugerido?.custoUnitario || originalItem.custoUnitario || 0).toString(),
+                            observacoes: `Importado via CSV`
+                        };
 
-                            // Se for componente industrial, cria a BOM
-                            if (validComponentData.has(skuId)) {
-                                bomToInsert.push({
-                                    orcamentoItemId: insertedItens[i].id,
-                                    skuComponenteId: skuId,
-                                    quantidadeCalculada: (originalItem.quantidade || 1).toString(),
-                                    quantidadeAjustada: (originalItem.quantidade || 1).toString(),
-                                    custoUnitario: precoDb.toString(),
-                                    origem: 'IMPORT'
-                                });
+                        try {
+                            const [inserted] = await db.insert(orcamentoItens).values(itemData).returning();
+                            insertedItens.push(inserted);
+
+                            // 3. Processar SKU e BOM (Lista Explodida)
+                            const skuId = itemData.skuComponenteId;
+                            const skuData = skuId ? (validComponentData.get(skuId) || validMaterialData.get(skuId)) : null;
+                            
+                            if (skuData) {
+                                const precoDb = Number(skuData.precoUnitario || 0);
+                                const skuCodigo = skuData.codigo || originalItem.match_sugerido?.nome || '';
+
+                                if (validComponentData.has(skuId)) {
+                                    await db.insert(orcamentoListaExplodida).values({
+                                        orcamentoItemId: inserted.id,
+                                        skuComponenteId: skuId,
+                                        quantidadeCalculada: inserted.quantidade,
+                                        quantidadeAjustada: inserted.quantidade,
+                                        custoUnitario: precoDb.toString(),
+                                        origem: 'IMPORT'
+                                    });
+                                }
+
+                                await db.update(orcamentoItens)
+                                    .set({ 
+                                        custoUnitarioCalculado: precoDb.toString(),
+                                        skuCodigo: skuCodigo,
+                                        skuDescricao: skuData.nome
+                                    })
+                                    .where(eq(orcamentoItens.id, inserted.id));
                             }
-
-                            // Atualiza o item principal com dados do SKU (independente de ser comercial ou industrial)
-                            await db.update(orcamentoItens)
-                                .set({ 
-                                    custoUnitarioCalculado: precoDb.toString(),
-                                    nomeCustomizado: originalItem.nome || skuData.nome,
-                                    material: skuCodigo // SALVAMOS O CÓDIGO NO CAMPO MATERIAL PARA EXIBIÇÃO
-                                })
-                                .where(eq(orcamentoItens.id, insertedItens[i].id));
+                        } catch (itemErr: any) {
+                            console.error(`❌ [API PRO] Falha ao processar item individual: ${itemData.nomeCustomizado}`, itemErr.message);
                         }
                     }
 
-                    if (bomToInsert.length > 0) {
-                        await db.insert(orcamentoListaExplodida).values(bomToInsert);
-                        console.log(`✅ [API PRO] ${bomToInsert.length} vínculos de SKU criados na lista explodida`);
-                    }
-
-                    // 4. Recalcular
-                    // 2. Recalcular orçamentos (garante consistência de valores totais e BOM)
                     console.log(`🧮 [API PRO] Recalculando orçamento ${id}...`);
                     await recalcularOrcamento(id);
                     
-                    // 3. Retornar sucesso explícito
                     return res.status(200).json({ 
                         success: true, 
-                        message: `${insertedItens.length} itens importados e orçamento recalculado.`
+                        message: `${insertedItens.length} itens importados e orçamento recalculado.`,
+                        count: insertedItens.length
                     });
                 } catch (err: any) {
-                    console.error("❌ [API PRO] Erro crítico na importação em lote:", err);
+                    console.error("❌ [API PRO] Erro crítico na importação:", err);
                     return res.status(500).json({ success: false, error: `Falha na importação: ${err.message}` });
                 }
             }
