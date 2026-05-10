@@ -1,5 +1,5 @@
 import { db } from '../../src/api-lib/drizzle-db.js';
-import { orcamentoItens, orcamentoListaExplodida } from '../../src/db/schema/engenharia-orcamentos.js';
+import { orcamentoItens, skuComponente, orcamentoListaExplodida } from '../../src/db/schema/engenharia-orcamentos.js';
 import { recalcularOrcamento } from '../../src/api-lib/orcamentos_pro.js';
 import { eq, sql } from 'drizzle-orm';
 
@@ -21,64 +21,233 @@ export default async function handler(req: any, res: any) {
     }
 
     const itensProcessados = [];
-    
-    // Processamento sequencial para garantir integridade e facilitar log
+    let countComSKU = 0;
+    let countSemSKU = 0;
+
     for (const item of itens) {
-      try {
-        console.log(`🔹 [IMPORTAÇÃO] Inserindo item: ${item.nome}`);
+      const nomeFinal = item.nome || item.Designação || item.designacao || 'Item sem nome';
+      const qtdVal = parseFloat((item.quantidade || item.Qtd || 1).toString()) || 1;
+      
+      const largura = parseFloat((item.largura || item.Larg || '0').toString()) || 0;
+      const altura = parseFloat((item.altura || item.Comp || '0').toString()) || 0;
+      const espessura = parseFloat((item.espessura || item.Esp || '0').toString()) || 0;
+      const material = item.material || item.Material || '';
 
-        // 1. Inserir Item do Orçamento usando Drizzle
-        const [newItem] = await db.insert(orcamentoItens).values({
-          orcamentoId: orcamento_id,
-          nomeCustomizado: item.nome,
-          quantidade: item.quantidade.toString(),
-          largura: item.largura?.toString() || null,
-          altura: item.altura?.toString() || null,
-          espessura: item.espessura?.toString() || null,
-          material: item.material || null,
-          custoUnitarioCalculado: (item.match_sugerido?.custoUnitario || 0).toString(),
-          observacoes: `Importado via CSV: ${item.nome}`
-        }).returning();
+      let custoUnitario = 0;
+      let precoVenda = 0;
+      let skuId = null;
+      let skuCodigo = '';
+      let skuDescricao = '';
+      let matchedSKU = null;
 
-        // 2. Se houver um SKU correspondente, adicionar na lista explodida (BOM)
-        const skuId = item.produto_id || item.match_sugerido?.sku_componente_id;
-        
-        if (skuId) {
-          await db.insert(orcamentoListaExplodida).values({
-            orcamentoItemId: newItem.id,
-            skuComponenteId: skuId,
-            quantidadeCalculada: '1',
-            quantidadeAjustada: '1',
-            custoUnitario: (item.match_sugerido?.custoUnitario || 0).toString(),
-            origem: 'IMPORT',
-            observacoes: `Match automático: ${item.match_sugerido?.nome || 'SKU'}`
+      // ✅ ESTRATÉGIA DE MATCHING INTELIGENTE
+      
+      // 1. Se vier SKU explícito no CSV, usar direto
+      const skuCsvExplicito = item['SKU Banco'] || item.sku || item.SKU || null;
+      
+      if (skuCsvExplicito) {
+        try {
+          // Buscar por código exato
+          const componente = await db.query.skuComponente.findFirst({
+            where: eq(skuComponente.codigo, skuCsvExplicito)
           });
+
+          if (componente) {
+            skuId = componente.id;
+            skuCodigo = componente.codigo;
+            skuDescricao = componente.nome;
+            custoUnitario = parseFloat(componente.precoUnitario?.toString() || '0');
+            precoVenda = parseFloat(componente.precoVenda?.toString() || (custoUnitario * 1.3).toString());
+            matchedSKU = componente.id;
+            countComSKU++;
+            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por código explícito`);
+          }
+        } catch (err) {
+          console.warn(`⚠️ [MATCH] Erro ao buscar SKU ${skuCsvExplicito}:`, err);
         }
+      }
 
-        itensProcessados.push({ id: newItem.id, nome: item.nome });
+      // 2. Se não encontrou por código, tentar match por dimensões + material
+      if (!matchedSKU && largura > 0 && altura > 0 && espessura > 0) {
+        try {
+          const matchPorDimensoes = await db.execute(sql`
+            SELECT 
+              id, codigo, nome, preco_unitario, preco_venda
+            FROM sku_componente
+            WHERE 
+              ABS(CAST(dimensoes->>'largura' AS FLOAT) - ${largura}) < 5 
+              AND ABS(CAST(dimensoes->>'altura' AS FLOAT) - ${altura}) < 5 
+              AND ABS(CAST(dimensoes->>'espessura' AS FLOAT) - ${espessura}) < 2
+              ${material ? sql`AND LOWER(nome) LIKE LOWER(${'%' + material + '%'})` : sql``}
+            ORDER BY 
+              (ABS(CAST(dimensoes->>'largura' AS FLOAT) - ${largura}) + ABS(CAST(dimensoes->>'altura' AS FLOAT) - ${altura}) + ABS(CAST(dimensoes->>'espessura' AS FLOAT) - ${espessura}))
+            LIMIT 1
+          `);
 
-      } catch (itemError: any) {
-        console.error(`❌ [IMPORTAÇÃO] Erro no item ${item.nome}:`, itemError);
+          if (matchPorDimensoes.rows.length > 0) {
+            const comp = matchPorDimensoes.rows[0] as any;
+            skuId = comp.id;
+            skuCodigo = comp.codigo;
+            skuDescricao = comp.nome;
+            custoUnitario = parseFloat(comp.preco_unitario?.toString() || '0');
+            precoVenda = parseFloat(comp.preco_venda?.toString() || (custoUnitario * 1.3).toString());
+            matchedSKU = comp.id;
+            countComSKU++;
+            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por dimensões similares`);
+          }
+        } catch (err) {
+          console.warn(`⚠️ [MATCH] Erro ao buscar por dimensões:`, err);
+        }
+      }
+
+      // 3. Se não encontrou por dimensões, tentar match por nome similar
+      if (!matchedSKU) {
+        try {
+          const nomeClean = nomeFinal
+            .toLowerCase()
+            .replace(/[#_]/g, ' ')
+            .trim();
+
+          const matchPorNome = await db.execute(sql`
+            SELECT 
+              id, codigo, nome, preco_unitario, preco_venda
+            FROM sku_componente
+            WHERE 
+              LOWER(nome) LIKE LOWER(${'%' + nomeClean.split(' ')[0] + '%'})
+              OR LOWER(codigo) LIKE LOWER(${'%' + nomeClean.split(' ')[0] + '%'})
+            LIMIT 1
+          `);
+
+          if (matchPorNome.rows.length > 0) {
+            const comp = matchPorNome.rows[0] as any;
+            skuId = comp.id;
+            skuCodigo = comp.codigo;
+            skuDescricao = comp.nome;
+            custoUnitario = parseFloat(comp.preco_unitario?.toString() || '0');
+            precoVenda = parseFloat(comp.preco_venda?.toString() || (custoUnitario * 1.3).toString());
+            matchedSKU = comp.id;
+            countComSKU++;
+            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por similaridade de nome`);
+          }
+        } catch (err) {
+          console.warn(`⚠️ [MATCH] Erro ao buscar por nome:`, err);
+        }
+      }
+
+      // Se não encontrou nada, marca como sem SKU
+      if (!matchedSKU) {
+        countSemSKU++;
+        console.log(`⚠️ [MATCH] Item "${nomeFinal}" sem SKU encontrado - será adicionado como avulso`);
+      }
+
+      const observacoes = [
+        material ? `Material: ${material}` : '',
+        item.Status ? `Status: ${item.Status}` : '',
+        item['SKU Banco'] ? `SKU CSV: ${item['SKU Banco']}` : ''
+      ].filter(Boolean).join(' | ');
+
+      itensProcessados.push({
+        orcamento_id,
+        nome_customizado: nomeFinal,
+        quantidade: qtdVal,
+        largura: largura.toString(),
+        altura: altura.toString(),
+        espessura: espessura.toString(),
+        material: material || 'A definir',
+        sku_componente_id: skuId,
+        sku_codigo: skuCodigo,
+        sku_descricao: skuDescricao,
+        custo_unitario_calculado: custoUnitario,
+        preco_venda_unitario: precoVenda,
+        observacoes,
+        _matchedSKU: matchedSKU
+      });
+    }
+
+    console.log(`📝 [IMPORTAÇÃO] Inserindo ${itensProcessados.length} itens no banco...`);
+    console.log(`📊 [RESUMO] ${countComSKU} com SKU | ${countSemSKU} sem SKU`);
+
+    const itensInseridos = [];
+    
+    for (const bit of itensProcessados) {
+      try {
+        const resItem = await db.execute(sql`
+          INSERT INTO orcamento_itens (
+            orcamento_id, nome_customizado, quantidade, 
+            largura, altura, espessura, material,
+            sku_componente_id, sku_codigo, sku_descricao,
+            custo_unitario_calculado, preco_venda_unitario, observacoes
+          )
+          VALUES (
+            ${bit.orcamento_id}, ${bit.nome_customizado}, ${bit.quantidade}, 
+            ${bit.largura}, ${bit.altura}, ${bit.espessura}, ${bit.material},
+            ${bit.sku_componente_id}, ${bit.sku_codigo}, ${bit.sku_descricao},
+            ${bit.custo_unitario_calculado}, ${bit.preco_venda_unitario}, ${bit.observacoes}
+          )
+          RETURNING *
+        `);
+        
+        if (resItem.rows.length > 0) {
+          const inserted = resItem.rows[0] as any;
+          itensInseridos.push(inserted);
+
+          // Se houve match de SKU, adiciona na lista explodida
+          if (bit._matchedSKU) {
+            await db.execute(sql`
+              INSERT INTO orcamento_lista_explodida (
+                orcamento_item_id, sku_componente_id, 
+                quantidade_calculada, quantidade_ajustada, 
+                custo_unitario, origem
+              )
+              VALUES (
+                ${inserted.id}, ${bit._matchedSKU}, 
+                ${inserted.quantidade}, ${inserted.quantidade}, 
+                ${bit.custo_unitario_calculado}, 'IMPORT_AUTO'
+              )
+            `);
+          }
+        }
+      } catch (insErr: any) {
+        console.error(`❌ [IMPORTAÇÃO] Falha ao inserir item "${bit.nome_customizado}":`, insErr.message);
       }
     }
 
-    // 3. Recalcular totais do orçamento após a importação massiva
-    console.log('🔄 [IMPORTAÇÃO] Recalculando totais do orçamento...');
-    await recalcularOrcamento(orcamento_id);
+    // Recalcular totais do orçamento
+    if (itensInseridos.length > 0) {
+      try {
+        await recalcularOrcamento(orcamento_id);
+        console.log(`💰 [IMPORTAÇÃO] Orçamento recalculado com sucesso.`);
+      } catch (recalcErr) {
+        console.error('❌ [IMPORTAÇÃO] Erro no recalculo:', recalcErr);
+      }
+    }
 
-    console.log(`✨ [IMPORTAÇÃO] Concluída com sucesso. ${itensProcessados.length} itens processados.`);
+    console.log(`✅ [IMPORTAÇÃO] Sucesso: ${itensInseridos.length}/${itensProcessados.length} itens importados.`);
 
-    return res.status(200).json({ 
-      success: true, 
-      message: `${itensProcessados.length} itens importados com sucesso`,
-      data: itensProcessados
+    return res.status(200).json({
+      success: true,
+      itens_inseridos: itensInseridos.length,
+      resumo: `${itensInseridos.length} itens importados | ${countComSKU} com SKU | ${countSemSKU} aguardando definição`,
+      detalhes: {
+        com_sku: countComSKU,
+        sem_sku: countSemSKU,
+        total: itensInseridos.length
+      },
+      itens: itensInseridos.map(i => ({
+        id: i.id,
+        nome: i.nome_customizado,
+        sku_codigo: i.sku_codigo,
+        preco: i.preco_venda_unitario
+      }))
     });
 
   } catch (error: any) {
-    console.error('💥 [IMPORTAÇÃO] Erro crítico:', error);
+    console.error('❌ [IMPORTAÇÃO] Erro Crítico no Handler:', error);
     return res.status(500).json({ 
       error: 'Erro interno ao processar importação',
-      details: error.message 
+      details: error.message,
+      stack: error.stack,
+      success: false
     });
   }
 }

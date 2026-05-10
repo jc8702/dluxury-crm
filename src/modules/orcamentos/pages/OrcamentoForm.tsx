@@ -14,6 +14,7 @@ import { api } from '@/lib/api';
 import { debounce } from 'lodash';
 import { SKUAutocomplete } from '@/modules/orcamentos/components/SKUAutocomplete';
 import { Info } from 'lucide-react';
+import { ItemCard } from '../components/ItemCard';
 
 export default function OrcamentoForm() {
     // Pegar ID da URL se existir (Simulando roteamento)
@@ -457,123 +458,16 @@ export default function OrcamentoForm() {
                             <p className="text-zinc-800 text-xs mt-2">Utilize a busca acima para adicionar módulos de engenharia.</p>
                         </div>
                     ) : (
-                        orcamento.itens.map((item: any) => (
-                            <div key={item.id} className="bg-zinc-950 border border-zinc-900 rounded-3xl overflow-hidden shadow-xl hover:border-orange-500/30 transition-all group">
-                                <div className="p-6 flex flex-col gap-6 bg-zinc-900/20 group-hover:bg-zinc-900/40 transition-colors">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-12 h-12 rounded-2xl bg-orange-600/10 flex items-center justify-center text-orange-500 font-black text-xl italic shadow-inner">
-                                                {item.skuEngenharia?.codigo?.slice(0, 3) || item.listaExplodida?.[0]?.componente?.codigo?.slice(0, 3) || item.material?.slice(0, 3) || 'ITM'}
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <input 
-                                                    className="bg-transparent border-none text-white text-lg font-black uppercase italic outline-none focus:ring-0 w-[400px]"
-                                                    value={item.nomeCustomizado || item.skuEngenharia?.nome || ''}
-                                                    onChange={(e) => updateItem(item.id, { nomeCustomizado: e.target.value })}
-                                                    onBlur={(e) => updateItem(item.id, { nomeCustomizado: e.target.value })}
-                                                    placeholder="NOME DO ITEM"
-                                                />
-                                                <span className="text-[10px] uppercase text-zinc-600 font-black tracking-widest flex items-center gap-2">
-                                                    {item.skuEngenharia?.codigo || item.listaExplodida?.[0]?.componente?.codigo || item.material || 'ITEM IMPORTADO / AVULSO'}
-                                                    
-                                                    {/* DESCRIÇÃO DO SKU SELECIONADO */}
-                                                    {(item.skuEngenharia?.nome || item.listaExplodida?.[0]?.componente?.nome) && (
-                                                        <span className="text-[10px] text-orange-500 font-bold italic normal-case border-l border-zinc-800 pl-2">
-                                                            {item.skuEngenharia?.nome || item.listaExplodida?.[0]?.componente?.nome}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-right">
-                                                <span className="text-[10px] uppercase text-zinc-600 font-black tracking-widest mb-1 block">Custo Unitário</span>
-                                                <span className="text-lg font-black text-white italic">
-                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.custoUnitarioCalculado)}
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800"
-                                                    onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}
-                                                >
-                                                    {expandedItem === item.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                                </Button>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-red-950 hover:text-red-500 hover:border-red-900 transition-all"
-                                                    onClick={() => removerItem(item.id)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Grid de Edição Direta */}
-                                    <div className="grid grid-cols-6 gap-4 p-4 bg-black/40 rounded-2xl border border-zinc-900">
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">Qtd</label>
-                                            <Input 
-                                                type="number" 
-                                                className="bg-zinc-900 border-zinc-800 h-10 font-black text-orange-500 text-center" 
-                                                value={item.quantidade}
-                                                onChange={(e) => updateItem(item.id, { quantidade: parseFloat(e.target.value) || 0 })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">Largura (cm)</label>
-                                            <Input 
-                                                className="bg-zinc-900 border-zinc-800 h-10 font-bold text-white text-center" 
-                                                value={item.largura || ''}
-                                                onChange={(e) => updateItem(item.id, { largura: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">Altura (cm)</label>
-                                            <Input 
-                                                className="bg-zinc-900 border-zinc-800 h-10 font-bold text-white text-center" 
-                                                value={item.altura || ''}
-                                                onChange={(e) => updateItem(item.id, { altura: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">Esp (mm)</label>
-                                            <Input 
-                                                className="bg-zinc-900 border-zinc-800 h-10 font-bold text-white text-center" 
-                                                value={item.espessura || ''}
-                                                onChange={(e) => updateItem(item.id, { espessura: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="col-span-2 space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">SKU / Material</label>
-                                            <SKUAutocomplete 
-                                                value={item.material || ''}
-                                                onSelect={(sku) => updateItemSku(item.id, sku.id, sku.tipo)}
-                                                placeholder="Busque por código ou nome..."
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {expandedItem === item.id && (
-                                    <div className="p-8 border-t border-zinc-900 bg-black/60 animate-in slide-in-from-top-4 duration-300">
-                                        <div className="flex items-center gap-2 mb-6 text-[10px] uppercase tracking-[0.3em] font-black text-orange-500">
-                                            <Calculator className="w-4 h-4" /> Explosão de Materiais Detalhada
-                                        </div>
-                                        <ListaExplodidaGrid 
-                                            itemId={item.id} 
-                                            data={item.listaExplodida} 
-                                            onUpdate={(bomId, qtd) => updateItemExplosion(bomId, qtd)}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ))
+                        <div className="grid gap-4">
+                            {orcamento.itens.map((item: any) => (
+                                <ItemCard
+                                    key={item.id}
+                                    item={item}
+                                    onUpdate={updateItem}
+                                    onDelete={removerItem}
+                                />
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>

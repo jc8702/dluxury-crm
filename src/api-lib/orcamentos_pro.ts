@@ -399,6 +399,9 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         altura: it.altura?.toString() || null,
                         espessura: it.espessura?.toString() || null,
                         material: it.material || null,
+                        skuComponenteId: it.produto_id || it.match_sugerido?.sku_componente_id || null,
+                        skuCodigo: it.sku_codigo || it.match_sugerido?.sku_codigo || null,
+                        skuDescricao: it.sku_descricao || it.match_sugerido?.sku_descricao || null,
                         custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || it.custoUnitario || 0).toString(),
                         observacoes: `Importado via CSV`
                     }));
