@@ -40,6 +40,10 @@ export default async function handler(req: any, res: any) {
       let skuDescricao = '';
       let matchedSKU = null;
 
+      // Truncar strings para evitar erros de limite do banco (VARCHAR 255)
+      const nomeFinalTrunc = nomeFinal.slice(0, 250);
+      const materialTrunc = material.slice(0, 250);
+
       // ✅ ESTRATÉGIA DE MATCHING INTELIGENTE
       
       // 1. Se vier SKU explícito no CSV, usar direto
@@ -148,18 +152,18 @@ export default async function handler(req: any, res: any) {
 
       itensProcessados.push({
         orcamento_id,
-        nome_customizado: nomeFinal,
-        quantidade: qtdVal,
-        largura: largura.toString(),
-        altura: altura.toString(),
-        espessura: espessura.toString(),
-        material: material || 'A definir',
+        nome_customizado: nomeFinalTrunc,
+        quantidade: isNaN(qtdVal) ? 1 : qtdVal,
+        largura: (isNaN(largura) ? 0 : largura).toString().slice(0, 20),
+        altura: (isNaN(altura) ? 0 : altura).toString().slice(0, 20),
+        espessura: (isNaN(espessura) ? 0 : espessura).toString().slice(0, 20),
+        material: materialTrunc || 'A definir',
         sku_componente_id: skuId,
-        sku_codigo: skuCodigo,
+        sku_codigo: (skuCodigo || '').slice(0, 100),
         sku_descricao: skuDescricao,
-        custo_unitario_calculado: custoUnitario,
-        preco_venda_unitario: precoVenda,
-        observacoes,
+        custo_unitario_calculado: isNaN(custoUnitario) ? 0 : custoUnitario,
+        preco_venda_unitario: isNaN(precoVenda) ? 0 : precoVenda,
+        observacoes: (observacoes || '').slice(0, 500),
         _matchedSKU: matchedSKU
       });
     }

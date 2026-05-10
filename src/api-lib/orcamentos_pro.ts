@@ -390,21 +390,24 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 
                 try {
                     // 1. Preparar itens para inserção em lote
-                    const itemsToInsert = items.map((it: any) => ({
-                        orcamentoId: id,
-                        skuEngenhariaId: null,
-                        nomeCustomizado: it.nome || 'Item sem nome',
-                        quantidade: (it.quantidade || 1).toString(),
-                        largura: it.largura?.toString() || null,
-                        altura: it.altura?.toString() || null,
-                        espessura: it.espessura?.toString() || null,
-                        material: it.material || null,
-                        skuComponenteId: it.produto_id || it.match_sugerido?.sku_componente_id || null,
-                        skuCodigo: it.sku_codigo || it.match_sugerido?.sku_codigo || null,
-                        skuDescricao: it.sku_descricao || it.match_sugerido?.sku_descricao || null,
-                        custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || it.custoUnitario || 0).toString(),
-                        observacoes: `Importado via CSV`
-                    }));
+                    const itemsToInsert = items.map((it: any) => {
+                        const qtd = parseFloat(it.quantidade || 1);
+                        return {
+                            orcamentoId: id,
+                            skuEngenhariaId: null,
+                            nomeCustomizado: (it.nome || 'Item sem nome').slice(0, 250),
+                            quantidade: (isNaN(qtd) ? 1 : qtd).toString(),
+                            largura: it.largura?.toString().slice(0, 20) || null,
+                            altura: it.altura?.toString().slice(0, 20) || null,
+                            espessura: it.espessura?.toString().slice(0, 20) || null,
+                            material: (it.material || '').slice(0, 250),
+                            skuComponenteId: it.produto_id || it.match_sugerido?.sku_componente_id || null,
+                            skuCodigo: (it.sku_codigo || it.match_sugerido?.sku_codigo || '').slice(0, 100),
+                            skuDescricao: it.sku_descricao || it.match_sugerido?.sku_descricao || null,
+                            custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || it.custoUnitario || 0).toString(),
+                            observacoes: `Importado via CSV`
+                        };
+                    });
 
                     // 2. Inserir itens
                     const insertedItens = await db.insert(orcamentoItens).values(itemsToInsert).returning();
