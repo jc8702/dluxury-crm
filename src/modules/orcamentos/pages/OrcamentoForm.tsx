@@ -98,8 +98,7 @@ export default function OrcamentoForm() {
                 margemLucroPercentual: 30,
                 validadeDias: 15
             });
-            window.history.pushState({}, '', `?id=${res.id}`);
-            window.location.reload();
+            window.location.href = `?id=${res.id}#/orcamentos`;
         } catch (err) {
             alert('Erro ao criar rascunho');
         }
@@ -156,8 +155,7 @@ export default function OrcamentoForm() {
                 margemLucroPercentual: 30,
                 validadeDias: 15
             });
-            window.history.pushState({}, '', `?id=${res.id}&import=true`);
-            window.location.reload();
+            window.location.href = `?id=${res.id}&import=true#/orcamentos`;
         } catch (err) {
             alert('Erro ao criar rascunho');
         }
@@ -223,8 +221,7 @@ export default function OrcamentoForm() {
                                                 size="sm" 
                                                 className="bg-zinc-900 border border-zinc-800 hover:bg-orange-600 hover:text-white"
                                                 onClick={() => {
-                                                    window.history.pushState({}, '', `?id=${orc.id}`);
-                                                    window.location.reload();
+                                                    window.location.href = `?id=${orc.id}#/orcamentos`;
                                                 }}
                                             >
                                                 Editar
@@ -303,8 +300,7 @@ export default function OrcamentoForm() {
                         size="icon" 
                         className="bg-zinc-900 border border-zinc-800 rounded-xl" 
                         onClick={() => {
-                            window.history.pushState({}, '', window.location.pathname + window.location.hash);
-                            window.location.reload();
+                            window.location.href = `#/orcamentos`;
                         }}
                     >
                         <ArrowLeft className="w-5 h-5" />
