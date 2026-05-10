@@ -4,7 +4,7 @@ import {
     bomEngenhariaMontagem, bomMontagemComponente,
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
-import { eq, sql as dsql, and, inArray } from 'drizzle-orm';
+import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
 
 /**
@@ -447,6 +447,61 @@ export async function handleOrcamentosPro(req: any, res: any) {
             if (action === 'update-item') {
                 const { itemId, ...updates } = req.body;
                 await db.update(orcamentoItens).set(updates).where(eq(orcamentoItens.id, itemId));
+                
+                // Se o material foi alterado manualmente e não por SKU, recalcula apenas totais
+                await recalcularOrcamento(id);
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === 'update-sku') {
+                const { itemId, skuId, tipo } = req.body;
+                const item = await db.query.orcamentoItens.findFirst({ where: eq(orcamentoItens.id, itemId) });
+                if (!item) return res.status(404).json({ success: false, error: 'Item não encontrado' });
+
+                if (tipo === 'ENGENHARIA') {
+                    // Se for módulo, limpa a explodida antiga e gera a nova
+                    await db.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
+                    const comps = await explodirBOM(skuId, 1);
+                    
+                    if (comps.length > 0) {
+                        await db.insert(orcamentoListaExplodida).values(
+                            comps.map(c => ({
+                                orcamentoItemId: itemId,
+                                skuComponenteId: c.skuComponenteId,
+                                quantidadeCalculada: c.quantidadeCalculada.toString(),
+                                quantidadeAjustada: c.quantidadeCalculada.toString(),
+                                custoUnitario: c.custoUnitario.toString(),
+                                origem: 'BOM'
+                            }))
+                        );
+                    }
+
+                    await db.update(orcamentoItens).set({ 
+                        skuEngenhariaId: skuId,
+                        material: null 
+                    }).where(eq(orcamentoItens.id, itemId));
+                } else {
+                    // Se for componente direto
+                    const comp = await db.query.skuComponente.findFirst({ where: eq(skuComponente.id, skuId) });
+                    if (!comp) return res.status(404).json({ success: false, error: 'Componente não encontrado' });
+
+                    await db.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
+                    await db.insert(orcamentoListaExplodida).values({
+                        orcamentoItemId: itemId,
+                        skuComponenteId: skuId,
+                        quantidadeCalculada: '1',
+                        quantidadeAjustada: '1',
+                        custoUnitario: comp.precoUnitario,
+                        origem: 'MANUAL'
+                    });
+
+                    await db.update(orcamentoItens).set({ 
+                        skuEngenhariaId: null,
+                        material: comp.codigo,
+                        custoUnitarioCalculado: comp.precoUnitario
+                    }).where(eq(orcamentoItens.id, itemId));
+                }
+
                 await recalcularOrcamento(id);
                 return res.status(200).json({ success: true });
             }

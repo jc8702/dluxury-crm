@@ -190,6 +190,24 @@ export function useOrcamento(orcamentoId?: string) {
     }
   }, [orcamentoId, carregar]);
 
+  // ✅ TROCAR SKU DO ITEM (Com Re-explosão)
+  const updateItemSku = useCallback(async (itemId: string, skuId: string, tipo: string) => {
+    if (!orcamentoId) return;
+    try {
+      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-sku`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, skuId, tipo })
+      });
+      const result = await response.json();
+      if (result.success) {
+        await carregar(orcamentoId);
+      }
+    } catch (err) {
+      console.error("❌ [useOrcamento] Erro ao trocar SKU:", err);
+    }
+  }, [orcamentoId, carregar]);
+
   // Efeito de carregamento inicial
   useEffect(() => {
     if (orcamentoId) {
@@ -208,6 +226,7 @@ export function useOrcamento(orcamentoId?: string) {
     updateItem,
     removerItem,
     updateItemExplosion,
+    updateItemSku,
     carregar: () => orcamentoId ? carregar(orcamentoId) : null
   };
 }

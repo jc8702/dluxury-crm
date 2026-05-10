@@ -12,6 +12,8 @@ import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { exportBudgetToPDF } from '../services/export-pdf';
 import { api } from '@/lib/api';
 import { debounce } from 'lodash';
+import { SKUAutocomplete } from '../components/SKUAutocomplete';
+import { Info } from 'lucide-react';
 
 export default function OrcamentoForm() {
     // Pegar ID da URL se existir (Simulando roteamento)
@@ -20,7 +22,7 @@ export default function OrcamentoForm() {
 
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
-        importItems, updateItem, removerItem, updateItemExplosion, error 
+        importItems, updateItem, removerItem, updateItemExplosion, updateItemSku, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -541,12 +543,11 @@ export default function OrcamentoForm() {
                                             />
                                         </div>
                                         <div className="col-span-2 space-y-1">
-                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">Material</label>
-                                            <Input 
-                                                className="bg-zinc-900 border-zinc-800 h-10 font-bold text-white" 
+                                            <label className="text-[9px] uppercase font-black text-zinc-600 ml-1">SKU / Material</label>
+                                            <SKUAutocomplete 
                                                 value={item.material || ''}
-                                                onChange={(e) => updateItem(item.id, { material: e.target.value })}
-                                                placeholder="Defina o material..."
+                                                onSelect={(sku) => updateItemSku(item.id, sku.id, sku.tipo)}
+                                                placeholder="Busque por código ou nome..."
                                             />
                                         </div>
                                     </div>

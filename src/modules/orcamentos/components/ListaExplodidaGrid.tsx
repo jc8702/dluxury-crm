@@ -14,8 +14,8 @@ export function ListaExplodidaGrid({ data, onUpdate }: ListaExplodidaGridProps) 
                     <tr className="bg-zinc-900/80 text-zinc-500 uppercase tracking-widest font-black border-b border-zinc-900">
                         <th className="px-6 py-4">Componente</th>
                         <th className="px-6 py-4 text-center">Origem</th>
-                        <th className="px-6 py-4 text-right">Qtd Calc.</th>
-                        <th className="px-6 py-4 text-right">Qtd Ajustada</th>
+                        <th className="px-6 py-4 text-right" title="Quantidade exata calculada pela engenharia (BOM)">Qtd Calc.</th>
+                        <th className="px-6 py-4 text-right" title="Quantidade que será enviada para o estoque/compras (incluindo sobras)">Qtd Ajustada</th>
                         <th className="px-6 py-4 text-right">Custo UN</th>
                         <th className="px-6 py-4 text-right">Total</th>
                     </tr>
