@@ -4,7 +4,7 @@ import {
     bomEngenhariaMontagem, bomMontagemComponente,
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
-import { eq, sql as dsql, and } from 'drizzle-orm';
+import { eq, sql as dsql, and, inArray } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
 
 /**
@@ -365,18 +365,31 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     const insertedItens = await db.insert(orcamentoItens).values(itemsToInsert).returning();
                     console.log(`✅ [API PRO] ${insertedItens.length} registros inseridos em orcamento_itens`);
 
-                    // 3. Criar lista explodida (BOM) para itens que possuem SKU vinculado
+                    // 3. Criar lista explodida (BOM) para itens que possuem SKU vinculado e são COMPONENTES INDUSTRIAIS
                     const bomToInsert = [];
+                    const skuIdsToCheck = items
+                        .map((it: any) => it.produto_id || it.match_sugerido?.sku_componente_id || null)
+                        .filter(Boolean);
+
+                    const validComponentIds = new Set<string>();
+                    if (skuIdsToCheck.length > 0) {
+                        const validComps = await db.select({ id: skuComponente.id })
+                            .from(skuComponente)
+                            .where(inArray(skuComponente.id, skuIdsToCheck));
+                        validComps.forEach(c => validComponentIds.add(c.id));
+                    }
+
                     for (let i = 0; i < insertedItens.length; i++) {
                         const originalItem = items[i];
                         const skuId = originalItem.produto_id || originalItem.match_sugerido?.sku_componente_id || null;
                         
-                        if (skuId) {
+                        // SÓ inserir na explodida se o SKU existir na tabela industrial de componentes
+                        if (skuId && validComponentIds.has(skuId)) {
                             bomToInsert.push({
                                 orcamentoItemId: insertedItens[i].id,
                                 skuComponenteId: skuId,
-                                quantidadeCalculada: '1',
-                                quantidadeAjustada: '1',
+                                quantidadeCalculada: (originalItem.quantidade || 1).toString(),
+                                quantidadeAjustada: (originalItem.quantidade || 1).toString(),
                                 custoUnitario: (originalItem.match_sugerido?.custoUnitario || originalItem.custoUnitario || 0).toString(),
                                 origem: 'IMPORT'
                             });
