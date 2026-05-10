@@ -4,8 +4,8 @@ import {
     bomEngenhariaMontagem, bomMontagemComponente,
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
-import { eq, sql, and } from 'drizzle-orm';
-import { auditLog, validateAuth } from './_db.js';
+import { eq, sql as dsql, and } from 'drizzle-orm';
+import { auditLog, validateAuth, sql } from './_db.js';
 
 /**
  * SERVIÇO DE ORÇAMENTOS PROFISSIONAIS - INTEGRADO
@@ -15,7 +15,7 @@ import { auditLog, validateAuth } from './_db.js';
  * Explode um SKU de Engenharia usando CTE Recursivo para máxima performance
  */
 export async function explodirBOM(skuEngId: string, qtdItem: number = 1) {
-    const query = sql`
+    const query = dsql`
         WITH RECURSIVE bom_recursivo AS (
             -- Nível 1: SKU Engenharia → SKU Montagem
             SELECT 
@@ -69,14 +69,18 @@ export async function recalcularOrcamento(orcId: string) {
     
     for (const item of itensOrc) {
         const explodida = await db.select().from(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, item.id));
-        const custoItem = explodida.reduce((sum, c) => {
-            const val = (Number(c.quantidadeAjustada || 0) * Number(c.custoUnitario || 0));
-            return sum + (isNaN(val) ? 0 : val);
-        }, 0);
         
-        await db.update(orcamentoItens)
-            .set({ custoUnitarioCalculado: custoItem.toFixed(2) })
-            .where(eq(orcamentoItens.id, item.id));
+        // Se houver explosão, recalcula. Se não, mantém o custo atual (importante para itens importados/avulsos)
+        if (explodida.length > 0) {
+            const custoItem = explodida.reduce((sum, c) => {
+                const val = (Number(c.quantidadeAjustada || 0) * Number(c.custoUnitario || 0));
+                return sum + (isNaN(val) ? 0 : val);
+            }, 0);
+            
+            await db.update(orcamentoItens)
+                .set({ custoUnitarioCalculado: custoItem.toFixed(2) })
+                .where(eq(orcamentoItens.id, item.id));
+        }
     }
 
     // 2. Atualizar totais do cabeçalho
@@ -129,67 +133,152 @@ export async function handleOrcamentosPro(req: any, res: any) {
             }
 
             if (id) {
-                const data = await db.query.orcamentos.findFirst({
+                console.log(`🔍 [API PRO] Buscando orçamento: ${id}`);
+                let result = await db.query.orcamentos.findFirst({
                     where: eq(orcamentos.id, id),
                     with: {
                         itens: {
                             with: {
-                                listaExplodida: {
-                                    with: { componente: true }
-                                },
-                                skuEngenharia: true
+                                skuEngenharia: true,
+                                listaExplodida: true
                             }
                         }
                     }
                 });
-                return res.status(200).json({ success: true, data });
+
+                // FALLBACK: Se não encontrou na tabela PRO, busca na tabela comercial legada
+                if (!result) {
+                    console.log(`🔍 [API PRO] ID ${id} não encontrado na tabela PRO. Buscando na tabela comercial...`);
+                    const oldOrc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+                    
+                    if (oldOrc) {
+                        console.log(`✅ [API PRO] Orçamento legado encontrado. Mapeando para formato PRO...`);
+                        const oldItens = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id}`;
+                        
+                        // Converte o formato legado para o formato PRO
+                        result = {
+                            id: oldOrc.id,
+                            numeroOrcamento: oldOrc.numero || `LEG-${oldOrc.id.substring(0,8)}`,
+                            clienteId: oldOrc.cliente_id,
+                            projetoId: oldOrc.projeto_id,
+                            dataOrcamento: oldOrc.created_at,
+                            status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
+                            valorTotalVenda: oldOrc.valor_final || 0,
+                            valorTotalCusto: oldOrc.valor_base || 0,
+                            margemLucroPercentual: 30, // Default para legados
+                            itens: oldItens.map((it: any) => ({
+                                id: it.id,
+                                nomeCustomizado: it.descricao,
+                                quantidade: it.quantidade?.toString() || '1',
+                                largura: it.largura_cm?.toString(),
+                                altura: it.altura_cm?.toString(),
+                                material: it.material,
+                                precoVendaUnitario: it.valor_unitario?.toString() || '0'
+                            }))
+                        };
+                    }
+                }
+
+                if (!result) {
+                    return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
+                }
+
+                return res.status(200).json({ success: true, data: result });
             }
 
-            const list = await db.select().from(orcamentos).orderBy(sql`${orcamentos.createdAt} DESC`);
+            const list = await db.select().from(orcamentos).orderBy(dsql`${orcamentos.createdAt} DESC`);
             return res.status(200).json({ success: true, data: list });
         }
 
         if (method === 'POST') {
             const { header, itens } = req.body;
+            console.log("🆕 [API PRO] Criando novo orçamento...");
 
-            // Criar orçamento
-            const [newOrc] = await db.insert(orcamentos).values({
-                ...header,
-                numeroOrcamento: `PRO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`,
-                status: 'RASCUNHO'
-            }).returning();
-
-            // Adicionar itens e explodir BOM
-            for (const item of (itens || [])) {
-                const [newItem] = await db.insert(orcamentoItens).values({
-                    orcamentoId: newOrc.id,
-                    skuEngenhariaId: item.skuEngenhariaId,
-                    quantidade: item.quantidade
+            try {
+                // Criar orçamento
+                const [newOrc] = await db.insert(orcamentos).values({
+                    clienteId: header.clienteId || null,
+                    projetoId: header.projetoId || null,
+                    validadeDias: header.validadeDias || 15,
+                    margemLucroPercentual: header.margemLucroPercentual?.toString() || '30',
+                    numeroOrcamento: `PRO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`,
+                    status: 'RASCUNHO'
                 }).returning();
 
-                const comps = await explodirBOM(item.skuEngenhariaId, 1);
-                if (comps.length > 0) {
-                    await db.insert(orcamentoListaExplodida).values(
-                        comps.map(c => ({
-                            orcamentoItemId: newItem.id,
-                            skuComponenteId: c.skuComponenteId,
-                            quantidadeCalculada: c.quantidadeCalculada.toString(),
-                            quantidadeAjustada: c.quantidadeCalculada.toString(),
-                            custoUnitario: c.custoUnitario.toString(),
-                            origem: 'BOM'
-                        }))
-                    );
-                }
-            }
+                console.log(`✅ [API PRO] Orçamento criado: ${newOrc.id}`);
 
-            await recalcularOrcamento(newOrc.id);
-            await auditLog('ORCAMENTO_PRO', newOrc.id, 'CREATE', auth.user?.id || 'system');
-            
-            return res.status(201).json({ success: true, data: { id: newOrc.id, numeroOrcamento: newOrc.numeroOrcamento } });
+                // Adicionar itens e explodir BOM
+                for (const item of (itens || [])) {
+                    const [newItem] = await db.insert(orcamentoItens).values({
+                        orcamentoId: newOrc.id,
+                        skuEngenhariaId: item.skuEngenhariaId,
+                        quantidade: item.quantidade.toString()
+                    }).returning();
+
+                    const comps = await explodirBOM(item.skuEngenhariaId, 1);
+                    if (comps.length > 0) {
+                        await db.insert(orcamentoListaExplodida).values(
+                            comps.map(c => ({
+                                orcamentoItemId: newItem.id,
+                                skuComponenteId: c.skuComponenteId,
+                                quantidadeCalculada: c.quantidadeCalculada.toString(),
+                                quantidadeAjustada: c.quantidadeCalculada.toString(),
+                                custoUnitario: c.custoUnitario.toString(),
+                                origem: 'BOM'
+                            }))
+                        );
+                    }
+                }
+
+                await recalcularOrcamento(newOrc.id);
+                await auditLog('ORCAMENTO_PRO', newOrc.id, 'CREATE', auth.user?.id || 'system');
+                
+                return res.status(201).json({ success: true, data: { id: newOrc.id, numeroOrcamento: newOrc.numeroOrcamento } });
+            } catch (err: any) {
+                console.error("❌ [API PRO] Erro ao criar orçamento:", err);
+                return res.status(500).json({ success: false, error: `Erro na criação: ${err.message}` });
+            }
         }
 
         if (method === 'PUT') {
             if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
+
+            // Verificar se o orçamento existe antes de qualquer PUT
+            let exists = await db.query.orcamentos.findFirst({ where: eq(orcamentos.id, id) });
+            
+            // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora.
+            if (!exists) {
+                console.log(`🚀 [API PRO] Migrando orçamento ${id} da tabela legada para a PRO durante atualização...`);
+                const oldOrc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+                
+                if (oldOrc) {
+                    try {
+                        const [newPro] = await db.insert(orcamentos).values({
+                            id: oldOrc.id,
+                            numeroOrcamento: oldOrc.numero || `MIG-${oldOrc.id.substring(0,8)}`,
+                            clienteId: oldOrc.cliente_id,
+                            projetoId: oldOrc.projeto_id,
+                            dataOrcamento: oldOrc.created_at ? new Date(oldOrc.created_at) : new Date(),
+                            status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
+                            valorTotalVenda: (oldOrc.valor_final || 0).toString(),
+                            valorTotalCusto: (oldOrc.valor_base || 0).toString(),
+                            margemLucroPercentual: '30',
+                            taxaFinanceiraPercentual: '0',
+                            descontoPercentual: '0',
+                            validadeDias: 15
+                        }).returning();
+                        exists = newPro;
+                        console.log(`✅ [API PRO] Orçamento ${id} migrado com sucesso.`);
+                    } catch (migErr: any) {
+                        console.error(`❌ [API PRO] Falha na migração automática:`, migErr);
+                        return res.status(500).json({ success: false, error: 'Erro ao migrar orçamento legado para o novo formato.' });
+                    }
+                }
+            }
+
+            if (!exists) {
+                return res.status(404).json({ success: false, error: 'Orçamento não encontrado para atualização.' });
+            }
 
             if (action === 'update-bom') {
                 const { bomId, quantidadeAjustada } = req.body;
@@ -211,7 +300,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     const [newItem] = await db.insert(orcamentoItens).values({
                         orcamentoId: id,
                         skuEngenhariaId: skuId,
-                        quantidade
+                        quantidade: quantidade.toString()
                     }).returning();
 
                     const comps = await explodirBOM(skuId, 1);
@@ -234,7 +323,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         const [newItem] = await db.insert(orcamentoItens).values({
                             orcamentoId: id,
                             skuEngenhariaId: null,
-                            quantidade: 1,
+                            quantidade: '1',
                             observacoes: `ITEM AVULSO: ${isComp.nome}`
                         }).returning();
 
@@ -254,38 +343,65 @@ export async function handleOrcamentosPro(req: any, res: any) {
             }
 
             if (action === 'import-items') {
-                const { items } = req.body; // Array de { sku_componente_id, quantidade, custoUnitario }
+                const { items } = req.body; 
+                console.log(`📥 [API PRO] Iniciando importação em lote de ${items?.length} itens para o orçamento ${id}`);
                 
-                for (const it of items) {
-                    const skuId = it.produto_id || it.match_sugerido?.sku_componente_id;
-                    if (!skuId) continue;
-
-                    const [newItem] = await db.insert(orcamentoItens).values({
+                try {
+                    // 1. Preparar itens para inserção em lote
+                    const itemsToInsert = items.map((it: any) => ({
                         orcamentoId: id,
                         skuEngenhariaId: null,
-                        nomeCustomizado: it.nome,
-                        quantidade: it.quantidade,
-                        largura: it.largura?.toString(),
-                        altura: it.altura?.toString(),
-                        espessura: it.espessura?.toString(),
-                        material: it.material || it.Material,
-                        custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || 0).toString(),
-                        observacoes: `Importado de projeto: ${it.nome}`
-                    }).returning();
+                        nomeCustomizado: it.nome || 'Item sem nome',
+                        quantidade: (it.quantidade || 1).toString(),
+                        largura: it.largura?.toString() || null,
+                        altura: it.altura?.toString() || null,
+                        espessura: it.espessura?.toString() || null,
+                        material: it.material || null,
+                        custoUnitarioCalculado: (it.match_sugerido?.custoUnitario || it.custoUnitario || 0).toString(),
+                        observacoes: `Importado via CSV`
+                    }));
 
-                    // Adiciona na lista explodida (BOM) do item
-                    await db.insert(orcamentoListaExplodida).values({
-                        orcamentoItemId: newItem.id,
-                        skuComponenteId: skuId,
-                        quantidadeCalculada: '1', // Cada peça é 1 unidade do SKU base
-                        quantidadeAjustada: '1',
-                        custoUnitario: (it.match_sugerido?.custoUnitario || 0).toString(),
-                        origem: 'IMPORT'
+                    // 2. Inserir itens
+                    const insertedItens = await db.insert(orcamentoItens).values(itemsToInsert).returning();
+                    console.log(`✅ [API PRO] ${insertedItens.length} registros inseridos em orcamento_itens`);
+
+                    // 3. Criar lista explodida (BOM) para itens que possuem SKU vinculado
+                    const bomToInsert = [];
+                    for (let i = 0; i < insertedItens.length; i++) {
+                        const originalItem = items[i];
+                        const skuId = originalItem.produto_id || originalItem.match_sugerido?.sku_componente_id || null;
+                        
+                        if (skuId) {
+                            bomToInsert.push({
+                                orcamentoItemId: insertedItens[i].id,
+                                skuComponenteId: skuId,
+                                quantidadeCalculada: '1',
+                                quantidadeAjustada: '1',
+                                custoUnitario: (originalItem.match_sugerido?.custoUnitario || originalItem.custoUnitario || 0).toString(),
+                                origem: 'IMPORT'
+                            });
+                        }
+                    }
+
+                    if (bomToInsert.length > 0) {
+                        await db.insert(orcamentoListaExplodida).values(bomToInsert);
+                        console.log(`✅ [API PRO] ${bomToInsert.length} vínculos de SKU criados na lista explodida`);
+                    }
+
+                    // 4. Recalcular
+                    // 2. Recalcular orçamentos (garante consistência de valores totais e BOM)
+                    console.log(`🧮 [API PRO] Recalculando orçamento ${id}...`);
+                    await recalcularOrcamento(id);
+                    
+                    // 3. Retornar sucesso explícito
+                    return res.status(200).json({ 
+                        success: true, 
+                        message: `${insertedItens.length} itens importados e orçamento recalculado.`
                     });
+                } catch (err: any) {
+                    console.error("❌ [API PRO] Erro crítico na importação em lote:", err);
+                    return res.status(500).json({ success: false, error: `Falha na importação: ${err.message}` });
                 }
-
-                await recalcularOrcamento(id);
-                return res.status(200).json({ success: true });
             }
 
             if (action === 'update-item') {
@@ -316,7 +432,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
         return res.status(405).json({ success: false, error: 'Método não permitido' });
     } catch (err: any) {
-        console.error('[API ORÇAMENTOS PRO]', err);
+        console.error('[API ORÇAMENTOS PRO GLOBAL]', err);
         return res.status(500).json({ success: false, error: err.message });
     }
 }

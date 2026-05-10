@@ -106,14 +106,26 @@ export default function OrcamentoForm() {
 
     if (error && !orcamento) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 gap-6 text-center">
-                <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl max-w-md">
-                    <p className="text-red-500 font-bold mb-2">Erro ao carregar orçamento</p>
-                    <p className="text-zinc-500 text-sm">{error}</p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
+                <div className="bg-red-500/10 p-6 rounded-2xl mb-6">
+                    <span className="text-red-500 text-5xl">⚠️</span>
                 </div>
-                <Button variant="outline" className="border-zinc-800" onClick={() => window.location.reload()}>
-                    Tentar Novamente
-                </Button>
+                <h2 className="text-2xl font-bold text-white mb-2">Erro ao carregar orçamento</h2>
+                <p className="text-zinc-400 mb-8 max-w-md">{error}</p>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => window.location.href = '#/orcamentos'}
+                        className="px-6 py-3 bg-zinc-800 text-white rounded-xl hover:bg-zinc-700 transition-all"
+                    >
+                        Voltar para Lista
+                    </button>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all font-bold"
+                    >
+                        Tentar Novamente
+                    </button>
+                </div>
             </div>
         );
     }

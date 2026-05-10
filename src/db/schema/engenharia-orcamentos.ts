@@ -93,6 +93,7 @@ export const orcamentoItens = pgTable('orcamento_itens', {
     custoUnitarioCalculado: decimal('custo_unitario_calculado', { precision: 12, scale: 2 }),
     precoVendaUnitario: decimal('preco_venda_unitario', { precision: 12, scale: 2 }),
     observacoes: text('observacoes'),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const orcamentoListaExplodida = pgTable('orcamento_lista_explodida', {
@@ -105,6 +106,7 @@ export const orcamentoListaExplodida = pgTable('orcamento_lista_explodida', {
     origem: varchar('origem', { length: 20 }).default('BOM'),
     editado: boolean('editado').default(false),
     observacoes: text('observacoes'),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Relacionamentos
@@ -117,15 +119,27 @@ export const skuMontagemRelations = relations(skuMontagem, ({ many }) => ({
     componentes: many(bomMontagemComponente),
 }));
 
-export const orcamentosRelations = relations(orcamentos, ({ many }) => ({
+export const orcamentosRelations = relations(orcamentos, ({ one, many }) => ({
     itens: many(orcamentoItens),
+    cliente: one(clientes, { fields: [orcamentos.clienteId], references: [clientes.id] }),
 }));
 
 export const orcamentoItensRelations = relations(orcamentoItens, ({ one, many }) => ({
     orcamento: one(orcamentos, { fields: [orcamentoItens.orcamentoId], references: [orcamentos.id] }),
+    skuEngenharia: one(skuEngenharia, { fields: [orcamentoItens.skuEngenhariaId], references: [skuEngenharia.id] }),
     listaExplodida: many(orcamentoListaExplodida),
 }));
 export const orcamentoListaExplodidaRelations = relations(orcamentoListaExplodida, ({ one }) => ({ 
     item: one(orcamentoItens, { fields: [orcamentoListaExplodida.orcamentoItemId], references: [orcamentoItens.id] }), 
     componente: one(skuComponente, { fields: [orcamentoListaExplodida.skuComponenteId], references: [skuComponente.id] }),
+}));
+
+export const bomEngenhariaMontagemRelations = relations(bomEngenhariaMontagem, ({ one }) => ({
+    engenharia: one(skuEngenharia, { fields: [bomEngenhariaMontagem.skuEngenhariaId], references: [skuEngenharia.id] }),
+    montagem: one(skuMontagem, { fields: [bomEngenhariaMontagem.skuMontagemId], references: [skuMontagem.id] }),
+}));
+
+export const bomMontagemComponenteRelations = relations(bomMontagemComponente, ({ one }) => ({
+    montagem: one(skuMontagem, { fields: [bomMontagemComponente.skuMontagemId], references: [skuMontagem.id] }),
+    componente: one(skuComponente, { fields: [bomMontagemComponente.skuComponenteId], references: [skuComponente.id] }),
 }));

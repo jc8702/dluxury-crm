@@ -116,9 +116,22 @@ export default async function handler(req: any, res: any) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');
       return await handleEstoque(req, res);
     }
+    // Rotas de Orçamentos (Ordem de especificidade)
+    if (cleanUrl.startsWith('/api/orcamentos/importar-itens')) {
+      const { handleImportarItensOrcamento } = await import('./orcamentos/importar-itens.js');
+      return await handleImportarItensOrcamento(req, res);
+    }
+    if (cleanUrl.startsWith('/api/orcamentos-pro')) {
+      const { handleOrcamentosPro } = await import('../src/api-lib/orcamentos_pro.js');
+      return await handleOrcamentosPro(req, res);
+    }
     if (cleanUrl.startsWith('/api/orcamentos')) {
       const { handleOrcamentos } = await import('../src/api-lib/orcamentos.js');
       return await handleOrcamentos(req, res);
+    }
+    if (cleanUrl.startsWith('/api/orcamento-tecnico')) {
+      const { handleOrcamentoTecnico } = await import('../src/api-lib/orcamentos.js');
+      return await handleOrcamentoTecnico(req, res);
     }
     if (cleanUrl.startsWith('/api/ai/chat')) {
       const { handleAIChat } = await import('../src/api-lib/ai-chat.js');
@@ -156,10 +169,6 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/reports')) {
       const { handleReports } = await import('../src/api-lib/projects.js');
       return await handleReports(req, res);
-    }
-    if (cleanUrl.startsWith('/api/orcamento-tecnico')) {
-      const { handleOrcamentoTecnico } = await import('../src/api-lib/orcamentos.js');
-      return await handleOrcamentoTecnico(req, res);
     }
     if (cleanUrl.startsWith('/api/projects')) {
       const { handleProjects } = await import('../src/api-lib/projects.js');
@@ -221,10 +230,6 @@ export default async function handler(req: any, res: any) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
     }
-    if (cleanUrl.startsWith('/api/orcamentos-pro')) {
-      const { handleOrcamentosPro } = await import('../src/api-lib/orcamentos_pro.js');
-      return await handleOrcamentosPro(req, res);
-    }
     if (cleanUrl.startsWith('/api/importar-projeto')) {
       const { handleImportarProjeto } = await import('../src/api-lib/importacao-projetos.js');
       return await handleImportarProjeto(req, res);
@@ -232,10 +237,6 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/match-skus')) {
       const { handleMatchSKUs } = await import('../src/api-lib/match-skus.js');
       return await handleMatchSKUs(req, res);
-    }
-    if (cleanUrl.startsWith('/api/orcamentos/importar-itens')) {
-      const { handleImportarItensOrcamento } = await import('./orcamentos/importar-itens.js');
-      return await handleImportarItensOrcamento(req, res);
     }
     if (cleanUrl.startsWith('/api/forn')) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');

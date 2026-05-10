@@ -8,7 +8,7 @@ import {
   Hammer, Scissors, Calendar, Package, 
   Truck, Settings2, DraftingCompass, BarChart3, 
   DollarSign, Settings, HeartHandshake, LogOut, 
-  ShoppingCart, CalendarDays, Bell
+  ShoppingCart, CalendarDays, Bell, Calculator
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {

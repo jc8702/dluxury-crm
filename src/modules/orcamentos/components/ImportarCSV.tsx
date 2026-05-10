@@ -1,342 +1,267 @@
+// src/modules/orcamentos/components/ImportarCSV.tsx
 import React, { useState } from 'react';
-import { Modal, Button } from '@/design-system/components';
-import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
-import { api } from '@/lib/api';
-import { GenericCSVParser, type ComponenteImportado } from '../../../utils/parsers/GenericCSVParser.js';
-import { CutListParser } from '../../../utils/parsers/CutListParser.js';
-import { CSVDetector } from '../../../utils/parsers/CSVDetector.js';
 import Papa from 'papaparse';
+import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Button } from '@/design-system/components';
 
-export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: { 
-    isOpen: boolean, 
-    onClose: () => void, 
-    onAddItems: (items: any[]) => Promise<void>,
-    orcamentoId: string 
-}) {
-    const [status, setStatus] = useState<'idle' | 'parsing' | 'review' | 'saving'>('idle');
-    const [items, setItems] = useState<ComponenteImportado[]>([]);
-    const [detectedFormat, setDetectedFormat] = useState<'CutList' | 'Generic' | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [activeSearchIdx, setActiveSearchIdx] = useState<number | null>(null);
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            setStatus('parsing');
-            
-            // Leitura inicial para detecção
-            const reader = new FileReader();
-            const text = await new Promise<string>((resolve) => {
-                reader.onload = (ev) => resolve(ev.target?.result as string);
-                reader.readAsText(file, 'UTF-8'); // Tenta UTF-8 primeiro
-            });
-
-            // Detectar delimitador e cabeçalhos
-            const delimiter = CSVDetector.detectDelimiter(text.substring(0, 1000));
-            const results = Papa.parse(text, { delimiter, header: true, preview: 5 });
-            const headers = results.meta.fields || [];
-
-            let parsed: ComponenteImportado[];
-
-            if (CSVDetector.isCutList(headers, results.data)) {
-                console.log('[ImportarCSV] Formato CutList detectado');
-                setDetectedFormat('CutList');
-                parsed = await CutListParser.parse(file);
-            } else {
-                console.log('[ImportarCSV] Formato Genérico detectado');
-                setDetectedFormat('Generic');
-                parsed = await GenericCSVParser.parse(file);
-            }
-            
-            // Match de SKUs no backend
-            const response = await fetch('/api/match-skus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itens: parsed })
-            });
-            const result = await response.json();
-            
-            setItems(result.data || parsed); // Fallback se match falhar
-            setStatus('review');
-        } catch (err) {
-            console.error('[ImportarCSV] Erro:', err);
-            alert('Falha ao processar CSV. Verifique se o formato é válido.');
-            setStatus('idle');
-        }
-    };
-
-    const updateItem = (idx: number, updates: Partial<ComponenteImportado>) => {
-        setItems(prev => prev.map((item, i) => i === idx ? { ...item, ...updates } : item));
-    };
-
-    const handleConfirmarImportacao = async () => {
-        try {
-            setStatus('saving');
-            console.log('[ImportarCSV] Confirmando importação de', items.length, 'itens');
-            
-            // Validação básica: garantir que todos tenham nome e quantidade
-            const validItems = items.filter(i => (i.nome || i.Designação) && (i.quantidade || i.Qtd) > 0);
-            
-            if (validItems.length === 0) {
-                alert('Nenhum item válido para importar.');
-                setStatus('review');
-                return;
-            }
-
-            // Chamar o callback do pai (OrcamentoForm) para adicionar e recarregar
-            if (onAddItems) {
-                await onAddItems(validItems);
-            }
-            
-            console.log(`✅ [ImportarCSV] Sucesso: ${validItems.length} itens processados.`);
-            alert(`Sucesso! ${validItems.length} itens importados e orçamento recalculado.`);
-            onClose();
-
-        } catch (error: any) {
-            console.error('[ImportarCSV] Erro na importação:', error);
-            alert(error.message || 'Erro ao importar itens. Verifique o console.');
-        } finally {
-            setStatus('review');
-        }
-    };
-
-    const handleSearchSKU = async (query: string) => {
-        setSearchQuery(query);
-        if (query.length > 1) {
-            try {
-                const results = await api.engineering.list({ q: query });
-                setSearchResults(results);
-            } catch (err) {
-                console.error(err);
-            }
-        } else {
-            setSearchResults([]);
-        }
-    };
-
-    const selectSKU = (idx: number, sku: any) => {
-        updateItem(idx, {
-            produto_id: sku.id,
-            sku_encontrado: sku.codigo,
-            status: 'encontrado'
-        });
-        setActiveSearchIdx(null);
-        setSearchQuery('');
-        setSearchResults([]);
-    };
-
-    const removeItem = (idx: number) => {
-        setItems(prev => prev.filter((_, i) => i !== idx));
-    };
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Importar Projeto do SketchUp (CSV)" size="xl">
-            <div className="py-2">
-                {status === 'idle' && (
-                    <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-16 text-center hover:border-orange-500 transition-all cursor-pointer relative group bg-zinc-900/20">
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} accept=".csv" />
-                        <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform border border-zinc-800 group-hover:border-orange-500/50">
-                            <Upload className="w-8 h-8 text-zinc-500 group-hover:text-orange-500" />
-                        </div>
-                        <h3 className="text-xl text-white font-bold mb-2">Selecione o arquivo CSV</h3>
-                        <p className="text-zinc-500 max-w-sm mx-auto">
-                            Arraste ou clique para carregar o relatório do SketchUp (CutList Bridge ou Generate Report).
-                        </p>
-                        <div className="mt-8 flex items-center justify-center gap-4 text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
-                            <span className="flex items-center gap-1.5"><FileSpreadsheet className="w-3 h-3" /> UTF-8 ou Latin1</span>
-                            <span className="w-1 h-1 rounded-full bg-zinc-800"></span>
-                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Detecção Automática</span>
-                        </div>
-                    </div>
-                )}
-
-                {status === 'parsing' && (
-                    <div className="py-24 text-center">
-                        <div className="w-12 h-12 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                        <h3 className="text-lg text-white font-medium">Processando dados...</h3>
-                        <p className="text-zinc-500 mt-2">Mapeando componentes e buscando SKUs compatíveis.</p>
-                    </div>
-                )}
-
-                {status === 'review' && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] text-orange-500 font-bold uppercase tracking-wider">
-                                    {detectedFormat === 'CutList' ? 'SketchUp CutList' : 'CSV Genérico'}
-                                </div>
-                                <div className="text-xs text-zinc-500">
-                                    {items.length} componentes encontrados
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white" onClick={() => setStatus('idle')}>
-                                Trocar arquivo
-                            </Button>
-                        </div>
-
-                        <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden">
-                            <div className="max-h-[450px] overflow-y-auto">
-                                <table className="w-full text-left text-[11px]">
-                                    <thead className="bg-zinc-950/50 text-zinc-500 uppercase text-[9px] font-bold tracking-wider sticky top-0 z-10">
-                                        <tr>
-                                            <th className="p-4 border-b border-zinc-800">Designação</th>
-                                            <th className="p-4 border-b border-zinc-800 text-center">Qtd</th>
-                                            <th className="p-4 border-b border-zinc-800 text-center">Comp</th>
-                                            <th className="p-4 border-b border-zinc-800 text-center">Larg</th>
-                                            <th className="p-4 border-b border-zinc-800 text-center">Esp</th>
-                                            <th className="p-4 border-b border-zinc-800">Material</th>
-                                            <th className="p-4 border-b border-zinc-800 min-w-[140px]">SKU Banco</th>
-                                            <th className="p-4 border-b border-zinc-800 text-right">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-zinc-800/50">
-                                        {items.map((item, idx) => (
-                                            <tr key={idx} className="group hover:bg-white/[0.02] transition-colors">
-                                                <td className="p-2 pl-4">
-                                                    <input 
-                                                        className="bg-transparent border-none outline-none text-white w-full focus:bg-zinc-800/50 rounded px-1 transition-all"
-                                                        value={item.nome}
-                                                        onChange={(e) => updateItem(idx, { nome: e.target.value })}
-                                                    />
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    <input 
-                                                        type="number"
-                                                        className="bg-transparent border-none outline-none text-orange-500 font-bold w-12 text-center focus:bg-zinc-800/50 rounded transition-all"
-                                                        value={item.quantidade}
-                                                        onChange={(e) => updateItem(idx, { quantidade: parseFloat(e.target.value) || 1 })}
-                                                    />
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    <input 
-                                                        className="bg-transparent border-none outline-none text-zinc-400 w-16 text-center focus:bg-zinc-800/50 rounded transition-all"
-                                                        value={item.altura || ''}
-                                                        placeholder="-"
-                                                        onChange={(e) => updateItem(idx, { altura: parseFloat(e.target.value) || null })}
-                                                    />
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    <input 
-                                                        className="bg-transparent border-none outline-none text-zinc-400 w-16 text-center focus:bg-zinc-800/50 rounded transition-all"
-                                                        value={item.largura || ''}
-                                                        placeholder="-"
-                                                        onChange={(e) => updateItem(idx, { largura: parseFloat(e.target.value) || null })}
-                                                    />
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    <input 
-                                                        className="bg-transparent border-none outline-none text-zinc-400 w-12 text-center focus:bg-zinc-800/50 rounded transition-all"
-                                                        value={item.espessura || ''}
-                                                        placeholder="-"
-                                                        onChange={(e) => updateItem(idx, { espessura: parseFloat(e.target.value) || null })}
-                                                    />
-                                                </td>
-                                                <td className="p-2">
-                                                    <input 
-                                                        className="bg-transparent border-none outline-none text-zinc-500 w-full focus:bg-zinc-800/50 rounded px-1 transition-all italic"
-                                                        value={item.material || ''}
-                                                        placeholder="A definir"
-                                                        onChange={(e) => updateItem(idx, { material: e.target.value })}
-                                                    />
-                                                </td>
-                                                <td className="p-2 relative">
-                                                    {activeSearchIdx === idx ? (
-                                                        <div className="absolute inset-x-0 top-0 z-50 bg-zinc-950 p-2 flex flex-col border border-orange-500 shadow-2xl rounded-lg -mt-1">
-                                                            <div className="flex items-center gap-2 px-2 py-1 mb-1 border-b border-zinc-800">
-                                                                <Search className="w-3 h-3 text-zinc-500" />
-                                                                <input 
-                                                                    autoFocus
-                                                                    className="bg-transparent text-[10px] text-white outline-none w-full"
-                                                                    placeholder="Buscar por nome ou código..."
-                                                                    value={searchQuery}
-                                                                    onChange={(e) => handleSearchSKU(e.target.value)}
-                                                                />
-                                                            </div>
-                                                            <div className="overflow-y-auto max-h-[180px] custom-scrollbar">
-                                                                {searchResults.length > 0 ? searchResults.map(sku => (
-                                                                    <button 
-                                                                        key={sku.id}
-                                                                        onClick={() => selectSKU(idx, sku)}
-                                                                        className="w-full text-left p-2 hover:bg-orange-500/20 rounded-md transition-all group/btn"
-                                                                    >
-                                                                        <div className="font-bold text-white text-[10px]">{sku.nome}</div>
-                                                                        <div className="text-zinc-500 text-[9px] flex justify-between">
-                                                                            <span>{sku.codigo}</span>
-                                                                            <span className="text-orange-500 opacity-0 group-hover/btn:opacity-100 font-bold">VINCULAR</span>
-                                                                        </div>
-                                                                    </button>
-                                                                )) : searchQuery.length > 1 && (
-                                                                    <div className="p-4 text-center text-zinc-600 italic text-[10px]">Nenhum SKU encontrado</div>
-                                                                )}
-                                                            </div>
-                                                            <Button size="sm" variant="ghost" className="mt-1 h-6 text-[9px]" onClick={() => setActiveSearchIdx(null)}>Cancelar</Button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-between p-1 hover:bg-zinc-800/50 rounded-lg transition-all cursor-pointer group/sku" 
-                                                             onClick={() => setActiveSearchIdx(idx)}>
-                                                            <div className="flex flex-col">
-                                                                {item.sku_encontrado ? (
-                                                                    <span className="text-emerald-500 font-bold flex items-center gap-1">
-                                                                        {item.sku_encontrado}
-                                                                        <CheckCircle2 className="w-3 h-3" />
-                                                                    </span>
-                                                                ) : item.sku_informado ? (
-                                                                    <span className="text-zinc-400 line-through opacity-50">{item.sku_informado}</span>
-                                                                ) : (
-                                                                    <span className="text-zinc-600 italic">Pendente</span>
-                                                                )}
-                                                            </div>
-                                                            <Search className="w-3 h-3 text-zinc-700 group-hover/sku:text-orange-500 transition-colors" />
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="p-2 pr-4 text-right">
-                                                    <button onClick={() => removeItem(idx)} className="p-2 text-zinc-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center p-6 bg-zinc-950 rounded-2xl border border-zinc-900 shadow-xl">
-                            <div className="flex gap-6">
-                                <div className="flex flex-col">
-                                    <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider">Mapeados</span>
-                                    <span className="text-xl text-emerald-500 font-black">
-                                        {items.filter(i => i.produto_id).length}
-                                    </span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider">Pendentes</span>
-                                    <span className="text-xl text-amber-500 font-black">
-                                        {items.filter(i => !i.produto_id).length}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <Button variant="outline" className="px-8 border-zinc-800 text-zinc-400 hover:text-white" onClick={onClose} disabled={status === 'saving'}>
-                                    Cancelar
-                                </Button>
-                                <Button 
-                                    className="bg-orange-600 hover:bg-orange-700 px-8 font-bold text-white shadow-lg shadow-orange-900/20 disabled:opacity-50" 
-                                    onClick={handleConfirmarImportacao}
-                                    disabled={status === 'saving'}
-                                >
-                                    {status === 'saving' ? 'Importando...' : 'Adicionar ao Orçamento'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </Modal>
-    );
+interface ImportarCSVProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddItems: (items: any[]) => Promise<any>;
+  orcamentoId: string;
 }
 
+type ImportStatus = 'idle' | 'parsing' | 'review' | 'saving' | 'success' | 'error';
+
+export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: ImportarCSVProps) {
+  const [items, setItems] = useState<any[]>([]);
+  const [status, setStatus] = useState<ImportStatus>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setStatus('parsing');
+    setError(null);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        console.log(`📄 [ImportarCSV] Arquivo parseado: ${results.data.length} linhas`);
+        
+        // Mapeamento inteligente de colunas (Novo layout + Fallbacks)
+        const mappedData = results.data
+          .filter((row: any) => row.Designação || row.nome || row.SKU)
+          .map((row: any) => ({
+            nome: row['Designação'] || row.designacao || row.nome || row.Description || 'Item sem nome',
+            quantidade: parseFloat(row['Quantidade'] || row.Qtd || row.quantidade || row.Quantity || '0'),
+            largura: row['Largura'] || row.Larg || row.largura || row.Width || '',
+            altura: row['Comprimento'] || row.Comp || row.altura || row.Length || '',
+            espessura: row['Espessura'] || row.Esp || row.espessura || row.Thickness || '',
+            material: row['Descrição do material'] || row.Material || row.material || '',
+            sku_informado: row['SKU'] || row['SKU Banco'] || row.sku || ''
+          }));
+
+        const filtered = mappedData.filter(i => i.quantidade > 0);
+        
+        if (filtered.length > 0) {
+          try {
+            console.log(`🔍 [ImportarCSV] Buscando SKUs para ${filtered.length} itens...`);
+            const matchResponse = await fetch('/api/match-skus', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ itens: filtered })
+            });
+            const matchResult = await matchResponse.json();
+            
+            if (matchResult.success) {
+              console.log("✅ [ImportarCSV] SKUs reconhecidos!");
+              // Transformar o formato do match-skus para o esperado pelo importar-itens
+              const enriched = matchResult.data.map((it: any) => ({
+                ...it,
+                match_sugerido: it.produto_id ? {
+                  sku_componente_id: it.produto_id,
+                  nome: it.sku_encontrado,
+                  custoUnitario: it.custoUnitario
+                } : null
+              }));
+              setItems(enriched);
+            } else {
+              setItems(filtered);
+            }
+          } catch (err) {
+            console.warn("⚠️ [ImportarCSV] Erro ao buscar SKUs, prosseguindo sem match:", err);
+            setItems(filtered);
+          }
+        }
+
+        setStatus('review');
+      },
+      error: (err) => {
+        console.error('❌ [ImportarCSV] Erro no parse:', err);
+        setError(`Erro ao ler arquivo: ${err.message}`);
+        setStatus('error');
+      }
+    });
+  };
+
+  const handleConfirmarImportacao = async () => {
+    if (items.length === 0) return;
+    
+    setStatus('saving');
+    setError(null);
+
+    try {
+      console.log(`📤 [ImportarCSV] Chamando callback onAddItems com ${items.length} itens...`);
+      
+      // O Callback deve ser o importItems do useOrcamento que já faz o refetch
+      const success = await onAddItems(items);
+
+      if (success) {
+        console.log(`✅ [ImportarCSV] Processo concluído!`);
+        setStatus('success');
+        setTimeout(() => {
+          onClose();
+          setStatus('idle');
+          setItems([]);
+        }, 1500);
+      } else {
+        throw new Error('O servidor retornou erro ao processar os itens.');
+      }
+    } catch (err: any) {
+      console.error('❌ [ImportarCSV] Falha na persistência:', err);
+      setError(err.message || 'Erro ao salvar itens no banco de dados.');
+      setStatus('error');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
+      <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        
+        {/* Header */}
+        <div className="p-8 border-b border-zinc-900 flex justify-between items-center bg-zinc-900/20">
+          <div>
+            <h2 className="text-2xl font-black text-white flex items-center gap-3">
+              <Upload className="w-6 h-6 text-orange-500" />
+              Importar Projeto <span className="text-orange-500">SketchUp</span>
+            </h2>
+            <p className="text-zinc-500 text-xs mt-1 uppercase tracking-widest font-bold">Injeção Industrial de Dados via CSV</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
+            disabled={status === 'saving'}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8">
+          {status === 'idle' || status === 'error' ? (
+            <div className="h-full flex flex-col items-center justify-center">
+              {error && (
+                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 w-full max-w-md">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p className="text-sm font-bold">{error}</p>
+                </div>
+              )}
+              
+              <label className="group relative w-full max-w-xl h-64 border-2 border-dashed border-zinc-800 rounded-[40px] flex flex-col items-center justify-center cursor-pointer hover:border-orange-500/50 hover:bg-orange-500/5 transition-all duration-500">
+                <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                  <FileText className="w-10 h-10 text-zinc-700 group-hover:text-orange-500" />
+                </div>
+                <p className="text-white font-black text-lg">Selecione o arquivo CSV</p>
+                <p className="text-zinc-600 text-xs mt-2 font-bold uppercase tracking-tighter">Exportação do CutList Plus ou SketchUp</p>
+              </label>
+            </div>
+          ) : null}
+
+          {status === 'parsing' && (
+            <div className="h-full flex flex-col items-center justify-center gap-4">
+              <div className="w-16 h-16 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+              <p className="text-orange-500 font-black animate-pulse uppercase tracking-[0.3em]">Analisando Estrutura...</p>
+            </div>
+          )}
+
+          {status === 'review' && (
+            <div className="space-y-6">
+              <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                  <span className="text-orange-500 font-bold">{items.length} itens detectados no arquivo</span>
+                </div>
+                <Button variant="ghost" className="text-xs font-black uppercase text-zinc-500 hover:text-white" onClick={() => setStatus('idle')}>
+                  Trocar Arquivo
+                </Button>
+              </div>
+
+              <div className="border border-zinc-900 rounded-2xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-zinc-900/50 text-zinc-500 font-black uppercase tracking-widest">
+                    <tr>
+                      <th className="px-6 py-4">Item / Designação</th>
+                      <th className="px-6 py-4 text-center">Qtd</th>
+                      <th className="px-6 py-4">Dimensões (LxAxE)</th>
+                      <th className="px-6 py-4">Material</th>
+                      <th className="px-6 py-4">SKU / Vínculo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900">
+                    {items.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4 font-bold text-white uppercase">{item.nome}</td>
+                        <td className="px-6 py-4 text-center font-black text-orange-500">{item.quantidade}</td>
+                        <td className="px-6 py-4 text-zinc-400 font-mono">
+                          {item.largura} x {item.altura} x {item.espessura}
+                        </td>
+                        <td className="px-6 py-4 text-zinc-500 italic">{item.material || '-'}</td>
+                        <td className="px-6 py-4">
+                          {item.match_sugerido ? (
+                            <div className="flex flex-col">
+                              <span className="text-green-500 font-bold">{item.match_sugerido.nome}</span>
+                              <span className="text-[10px] text-zinc-600 uppercase">Reconhecido</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col">
+                              <span className="text-zinc-500">{item.sku_informado || '-'}</span>
+                              <span className="text-[10px] text-red-500/50 uppercase">Não encontrado</span>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {status === 'saving' && (
+            <div className="h-full flex flex-col items-center justify-center gap-6">
+              <div className="relative">
+                <div className="w-24 h-24 border-8 border-orange-500/10 border-t-orange-500 rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-orange-500 animate-bounce" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-white font-black text-2xl uppercase italic italic tracking-tighter">Sincronizando Banco de Dados</p>
+                <p className="text-zinc-500 text-sm mt-2">Gravando itens e vinculando SKUs industriais...</p>
+              </div>
+            </div>
+          )}
+
+          {status === 'success' && (
+            <div className="h-full flex flex-col items-center justify-center gap-4">
+              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-500">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+              <p className="text-green-500 font-black text-xl uppercase tracking-widest">Importação Concluída!</p>
+              <p className="text-zinc-500">O orçamento foi atualizado com sucesso.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {status === 'review' && (
+          <div className="p-8 border-t border-zinc-900 bg-zinc-900/20 flex justify-end gap-4">
+            <Button variant="ghost" className="px-8 font-bold text-zinc-500" onClick={onClose}>Cancelar</Button>
+            <Button 
+              className="bg-orange-600 hover:bg-orange-700 text-white font-black px-12 h-14 text-lg shadow-xl shadow-orange-900/20"
+              onClick={handleConfirmarImportacao}
+            >
+              Confirmar Importação
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
