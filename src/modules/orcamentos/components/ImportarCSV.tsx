@@ -86,15 +86,18 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: {
                 return;
             }
 
-            await onAddItems(validItems);
-            onClose();
+            // Chamar o callback do pai (OrcamentoForm) para adicionar e recarregar
+            if (onAddItems) {
+                await onAddItems(validItems);
+            }
             
-            const unmapped = items.filter(i => !i.produto_id).length;
-            alert(`Sucesso! ${validItems.length} itens importados.${unmapped > 0 ? `\nNota: ${unmapped} itens estão sem SKU definido e precisarão ser vinculados manualmente no orçamento.` : ''}`);
+            console.log(`✅ [ImportarCSV] Sucesso: ${validItems.length} itens processados.`);
+            alert(`Sucesso! ${validItems.length} itens importados e orçamento recalculado.`);
+            onClose();
 
         } catch (error: any) {
-            console.error('❌ [ImportarCSV] Erro:', error);
-            alert(`Erro ao importar: ${error.message}`);
+            console.error('[ImportarCSV] Erro na importação:', error);
+            alert(error.message || 'Erro ao importar itens. Verifique o console.');
         } finally {
             setStatus('review');
         }

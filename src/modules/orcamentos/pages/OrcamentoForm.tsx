@@ -8,8 +8,10 @@ import { useOrcamento } from '../hooks/useOrcamento';
 import { ListaExplodidaGrid } from '../components/ListaExplodidaGrid';
 import { ImportarProjeto } from '../components/ImportarProjeto';
 import { ResumoFinanceiro } from '../components/ResumoFinanceiro';
+import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { exportBudgetToPDF } from '../services/export-pdf';
 import { api } from '@/lib/api';
+import { debounce } from 'lodash';
 
 export default function OrcamentoForm() {
     // Pegar ID da URL se existir (Simulando roteamento)
@@ -18,23 +20,41 @@ export default function OrcamentoForm() {
 
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
-        importItems, removeItem, updateItemExplosion, error 
+        importItems, updateItem, removerItem, updateItemExplosion, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [expandedItem, setExpandedItem] = useState<string | null>(null);
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Estados locais para campos comerciais (Debounce / Blur)
+    const [localComercial, setLocalComercial] = useState({
+        margemLucroPercentual: 0,
+        taxaFinanceiraPercentual: 0,
+        validadeDias: 0,
+        clienteId: ''
+    });
+
+    useEffect(() => {
+        if (orcamento) {
+            setLocalComercial({
+                margemLucroPercentual: Number(orcamento.margemLucroPercentual),
+                taxaFinanceiraPercentual: Number(orcamento.taxaFinanceiraPercentual),
+                validadeDias: Number(orcamento.validadeDias),
+                clienteId: orcamento.clienteId || ''
+            });
+        }
+    }, [orcamento]);
+
     useEffect(() => {
         api.clients.list().then(setClients).catch(console.error);
-
-        // Busca inicial de SKUs (limitada)
         api.engineering.list().then(setSkus).catch(console.error);
     }, [orcamentoId]);
 
-    // Busca de SKU reativa (Debounced simplificado)
+    // Busca de SKU reativa (Debounced)
     useEffect(() => {
         if (searchTerm.length > 2) {
             const timer = setTimeout(() => {
@@ -48,6 +68,10 @@ export default function OrcamentoForm() {
         }
     }, [searchTerm]);
 
+    const handleUpdateHeader = async (updates: any) => {
+        await setHeader(updates);
+    };
+
     const handleCreateDraft = async () => {
         try {
             const res = await inicializar({ 
@@ -55,9 +79,8 @@ export default function OrcamentoForm() {
                 margemLucroPercentual: 30,
                 validadeDias: 15
             });
-            // Atualizar URL (Simulado)
             window.history.pushState({}, '', `?id=${res.id}`);
-            window.location.reload(); // Forçar recarregamento para o hook pegar o ID
+            window.location.reload();
         } catch (err) {
             alert('Erro ao criar rascunho');
         }
@@ -127,17 +150,24 @@ export default function OrcamentoForm() {
                         <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
                             Orçamento <span className="text-orange-500">{orcamento?.numeroOrcamento || '...'}</span>
                         </h1>
-                        <p className="text-zinc-500 text-sm mt-1">Status: <span className="text-orange-500 font-bold">{orcamento?.status || 'CARREGANDO'}</span></p>
+                        <p className="text-zinc-500 text-sm mt-1">Status: <span className="text-orange-500 font-bold uppercase">{orcamento?.status || 'CARREGANDO'}</span></p>
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <Button variant="outline" className="border-zinc-800 hover:bg-zinc-900" onClick={() => exportBudgetToPDF(orcamento)}>
+                    <Button 
+                        variant="outline" 
+                        className="border-zinc-800 hover:bg-zinc-900" 
+                        onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orcamentoId}`, '_blank')}
+                    >
                         <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
                     </Button>
                     <Button variant="outline" className="border-zinc-800 hover:bg-zinc-900" onClick={() => setIsImportModalOpen(true)}>
                         <Upload className="w-4 h-4 mr-2" /> Importar Projeto
                     </Button>
-                    <Button className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 shadow-lg shadow-orange-900/20">
+                    <Button 
+                        className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 shadow-lg shadow-orange-900/20"
+                        onClick={() => setIsSendModalOpen(true)}
+                    >
                         <CheckCircle2 className="w-4 h-4 mr-2" /> Enviar para Cliente
                     </Button>
                 </div>
@@ -157,9 +187,12 @@ export default function OrcamentoForm() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-zinc-600">Cliente</label>
                                     <select 
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-all appearance-none"
-                                        value={orcamento?.clienteId || ''}
-                                        onChange={(e) => setHeader({ clienteId: e.target.value })}
+                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-all appearance-none font-bold"
+                                        value={localComercial.clienteId}
+                                        onChange={(e) => {
+                                            setLocalComercial({ ...localComercial, clienteId: e.target.value });
+                                            handleUpdateHeader({ clienteId: e.target.value });
+                                        }}
                                     >
                                         <option value="">Selecione um cliente...</option>
                                         {clients.map(c => (
@@ -167,30 +200,36 @@ export default function OrcamentoForm() {
                                         ))}
                                     </select>
                                 </div>
-                                <Input 
-                                    label="Margem de Lucro (%)"
-                                    type="number"
-                                    value={orcamento?.margemLucroPercentual || 0}
-                                    onChange={(e) => setHeader({ margemLucroPercentual: parseFloat(e.target.value) || 0 })}
-                                    onBlur={(e) => setHeader({ margemLucroPercentual: parseFloat(e.target.value) || 0 })}
-                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
-                                />
-                                <Input 
-                                    label="Taxa Financeira (%)"
-                                    type="number"
-                                    value={orcamento?.taxaFinanceiraPercentual || 0}
-                                    onChange={(e) => setHeader({ taxaFinanceiraPercentual: parseFloat(e.target.value) || 0 })}
-                                    onBlur={(e) => setHeader({ taxaFinanceiraPercentual: parseFloat(e.target.value) || 0 })}
-                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
-                                />
-                                <Input 
-                                    label="Validade (Dias)"
-                                    type="number"
-                                    value={orcamento?.validadeDias || 0}
-                                    onChange={(e) => setHeader({ validadeDias: parseInt(e.target.value) || 0 })}
-                                    onBlur={(e) => setHeader({ validadeDias: parseInt(e.target.value) || 0 })}
-                                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-bold"
-                                />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Margem de Lucro (%)</label>
+                                    <Input 
+                                        type="number"
+                                        className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-black text-xl"
+                                        value={localComercial.margemLucroPercentual}
+                                        onChange={(e) => setLocalComercial({ ...localComercial, margemLucroPercentual: parseFloat(e.target.value) || 0 })}
+                                        onBlur={() => handleUpdateHeader({ margemLucroPercentual: localComercial.margemLucroPercentual })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Taxa Financeira (%)</label>
+                                    <Input 
+                                        type="number"
+                                        className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-black text-xl"
+                                        value={localComercial.taxaFinanceiraPercentual}
+                                        onChange={(e) => setLocalComercial({ ...localComercial, taxaFinanceiraPercentual: parseFloat(e.target.value) || 0 })}
+                                        onBlur={() => handleUpdateHeader({ taxaFinanceiraPercentual: localComercial.taxaFinanceiraPercentual })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold text-zinc-600">Validade (Dias)</label>
+                                    <Input 
+                                        type="number"
+                                        className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-black text-xl"
+                                        value={localComercial.validadeDias}
+                                        onChange={(e) => setLocalComercial({ ...localComercial, validadeDias: parseInt(e.target.value) || 0 })}
+                                        onBlur={() => handleUpdateHeader({ validadeDias: localComercial.validadeDias })}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -384,6 +423,15 @@ export default function OrcamentoForm() {
                 onClose={() => setIsImportModalOpen(false)} 
                 onAddItems={(items) => importItems(items)}
                 orcamentoId={orcamentoId || ''}
+            />
+
+            <ModalEnviarCliente 
+                isOpen={isSendModalOpen}
+                onClose={() => setIsSendModalOpen(false)}
+                orcamento={orcamento}
+                onSave={async () => {
+                    await handleUpdateHeader(localComercial);
+                }}
             />
         </div>
     );

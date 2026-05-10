@@ -104,12 +104,12 @@ export default async function handler(req: any, res: any) {
         const resItem = await db.execute(sql`
           INSERT INTO orcamento_itens (
             orcamento_id, nome_customizado, quantidade, 
-            largura, altura, espessura, 
+            largura, altura, espessura, material,
             custo_unitario_calculado, preco_venda_unitario, observacoes
           )
           VALUES (
             ${bit.orcamento_id}, ${bit.nome_customizado}, ${bit.quantidade}, 
-            ${bit.largura}, ${bit.altura}, ${bit.espessura}, 
+            ${bit.largura}, ${bit.altura}, ${bit.espessura}, ${bit.material},
             ${bit.custo_unitario_calculado}, ${bit.preco_venda_unitario}, ${bit.observacoes}
           )
           RETURNING id, quantidade
