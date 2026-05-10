@@ -386,7 +386,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         validComps.forEach(c => validComponentData.set(c.id, c));
 
                         // Busca em Materiais Comerciais (como fallback para identificação)
-                        const materials = await db.execute(sql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE id::text IN (${sql.join(skuIdsToCheck.map(id => sql`${id}`), sql`, `)})`);
+                        const materials = await db.execute(dsql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE id::text IN (${dsql.join(skuIdsToCheck.map(id => dsql`${id}`), dsql.raw(','))})`);
                         materials.rows.forEach((m: any) => validMaterialData.set(m.id, m));
                     }
 
