@@ -376,35 +376,48 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         .filter(Boolean);
 
                     const validComponentData = new Map<string, any>();
+                    const validMaterialData = new Map<string, any>();
+                    
                     if (skuIdsToCheck.length > 0) {
+                        // Busca em Componentes Industriais
                         const validComps = await db.select()
                             .from(skuComponente)
                             .where(inArray(skuComponente.id, skuIdsToCheck));
                         validComps.forEach(c => validComponentData.set(c.id, c));
+
+                        // Busca em Materiais Comerciais (como fallback para identificação)
+                        const materials = await db.execute(sql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE id::text IN (${sql.join(skuIdsToCheck.map(id => sql`${id}`), sql`, `)})`);
+                        materials.rows.forEach((m: any) => validMaterialData.set(m.id, m));
                     }
 
                     for (let i = 0; i < insertedItens.length; i++) {
                         const originalItem = items[i];
                         const skuId = originalItem.produto_id || originalItem.match_sugerido?.sku_componente_id || null;
                         
-                        // SÓ inserir na explodida se o SKU existir na tabela industrial de componentes
-                        const skuData = skuId ? validComponentData.get(skuId) : null;
+                        const skuData = skuId ? (validComponentData.get(skuId) || validMaterialData.get(skuId)) : null;
+                        
                         if (skuData) {
                             const precoDb = Number(skuData.precoUnitario || 0);
-                            bomToInsert.push({
-                                orcamentoItemId: insertedItens[i].id,
-                                skuComponenteId: skuId,
-                                quantidadeCalculada: (originalItem.quantidade || 1).toString(),
-                                quantidadeAjustada: (originalItem.quantidade || 1).toString(),
-                                custoUnitario: precoDb.toString(), // USA O PREÇO DO BANCO
-                                origem: 'IMPORT'
-                            });
+                            const skuCodigo = skuData.codigo || originalItem.match_sugerido?.nome || '';
 
-                            // Atualiza o custo do item principal também
+                            // Se for componente industrial, cria a BOM
+                            if (validComponentData.has(skuId)) {
+                                bomToInsert.push({
+                                    orcamentoItemId: insertedItens[i].id,
+                                    skuComponenteId: skuId,
+                                    quantidadeCalculada: (originalItem.quantidade || 1).toString(),
+                                    quantidadeAjustada: (originalItem.quantidade || 1).toString(),
+                                    custoUnitario: precoDb.toString(),
+                                    origem: 'IMPORT'
+                                });
+                            }
+
+                            // Atualiza o item principal com dados do SKU (independente de ser comercial ou industrial)
                             await db.update(orcamentoItens)
                                 .set({ 
                                     custoUnitarioCalculado: precoDb.toString(),
-                                    nomeCustomizado: originalItem.nome || skuData.nome 
+                                    nomeCustomizado: originalItem.nome || skuData.nome,
+                                    material: skuCodigo // SALVAMOS O CÓDIGO NO CAMPO MATERIAL PARA EXIBIÇÃO
                                 })
                                 .where(eq(orcamentoItens.id, insertedItens[i].id));
                         }
