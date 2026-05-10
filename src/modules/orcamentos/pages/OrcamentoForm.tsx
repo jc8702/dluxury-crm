@@ -61,6 +61,16 @@ export default function OrcamentoForm() {
                 if (res.success) setOrcamentosRecentes(res.data);
             })
             .catch(console.error);
+
+        // Abrir modal de importação se vier do fluxo "Criar e Importar"
+        const isImporting = urlParams.get('import') === 'true';
+        if (isImporting && orcamentoId) {
+            setIsImportModalOpen(true);
+            // Limpar o flag da URL sem reload
+            const newUrl = window.location.pathname + window.location.hash;
+            const cleanUrl = orcamentoId ? `${newUrl}?id=${orcamentoId}` : newUrl;
+            window.history.replaceState({}, '', cleanUrl);
+        }
     }, [orcamentoId]);
 
     // Busca de SKU reativa (Debounced)
@@ -146,8 +156,7 @@ export default function OrcamentoForm() {
                 margemLucroPercentual: 30,
                 validadeDias: 15
             });
-            window.history.pushState({}, '', `?id=${res.id}`);
-            // Forçar reload ou atualizar estado local? Vamos dar reload para garantir sync
+            window.history.pushState({}, '', `?id=${res.id}&import=true`);
             window.location.reload();
         } catch (err) {
             alert('Erro ao criar rascunho');
@@ -289,7 +298,15 @@ export default function OrcamentoForm() {
             {/* Header Sticky */}
             <div className="flex justify-between items-start mb-8">
                 <div className="flex items-center gap-6">
-                    <Button variant="ghost" size="icon" className="bg-zinc-900 border border-zinc-800 rounded-xl" onClick={() => window.history.back()}>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl" 
+                        onClick={() => {
+                            window.history.pushState({}, '', window.location.pathname + window.location.hash);
+                            window.location.reload();
+                        }}
+                    >
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
                     <div>

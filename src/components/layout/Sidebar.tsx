@@ -70,6 +70,12 @@ const Sidebar: React.FC = () => {
                   <Link
                     key={item.id}
                     to={'/' + item.path}
+                    onClick={() => {
+                        // Limpar query params ao navegar pelo menu principal
+                        if (window.location.search) {
+                            window.history.pushState({}, '', window.location.pathname + window.location.hash);
+                        }
+                    }}
                     className={`menu-item ${isActive ? 'active' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                     title={item.label}
