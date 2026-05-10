@@ -29,6 +29,7 @@ export default function OrcamentoForm() {
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [orcamentosRecentes, setOrcamentosRecentes] = useState<any[]>([]);
 
     // Estados locais para campos comerciais (Debounce / Blur)
     const [localComercial, setLocalComercial] = useState({
@@ -52,6 +53,14 @@ export default function OrcamentoForm() {
     useEffect(() => {
         api.clients.list().then(setClients).catch(console.error);
         api.engineering.list().then(setSkus).catch(console.error);
+        
+        // Carregar orçamentos recentes
+        fetch('/api/orcamentos-pro')
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) setOrcamentosRecentes(res.data);
+            })
+            .catch(console.error);
     }, [orcamentoId]);
 
     // Busca de SKU reativa (Debounced)
@@ -130,21 +139,146 @@ export default function OrcamentoForm() {
         );
     }
 
+    const handleCreateAndImport = async () => {
+        try {
+            const res = await inicializar({ 
+                clienteId: null, 
+                margemLucroPercentual: 30,
+                validadeDias: 15
+            });
+            window.history.pushState({}, '', `?id=${res.id}`);
+            // Forçar reload ou atualizar estado local? Vamos dar reload para garantir sync
+            window.location.reload();
+        } catch (err) {
+            alert('Erro ao criar rascunho');
+        }
+    };
+
+    // Renderizar lista de orçamentos (utilizado tanto no estado limpo quanto no rodapé)
+    const renderListaRecentes = () => (
+        <Card className="bg-zinc-950 border-zinc-900 shadow-2xl overflow-hidden mt-12">
+            <CardHeader className="bg-zinc-900/50 border-b border-zinc-900/50 py-4 px-6 flex flex-row items-center justify-between">
+                <CardTitle className="text-xs uppercase tracking-[0.3em] text-zinc-400 flex items-center gap-3 font-black">
+                    <FileText className="w-4 h-4 text-orange-500" /> Orçamentos Recentes
+                </CardTitle>
+                <span className="text-[10px] font-bold text-zinc-600 bg-black px-3 py-1 rounded-full border border-zinc-900">
+                    {orcamentosRecentes.length} TOTAL
+                </span>
+            </CardHeader>
+            <CardContent className="p-0">
+                {orcamentosRecentes.length === 0 ? (
+                    <div className="p-12 text-center text-zinc-600 italic text-sm">
+                        Nenhum orçamento salvo ainda.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="border-b border-zinc-900 bg-zinc-900/20">
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Número</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Cliente</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center">Itens</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Total Venda</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orcamentosRecentes.map((orc: any) => (
+                                    <tr key={orc.id} className="border-b border-zinc-900 hover:bg-orange-600/5 transition-colors group">
+                                        <td className="px-6 py-4 font-black text-white italic group-hover:text-orange-500 transition-colors">
+                                            {orc.numeroOrcamento}
+                                        </td>
+                                        <td className="px-6 py-4 text-zinc-400 text-sm">
+                                            {clients.find(c => c.id === orc.clienteId)?.nome || 'Cliente não definido'}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="bg-zinc-900 text-zinc-500 text-[10px] font-black px-2 py-1 rounded border border-zinc-800">
+                                                {orc.itens?.length || 0}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-white">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orc.valorTotalVenda)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${
+                                                orc.status === 'APROVADO' ? 'bg-green-500/20 text-green-500' : 
+                                                orc.status === 'RASCUNHO' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-500'
+                                            }`}>
+                                                {orc.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="bg-zinc-900 border border-zinc-800 hover:bg-orange-600 hover:text-white"
+                                                onClick={() => {
+                                                    window.history.pushState({}, '', `?id=${orc.id}`);
+                                                    window.location.reload();
+                                                }}
+                                            >
+                                                Editar
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+
     if (!orcamentoId && !orcamento) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8">
-                <div className="max-w-md w-full bg-zinc-950 border border-zinc-900 rounded-3xl p-10 text-center shadow-2xl">
-                    <div className="w-20 h-20 bg-orange-600/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <FileText className="w-10 h-10 text-orange-500" />
+            <div className="min-h-screen bg-black text-white p-8">
+                <div className="max-w-6xl mx-auto space-y-8">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <h1 className="text-4xl font-black italic tracking-tighter text-white">
+                                ORÇAMENTOS <span className="text-orange-500">PRO</span>
+                            </h1>
+                            <p className="text-zinc-500 mt-2 font-medium">Gestão de orçamentos industriais e cálculos de engenharia.</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <Button 
+                                variant="outline"
+                                className="border-zinc-800 hover:bg-zinc-900 h-14 px-8 text-lg font-bold"
+                                onClick={handleCreateDraft}
+                            >
+                                <Plus className="w-5 h-5 mr-2" /> Novo Vazio
+                            </Button>
+                            <Button 
+                                className="bg-orange-600 hover:bg-orange-700 text-white font-black h-14 px-10 text-lg shadow-xl shadow-orange-900/20"
+                                onClick={handleCreateAndImport}
+                            >
+                                <Upload className="w-5 h-5 mr-2" /> Importar Projeto
+                            </Button>
+                        </div>
                     </div>
-                    <h2 className="text-2xl font-black text-white mb-2">Novo Orçamento</h2>
-                    <p className="text-zinc-500 mb-8">Inicie um novo orçamento profissional com cálculos de engenharia e BOM.</p>
-                    <Button 
-                        className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold h-14 text-lg"
-                        onClick={handleCreateDraft}
-                    >
-                        Criar Rascunho
-                    </Button>
+
+                    <div className="grid grid-cols-3 gap-6">
+                        <Card className="bg-zinc-950 border-zinc-900 p-6">
+                            <div className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-2">Total de Orçamentos</div>
+                            <div className="text-4xl font-black italic">{orcamentosRecentes.length}</div>
+                        </Card>
+                        <Card className="bg-zinc-950 border-zinc-900 p-6 border-l-orange-500 border-l-4">
+                            <div className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-2">Aguardando Aprovação</div>
+                            <div className="text-4xl font-black italic text-orange-500">
+                                {orcamentosRecentes.filter(o => o.status === 'RASCUNHO' || o.status === 'ENVIADO').length}
+                            </div>
+                        </Card>
+                        <Card className="bg-zinc-950 border-zinc-900 p-6 border-l-green-500 border-l-4">
+                            <div className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-2">Aprovados este Mês</div>
+                            <div className="text-4xl font-black italic text-green-500">
+                                {orcamentosRecentes.filter(o => o.status === 'APROVADO').length}
+                            </div>
+                        </Card>
+                    </div>
+
+                    {renderListaRecentes()}
                 </div>
             </div>
         );
@@ -423,12 +557,10 @@ export default function OrcamentoForm() {
                 </div>
             </div>
 
-            {/* Rodapé com Resumo Financeiro Real-Time */}
-            <ResumoFinanceiro resumo={{
-                custoTotal: Number(orcamento?.valorTotalCusto || 0),
-                vendaTotal: Number(orcamento?.valorTotalVenda || 0),
-                margemReal: Number(orcamento?.valorTotalVenda || 0) - Number(orcamento?.valorTotalCusto || 0)
-            }} />
+            {/* Lista de Orçamentos Recentes (Rodapé) */}
+            <div className="max-w-6xl mx-auto mt-20">
+                {renderListaRecentes()}
+            </div>
 
             <ImportarProjeto 
                 isOpen={isImportModalOpen} 
