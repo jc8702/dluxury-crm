@@ -190,7 +190,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     id: skuComponente.id, 
                     codigo: skuComponente.codigo, 
                     nome: skuComponente.nome, 
-                    preco: skuComponente.precoUnitario 
+                    precoUnitario: skuComponente.precoUnitario 
                 })
                 .from(skuComponente)
                 .where(or(ilike(skuComponente.codigo, `%${query}%`), ilike(skuComponente.nome, `%${query}%`)))
@@ -207,8 +207,8 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 .limit(limit);
 
                 const finalData = [
-                    ...comps.map(c => ({ ...c, preco: Number(c.preco || 0), tipo: 'COMPONENTE' })),
-                    ...engs.map(e => ({ ...e, preco: 0, tipo: 'ENGENHARIA' }))
+                    ...comps.map(c => ({ ...c, precoUnitario: Number(c.precoUnitario || 0), tipo: 'COMPONENTE' })),
+                    ...engs.map(e => ({ ...e, precoUnitario: 0, tipo: 'ENGENHARIA' }))
                 ];
 
                 console.log(`✅ [API PRO] Encontrados ${finalData.length} resultados.`);

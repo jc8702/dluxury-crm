@@ -78,8 +78,8 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   }, [isEditing, state.draft]);
 
   // 🧮 CÁLCULO FINANCEIRO (Markup Simples)
-  const recalculatePrices = (type: 'cost' | 'price' | 'margin', value: number) => {
-    const draft = { ...state.draft };
+  const recalculatePrices = (type: 'cost' | 'price' | 'margin', value: number, currentDraft?: any) => {
+    const draft = { ...(currentDraft || state.draft) };
     const cost = type === 'cost' ? value : draft.custoUnitarioCalculado;
     let price = type === 'price' ? value : draft.precoVendaUnitario;
     let margin = type === 'margin' ? value : draft.margemLucro;
@@ -95,15 +95,19 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         price = cost * (1 + (margin / 100));
     }
 
+    const newDraft = {
+        ...draft,
+        custoUnitarioCalculado: cost,
+        precoVendaUnitario: price,
+        margemLucro: margin,
+        precoVendaSobrescrito: type === 'price' ? price : draft.precoVendaSobrescrito
+    };
+
+    if (currentDraft) return newDraft; // Retorna para uso síncrono
+
     setState(prev => ({
         ...prev,
-        draft: {
-            ...prev.draft,
-            custoUnitarioCalculado: cost,
-            precoVendaUnitario: price,
-            margemLucro: margin,
-            precoVendaSobrescrito: type === 'price' ? price : prev.draft.precoVendaSobrescrito
-        },
+        draft: newDraft,
         hasChanges: true
     }));
   };
@@ -155,14 +159,21 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   };
 
   // Descrição Oficial (Herdada do SKU Mapeado)
-  const currentSKU = isEditing ? state.draft.skuCodigo : item.skuCodigo;
-  const currentDesc = isEditing ? state.draft.skuDescricao : (item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao);
+  const currentSKU = (isEditing ? state.draft.skuCodigo : item.skuCodigo) || '';
+  const currentDesc = (isEditing ? state.draft.skuDescricao : (item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao)) || '';
   
   const tituloExibicao = item.nomeCustomizado || 'Item sem nome';
+  
   // Unificar SKU-Descrição para evitar redundância (ex: FRG-0003 - FRG-0003)
-  const skuLimpo = currentSKU || '';
-  const descLimpa = currentDesc && currentDesc !== skuLimpo ? currentDesc : '';
-  const subtituloExibicao = descLimpa ? `${skuLimpo} - ${descLimpa}` : skuLimpo;
+  const skuLimpo = currentSKU.trim();
+  let descLimpa = currentDesc.trim();
+  
+  // Remover o SKU do início da descrição se ele já estiver lá (evita SKU - SKU - Descrição)
+  const prefixoRemover = new RegExp(`^${skuLimpo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*[-–—:]*\\s*`, 'i');
+  descLimpa = descLimpa.replace(prefixoRemover, '').trim();
+  
+  const isIdentical = descLimpa.toUpperCase() === skuLimpo.toUpperCase() || descLimpa === '';
+  const subtituloExibicao = isIdentical ? skuLimpo : (skuLimpo ? `${skuLimpo} - ${descLimpa}` : descLimpa);
 
   const precoTotal = (state.draft.precoVendaUnitario || 0) * (state.draft.quantidade || 0);
   const temSKU = !!item.skuComponenteId || !!item.skuEngenhariaId || !!item.skuCodigo;
@@ -244,19 +255,25 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                             onSelect={(sku) => {
                                 console.log("[ItemCard] 🔍 Novo SKU selecionado:", sku);
                                 const novoCusto = Number(sku.precoUnitario) || 0;
+                                
+                                // Criar novo rascunho com o SKU atualizado
+                                const updatedDraft = {
+                                    ...state.draft,
+                                    skuId: sku.id,
+                                    skuCodigo: sku.codigo,
+                                    skuDescricao: sku.nome,
+                                    skuTipo: (sku as any).tipo,
+                                    custoUnitarioCalculado: novoCusto
+                                };
+
+                                // Recalcular preços sincronamente usando o novo rascunho
+                                const finalDraft = recalculatePrices('cost', novoCusto, updatedDraft);
+
                                 setState(prev => ({
                                     ...prev,
-                                    draft: {
-                                        ...prev.draft,
-                                        skuId: sku.id,
-                                        skuCodigo: sku.codigo,
-                                        skuDescricao: sku.nome,
-                                        skuTipo: (sku as any).tipo,
-                                        custoUnitarioCalculado: novoCusto
-                                    }
+                                    draft: finalDraft,
+                                    hasChanges: true
                                 }));
-                                // Forçar recalculo baseado no novo custo
-                                recalculatePrices('cost', novoCusto);
                             }}
                             defaultValue={state.draft.skuCodigo}
                         />
