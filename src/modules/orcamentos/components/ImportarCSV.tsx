@@ -33,18 +33,31 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
         
         // Mapeamento inteligente de colunas (Novo layout + Fallbacks)
         const mappedData = results.data
-          .filter((row: any) => row.Designação || row.nome || row.SKU)
-          .map((row: any) => ({
-            nome: row['Designação'] || row.designacao || row.nome || row.Description || 'Item sem nome',
-            quantidade: parseFloat(row['Quantidade'] || row.Qtd || row.quantidade || row.Quantity || '0'),
-            largura: row['Largura'] || row.Larg || row.largura || row.Width || '',
-            altura: row['Comprimento'] || row.Comp || row.altura || row.Length || '',
-            espessura: row['Espessura'] || row.Esp || row.espessura || row.Thickness || '',
-            material: row['Descrição do material'] || row.Material || row.material || '',
-            sku_informado: row['SKU'] || row['SKU Banco'] || row.sku || ''
-          }));
+          .map((row: any) => {
+            // Normalizar nomes de colunas (case-insensitive e trim)
+            const getVal = (keys: string[]) => {
+              const foundKey = Object.keys(row).find(k => keys.some(key => k.toLowerCase().trim() === key.toLowerCase()));
+              return foundKey ? row[foundKey] : null;
+            };
 
-        const filtered = mappedData.filter(i => i.quantidade > 0);
+            const nome = getVal(['Designação', 'designacao', 'nome', 'Description', 'Item', 'Component']) || 'Item sem nome';
+            
+            // Tratar quantidade com suporte a vírgula decimal
+            let qtdStr = getVal(['Quantidade', 'Qtd', 'quantidade', 'Quantity', 'Count']) || '0';
+            if (typeof qtdStr === 'string') qtdStr = qtdStr.replace(',', '.');
+            const quantidade = parseFloat(qtdStr);
+
+            // Dimensões e Material
+            const largura = getVal(['Largura', 'Larg', 'largura', 'Width']) || '';
+            const altura = getVal(['Comprimento', 'Comp', 'altura', 'Length', 'Height']) || '';
+            const espessura = getVal(['Espessura', 'Esp', 'espessura', 'Thickness']) || '';
+            const material = getVal(['Descrição do material', 'Material', 'material', 'Finish']) || '';
+            const sku_informado = getVal(['SKU', 'SKU Banco', 'sku', 'Part Number']) || '';
+
+            return { nome, quantidade, largura, altura, espessura, material, sku_informado };
+          });
+
+        const filtered = mappedData.filter(i => i.quantidade > 0 && i.nome !== 'Item sem nome');
         
         if (filtered.length > 0) {
           try {
@@ -94,13 +107,27 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
     setError(null);
 
     try {
-      console.log(`📤 [ImportarCSV] Chamando callback onAddItems com ${items.length} itens...`);
+      console.log(`📤 [ImportarCSV] Preparando payload para ${items.length} itens...`);
       
-      // O Callback deve ser o importItems do useOrcamento que já faz o refetch
-      const success = await onAddItems(items);
+      // Validação prévia de sanidade dos itens
+      const sanitizedItems = items.map((it, idx) => {
+        const q = parseFloat(it.quantidade);
+        if (isNaN(q)) console.warn(`⚠️ [ImportarCSV] Item ${idx} (${it.nome}) com quantidade inválida:`, it.quantidade);
+        return {
+          ...it,
+          quantidade: isNaN(q) ? 1 : q,
+          // Garantir que não existam campos nulos críticos
+          nome: it.nome || 'Sem Nome',
+          sku_id: it.sku_id || it.produto_id || it.match_sugerido?.sku_componente_id || null
+        };
+      });
+
+      console.log(`📤 [ImportarCSV] Payload sanitizado:`, sanitizedItems);
+      
+      const success = await onAddItems(sanitizedItems);
 
       if (success) {
-        console.log(`✅ [ImportarCSV] Processo concluído!`);
+        console.log(`✅ [ImportarCSV] Importação confirmada pelo servidor.`);
         setStatus('success');
         setTimeout(() => {
           onClose();
@@ -108,11 +135,16 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
           setItems([]);
         }, 1500);
       } else {
-        throw new Error('O servidor retornou erro ao processar os itens.');
+        // Se success for false, o erro já deve ter sido alertado pelo useOrcamento ou capturado aqui
+        throw new Error('Falha na persistência dos itens. Verifique os logs do servidor.');
       }
     } catch (err: any) {
-      console.error('❌ [ImportarCSV] Falha na persistência:', err);
-      setError(err.message || 'Erro ao salvar itens no banco de dados.');
+      console.error('❌ [ImportarCSV] Falha crítica na confirmação:', {
+        message: err.message,
+        stack: err.stack,
+        itemsCount: items.length
+      });
+      setError(err.message || 'Erro ao processar importação. Tente novamente.');
       setStatus('error');
     }
   };

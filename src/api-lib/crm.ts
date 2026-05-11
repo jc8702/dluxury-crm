@@ -15,8 +15,8 @@ export async function handleClients(req: any, res: any) {
       const comodosStr = Array.isArray(f.comodos_interesse) ? f.comodos_interesse.join(', ') : (f.comodos_interesse || '');
       
       // Tratar CNPJ/CPF vazios como NULL para evitar duplicates
-      const cnpjVal = f.cnpj && f.cnpj.length > 0 ? f.cnpj : null;
-      const cpfVal = f.cpf && f.cpf.length > 0 ? f.cpf : null;
+      const cnpjVal = f.cnpj?.trim() ? f.cnpj.trim() : null;
+      const cpfVal = f.cpf?.trim() ? f.cpf.trim() : null;
       
       const result = await sql`
         INSERT INTO clients (
@@ -46,10 +46,13 @@ export async function handleClients(req: any, res: any) {
       const before = await sql`SELECT * FROM clients WHERE id = ${id}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
 
+      const cnpjVal = f.cnpj?.trim() ? f.cnpj.trim() : null;
+      const cpfVal = f.cpf?.trim() ? f.cpf.trim() : null;
+
       const result = await sql`
         UPDATE clients SET 
           nome = COALESCE(${f.nome}, nome), 
-          cpf = COALESCE(${f.cpf}, cpf), 
+          cpf = COALESCE(${cpfVal}, cpf), 
           telefone = COALESCE(${f.telefone}, telefone), 
           email = COALESCE(${f.email}, email), 
           endereco = COALESCE(${f.endereco}, endereco), 
@@ -62,6 +65,7 @@ export async function handleClients(req: any, res: any) {
           observacoes = COALESCE(${f.observacoes}, observacoes), 
           status = COALESCE(${f.status}, status), 
           razao_social = COALESCE(${f.razao_social}, razao_social),
+          cnpj = COALESCE(${cnpjVal}, cnpj),
           municipio = COALESCE(${f.cidade}, municipio),
           situacao_cadastral = COALESCE(${f.status === 'ativo' ? 'ATIVA' : f.status === 'inativo' ? 'INATIVA' : null}, situacao_cadastral)
         WHERE id = ${id} RETURNING *
@@ -91,7 +95,12 @@ export async function handleClients(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+        ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
+        : err.message 
+    });
   }
 }
 
@@ -137,7 +146,12 @@ export async function handleKanban(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+        ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
+        : err.message 
+    });
   }
 }
 
@@ -157,6 +171,11 @@ export async function handleGoals(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+        ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
+        : err.message 
+    });
   }
 }

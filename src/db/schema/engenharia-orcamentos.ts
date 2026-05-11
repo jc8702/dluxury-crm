@@ -93,10 +93,24 @@ export const orcamentoItens = pgTable('orcamento_itens', {
     skuComponenteId: uuid('sku_componente_id').references(() => skuComponente.id),
     skuCodigo: varchar('sku_codigo', { length: 100 }),
     skuDescricao: text('sku_descricao'),
+    unidadeMedida: varchar('unidade_medida', { length: 20 }).default('UN'),
     custoUnitarioCalculado: decimal('custo_unitario_calculado', { precision: 12, scale: 2 }),
     precoVendaUnitario: decimal('preco_venda_unitario', { precision: 12, scale: 2 }),
+    
+    // Novos campos para Precificação Dinâmica e Overrides
+    custoBaseEstoque: decimal('custo_base_estoque', { precision: 12, scale: 2 }),
+    custoSobrescrito: decimal('custo_sobrescrito', { precision: 12, scale: 2 }),
+    precoVendaSobrescrito: decimal('preco_venda_sobrescrito', { precision: 12, scale: 2 }),
+    markup: decimal('markup', { precision: 10, scale: 4 }),
+    margemLucro: decimal('margem_lucro', { precision: 10, scale: 4 }),
+    
+    origemDados: varchar('origem_dados', { length: 50 }).default('CSV'),
+    possuiOverride: boolean('possui_override').default(false),
+    metadata: jsonb('metadata').default({}),
+    
     observacoes: text('observacoes'),
     createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const orcamentoListaExplodida = pgTable('orcamento_lista_explodida', {
@@ -127,13 +141,19 @@ export const orcamentosRelations = relations(orcamentos, ({ one, many }) => ({
     cliente: one(clientes, { fields: [orcamentos.clienteId], references: [clientes.id] }),
 }));
 
+export const skuComponenteRelations = relations(skuComponente, ({ many }) => ({
+    itensOrcamento: many(orcamentoItens),
+    itensListaExplodida: many(orcamentoListaExplodida),
+}));
+
 export const orcamentoItensRelations = relations(orcamentoItens, ({ one, many }) => ({
     orcamento: one(orcamentos, { fields: [orcamentoItens.orcamentoId], references: [orcamentos.id] }),
     skuEngenharia: one(skuEngenharia, { fields: [orcamentoItens.skuEngenhariaId], references: [skuEngenharia.id] }),
+    skuComponente: one(skuComponente, { fields: [orcamentoItens.skuComponenteId], references: [skuComponente.id] }),
     listaExplodida: many(orcamentoListaExplodida),
 }));
-export const orcamentoListaExplodidaRelations = relations(orcamentoListaExplodida, ({ one }) => ({ 
-    item: one(orcamentoItens, { fields: [orcamentoListaExplodida.orcamentoItemId], references: [orcamentoItens.id] }), 
+export const orcamentoListaExplodidaRelations = relations(orcamentoListaExplodida, ({ one }) => ({
+    item: one(orcamentoItens, { fields: [orcamentoListaExplodida.orcamentoItemId], references: [orcamentoItens.id] }),
     componente: one(skuComponente, { fields: [orcamentoListaExplodida.skuComponenteId], references: [skuComponente.id] }),
 }));
 

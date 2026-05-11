@@ -50,7 +50,7 @@ export function useOrcamento(orcamentoId?: string) {
         espessura: item.espessura?.toString() || ''
     }));
 
-    console.log(`📤 [useOrcamento] Iniciando importação via API com ${normalizedItems.length} itens...`);
+    console.log(`📤 [useOrcamento] Enviando request de importação (${normalizedItems.length} itens)...`);
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=import-items`, {
         method: 'PUT',
@@ -61,21 +61,17 @@ export function useOrcamento(orcamentoId?: string) {
       const result = await response.json();
       
       if (result.success) {
-        console.log("✅ [useOrcamento] Importação OK, forçando recarregamento profundo...");
-        // O SEGREDO: Aguardar o recarregamento completo e garantir que o estado local foi atualizado
-        const newData = await carregar(orcamentoId); 
-        if (newData) {
-            console.log("🔄 [useOrcamento] Interface sincronizada com novos itens.");
-            return true;
-        }
+        console.log("✅ [useOrcamento] Importação concluída com sucesso!");
+        await carregar(orcamentoId); 
+        return true;
+      } else {
+        console.error("❌ [useOrcamento] Erro retornado pela API:", result.error);
+        alert(`Erro na importação: ${result.error || 'Erro desconhecido no servidor'}`);
+        return false;
       }
-      
-      if (result.error) {
-        alert(`Erro na importação: ${result.error}`);
-      }
-      return false;
-    } catch (err) {
-      console.error("❌ [useOrcamento] Erro na importação:", err);
+    } catch (err: any) {
+      console.error("❌ [useOrcamento] Falha na comunicação com a API:", err);
+      alert(`Erro de rede ou conexão: ${err.message}`);
       return false;
     }
   }, [orcamentoId, carregar]);
@@ -190,23 +186,86 @@ export function useOrcamento(orcamentoId?: string) {
     }
   }, [orcamentoId, carregar]);
 
-  // ✅ TROCAR SKU DO ITEM (Com Re-explosão)
-  const updateItemSku = useCallback(async (itemId: string, skuId: string, tipo: string) => {
+  // ✅ ATUALIZAR SKU
+  const updateItemSku = useCallback(async (itemId: string, skuId: string) => {
     if (!orcamentoId) return;
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-sku`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, skuId, tipo })
+        body: JSON.stringify({ itemId, skuId })
       });
       const result = await response.json();
       if (result.success) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao trocar SKU:", err);
+      console.error("❌ [useOrcamento] Erro ao atualizar SKU:", err);
     }
   }, [orcamentoId, carregar]);
+  
+  // ✅ ATUALIZAÇÃO EM MASSA (Bulk Update)
+  const bulkUpdateItems = useCallback(async (itemIds: string[], updates: any) => {
+    if (!orcamentoId || itemIds.length === 0) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=bulk-update-items`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds, updates })
+      });
+      const result = await response.json();
+      if (result.success) {
+        await carregar(orcamentoId);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("❌ [useOrcamento] Erro em bulk update:", err);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [orcamentoId, carregar]);
+
+  // ✅ APLICAR MARGEM GLOBAL (Cabeçalho + Itens)
+  const applyGlobalMargin = useCallback(async (margem: number) => {
+    if (!orcamentoId) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=apply-global-margin`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ margem })
+      });
+      const result = await response.json();
+      if (result.success) {
+        await carregar(orcamentoId);
+        return result;
+      }
+      throw new Error(result.error);
+    } catch (err: any) {
+      console.error("❌ [useOrcamento] Erro ao aplicar margem global:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [orcamentoId, carregar]);
+
+  // ✅ DELETAR ORÇAMENTO COMPLETO
+  const deletarOrcamento = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/orcamentos-pro?id=${id}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+      if (result.success) return true;
+      throw new Error(result.error);
+    } catch (err: any) {
+      console.error("❌ [useOrcamento] Erro ao deletar orçamento:", err);
+      throw err;
+    }
+  }, []);
 
   // Efeito de carregamento inicial
   useEffect(() => {
@@ -227,6 +286,10 @@ export function useOrcamento(orcamentoId?: string) {
     removerItem,
     updateItemExplosion,
     updateItemSku,
+    bulkUpdateItems,
+    resetToGlobalMargin,
+    applyGlobalMargin,
+    deletarOrcamento,
     carregar: () => orcamentoId ? carregar(orcamentoId) : null
   };
 }

@@ -125,6 +125,10 @@ export default async function handler(req: any, res: any) {
       const { handleOrcamentosPro } = await import('../src/api-lib/orcamentos_pro.js');
       return await handleOrcamentosPro(req, res);
     }
+    if (cleanUrl.startsWith('/api/orcamentos/export-pdf')) {
+      const { default: handler } = await import('./orcamentos/exportar-pdf.js');
+      return await handler(req, res);
+    }
     if (cleanUrl.startsWith('/api/orcamentos')) {
       const { handleOrcamentos } = await import('../src/api-lib/orcamentos.js');
       return await handleOrcamentos(req, res);

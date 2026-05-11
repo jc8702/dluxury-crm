@@ -23,7 +23,8 @@ export default function OrcamentoForm() {
 
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
-        importItems, updateItem, removerItem, updateItemExplosion, updateItemSku, error 
+        importItems, updateItem, removerItem, updateItemExplosion, updateItemSku, 
+        bulkUpdateItems, resetToGlobalMargin, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -32,15 +33,25 @@ export default function OrcamentoForm() {
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [isBulkBarOpen, setIsBulkBarOpen] = useState(false);
+    const [bulkPercentage, setBulkPercentage] = useState(0);
     const [orcamentosRecentes, setOrcamentosRecentes] = useState<any[]>([]);
 
-    // Estados locais para campos comerciais (Debounce / Blur)
     const [localComercial, setLocalComercial] = useState({
         margemLucroPercentual: 0,
         taxaFinanceiraPercentual: 0,
         validadeDias: 0,
         clienteId: ''
     });
+
+    const [pagination, setPagination] = useState({
+        page: 1,
+        total: 0,
+        pages: 1,
+        limit: 10
+    });
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (orcamento) {
@@ -53,17 +64,24 @@ export default function OrcamentoForm() {
         }
     }, [orcamento]);
 
+    const fetchRecentes = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/orcamentos-pro?page=${pagination.page}&limit=${pagination.limit}&q=${searchQuery}`);
+            const result = await res.json();
+            if (result.success) {
+                setOrcamentosRecentes(result.data);
+                setPagination(result.pagination);
+            }
+        } catch (err) {
+            console.error('Erro ao carregar orçamentos:', err);
+        }
+    }, [pagination.page, pagination.limit, searchQuery]);
+
     useEffect(() => {
         api.clients.list().then(setClients).catch(console.error);
         api.engineering.list().then(setSkus).catch(console.error);
         
-        // Carregar orçamentos recentes
-        fetch('/api/orcamentos-pro')
-            .then(res => res.json())
-            .then(res => {
-                if (res.success) setOrcamentosRecentes(res.data);
-            })
-            .catch(console.error);
+        fetchRecentes();
 
         // Abrir modal de importação se vier do fluxo "Criar e Importar"
         const isImporting = urlParams.get('import') === 'true';
@@ -75,6 +93,18 @@ export default function OrcamentoForm() {
             window.history.replaceState({}, '', cleanUrl);
         }
     }, [orcamentoId]);
+
+    // Atalho ESC para fechar barra de ações
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setSelectedItems([]);
+                setIsBulkBarOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
 
     // Busca de SKU reativa (Debounced)
     useEffect(() => {
@@ -114,6 +144,20 @@ export default function OrcamentoForm() {
         }
         await addItem(sku.id, 1);
         setSearchTerm('');
+    };
+
+    const toggleSelectItem = (itemId: string) => {
+        setSelectedItems(prev => 
+            prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+        );
+    };
+
+    const handleBulkPriceAdjustment = async (type: 'percentualPreco' | 'percentualCusto') => {
+        if (selectedItems.length === 0) return;
+        await bulkUpdateItems(selectedItems, { [type]: bulkPercentage });
+        setSelectedItems([]);
+        setIsBulkBarOpen(false);
+        setBulkPercentage(0);
     };
 
     if (loading && !orcamento) {
@@ -164,21 +208,70 @@ export default function OrcamentoForm() {
         }
     };
 
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Deseja realmente excluir este orçamento?')) return;
+        try {
+            const success = await deletarOrcamento(id);
+            if (success) {
+                alert('Orçamento excluído com sucesso');
+                fetchRecentes();
+            }
+        } catch (err) {
+            alert('Erro ao excluir orçamento');
+        }
+    };
+
     // Renderizar lista de orçamentos (utilizado tanto no estado limpo quanto no rodapé)
     const renderListaRecentes = () => (
         <Card className="bg-zinc-950 border-zinc-900 shadow-2xl overflow-hidden mt-12">
             <CardHeader className="bg-zinc-900/50 border-b border-zinc-900/50 py-4 px-6 flex flex-row items-center justify-between">
-                <CardTitle className="text-xs uppercase tracking-[0.3em] text-zinc-400 flex items-center gap-3 font-black">
-                    <FileText className="w-4 h-4 text-orange-500" /> Orçamentos Recentes
-                </CardTitle>
-                <span className="text-[10px] font-bold text-zinc-600 bg-black px-3 py-1 rounded-full border border-zinc-900">
-                    {orcamentosRecentes.length} TOTAL
-                </span>
+                <div className="flex items-center gap-6">
+                    <CardTitle className="text-xs uppercase tracking-[0.3em] text-zinc-400 flex items-center gap-3 font-black">
+                        <FileText className="w-4 h-4 text-orange-500" /> Orçamentos Recentes
+                    </CardTitle>
+                    <div className="relative">
+                        <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+                        <input 
+                            type="text"
+                            placeholder="BUSCAR NÚMERO..."
+                            className="bg-black border border-zinc-800 rounded-full pl-8 pr-4 py-1.5 text-[10px] font-bold text-white focus:border-orange-500 outline-none w-48"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={pagination.page === 1}
+                            onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                            className="bg-zinc-900 border border-zinc-800 text-[10px] h-8 w-8 p-0"
+                        >
+                            {'<'}
+                        </Button>
+                        <span className="text-[10px] font-bold text-zinc-500">PÁGINA {pagination.page} DE {pagination.pages}</span>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={pagination.page === pagination.pages}
+                            onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                            className="bg-zinc-900 border border-zinc-800 text-[10px] h-8 w-8 p-0"
+                        >
+                            {'>'}
+                        </Button>
+                    </div>
+                    <span className="text-[10px] font-bold text-zinc-600 bg-black px-3 py-1 rounded-full border border-zinc-900">
+                        {pagination.total} TOTAL
+                    </span>
+                </div>
             </CardHeader>
             <CardContent className="p-0">
                 {orcamentosRecentes.length === 0 ? (
                     <div className="p-12 text-center text-zinc-600 italic text-sm">
-                        Nenhum orçamento salvo ainda.
+                        Nenhum orçamento encontrado.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -195,7 +288,7 @@ export default function OrcamentoForm() {
                             </thead>
                             <tbody>
                                 {orcamentosRecentes.map((orc: any) => (
-                                    <tr key={orc.id} className="border-b border-zinc-900 hover:bg-orange-600/5 transition-colors group">
+                                    <tr key={orc.id} className="border-b border-zinc-900 hover:bg-orange-600/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
                                         <td className="px-6 py-4 font-black text-white italic group-hover:text-orange-500 transition-colors">
                                             {orc.numeroOrcamento}
                                         </td>
@@ -218,7 +311,15 @@ export default function OrcamentoForm() {
                                                 {orc.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-red-500 p-2"
+                                                onClick={(e) => handleDelete(orc.id, e)}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
@@ -364,13 +465,27 @@ export default function OrcamentoForm() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-zinc-600">Margem de Lucro (%)</label>
-                                    <Input 
-                                        type="number"
-                                        className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-black text-xl"
-                                        value={localComercial.margemLucroPercentual}
-                                        onChange={(e) => setLocalComercial({ ...localComercial, margemLucroPercentual: parseFloat(e.target.value) || 0 })}
-                                        onBlur={() => handleUpdateHeader({ margemLucroPercentual: localComercial.margemLucroPercentual })}
-                                    />
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            type="number"
+                                            className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white font-black text-xl flex-1"
+                                            value={localComercial.margemLucroPercentual}
+                                            onChange={(e) => setLocalComercial({ ...localComercial, margemLucroPercentual: parseFloat(e.target.value) || 0 })}
+                                        />
+                                        <Button 
+                                            className="bg-orange-500 hover:bg-orange-600 text-white font-black text-[10px] uppercase h-12 px-4"
+                                            onClick={async () => {
+                                                try {
+                                                    const res = await applyGlobalMargin(localComercial.margemLucroPercentual);
+                                                    alert(res.message);
+                                                } catch (err: any) {
+                                                    alert('Erro: ' + err.message);
+                                                }
+                                            }}
+                                        >
+                                            Aplicar
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-zinc-600">Taxa Financeira (%)</label>
@@ -460,17 +575,88 @@ export default function OrcamentoForm() {
                     ) : (
                         <div className="grid gap-4">
                             {orcamento.itens.map((item: any) => (
-                                <ItemCard
-                                    key={item.id}
-                                    item={item}
-                                    onUpdate={updateItem}
-                                    onDelete={removerItem}
-                                />
+                                <div key={item.id} className="relative group">
+                                    <div className="absolute left-[-40px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedItems.includes(item.id)}
+                                            onChange={() => toggleSelectItem(item.id)}
+                                            className="w-5 h-5 rounded border-zinc-800 bg-zinc-950 text-orange-600 focus:ring-orange-500"
+                                        />
+                                    </div>
+                                    <ItemCard
+                                        item={item}
+                                        onUpdate={updateItem}
+                                        onDelete={removerItem}
+                                    />
+                                </div>
                             ))}
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Barra de Ações em Massa (Sticky Bottom) */}
+            {selectedItems.length > 0 && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-xl border border-orange-500/50 p-4 rounded-3xl shadow-2xl z-[200] flex items-center gap-8 animate-in slide-in-from-bottom-6 duration-500 ring-1 ring-white/5">
+                    <div className="flex items-center gap-4 px-6 border-r border-zinc-800">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 animate-pulse" />
+                            <span className="relative text-orange-500 font-black text-2xl italic tracking-tighter">{selectedItems.length}</span>
+                        </div>
+                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-tight">Itens<br/>Selecionados</span>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Ajuste Manual</label>
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <Input 
+                                        type="number" 
+                                        value={bulkPercentage} 
+                                        onChange={(e) => setBulkPercentage(parseFloat(e.target.value) || 0)}
+                                        className="w-24 h-10 bg-black border-zinc-800 text-white font-black text-center pr-6 rounded-xl"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 font-bold text-xs">%</span>
+                                </div>
+                                <Button 
+                                    onClick={() => handleBulkPriceAdjustment('percentualPreco')}
+                                    className="bg-zinc-100 hover:bg-white text-black font-black text-[10px] uppercase h-10 px-6 rounded-xl transition-all active:scale-95"
+                                >
+                                    Aplicar na Venda
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="h-10 w-px bg-zinc-800" />
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center">Resetar Padrão</label>
+                            <Button 
+                                onClick={async () => {
+                                    console.log("[OrcamentoForm] 🔄 Aplicando Margem Global...");
+                                    await resetToGlobalMargin(selectedItems);
+                                    setSelectedItems([]);
+                                }}
+                                className="bg-orange-600 hover:bg-orange-500 text-white font-black text-[10px] uppercase h-10 px-8 rounded-xl shadow-lg shadow-orange-900/40 transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <Calculator className="w-3 h-3" />
+                                Aplicar Margem Global
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 ml-4">
+                        <button 
+                            className="text-zinc-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest px-4 py-2"
+                            onClick={() => setSelectedItems([])}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Lista de Orçamentos Recentes (Rodapé) */}
             <div className="max-w-6xl mx-auto mt-20">

@@ -1,60 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Loader2, Package, Layers, Info } from 'lucide-react';
+import { Search, Package, Loader2 } from 'lucide-react';
 
 interface SKU {
     id: string;
     codigo: string;
     nome: string;
-    preco: number;
-    tipo: 'COMPONENTE' | 'ENGENHARIA';
+    precoUnitario: number | string;
+    tipo: 'INDUSTRIAL' | 'COMERCIAL';
 }
 
 interface SKUAutocompleteProps {
-    value: string;
     onSelect: (sku: SKU) => void;
+    defaultValue?: string;
     placeholder?: string;
     className?: string;
 }
 
-export const SKUAutocomplete: React.FC<SKUAutocompleteProps> = ({ value, onSelect, placeholder, className }) => {
-    const [inputValue, setInputValue] = useState(value);
-    const [suggestions, setSuggestions] = useState<SKU[]>([]);
+export function SKUAutocomplete({ onSelect, defaultValue = '', placeholder = 'Buscar SKU ou descrição...', className = '' }: SKUAutocompleteProps) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState(defaultValue);
+    const [results, setResults] = useState<SKU[]>([]);
     const [loading, setLoading] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const debouncedTimer = useRef<NodeJS.Timeout>();
-
-    useEffect(() => {
-        setInputValue(value);
-    }, [value]);
+    const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
+                setOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const searchSKUs = async (query: string) => {
-        if (query.length < 2) {
-            setSuggestions([]);
+    const searchSKUs = async (q: string) => {
+        if (q.length < 2) {
+            setResults([]);
             return;
         }
-
         setLoading(true);
         try {
-            const response = await fetch(`/api/orcamentos-pro?action=search-skus&q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            if (result.success) {
-                console.log('✅ SKUs encontrados:', result.data);
-                setSuggestions(result.data || []);
-                setIsOpen(true);
+            const res = await fetch(`/api/match-skus?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            if (data.success) {
+                setResults(data.data);
             }
         } catch (error) {
-            console.error('Erro na busca de SKUs:', error);
+            console.error('Erro ao buscar SKUs:', error);
         } finally {
             setLoading(false);
         }
@@ -62,82 +55,75 @@ export const SKUAutocomplete: React.FC<SKUAutocompleteProps> = ({ value, onSelec
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-        setInputValue(val);
+        setQuery(val);
+        setOpen(true);
 
-        if (debouncedTimer.current) clearTimeout(debouncedTimer.current);
-        debouncedTimer.current = setTimeout(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
             searchSKUs(val);
         }, 300);
     };
 
     return (
-        <div className="relative w-full" ref={containerRef}>
+        <div className={`relative ${className}`} ref={containerRef}>
             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                     type="text"
-                    className={`w-full bg-zinc-900 border-zinc-800 rounded-xl h-10 px-4 font-bold text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-zinc-700 ${className}`}
-                    value={inputValue}
+                    value={query}
                     onChange={handleInputChange}
-                    onFocus={() => inputValue.length >= 2 && setIsOpen(true)}
-                    placeholder={placeholder || "Procurar por código ou descrição..."}
+                    onFocus={() => setOpen(true)}
+                    placeholder={placeholder}
+                    className="w-full bg-gray-900 border border-gray-700 text-white pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    {loading ? (
-                        <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
-                    ) : (
-                        <Search className="w-4 h-4 text-zinc-700" />
-                    )}
-                </div>
+                {loading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 animate-spin" />
+                )}
             </div>
 
-            {isOpen && suggestions.length > 0 && (
-                <div className="absolute z-[100] mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="max-h-[300px] overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
-                        {suggestions.map((sku) => (
-                            <button
-                                key={sku.id}
-                                className="flex items-center justify-between p-3 rounded-xl hover:bg-orange-500/10 border border-transparent hover:border-orange-500/20 group transition-all text-left"
-                                onClick={() => {
-                                    onSelect(sku);
-                                    setInputValue(sku.codigo);
-                                    setIsOpen(false);
-                                }}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${sku.tipo === 'ENGENHARIA' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                                        {sku.tipo === 'ENGENHARIA' ? <Layers className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+            {open && (results.length > 0 || query.length >= 2) && (
+                <div className="absolute z-50 left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-h-80 overflow-y-auto overflow-x-hidden">
+                    {results.length === 0 && !loading ? (
+                        <div className="p-4 text-center text-gray-500 text-sm italic">
+                            Nenhum SKU encontrado para "{query}"
+                        </div>
+                    ) : (
+                        <div className="py-2">
+                            {results.map((sku) => (
+                                <button
+                                    key={sku.id}
+                                    onClick={() => {
+                                        onSelect(sku);
+                                        setQuery(sku.codigo);
+                                        setOpen(false);
+                                    }}
+                                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-800 transition-colors text-left border-b border-gray-800 last:border-0"
+                                >
+                                    <div className={`mt-1 p-1.5 rounded-md ${sku.tipo === 'INDUSTRIAL' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                        <Package className="w-4 h-4" />
                                     </div>
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="text-white font-black text-sm group-hover:text-orange-500 transition-colors truncate">
-                                            {sku.codigo || 'S/ COD'}
-                                        </span>
-                                        <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-tight truncate">
-                                            {sku.nome || 'S/ NOME'}
-                                        </span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-center gap-2">
+                                            <span className="font-mono text-xs font-bold text-gray-300 truncate">
+                                                {sku.codigo}
+                                            </span>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${sku.tipo === 'INDUSTRIAL' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                                {sku.tipo}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-white font-medium mt-0.5 truncate">
+                                            {sku.nome}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Custo Base: R$ {Number(sku.precoUnitario || 0).toFixed(2)}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-700">
-                                        {sku.tipo}
-                                    </span>
-                                    {sku.preco > 0 && (
-                                        <span className="text-xs font-black text-white italic">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sku.preco)}
-                                        </span>
-                                    )}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {isOpen && suggestions.length === 0 && !loading && inputValue.length >= 2 && (
-                <div className="absolute z-[100] mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center shadow-2xl">
-                    <Info className="w-8 h-8 text-zinc-800 mx-auto mb-2" />
-                    <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest">Nenhum SKU encontrado</p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
     );
-};
+}

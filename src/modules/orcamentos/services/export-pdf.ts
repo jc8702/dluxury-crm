@@ -67,15 +67,18 @@ export const exportBudgetToPDF = (orcamento: any) => {
 
     // 3. ITEMS TABLE
     const tableBody = (orcamento.itens || []).map((item: any) => [
-        { content: item.skuEngenharia?.nome || 'ITEM SEM NOME', styles: { fontStyle: 'bold' } },
-        item.quantidade,
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.custoUnitarioCalculado) * (1 + Number(orcamento.margemLucroPercentual) / 100)),
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valorVendaCalculado || (Number(item.custoUnitarioCalculado) * item.quantidade * (1 + Number(orcamento.margemLucroPercentual) / 100)))
+        { 
+            content: `${item.nomeCustomizado}\n${item.skuCodigo ? `SKU: ${item.skuDescricao || item.skuCodigo}` : ''}`, 
+            styles: { fontStyle: item.skuCodigo ? 'normal' : 'bold' } 
+        },
+        `${item.quantidade} ${item.unidadeMedida || 'UN'}`,
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.precoVendaUnitario || 0)),
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.precoVendaUnitario || 0) * Number(item.quantidade))
     ]);
 
     doc.autoTable({
         startY: 95,
-        head: [['MÓDULO / SKU ENGENHARIA', 'QTD', 'VALOR UNIT.', 'TOTAL']],
+        head: [['ITEM / ESPECIFICAÇÃO TÉCNICA', 'QTD', 'VALOR UNIT.', 'TOTAL']],
         body: tableBody,
         headStyles: { 
             fillColor: [15, 15, 15], 
