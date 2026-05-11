@@ -146,18 +146,8 @@ export default function OrcamentoForm() {
         setSearchTerm('');
     };
 
-    const toggleSelectItem = (itemId: string) => {
-        setSelectedItems(prev => 
-            prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
-        );
-    };
-
     const handleBulkPriceAdjustment = async (type: 'percentualPreco' | 'percentualCusto') => {
-        if (selectedItems.length === 0) return;
-        await bulkUpdateItems(selectedItems, { [type]: bulkPercentage });
-        setSelectedItems([]);
-        setIsBulkBarOpen(false);
-        setBulkPercentage(0);
+        // Removido conforme pedido
     };
 
     if (loading && !orcamento) {
@@ -575,88 +565,19 @@ export default function OrcamentoForm() {
                     ) : (
                         <div className="grid gap-4">
                             {orcamento.itens.map((item: any) => (
-                                <div key={item.id} className="relative group">
-                                    <div className="absolute left-[-40px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedItems.includes(item.id)}
-                                            onChange={() => toggleSelectItem(item.id)}
-                                            className="w-5 h-5 rounded border-zinc-800 bg-zinc-950 text-orange-600 focus:ring-orange-500"
-                                        />
-                                    </div>
-                                    <ItemCard
-                                        item={item}
-                                        onUpdate={updateItem}
-                                        onDelete={removerItem}
-                                    />
-                                </div>
+                                <ItemCard
+                                    key={item.id}
+                                    item={item}
+                                    onUpdate={updateItem}
+                                    onDelete={removerItem}
+                                />
                             ))}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Barra de Ações em Massa (Sticky Bottom) */}
-            {selectedItems.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-xl border border-orange-500/50 p-4 rounded-3xl shadow-2xl z-[200] flex items-center gap-8 animate-in slide-in-from-bottom-6 duration-500 ring-1 ring-white/5">
-                    <div className="flex items-center gap-4 px-6 border-r border-zinc-800">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 animate-pulse" />
-                            <span className="relative text-orange-500 font-black text-2xl italic tracking-tighter">{selectedItems.length}</span>
-                        </div>
-                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-tight">Itens<br/>Selecionados</span>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Ajuste Manual</label>
-                            <div className="flex items-center gap-2">
-                                <div className="relative">
-                                    <Input 
-                                        type="number" 
-                                        value={bulkPercentage} 
-                                        onChange={(e) => setBulkPercentage(parseFloat(e.target.value) || 0)}
-                                        className="w-24 h-10 bg-black border-zinc-800 text-white font-black text-center pr-6 rounded-xl"
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 font-bold text-xs">%</span>
-                                </div>
-                                <Button 
-                                    onClick={() => handleBulkPriceAdjustment('percentualPreco')}
-                                    className="bg-zinc-100 hover:bg-white text-black font-black text-[10px] uppercase h-10 px-6 rounded-xl transition-all active:scale-95"
-                                >
-                                    Aplicar na Venda
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="h-10 w-px bg-zinc-800" />
-
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center">Resetar Padrão</label>
-                            <Button 
-                                onClick={async () => {
-                                    console.log("[OrcamentoForm] 🔄 Aplicando Margem Global...");
-                                    await resetToGlobalMargin(selectedItems);
-                                    setSelectedItems([]);
-                                }}
-                                className="bg-orange-600 hover:bg-orange-500 text-white font-black text-[10px] uppercase h-10 px-8 rounded-xl shadow-lg shadow-orange-900/40 transition-all active:scale-95 flex items-center gap-2"
-                            >
-                                <Calculator className="w-3 h-3" />
-                                Aplicar Margem Global
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 ml-4">
-                        <button 
-                            className="text-zinc-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest px-4 py-2"
-                            onClick={() => setSelectedItems([])}
-                        >
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Barra de Ações Removida */}
 
             {/* Lista de Orçamentos Recentes (Rodapé) */}
             <div className="max-w-6xl mx-auto mt-20">

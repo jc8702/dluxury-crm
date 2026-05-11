@@ -21,31 +21,7 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
     const [isCSVModalOpen, setIsCSVModalOpen] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            if (file.name.endsWith('.pdf')) {
-                setStatus('parsing');
-                const parser = new PDFParser();
-                const extractedData = await parser.extrairItensPromob(file);
-                
-                if (extractedData.length === 0) {
-                    throw new Error('Nenhum item identificado no PDF.');
-                }
-
-                setStatus('uploading');
-                const response = await api.importador.importar('PDF_JSON', { 
-                    jsonData: extractedData,
-                    fileName: file.name
-                });
-                setResults(response.data || response);
-                setStatus('success');
-            }
-        } catch (err: any) {
-            alert(err.message || 'Falha ao processar arquivo.');
-            setStatus('idle');
-        }
+        // Lógica de PDF removida
     };
 
     const handleConfirmarImportacao = async () => {
@@ -83,33 +59,17 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
             >
                 <div className="py-8">
                     {(status === 'idle') && (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="relative border-2 border-dashed border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all cursor-pointer group">
-                                <input 
-                                    type="file" 
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    onChange={handleFileChange}
-                                    accept=".pdf"
-                                />
-                                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <FileText className="w-6 h-6 text-zinc-500 group-hover:text-orange-500" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="font-bold text-white text-sm">PDF (Promob)</p>
-                                    <p className="text-[10px] text-zinc-500 mt-1">Extração automática de texto</p>
-                                </div>
-                            </div>
-
+                        <div className="flex justify-center">
                             <div 
                                 onClick={() => { setIsCSVModalOpen(true); onClose(); }}
-                                className="border-2 border-dashed border-zinc-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all cursor-pointer group"
+                                className="w-full border-2 border-dashed border-zinc-800 rounded-2xl p-10 flex flex-col items-center justify-center gap-4 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all cursor-pointer group"
                             >
-                                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <FileSpreadsheet className="w-6 h-6 text-zinc-500 group-hover:text-emerald-500" />
+                                <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <FileSpreadsheet className="w-8 h-8 text-zinc-500 group-hover:text-emerald-500" />
                                 </div>
                                 <div className="text-center">
-                                    <p className="font-bold text-white text-sm">CSV (SketchUp)</p>
-                                    <p className="text-[10px] text-zinc-500 mt-1">CutList Bridge / Report</p>
+                                    <p className="font-bold text-white text-base">CSV (SketchUp)</p>
+                                    <p className="text-xs text-zinc-500 mt-1">Clique para abrir o importador CutList Bridge / Report</p>
                                 </div>
                             </div>
                         </div>

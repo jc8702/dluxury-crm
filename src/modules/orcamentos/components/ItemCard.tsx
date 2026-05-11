@@ -154,12 +154,12 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     setIsEditing(false);
   };
 
-  // Descrição Oficial (Prioridade: SKU Mapeado -> Importada)
+  // Descrição Oficial (Herdada do SKU Mapeado)
   const descricaoOficial = item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao;
-  const descricaoImportada = item.nomeCustomizado || item.skuCodigo || 'Item sem nome';
+  const descricaoImportada = item.nomeCustomizado || 'Item sem nome';
   
-  const tituloExibicao = descricaoOficial || descricaoImportada;
-  const subtituloExibicao = descricaoOficial ? descricaoImportada : null;
+  const tituloExibicao = descricaoImportada;
+  const subtituloExibicao = `${item.skuCodigo || ''}${descricaoOficial ? ' - ' + descricaoOficial : ''}`.trim();
 
   const precoTotal = (state.draft.precoVendaUnitario || 0) * (state.draft.quantidade || 0);
   const temSKU = !!item.skuComponenteId || !!item.skuEngenhariaId || !!item.skuCodigo;
@@ -180,34 +180,13 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 <h3 className="text-white font-black text-xl italic tracking-tight truncate leading-none uppercase">
                     {tituloExibicao}
                 </h3>
-                <div className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-orange-500 border border-orange-500/20 uppercase tracking-widest">
-                            {item.skuCodigo || 'SEM REF'}
-                        </span>
-                        {item.skuEngenharia?.codigo && item.skuEngenharia.codigo !== item.skuCodigo && (
-                            <>
-                                <span className="text-zinc-700 font-bold text-[9px]">|</span>
-                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-widest">
-                                    {item.skuEngenharia.codigo}
-                                </span>
-                            </>
-                        )}
-                        {item.skuComponente?.codigo && item.skuComponente.codigo !== item.skuCodigo && (
-                            <>
-                                <span className="text-zinc-700 font-bold text-[9px]">|</span>
-                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-widest">
-                                    {item.skuComponente.codigo}
-                                </span>
-                            </>
-                        )}
-                    </div>
-                    {subtituloExibicao && (
-                        <span className="text-[10px] text-zinc-500 font-bold truncate flex-1 ml-1 uppercase">
+                {subtituloExibicao && (
+                    <div className="mt-2">
+                        <span className="text-[10px] text-orange-500 font-black uppercase tracking-widest bg-orange-500/5 px-2 py-1 rounded border border-orange-500/10">
                             {subtituloExibicao}
                         </span>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
           </div>
         </div>
@@ -369,10 +348,19 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 </div>
 
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-800/50">
-                    <span className="text-zinc-600 text-[10px] font-black uppercase">Margem Real</span>
-                    <div className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${Number(isEditing ? state.draft.margemLucro : item.margemLucro) >= 30 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                        {Number(isEditing ? state.draft.margemLucro : (item.margemLucro || 0)).toFixed(1)}%
-                    </div>
+                    <span className="text-zinc-600 text-[10px] font-black uppercase">Margem Real (%)</span>
+                    {isEditing ? (
+                        <input 
+                            type="number"
+                            className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-right w-20 text-[10px] font-black font-mono text-white"
+                            value={state.draft.margemLucro}
+                            onChange={(e) => recalculatePrices('margin', parseFloat(e.target.value) || 0)}
+                        />
+                    ) : (
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${Number(item.margemLucro) >= 30 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                            {Number(item.margemLucro || 0).toFixed(1)}%
+                        </div>
+                    )}
                 </div>
             </div>
 
