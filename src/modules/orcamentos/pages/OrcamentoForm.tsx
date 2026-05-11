@@ -24,7 +24,7 @@ export default function OrcamentoForm() {
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
         importItems, updateItem, removerItem, updateItemExplosion, updateItemSku, 
-        bulkUpdateItems, resetToGlobalMargin, error 
+        bulkUpdateItems, resetToGlobalMargin, applyGlobalMargin, deletarOrcamento, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);

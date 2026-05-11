@@ -228,6 +228,11 @@ export function useOrcamento(orcamentoId?: string) {
     }
   }, [orcamentoId, carregar]);
 
+  // ✅ RESETAR PARA MARGEM GLOBAL (Itens Selecionados)
+  const resetToGlobalMargin = useCallback(async (itemIds: string[]) => {
+    return bulkUpdateItems(itemIds, { possuiOverride: false });
+  }, [bulkUpdateItems]);
+
   // ✅ APLICAR MARGEM GLOBAL (Cabeçalho + Itens)
   const applyGlobalMargin = useCallback(async (margem: number) => {
     if (!orcamentoId) return;
