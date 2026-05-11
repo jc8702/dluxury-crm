@@ -154,12 +154,15 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     setIsEditing(false);
   };
 
+  // Descrição Oficial (Prioridade: SKU Mapeado -> Importada)
+  const descricaoOficial = item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao;
+  const descricaoImportada = item.nomeCustomizado || item.skuCodigo || 'Item sem nome';
+  
+  const tituloExibicao = descricaoOficial || descricaoImportada;
+  const subtituloExibicao = descricaoOficial ? descricaoImportada : null;
+
   const precoTotal = (state.draft.precoVendaUnitario || 0) * (state.draft.quantidade || 0);
   const temSKU = !!item.skuComponenteId || !!item.skuEngenhariaId || !!item.skuCodigo;
-  
-  // Descrição Oficial (Prioridade: Dados do Objeto Relacionado -> Campo SKU Descricao)
-  const descricaoOficial = item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao;
-  const descricaoImportada = item.nomeCustomizado;
 
   return (
     <div className={`bg-zinc-950 rounded-2xl border ${isEditing ? 'border-orange-500 shadow-2xl shadow-orange-500/10' : 'border-zinc-900'} p-5 transition-all group/card relative overflow-hidden`}>
@@ -175,14 +178,14 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
             </div>
             <div className="min-w-0 flex-1">
                 <h3 className="text-white font-black text-xl italic tracking-tight truncate leading-none uppercase">
-                    {descricaoImportada}
+                    {tituloExibicao}
                 </h3>
                 <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center gap-1.5">
                         <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-orange-500 border border-orange-500/20 uppercase tracking-widest">
                             {item.skuCodigo || 'SEM REF'}
                         </span>
-                        {item.skuEngenharia?.codigo && (
+                        {item.skuEngenharia?.codigo && item.skuEngenharia.codigo !== item.skuCodigo && (
                             <>
                                 <span className="text-zinc-700 font-bold text-[9px]">|</span>
                                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-widest">
@@ -190,7 +193,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                                 </span>
                             </>
                         )}
-                        {item.skuComponente?.codigo && (
+                        {item.skuComponente?.codigo && item.skuComponente.codigo !== item.skuCodigo && (
                             <>
                                 <span className="text-zinc-700 font-bold text-[9px]">|</span>
                                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-widest">
@@ -199,9 +202,9 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                             </>
                         )}
                     </div>
-                    {descricaoOficial && (
-                        <span className="text-[10px] text-zinc-500 font-bold truncate flex-1 ml-1">
-                            {descricaoOficial}
+                    {subtituloExibicao && (
+                        <span className="text-[10px] text-zinc-500 font-bold truncate flex-1 ml-1 uppercase">
+                            {subtituloExibicao}
                         </span>
                     )}
                 </div>
@@ -227,13 +230,21 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 </button>
             </>
           ) : (
-            <button
-                onClick={handleCancel}
-                className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-zinc-800 text-zinc-400"
-                title="Fechar (ESC)"
-            >
-                <X className="w-5 h-5" />
-            </button>
+            <div className="flex gap-2">
+                <button
+                    onClick={handleCancel}
+                    className="px-3 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-zinc-800 text-zinc-400 text-[10px] font-black uppercase"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-6 h-10 rounded-xl bg-orange-600 border border-orange-500 flex items-center justify-center hover:bg-orange-500 text-white text-[10px] font-black uppercase shadow-lg shadow-orange-900/20"
+                >
+                    {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar'}
+                </button>
+            </div>
           )}
         </div>
       </div>
@@ -372,17 +383,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                         R$ {precoTotal.toFixed(2)}
                     </span>
                 </div>
-                
-                {isEditing && (
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase flex items-center gap-2 shadow-lg shadow-orange-900/20 transition-all active:scale-95"
-                    >
-                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        {isSaving ? 'Salvando...' : 'Confirmar'}
-                    </button>
-                )}
             </div>
         </div>
       </div>
