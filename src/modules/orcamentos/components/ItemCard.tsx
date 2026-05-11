@@ -155,11 +155,14 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   };
 
   // Descrição Oficial (Herdada do SKU Mapeado)
-  const descricaoOficial = item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao;
-  const descricaoImportada = item.nomeCustomizado || 'Item sem nome';
+  const currentSKU = isEditing ? state.draft.skuCodigo : item.skuCodigo;
+  const currentDesc = isEditing ? state.draft.skuDescricao : (item.skuEngenharia?.nome || item.skuComponente?.nome || item.skuDescricao);
   
-  const tituloExibicao = descricaoImportada;
-  const subtituloExibicao = `${item.skuCodigo || ''}${descricaoOficial ? ' - ' + descricaoOficial : ''}`.trim();
+  const tituloExibicao = item.nomeCustomizado || 'Item sem nome';
+  // Unificar SKU-Descrição para evitar redundância (ex: FRG-0003 - FRG-0003)
+  const skuLimpo = currentSKU || '';
+  const descLimpa = currentDesc && currentDesc !== skuLimpo ? currentDesc : '';
+  const subtituloExibicao = descLimpa ? `${skuLimpo} - ${descLimpa}` : skuLimpo;
 
   const precoTotal = (state.draft.precoVendaUnitario || 0) * (state.draft.quantidade || 0);
   const temSKU = !!item.skuComponenteId || !!item.skuEngenhariaId || !!item.skuCodigo;
@@ -240,6 +243,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                         <SKUAutocomplete 
                             onSelect={(sku) => {
                                 console.log("[ItemCard] 🔍 Novo SKU selecionado:", sku);
+                                const novoCusto = Number(sku.precoUnitario) || 0;
                                 setState(prev => ({
                                     ...prev,
                                     draft: {
@@ -247,12 +251,12 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                                         skuId: sku.id,
                                         skuCodigo: sku.codigo,
                                         skuDescricao: sku.nome,
-                                        skuTipo: sku.tipo,
-                                        custoUnitarioCalculado: Number(sku.preco) || 0
+                                        skuTipo: (sku as any).tipo,
+                                        custoUnitarioCalculado: novoCusto
                                     }
                                 }));
                                 // Forçar recalculo baseado no novo custo
-                                recalculatePrices('cost', Number(sku.preco) || 0);
+                                recalculatePrices('cost', novoCusto);
                             }}
                             defaultValue={state.draft.skuCodigo}
                         />
