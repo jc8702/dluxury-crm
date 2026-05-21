@@ -233,3 +233,114 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria', () => {
     expect(responseData.suggestions).toContain('Ver materiais abaixo do mínimo');
   });
 });
+
+describe('Validações de Entrada e Controle de Rate Limit', () => {
+  it('deve rejeitar mensagens vazias com erro 400', async () => {
+    const req = {
+      method: 'POST',
+      body: {
+        message: '   ',
+        conversation_history: [],
+        context: {}
+      }
+    };
+
+    let responseStatus = 200;
+    let responseData: any = null;
+
+    const res = {
+      status: (code: number) => {
+        responseStatus = code;
+        return res;
+      },
+      json: (data: any) => {
+        responseData = data;
+        return res;
+      },
+      end: () => res
+    };
+
+    await handleAIChat(req, res);
+
+    expect(responseStatus).toBe(400);
+    expect(responseData.error).toBe('Mensagem inválida ou vazia');
+  });
+
+  it('deve rejeitar mensagens com mais de 4000 caracteres com erro 400', async () => {
+    const req = {
+      method: 'POST',
+      body: {
+        message: 'A'.repeat(4001),
+        conversation_history: [],
+        context: {}
+      }
+    };
+
+    let responseStatus = 200;
+    let responseData: any = null;
+
+    const res = {
+      status: (code: number) => {
+        responseStatus = code;
+        return res;
+      },
+      json: (data: any) => {
+        responseData = data;
+        return res;
+      },
+      end: () => res
+    };
+
+    await handleAIChat(req, res);
+
+    expect(responseStatus).toBe(400);
+    expect(responseData.error).toBe('Mensagem muito longa (máximo 4000 caracteres)');
+  });
+
+  it('deve disparar erro 429 (Rate Limit) após 5 requisições rápidas do mesmo usuário', async () => {
+    const userId = `test-user-${Date.now()}`;
+    const makeRequest = async () => {
+      const req = {
+        method: 'POST',
+        body: {
+          message: 'Olá, IA',
+          conversation_history: [],
+          context: {
+            usuario_id: userId
+          }
+        }
+      };
+
+      let responseStatus = 200;
+      let responseData: any = null;
+
+      const res = {
+        status: (code: number) => {
+          responseStatus = code;
+          return res;
+        },
+        json: (data: any) => {
+          responseData = data;
+          return res;
+        },
+        end: () => res
+      };
+
+      await handleAIChat(req, res);
+      return { status: responseStatus, data: responseData };
+    };
+
+    // Fazer 5 requisições (dentro do limite)
+    for (let i = 0; i < 5; i++) {
+      const result = await makeRequest();
+      expect(result.status).toBe(200);
+    }
+
+    // A 6ª requisição deve estourar o limite de 5 a cada 10 segundos
+    const blockedResult = await makeRequest();
+    expect(blockedResult.status).toBe(429);
+    expect(blockedResult.data.error).toContain('Limite de requisições excedido');
+    expect(blockedResult.data.retry_after).toBeDefined();
+  });
+});
+
