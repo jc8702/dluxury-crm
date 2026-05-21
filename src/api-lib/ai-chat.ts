@@ -472,6 +472,7 @@ function makeSuggestions(kind: ToolName) {
     getComparativoMensal: ['Ver DRE do período', 'Comparar com o trimestre anterior', 'Analisar ticket médio'],
     getPrevisaoFaturamento: ['Comparar com o realizado', 'Ver projetos em andamento', 'Abrir fluxo de caixa projetado'],
     getMargemPorTipoProjeto: ['Comparar com o mês passado', 'Ver SKUs mais lucrativos', 'Analisar projetos em andamento'],
+    analisarSKUCompleto: ['Como melhorar o plano de corte?', 'Ver impacto produtivo desse SKU', 'Qual a margem desse produto?'],
   };
   return suggestions[kind];
 }
