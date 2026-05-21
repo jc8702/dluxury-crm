@@ -21,7 +21,7 @@ const CONHECIMENTO_ITEMS = [
   {
     titulo: 'Posicionamento e Distâncias Ergonômicas para Armários Aéreos',
     categoria: 'ergonomia',
-    conteudo: 'Os armários aéreos de cozinha devem ser instalados com a base respeitando uma distância mínima de 50 cm a 60 cm in relação à bancada de trabalho para permitir uma área de trabalho livre e evitar colisões com a cabeça. O alinhamento superior padrão dos aéreos costuma ser a 210 cm ou 220 cm do piso acabado, coincidindo com a altura de portas e portais. A profundidade máxima recomendada para os aéreos é de 35 cm (incluindo as portas), garantindo que o usuário tenha visibilidade total da bancada e não bata a testa ao se inclinar para a frente.',
+    conteudo: 'Os armários aéreos de cozinha devem ser instalados com a base respeitando uma distância mínima de 50 cm a 60 cm em relação à bancada de trabalho para permitir uma área de trabalho livre e evitar colisões com a cabeça. O alinhamento superior padrão dos aéreos costuma ser a 210 cm ou 220 cm do piso acabado, coincidindo com a altura de portas e portais. A profundidade máxima recomendada para os aéreos é de 35 cm (incluindo as portas), garantindo que o usuário tenha visibilidade total da bancada e não bata a testa ao se inclinar para a frente.',
   },
   {
     titulo: 'Ventilação e Nichos para Fornos de Embutir e Micro-ondas',
@@ -62,7 +62,37 @@ const CONHECIMENTO_ITEMS = [
     titulo: 'Vãos de Portas de Giro e Alinhamento de Dobradiças',
     categoria: 'ferragens',
     conteudo: 'As portas de giro devem ter uma folga de 2 mm a 3 mm entre si e em relação às laterais ou tampo do armário para permitir a regulagem fina e evitar atrito. Dobradiças tipo caneco (geralmente de 35 mm de diâmetro) exigem uma distância de furação da borda da porta (distância do copo) entre 3 mm e 5 mm. O número de dobradiças por porta depende do peso e da altura física: até 90 cm de altura bastam 2 dobradiças; de 90 cm a 160 cm usam-se 3 dobradiças; acima de 160 cm são necessárias 4 ou 5 dobradiças para mitigar o empenamento natural do MDF causado por variações de umidade e temperatura.',
-  }
+  },
+  {
+    titulo: 'Fitas de Borda PVC, ABS e Acrílico',
+    categoria: 'materiais',
+    conteudo: 'Fitas de borda protegem o miolo do MDF/MDP contra umidade externa e impactos mecânicos. Para frentes de gavetas, portas e tampos de móveis, é obrigatória a aplicação de fitas de borda com espessura de 1 mm a 2 mm em PVC ou ABS, pois oferecem alta resistência a impactos cotidianos. Para as partes internas de módulos e prateleiras estruturais, fitas finas de 0,45 mm são suficientes e econômicas. O fitamento de bordas superiores em áreas úmidas deve ser total para mitigar o inchaço do MDF.',
+  },
+  {
+    titulo: 'Tecnologia de Colagem: PUR vs Hotmelt',
+    categoria: 'materiais',
+    conteudo: 'A colagem de fitas de borda na indústria moveleira utiliza principalmente dois adesivos: Hotmelt tradicional (à base de EVA ou Poliolefina) e PUR (Poliuretano Reativo). O Hotmelt é termoplástico, ou seja, pode amolecer se exposto a temperaturas acima de 70°C, tornando-o inadequado para laterais adjacentes a fornos e cooktops. O adesivo PUR cura quimicamente por reação com a umidade do ar, criando uma ligação cruzada irreversível que resiste a até 150°C e impede a infiltração de água por capilaridade. A colagem PUR gera uma linha de cola quase invisível e é recomendada para cozinhas e banheiros.',
+  },
+  {
+    titulo: 'Dobradiças Especiais e Ângulos de Abertura',
+    categoria: 'ferragens',
+    conteudo: 'Armários planejados com cantos complexos exigem dobradiças específicas para garantir a abertura correta das portas sem colisões. Dobradiças de 45° são usadas em módulos com chanfros de canto. Dobradiças de 135° (ou dobradiças de canto L) articulam portas em ângulo para fechamento total. A dobradiça de 165° (abertura total) é obrigatória em módulos com gavetas internas livres, permitindo que a porta abra totalmente para fora do vão do armário, evitando que a frente das gavetas colida com o perfil da porta regulada. As dobradiças modernas contam com amortecimento integrado (sistema click) para fechamento suave.',
+  },
+  {
+    titulo: 'Sistemas de Corrediças Ocultas e Invisíveis',
+    categoria: 'ferragens',
+    conteudo: 'Corrediças invisíveis (ocultas) são instaladas sob o fundo da gaveta, mantendo as laterais limpas e valorizando o design. Elas oferecem melhor estabilidade de movimento e maior capacidade de carga (geralmente entre 30 kg e 45 kg) em comparação com as telescópicas tradicionais de 13mm. Exigem folga lateral específica de 5 mm de cada lado, além de rebaixo inferior de 12 mm na base da gaveta e usinagem traseira precisa para acoplamento dos gatilhos de regulagem tridimensional (altura, lateral e inclinação). Estão disponíveis com fechamento amortecido suave ou sistema de toque (push-to-open).',
+  },
+  {
+    titulo: 'Sistemas de Montagem Minifix/VB e Dispositivos Invisíveis',
+    categoria: 'engenharia',
+    conteudo: 'O sistema de união de chapas Minifix (tambor de 15mm e pino de fixação) e o sistema VB (dispositivo de união rápida) permitem a montagem invisível de módulos, dispensando o uso de parafusos aparentes nas laterais externas dos armários. São essenciais para móveis desmontáveis (RTA). O Minifix exige furação com broca de 15 mm na face da peça com profundidade de 12.5 mm, e furo de topo de 8 mm para passagem do pino. O VB utiliza um tambor metálico embutido na prateleira que se acopla ao pino fixado na lateral, ideal para prateleiras estruturais suspensas de alta carga.',
+  },
+  {
+    titulo: 'Pistões Basculantes de Abertura Dupla e Aventos',
+    categoria: 'ferragens',
+    conteudo: 'Portas basculantes de grandes dimensões (largura superior a 90 cm) instaladas em armários aéreos altos exigem sistemas de articulação de abertura dupla (como o sistema Aventos ou similares), onde a porta se divide horizontalmente ao meio durante a abertura. Isso reduz a projeção da porta para frente, facilitando o acesso ao interior do armário sem que o usuário precise se esquivar do móvel. Estes sistemas exigem braços articulados simétricos e regulagem fina da tensão das molas de acordo com a massa calculada do MDF, evitando desgaste prematuro das dobradiças superiores.',
+  },
 ];
 
 function getSimulatedEmbedding(text: string): number[] {
@@ -130,6 +160,10 @@ async function seed() {
   }
 
   try {
+    console.log('Limpando dados antigos da base de conhecimento para evitar duplicados...');
+    await db.delete(conhecimentoMarcenaria);
+    console.log('Tabela limpa com sucesso!');
+
     console.log(`Populando ${CONHECIMENTO_ITEMS.length} tópicos na base de marcenaria...`);
 
     let inseridos = 0;

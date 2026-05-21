@@ -323,6 +323,23 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
     });
   }
 
+  // 8. Impacto Produtivo e Restrições de Chão de Fábrica
+  if (largura > 1200) {
+    alertas.push({
+      nivel: 'AVISO',
+      mensagem: `Gargalo Operacional na Linha de Montagem.`,
+      justificativa: `SKU com largura de ${largura}mm foge do padrão modular. IMPACTO PRODUTIVO: Exige duas pessoas para movimentação na fábrica, empacotamento especial e aumenta o risco de avarias no transporte até a casa do cliente.`,
+    });
+  }
+
+  if (parsed.gavetas >= 4) {
+    alertas.push({
+      nivel: 'AVISO',
+      mensagem: `Elevado Tempo de Setup e Montagem.`,
+      justificativa: `Móvel possui ${parsed.gavetas} gavetas. IMPACTO PRODUTIVO: Gaveteiros múltiplos exigem alto tempo de usinagem, furação, montagem de caixas e regulagem fina de corrediças no prumo, reduzindo a velocidade de esteira.`,
+    });
+  }
+
   return alertas;
 }
 
@@ -339,9 +356,13 @@ export function analisarSKUCompleto(sku: string): AnaliseSKU {
     // Gerar sugestões baseadas nos alertas
     for (const alerta of alertas) {
       if (alerta.nivel === 'CRITICO') {
-        sugestoesMelhoria.push(`ALTERAÇÃO DE PROJETO: ${alerta.mensagem} -> Substituir componente ou reduzir largura.`);
+        sugestoesMelhoria.push(`ALTERAÇÃO DE PROJETO: ${alerta.mensagem} -> Substituir componente, material ou reduzir medidas críticas.`);
       } else if (alerta.nivel === 'AVISO') {
-        sugestoesMelhoria.push(`REFORÇO: ${alerta.mensagem} -> Adicionar travessas/suportes de engenharia.`);
+        if (alerta.mensagem.includes('Produtivo') || alerta.mensagem.includes('Operacional') || alerta.mensagem.includes('Tempo')) {
+          sugestoesMelhoria.push(`DECISÃO COMERCIAL: ${alerta.mensagem} -> Avaliar se a margem comercial do móvel compensa o tempo perdido na fábrica.`);
+        } else {
+          sugestoesMelhoria.push(`REFORÇO FÍSICO: ${alerta.mensagem} -> Adicionar travessas/suportes de engenharia ou dobradiças extras.`);
+        }
       }
     }
 

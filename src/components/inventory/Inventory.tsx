@@ -339,6 +339,64 @@ const Inventory: React.FC = () => {
           onSuccess={reloadData}
         />
       )}
+
+      {/* 💡 Consultas de Estoque Inteligentes com Dlux */}
+      <div className="card glass animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'linear-gradient(135deg, rgba(0,169,157,0.06), rgba(139,92,246,0.04))', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.2rem' }}>💡</span>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Dlux Copilot — Consultas Rápidas de Estoque</h3>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Consulte regras de estocagem de insumos e especificações técnicas de ferragens diretamente com a nossa inteligência.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
+          {[
+            { label: '🚨 Estoque Crítico & Compras', query: 'Verificar materiais abaixo do estoque mínimo e plano de compras' },
+            { label: '🪵 Estoque MDF & Consumo', query: 'Análise de estoque de chapas MDF e consumo recente' },
+            { label: '📦 Corrediças Telescópicas vs Ocultas', query: 'Qual a diferença de folga lateral e rebaixo inferior exigida entre corrediça telescópica e invisível?' },
+            { label: '🪵 MDF 15mm vs 18mm estrutural', query: 'Quando o projeto exige prateleiras de MDF 18mm para evitar envergamento e qual o vão máximo para 15mm?' },
+            { label: '🔗 Dobradiça click com amortecimento', query: 'Como dimensionar o número de dobradiças tipo caneco de 35mm para portas de giro baseando-se no peso e altura?' },
+            { label: '📐 Dispositivo Minifix e VB', query: 'Quais os diâmetros e profundidades de furação exigidos para instalação do sistema de união Minifix e VB?' },
+            { label: '🛡️ Vedação e Chapas Ultra', query: 'Quais materiais e técnicas de vedação são obrigatórios para gabinetes de pia sob áreas úmidas no padrão D\'Luxury?' },
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                const event = new CustomEvent('dlux-open-chat', {
+                  detail: { query: item.query }
+                });
+                window.dispatchEvent(event);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                color: 'var(--text)',
+                padding: '0.6rem 1rem',
+                borderRadius: '12px',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                e.currentTarget.style.borderColor = '#8B5CF6';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              <span>✨</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

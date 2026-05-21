@@ -280,9 +280,7 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
     }
   };
 
-  const handleSend = async (event?: React.FormEvent) => {
-    event?.preventDefault();
-    const text = input.trim();
+  const sendMessage = async (text: string) => {
     if (!text || loading) return;
 
     const history = messages.map((msg) => ({
@@ -291,7 +289,6 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
     }));
 
     setMessages((prev) => [...prev, { role: 'user', text, timestamp: new Date() }]);
-    setInput('');
     setLoading(true);
 
     try {
@@ -332,6 +329,32 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
       setLoading(false);
     }
   };
+
+  const handleSend = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    await sendMessage(text);
+  };
+
+  useEffect(() => {
+    const handleOpenChatEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ query?: string }>;
+      setIsOpen(true);
+      if (customEvent.detail?.query) {
+        const queryText = customEvent.detail.query.trim();
+        if (queryText) {
+          sendMessage(queryText);
+        }
+      }
+    };
+
+    window.addEventListener('dlux-open-chat', handleOpenChatEvent);
+    return () => {
+      window.removeEventListener('dlux-open-chat', handleOpenChatEvent);
+    };
+  }, [messages, memorySummary, user, loading]);
 
   return (
     <>

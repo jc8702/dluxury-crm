@@ -261,6 +261,65 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* 💡 Dlux Copilot - Insights Rápidos */}
+      <div className="card glass animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'linear-gradient(135deg, rgba(226,172,0,0.06), rgba(0,169,157,0.04))', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.2rem' }}>💡</span>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Dlux Copilot — Consultoria Técnica & Insights</h3>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a nossa IA especialista.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
+          {[
+            { label: '📊 Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
+            { label: '💎 Ambientes Mais Lucrativos', query: 'Quais os produtos/ambientes mais lucrativos este mês?' },
+            { label: '🔮 Previsão de Faturamento', query: 'Previsão de faturamento baseada nos projetos ativos' },
+            { label: '🔥 Análise PUR vs Hotmelt', query: 'Qual a diferença prática na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?' },
+            { label: '📐 Altura Ergonômica de Bancadas', query: 'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapé?' },
+            { label: '🪵 MDF vs MDP na Estrutura', query: 'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário planejado?' },
+            { label: '📦 Regras de Dobradiça 165°', query: 'Em quais situações em armários de cozinha a dobradiça de 165 graus de abertura é obrigatória?' },
+            { label: '📉 Evitar Flambagem em Prateleiras', query: 'Qual é o vão livre máximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?' },
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                const event = new CustomEvent('dlux-open-chat', {
+                  detail: { query: item.query }
+                });
+                window.dispatchEvent(event);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                color: 'var(--text)',
+                padding: '0.6rem 1rem',
+                borderRadius: '12px',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 169, 157, 0.15)';
+                e.currentTarget.style.borderColor = '#00A99D';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              <span>✨</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Modal editar meta */}
       <Modal isOpen={editGoal} onClose={() => setEditGoal(false)} title="Definir Meta Mensal">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
