@@ -5,6 +5,20 @@ import { sql, validateAuth } from './_db.js';
 import { bootstrapFinanceiro } from './financeiro.js';
 import { buildAnswerPrompt, buildDirectAnswerPrompt, buildRouterPrompt } from './system-prompt.js';
 import { buildMemoryPrompt } from './system-prompt.js';
+import { analisarSKUCompleto } from './sku-parser.js';
+
+// Importação dos subagentes especialistas
+import { marcenariaAgent, ragConhecimentoTecnico } from './agents/marcenaria.js';
+import { financeiroAgent } from './agents/financeiro.js';
+import { engenhariaAgent } from './agents/engenharia.js';
+import { producaoAgent } from './agents/producao.js';
+
+const SUBAGENTS = {
+  marcenaria: marcenariaAgent,
+  financeiro: financeiroAgent,
+  engenharia: engenhariaAgent,
+  producao: producaoAgent,
+};
 
 type Granularity = 'diario' | 'semanal' | 'mensal';
 type Regime = 'caixa' | 'competencia';
@@ -27,7 +41,7 @@ type AiToolResult = {
 
 type NormalizedMessage = { role: 'user' | 'assistant'; content: string };
 type ToolCall = { name: ToolName; args: Record<string, any> };
-type ExecutedTool = { name: ToolName; result: AiToolResult };
+type ExecutedTool = { name: ToolName | 'ragConhecimentoTecnico'; result: AiToolResult };
 type ToolExecutionContext = {
   today: Date;
   message: string;
@@ -99,6 +113,10 @@ const TOOL_CATALOG = {
     description: 'Margem por tipo de projeto ou ambiente.',
     hint: 'periodo_inicio, periodo_fim',
   },
+  analisarSKUCompleto: {
+    description: 'Realiza uma análise técnica, dimensional, de materiais e segurança estrutural de um SKU de móvel planejado.',
+    hint: 'sku',
+  },
 } as const;
 
 type ToolName = keyof typeof TOOL_CATALOG;
@@ -167,6 +185,9 @@ const TOOL_ARG_SCHEMAS: Record<ToolName, z.ZodTypeAny> = {
   getMargemPorTipoProjeto: z.object({
     periodo_inicio: z.string().optional(),
     periodo_fim: z.string().optional(),
+  }),
+  analisarSKUCompleto: z.object({
+    sku: z.string(),
   }),
 };
 
@@ -1622,6 +1643,84 @@ async function getMargemPorTipoProjeto(args: any, ctx: ToolExecutionContext): Pr
   };
 }
 
+async function analisarSKUCompletoTool(args: any): Promise<AiToolResult> {
+  const skuString = String(args.sku || '').trim();
+  const analise = analisarSKUCompleto(skuString);
+
+  if (!analise.sucesso || analise.parsed.categoria === 'Desconhecido') {
+    return {
+      text: `Não foi possível analisar o SKU "${skuString}". Certifique-se de que a nomenclatura segue o padrão da Dluxury (ex: BALC-COZ-600-1P-MDF18).`,
+      chart_data: null,
+      table_data: null,
+      suggestions: [
+        'Tentar outro SKU (ex: BALC-COZ-1200-2P-2G-MDF18)',
+        'Consultar tabela de medidas padrão',
+      ],
+      meta: { sucesso: false },
+    };
+  }
+
+  const p = analise.parsed;
+
+  // Montar tabela rica
+  const tableHeaders = ['Parâmetro / Componente', 'Valor Identificado', 'Especificação / Status'];
+  const tableRows: (string | number)[][] = [
+    ['SKU analisado', skuString, 'Fórmula interpretada com sucesso'],
+    ['Categoria do móvel', p.categoria, 'Mapeamento comercial do ERP'],
+    ['Ambiente recomendado', p.ambiente, 'Aplicação física do móvel'],
+    ['Largura total', p.dimensoes.largura_mm ? `${p.dimensoes.largura_mm} mm` : 'Não especificada (padrão)', p.dimensoes.largura_mm ? 'Especificada' : 'Padrão modular'],
+    ['Altura total', p.dimensoes.altura_mm ? `${p.dimensoes.altura_mm} mm` : 'Não especificada (padrão)', p.dimensoes.altura_mm ? 'Especificada' : 'Padrão de ergonomia'],
+    ['Profundidade total', p.dimensoes.profundidade_mm ? `${p.dimensoes.profundidade_mm} mm` : 'Não especificada (padrão)', p.dimensoes.profundidade_mm ? 'Especificada' : 'Profundidade útil padrão'],
+    ['Quantidade de Portas', `${p.portas} porta(s)`, `Tipo de abertura: Porta de ${p.tipoPorta}`],
+    ['Quantidade de Gavetas', `${p.gavetas} gaveta(s)`, p.gavetas > 0 ? 'Gaveteiro embutido' : 'Sem gavetas'],
+    ['Material da estrutura', p.material, `Espessura nominal: ${p.espessura_mm} mm`],
+  ];
+
+  if (p.caracteristicasExtra.length > 0) {
+    tableRows.push(['Diferenciais extras', p.caracteristicasExtra.join(', '), 'Acessórios / Acabamento']);
+  }
+
+  // Se houver alertas estruturais, montar o texto de alertas
+  let alertasText = '';
+  if (analise.alertas.length > 0) {
+    alertasText = '\n\n### ⚠️ ALERTAS DE SEGURANÇA E RISCOS FÍSICOS:\n';
+    analise.alertas.forEach((alerta) => {
+      const icon = alerta.nivel === 'CRITICO' ? '🚨 **[CRÍTICO]**' : '⚠️ **[AVISO]**';
+      alertasText += `- ${icon} **${alerta.mensagem}**\n  *Justificativa/Risco:* ${alerta.justificativa}\n`;
+    });
+  } else {
+    alertasText = '\n\n✅ **Segurança Estrutural:** Nenhuma inconformidade crítica ou de risco físico foi detectada para as dimensões e materiais declarados neste SKU. O móvel atende aos coeficientes de segurança da engenharia Dluxury.';
+  }
+
+  // Texto consultivo
+  const textParts = [
+    `### 📐 RELATÓRIO DE ENGENHARIA DE MÓVEIS — DLUX SÊNIOR`,
+    `A nomenclatura **${skuString}** foi processada e decomposta para avaliação ergonômica, de flambagem e fixação.`,
+    `- **Tipo de item:** ${p.categoria} | **Ambiente:** ${p.ambiente}`,
+    `- **Estruturação:** Material em **${p.material} de ${p.espessura_mm}mm** com **${p.portas} porta(s) (${p.tipoPorta})** e **${p.gavetas} gaveta(s)**.`,
+    alertasText,
+  ];
+
+  if (analise.sugestoesMelhoria.length > 0) {
+    textParts.push(`\n### 🔧 SUGESTÕES DE ENGENHARIA E CONSTRUTIVIDADE:\n` + analise.sugestoesMelhoria.map(s => `- ${s}`).join('\n'));
+  }
+
+  // Sugestões de follow-up para o chat
+  const suggestions = [
+    `Verificar estoque do material ${p.material} ${p.espessura_mm}mm`,
+    ...analise.sugestoesMelhoria.slice(0, 2),
+    'Consultar medidas padrão de móveis',
+  ];
+
+  return {
+    text: toolText(textParts),
+    chart_data: null,
+    table_data: buildTable(tableHeaders, tableRows),
+    suggestions: uniqueStrings(suggestions),
+    meta: { analise },
+  };
+}
+
 const TOOL_HANDLERS: Record<ToolName, (args: any, ctx: ToolExecutionContext) => Promise<AiToolResult>> = {
   getFluxoCaixa,
   getSaudeFinanceira,
@@ -1638,6 +1737,7 @@ const TOOL_HANDLERS: Record<ToolName, (args: any, ctx: ToolExecutionContext) => 
   getComparativoMensal,
   getPrevisaoFaturamento,
   getMargemPorTipoProjeto,
+  analisarSKUCompleto: analisarSKUCompletoTool,
 };
 
 function buildToolGuide() {
@@ -1698,12 +1798,80 @@ function inferFallbackCalls(message: string, today: Date): ToolCall[] {
     return [{ name: 'getMargemPorTipoProjeto', args: { periodo_inicio: start, periodo_fim: end } }];
   }
 
+  // Detecção de SKU de marcenaria ou pedido de análise de SKU
+  const skuRegex = /\b([A-Z]{3,4}-[A-Z]{3,4}-\d+(?:[A-Z0-9-]*))\b/i;
+  const skuMatch = message.match(skuRegex);
+  if (skuMatch) {
+    return [{ name: 'analisarSKUCompleto', args: { sku: skuMatch[1].toUpperCase() } }];
+  }
+  if (text.includes('analisar sku') || text.includes('analise de sku') || text.includes('analise o sku')) {
+    const words = message.split(/\s+/);
+    const possibleSku = words.find(w => w.includes('-') && w.length > 5);
+    if (possibleSku) {
+      return [{ name: 'analisarSKUCompleto', args: { sku: possibleSku.replace(/[.,;:?]/g, '').toUpperCase() } }];
+    }
+  }
+
   return [];
+}
+
+function inferFallbackAgent(message: string): 'marcenaria' | 'financeiro' | 'engenharia' | 'producao' {
+  const text = normalizeText(message);
+  
+  // Engenharia (Validação de SKUs e BOM)
+  const skuRegex = /\b([A-Z]{3,4}-[A-Z]{3,4}-\d+(?:[A-Z0-9-]*))\b/i;
+  if (skuRegex.test(message) || text.includes('analisar sku') || text.includes('analise de sku') || text.includes('analise o sku')) {
+    return 'engenharia';
+  }
+
+  // Financeiro
+  if (
+    text.includes('faturamento') ||
+    text.includes('dre') ||
+    text.includes('fluxo de caixa') ||
+    (text.includes('caixa') && text.includes('fluxo')) ||
+    text.includes('inadimpl') ||
+    text.includes('saldo') ||
+    text.includes('abc de clientes') ||
+    text.includes('curva abc') ||
+    text.includes('vendas') ||
+    text.includes('ticket medio') ||
+    text.includes('ticket médio') ||
+    text.includes('lucrativ') ||
+    text.includes('margem') ||
+    text.includes('comparativo') ||
+    text.includes('previsao') ||
+    text.includes('forecast')
+  ) {
+    return 'financeiro';
+  }
+
+  // Produção
+  if (
+    text.includes('estoque') ||
+    text.includes('chapa') ||
+    text.includes('mdf') ||
+    text.includes('mdp') ||
+    text.includes('compens') ||
+    text.includes('retalho') ||
+    text.includes('plano de corte') ||
+    text.includes('andamento') ||
+    text.includes('producao') ||
+    text.includes('fábrica') ||
+    text.includes('fabrica')
+  ) {
+    return 'producao';
+  }
+
+  // Fallback padrão: Marcenaria (RAG e conceitual)
+  return 'marcenaria';
 }
 
 async function selectRoutePlan(message: string, history: NormalizedMessage[], memorySummary: string, context: Record<string, any>, today: Date) {
   if (!chatModel) {
+    const agent = inferFallbackAgent(message);
     return {
+      agent,
       response_mode: inferFallbackCalls(message, today).length > 0 ? 'tools' : 'direct',
       needs_clarification: false,
       clarification_question: null,
@@ -1717,6 +1885,7 @@ async function selectRoutePlan(message: string, history: NormalizedMessage[], me
     const { object } = await generateObject({
       model: chatModel,
       schema: z.object({
+        agent: z.enum(['marcenaria', 'financeiro', 'engenharia', 'producao']).default('marcenaria'),
         response_mode: z.enum(['direct', 'tools', 'clarify']).default('tools'),
         needs_clarification: z.boolean(),
         clarification_question: z.string().nullable().optional(),
@@ -1737,7 +1906,18 @@ async function selectRoutePlan(message: string, history: NormalizedMessage[], me
       }),
     });
 
-    const selected = object as { response_mode?: 'direct' | 'tools' | 'clarify'; needs_clarification: boolean; clarification_question?: string | null; tool_calls: ToolCall[] };
+    const selected = object as {
+      agent: 'marcenaria' | 'financeiro' | 'engenharia' | 'producao';
+      response_mode?: 'direct' | 'tools' | 'clarify';
+      needs_clarification: boolean;
+      clarification_question?: string | null;
+      tool_calls: ToolCall[];
+    };
+
+    if (!selected.agent) {
+      selected.agent = inferFallbackAgent(message);
+    }
+
     if (selected.response_mode === 'direct') {
       selected.needs_clarification = false;
       selected.clarification_question = null;
@@ -1769,7 +1949,9 @@ async function selectRoutePlan(message: string, history: NormalizedMessage[], me
 
     return selected;
   } catch {
+    const agent = inferFallbackAgent(message);
     return {
+      agent,
       response_mode: inferFallbackCalls(message, today).length > 0 ? 'tools' : 'direct',
       needs_clarification: false,
       clarification_question: null,
@@ -1796,7 +1978,39 @@ async function executePlan(plan: { tool_calls: ToolCall[] }, ctx: ToolExecutionC
   return results;
 }
 
-async function generateFinalText(message: string, history: NormalizedMessage[], memorySummary: string, context: Record<string, any>, today: Date, executed: ExecutedTool[]) {
+async function generateFinalText(
+  message: string,
+  history: NormalizedMessage[],
+  memorySummary: string,
+  context: Record<string, any>,
+  today: Date,
+  executed: ExecutedTool[],
+  agent: 'marcenaria' | 'financeiro' | 'engenharia' | 'producao',
+) {
+  // RAG proativo para marcenaria se não executou já
+  if (agent === 'marcenaria') {
+    const hasRag = executed.some(e => e.name === 'ragConhecimentoTecnico');
+    if (!hasRag) {
+      try {
+        const ragResult = await ragConhecimentoTecnico(message, aiApiKey);
+        executed.push({
+          name: 'ragConhecimentoTecnico',
+          result: {
+            text: ragResult,
+            chart_data: null,
+            table_data: null,
+            suggestions: [],
+          },
+        });
+      } catch (err) {
+        console.error('Erro no RAG Proativo:', err);
+      }
+    }
+  }
+
+  const agentObj = SUBAGENTS[agent] || marcenariaAgent;
+  const agentSystemPrompt = agentObj.systemPrompt;
+
   if (!chatModel) {
     return executed[0]?.result.text || buildOfflineFallbackText(message);
   }
@@ -1808,13 +2022,14 @@ async function generateFinalText(message: string, history: NormalizedMessage[], 
     try {
       const { text } = await generateText({
         model: chatModel,
-      prompt: buildDirectAnswerPrompt({
-        currentDate: today.toISOString(),
-        memorySummary,
-        contextSummary,
-        historySummary,
-        message,
-      }),
+        prompt: buildDirectAnswerPrompt({
+          currentDate: today.toISOString(),
+          memorySummary,
+          contextSummary,
+          historySummary,
+          message,
+          agentSystemPrompt,
+        }),
       });
 
       return (text || '').trim() || buildOfflineFallbackText(message);
@@ -1848,6 +2063,7 @@ async function generateFinalText(message: string, history: NormalizedMessage[], 
         historySummary,
         message,
         toolResultsSummary,
+        agentSystemPrompt,
       }),
     });
 
@@ -1893,7 +2109,7 @@ export async function handleAIChat(req: any, res: any) {
 
     const executed = await executePlan(plan, executionContext);
     const extracted = extractRelevantToolResults(executed);
-    const text = await generateFinalText(message, history, memorySummary, context, today, executed);
+    const text = await generateFinalText(message, history, memorySummary, context, today, executed, plan.agent);
     const updatedMemory = await updatePersistentMemory({
       existingMemory: memorySummary,
       message,

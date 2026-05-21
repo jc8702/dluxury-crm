@@ -3,3 +3,4 @@ export * from './financeiro.js';
 export * from './agenda.js';
 export * from './crm.js';
 export * from './engenharia-orcamentos.js';
+export * from './conhecimento.js';
