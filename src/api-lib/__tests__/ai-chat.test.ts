@@ -67,10 +67,8 @@ describe('Integração do Analisador de SKU com AI Chat', () => {
     // Verificar se respondeu com sucesso (200 OK)
     expect(responseStatus).toBe(200);
     expect(responseData).toBeDefined();
-    expect(responseData.success).toBe(true);
-    expect(responseData.data).toBeDefined();
 
-    const data = responseData.data;
+    const data = responseData;
     
     // Verificar se o texto de resposta contém informações do relatório de engenharia
     expect(data.text).toContain('RELATÓRIO DE ENGENHARIA DE MÓVEIS');
@@ -123,9 +121,8 @@ describe('Integração do Analisador de SKU com AI Chat', () => {
     await handleAIChat(req, res);
 
     expect(responseStatus).toBe(200);
-    expect(responseData.success).toBe(true);
-    expect(responseData.data.text).toContain('Não foi possível analisar o SKU');
-    expect(responseData.data.suggestions).toContain('Consultar tabela de medidas padrão');
+    expect(responseData.text).toContain('Não foi possível analisar o SKU');
+    expect(responseData.suggestions).toContain('Consultar tabela de medidas padrão');
   });
 });
 
@@ -160,11 +157,10 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria', () => {
     await handleAIChat(req, res);
 
     expect(responseStatus).toBe(200);
-    expect(responseData.success).toBe(true);
     
     // O texto deve conter as informações recuperadas do RAG mockado
-    expect(responseData.data.text).toContain('Folga de corrediça telescópica');
-    expect(responseData.data.text).toContain('13mm de cada lado');
+    expect(responseData.text).toContain('Folga de corrediça telescópica');
+    expect(responseData.text).toContain('13mm de cada lado');
   });
 
   it('deve classificar consultas de finanças para o subagente financeiro', async () => {
@@ -197,10 +193,9 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria', () => {
     await handleAIChat(req, res);
 
     expect(responseStatus).toBe(200);
-    expect(responseData.success).toBe(true);
     // Como o chatModel está nulo nos testes, o fallback offline roda.
     // O fallback offline detecta "fluxo de caixa" e retorna a ferramenta getFluxoCaixa.
-    expect(responseData.data.text).toContain('Fluxo de caixa');
+    expect(responseData.text).toContain('Fluxo de caixa');
   });
 
   it('deve classificar consultas de estoque/produção para o subagente de produção', async () => {
@@ -233,9 +228,8 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria', () => {
     await handleAIChat(req, res);
 
     expect(responseStatus).toBe(200);
-    expect(responseData.success).toBe(true);
     // Deve acionar o fallback de ferramentas getEstoqueChapas
-    expect(responseData.data.text).toContain('chapas');
-    expect(responseData.data.suggestions).toContain('Ver materiais abaixo do mínimo');
+    expect(responseData.text).toContain('chapas');
+    expect(responseData.suggestions).toContain('Ver materiais abaixo do mínimo');
   });
 });

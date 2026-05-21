@@ -18,6 +18,16 @@ import { Bot, Loader2, MessageCircle, Send, Sparkles, Trash2, X } from 'lucide-r
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000,
+  maxDelay: 8000,
+  backoffMultiplier: 2,
+};
+
+const REQUEST_TIMEOUT = 45000; // 45 segundos
+const MAX_CONVERSATION_HISTORY = 10; // Últimas 10 mensagens (20 turnos)
+
 type ChartSeries = { key: string; label: string; color?: string };
 type ChartData =
   | { type: 'line' | 'bar'; xKey: string; series: ChartSeries[]; data: Array<Record<string, any>>; title?: string }
@@ -80,6 +90,130 @@ function deserializeMessages(raw: any): DluxMessage[] {
       sources: Array.isArray(item.sources) ? item.sources : [],
     }))
     .filter((item) => !Number.isNaN(item.timestamp.getTime()));
+}
+
+/**
+ * Implementa retry com backoff exponencial e jitter
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  context: string
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), REQUEST_TIMEOUT);
+      });
+
+      const result = await Promise.race([fn(), timeoutPromise]);
+      return result as T;
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[${context}] Tentativa ${attempt + 1}/${RETRY_CONFIG.maxRetries} falhou:`, error.message);
+
+      // Não tenta novamente em erros 4xx (exceto 429)
+      if (error.status >= 400 && error.status < 500 && error.status !== 429) {
+        throw error;
+      }
+
+      if (attempt < RETRY_CONFIG.maxRetries - 1) {
+        const delay = Math.min(
+          RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
+          RETRY_CONFIG.maxDelay
+        );
+        const jitter = Math.random() * 0.3 * delay; // ±30% jitter
+        const waitTime = delay + jitter;
+
+        console.info(`[${context}] Aguardando ${Math.round(waitTime)}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+  }
+
+  throw lastError || new Error(`${context}: Falha após ${RETRY_CONFIG.maxRetries} tentativas`);
+}
+
+/**
+ * Valida e normaliza resposta do backend
+ */
+function validateAndNormalizeResponse(rawResponse: any): {
+  text: string;
+  chart_data: ChartData | null;
+  table_data: TableData | null;
+  suggestions: string[];
+  agent?: string;
+  confidence_score?: number;
+  sources?: string[];
+  memory_summary?: string;
+} {
+  // Verifica estrutura mínima
+  if (!rawResponse || typeof rawResponse !== 'object') {
+    throw new Error('Resposta inválida do backend: estrutura não reconhecida');
+  }
+
+  // Extrai texto da resposta
+  let text = '';
+  if (typeof rawResponse.text === 'string') {
+    text = rawResponse.text;
+  } else if (typeof rawResponse.content === 'string') {
+    text = rawResponse.content;
+  } else if (typeof rawResponse.message === 'string') {
+    text = rawResponse.message;
+  }
+
+  if (!text || text.trim().length === 0) {
+    throw new Error('Resposta do backend não contém texto válido');
+  }
+
+  // Valida chart_data se presente
+  let chart_data: ChartData | null = null;
+  if (rawResponse.chart_data && typeof rawResponse.chart_data === 'object') {
+    const cd = rawResponse.chart_data;
+    if (
+      (cd.type === 'line' || cd.type === 'bar') &&
+      typeof cd.xKey === 'string' &&
+      Array.isArray(cd.series) &&
+      Array.isArray(cd.data)
+    ) {
+      chart_data = cd;
+    } else if (
+      cd.type === 'pie' &&
+      typeof cd.nameKey === 'string' &&
+      typeof cd.valueKey === 'string' &&
+      Array.isArray(cd.data)
+    ) {
+      chart_data = cd;
+    }
+  }
+
+  // Valida table_data se presente
+  let table_data: TableData | null = null;
+  if (
+    rawResponse.table_data &&
+    typeof rawResponse.table_data === 'object' &&
+    Array.isArray(rawResponse.table_data.headers) &&
+    Array.isArray(rawResponse.table_data.rows)
+  ) {
+    table_data = rawResponse.table_data;
+  }
+
+  // Normaliza suggestions
+  const suggestions = Array.isArray(rawResponse.suggestions)
+    ? rawResponse.suggestions.filter((s: any) => typeof s === 'string' && s.trim().length > 0)
+    : [];
+
+  return {
+    text: text.trim(),
+    chart_data,
+    table_data,
+    suggestions,
+    agent: typeof rawResponse.agent === 'string' ? rawResponse.agent : undefined,
+    confidence_score: typeof rawResponse.confidence_score === 'number' ? rawResponse.confidence_score : undefined,
+    sources: Array.isArray(rawResponse.sources) ? rawResponse.sources : undefined,
+    memory_summary: typeof rawResponse.memory_summary === 'string' ? rawResponse.memory_summary : undefined,
+  };
 }
 
 function normalizeMemorySummary(value: any) {
@@ -290,52 +424,101 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
   const sendMessage = async (text: string) => {
     if (!text || loading) return;
 
-    const history = messages.map((msg) => ({
-      role: msg.role === 'assistant' ? 'assistant' : 'user',
+    const userMessage: DluxMessage = { 
+      role: 'user', 
+      text, 
+      timestamp: new Date() 
+    };
+
+    // Constrói histórico limitado (últimas N mensagens, excluindo a atual)
+    const recentMessages = messages.slice(-MAX_CONVERSATION_HISTORY);
+    const history = recentMessages.map((msg) => ({
+      role: msg.role,
       content: msg.text,
+      timestamp: msg.timestamp.toISOString(),
     }));
 
-    setMessages((prev) => [...prev, { role: 'user', text, timestamp: new Date() }]);
+    setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
 
     try {
-      const response = await api.ai.chat({
-        message: text,
-        agentMode,
-        conversation_history: history,
-        context: {
-          data_atual: new Date().toISOString(),
-          rota_atual: window.location.hash || window.location.pathname,
-          usuario_id: user?.id,
-          usuario_nome: user?.name,
-          empresa: 'D\'LUXURY CRM',
-        },
-        memory_summary: memorySummary,
-      });
+      const response = await retryWithBackoff(async () => {
+        const apiResponse = await api.ai.chat({
+          message: text,
+          agentMode,
+          conversation_history: history,
+          context: {
+            data_atual: new Date().toISOString(),
+            data_formatada: new Date().toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+            hora_atual: new Date().toLocaleTimeString('pt-BR'),
+            rota_atual: window.location.hash || window.location.pathname,
+            usuario_id: user?.id || 'anonimo',
+            usuario_nome: user?.name || 'Usuário',
+            empresa: 'D\'LUXURY CRM',
+            versao_app: '1.0.0',
+          },
+          memory_summary: memorySummary || undefined,
+          request_id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        });
+
+        return apiResponse;
+      }, 'DLUX_CHAT');
+
+      // Valida e normaliza resposta
+      const validated = validateAndNormalizeResponse(response);
 
       const assistantMessage: DluxMessage = {
         role: 'assistant',
-        text: response?.text || response?.content || 'Não consegui processar a resposta no momento.',
-        chart_data: response?.chart_data ?? null,
-        table_data: response?.table_data ?? null,
-        suggestions: Array.isArray(response?.suggestions) ? response.suggestions : [],
+        text: validated.text,
+        chart_data: validated.chart_data,
+        table_data: validated.table_data,
+        suggestions: validated.suggestions,
         timestamp: new Date(),
-        agent: response?.agent,
-        confidence_score: response?.confidence_score,
-        sources: response?.sources,
+        agent: validated.agent,
+        confidence_score: validated.confidence_score,
+        sources: validated.sources,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      if (typeof response?.memory_summary === 'string') {
-        setMemorySummary(normalizeMemorySummary(response.memory_summary));
+
+      // Atualiza memória se fornecida
+      if (validated.memory_summary) {
+        setMemorySummary(normalizeMemorySummary(validated.memory_summary));
       }
+
     } catch (err: any) {
-      console.error('DLUX_CHAT_FRONTEND_ERROR:', err);
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        text: `Desculpe, houve um erro. Tente novamente.\n\n${err?.message ? `Detalhe: ${err.message}` : ''}`.trim(),
-        timestamp: new Date(),
-      }]);
+      console.error('[DLUX_CHAT_ERROR]', {
+        message: err?.message,
+        status: err?.status,
+        stack: err?.stack,
+        timestamp: new Date().toISOString(),
+      });
+
+      let errorMessage = 'Desculpe, não consegui processar sua mensagem no momento.';
+
+      if (err?.status === 429) {
+        errorMessage = 'Sistema temporariamente ocupado. Tente novamente em alguns segundos.';
+      } else if (err?.status >= 500) {
+        errorMessage = 'Erro no servidor. Nossa equipe foi notificada. Tente novamente em instantes.';
+      } else if (err?.message?.includes('timeout')) {
+        errorMessage = 'A requisição demorou muito. Tente uma pergunta mais específica ou aguarde um momento.';
+      } else if (err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError')) {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: `⚠️ ${errorMessage}\n\n${err?.message ? `Detalhe técnico: ${err.message}` : ''}`.trim(),
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -618,9 +801,27 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
             ))}
 
             {loading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.65)' }}>
-                <Loader2 size={16} className="dlux-spin" />
-                Processando dados...
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'flex-start',
+                gap: 6,
+              }}>
+                <div
+                  style={{
+                    maxWidth: '85%',
+                    borderRadius: 18,
+                    padding: '0.9rem 1rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    color: 'rgba(255,255,255,0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <Loader2 size={16} className="dlux-spin" />
+                  <span>Processando sua pergunta...</span>
+                </div>
               </div>
             )}
 

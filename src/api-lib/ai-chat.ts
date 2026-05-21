@@ -2109,20 +2109,57 @@ async function generateFinalText(
   }
 }
 
+const rateLimitStore = new Map<string, number[]>();
+
+function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const windowMs = 10000; // 10 segundos
+  const maxRequests = 5;
+
+  let requests = rateLimitStore.get(userId) || [];
+  requests = requests.filter(timestamp => now - timestamp < windowMs);
+  
+  if (requests.length >= maxRequests) {
+    const oldestRequest = requests[0];
+    const retryAfter = Math.ceil((windowMs - (now - oldestRequest)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  requests.push(now);
+  rateLimitStore.set(userId, requests);
+  return { allowed: true };
+}
+
 export async function handleAIChat(req: any, res: any) {
   try {
     const { authorized, error } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
+    if (!authorized) return res.status(401).json({ error: error || 'Não autorizado' });
     if (req.method !== 'POST') return res.status(405).end();
 
     await bootstrapFinanceiro();
 
     const body = req.body || {};
-    const message = String(body.message || '').trim();
-    if (!message) {
-      return res.status(400).json({ success: false, error: 'Mensagem vazia' });
+    
+    // Validação de entrada
+    if (!body.message || typeof body.message !== 'string' || body.message.trim().length === 0) {
+      return res.status(400).json({ error: 'Mensagem inválida ou vazia' });
     }
 
+    if (body.message.length > 4000) {
+      return res.status(400).json({ error: 'Mensagem muito longa (máximo 4000 caracteres)' });
+    }
+
+    // Rate limiting por usuário
+    const userId = body.context?.usuario_id || 'anonimo';
+    const rateCheck = checkRateLimit(userId);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({
+        error: 'Limite de requisições excedido. Aguarde alguns segundos.',
+        retry_after: rateCheck.retryAfter || 10
+      });
+    }
+
+    const message = body.message.trim();
     const agentMode = body.agentMode || 'auto';
     const history = normalizeHistory(body.conversation_history || body.history || []);
     const context = (body.context || {}) as Record<string, any>;
@@ -2147,8 +2184,6 @@ export async function handleAIChat(req: any, res: any) {
         tool_calls: [],
       };
       
-      // We could use an LLM call here just to extract tools if needed, but for strict mode, we'll try to infer or direct answer.
-      // Let's run selectRoutePlan but force the agent.
       try {
          const autoPlan = await selectRoutePlan(message, history, memorySummary, context, today);
          const allowedTools = getAgentToolNames(SUBAGENTS[agentMode as keyof typeof SUBAGENTS]);
@@ -2167,22 +2202,19 @@ export async function handleAIChat(req: any, res: any) {
       plan = await selectRoutePlan(message, history, memorySummary, context, today);
       // Ensure the auto-selected agent only uses its own tools
       if (SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]) {
-          const allowedTools = getAgentToolNames(SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]);
+          const allowedTools = getAgentToolNames(SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]) as string[];
           plan.tool_calls = plan.tool_calls.filter((c: any) => allowedTools.includes(c.name));
       }
     }
 
     if (plan.needs_clarification && plan.clarification_question && (!plan.tool_calls || plan.tool_calls.length === 0)) {
       return res.status(200).json({
-        success: true,
-        data: {
-          text: plan.clarification_question,
-          chart_data: null,
-          table_data: null,
-          suggestions: [],
-          conversation_id: crypto.randomUUID(),
-          agent: plan.agent,
-        },
+        text: plan.clarification_question,
+        chart_data: null,
+        table_data: null,
+        suggestions: [],
+        conversation_id: crypto.randomUUID(),
+        agent: plan.agent,
       });
     }
 
@@ -2215,22 +2247,45 @@ export async function handleAIChat(req: any, res: any) {
     });
 
     return res.status(200).json({
-      success: true,
-      data: {
-        text: finalResult.text,
-        content: finalResult.text,
-        chart_data: extracted.chart_data,
-        table_data: extracted.table_data,
-        suggestions: extracted.suggestions,
-        memory_summary: updatedMemory,
-        conversation_id: crypto.randomUUID(),
-        agent: plan.agent,
-        confidence_score: finalResult.confidence_score,
-        sources: finalResult.sources,
-      },
+      text: finalResult.text,
+      chart_data: extracted.chart_data,
+      table_data: extracted.table_data,
+      suggestions: extracted.suggestions,
+      memory_summary: updatedMemory,
+      conversation_id: crypto.randomUUID(),
+      agent: plan.agent,
+      confidence_score: finalResult.confidence_score,
+      sources: finalResult.sources,
     });
   } catch (err: any) {
-    console.error('DLUX_CHAT_ERROR:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Erro ao processar mensagem' });
+    console.error('[GEMINI_API_ERROR]', {
+      message: err.message,
+      status: err.status || err.statusCode,
+      type: err.type,
+      timestamp: new Date().toISOString(),
+    });
+
+    const status = err.status || err.statusCode || 500;
+
+    if (status === 429) {
+      return res.status(429).json({
+        error: 'Sistema temporariamente ocupado',
+        text: 'Muitas requisições simultâneas. Por favor, aguarde alguns segundos e tente novamente.',
+        retry_after: 10,
+      });
+    }
+
+    if (status === 529 || status >= 500) {
+      return res.status(503).json({
+        error: 'Erro no serviço de IA',
+        text: 'O serviço está temporariamente indisponível. Tente novamente em instantes.',
+      });
+    }
+
+    return res.status(status).json({
+      error: err.message || 'Erro ao processar requisição',
+      text: 'Ocorreu um erro inesperado. Por favor, tente novamente.',
+    });
   }
 }
+

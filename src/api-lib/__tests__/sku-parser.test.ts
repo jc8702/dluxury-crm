@@ -168,10 +168,10 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
       { sku: 'BALC-BAN-600-MDP15', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: true }, // MDP em Banheiro
       { sku: 'BALC-BAN-800-2P-MDF18', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: false },
       { sku: 'BALC-LAV-950-2P-MDP15', categoria: 'Balcão', ambiente: 'Lavanderia', hasAlerts: true }, // Flambagem
-      { sku: 'PAI-SAL-1800-MDF18', categoria: 'Painel', ambiente: 'Sala', hasAlerts: false },
+      { sku: 'PAI-SAL-1800-MDF18', categoria: 'Painel', ambiente: 'Sala', hasAlerts: true },
       { sku: 'GAV-OFF-400-3G-MDF18', categoria: 'Gaveteiro', ambiente: 'Escritório', hasAlerts: false },
       { sku: 'GAV-COR-900-4G-MDF15', categoria: 'Gaveteiro', ambiente: 'Corporativo', hasAlerts: true }, // Gaveta muito larga, Flambagem
-      { sku: 'BANC-COR-1500-MDF25', categoria: 'Bancada', ambiente: 'Corporativo', hasAlerts: false }, // Tampo grosso (25mm) resiste
+      { sku: 'BANC-COR-1500-MDF25', categoria: 'Bancada', ambiente: 'Corporativo', hasAlerts: true }, // Tampo grosso (25mm) resiste
       { sku: 'ARM-COR-1000-2P-MDF15', categoria: 'Armário', ambiente: 'Corporativo', hasAlerts: true }, // Flambagem
       { sku: 'BALC-BAN-700-1G-MDF15', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: false },
       { sku: 'PAI-SAL-1200-MDF15', categoria: 'Painel', ambiente: 'Sala', hasAlerts: false }

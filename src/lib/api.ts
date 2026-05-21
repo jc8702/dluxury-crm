@@ -298,7 +298,44 @@ export const api = {
     create: (data: any) => apiCall<any>('estoque?type=categories', 'POST', data),
   },
   ai: {
-    chat: (payload: any) => apiCall<any>('ai/chat', 'POST', payload),
+    async chat(payload: any) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      try {
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const error: any = new Error(errorData.error || `HTTP ${response.status}`);
+          error.status = response.status;
+          error.data = errorData;
+          throw error;
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+
+        if (error.name === 'AbortError') {
+          const timeoutError: any = new Error('Request timeout');
+          timeoutError.status = 408;
+          throw timeoutError;
+        }
+
+        throw error;
+      }
+    },
     generateBOM: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-bom', payload }),
     auditSKU: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'audit-sku', payload }),
     purchaseSuggestion: () => apiCall<any>('ai-copilot', 'POST', { skill: 'purchase-suggestion' }),
