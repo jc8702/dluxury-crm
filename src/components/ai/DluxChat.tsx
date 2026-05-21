@@ -31,6 +31,9 @@ interface DluxMessage {
   table_data?: TableData | null;
   suggestions?: string[];
   timestamp: Date;
+  agent?: string;
+  confidence_score?: number;
+  sources?: string[];
 }
 
 interface DluxChatProps {
@@ -72,6 +75,9 @@ function deserializeMessages(raw: any): DluxMessage[] {
       table_data: item.table_data ?? null,
       suggestions: Array.isArray(item.suggestions) ? item.suggestions : [],
       timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
+      agent: item.agent,
+      confidence_score: item.confidence_score,
+      sources: Array.isArray(item.sources) ? item.sources : [],
     }))
     .filter((item) => !Number.isNaN(item.timestamp.getTime()));
 }
@@ -191,6 +197,7 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
   const [memorySummary, setMemorySummary] = useState('');
+  const [agentMode, setAgentMode] = useState('auto');
   const [messages, setMessages] = useState<DluxMessage[]>([
     { role: 'assistant', text: initialGreeting, timestamp: new Date() },
   ]);
@@ -294,6 +301,7 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
     try {
       const response = await api.ai.chat({
         message: text,
+        agentMode,
         conversation_history: history,
         context: {
           data_atual: new Date().toISOString(),
@@ -312,6 +320,9 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
         table_data: response?.table_data ?? null,
         suggestions: Array.isArray(response?.suggestions) ? response.suggestions : [],
         timestamp: new Date(),
+        agent: response?.agent,
+        confidence_score: response?.confidence_score,
+        sources: response?.sources,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -487,6 +498,34 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
           </header>
 
           <div style={{ padding: '0.9rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+               <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Modo do Agente:</div>
+               <select
+                 value={agentMode}
+                 onChange={(e) => setAgentMode(e.target.value)}
+                 style={{
+                   background: 'rgba(255,255,255,0.05)',
+                   color: '#fff',
+                   border: '1px solid rgba(255,255,255,0.1)',
+                   borderRadius: 8,
+                   padding: '0.3rem 0.5rem',
+                   fontSize: 12,
+                   outline: 'none',
+                   cursor: 'pointer'
+                 }}
+               >
+                 <option value="auto" style={{ color: '#000' }}>✨ Automático (Roteador)</option>
+                 <option value="marcenaria" style={{ color: '#000' }}>🪵 Marcenaria</option>
+                 <option value="engenharia" style={{ color: '#000' }}>📐 Engenharia</option>
+                 <option value="producao" style={{ color: '#000' }}>🏭 Produção</option>
+                 <option value="pcp" style={{ color: '#000' }}>📋 PCP</option>
+                 <option value="comercial" style={{ color: '#000' }}>💰 Comercial</option>
+                 <option value="financeiro" style={{ color: '#000' }}>🏦 Financeiro</option>
+                 <option value="estoque" style={{ color: '#000' }}>📦 Estoque</option>
+                 <option value="projetos" style={{ color: '#000' }}>🚀 Projetos</option>
+                 <option value="administrativo" style={{ color: '#000' }}>⚙️ Administrativo</option>
+               </select>
+            </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.04em', lineHeight: 1.5 }}>
               Pergunte livremente em português. Eu entendo contexto, histórico e dados do ERP sem precisar de comandos prontos.
             </div>
@@ -553,9 +592,28 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
                   </div>
                 )}
 
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                  {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span>{message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  {message.role === 'assistant' && message.agent && (
+                    <>
+                      <span>•</span>
+                      <span style={{ color: '#00A99D', fontWeight: 600 }}>Agente: {message.agent.toUpperCase()}</span>
+                    </>
+                  )}
+                  {message.role === 'assistant' && message.confidence_score !== undefined && (
+                    <>
+                      <span>•</span>
+                      <span style={{ color: message.confidence_score >= 80 ? '#22C55E' : message.confidence_score >= 50 ? '#E2AC00' : '#EF4444' }}>
+                         Confiança: {message.confidence_score}%
+                      </span>
+                    </>
+                  )}
                 </div>
+                {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
+                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>
+                     Fontes: {message.sources.join(', ')}
+                   </div>
+                )}
               </div>
             ))}
 

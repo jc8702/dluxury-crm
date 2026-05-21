@@ -13,11 +13,22 @@ import { financeiroAgent } from './agents/financeiro.js';
 import { engenhariaAgent } from './agents/engenharia.js';
 import { producaoAgent } from './agents/producao.js';
 
+import { comercialAgent } from './agents/comercial.js';
+import { estoqueAgent } from './agents/estoque.js';
+import { administrativoAgent } from './agents/administrativo.js';
+import { projetosAgent } from './agents/projetos.js';
+import { pcpAgent } from './agents/pcp.js';
+
 const SUBAGENTS = {
   marcenaria: marcenariaAgent,
   financeiro: financeiroAgent,
   engenharia: engenhariaAgent,
   producao: producaoAgent,
+  comercial: comercialAgent,
+  estoque: estoqueAgent,
+  administrativo: administrativoAgent,
+  projetos: projetosAgent,
+  pcp: pcpAgent,
 };
 
 type Granularity = 'diario' | 'semanal' | 'mensal';
@@ -37,6 +48,8 @@ type AiToolResult = {
   table_data: TableData | null;
   suggestions: string[];
   meta?: Record<string, any>;
+  confidence_score?: number;
+  sources?: string[];
 };
 
 type NormalizedMessage = { role: 'user' | 'assistant'; content: string };
@@ -1986,7 +1999,7 @@ async function generateFinalText(
   context: Record<string, any>,
   today: Date,
   executed: ExecutedTool[],
-  agent: 'marcenaria' | 'financeiro' | 'engenharia' | 'producao',
+  agent: string,
 ) {
   // RAG proativo para marcenaria se não executou já
   if (agent === 'marcenaria') {
@@ -2009,20 +2022,30 @@ async function generateFinalText(
     }
   }
 
-  const agentObj = SUBAGENTS[agent] || marcenariaAgent;
+  const agentObj = SUBAGENTS[agent as keyof typeof SUBAGENTS] || marcenariaAgent;
   const agentSystemPrompt = agentObj.systemPrompt;
 
+  const fallbackText = executed[0]?.result.text || buildOfflineFallbackText(message);
+  const fallbackResult = { text: fallbackText, confidence_score: 50, sources: [] };
+
   if (!chatModel) {
-    return executed[0]?.result.text || buildOfflineFallbackText(message);
+    return fallbackResult;
   }
 
   const historySummary = historyToText(history);
   const contextSummary = sanitizeContext(context);
 
+  const responseSchema = z.object({
+    response: z.string().describe("A resposta completa do assistente formatada em Markdown."),
+    confidence: z.number().min(0).max(100).describe("Nível de confiança da resposta (0 a 100)."),
+    sources: z.array(z.string()).describe("Fontes utilizadas (ex: 'ERP Data', 'Norma ABNT', 'Conhecimento Interno', 'N/A').")
+  });
+
   if (!executed.length) {
     try {
-      const { text } = await generateText({
+      const { object } = await generateObject({
         model: chatModel,
+        schema: responseSchema,
         prompt: buildDirectAnswerPrompt({
           currentDate: today.toISOString(),
           memorySummary,
@@ -2033,9 +2056,9 @@ async function generateFinalText(
         }),
       });
 
-      return (text || '').trim() || buildOfflineFallbackText(message);
+      return { text: object.response || fallbackText, confidence_score: object.confidence || 0, sources: object.sources || [] };
     } catch {
-      return buildOfflineFallbackText(message);
+      return fallbackResult;
     }
   }
 
@@ -2055,8 +2078,9 @@ async function generateFinalText(
   );
 
   try {
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: chatModel,
+      schema: responseSchema,
       prompt: buildAnswerPrompt({
         currentDate: today.toISOString(),
         memorySummary,
@@ -2068,9 +2092,9 @@ async function generateFinalText(
       }),
     });
 
-    return (text || '').trim() || executed[0]?.result.text || buildOfflineFallbackText(message);
+    return { text: object.response || fallbackText, confidence_score: object.confidence || 0, sources: object.sources || [] };
   } catch {
-    return executed[0]?.result.text || buildOfflineFallbackText(message);
+    return fallbackResult;
   }
 }
 
@@ -2088,13 +2112,46 @@ export async function handleAIChat(req: any, res: any) {
       return res.status(400).json({ success: false, error: 'Mensagem vazia' });
     }
 
+    const agentMode = body.agentMode || 'auto';
     const history = normalizeHistory(body.conversation_history || body.history || []);
     const context = (body.context || {}) as Record<string, any>;
     const memorySummary = normalizeMemorySummary(body.memory_summary || body.memory || '');
     const today = context.data_atual ? toDate(context.data_atual) : new Date();
     const executionContext: ToolExecutionContext = { today, message, context, history };
 
-    const plan = await selectRoutePlan(message, history, memorySummary, context, today);
+    let plan: any;
+    if (agentMode !== 'auto' && SUBAGENTS[agentMode as keyof typeof SUBAGENTS]) {
+      // Manual explicit routing
+      plan = {
+        agent: agentMode,
+        response_mode: 'tools',
+        needs_clarification: false,
+        clarification_question: null,
+        tool_calls: [],
+      };
+      
+      // We could use an LLM call here just to extract tools if needed, but for strict mode, we'll try to infer or direct answer.
+      // Let's run selectRoutePlan but force the agent.
+      try {
+         const autoPlan = await selectRoutePlan(message, history, memorySummary, context, today);
+         plan.tool_calls = autoPlan.tool_calls.filter(c => SUBAGENTS[agentMode as keyof typeof SUBAGENTS].tools.includes(c.name));
+         if (autoPlan.needs_clarification) {
+             plan.needs_clarification = autoPlan.needs_clarification;
+             plan.clarification_question = autoPlan.clarification_question;
+         }
+      } catch {
+         // fallback
+         const fallbackCalls = inferFallbackCalls(message, today);
+         plan.tool_calls = fallbackCalls.filter(c => SUBAGENTS[agentMode as keyof typeof SUBAGENTS].tools.includes(c.name));
+      }
+    } else {
+      plan = await selectRoutePlan(message, history, memorySummary, context, today);
+      // Ensure the auto-selected agent only uses its own tools
+      if (SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]) {
+          plan.tool_calls = plan.tool_calls.filter((c: any) => SUBAGENTS[plan.agent as keyof typeof SUBAGENTS].tools.includes(c.name));
+      }
+    }
+
     if (plan.needs_clarification && plan.clarification_question && (!plan.tool_calls || plan.tool_calls.length === 0)) {
       return res.status(200).json({
         success: true,
@@ -2104,17 +2161,21 @@ export async function handleAIChat(req: any, res: any) {
           table_data: null,
           suggestions: [],
           conversation_id: crypto.randomUUID(),
+          agent: plan.agent,
         },
       });
     }
 
     const executed = await executePlan(plan, executionContext);
     const extracted = extractRelevantToolResults(executed);
-    const text = await generateFinalText(message, history, memorySummary, context, today, executed, plan.agent);
+    
+    // Final text now returns an object with text, confidence_score and sources
+    const finalResult = await generateFinalText(message, history, memorySummary, context, today, executed, plan.agent);
+    
     const updatedMemory = await updatePersistentMemory({
       existingMemory: memorySummary,
       message,
-      assistantText: text,
+      assistantText: finalResult.text,
       context,
       toolResultsSummary: JSON.stringify(
         executed.map((entry) => ({
@@ -2136,13 +2197,16 @@ export async function handleAIChat(req: any, res: any) {
     return res.status(200).json({
       success: true,
       data: {
-        text,
-        content: text,
+        text: finalResult.text,
+        content: finalResult.text,
         chart_data: extracted.chart_data,
         table_data: extracted.table_data,
         suggestions: extracted.suggestions,
         memory_summary: updatedMemory,
         conversation_id: crypto.randomUUID(),
+        agent: plan.agent,
+        confidence_score: finalResult.confidence_score,
+        sources: finalResult.sources,
       },
     });
   } catch (err: any) {
