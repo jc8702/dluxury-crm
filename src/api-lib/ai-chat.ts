@@ -2042,6 +2042,7 @@ async function generateFinalText(
   });
 
   if (!executed.length) {
+    console.log("====> IN !executed.length block, fallbackText is:", fallbackText);
     try {
       const { object } = await generateObject({
         model: chatModel,
@@ -2057,8 +2058,13 @@ async function generateFinalText(
       });
 
       return { text: object.response || fallbackText, confidence_score: object.confidence || 0, sources: object.sources || [] };
-    } catch {
-      return fallbackResult;
+    } catch (err: any) {
+      console.error("Erro no generateObject (Direct):", err);
+      return { 
+        text: "Desculpe, ocorreu um erro de comunicação ou limite de requisições da IA. Por favor, aguarde alguns instantes e tente novamente.", 
+        confidence_score: 0, 
+        sources: [] 
+      };
     }
   }
 
@@ -2093,8 +2099,13 @@ async function generateFinalText(
     });
 
     return { text: object.response || fallbackText, confidence_score: object.confidence || 0, sources: object.sources || [] };
-  } catch {
-    return fallbackResult;
+  } catch (err: any) {
+    console.error("Erro no generateObject (With Tools):", err);
+    return { 
+      text: "Desculpe, ocorreu um erro de comunicação ou limite de requisições da IA. Por favor, aguarde alguns instantes e tente novamente.", 
+      confidence_score: 0, 
+      sources: [] 
+    };
   }
 }
 
