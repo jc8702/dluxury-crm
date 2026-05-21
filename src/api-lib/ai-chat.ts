@@ -2119,6 +2119,12 @@ export async function handleAIChat(req: any, res: any) {
     const today = context.data_atual ? toDate(context.data_atual) : new Date();
     const executionContext: ToolExecutionContext = { today, message, context, history };
 
+    const getAgentToolNames = (agent: any): string[] => {
+      if (!agent || !agent.tools) return [];
+      if (Array.isArray(agent.tools)) return agent.tools;
+      return Object.keys(agent.tools);
+    };
+
     let plan: any;
     if (agentMode !== 'auto' && SUBAGENTS[agentMode as keyof typeof SUBAGENTS]) {
       // Manual explicit routing
@@ -2134,7 +2140,8 @@ export async function handleAIChat(req: any, res: any) {
       // Let's run selectRoutePlan but force the agent.
       try {
          const autoPlan = await selectRoutePlan(message, history, memorySummary, context, today);
-         plan.tool_calls = autoPlan.tool_calls.filter(c => SUBAGENTS[agentMode as keyof typeof SUBAGENTS].tools.includes(c.name));
+         const allowedTools = getAgentToolNames(SUBAGENTS[agentMode as keyof typeof SUBAGENTS]);
+         plan.tool_calls = autoPlan.tool_calls.filter(c => allowedTools.includes(c.name));
          if (autoPlan.needs_clarification) {
              plan.needs_clarification = autoPlan.needs_clarification;
              plan.clarification_question = autoPlan.clarification_question;
@@ -2142,13 +2149,15 @@ export async function handleAIChat(req: any, res: any) {
       } catch {
          // fallback
          const fallbackCalls = inferFallbackCalls(message, today);
-         plan.tool_calls = fallbackCalls.filter(c => SUBAGENTS[agentMode as keyof typeof SUBAGENTS].tools.includes(c.name));
+         const allowedTools = getAgentToolNames(SUBAGENTS[agentMode as keyof typeof SUBAGENTS]);
+         plan.tool_calls = fallbackCalls.filter(c => allowedTools.includes(c.name));
       }
     } else {
       plan = await selectRoutePlan(message, history, memorySummary, context, today);
       // Ensure the auto-selected agent only uses its own tools
       if (SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]) {
-          plan.tool_calls = plan.tool_calls.filter((c: any) => SUBAGENTS[plan.agent as keyof typeof SUBAGENTS].tools.includes(c.name));
+          const allowedTools = getAgentToolNames(SUBAGENTS[plan.agent as keyof typeof SUBAGENTS]);
+          plan.tool_calls = plan.tool_calls.filter((c: any) => allowedTools.includes(c.name));
       }
     }
 
