@@ -40,4 +40,4 @@ async function validateBOM() {
     }
 }
 
-validateBOM().catch(console.error).finally(() => process.exit(0));
+validateBOM().catch(console.error);

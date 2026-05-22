@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, decimal, jsonb, integer, text, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, decimal, jsonb, integer, text, boolean, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { clientes } from './crm.js';
 import { planosDeCorte } from './planos-de-corte.js';
@@ -78,6 +78,13 @@ export const orcamentos = pgTable('orcamentos_pro', {
     arquivoSketchupUrl: text('arquivo_sketchup_url'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+    return {
+        numeroOrcamentoIdx: index('idx_orcamentos_numero').on(table.numeroOrcamento),
+        clienteIdIdx: index('idx_orcamentos_cliente').on(table.clienteId),
+        statusIdx: index('idx_orcamentos_status').on(table.status),
+        dataOrcamentoIdx: index('idx_orcamentos_data').on(table.dataOrcamento),
+    };
 });
 
 export const orcamentoItens = pgTable('orcamento_itens', {
@@ -111,6 +118,12 @@ export const orcamentoItens = pgTable('orcamento_itens', {
     observacoes: text('observacoes'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+    return {
+        orcamentoIdIdx: index('idx_orc_itens_orcamento').on(table.orcamentoId),
+        skuEngIdIdx: index('idx_orc_itens_sku_eng').on(table.skuEngenhariaId),
+        skuCompIdIdx: index('idx_orc_itens_sku_comp').on(table.skuComponenteId),
+    };
 });
 
 export const orcamentoListaExplodida = pgTable('orcamento_lista_explodida', {
@@ -124,6 +137,11 @@ export const orcamentoListaExplodida = pgTable('orcamento_lista_explodida', {
     editado: boolean('editado').default(false),
     observacoes: text('observacoes'),
     createdAt: timestamp('created_at').defaultNow(),
+}, (table) => {
+    return {
+        itemIdIdx: index('idx_lista_explodida_item').on(table.orcamentoItemId),
+        skuCompIdIdx: index('idx_lista_explodida_sku').on(table.skuComponenteId),
+    };
 });
 
 // Relacionamentos
