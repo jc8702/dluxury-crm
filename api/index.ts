@@ -330,10 +330,11 @@ export default async function handler(req: any, res: any) {
       return await handleEstoque(req, res);
     }
 
-    // Endpoint init-db - apenas em desenvolvimento
+    // Endpoint init-db - requer header x-init-key
     if (cleanUrl.startsWith('/api/init-db')) {
-      if (process.env.NODE_ENV === 'production') {
-        return res.status(403).json({ success: false, error: 'Endpoint desabilitado em produção' });
+      const initKey = req.headers['x-init-key'];
+      if (!initKey || initKey !== process.env.APP_INIT_KEY) {
+        return res.status(403).json({ success: false, error: 'Acesso negado' });
       }
       const { runInitDB } = await import('../src/api-lib/_init.js');
       const result = await runInitDB();

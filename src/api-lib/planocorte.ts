@@ -120,7 +120,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           }
 
           // 3. Criar Ordem de Produção (Problem 5)
-          const op_id = `OP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const op_id = `OP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
           
           await rawSql`
             INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at)

@@ -65,6 +65,9 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS ordem_producao_id TEXT`);
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
+  // Migrações Plano de Corte / Industrial
+  await safeSql(sql`ALTER TABLE erp_chapas ADD COLUMN IF NOT EXISTS estoque INTEGER DEFAULT 0`);
+  await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`);
@@ -554,6 +557,14 @@ export async function runInitDB() {
     }
   } catch {
     // Ignore error
+  }
+
+  // Hardening Migration (soft deletes, índices)
+  try {
+    const { runHardeningMigration } = await import('./queries/hardening_migration.js');
+    await runHardeningMigration();
+  } catch {
+    // Ignore se falhar
   }
 
   /* console.log('--- Sincronização Concluída ---'); */
