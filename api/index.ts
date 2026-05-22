@@ -138,8 +138,88 @@ export default async function handler(req: any, res: any) {
       return await handleOrcamentoTecnico(req, res);
     }
     if (cleanUrl.startsWith('/api/ai/chat')) {
-      const { handleAIChat } = await import('../src/api-lib/ai-chat.js');
-      return await handleAIChat(req, res);
+      if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, error: 'Método não permitido' });
+      }
+
+      const body = req.body || {};
+      const message = body.message;
+      const agentMode = body.agentMode || 'auto';
+      const conversation_history = body.conversation_history || [];
+      const context = body.context || {};
+      const memory_summary = body.memory_summary || '';
+
+      // Validação
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ success: false, error: 'Mensagem inválida ou vazia' });
+      }
+
+      if (message.length > 4000) {
+        return res.status(400).json({ success: false, error: 'Mensagem muito longa (máximo 4000 caracteres)' });
+      }
+
+      // Enriquecer contexto com data pt-BR
+      const enrichedContext = {
+        ...context,
+        data_atual: context.data_atual || new Date().toISOString()
+      };
+
+      try {
+        const { processarChat } = await import('./services/ai-chat.js');
+        
+        // Timeout de 45 segundos usando Promise.race
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            const err = new Error('TIMEOUT_ERROR');
+            (err as any).status = 408;
+            reject(err);
+          }, 45000);
+        });
+
+        const chatPromise = processarChat({
+          message: message.trim(),
+          agentMode,
+          conversation_history: conversation_history.slice(-10),
+          context: enrichedContext,
+          memory_summary
+        });
+
+        const result = await Promise.race([chatPromise, timeoutPromise]) as any;
+        
+        res.setHeader('X-Agent', result.agent || 'administrativo');
+        return res.status(200).json(result);
+      } catch (err: any) {
+        console.error('[AI_CHAT_ROUTE_ERROR]', err);
+        
+        const status = err.status || err.statusCode || 500;
+        const errMsg = err.message || '';
+        
+        if (errMsg === 'TIMEOUT_ERROR' || status === 408) {
+          return res.status(408).json({
+            success: false,
+            error: 'Tempo limite de resposta excedido. A IA demorou mais de 45 segundos para responder.'
+          });
+        }
+        
+        if (status === 429 || errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED')) {
+          return res.status(429).json({
+            success: false,
+            error: 'Muitas requisições. O limite de cota da API da IA foi excedido. Tente novamente mais tarde.'
+          });
+        }
+        
+        if (status === 503 || errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('indisponivel')) {
+          return res.status(503).json({
+            success: false,
+            error: 'Serviço temporariamente indisponível. Tente novamente em instantes.'
+          });
+        }
+
+        return res.status(status >= 400 && status < 600 ? status : 500).json({
+          success: false,
+          error: err.message || 'Erro interno ao processar chat com IA'
+        });
+      }
     }
     if (cleanUrl.startsWith('/api/ai-copilot')) {
       const { handleAICopilot } = await import('../src/api-lib/copilot.js');
