@@ -98,7 +98,7 @@ const VisitKanban: React.FC = () => {
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl">
             <div className="flex flex-col items-center gap-2">
-              <RefreshCw className="animate-spin" size={32} color="var(--primary)" />
+              <RefreshCw className="animate-spin" size={32} color="hsl(var(--primary))" />
               <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Sincronizando...</span>
             </div>
           </div>

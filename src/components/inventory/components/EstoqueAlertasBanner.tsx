@@ -54,7 +54,7 @@ const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCri
           <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#ef4444' }}>
             Atenção ao Estoque
           </h4>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
             Existem {alertas.total} itens que precisam de reposição imediata.
           </p>
         </div>
@@ -64,13 +64,13 @@ const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCri
         {alertas.criticos > 0 && (
           <div style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>{alertas.criticos}</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Críticos</span>
+            <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase' }}>Críticos</span>
           </div>
         )}
         {alertas.zerados > 0 && (
           <div style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#94a3b8' }}>{alertas.zerados}</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Zerados</span>
+            <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase' }}>Zerados</span>
           </div>
         )}
       </div>

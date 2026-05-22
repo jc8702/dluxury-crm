@@ -271,14 +271,14 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background)', zIndex: 1000, display: 'flex', flexDirection: 'column' }} onClick={onClose} tabIndex={-1}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'hsl(var(--background))', zIndex: 1000, display: 'flex', flexDirection: 'column' }} onClick={onClose} tabIndex={-1}>
       {/* Header */}
-      <header style={{ padding: '1rem 2rem', background: '#0a0d14', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ padding: '1rem 2rem', background: '#0a0d14', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '1.5rem' }}>📐</span>
           <div>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>Compositor Técnico de Orçamento</h2>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>ORC-{orcamentoId.substring(0,8).toUpperCase()}</p>
+            <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>ORC-{orcamentoId.substring(0,8).toUpperCase()}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -289,7 +289,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
           >
             APLICAR AO ORÇAMENTO COMERCIAL
           </button>
-          <button onClick={onClose} style={{ background: 'none', border: '1px solid var(--border)', color: 'white', borderRadius: '8px', cursor: 'pointer', padding: '0.6rem 1.2rem' }}>Sair</button>
+          <button onClick={onClose} style={{ background: 'none', border: '1px solid hsl(var(--border))', color: 'white', borderRadius: '8px', cursor: 'pointer', padding: '0.6rem 1.2rem' }}>Sair</button>
         </div>
       </header>
 
@@ -297,7 +297,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr 340px', overflow: 'hidden' }}>
         
         {/* Coluna 1: Árvore */}
-        <aside style={{ background: 'rgba(0,0,0,0.2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <aside style={{ background: 'rgba(0,0,0,0.2)', borderRight: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           <div style={{ padding: '1.5rem' }}>
              <h3 style={headerStyle}>
                Ambientes
@@ -337,7 +337,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                               fontSize: '0.85rem'
                             }}
                           >
-                            <span style={{ color: selectedMovelId === mov.id ? 'white' : 'var(--text-muted)' }}>🪑 {mov.nome}</span>
+                            <span style={{ color: selectedMovelId === mov.id ? 'white' : 'hsl(var(--muted-foreground))' }}>🪑 {mov.nome}</span>
                             <button onClick={(e) => { e.stopPropagation(); handleRemove('movel', mov.id); }} style={{ opacity: 0.5, border: 'none', background: 'none', color: 'red', cursor: 'pointer' }}>×</button>
                           </div>
                         ))}
@@ -358,7 +358,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
         {/* Coluna 2: Detalhamento */}
         <section style={{ overflowY: 'auto', padding: '2rem' }}>
           {!selectedMovelId ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', textAlign: 'center' }}>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
                <div>
                  <span style={{ fontSize: '3rem' }}>🛋️</span>
                  <p>Selecione um móvel à esquerda para editar<br/>suas peças e ferragens.</p>
@@ -367,12 +367,12 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                {/* Titulo Movel */}
-               <header style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+               <header style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1rem' }}>
                   <h2 style={{ color: '#d4af37', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {activeMovel?.nome} 
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>({activeMovel?.tipo_movel})</span>
+                    <span style={{ fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))', fontWeight: 'normal' }}>({activeMovel?.tipo_movel})</span>
                   </h2>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Dimensões: {activeMovel?.largura_total_cm} x {activeMovel?.altura_total_cm} x {activeMovel?.profundidade_total_cm} cm</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>Dimensões: {activeMovel?.largura_total_cm} x {activeMovel?.altura_total_cm} x {activeMovel?.profundidade_total_cm} cm</p>
                </header>
 
                {/* Tabela de Peças */}
@@ -394,7 +394,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
-                      <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
+                      <tr style={{ textAlign: 'left', color: 'hsl(var(--muted-foreground))', borderBottom: '1px solid hsl(var(--border))' }}>
                         <th style={{ padding: '0.5rem' }}>DESCRIÇÃO</th>
                         <th style={{ padding: '0.5rem' }}>SKU MATERIAL</th>
                         <th style={{ padding: '0.5rem', width: '80px' }}>L (cm)</th>
@@ -528,13 +528,13 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
         </section>
 
         {/* Coluna 3: Painel de Precificação */}
-        <aside style={{ background: '#0a0d14', borderLeft: '1px solid var(--border)', padding: '1.5rem', overflowY: 'auto' }}>
+        <aside style={{ background: '#0a0d14', borderLeft: '1px solid hsl(var(--border))', padding: '1.5rem', overflowY: 'auto' }}>
            <h3 style={headerStyle}>Precisificação</h3>
            
            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               <div style={cardStyle}>
-                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>CUSTO DE MATERIAIS</p>
+                 <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>CUSTO DE MATERIAIS</p>
                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                     <span style={{ fontSize: '0.85rem' }}>Peças:</span>
                     <span style={{ fontWeight: 'bold' }}>{formatCurrency(totals.custoPecas)}</span>
@@ -545,7 +545,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                   </div>
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Espessura Chapa (ms):</span>
+                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Espessura Chapa (ms):</span>
                         <input 
                           type="number" 
                           style={inputConfigStyle} 
@@ -554,7 +554,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
                         />
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recuo Fundo (ms):</span>
+                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Recuo Fundo (ms):</span>
                         <input 
                           type="number" 
                           style={inputConfigStyle} 
@@ -566,7 +566,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
               </div>
 
               <div style={cardStyle}>
-                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>MÃO DE OBRA</p>
+                 <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>MÃO DE OBRA</p>
                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                     <span style={{ fontSize: '0.85rem' }}>Produção ({((config?.mo_producao_pct_padrao || 0) * 100).toFixed(0)}%):</span>
                     <span style={{ fontWeight: 'bold' }}>{formatCurrency(totals.moProducao)}</span>
@@ -580,16 +580,16 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
               <div style={{ background: 'rgba(212,175,55,0.05)', borderRadius: '12px', padding: '1.5rem', border: '1px solid rgba(212,175,55,0.2)' }}>
                  <p style={{ fontSize: '0.75rem', color: '#d4af37', marginBottom: '0.5rem', fontWeight: 'bold' }}>PREÇO FINAL SUGERIDO</p>
                  <h2 style={{ fontSize: '2rem', margin: 0, color: '#d4af37', fontWeight: '900' }}>{formatCurrency(totals.precoVenda)}</h2>
-                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>Com markup de {config?.markup_padrao}x</p>
+                 <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', margin: '0.5rem 0 0 0' }}>Com markup de {config?.markup_padrao}x</p>
               </div>
 
               <div style={{ ...cardStyle, background: 'rgba(0,0,0,0.3)' }}>
                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Custo Total:</span>
+                    <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Custo Total:</span>
                     <span style={{ fontSize: '0.8rem' }}>{formatCurrency(totals.custoTotal)}</span>
                  </div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Imposto (~{config?.aliquota_imposto}%):</span>
+                    <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Imposto (~{config?.aliquota_imposto}%):</span>
                     <span style={{ fontSize: '0.8rem', color: '#ff4d4d' }}>- {formatCurrency(totals.imposto)}</span>
                  </div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
@@ -608,7 +608,7 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
               </div>
 
               <div style={cardStyle}>
-                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>DADOS TÉCNICOS</p>
+                 <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>DADOS TÉCNICOS</p>
                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: '0.8rem' }}>Área Total:</span>
                     <span style={{ fontWeight: 'bold' }}>{totals.totalM2.toFixed(2)} m²</span>

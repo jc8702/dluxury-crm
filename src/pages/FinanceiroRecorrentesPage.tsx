@@ -134,7 +134,7 @@ export default function FinanceiroRecorrentesPage() {
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Repeat /> CONTAS RECORRENTES
           </h1>
-          <p style={{ color: 'var(--text-muted)' }}>Configuração de despesas fixas e geração automática mensal</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Configuração de despesas fixas e geração automática mensal</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Button variant="outline" onClick={() => setGerarModal(true)}>
@@ -179,7 +179,7 @@ export default function FinanceiroRecorrentesPage() {
                 </td>
                 <td>
                   <div style={{ fontWeight: 700 }}>{r.descricao.toUpperCase()}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}</div>
                 </td>
                 <td style={{ fontWeight: 600 }}>Todo dia {r.dia_vencimento}</td>
                 <td>{classes.find(c => c.id === r.classe_financeira_id)?.nome || '---'}</td>
@@ -291,7 +291,7 @@ export default function FinanceiroRecorrentesPage() {
 
       {/* Modal de Geração */}
       <Modal isOpen={gerarModal} onClose={() => setGerarModal(false)} title="Gerar Títulos Mensais" size="sm">
-        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>
           Este processo irá criar lançamentos automáticos no <strong>Contas a Pagar</strong> baseados em todas as configurações ativas acima.
         </p>
 

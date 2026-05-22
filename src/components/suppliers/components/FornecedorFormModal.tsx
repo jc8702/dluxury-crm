@@ -71,7 +71,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
             {fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}
           </h3>
-          <button onClick={onClose} style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}><X /></button>
+          <button onClick={onClose} style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--muted-foreground))' }}><X /></button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -114,7 +114,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
             <textarea className="input-base" style={{ height: '80px', resize: 'none' }} value={form.observacoes} onChange={e => setForm({...form, observacoes: e.target.value})} />
           </div>
 
-          {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
+          {error && <p style={{ color: 'hsl(var(--destructive))', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button type="button" onClick={onClose} className="btn btn-outline" style={{ flex: 1 }}>Cancelar</button>

@@ -323,12 +323,12 @@ const [newItem, setNewItem] = useState({
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', background: 'linear-gradient(to right, #fff, #d4af37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             {editingId ? '📝 Editando Proposta' : '💎 Simulador Comercial D’Luxury'}
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
             {editingId ? 'Alterando valores e itens de proposta existente.' : 'Gere orçamentos precisos com base em custos e margens industriais.'}
           </p>
         </div>
         <div>
-          <button onClick={handleGeneratePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed', marginRight: '0.5rem' }}>
+          <button onClick={handleGeneratePDF} disabled={items.length === 0} style={{ background: items.length > 0 ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.1)', color: '#1a1a2e', fontWeight: 'bold', padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', cursor: items.length > 0 ? 'pointer' : 'not-allowed', marginRight: '0.5rem' }}>
             🖨️ Exportar Orçamento PDF
           </button>
         </div>
@@ -337,12 +337,12 @@ const [newItem, setNewItem] = useState({
       {editingId && (
         <div style={{ display: 'flex', gap: '1rem', background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.2)', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Status Atual:</div>
+            <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Status Atual:</div>
             <span style={{ 
-              background: orcamentosList.find(o => o.id === editingId)?.status === 'aprovado' ? 'var(--success)' : 
-                         orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
+              background: orcamentosList.find(o => o.id === editingId)?.status === 'aprovado' ? 'hsl(var(--success))' : 
+                         orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.1)',
               color: orcamentosList.find(o => o.id === editingId)?.status === 'aprovado' ? 'white' : 
-                     orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? '#1a1a2e' : 'var(--text-muted)',
+                     orcamentosList.find(o => o.id === editingId)?.status === 'enviado' ? '#1a1a2e' : 'hsl(var(--muted-foreground))',
               padding: '0.25rem 0.75rem',
               borderRadius: '20px',
               fontSize: '0.75rem',
@@ -356,13 +356,13 @@ const [newItem, setNewItem] = useState({
             <button 
               onClick={() => updateStatus(editingId, 'enviado')}
               disabled={saving || orcamentosList.find(o => o.id === editingId)?.status === 'enviado'}
-              style={{ background: 'var(--primary)', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || orcamentosList.find(o => o.id === editingId)?.status === 'enviado') ? 0.6 : 1 }}>
+              style={{ background: 'hsl(var(--primary))', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || orcamentosList.find(o => o.id === editingId)?.status === 'enviado') ? 0.6 : 1 }}>
               <Send size={14} style={{ marginRight: '0.4rem' }} /> Marcar como Enviado
             </button>
             <button 
               onClick={() => updateStatus(editingId, 'aprovado')}
               disabled={saving || !isAdmin || orcamentosList.find(o => o.id === editingId)?.status === 'aprovado'}
-              style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || !isAdmin || orcamentosList.find(o => o.id === editingId)?.status === 'aprovado') ? 0.6 : 1 }}>
+              style={{ background: 'hsl(var(--success))', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', opacity: (saving || !isAdmin || orcamentosList.find(o => o.id === editingId)?.status === 'aprovado') ? 0.6 : 1 }}>
               <Check size={14} style={{ marginRight: '0.4rem' }} /> Aprovar Orçamento (Admin)
             </button>
           </div>
@@ -374,17 +374,17 @@ const [newItem, setNewItem] = useState({
         <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Dados do Orçamento</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Cliente</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Cliente</label>
             <select style={selectStyle} value={selectedClient} onChange={e => setSelectedClient(e.target.value)}>
               <option value="">Selecione...</option>
               {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Buscar Projeto por TAG</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Buscar Projeto por TAG</label>
             <div style={{ position: 'relative' }}>
               <input 
-                style={{...inputStyle, paddingLeft: '2.5rem', borderColor: selectedProject ? 'var(--success)' : 'rgba(212,175,55,0.3)'}} 
+                style={{...inputStyle, paddingLeft: '2.5rem', borderColor: selectedProject ? 'hsl(var(--success))' : 'rgba(212,175,55,0.3)'}} 
                 placeholder="Ex: PRJ-XXXX"
                 value={tagSearch}
                 onFocus={() => setShowTagSuggestions(true)}
@@ -399,7 +399,7 @@ const [newItem, setNewItem] = useState({
                   }
                 }}
               />
-              <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
               
               {showTagSuggestions && tagSearch.length >= 2 && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a2e', border: '1px solid #d4af37', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
@@ -422,14 +422,14 @@ const [newItem, setNewItem] = useState({
               )}
 
               {selectedProject && (
-                <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--success))', display: 'flex', alignItems: 'center', gap: '4px' }}>
                    <Check size={14} /> <span style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{projects.find(p => p.id === selectedProject)?.tag}</span>
                 </div>
               )}
             </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente Vinculado</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Projeto/Ambiente Vinculado</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <select style={{...selectStyle, flex: 1}} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
                 <option value="">Nenhum projeto vinculado</option>
@@ -447,18 +447,18 @@ const [newItem, setNewItem] = useState({
             </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Margem de Lucro (%)</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Margem de Lucro (%)</label>
             <input type="number" style={inputStyle} value={marginPercent} onChange={e => setMarginPercent(Number(e.target.value))} />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '1.5rem' }}>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Prazo de Entrega</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Prazo de Entrega</label>
             <input style={inputStyle} value={prazoEntrega} onChange={e => setPrazoEntrega(e.target.value.toUpperCase())} />
           </div>
           <div>
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Descritivo de Pagamento</label>
+            <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Descritivo de Pagamento</label>
             <input style={inputStyle} value={formaPagamento} onChange={e => setFormaPagamento(e.target.value.toUpperCase())} />
           </div>
         </div>
@@ -477,14 +477,14 @@ const [newItem, setNewItem] = useState({
             </label>
             <div style={{ position: 'relative' }}>
               <input type="number" step={0.01} style={{...inputStyle, borderColor: 'rgba(212,175,55,0.3)', paddingRight: '2rem'}} value={taxaFinanceira} onChange={e => setTaxaFinanceira(Number(e.target.value))} />
-              <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>%</span>
+              <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }}>%</span>
             </div>
           </div>
         </div>
 
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
           <button onClick={saveBudget} disabled={saving || items.length === 0}
-            style={{ flex: 1, background: 'var(--success)', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', opacity: (saving || items.length === 0) ? 0.6 : 1 }}>
+            style={{ flex: 1, background: 'hsl(var(--success))', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', opacity: (saving || items.length === 0) ? 0.6 : 1 }}>
             {saving ? 'Gravando...' : (editingId ? 'Atualizar Orçamento' : 'Salvar Orçamento')}
           </button>
           <button onClick={() => setShowItemForm(true)}
@@ -500,9 +500,9 @@ const [newItem, setNewItem] = useState({
           <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ textAlign: 'left', padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Item</th>
-                <th style={{ textAlign: 'center', padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Qtd</th>
-                <th style={{ textAlign: 'right', padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Subtotal</th>
+                <th style={{ textAlign: 'left', padding: '0.75rem', color: 'hsl(var(--muted-foreground))', fontSize: '0.75rem' }}>Item</th>
+                <th style={{ textAlign: 'center', padding: '0.75rem', color: 'hsl(var(--muted-foreground))', fontSize: '0.75rem' }}>Qtd</th>
+                <th style={{ textAlign: 'right', padding: '0.75rem', color: 'hsl(var(--muted-foreground))', fontSize: '0.75rem' }}>Subtotal</th>
                 <th style={{ width: '40px' }}></th>
               </tr>
             </thead>
@@ -511,7 +511,7 @@ const [newItem, setNewItem] = useState({
                 <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '0.75rem' }}>
                     <div style={{ fontWeight: 'bold', color: '#d4af37' }}>{item.sku || item.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{item.name}</div>
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.quantity}</td>
                   <td style={{ padding: '0.75rem', textAlign: 'right' }}>{formatCurrency((item.precoEngenharia || 0) * (1 + marginPercent/100) * item.quantity)}</td>
@@ -526,11 +526,11 @@ const [newItem, setNewItem] = useState({
           <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
             <div style={{ minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Custo Base</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>Custo Base</span>
                 <span>{formatCurrency(subtotalCusto)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Venda (c/ Margem)</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>Venda (c/ Margem)</span>
                 <span>{formatCurrency(totalBase)}</span>
               </div>
               {taxaFinanceira > 0 && (
@@ -544,7 +544,7 @@ const [newItem, setNewItem] = useState({
                 <span style={{ fontSize: '1.5rem', fontWeight: '800', color: '#d4af37' }}>{formatCurrency(totalFinalComTaxa)}</span>
               </div>
               {numParcelas > 1 && (
-                <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>
                    {numParcelas}x de {formatCurrency(totalFinalComTaxa / numParcelas)}
                 </div>
               )}
@@ -570,15 +570,15 @@ const [newItem, setNewItem] = useState({
                   fontSize: '0.65rem', 
                   padding: '2px 8px', 
                   borderRadius: '10px', 
-                  background: orc.status === 'aprovado' ? 'var(--success)' : orc.status === 'enviado' ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
-                  color: orc.status === 'aprovado' ? 'white' : orc.status === 'enviado' ? '#1a1a2e' : 'var(--text-muted)',
+                  background: orc.status === 'aprovado' ? 'hsl(var(--success))' : orc.status === 'enviado' ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.1)',
+                  color: orc.status === 'aprovado' ? 'white' : orc.status === 'enviado' ? '#1a1a2e' : 'hsl(var(--muted-foreground))',
                   textTransform: 'uppercase',
                   fontWeight: '800'
                 }}>
                   {orc.status}
                 </span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
                 {orc.observacoes || 'Sem observações'}
                 {orc.projeto_id && ` | Projeto: ${projects.find(p => p.id === orc.projeto_id)?.ambiente || 'Não encontrado'}`}
               </div>
@@ -602,11 +602,11 @@ const [newItem, setNewItem] = useState({
       {/* Item Form Modal */}
       {showItemForm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowItemForm(false)}>
-          <div style={{ background: 'var(--surface)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'hsl(var(--surface))', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid hsl(var(--border))' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color: 'white', marginBottom: '1rem' }}>Adicionar Móvel</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>SKU (Engenharia)</label>
+                <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>SKU (Engenharia)</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     style={{...inputStyle, paddingLeft: '2.5rem'}} 
@@ -614,14 +614,14 @@ const [newItem, setNewItem] = useState({
                     value={skuSearch} 
                     onChange={e => searchSKU(e.target.value)} 
                   />
-                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
                 </div>
                 {skuResults.length > 0 && (
                   <div style={{ position: 'absolute', background: '#1a1a2e', border: '1px solid #d4af37', borderRadius: '8px', maxHeight: '200px', overflow: 'auto', width: 'calc(100% - 4rem)', zIndex: 1001, marginTop: '4px' }}>
                     {skuResults.slice(0, 10).map((mat: any) => (
-                      <div key={mat.id} onClick={() => selectSKU(mat)} style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div key={mat.id} onClick={() => selectSKU(mat)} style={{ padding: '0.75rem', cursor: 'pointer', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{mat.codigo_modelo}</span>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{mat.nome}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>{mat.nome}</span>
                       </div>
                     ))}
                   </div>
@@ -629,13 +629,13 @@ const [newItem, setNewItem] = useState({
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Quantidade</label>
+                  <label style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.5rem' }}>Quantidade</label>
                   <input type="number" min={1} style={inputStyle} value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: Number(e.target.value)})} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   {newItem.sku && (
                     <div style={{ padding: '0.75rem', background: 'rgba(212,175,55,0.1)', borderRadius: '8px', flex: 1 }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Valor Unit.</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Valor Unit.</div>
                       <div style={{ color: '#d4af37', fontWeight: 'bold', fontSize: '1.1rem' }}>{formatCurrency(newItem.precoEngenharia * (1 + marginPercent/100))}</div>
                     </div>
                   )}
@@ -643,15 +643,15 @@ const [newItem, setNewItem] = useState({
               </div>
               {newItem.sku && (
                 <div style={{ padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Detalhes do SKU</div>
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.5rem' }}>Detalhes do SKU</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Nome:</span> {newItem.name}</div>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Dims:</span> {newItem.width}x{newItem.height}x{newItem.depth}cm</div>
-                    <div><span style={{ color: 'var(--text-muted)' }}>Material:</span> {newItem.woodType}</div>
+                    <div><span style={{ color: 'hsl(var(--muted-foreground))' }}>Nome:</span> {newItem.name}</div>
+                    <div><span style={{ color: 'hsl(var(--muted-foreground))' }}>Dims:</span> {newItem.width}x{newItem.height}x{newItem.depth}cm</div>
+                    <div><span style={{ color: 'hsl(var(--muted-foreground))' }}>Material:</span> {newItem.woodType}</div>
                   </div>
                 </div>
               )}
-              <button onClick={addItem} disabled={!newItem.sku || newItem.quantity < 1} className="btn btn-primary" style={{ background: 'var(--primary)', color: '#1a1a2e', fontWeight: 'bold', opacity: (!newItem.sku || newItem.quantity < 1) ? 0.6 : 1 }}>ADICIONAR</button>
+              <button onClick={addItem} disabled={!newItem.sku || newItem.quantity < 1} className="btn btn-primary" style={{ background: 'hsl(var(--primary))', color: '#1a1a2e', fontWeight: 'bold', opacity: (!newItem.sku || newItem.quantity < 1) ? 0.6 : 1 }}>ADICIONAR</button>
             </div>
           </div>
         </div>

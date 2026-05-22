@@ -27,23 +27,23 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'hsl(var(--background))', alignItems: 'center', justifyContent: 'center' }}>
       <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img src="/logo.png" alt="D'Luxury" style={{ width: '120px', height: '120px', marginBottom: '1.5rem', objectFit: 'contain' }} />
-          <h1 style={{ color: 'var(--primary)', fontSize: '1.5rem', fontWeight: 'bold' }}>D'LUXURY</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.1em' }}>MÓVEIS SOB MEDIDA</p>
+          <h1 style={{ color: 'hsl(var(--primary))', fontSize: '1.5rem', fontWeight: 'bold' }}>D'LUXURY</h1>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem', letterSpacing: '0.1em' }}>MÓVEIS SOB MEDIDA</p>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center', border: '1px solid var(--danger)' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'hsl(var(--destructive))', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center', border: '1px solid hsl(var(--destructive))' }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>E-mail</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>E-mail</label>
             <input 
               type="email" 
               className="input" 
@@ -54,7 +54,7 @@ const Login: React.FC = () => {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Senha</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>Senha</label>
             <input 
               type="password" 
               className="input" 

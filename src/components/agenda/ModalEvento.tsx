@@ -117,14 +117,14 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
         {/* Header */}
         <div style={{ 
           padding: '1.5rem 2rem', 
-          borderBottom: '1px solid var(--border)', 
+          borderBottom: '1px solid hsl(var(--border))', 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
           background: 'rgba(212, 175, 55, 0.05)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Calendar size={20} color="var(--primary)" />
+            <Calendar size={20} color="hsl(var(--primary))" />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
               {eventToEdit?.id ? 'EDITAR EVENTO' : 'NOVO EVENTO'}
             </h2>
@@ -164,8 +164,8 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  background: formData.tipo === t.id ? 'var(--primary)' : 'transparent',
-                  color: formData.tipo === t.id ? 'var(--primary-text)' : 'var(--text-muted)'
+                  background: formData.tipo === t.id ? 'hsl(var(--primary))' : 'transparent',
+                  color: formData.tipo === t.id ? 'var(--primary-text)' : 'hsl(var(--muted-foreground))'
                 }}
               >
                 {t.label}
@@ -189,7 +189,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <div>
                 <label className="label-base">INÍCIO</label>
                 <div style={{ position: 'relative' }}>
-                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
                   <input
                     required
                     type="datetime-local"
@@ -203,7 +203,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <div>
                 <label className="label-base">FIM</label>
                 <div style={{ position: 'relative' }}>
-                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
                   <input
                     required
                     type="datetime-local"
@@ -220,7 +220,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <div className="section animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--primary-glow)' }}>
                 <div className="grid-2">
                   <div>
-                    <label className="label-base" style={{ color: 'var(--primary)' }}>CLIENTE *</label>
+                    <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>CLIENTE *</label>
                     <select
                       required={formData.tipo === 'visita'}
                       value={formData.cliente_id || ''}
@@ -232,7 +232,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                     </select>
                   </div>
                   <div>
-                    <label className="label-base" style={{ color: 'var(--primary)' }}>OBJETIVO</label>
+                    <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>OBJETIVO</label>
                     <select
                       value={formData.objetivo}
                       onChange={e => setFormData({ ...formData, objetivo: e.target.value })}
@@ -247,9 +247,9 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   </div>
                 </div>
                 <div>
-                  <label className="label-base" style={{ color: 'var(--primary)' }}>ENDEREÇO DA VISITA</label>
+                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>ENDEREÇO DA VISITA</label>
                   <div style={{ position: 'relative' }}>
-                    <MapPin size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <MapPin size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
                     <input
                       value={formData.endereco}
                       onChange={e => setFormData({ ...formData, endereco: e.target.value })}
@@ -303,7 +303,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                         cursor: 'pointer'
                       }}
                     />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{formData.cor}</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}>{formData.cor}</span>
                   </div>
                 </div>
             </div>
@@ -313,7 +313,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
           <div style={{ 
             marginTop: '1rem', 
             paddingTop: '1.5rem', 
-            borderTop: '1px solid var(--border)', 
+            borderTop: '1px solid hsl(var(--border))', 
             display: 'flex', 
             justifyContent: 'space-between' 
           }}>
@@ -323,7 +323,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   type="button"
                   onClick={handleDelete}
                   className="btn btn-outline"
-                  style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                  style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}
                 >
                   <Trash2 size={18} /> EXCLUIR
                 </button>

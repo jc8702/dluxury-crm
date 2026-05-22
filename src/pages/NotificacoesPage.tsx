@@ -54,10 +54,10 @@ const NotificacoesPage: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critica': return 'var(--danger)';
-      case 'alta': return 'var(--warning)';
-      case 'normal': return 'var(--primary)';
-      default: return 'var(--text-muted)';
+      case 'critica': return 'hsl(var(--destructive))';
+      case 'alta': return 'hsl(var(--warning))';
+      case 'normal': return 'hsl(var(--primary))';
+      default: return 'hsl(var(--muted-foreground))';
     }
   };
 
@@ -86,9 +86,9 @@ const NotificacoesPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-            <Bell style={{ color: 'var(--primary)' }} /> CENTRAL DE NOTIFICAÇÕES
+            <Bell style={{ color: 'hsl(var(--primary))' }} /> CENTRAL DE NOTIFICAÇÕES
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Alertas automáticos do sistema e monitoramento de prazos críticos</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>Alertas automáticos do sistema e monitoramento de prazos críticos</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Button variant="outline" onClick={() => (api.notificacoes as any).generate().then(fetchNotificacoes)} style={{ fontSize: '0.85rem' }}>
@@ -103,7 +103,7 @@ const NotificacoesPage: React.FC = () => {
       <Card style={{ overflow: 'hidden' }}>
         <CardHeader style={{ 
           padding: '1rem 1.5rem', 
-          borderBottom: '1px solid var(--border)', 
+          borderBottom: '1px solid hsl(var(--border))', 
           display: 'flex', 
           flexDirection: 'row',
           justifyContent: 'space-between', 
@@ -130,7 +130,7 @@ const NotificacoesPage: React.FC = () => {
               Pendentes
             </Button>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
             {notificacoes.length} notificação{notificacoes.length !== 1 ? 'es' : ''} encontrada{notificacoes.length !== 1 ? 's' : ''}
           </div>
         </CardHeader>
@@ -143,8 +143,8 @@ const NotificacoesPage: React.FC = () => {
               <CardSkeleton />
             </div>
           ) : notificacoes.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', gap: '1rem', color: 'var(--text-secondary)' }}>
-              <CheckCircle size={48} style={{ color: 'var(--success)', opacity: 0.8 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', gap: '1rem', color: 'hsl(var(--muted-foreground))' }}>
+              <CheckCircle size={48} style={{ color: 'hsl(var(--success))', opacity: 0.8 }} />
               <div style={{ textAlign: 'center' }}>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>Tudo em dia!</h3>
                 <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>Nenhuma notificação {filter === 'não_lidas' ? 'pendente' : 'registrada'}.</p>
@@ -159,7 +159,7 @@ const NotificacoesPage: React.FC = () => {
                     display: 'flex', 
                     gap: '1.25rem', 
                     padding: '1.25rem 1.5rem', 
-                    borderBottom: '1px solid var(--border)',
+                    borderBottom: '1px solid hsl(var(--border))',
                     background: n.lida ? 'transparent' : 'rgba(212, 175, 55, 0.02)',
                     transition: 'background 0.2s',
                     position: 'relative'
@@ -173,7 +173,7 @@ const NotificacoesPage: React.FC = () => {
                       top: 0, 
                       bottom: 0, 
                       width: '4px', 
-                      background: 'var(--primary)' 
+                      background: 'hsl(var(--primary))' 
                     }} />
                   )}
 
@@ -201,12 +201,12 @@ const NotificacoesPage: React.FC = () => {
                           {n.prioridade.toUpperCase()}
                         </Badge>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <Clock size={12} /> {new Date(n.created_at!).toLocaleString('pt-BR')}
                       </span>
                     </div>
                     
-                    <p style={{ margin: '0.5rem 0 0.85rem', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                    <p style={{ margin: '0.5rem 0 0.85rem', color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem', lineHeight: '1.5' }}>
                       {n.mensagem}
                     </p>
                     
@@ -228,7 +228,7 @@ const NotificacoesPage: React.FC = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}
+                          style={{ color: 'hsl(var(--primary))', fontSize: '0.75rem', fontWeight: 600 }}
                           onClick={() => handleMarkRead(n.id)}
                         >
                           Marcar como lida

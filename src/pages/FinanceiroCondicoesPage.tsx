@@ -65,9 +65,9 @@ const FinanceiroCondicoesPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-            <CreditCard style={{ color: 'var(--primary)' }} /> CONDIÇÕES DE PAGAMENTO
+            <CreditCard style={{ color: 'hsl(var(--primary))' }} /> CONDIÇÕES DE PAGAMENTO
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Parâmetros de parcelamento, juros e entrada</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>Parâmetros de parcelamento, juros e entrada</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Button variant="outline" onClick={fetch} disabled={loading} style={{ fontSize: '0.85rem' }} aria-label="Atualizar lista">
@@ -93,7 +93,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
               </table>
             </div>
           ) : items.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
               Nenhuma condição de pagamento cadastrada.
             </div>
           ) : (
@@ -101,11 +101,11 @@ const FinanceiroCondicoesPage: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ textAlign: 'left', borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--surface))' }}>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>NOME</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>DESCRIÇÃO</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'right' }}>PARCELAS</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'right' }}>ENTRADA</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'right' }}>JUROS</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>NOME</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>DESCRIÇÃO</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>PARCELAS</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>ENTRADA</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>JUROS</th>
                     <th style={{ padding: '1rem', width: '80px' }}></th>
                   </tr>
                 </thead>
@@ -118,12 +118,12 @@ const FinanceiroCondicoesPage: React.FC = () => {
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 700 }}>{f.nome}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{f.descricao || '-'}</td>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{f.descricao || '-'}</td>
                       <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace' }}>{f.parcelas}x</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.entrada_percentual > 0 ? 'var(--success)' : 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.entrada_percentual > 0 ? 'hsl(var(--success))' : 'hsl(var(--muted-foreground))', fontFamily: 'monospace' }}>
                         {Number(f.entrada_percentual || 0).toFixed(2)}%
                       </td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.juros_percentual > 0 ? 'var(--danger)' : 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.juros_percentual > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))', fontFamily: 'monospace' }}>
                         {Number(f.juros_percentual || 0).toFixed(2)}%
                       </td>
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
@@ -148,7 +148,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'Editar Condição de Pagamento' : 'Nova Condição de Pagamento'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Nome *</label>
+            <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Nome *</label>
             <Input 
               placeholder="ex: 3x Sem Juros, Entrada + 2x" 
               value={form.nome} 
@@ -157,7 +157,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
           </div>
           
           <div>
-            <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Descrição</label>
+            <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Descrição</label>
             <Input 
               placeholder="Descrição ou observações adicionais" 
               value={form.descricao} 
@@ -167,7 +167,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <div>
-              <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Parcelas *</label>
+              <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Parcelas *</label>
               <Input 
                 type="number"
                 min="1"
@@ -177,7 +177,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Entrada %</label>
+              <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Entrada %</label>
               <Input 
                 type="number"
                 min="0"
@@ -188,7 +188,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Juros %</label>
+              <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Juros %</label>
               <Input 
                 type="number"
                 min="0"

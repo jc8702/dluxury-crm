@@ -222,8 +222,8 @@ const CalendarioPage: React.FC = () => {
         justifyContent: 'space-between',
         padding: '1rem 1.5rem',
         borderRadius: '16px',
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
+        background: 'hsl(var(--surface))',
+        border: '1px solid hsl(var(--border))',
         flexWrap: 'wrap',
         gap: '1rem'
       }}>
@@ -240,13 +240,13 @@ const CalendarioPage: React.FC = () => {
             </Button>
           </div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <CalendarIcon size={20} style={{ color: 'var(--primary)' }} />
+            <CalendarIcon size={20} style={{ color: 'hsl(var(--primary))' }} />
             {format(date, "MMMM yyyy", { locale: ptBR })}
           </h2>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'hsl(var(--surface-hover))', borderRadius: '10px', padding: '3px', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', background: 'hsl(var(--surface-hover))', borderRadius: '10px', padding: '3px', border: '1px solid hsl(var(--border))' }}>
             {[
               { id: Views.WEEK, label: 'SEMANA' },
               { id: Views.MONTH, label: 'MÊS' },
@@ -259,8 +259,8 @@ const CalendarioPage: React.FC = () => {
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
                   border: 'none',
-                  background: view === v.id ? 'var(--primary)' : 'transparent',
-                  color: view === v.id ? 'black' : 'var(--text-secondary)',
+                  background: view === v.id ? 'hsl(var(--primary))' : 'transparent',
+                  color: view === v.id ? 'black' : 'hsl(var(--muted-foreground))',
                   fontSize: '0.75rem',
                   fontWeight: '800',
                   cursor: 'pointer',
@@ -287,8 +287,8 @@ const CalendarioPage: React.FC = () => {
         {/* SIDEBAR */}
         <aside style={{ 
           width: '280px', 
-          background: 'var(--surface)', 
-          border: '1px solid var(--border)',
+          background: 'hsl(var(--surface))', 
+          border: '1px solid hsl(var(--border))',
           borderRadius: '16px',
           padding: '1.25rem', 
           display: 'flex',
@@ -327,8 +327,8 @@ const CalendarioPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtros de Visão</h3>
+          <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1.25rem' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtros de Visão</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {calendars.map(cal => (
                 <label key={cal.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} className="hover:bg-[hsl(var(--surface-hover))]">
@@ -336,7 +336,7 @@ const CalendarioPage: React.FC = () => {
                     type="checkbox" 
                     checked={cal.visible}
                     onChange={() => toggleCalendar(cal.id)}
-                    style={{ accentColor: 'var(--primary)' }}
+                    style={{ accentColor: 'hsl(var(--primary))' }}
                   />
                   <div style={{ width: '12px', height: '12px', background: cal.color, borderRadius: '3px' }} />
                   <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{cal.label}</span>
@@ -347,7 +347,7 @@ const CalendarioPage: React.FC = () => {
         </aside>
 
         {/* CALENDAR AREA */}
-        <div style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: '16px', padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <DragAndDropCalendar
             localizer={localizer}
             events={events.filter(e => calendars.find(c => c.id === e.tipo)?.visible !== false)}
@@ -399,14 +399,14 @@ const CalendarioPage: React.FC = () => {
               justifyContent: 'center',
               margin: '0 auto',
             }}>
-              <AlertTriangle size={24} style={{ color: 'var(--primary)' }} />
+              <AlertTriangle size={24} style={{ color: 'hsl(var(--primary))' }} />
             </div>
             
             <div>
               <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.25rem 0' }}>
                 {dragConfirm.event.title}
               </p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
                 Tem certeza de que deseja remarcar este evento para a nova data?
               </p>
             </div>
@@ -415,12 +415,12 @@ const CalendarioPage: React.FC = () => {
               padding: '1rem', 
               background: 'hsl(var(--surface-hover))', 
               borderRadius: '12px',
-              border: '1px solid var(--border)',
+              border: '1px solid hsl(var(--border))',
             }}>
-              <p style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)', margin: '0 0 0.25rem 0' }}>
+              <p style={{ fontSize: '0.9rem', fontWeight: 800, color: 'hsl(var(--primary))', margin: '0 0 0.25rem 0' }}>
                 📅 {dragConfirm.newStart.toLocaleDateString('pt-BR')}
               </p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, fontFamily: 'monospace' }}>
+              <p style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', margin: 0, fontFamily: 'monospace' }}>
                 🕐 {dragConfirm.newStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
                 {' - '} 
                 {dragConfirm.newEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -448,23 +448,23 @@ const CalendarioPage: React.FC = () => {
         .rbc-header { 
           padding: 12px 0; 
           font-weight: 700; 
-          color: var(--text-secondary); 
-          border-bottom: 1px solid var(--border);
+          color: hsl(var(--muted-foreground)); 
+          border-bottom: 1px solid hsl(var(--border));
           font-size: 0.75rem;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
         .rbc-month-view { 
-          border: 1px solid var(--border) !important; 
+          border: 1px solid hsl(var(--border)) !important; 
           border-radius: 12px;
           overflow: hidden;
         }
         .rbc-day-bg { 
-          border-left: 1px solid var(--border) !important;
+          border-left: 1px solid hsl(var(--border)) !important;
         }
-        .rbc-day-bg + .rbc-day-bg { border-left: 1px solid var(--border) !important; }
+        .rbc-day-bg + .rbc-day-bg { border-left: 1px solid hsl(var(--border)) !important; }
         .rbc-month-row { border-top: none !important; }
-        .rbc-month-row + .rbc-month-row { border-top: 1px solid var(--border) !important; }
+        .rbc-month-row + .rbc-month-row { border-top: 1px solid hsl(var(--border)) !important; }
         .rbc-off-range-bg { background: rgba(255,255,255,0.01) !important; opacity: 0.5; }
         .rbc-today { 
           background: rgba(212, 175, 55, 0.08) !important;
@@ -474,38 +474,38 @@ const CalendarioPage: React.FC = () => {
           outline: none;
           font-weight: 600;
         }
-        .rbc-event:focus { outline: 2px solid var(--primary); }
+        .rbc-event:focus { outline: 2px solid hsl(var(--primary)); }
         .rbc-time-view { 
-          border: 1px solid var(--border) !important; 
+          border: 1px solid hsl(var(--border)) !important; 
           border-radius: 12px;
           overflow: hidden;
         }
         .rbc-time-header { 
-          background: var(--surface) !important;
+          background: hsl(var(--surface)) !important;
         }
         .rbc-time-header-content {
-          border-left: 1px solid var(--border) !important;
+          border-left: 1px solid hsl(var(--border)) !important;
         }
-        .rbc-time-content { border-top: 1px solid var(--border); }
-        .rbc-timeslot-group { border-bottom: 1px solid var(--border); min-height: 50px; }
+        .rbc-time-content { border-top: 1px solid hsl(var(--border)); }
+        .rbc-timeslot-group { border-bottom: 1px solid hsl(var(--border)); min-height: 50px; }
         .rbc-time-slot { border-top: 1px solid rgba(255,255,255,0.02); }
         .rbc-current-time-indicator {
-          background: var(--primary);
+          background: hsl(var(--primary));
           height: 2px;
         }
         .rbc-allday-cell { display: none; }
         .rbc-date-cell {
           padding: 6px;
           text-align: right;
-          color: var(--text-secondary);
+          color: hsl(var(--muted-foreground));
           font-size: 0.8rem;
         }
         .rbc-date-cell.rbc-now {
-          color: var(--primary);
+          color: hsl(var(--primary));
           font-weight: 800;
         }
         .rbc-label {
-          color: var(--text-secondary) !important;
+          color: hsl(var(--muted-foreground)) !important;
           font-size: 0.75rem;
           padding: 0 6px;
         }

@@ -18,11 +18,11 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
 
   const getStatusConfig = (s: string) => {
     switch (s) {
-      case 'ok': return { color: 'var(--success)', label: '✓ OK', bg: 'rgba(34,197,94,0.1)' };
-      case 'alerta': return { color: 'var(--warning)', label: '⚠ ALERTA', bg: 'rgba(245,158,11,0.1)' };
-      case 'critico': return { color: 'var(--danger)', label: '‼ CRÍTICO', bg: 'rgba(239,68,68,0.12)' };
-      case 'zerado': return { color: 'var(--text-muted)', label: '○ ZERADO', bg: 'var(--badge-bg)' };
-      default: return { color: 'var(--text-muted)', label: '—', bg: 'transparent' };
+      case 'ok': return { color: 'hsl(var(--success))', label: '✓ OK', bg: 'rgba(34,197,94,0.1)' };
+      case 'alerta': return { color: 'hsl(var(--warning))', label: '⚠ ALERTA', bg: 'rgba(245,158,11,0.1)' };
+      case 'critico': return { color: 'hsl(var(--destructive))', label: '‼ CRÍTICO', bg: 'rgba(239,68,68,0.12)' };
+      case 'zerado': return { color: 'hsl(var(--muted-foreground))', label: '○ ZERADO', bg: 'var(--badge-bg)' };
+      default: return { color: 'hsl(var(--muted-foreground))', label: '—', bg: 'transparent' };
     }
   };
 
@@ -60,7 +60,7 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
                 cursor: 'pointer',
                 padding: '0.25rem',
                 borderRadius: '4px',
-                color: 'var(--text-muted)',
+                color: 'hsl(var(--muted-foreground))',
                 transition: 'color 0.2s'
               }}
               title="Editar material"
@@ -76,7 +76,7 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
                 cursor: 'pointer',
                 padding: '0.25rem',
                 borderRadius: '4px',
-                color: 'var(--text-muted)',
+                color: 'hsl(var(--muted-foreground))',
                 transition: 'color 0.2s'
               }}
               title="Excluir material"
@@ -95,25 +95,25 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
       </div>
 
       <div>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '0.15rem' }}>
+        <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontFamily: 'monospace', marginBottom: '0.15rem' }}>
           {material.sku || 'SEM SKU'}
         </p>
         <h4 style={{ fontSize: '0.95rem', fontWeight: '700', margin: 0, lineHeight: '1.35', color: 'var(--text)' }}>
           {material.nome || 'Material sem nome'}
         </h4>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+        <p style={{ fontSize: '0.72rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>
           {categoria?.nome || 'Sem categoria'}
         </p>
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', borderTop: '1px solid var(--border)', paddingTop: '0.4rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '0.4rem' }}>
           {material.marca && (
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Marca</span>
+              <span style={{ fontSize: '0.6rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', display: 'block' }}>Marca</span>
               <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{material.marca}</span>
             </div>
           )}
           {material.fornecedor_principal && (
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Fornecedor</span>
+              <span style={{ fontSize: '0.6rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', display: 'block' }}>Fornecedor</span>
               <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{material.fornecedor_principal}</span>
             </div>
           )}
@@ -129,25 +129,25 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material, categoria, onClic
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase' }}>Custo Compra</span>
-        <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary)' }}>
+        <span style={{ fontSize: '0.65rem', color: 'hsl(var(--primary))', fontWeight: '700', textTransform: 'uppercase' }}>Custo Compra</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'hsl(var(--primary))' }}>
           R$ {Number(material.preco_custo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </span>
       </div>
 
       <div style={{ 
-        marginTop: 'auto', borderTop: '1px solid var(--border)', 
+        marginTop: 'auto', borderTop: '1px solid hsl(var(--border))', 
         paddingTop: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' 
       }}>
         <div>
-          <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>Disponível</p>
+          <p style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.1rem' }}>Disponível</p>
           <p style={{ fontSize: '1.05rem', fontWeight: '800', color: config.color }}>
-            {material.estoque_atual} <span style={{ fontSize: '0.68rem', fontWeight: '400', color: 'var(--text-muted)' }}>{material.unidade_compra}</span>
+            {material.estoque_atual} <span style={{ fontSize: '0.68rem', fontWeight: '400', color: 'hsl(var(--muted-foreground))' }}>{material.unidade_compra}</span>
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>Equivalente</p>
-          <p style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.1rem' }}>Equivalente</p>
+          <p style={{ fontSize: '0.82rem', fontWeight: '600', color: 'hsl(var(--muted-foreground))' }}>
             {converterParaUso(material.estoque_atual, material.fator_conversao).toFixed(2)} {material.unidade_uso}
           </p>
         </div>

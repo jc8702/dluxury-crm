@@ -47,17 +47,17 @@ const SearchableSelect: React.FC<{
       </div>
 
       {open && (
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 6px)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, maxHeight: 260, overflowY: 'auto', zIndex: 2000, boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 6px)', background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: 8, maxHeight: 260, overflowY: 'auto', zIndex: 2000, boxShadow: 'var(--shadow-md)' }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>Nenhum item encontrado</div>
+            <div style={{ padding: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Nenhum item encontrado</div>
           ) : (
             filtered.map(it => (
-              <div key={it.id} onClick={() => { onChange(it.id); setOpen(false); }} style={{ padding: '0.65rem 0.85rem', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={it.id} onClick={() => { onChange(it.id); setOpen(false); }} style={{ padding: '0.65rem 0.85rem', borderBottom: '1px solid hsl(var(--border))', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ fontWeight: 700 }}>{it.label}</div>
-                  {it.sku && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{it.sku}</div>}
+                  {it.sku && <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>{it.sku}</div>}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{it._meta || ''}</div>
+                <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{it._meta || ''}</div>
               </div>
             ))
           )}

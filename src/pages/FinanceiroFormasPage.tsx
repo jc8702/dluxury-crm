@@ -75,9 +75,9 @@ const FinanceiroFormasPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-            <DollarSign style={{ color: 'var(--primary)' }} /> FORMAS DE PAGAMENTO
+            <DollarSign style={{ color: 'hsl(var(--primary))' }} /> FORMAS DE PAGAMENTO
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Meios de transação, taxas associadas e prazos de compensação</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>Meios de transação, taxas associadas e prazos de compensação</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Button variant="outline" onClick={fetch} disabled={loading} style={{ fontSize: '0.85rem' }} aria-label="Atualizar lista">
@@ -103,7 +103,7 @@ const FinanceiroFormasPage: React.FC = () => {
               </table>
             </div>
           ) : formas.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
               Nenhuma forma de pagamento cadastrada.
             </div>
           ) : (
@@ -111,10 +111,10 @@ const FinanceiroFormasPage: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ textAlign: 'left', borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--surface))' }}>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>NOME</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>TIPO</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'right' }}>TAXA</th>
-                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'right' }}>COMPENSAÇÃO</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>NOME</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>TIPO</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>TAXA</th>
+                    <th style={{ padding: '1rem', fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>COMPENSAÇÃO</th>
                     <th style={{ padding: '1rem', width: '80px' }}></th>
                   </tr>
                 </thead>
@@ -132,10 +132,10 @@ const FinanceiroFormasPage: React.FC = () => {
                           {String(f.tipo || '').toUpperCase()}
                         </Badge>
                       </td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.taxa_percentual > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 700, fontFamily: 'monospace' }}>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: f.taxa_percentual > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))', fontWeight: 700, fontFamily: 'monospace' }}>
                         {Number(f.taxa_percentual || 0).toFixed(2)}%
                       </td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '1rem', fontSize: '0.85rem', textAlign: 'right', color: 'hsl(var(--muted-foreground))', fontFamily: 'monospace' }}>
                         {f.prazo_compensacao_dias > 0 ? `${f.prazo_compensacao_dias} dia${f.prazo_compensacao_dias !== 1 ? 's' : ''}` : 'Imediato'}
                       </td>
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
@@ -160,7 +160,7 @@ const FinanceiroFormasPage: React.FC = () => {
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'Editar Forma de Pagamento' : 'Nova Forma de Pagamento'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Nome *</label>
+            <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Nome *</label>
             <Input 
               placeholder="ex: Cartão Visa Crédito, Boleto Sicredi" 
               value={form.nome} 
@@ -169,7 +169,7 @@ const FinanceiroFormasPage: React.FC = () => {
           </div>
           
           <div>
-            <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Tipo *</label>
+            <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Tipo *</label>
             <select 
               className="input-base" 
               style={{ 
@@ -195,7 +195,7 @@ const FinanceiroFormasPage: React.FC = () => {
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Taxa %</label>
+              <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Taxa %</label>
               <Input 
                 type="number"
                 step="0.01"
@@ -206,7 +206,7 @@ const FinanceiroFormasPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Prazo de Compensação (Dias)</label>
+              <label className="label-base" style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem', display: 'block' }}>Prazo de Compensação (Dias)</label>
               <Input 
                 type="number"
                 min="0"

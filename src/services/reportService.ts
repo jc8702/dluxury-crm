@@ -41,7 +41,7 @@ export const reportService = {
         i.quantidade_com_perda,
         i.unidade_medida
       ]),
-      headStyles: { fillStyle: 'var(--primary)', fillColor: [212, 175, 55], textColor: [0, 0, 0] },
+      headStyles: { fillStyle: 'hsl(var(--primary))', fillColor: [212, 175, 55], textColor: [0, 0, 0] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
       margin: { top: 60 }
     });

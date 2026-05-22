@@ -58,17 +58,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
             border: '2px dashed transparent',
             transition: 'border-color 0.2s ease'
           }}
-          onDragEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; }}
+          onDragEnter={(e) => { e.currentTarget.style.borderColor = 'hsl(var(--primary))'; }}
           onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {col.title}
-              <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
                 ({items.filter(i => i.status === col.id).length})
               </span>
             </h4>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }}></div>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'hsl(var(--primary))' }}></div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -82,8 +82,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                 style={{ 
                   cursor: 'pointer', 
                   padding: '1rem', 
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
+                  background: 'hsl(var(--surface))',
+                  border: '1px solid hsl(var(--border))',
                   userSelect: 'none',
                   opacity: draggedId === item.id ? 0.4 : 1,
                   transition: 'all 0.2s ease'
@@ -108,46 +108,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: '0.875rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}>{item.title}</p>
-                      {item.tag && (
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(212, 175, 55, 0.15)', color: '#d4af37', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                          {item.tag}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {onEdit && (
-                        <div 
-                          style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
-                        >
-                          Editar
-                        </div>
-                      )}
-                      {onDelete && (
-                        <div 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm('Tem certeza que deseja excluir este item?')) {
-                              onDelete(item.id);
-                            }
-                          }}
-                          style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.7 }}
-                        >
-                          Excluir
-                        </div>
-                      )}
                     </div>
                   </div>
-                  {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{item.subtitle}</p>}
+                  {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))' }}>{item.subtitle}</p>}
                   
                   {(item.phone || item.city) && (
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
                       {item.phone && <span>📞 {item.phone}</span>}
                       {item.city && <span>📍 {item.city}</span>}
                     </div>
                   )}
 
                   {item.dateTime && (
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       📅 {new Date(item.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                     </div>
                   )}
@@ -160,7 +133,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                   )}
 
                   {(item as any).visitType && (
-                    <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 'bold', marginTop: '0.2rem' }}>
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--primary))', fontWeight: 'bold', marginTop: '0.2rem' }}>
                       { (item as any).visitType }
                     </div>
                   )}
@@ -169,7 +142,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                     <div style={{ 
                       fontSize: '0.6rem', 
                       background: item.visitFormat === 'Presencial' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(52, 115, 255, 0.1)',
-                      color: item.visitFormat === 'Presencial' ? '#10b981' : 'var(--primary)',
+                      color: item.visitFormat === 'Presencial' ? '#10b981' : 'hsl(var(--primary))',
                       padding: '1px 6px',
                       borderRadius: '10px',
                       width: 'fit-content',
@@ -183,7 +156,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                   {item.badges && item.badges.length > 0 && (
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
                       {item.badges.map((b, idx) => (
-                        <span key={idx} style={{ background: 'var(--primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                        <span key={idx} style={{ background: 'hsl(var(--primary))', color: '#000', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
                           {b}
                         </span>
                       ))}
@@ -204,7 +177,82 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                     </div>
                   )}
 
-                  {item.label && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>{item.label}</div>}
+                  {item.label && <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '0.5rem' }}>{item.label}</div>}
+
+                  {/* Rodapé de Ações do Card */}
+                  {(onEdit || onDelete) && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      paddingTop: '0.5rem', 
+                      borderTop: '1px solid hsl(var(--border))', 
+                      display: 'flex', 
+                      justifyContent: 'flex-end', 
+                      gap: '0.75rem' 
+                    }}>
+                      {onEdit && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(item);
+                          }}
+                          style={{ 
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'hsl(var(--primary))', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            opacity: 0.8,
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.8';
+                          }}
+                        >
+                          Editar
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Tem certeza que deseja excluir este item?')) {
+                              onDelete(item.id);
+                            }
+                          }}
+                          style={{ 
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            opacity: 0.8,
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.8';
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -43,9 +43,9 @@ const FornecedoresPage: React.FC = () => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Truck size={28} style={{ color: 'var(--primary)' }} /> Fornecedores
+            <Truck size={28} style={{ color: 'hsl(var(--primary))' }} /> Fornecedores
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.25rem' }}>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.95rem', marginTop: '0.25rem' }}>
             Gerencie seus parceiros de materiais e acabamentos.
           </p>
         </div>
@@ -56,7 +56,7 @@ const FornecedoresPage: React.FC = () => {
  
       <div className="card" style={{ padding: '0.75rem 1.25rem' }}>
         <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
           <input 
             className="input-base" 
             style={{ paddingLeft: '2.5rem', width: '100%' }}
@@ -77,14 +77,14 @@ const FornecedoresPage: React.FC = () => {
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
                   onClick={() => handleEdit(f)} 
-                  style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--muted-foreground))' }}
                   aria-label={`Editar fornecedor ${f.nome}`}
                 >
                   <Edit2 size={16} />
                 </button>
                 <button 
                   onClick={() => handleDelete(f.id)} 
-                  style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)' }}
+                  style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--destructive))' }}
                   aria-label={`Excluir fornecedor ${f.nome}`}
                 >
                   <Trash2 size={16} />
@@ -94,27 +94,27 @@ const FornecedoresPage: React.FC = () => {
 
             <div>
               <h4 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{f.nome}</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{f.cnpj || 'CNPJ não informado'}</p>
+              <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.2rem' }}>{f.cnpj || 'CNPJ não informado'}</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '1rem' }}>
               {f.contato && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                   <Edit2 size={14} /> <span>{f.contato}</span>
                 </div>
               )}
               {f.telefone && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                   <Phone size={14} /> <span>{f.telefone}</span>
                 </div>
               )}
               {f.email && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                   <Mail size={14} /> <span>{f.email}</span>
                 </div>
               )}
               {(f.cidade || f.estado) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                   <MapPin size={14} /> <span>{f.cidade}{f.cidade && f.estado ? ', ' : ''}{f.estado}</span>
                 </div>
               )}

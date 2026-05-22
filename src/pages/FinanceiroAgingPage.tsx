@@ -92,10 +92,10 @@ export default function FinanceiroAgingPage() {
       <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <AlertCircle style={{ color: modo === 'receber' ? 'var(--warning)' : 'var(--danger)' }} />
+            <AlertCircle style={{ color: modo === 'receber' ? 'hsl(var(--warning))' : 'hsl(var(--destructive))' }} />
             Aging / {modo === 'receber' ? (historico ? 'HISTÓRICO RECEBER' : 'Inadimplência') : (historico ? 'HISTÓRICO PAGAR' : 'Dívidas')}
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -113,7 +113,7 @@ export default function FinanceiroAgingPage() {
           >
             PAGAR
           </Button>
-          <div style={{ width: '1px', background: 'var(--border)', height: '24px', margin: '0 0.25rem' }} />
+          <div style={{ width: '1px', background: 'hsl(var(--border))', height: '24px', margin: '0 0.25rem' }} />
           <Button 
             variant={historico ? 'secondary' : 'ghost'} 
             size="sm"
@@ -134,7 +134,7 @@ export default function FinanceiroAgingPage() {
           
           return (
             <Card key={faixa} className="glass" style={{ 
-              borderTop: `4px solid ${isLate ? (total > 0 ? 'var(--danger)' : 'var(--border)') : 'var(--success)'}`,
+              borderTop: `4px solid ${isLate ? (total > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--border))') : 'hsl(var(--success))'}`,
               opacity: total === 0 ? 0.6 : 1
             }} padding="none">
               <CardContent style={{ padding: '1.25rem' }}>
@@ -142,7 +142,7 @@ export default function FinanceiroAgingPage() {
                 <div style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0.5rem 0' }}>
                   R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>
                   {item?.qtd_titulos || 0} título(s)
                 </div>
               </CardContent>
@@ -153,7 +153,7 @@ export default function FinanceiroAgingPage() {
 
       {/* Lista Detalhada */}
       <Card padding="none" style={{ overflow: 'hidden' }}>
-        <div style={{ background: 'var(--surface-hover)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ background: 'hsl(var(--surface-hover))', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid hsl(var(--border))' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800 }}>DETALHAMENTO DE TÍTULOS VENCIDOS</h3>
           <Badge variant={totalVencido > 0 ? 'destructive' : 'success'}>
             TOTAL VENCIDO: R$ {totalVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -178,7 +178,7 @@ export default function FinanceiroAgingPage() {
               ) : data.details.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: 0 }}>
-                    <div className="empty-state" style={{ border: 'none', borderRadius: 0, color: 'var(--success)' }}>
+                    <div className="empty-state" style={{ border: 'none', borderRadius: 0, color: 'hsl(var(--success))' }}>
                       Nenhum título vencido encontrado. Parabéns!
                     </div>
                   </td>
@@ -190,12 +190,12 @@ export default function FinanceiroAgingPage() {
                     <tr key={t.id || i}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: 'hsl(var(--destructive))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
                             <User />
                           </div>
                           <div>
                             <div style={{ fontWeight: 700 }}>{t.entidade_nome || (modo === 'receber' ? 'Cliente' : 'Fornecedor') + ' não identificado'}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ID: {t.cliente_id || t.fornecedor_id}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>ID: {t.cliente_id || t.fornecedor_id}</div>
                           </div>
                         </div>
                       </td>
@@ -207,11 +207,11 @@ export default function FinanceiroAgingPage() {
                         </div>
                       </td>
                       <td>
-                        <span style={{ color: 'var(--danger)', fontWeight: 700 }}>
+                        <span style={{ color: 'hsl(var(--destructive))', fontWeight: 700 }}>
                           {diasAtraso} dias
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--danger)' }}>
+                      <td style={{ textAlign: 'right', fontWeight: 800, color: 'hsl(var(--destructive))' }}>
                         R$ {Number(t.valor_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td>
@@ -243,13 +243,13 @@ export default function FinanceiroAgingPage() {
         size="md"
       >
         {selectedItem && (
-          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '8px' }}>
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'hsl(var(--surface-hover))', borderRadius: '8px' }}>
             <strong>{selectedItem.entidade_nome}</strong><br/>
-            <small style={{ color: 'var(--text-muted)' }}>Título: {selectedItem.numero_titulo}</small>
+            <small style={{ color: 'hsl(var(--muted-foreground))' }}>Título: {selectedItem.numero_titulo}</small>
           </div>
         )}
         {historyData.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum histórico encontrado</p>
+          <p style={{ textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>Nenhum histórico encontrado</p>
         ) : (
           <table>
             <thead>

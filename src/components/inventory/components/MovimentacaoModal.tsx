@@ -93,7 +93,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-none cursor-pointer text-sm font-bold transition-all"
               style={{
                 background: tipo === t.id ? t.color : 'transparent',
-                color: tipo === t.id ? '#1a1a2e' : 'var(--text-muted)'
+                color: tipo === t.id ? '#1a1a2e' : 'hsl(var(--muted-foreground))'
               }}
             >
               {t.icon} {t.label}

@@ -171,7 +171,7 @@ export default function FinanceiroTitulosPagarWizard() {
         </div>
 
         {formData.fornecedor_id && (
-          <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-hover)' }}>
+          <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius-md)', background: 'hsl(var(--surface-hover))' }}>
             <label className="label-base">Possui Ordem de Compra (OC)?</label>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
               <Button variant={hasOC === 'sim' ? 'danger' : 'outline'}
@@ -197,7 +197,7 @@ export default function FinanceiroTitulosPagarWizard() {
                     ))}
                   </select>
                 ) : (
-                  <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Nenhuma OC pendente encontrada.</p>
+                  <p style={{ color: 'hsl(var(--destructive))', fontSize: '0.85rem', marginTop: '0.5rem' }}>Nenhuma OC pendente encontrada.</p>
                 )}
               </div>
             )}
@@ -267,7 +267,7 @@ export default function FinanceiroTitulosPagarWizard() {
                 value={taxaFinanceira}
                 onChange={e => setTaxaFinanceira(Number(e.target.value))} />
             </div>
-            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
+            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'hsl(var(--surface))', textAlign: 'right' }}>
               {loading ? (
                 <div style={{ display: 'grid', gap: '1rem', padding: '1rem' }}>
                    <CardSkeleton />
@@ -275,8 +275,8 @@ export default function FinanceiroTitulosPagarWizard() {
                 </div>
               ) : (
                 <>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>VALOR TOTAL COM TAXAS</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--danger)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>VALOR TOTAL COM TAXAS</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'hsl(var(--destructive))' }}>
                     R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
                 </>
@@ -309,7 +309,7 @@ export default function FinanceiroTitulosPagarWizard() {
         </div>
 
         {formData.showRateio && (
-          <div className="animate-fade-in" style={{ padding: '1.25rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
+          <div className="animate-fade-in" style={{ padding: '1.25rem', border: '1px dashed hsl(var(--border))', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                DISTRIBUIÇÃO POR PROJETO
                <Button variant="danger" size="sm" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
@@ -352,7 +352,7 @@ export default function FinanceiroTitulosPagarWizard() {
                       setFormData({ ...formData, rateios: newR });
                     }} />
                 </div>
-                <Button variant="outline" style={{ height: '36px', padding: 0, color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                <Button variant="outline" style={{ height: '36px', padding: 0, color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}
                   onClick={() => {
                     const newR = formData.rateios.filter((_: any, i: number) => i !== idx);
                     setFormData({ ...formData, rateios: newR });
@@ -378,12 +378,12 @@ export default function FinanceiroTitulosPagarWizard() {
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Confirmação Financeira</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {preview.map((p, i) => (
-          <div key={i} className="card" style={{ padding: '1rem', background: 'var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--danger)' }}>
+          <div key={i} className="card" style={{ padding: '1rem', background: 'hsl(var(--surface-hover))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid hsl(var(--destructive))' }}>
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--danger)', marginBottom: '0.2rem' }}>PARCELA {p.numero_parcela}</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--destructive))', marginBottom: '0.2rem' }}>PARCELA {p.numero_parcela}</div>
               <div style={{ fontWeight: 600 }}>{new Date(p.data_vencimento).toLocaleDateString('pt-BR')}</div>
               {taxaFinanceira > 0 && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>
                   Base: R$ {(formData.valor_base / totalParcelas).toFixed(2)} + {taxaFinanceira}% taxa
                 </div>
               )}
@@ -393,16 +393,16 @@ export default function FinanceiroTitulosPagarWizard() {
             </div>
           </div>
         ))}
-        <div style={{ marginTop: '1.5rem', padding: '1.25rem', borderTop: '2px dashed var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ marginTop: '1.5rem', padding: '1.25rem', borderTop: '2px dashed hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'hsl(var(--surface-hover))', borderRadius: 'var(--radius-md)' }}>
           <div>
             <div style={{ fontWeight: 700 }}>MONTANTE TOTAL A PAGAR</div>
             {taxaFinanceira > 0 && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
                 Inclui {taxaFinanceira}% de custo financeiro
               </div>
             )}
           </div>
-          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--danger)' }}>
+          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'hsl(var(--destructive))' }}>
             R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </span>
         </div>
@@ -420,16 +420,16 @@ export default function FinanceiroTitulosPagarWizard() {
       <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
         {/* Stepper – 3 passos */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '15px', left: 0, right: 0, height: '2px', background: 'var(--border)', zIndex: 0 }} />
+          <div style={{ position: 'absolute', top: '15px', left: 0, right: 0, height: '2px', background: 'hsl(var(--border))', zIndex: 0 }} />
           {[1, 2, 3].map(s => (
             <div key={s} style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{
                 width: '32px', height: '32px', borderRadius: '50%',
-                background: step >= s ? 'var(--danger)' : 'var(--surface)',
-                color: step >= s ? '#ffffff' : 'var(--text-muted)',
+                background: step >= s ? 'hsl(var(--destructive))' : 'hsl(var(--surface))',
+                color: step >= s ? '#ffffff' : 'hsl(var(--muted-foreground))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 800, border: '2px solid',
-                borderColor: step >= s ? 'var(--danger)' : 'var(--border)'
+                borderColor: step >= s ? 'hsl(var(--destructive))' : 'hsl(var(--border))'
               }}>
                 {step > s ? <Check /> : s}
               </div>
@@ -457,7 +457,7 @@ export default function FinanceiroTitulosPagarWizard() {
               PRÓXIMO <ArrowRight />
             </Button>
           ) : (
-            <Button style={{ background: 'var(--success)', borderColor: 'var(--success)', color: '#fff' }}
+            <Button style={{ background: 'hsl(var(--success))', borderColor: 'hsl(var(--success))', color: '#fff' }}
               isLoading={loading} onClick={handleSave}>
               CONFIRMAR E GERAR TÍTULOS
             </Button>

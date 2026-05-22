@@ -104,7 +104,7 @@ const NotificationBell: React.FC = () => {
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
         onMouseLeave={e => e.currentTarget.style.background = 'none'}
       >
-        <Bell size={22} color={unreadCount > 0 ? 'var(--primary)' : 'currentColor'} />
+        <Bell size={22} color={unreadCount > 0 ? 'hsl(var(--primary))' : 'currentColor'} />
         {unreadCount > 0 && (
           <span style={{
             position: 'absolute',
@@ -136,7 +136,7 @@ const NotificationBell: React.FC = () => {
           marginTop: '8px',
           width: '320px',
           background: 'var(--card-bg)',
-          border: '1px solid var(--border)',
+          border: '1px solid hsl(var(--border))',
           borderRadius: 'var(--radius-md)',
           boxShadow: 'var(--shadow-lg)',
           zIndex: 1000,
@@ -144,7 +144,7 @@ const NotificationBell: React.FC = () => {
         }}>
           <div style={{
             padding: '12px 16px',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid hsl(var(--border))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -153,7 +153,7 @@ const NotificationBell: React.FC = () => {
             <h3 style={{ fontSize: '0.875rem', fontWeight: '700', margin: 0 }}>Notificações</h3>
             <button
               onClick={() => api.notificacoes.markAllRead().then(() => fetchNotifications())}
-              style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}
+              style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}
             >
               Marcar lidas
             </button>
@@ -161,7 +161,7 @@ const NotificationBell: React.FC = () => {
 
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {notifications.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
                 <CheckCircle size={32} style={{ marginBottom: '8px', opacity: 0.2 }} />
                 <p style={{ fontSize: '0.8rem', margin: 0 }}>Nenhum alerta pendente</p>
               </div>
@@ -172,7 +172,7 @@ const NotificationBell: React.FC = () => {
                   onClick={() => handleMarkAsRead(n.id, n.url_destino)}
                   style={{
                     padding: '12px 16px',
-                    borderBottom: '1px solid var(--border)',
+                    borderBottom: '1px solid hsl(var(--border))',
                     cursor: 'pointer',
                     transition: 'background 0.2s',
                     position: 'relative'
@@ -191,10 +191,10 @@ const NotificationBell: React.FC = () => {
                       <p style={{ fontSize: '0.8rem', fontWeight: '700', margin: '0 0 2px 0', color: 'var(--text)' }}>
                         {n.titulo}
                       </p>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: 0, lineHeight: '1.4' }}>
                         {n.mensagem}
                       </p>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                      <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginTop: '4px' }}>
                         {new Date(n.criado_em!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -211,8 +211,8 @@ const NotificationBell: React.FC = () => {
               padding: '10px',
               background: 'rgba(255,255,255,0.02)',
               border: 'none',
-              borderTop: '1px solid var(--border)',
-              color: 'var(--text-muted)',
+              borderTop: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--muted-foreground))',
               fontSize: '0.75rem',
               cursor: 'pointer',
               fontWeight: '500'

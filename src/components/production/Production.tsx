@@ -8,7 +8,7 @@ const Production: React.FC = () => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Produção</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Acompanhe cada projeto na oficina — visão do marceneiro.</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Acompanhe cada projeto na oficina — visão do marceneiro.</p>
         </div>
       </header>
 

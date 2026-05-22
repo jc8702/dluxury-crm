@@ -511,9 +511,9 @@ function desenharPeca(
   if (isCortada && executionMode) {
     ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
   } else if (isSelected) {
-    ctx.fillStyle = 'hsla(var(--primary), 0.4)';
+    ctx.fillStyle = 'hsla(hsl(var(--primary)), 0.4)';
   } else if (highlighted) {
-    ctx.fillStyle = 'hsla(var(--primary), 0.2)';
+    ctx.fillStyle = 'hsla(hsl(var(--primary)), 0.2)';
   } else {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
   }

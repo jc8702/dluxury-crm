@@ -36,7 +36,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
             borderTop: '1px dashed rgba(255, 255, 255, 0.05)',
             zIndex: 0
           }}>
-            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', position: 'absolute', top: '-10px', left: 0 }}>
+            <span style={{ fontSize: '0.6rem', color: 'hsl(var(--muted-foreground))', position: 'absolute', top: '-10px', left: 0 }}>
               {formatValue(p * maxValue)}
             </span>
           </div>
@@ -58,10 +58,10 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
                     top: metaY, 
                     left: -5, right: -5, 
                     height: '3px', 
-                    background: 'var(--primary)', 
+                    background: 'hsl(var(--primary))', 
                     borderRadius: '2px',
                     zIndex: 5,
-                    boxShadow: '0 0 10px var(--primary)',
+                    boxShadow: '0 0 10px hsl(var(--primary))',
                     opacity: d.meta > 0 ? 1 : 0
                   }} title={`Meta: ${formatValue(d.meta)}`} />
 
@@ -113,7 +113,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
                     </div>
                   )}
                 </div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{d.month}</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}>{d.month}</span>
               </div>
             );
           })}
@@ -124,19 +124,19 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, title }) => {
       <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginTop: '1.5rem', fontSize: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#10b981' }}></div>
-          <span style={{ color: 'var(--text-muted)' }}>Faturado</span>
+          <span style={{ color: 'hsl(var(--muted-foreground))' }}>Faturado</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: 'rgba(245, 158, 11, 0.4)', border: '1px solid #f59e0b' }}></div>
-          <span style={{ color: 'var(--text-muted)' }}>Carteira (Projeção)</span>
+          <span style={{ color: 'hsl(var(--muted-foreground))' }}>Carteira (Projeção)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ width: '15px', height: '3px', background: 'var(--primary)' }}></div>
-          <span style={{ color: 'var(--text-muted)' }}>Meta</span>
+          <div style={{ width: '15px', height: '3px', background: 'hsl(var(--primary))' }}></div>
+          <span style={{ color: 'hsl(var(--muted-foreground))' }}>Meta</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ width: '18px', height: '14px', borderRadius: '10px', background: 'white', color: '#059669', fontSize: '0.6rem', fontWeight: 'bold', border: '1px solid #059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>N</div>
-          <span style={{ color: 'var(--text-muted)' }}>Clientes Atendidos</span>
+          <span style={{ color: 'hsl(var(--muted-foreground))' }}>Clientes Atendidos</span>
         </div>
       </div>
     </div>

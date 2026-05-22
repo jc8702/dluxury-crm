@@ -127,7 +127,7 @@ const BillingModule: React.FC = () => {
         </span>
       </td>
       <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{b.descricao || '-'}</td>
-      <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+      <td style={{ padding: '0.75rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
         {b.cliente || linkedProject?.clientName || '-'}
       </td>
       <td style={{ padding: '0.75rem' }}>
@@ -139,7 +139,7 @@ const BillingModule: React.FC = () => {
             {linkedProject.ambiente}
           </span>
         ) : (
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
+          <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>—</span>
         )}
       </td>
       <td style={{ padding: '0.75rem' }}>
@@ -162,7 +162,7 @@ const BillingModule: React.FC = () => {
                 cursor: 'pointer', width: '20px', height: '20px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: b.status === s.id ? s.color : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${b.status === s.id ? 'transparent' : 'var(--border)'}`,
+                border: `1px solid ${b.status === s.id ? 'transparent' : 'hsl(var(--border))'}`,
                 transition: 'all 0.2s'
               }}>
               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: b.status === s.id ? 'white' : s.color }} />
@@ -186,7 +186,7 @@ const BillingModule: React.FC = () => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Financeiro</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Controle de entradas e saídas por projeto.</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Controle de entradas e saídas por projeto.</p>
         </div>
         <button className="btn" onClick={() => { setEditingBilling(null); setIsModalOpen(true); }}
           style={{
@@ -200,15 +200,15 @@ const BillingModule: React.FC = () => {
       {/* Resumo */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #10b981' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Entradas</p>
+          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Total Entradas</p>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981' }}>{formatCurrency(totalEntradas)}</h3>
         </div>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #ef4444' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Saídas</p>
+          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Total Saídas</p>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>{formatCurrency(totalSaidas)}</h3>
         </div>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: `3px solid ${saldo >= 0 ? '#d4af37' : '#ef4444'}` }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Saldo</p>
+          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Saldo</p>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: saldo >= 0 ? '#d4af37' : '#ef4444' }}>{formatCurrency(saldo)}</h3>
         </div>
       </div>
@@ -228,9 +228,9 @@ const BillingModule: React.FC = () => {
               <button key={f.id} onClick={() => { setTypeFilter(f.id as any); setCurrentPage(1); }}
                 style={{
                   padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer',
-                  border: typeFilter === f.id ? `1px solid ${f.color}` : '1px solid var(--border)',
+                  border: typeFilter === f.id ? `1px solid ${f.color}` : '1px solid hsl(var(--border))',
                   background: typeFilter === f.id ? f.color : 'transparent',
-                  color: typeFilter === f.id ? 'white' : 'var(--text-muted)',
+                  color: typeFilter === f.id ? 'white' : 'hsl(var(--muted-foreground))',
                   transition: 'all 0.2s'
                 }}>
                 {f.label}
@@ -262,9 +262,9 @@ const BillingModule: React.FC = () => {
               <button key={t} type="button" onClick={() => setFormData({ ...formData, tipo: t, categoria: t === 'entrada' ? 'sinal' : 'material' })}
                 style={{
                   flex: 1, padding: '0.75rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
-                  border: formData.tipo === t ? 'none' : '1px solid var(--border)',
+                  border: formData.tipo === t ? 'none' : '1px solid hsl(var(--border))',
                   background: formData.tipo === t ? (t === 'entrada' ? '#10b981' : '#ef4444') : 'transparent',
-                  color: formData.tipo === t ? 'white' : 'var(--text-muted)',
+                  color: formData.tipo === t ? 'white' : 'hsl(var(--muted-foreground))',
                 }}>
                 {t === 'entrada' ? '↑ Entrada' : '↓ Saída'}
               </button>

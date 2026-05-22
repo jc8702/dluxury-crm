@@ -18,7 +18,7 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, sublabel }) => {
           cx="90"
           cy="90"
           r={radius}
-          stroke="var(--border)"
+          stroke="hsl(var(--border))"
           strokeWidth="12"
           fill="transparent"
         />
@@ -26,7 +26,7 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, sublabel }) => {
           cx="90"
           cy="90"
           r={radius}
-          stroke="var(--primary)"
+          stroke="hsl(var(--primary))"
           strokeWidth="12"
           fill="transparent"
           strokeDasharray={circumference}
@@ -37,9 +37,9 @@ const Gauge: React.FC<GaugeProps> = ({ value, label, sublabel }) => {
       </svg>
       <div style={{ position: 'absolute', textAlign: 'center' }}>
         <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{value}%</span>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{label}</div>
+        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{label}</div>
       </div>
-      <div style={{ marginTop: '1rem', fontWeight: '500', color: 'var(--text-muted)', fontSize: '0.875rem' }}>{sublabel}</div>
+      <div style={{ marginTop: '1rem', fontWeight: '500', color: 'hsl(var(--muted-foreground))', fontSize: '0.875rem' }}>{sublabel}</div>
     </div>
   );
 };

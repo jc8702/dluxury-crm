@@ -53,13 +53,13 @@ const ReciboModal: React.FC<ReciboModalProps> = ({ isOpen, onClose, titulo, tipo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Recibo de Quitação" width="700px">
       <div id="recibo-print-area">
-        <div className="recibo" style={{ padding: '2rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
+        <div className="recibo" style={{ padding: '2rem', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1.5rem' }}>
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>RECIBO DE QUITAÇÃO</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Título Nº {titulo.numero_titulo}</p>
+              <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Título Nº {titulo.numero_titulo}</p>
             </div>
-            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)', fontWeight: 900, fontSize: '1.25rem' }}>
+            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid hsl(var(--border))', fontWeight: 900, fontSize: '1.25rem' }}>
               R$ {Number(titulo.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -84,7 +84,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({ isOpen, onClose, titulo, tipo
             </div>
           </div>
 
-          <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px dotted var(--border)', fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px dotted hsl(var(--border))', fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', display: 'flex', justifyContent: 'space-between' }}>
             <span>Autenticação Eletrônica: {titulo.id?.substring(0,18).toUpperCase()}</span>
             <span>Emitido via D'Luxury ERP</span>
           </div>
