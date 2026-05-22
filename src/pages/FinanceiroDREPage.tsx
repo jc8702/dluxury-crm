@@ -81,7 +81,7 @@ export default function FinanceiroDREPage() {
           {sectionKey && children && (
             <Button 
               onClick={() => toggleSection(sectionKey)} 
-              className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+              className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-black' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'}`}
             >
               <TrendingUp className={`w-4 h-4 transition-transform ${expandedSections[sectionKey] ? 'rotate-90' : ''}`} />
             </Button>
@@ -89,7 +89,7 @@ export default function FinanceiroDREPage() {
         </div>
       </div>
       {sectionKey && expandedSections[sectionKey] && children && (
-        <div className="mt-4 pt-4 border-t border-white/5 space-y-1">
+        <div className="mt-4 pt-4 border-t border-border space-y-1">
           {children}
         </div>
       )}
@@ -97,8 +97,8 @@ export default function FinanceiroDREPage() {
   );
 
   const LineItem = ({ label, value, isNegative }: { label: string; value: number; isNegative?: boolean }) => (
-    <div className="flex justify-between items-center py-2 px-4 hover:bg-white/5 rounded-lg transition-colors group">
-      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider group-hover:text-white transition-colors">{label}</span>
+    <div className="flex justify-between items-center py-2 px-4 hover:bg-muted/50 rounded-lg transition-colors group">
+      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider group-hover:text-foreground transition-colors">{label}</span>
       <span className={`text-xs font-black italic tracking-tight ${isNegative ? 'text-red-400' : 'text-emerald-400'}`}>
         {isNegative ? '-' : '+'} {fmt(Math.abs(value))}
       </span>
@@ -107,9 +107,9 @@ export default function FinanceiroDREPage() {
 
   const Divider = ({ label }: { label: string }) => (
     <div className="flex items-center gap-4 my-8 first:mt-0">
-      <div className="h-px bg-white/5 flex-1" />
+      <div className="h-px bg-border flex-1" />
       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] italic opacity-40">{label}</span>
-      <div className="h-px bg-white/5 flex-1" />
+      <div className="h-px bg-border flex-1" />
     </div>
   );
 
@@ -145,7 +145,7 @@ export default function FinanceiroDREPage() {
           </Button>
 
           {/* Filtro de Período Industrial */}
-          <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-white/5">
+          <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-border">
             <input 
               type="date" 
               className="bg-transparent border-none text-[11px] font-black text-white px-4 py-2 uppercase italic focus:ring-0 w-40" 
@@ -290,7 +290,7 @@ export default function FinanceiroDREPage() {
 
           {/* Sidebar de Inteligência Financeira */}
           <div className="lg:col-span-4 space-y-8 sticky top-8">
-            <div className="glass-elevated p-8 rounded-3xl border border-white/5 space-y-8">
+            <div className="glass-elevated p-8 rounded-3xl border border-border space-y-8">
               <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" /> PAINEL DE MARGENS
               </div>
@@ -305,7 +305,7 @@ export default function FinanceiroDREPage() {
                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{m.label}</span>
                     <span className={`text-xl font-black italic tracking-tight ${m.color}`}>{fmtPct(m.value)}</span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden p-[2px]">
+                  <div className="h-2 bg-muted/40 rounded-full overflow-hidden p-[2px]">
                     <div 
                       className={`h-full rounded-full transition-all duration-1000 ${m.bg}`} 
                       style={{ width: `${Math.min(Math.max(Math.abs(m.value), 0), 100)}%` }} 
@@ -315,7 +315,7 @@ export default function FinanceiroDREPage() {
               ))}
             </div>
 
-            <div className="glass-elevated p-8 rounded-3xl border border-white/5 space-y-6">
+            <div className="glass-elevated p-8 rounded-3xl border border-border space-y-6">
               <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50">RESUMO EXECUTIVO</div>
               {[
                 { label: 'Receita Bruta', value: data.receita_bruta, icon: <TrendingUp className="w-4 h-4" />, color: 'text-emerald-500' },
@@ -323,10 +323,10 @@ export default function FinanceiroDREPage() {
                 { label: 'Total Despesas', value: (data.detalhes?.despesas_operacionais?.reduce((s: any, r: any) => s + r.valor, 0) || 0) + (data.detalhes?.despesas_administrativas?.reduce((s: any, r: any) => s + r.valor, 0) || 0), icon: <TrendingDown className="w-4 h-4" />, color: 'text-red-500' },
                 { label: 'Resultado', value: data.lucro_liquido, icon: null, color: data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500' },
               ].map((item, i) => (
-                <div key={i} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 group transition-all hover:bg-white/[0.02]">
+                <div key={i} className="flex justify-between items-center py-3 border-b border-border last:border-0 group transition-all hover:bg-muted/30">
                   <div className={`flex items-center gap-3 ${item.color} text-[11px] font-black italic uppercase tracking-wider`}>
                     {item.icon}
-                    <span className="text-muted-foreground group-hover:text-white transition-colors">{item.label}</span>
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
                   </div>
                   <span className={`text-sm font-black italic tracking-tight ${item.color}`}>{fmt(item.value)}</span>
                 </div>

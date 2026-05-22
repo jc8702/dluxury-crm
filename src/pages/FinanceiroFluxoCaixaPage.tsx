@@ -70,7 +70,7 @@ export default function FinanceiroFluxoCaixaPage() {
       <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-             <div style={{ padding: '0.6rem', borderRadius: '12px', background: 'hsl(var(--primary))/0.08)', color: 'hsl(var(--primary))' }}>
+             <div style={{ padding: '0.6rem', borderRadius: '12px', background: 'hsl(var(--primary) / 0.08)', color: 'hsl(var(--primary))' }}>
                 <TrendingUp size={24} />
              </div>
              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>FLUXO DE CAIXA GERENCIAL</h1>
@@ -298,7 +298,7 @@ export default function FinanceiroFluxoCaixaPage() {
               </CardContent>
            </Card>
 
-           <Card style={{ background: 'hsl(var(--primary))/0.02)', border: '1px dashed hsl(var(--primary))/0.19)' }}>
+           <Card style={{ background: 'hsl(var(--primary) / 0.02)', border: '1px dashed hsl(var(--primary) / 0.19)' }}>
               <CardContent style={{ padding: '1.25rem' }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>DISPONIBILIDADE FINAL</div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'hsl(var(--primary))' }}>{fmt(selectedPeriod?.saldo_projetado || saldoAtual)}</div>

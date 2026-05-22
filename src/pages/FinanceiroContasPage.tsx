@@ -260,7 +260,7 @@ const FinanceiroContasPage = () => {
       <ConfirmDialogElement />
 
       {/* Header Industrial */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-white/5 pb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-border pb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
@@ -277,7 +277,7 @@ const FinanceiroContasPage = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" className="h-12 px-6 group border-border/40 hover:bg-white/5" onClick={fetchContas}>
+          <Button variant="outline" className="h-12 px-6 group border-border/40 hover:bg-muted" onClick={fetchContas}>
             <RefreshCw className={`w-4 h-4 mr-2 transition-transform group-hover:rotate-180 ${loading ? 'animate-spin' : ''}`} /> ATUALIZAR
           </Button>
           <Button 
@@ -305,10 +305,10 @@ const FinanceiroContasPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-elevated p-8 rounded-[2rem] border border-white/5 h-64 animate-pulse" />
+            <div key={i} className="glass-elevated p-8 rounded-[2rem] border border-border h-64 animate-pulse" />
           ))
         ) : contas.length === 0 ? (
-          <div className="col-span-full glass-elevated p-32 text-center rounded-[3rem] border border-dashed border-white/10 relative overflow-hidden">
+          <div className="col-span-full glass-elevated p-32 text-center rounded-[3rem] border border-dashed border-border relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
             <div className="relative z-10">
               <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20">
@@ -324,7 +324,7 @@ const FinanceiroContasPage = () => {
         ) : contas.map(c => {
           const isPos = Number(c.saldo_atual || 0) >= 0;
           return (
-            <div key={c.id} className="glass-elevated group hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full border border-white/5 relative">
+            <div key={c.id} className="glass-elevated group hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full border border-border relative">
               {/* Status Glow */}
               <div className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-10 transition-opacity group-hover:opacity-20 ${isPos ? 'bg-emerald-500' : 'bg-red-500'}`} />
               
@@ -339,13 +339,13 @@ const FinanceiroContasPage = () => {
                       }`}>
                         {c.tipo?.replace(/_/g, ' ')}
                       </span>
-                      {c.banco_codigo && <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">BCO: {c.banco_codigo}</span>}
+                      {c.banco_codigo && <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">BCO: {c.banco_codigo}</span>}
                     </div>
                     <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-primary transition-colors truncate max-w-[220px] mt-2">
                       {c.nome}
                     </h3>
                   </div>
-                  <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center text-primary font-black text-2xl shadow-inner group-hover:border-primary/30 transition-all">
+                  <div className="w-14 h-14 rounded-2xl bg-muted/40 border border-border flex items-center justify-center text-primary font-black text-2xl shadow-inner group-hover:border-primary/30 transition-all">
                     {(c.nome || 'C').charAt(0)}
                   </div>
                 </div>
@@ -361,7 +361,7 @@ const FinanceiroContasPage = () => {
                   </div>
 
                   {c.agencia && (
-                    <div className="flex gap-4 pt-4 border-t border-white/5">
+                    <div className="flex gap-4 pt-4 border-t border-border">
                       <div className="flex-1">
                         <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Agência</div>
                         <div className="text-sm font-mono font-black">{c.agencia}</div>
@@ -375,7 +375,7 @@ const FinanceiroContasPage = () => {
                 </div>
               </div>
 
-              <div className="flex border-t border-white/5 bg-black/40 p-2 gap-2">
+              <div className="flex border-t border-border bg-muted/40 p-2 gap-2">
                 <Button 
                   variant="ghost"
                   className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest"
@@ -422,7 +422,7 @@ const FinanceiroContasPage = () => {
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">TIPO DE ATIVO</label>
               <div className="relative">
                 <select 
-                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold" 
+                  className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold" 
                   value={form.tipo} 
                   onChange={e => setForm({...form, tipo: e.target.value as TipoContaInterna})}
                 >
@@ -482,7 +482,7 @@ const FinanceiroContasPage = () => {
           )}
 
           <div className="flex gap-4 pt-4">
-            <Button variant="outline" className="flex-1 h-14 font-black italic border-border/40 hover:bg-white/5" onClick={() => setIsOpen(false)}>DESCARTAR</Button>
+            <Button variant="outline" className="h-14 font-black italic border-border hover:bg-muted/40" onClick={() => setIsOpen(false)}>DESCARTAR</Button>
             <Button variant="primary" className="flex-[2] h-14 font-black italic text-lg" onClick={save}>FINALIZAR CONFIGURAÇÃO</Button>
           </div>
         </div>
@@ -505,7 +505,7 @@ const FinanceiroContasPage = () => {
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">CONTA ORIGEM</label>
               <select 
-                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
+                className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
                 value={transferForm.conta_origem_id}
                 onChange={e => setTransferForm({...transferForm, conta_origem_id: e.target.value})}
               >
@@ -518,7 +518,7 @@ const FinanceiroContasPage = () => {
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">CONTA DESTINO</label>
               <select 
-                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
+                className="w-full bg-background border border-border rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all appearance-none font-bold text-center h-20" 
                 value={transferForm.conta_destino_id}
                 onChange={e => setTransferForm({...transferForm, conta_destino_id: e.target.value})}
               >
@@ -569,7 +569,7 @@ const FinanceiroContasPage = () => {
           )}
 
           <div className="flex gap-4 pt-4">
-            <Button variant="outline" className="flex-1 h-14 font-black italic border-border/40 hover:bg-white/5" onClick={() => setShowTransferencia(false)}>DESCARTAR</Button>
+            <Button variant="outline" className="flex-1 h-14 font-black italic border-border/40 hover:bg-muted" onClick={() => setShowTransferencia(false)}>DESCARTAR</Button>
             <Button 
               variant="primary"
               className="flex-[2] h-14 font-black italic text-lg shadow-lg shadow-primary/20" 
@@ -586,15 +586,15 @@ const FinanceiroContasPage = () => {
       <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`EXTRATO ANALÍTICO — ${extratoContaNome.toUpperCase()}`} size="full">
         {extratoLoading ? (
           <div className="h-[600px] p-8 space-y-8 animate-pulse">
-            <div className="grid grid-cols-4 gap-4 h-32 bg-white/5 rounded-3xl" />
-            <div className="h-full bg-white/5 rounded-3xl" />
+            <div className="grid grid-cols-4 gap-4 h-32 bg-muted/40 rounded-3xl" />
+            <div className="h-full bg-muted/40 rounded-3xl" />
           </div>
         ) : (
           <div className="space-y-10 p-4">
             {/* Resumo Industrial */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { label: 'Saldo Anterior', value: extrato?.saldo_inicial || 0, color: 'text-white/60', border: 'border-white/10', icon: <History className="w-4 h-4" /> },
+                { label: 'Saldo Anterior', value: extrato?.saldo_inicial || 0, color: 'text-muted-foreground', border: 'border-border', icon: <History className="w-4 h-4" /> },
                 { label: 'Total Entradas', value: extratoTotais.entradas, color: 'text-emerald-500', border: 'border-emerald-500/30', icon: <ArrowUpCircle className="w-4 h-4" /> },
                 { label: 'Total Saídas', value: extratoTotais.saidas, color: 'text-red-500', border: 'border-red-500/30', icon: <ArrowDownCircle className="w-4 h-4" />, isNeg: true },
                 { label: 'Saldo Projetado', value: extrato?.conta?.saldo_atual || 0, color: 'text-primary', border: 'border-primary/40', icon: <TrendingUp className="w-4 h-4" />, highlight: true },
@@ -612,7 +612,7 @@ const FinanceiroContasPage = () => {
             </div>
 
             {/* Filtros e Ações */}
-            <div className="flex flex-col xl:flex-row gap-6 items-end bg-black/20 p-8 rounded-[2.5rem] border border-white/5">
+            <div className="flex flex-col xl:flex-row gap-6 items-end bg-muted/20 p-8 rounded-[2.5rem] border border-border">
               <div className="flex-1 w-full space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">PESQUISA DINÂMICA</label>
                 <div className="relative">
@@ -629,7 +629,7 @@ const FinanceiroContasPage = () => {
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">FLUXO</label>
                 <div className="relative">
                   <select 
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm font-black italic appearance-none focus:outline-none focus:border-primary/50 uppercase"
+                    className="w-full bg-background border border-border rounded-2xl px-6 py-4 text-sm font-black italic appearance-none focus:outline-none focus:border-primary/50 uppercase"
                     value={filtroTipo}
                     onChange={e => setFiltroTipo(e.target.value as any)}
                   >
@@ -641,7 +641,7 @@ const FinanceiroContasPage = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" className="h-[58px] px-8 font-black italic tracking-widest group border-border/40 hover:bg-white/5" onClick={exportCSV}>
+                <Button variant="outline" className="h-[58px] px-8 font-black italic tracking-widest group border-border/40 hover:bg-muted" onClick={exportCSV}>
                   <Download className="w-5 h-5 mr-2 group-hover:-translate-y-1 transition-transform" /> CSV
                 </Button>
                 <Button variant="primary" className="h-[58px] px-8 font-black italic tracking-widest" onClick={() => window.print()}>
@@ -651,11 +651,11 @@ const FinanceiroContasPage = () => {
             </div>
 
             {/* Tabela de Extrato */}
-            <div className="glass-elevated rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl relative">
+            <div className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl relative">
               <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 bg-[#0A0A0A] z-20">
-                    <tr className="border-b border-white/10">
+                    <tr className="border-b border-border">
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Data de Efetivação</th>
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Memorial / Descrição</th>
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Módulo Origem</th>
@@ -664,7 +664,7 @@ const FinanceiroContasPage = () => {
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-center">Auditoria</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-border">
                     {extratoFiltrado.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-8 py-32 text-center">
@@ -675,11 +675,11 @@ const FinanceiroContasPage = () => {
                     ) : extratoFiltrado.map((m, i) => {
                       const isPos = Number(m.valor) > 0;
                       return (
-                        <tr key={m.id || i} className={`group transition-colors hover:bg-white/[0.02] ${m.conferido ? 'opacity-40 grayscale' : ''}`}>
+                        <tr key={m.id || i} className={`group transition-colors hover:bg-muted/20 ${m.conferido ? 'opacity-40 grayscale' : ''}`}>
                           <td className="px-8 py-5 text-xs font-mono font-bold tracking-widest text-muted-foreground">{new Date(m.data).toLocaleDateString('pt-BR')}</td>
                           <td className="px-8 py-5">
                             <div className="text-sm font-black italic tracking-tight group-hover:text-primary transition-colors">{m.descricao || m.tipo}</div>
-                            <div className="text-[9px] font-bold text-white/20 uppercase tracking-widest mt-1">{m.tipo}</div>
+                            <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">{m.tipo}</div>
                           </td>
                           <td className="px-8 py-5">
                             <span className="text-[10px] font-black bg-primary/5 border border-primary/20 px-3 py-1 rounded-lg text-primary italic uppercase tracking-wider">{m.origem}</span>
@@ -703,7 +703,7 @@ const FinanceiroContasPage = () => {
                                       success(m.conferido ? 'CONFERÊNCIA REVOGADA' : 'LANÇAMENTO AUDITADO');
                                     });
                                 }}
-                                className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center group/check ${m.conferido ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-white/10 hover:border-primary/50'}`}
+                                className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center group/check ${m.conferido ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-border hover:border-primary/50'}`}
                               >
                                 {m.conferido ? <X className="w-5 h-5 font-black" /> : <ChevronRight className="w-5 h-5 opacity-0 group-hover/check:opacity-100 transition-opacity" />}
                               </button>
@@ -738,12 +738,12 @@ const FinanceiroContasPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-black/40 p-8 rounded-[2.5rem] border border-white/5 shadow-inner">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-muted/40 p-8 rounded-[2.5rem] border border-border shadow-inner">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">MÊS DE REFERÊNCIA</label>
               <div className="relative">
                 <select 
-                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 appearance-none font-black italic uppercase text-sm"
+                  className="w-full bg-background border border-border rounded-2xl px-5 py-4 appearance-none font-black italic uppercase text-sm"
                   value={fechamentoForm.mes}
                   onChange={e => setFechamentoForm({...fechamentoForm, mes: Number(e.target.value)})}
                 >
@@ -758,7 +758,7 @@ const FinanceiroContasPage = () => {
               <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">ANO BASE</label>
               <div className="relative">
                 <select 
-                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 appearance-none font-black text-sm"
+                  className="w-full bg-background border border-border rounded-2xl px-5 py-4 appearance-none font-black text-sm"
                   value={fechamentoForm.ano}
                   onChange={e => setFechamentoForm({...fechamentoForm, ano: Number(e.target.value)})}
                 >
@@ -774,22 +774,22 @@ const FinanceiroContasPage = () => {
             <h4 className="text-[11px] font-black mb-6 flex items-center gap-3 uppercase tracking-[0.3em] text-muted-foreground italic">
               <Lock className="w-4 h-4 text-primary" /> LINHA DO TEMPO DE SEGURANÇA
             </h4>
-            <div className="glass-elevated rounded-[2rem] overflow-hidden border border-white/5">
+            <div className="glass-elevated rounded-[2rem] overflow-hidden border border-border">
               <table className="w-full text-left">
-                <thead className="bg-white/5 border-b border-white/5">
+                <thead className="bg-muted/40 border-b border-border">
                   <tr>
                     <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">Ciclo Mensal</th>
                     <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">Status de Integridade</th>
                     <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest text-right">Ações de Gestor</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-border">
                   {fechamentos.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-8 py-12 text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest italic opacity-50">Nenhum ciclo fechado identificado</td>
                     </tr>
                   ) : fechamentos.map(f => (
-                    <tr key={f.id} className="hover:bg-white/[0.02] group transition-colors">
+                    <tr key={f.id} className="hover:bg-muted/20 group transition-colors">
                       <td className="px-8 py-5 font-black italic tracking-tight text-base capitalize">
                         {new Date(2000, f.mes-1).toLocaleString('pt-BR', {month: 'long'})} <span className="text-primary">/ {f.ano}</span>
                       </td>
