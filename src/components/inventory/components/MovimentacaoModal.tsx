@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { Material } from '../../../context/AppContext';
-import { X, ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
+import { Modal, Button, Input } from '../../../design-system/components';
 
 interface MovimentacaoModalProps {
   material: Material;
@@ -11,7 +11,6 @@ interface MovimentacaoModalProps {
 }
 
 const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose, onSuccess }) => {
-  useEscClose(onClose);
   const { registrarMovimentacao, projects, orcamentos } = useAppContext();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'ajuste'>('entrada');
   const [quantidade, setQuantidade] = useState<number>(0);
@@ -70,141 +69,131 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1100 }} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
-      <div className="modal-content animate-pop-in" style={{ maxWidth: '500px', width: '90%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>Registrar Movimentação</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{material.nome}</p>
-          </div>
-          <button onClick={onClose} style={{ all: 'unset', cursor: 'pointer', color: 'var(--text-muted)' }}><X /></button>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Registrar Movimentação"
+      size="md"
+    >
+      <div className="mb-4">
+        <p className="text-sm text-muted-foreground">{material.nome}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex gap-2 bg-foreground/5 p-1.5 rounded-xl">
+          {[
+            { id: 'entrada', label: 'Entrada', icon: <ArrowUpCircle size={18} />, color: '#10b981' },
+            { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#ef4444' },
+            { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#3b82f6' }
+          ].map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTipo(t.id as any)}
+              className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-none cursor-pointer text-sm font-bold transition-all"
+              style={{
+                background: tipo === t.id ? t.color : 'transparent',
+                color: tipo === t.id ? '#1a1a2e' : 'var(--text-muted)'
+              }}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '12px' }}>
-            {[
-              { id: 'entrada', label: 'Entrada', icon: <ArrowUpCircle size={18} />, color: '#10b981' },
-              { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#ef4444' },
-              { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#3b82f6' }
-            ].map(t => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTipo(t.id as any)}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.6rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '700',
-                  background: tipo === t.id ? t.color : 'transparent',
-                  color: tipo === t.id ? '#1a1a2e' : 'var(--text-muted)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid-2">
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                Quantidade ({material.unidade_compra})
-              </label>
-              <input 
-                type="number" 
-                step="0.0001"
-                className="input-base" 
-                value={quantidade} 
-                onChange={e => setQuantidade(Number(e.target.value))}
-                autoFocus
-              />
-              <p style={{ fontSize: '0.7rem', color: '#d4af37', marginTop: '0.3rem' }}>
-                = {equivalencia.toFixed(2)} {material.unidade_uso}
-              </p>
-            </div>
-            {tipo === 'entrada' && (
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                  Preço Custo (R$)
-                </label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  className="input-base" 
-                  value={precoUnitario} 
-                  onChange={e => setPrecoUnitario(Number(e.target.value))}
-                />
-              </div>
-            )}
-          </div>
-
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Motivo / Referência</label>
-            <input 
-              className="input-base" 
-              placeholder="Ex: Compra NF 123, Consumo projeto X..." 
-              value={motivo} 
-              onChange={e => setMotivo(e.target.value)}
-              required
+            <Input 
+              type="number" 
+              step="0.0001"
+              label={`Quantidade (${material.unidade_compra})`}
+              value={quantidade} 
+              onChange={e => setQuantidade(Number(e.target.value))}
+              autoFocus
             />
+            <p className="text-xs text-primary mt-1 font-semibold">
+              = {equivalencia.toFixed(2)} {material.unidade_uso}
+            </p>
           </div>
-
-          {tipo === 'saida' && (
-            <div className="grid-2">
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Projeto (Opcional)</label>
-                <select className="input-base" value={projetoId} onChange={e => setProjetoId(e.target.value)}>
-                  <option value="">Selecione...</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.clientName} - {p.ambiente}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Orçamento (Opcional)</label>
-                <select className="input-base" value={orcamentoId} onChange={e => setOrcamentoId(e.target.value)}>
-                  <option value="">Selecione...</option>
-                  {orcamentos.map(o => <option key={o.id} value={o.id}>{o.numero}</option>)}
-                </select>
-              </div>
+          {tipo === 'entrada' && (
+            <div>
+              <Input 
+                type="number" 
+                step="0.01"
+                label="Preço Custo (R$)"
+                value={precoUnitario} 
+                onChange={e => setPrecoUnitario(Number(e.target.value))}
+              />
             </div>
           )}
+        </div>
 
-          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', marginTop: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-              <span color="var(--text-muted)">Estoque Atual:</span>
-              <span style={{ fontWeight: '700' }}>{material.estoque_atual} {material.unidade_compra}</span>
+        <div>
+          <Input 
+            label="Motivo / Referência"
+            placeholder="Ex: Compra NF 123, Consumo projeto X..." 
+            value={motivo} 
+            onChange={e => setMotivo(e.target.value)}
+            required
+          />
+        </div>
+
+        {tipo === 'saida' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground/90 mb-2">Projeto (Opcional)</label>
+              <select 
+                className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+                value={projetoId} 
+                onChange={e => setProjetoId(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.clientName} - {p.ambiente}</option>)}
+              </select>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginTop: '0.5rem', color: novoEstoque < 0 ? '#ef4444' : '#d4af37' }}>
-              <span style={{ fontWeight: '600' }}>Novo Estoque:</span>
-              <span style={{ fontWeight: '800' }}>{novoEstoque.toFixed(4)} {material.unidade_compra}</span>
+            <div>
+              <label className="block text-sm font-medium text-foreground/90 mb-2">Orçamento (Opcional)</label>
+              <select 
+                className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+                value={orcamentoId} 
+                onChange={e => setOrcamentoId(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {orcamentos.map(o => <option key={o.id} value={o.id}>{o.numero}</option>)}
+              </select>
             </div>
           </div>
+        )}
 
-          {error && <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
-
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-            <button type="button" onClick={onClose} className="btn btn-outline" style={{ flex: 1 }}>Cancelar</button>
-            <button 
-              type="submit" 
-              disabled={loading || (tipo === 'saida' && novoEstoque < 0)} 
-              className="btn btn-primary" 
-              style={{ flex: 2 }}
-            >
-              {loading ? 'Processando...' : 'Confirmar'}
-            </button>
+        <div className="p-4 bg-foreground/5 rounded-xl mt-2 flex flex-col gap-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Estoque Atual:</span>
+            <span className="font-semibold">{material.estoque_atual} {material.unidade_compra}</span>
           </div>
-        </form>
-      </div>
-    </div>
+          <div className={`flex justify-between text-base font-bold ${novoEstoque < 0 ? 'text-destructive' : 'text-primary'}`}>
+            <span>Novo Estoque:</span>
+            <span>{novoEstoque.toFixed(4)} {material.unidade_compra}</span>
+          </div>
+        </div>
+
+        {error && <p className="text-destructive text-sm text-center font-semibold">{error}</p>}
+
+        <div className="flex gap-4 mt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button 
+            type="submit" 
+            isLoading={loading}
+            disabled={tipo === 'saida' && novoEstoque < 0} 
+            className="flex-1"
+          >
+            Confirmar
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 
 export default MovimentacaoModal;
+
 

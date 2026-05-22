@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useAppContext } from '../../context/AppContext';
-import { ArrowLeft, Edit2, Trash2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Plus, X, Loader2 } from 'lucide-react';
 import { WhatsAppService } from '../../modules/plano-corte/infrastructure/services/WhatsAppService';
+import { Button, Card, CardContent, Input, Modal, Badge } from '../../design-system/components';
 
 type StatusCol = "AGUARDANDO" | "PRODUCAO" | "MONTAGEM" | "PINTURA" | "INSPECAO" | "PRONTO" | "FINALIZADO";
 
@@ -148,7 +149,7 @@ const ProductionPanel: React.FC = () => {
     }
   };
 
-const deleteOP = useCallback(async (op_id: string) => {
+  const deleteOP = useCallback(async (op_id: string) => {
     if (!confirm('Deseja realmente excluir esta Ordem de Produção? Esta ação não pode ser desfeita.')) return;
     setDeleting(true);
     try {
@@ -220,135 +221,132 @@ const deleteOP = useCallback(async (op_id: string) => {
     const allTasksDone = tasks.length === 0 || completed === tasks.length;
 
     return (
-      <div key={op.id} className="card-hover" style={{ 
-        background: 'rgba(255,255,255,0.03)', 
-        borderRadius: '16px', 
-        padding: '1rem', 
-        border: '1px solid rgba(255,255,255,0.05)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        cursor: 'pointer'
-      }} onClick={() => setEditingOP(op)}>
-        <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>#{op.op_id}</span>
-            <button 
-              onClick={(e) => { e.stopPropagation(); deleteOP(op.op_id); }}
-              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, opacity: 0.6, display: 'flex', alignItems: 'center' }}
-              title="Excluir OP"
-              aria-label={`Excluir ordem de produção ${op.op_id}`}
-            >
-              <Trash2 size={10} />
-            </button>
-          </div>
-          <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: `${col.color}22`, color: col.color, borderRadius: '4px', fontWeight: 'bold' }}>
-            {op.pecas} PEÇAS
-          </span>
-        </div>
-        
-        <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.5rem' }}>{op.produto}</h4>
-        
-        {tasks.length > 0 && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-              <span>TAREFAS</span>
-              <span style={{ fontWeight: 'bold', color: progress === 100 ? '#10b981' : col.color }}>{progress}%</span>
-            </div>
-            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '6px' }}>
-              <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10b981' : col.color, transition: 'width 0.3s ease' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              {tasks.map((task, idx) => {
-                const taskItem = checklist.find(c => c.task === task);
-                const isDone = !!taskItem?.completed;
-                return (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.6rem', padding: '3px 6px', background: isDone ? '#10b98122' : 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
-                    <span style={{ color: isDone ? '#10b981' : 'var(--text-muted)' }}>{isDone ? '✓' : '○'}</span>
-                    <span style={{ color: isDone ? '#10b981' : 'inherit', textDecoration: isDone ? 'line-through' : 'none' }}>{task}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        
-        <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', marginBottom: '4px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>📅 Previsão:</span>
-            <span style={{ fontWeight: 'bold', color: op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() ? '#ef4444' : 'inherit' }}>
-              {op.data_prevista_entrega ? new Date(op.data_prevista_entrega).toLocaleDateString('pt-BR') : '--'}
-            </span>
-          </div>
-          {op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() && (
-            <div style={{ fontSize: '0.55rem', color: '#ef4444', fontWeight: 'bold', textAlign: 'right' }}>⚠️ EM ATRASO</div>
-          )}
-        </div>
-
-        {/* Link para Mapa de Corte se estiver em Produção */}
-        {["PRODUCAO", "MONTAGEM"].includes(op.status) && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleVerMapaCorte(op); }}
-            style={{ 
-              width: '100%', 
-              background: 'rgba(212, 175, 55, 0.1)', 
-              border: '1px dashed #d4af37', 
-              color: '#d4af37', 
-              padding: '6px', 
-              borderRadius: '8px', 
-              fontSize: '0.65rem', 
-              fontWeight: '700',
-              marginTop: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px'
-            }}
-          >
-            <Edit2 size={10} /> VER MAPA DE CORTE
-          </button>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {col.id !== "AGUARDANDO" && (
-              <button onClick={() => updateStatus(op, 'voltar')} className="btn-icon" style={{ padding: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.03)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} aria-label={`Voltar status da OP ${op.op_id}`}>
-                <ArrowLeft size={12} />
+      <Card 
+        key={op.id} 
+        className="cursor-pointer hover:border-primary/40 transition-all shadow-md bg-card/60 flex flex-col gap-3"
+        onClick={() => setEditingOP(op)}
+      >
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground font-bold">#{op.op_id}</span>
+              <button 
+                onClick={(e) => { e.stopPropagation(); deleteOP(op.op_id); }}
+                className="text-destructive opacity-60 hover:opacity-100 transition-opacity p-0.5"
+                title="Excluir OP"
+                aria-label={`Excluir ordem de produção ${op.op_id}`}
+              >
+                <Trash2 size={12} />
               </button>
+            </div>
+            <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-2">
+              {op.pecas} PEÇAS
+            </Badge>
+          </div>
+          
+          <h4 className="text-sm font-bold text-foreground tracking-tight">{op.produto}</h4>
+          
+          {tasks.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <div className="text-[10px] text-muted-foreground flex justify-between font-semibold">
+                <span>TAREFAS</span>
+                <span className="font-bold" style={{ color: progress === 100 ? 'var(--color-success, #10b981)' : col.color }}>{progress}%</span>
+              </div>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full transition-all duration-300" 
+                  style={{ 
+                    width: `${progress}%`, 
+                    backgroundColor: progress === 100 ? 'var(--color-success, #10b981)' : col.color 
+                  }} 
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                {tasks.map((task, idx) => {
+                  const taskItem = checklist.find(c => c.task === task);
+                  const isDone = !!taskItem?.completed;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`flex items-center gap-2 text-[10px] px-2 py-1 rounded-lg ${isDone ? 'bg-success/10 text-success' : 'bg-muted/30 text-muted-foreground'}`}
+                    >
+                      <span className="font-bold">{isDone ? '✓' : '○'}</span>
+                      <span className={isDone ? 'line-through' : ''}>{task}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          <div className="p-2 bg-muted/20 border border-border/30 rounded-xl flex flex-col gap-1">
+            <div className="flex justify-between text-[10px]">
+              <span className="text-muted-foreground">📅 Previsão:</span>
+              <span className={`font-bold ${op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
+                {op.data_prevista_entrega ? new Date(op.data_prevista_entrega).toLocaleDateString('pt-BR') : '--'}
+              </span>
+            </div>
+            {op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() && (
+              <div className="text-[9px] text-destructive font-extrabold text-right">⚠️ EM ATRASO</div>
             )}
           </div>
-          {col.id !== "FINALIZADO" && (() => {
-            const canAdvance = allTasksDone;
-            return (
-              <button
-                onClick={() => canAdvance ? updateStatus(op, 'avancar') : toastError('Checklist ou peças pendentes', 'Conclua todas as tarefas antes de avançar.')}
-                disabled={!canAdvance}
-                title={!canAdvance ? 'Checklist ou peças pendentes' : 'Avançar OP'}
-                style={{
-                  background: canAdvance ? 'linear-gradient(135deg, #d4af37, #b49050)' : 'rgba(255,255,255,0.05)',
-                  color: canAdvance ? '#1a1a2e' : 'var(--text-muted)',
-                  border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800',
-                  cursor: canAdvance ? 'pointer' : 'not-allowed', opacity: canAdvance ? 1 : 0.6
-                }}
-              >
-                AVANÇAR →
-              </button>
-            );
-          })()}
-        </div>
-      </div>
+
+          {["PRODUCAO", "MONTAGEM"].includes(op.status) && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); handleVerMapaCorte(op); }}
+              className="w-full text-xs font-bold gap-2 text-primary hover:text-primary-foreground border-primary/20 hover:border-primary"
+            >
+              <Edit2 size={12} /> VER MAPA DE CORTE
+            </Button>
+          )}
+
+          <div className="flex justify-between items-center mt-2" onClick={e => e.stopPropagation()}>
+            <div>
+              {col.id !== "AGUARDANDO" && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => updateStatus(op, 'voltar')} 
+                  className="p-1 h-7 w-7 text-muted-foreground"
+                  aria-label={`Voltar status da OP ${op.op_id}`}
+                >
+                  <ArrowLeft size={12} />
+                </Button>
+              )}
+            </div>
+            {col.id !== "FINALIZADO" && (() => {
+              const canAdvance = allTasksDone;
+              return (
+                <Button
+                  size="sm"
+                  onClick={() => canAdvance ? updateStatus(op, 'avancar') : toastError('Checklist ou peças pendentes', 'Conclua todas as tarefas antes de avançar.')}
+                  disabled={!canAdvance}
+                  title={!canAdvance ? 'Checklist ou peças pendentes' : 'Avançar OP'}
+                  className={`text-[10px] font-extrabold px-3 py-1 h-7 ${canAdvance ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  AVANÇAR →
+                </Button>
+              );
+            })()}
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
-  if (loading && ops.length === 0) return <div style={{ padding: '2rem', color: 'var(--text-muted)' }}>Sincronizando com chão de fábrica...</div>;
+  if (loading && ops.length === 0) {
+    return (
+      <div className="py-20 flex flex-col justify-center items-center gap-3 text-muted-foreground">
+        <Loader2 className="animate-spin text-primary" size={32} />
+        <span className="text-sm font-semibold tracking-wider">Sincronizando com chão de fábrica...</span>
+      </div>
+    );
+  }
 
-  // Layout em linha (scroll horizontal)
   return (
-    <div style={{ 
-      display: 'flex', 
-      gap: '1rem',
-      overflowX: 'auto',
-      paddingBottom: '4rem',
-      padding: '0 0 1rem 0'
-    }}>
+    <div className="flex gap-4 overflow-x-auto pb-10 pt-2 custom-scrollbar">
       {colunas.map(col => {
         const colOps = ops.filter(o => {
           const s = (o.status || '').toUpperCase();
@@ -361,112 +359,129 @@ const deleteOP = useCallback(async (op_id: string) => {
           : [];
 
         return (
-        <div key={col.id} className="glass" style={{ borderRadius: '20px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', minWidth: '320px', maxWidth: '320px', minHeight: '75vh', flexShrink: 0 }}>
-          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '0.8rem', fontWeight: '800', color: col.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{col.label}</h2>
-            <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-              {colOps.length + colProjects.length}
-            </span>
-          </header>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {colProjects.map(project => (
-              <div key={project.id} className="card-hover" style={{ 
-                background: 'rgba(255,255,255,0.03)', 
-                borderRadius: '16px', 
-                padding: '1rem', 
-                border: '1px solid rgba(255,255,255,0.05)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>{project.tag || `#${project.id?.substring(0,8)}`}</span>
-                  <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: '#10b98122', color: '#10b981', borderRadius: '4px', fontWeight: 'bold' }}>
-                    {project.status === 'aprovado' ? 'APROVADO' : 'EM PROD'}
-                  </span>
-                </div>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '0.5rem' }}>{project.ambiente}</h4>
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>{project.clientName}</p>
-                <button onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!confirm('Gerar Ordem de Produção para este projeto?')) return;
-                  try {
-                    const opId = `OP-${project.id?.substring(0,8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-                    const res = await fetch('/api/production', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        op_id: opId,
-                        produto: project.ambiente || 'Produto',
-                        pecas: 1,
-                        projeto_id: project.id,
-                        visita_id: project.visitaId || null,
-                        orcamento_id: project.orcamentoId || null
-                      })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
-                    await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte', ordem_producao_id: opId });
-                    fetchOPs();
-                    toastSuccess(`OP ${opId} criada!`);
-                  } catch(e: any) {
-                    toastError('Erro', e.message);
-                  }
-                }}
-                  style={{ width: '100%', background: '#d4af37', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>
-                  🔨 Gerar OP
-                </button>
-              </div>
-            ))}
-            {colOps.map(op => renderCard(op, col))}
+          <div 
+            key={col.id} 
+            className="flex-shrink-0 w-[320px] min-h-[75vh] flex flex-col gap-4 bg-card/40 border border-border rounded-2xl p-4 shadow-sm"
+          >
+            <header className="flex justify-between items-center border-b border-border/50 pb-3">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest" style={{ color: col.color }}>{col.label}</h2>
+              <Badge variant="secondary" className="font-extrabold text-[11px]">
+                {colOps.length + colProjects.length}
+              </Badge>
+            </header>
+            <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh] pr-1 custom-scrollbar">
+              {colProjects.map(project => (
+                <Card key={project.id} className="border border-border bg-card/60">
+                  <CardContent className="p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-muted-foreground font-bold">
+                        {project.tag || `#${project.id?.substring(0,8)}`}
+                      </span>
+                      <Badge variant="outline" className="text-[9px] font-bold text-success border-success/20 bg-success/5">
+                        {project.status === 'aprovado' ? 'APROVADO' : 'EM PROD'}
+                      </Badge>
+                    </div>
+                    <h4 className="text-sm font-bold text-foreground">{project.ambiente}</h4>
+                    <p className="text-[11px] text-muted-foreground">{project.clientName}</p>
+                    <Button 
+                      size="sm"
+                      className="w-full text-xs font-bold"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm('Gerar Ordem de Produção para este projeto?')) return;
+                        try {
+                          const opId = `OP-${project.id?.substring(0,8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+                          const res = await fetch('/api/production', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              op_id: opId,
+                              produto: project.ambiente || 'Produto',
+                              pecas: 1,
+                              projeto_id: project.id,
+                              visita_id: project.visitaId || null,
+                              orcamento_id: project.orcamentoId || null
+                            })
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
+                          await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte', ordem_producao_id: opId });
+                          fetchOPs();
+                          toastSuccess(`OP ${opId} criada!`);
+                        } catch(e: any) {
+                          toastError('Erro', e.message);
+                        }
+                      }}
+                    >
+                      🔨 Gerar OP
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              {colOps.map(op => renderCard(op, col))}
+            </div>
           </div>
-        </div>
-      )})}
+        );
+      })}
 
       {/* Modal de Edição Industrial */}
       {editingOP && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }} onClick={() => setEditingOP(null)}>
-          <div className="glass" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '720px', borderRadius: '20px', padding: '1.25rem', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#d4af37' }}>DETALHES DA ORDEM #{editingOP.op_id}</h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => deleteOP(editingOP.op_id)} disabled={deleting} style={{ background: '#ef4444', border: 'none', color: '#fff', padding: '8px 10px', borderRadius: '10px', cursor: 'pointer' }} aria-label={`Excluir OP ${editingOP.op_id}`}>
-                  <Trash2 size={14} />&nbsp;EXCLUIR
-                </button>
-                <button onClick={() => setEditingOP(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text)', padding: '8px', borderRadius: '8px', cursor: 'pointer' }} aria-label="Fechar edição">
-                  <X size={18} />
-                </button>
-              </div>
+        <Modal 
+          isOpen={!!editingOP} 
+          onClose={() => setEditingOP(null)} 
+          title={`DETALHES DA ORDEM #${editingOP.op_id}`}
+          size="xl"
+        >
+          <div className="flex flex-col gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex justify-between items-center pb-2 border-b border-border/50">
+              <span className="text-xs text-muted-foreground">Configure as tarefas e confira as peças.</span>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => deleteOP(editingOP.op_id)} 
+                disabled={deleting}
+                className="font-bold flex items-center gap-1.5"
+              >
+                <Trash2 size={14} /> EXCLUIR ORDEM
+              </Button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block', marginBottom: '0.5rem' }}>PRODUTO / AMBIENTE</label>
-                  <input 
-                    value={editingOP.produto} 
-                    onChange={e => setEditingOP({...editingOP, produto: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.75rem', borderRadius: '10px', fontSize: '0.95rem' }}
-                  />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-6">
+              <div className="flex flex-col gap-5">
+                <Input 
+                  label="PRODUTO / AMBIENTE"
+                  value={editingOP.produto} 
+                  onChange={e => setEditingOP({...editingOP, produto: e.target.value})}
+                />
 
-                <div>
-                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block', marginBottom: '0.5rem' }}>CHECKLIST DE QUALIDADE (MANDATÓRIO)</label>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <div />
-                    <button onClick={() => setEditingOP({...editingOP, checklist: [...(editingOP.checklist || []), { id: Math.random().toString(36).substr(2, 9), task: '', completed: false }]})} 
-                      style={{ background: '#d4af37', border: 'none', color: '#1a1a2e', fontSize: '0.7rem', fontWeight: '900', cursor: 'pointer', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Plus size={12} /> TAREFA
-                    </button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">CHECKLIST DE QUALIDADE (MANDATÓRIO)</label>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setEditingOP({
+                        ...editingOP, 
+                        checklist: [...(editingOP.checklist || []), { id: crypto.randomUUID(), task: '', completed: false }]
+                      })} 
+                      className="text-xs font-bold h-8 flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Tarefa
+                    </Button>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '160px', overflowY: 'auto', paddingRight: '8px', marginBottom: '0.5rem' }}>
+                  <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                     {(editingOP.checklist || []).length === 0 && (
-                      <div style={{ textAlign: 'center', padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.75rem', border: '1px dashed var(--border)', borderRadius: '10px' }}>Nenhuma tarefa de conferência definida.</div>
+                      <div className="text-center py-6 text-xs text-muted-foreground border border-dashed border-border rounded-xl">
+                        Nenhuma tarefa de conferência definida.
+                      </div>
                     )}
                     {(editingOP.checklist || []).map((item, idx) => (
-                      <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '10px' }}>
+                      <div key={item.id} className="flex items-center gap-3 bg-muted/20 border border-border/30 p-2.5 rounded-xl">
                         <input 
                           type="checkbox" 
                           checked={item.completed} 
+                          className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                           onChange={e => {
                             const newCheck = [...(editingOP.checklist || [])];
                             newCheck[idx].completed = e.target.checked;
@@ -481,82 +496,94 @@ const deleteOP = useCallback(async (op_id: string) => {
                             setEditingOP({...editingOP, checklist: newCheck});
                           }}
                           placeholder="Descrição da tarefa"
-                          style={{ flex: 1, background: 'none', border: 'none', color: item.completed ? 'var(--text-muted)' : 'var(--text)', fontSize: '0.85rem' }}
+                          className={`flex-1 bg-transparent border-none focus:outline-none focus:ring-0 p-0 text-sm ${item.completed ? 'text-muted-foreground line-through' : 'text-foreground font-medium'}`}
                         />
-                        <button onClick={() => {
-                          const newCheck = (editingOP.checklist || []).filter((_, i) => i !== idx);
-                          setEditingOP({...editingOP, checklist: newCheck});
-                        }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} aria-label="Remover item do checklist">
+                        <button 
+                          onClick={() => {
+                            const newCheck = (editingOP.checklist || []).filter((_, i) => i !== idx);
+                            setEditingOP({...editingOP, checklist: newCheck});
+                          }} 
+                          className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
+                          aria-label="Remover item do checklist"
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
                   </div>
+                </div>
 
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block', marginBottom: '0.75rem' }}>📦 ENGENHARIA E MATERIAIS</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
-                      <div>
-                        <h5 style={{ fontSize: '0.75rem', color: '#d4af37', marginBottom: '0.5rem', fontWeight: '700' }}>MATERIAIS</h5>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '220px', overflowY: 'auto', paddingRight: '8px' }}>
-                          {(editingOP as any).metadata?.materiais?.map((m: any, i: number) => (
-                            <div key={i} style={{ fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', padding: '6px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                              <span>{m.descricao}</span>
-                              <span style={{ fontWeight: '800' }}>{m.quantidade}{m.unidade || ''}</span>
-                            </div>
-                          )) || <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sem dados de materiais</div>}
-                        </div>
+                <div className="border-t border-border/50 pt-4 flex flex-col gap-3">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">📦 ENGENHARIA E MATERIAIS</label>
+                  <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                    {(editingOP as any).metadata?.materiais?.map((m: any, i: number) => (
+                      <div key={i} className="text-xs flex justify-between p-3 bg-muted/20 border border-border/20 rounded-xl">
+                        <span className="font-medium text-foreground">{m.descricao}</span>
+                        <Badge variant="secondary" className="font-extrabold text-[10px]">
+                          {m.quantidade}{m.unidade || ''}
+                        </Badge>
                       </div>
-                    </div>
+                    )) || (
+                      <div className="text-xs text-muted-foreground py-4 text-center">Sem dados de materiais</div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <aside style={{ borderLeft: '1px solid var(--border)', paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <h5 style={{ fontSize: '0.75rem', color: '#d4af37', marginBottom: '0.25rem', fontWeight: '700' }}>LISTA DE CORTE</h5>
-                <div style={{ maxHeight: '420px', overflowY: 'auto', paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {((editingOP as any).metadata?.pecas || []).length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Sem lista de peças</div>}
+              <div className="border-t md:border-t-0 md:border-l border-border/50 md:pl-6 flex flex-col gap-3">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">📏 LISTA DE CORTE / PEÇAS</label>
+                <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2">
+                  {((editingOP as any).metadata?.pecas || []).length === 0 && (
+                    <div className="text-xs text-muted-foreground py-4 text-center">Sem lista de peças</div>
+                  )}
                   {((editingOP as any).metadata?.pecas || []).map((p: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <input type="checkbox" checked={!!p.operator_checked} onChange={async (e) => {
+                    <div key={i} className="flex justify-between items-center p-3 rounded-xl border border-border/30 bg-muted/10 hover:bg-muted/20 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="checkbox" 
+                          checked={!!p.operator_checked} 
+                          className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                          onChange={async (e) => {
                             const checked = e.target.checked;
                             const newMeta = { ...(editingOP as any).metadata };
                             const newPecas = Array.isArray(newMeta.pecas) ? [...newMeta.pecas] : [];
                             newPecas[i] = { ...newPecas[i], operator_checked: checked };
                             newMeta.pecas = newPecas;
 
-                            // Update local editing state immediately for responsiveness
                             const nextEditing = { ...editingOP, metadata: newMeta } as any;
                             setEditingOP(nextEditing);
 
-                            // Persist change to backend (non-blocking UI)
                             try {
                               const saved = await api.production.updateDetails({ op_id: nextEditing.op_id, metadata: nextEditing.metadata });
-                              // Update list of OPs in the panel so AVANÇAR sees up-to-date data
                               setOps(prev => prev.map(o => o.op_id === saved.op_id ? saved : o));
-                              // Keep editing modal open but refresh editingOP with saved data
                               setEditingOP(saved as any);
                             } catch (err: any) {
                               console.error('Erro salvando metadata da OP:', err);
                               toastError('Erro ao salvar conferência da peça', err.message || err);
                             }
-                          }} />
-                        <div style={{ fontSize: '0.9rem' }}>{p.nome}</div>
+                          }} 
+                        />
+                        <span className="text-sm font-semibold text-foreground">{p.nome}</span>
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{p.largura}x{p.altura}</div>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {p.largura}x{p.altura}
+                      </Badge>
                     </div>
                   ))}
                 </div>
-              </aside>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
-              <button onClick={() => setEditingOP(null)} style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: '700', cursor: 'pointer' }}>CANCELAR</button>
-              <button onClick={() => saveOPDetails(editingOP)} style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e', border: 'none', fontWeight: '800', cursor: 'pointer' }}>SALVAR OP</button>
+            <div className="flex justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+              <Button variant="secondary" onClick={() => setEditingOP(null)} className="font-bold">
+                CANCELAR
+              </Button>
+              <Button onClick={() => saveOPDetails(editingOP)} className="font-bold px-6">
+                SALVAR OP
+              </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

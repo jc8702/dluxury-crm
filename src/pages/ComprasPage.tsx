@@ -3,13 +3,14 @@ import SearchableSelect from '../components/ui/SearchableSelect';
 import { 
   Plus, ShoppingCart, 
   Trash2, Eye, AlertCircle, 
-  History, ArrowRight
+  History
 } from 'lucide-react';
 import { api } from '../lib/api';
 
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { CardSkeleton } from '../design-system/components/Skeleton';
+import { Button, Card, CardContent, Input, Modal, Badge } from '../design-system/components';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
@@ -42,50 +43,46 @@ const ComprasPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'rascunho': return '#6B7280';
-      case 'enviado': return '#3B82F6';
-      case 'confirmado': return '#8B5CF6';
-      case 'parcialmente_recebido': return '#F59E0B';
-      case 'recebido': return '#10B981';
-      case 'cancelado': return '#EF4444';
-      default: return 'var(--text-muted)';
+      case 'rascunho': return 'secondary';
+      case 'enviado': return 'info';
+      case 'confirmado': return 'success';
+      case 'parcialmente_recebido': return 'warning';
+      case 'recebido': return 'success';
+      case 'cancelado': return 'danger';
+      default: return 'secondary';
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    return status.replace('_', ' ').toUpperCase();
+  };
+
   return (
-    <div className="animate-fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="animate-fade-in space-y-6">
+      <header className="flex justify-between items-center pb-4 border-b border-border">
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, color: 'var(--primary)' }}>Gestão de Compras</h1>
-          <p style={{ color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>Fluxos de suprimentos, histórico de preços e reposição de estoque.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Gestão de Compras</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Fluxos de suprimentos, histórico de preços e reposição de estoque.</p>
         </div>
-        <button 
-          className="btn-primary"
+        <Button 
+          variant="primary"
           onClick={() => { setSelectedPedido(null); setShowPedidoModal(true); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          className="flex items-center gap-2"
         >
           <Plus size={20} /> Novo Pedido
-        </button>
+        </Button>
       </header>
 
       {/* Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '1rem', 
-        marginBottom: '2rem',
-        background: 'rgba(255,255,255,0.03)',
-        padding: '0.5rem',
-        borderRadius: 'var(--radius-lg)',
-        width: 'fit-content'
-      }}>
+      <div className="flex gap-2 p-1 bg-muted/30 border border-border rounded-xl w-fit">
         <TabButton active={activeTab === 'ativos'} onClick={() => setActiveTab('ativos')} icon={<ShoppingCart size={18} />}>Pedidos Ativos</TabButton>
         <TabButton active={activeTab === 'sugestoes'} onClick={() => setActiveTab('sugestoes')} icon={<AlertCircle size={18} />}>Sugestões de Reposição</TabButton>
         <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} icon={<History size={18} />}>Histórico</TabButton>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+      <div className="grid grid-cols-1 gap-6">
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="flex flex-col gap-4">
             <CardSkeleton />
             <CardSkeleton />
             <CardSkeleton />
@@ -97,6 +94,7 @@ const ComprasPage: React.FC = () => {
             pedidos={pedidos.filter(p => activeTab === 'ativos' ? p.status !== 'recebido' && p.status !== 'cancelado' : p.status === 'recebido' || p.status === 'cancelado')} 
             onView={(p) => { setSelectedPedido(p); setShowPedidoModal(true); }}
             getStatusColor={getStatusColor}
+            getStatusLabel={getStatusLabel}
           />
         )}
       </div>
@@ -113,127 +111,122 @@ const ComprasPage: React.FC = () => {
 };
 
 const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }> = ({ active, onClick, icon, children }) => (
-  <button
+  <Button
+    variant={active ? "primary" : "ghost"}
     onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.6rem',
-      padding: '0.6rem 1.2rem',
-      borderRadius: 'var(--radius-md)',
-      background: active ? 'var(--primary)' : 'transparent',
-      color: active ? 'var(--sidebar-bg)' : 'var(--text-muted)',
-      border: 'none',
-      cursor: 'pointer',
-      fontWeight: '600',
-      transition: 'all 0.2s',
-      fontSize: '0.85rem'
-    }}
+    className={`flex items-center gap-2 px-4 py-2 font-semibold text-sm ${active ? '' : 'text-muted-foreground'}`}
   >
     {icon} {children}
-  </button>
+  </Button>
 );
 
 const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ sugestoes, onAction: _onAction }) => (
-  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <tr>
-          <th style={{ textAlign: 'left', padding: '1rem' }}>Material / SKU</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Estoque Atual</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Mínimo</th>
-          <th style={{ textAlign: 'right', padding: '1rem' }}>Preço Últ. Compra</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sugestoes.length === 0 ? (
-          <tr>
-            <td colSpan={5} style={{ padding: 0 }}>
-              <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
-                Estoque saudável. Nenhuma sugestão de compra pendente.
-              </div>
-            </td>
+  <Card>
+    <CardContent className="p-0 overflow-x-auto custom-scrollbar">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted/20">
+            <th className="text-left p-4 font-semibold text-muted-foreground">Material / SKU</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Estoque Atual</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Mínimo</th>
+            <th className="text-right p-4 font-semibold text-muted-foreground">Preço Últ. Compra</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Ações</th>
           </tr>
-        ) : (
-          sugestoes.map(s => (
-            <tr key={s.material_id} style={{ borderTop: '1px solid var(--border)' }}>
-              <td style={{ padding: '1rem' }}>
-                <div style={{ fontWeight: '600' }}>{s.descricao}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {s.sku}</div>
-              </td>
-              <td style={{ padding: '1rem', textAlign: 'center' }}>
-                <span style={{ color: s.estoque_atual <= 0 ? 'var(--error)' : 'var(--warning)', fontWeight: '700' }}>
-                  {s.estoque_atual} {s.unidade}
-                </span>
-              </td>
-              <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>{s.estoque_minimo} {s.unidade}</td>
-              <td style={{ padding: '1rem', textAlign: 'right' }}>
-                R$ {s.preco_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </td>
-              <td style={{ padding: '1rem', textAlign: 'center' }}>
-                <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
-                  Comprar agora
-                </button>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {sugestoes.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="p-0">
+                <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
+                  <AlertCircle className="w-8 h-8 mb-2 text-muted-foreground/60" />
+                  <span>Estoque saudável. Nenhuma sugestão de compra pendente.</span>
+                </div>
               </td>
             </tr>
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
+          ) : (
+            sugestoes.map(s => (
+              <tr key={s.material_id} className="hover:bg-muted/10 transition-colors">
+                <td className="p-4">
+                  <div className="font-semibold text-foreground">{s.descricao}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">SKU: {s.sku}</div>
+                </td>
+                <td className="p-4 text-center">
+                  <span className={`font-bold ${s.estoque_atual <= 0 ? 'text-destructive' : 'text-warning'}`}>
+                    {s.estoque_atual} {s.unidade}
+                  </span>
+                </td>
+                <td className="p-4 text-center text-muted-foreground">{s.estoque_minimo} {s.unidade}</td>
+                <td className="p-4 text-right font-medium text-foreground">
+                  R$ {s.preco_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </td>
+                <td className="p-4 text-center">
+                  <Button variant="secondary" className="px-3 py-1.5 text-xs">
+                    Comprar agora
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </CardContent>
+  </Card>
 );
 
-const PedidosTable: React.FC<{ pedidos: any[]; onView: (p: any) => void; getStatusColor: (s: string) => string }> = ({ pedidos, onView, getStatusColor }) => (
-  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <tr>
-          <th style={{ textAlign: 'left', padding: '1rem' }}>Nº Pedido</th>
-          <th style={{ textAlign: 'left', padding: '1rem' }}>Fornecedor</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Data</th>
-          <th style={{ textAlign: 'right', padding: '1rem' }}>Total</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Status</th>
-          <th style={{ textAlign: 'center', padding: '1rem' }}>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {pedidos.map(p => (
-          <tr key={p.id} style={{ borderTop: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row">
-            <td style={{ padding: '1rem', fontWeight: '700', color: 'var(--primary)' }}>{p.numero}</td>
-            <td style={{ padding: '1rem' }}>{p.fornecedor_nome || 'Não definido'}</td>
-            <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              {new Date(p.data_pedido || p.criado_em).toLocaleDateString('pt-BR')}
-            </td>
-            <td style={{ padding: '1rem', textAlign: 'right', fontWeight: '600' }}>
-              R$ {Number(p.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </td>
-            <td style={{ padding: '1rem', textAlign: 'center' }}>
-              <span style={{ 
-                padding: '0.3rem 0.7rem', 
-                borderRadius: '12px', 
-                fontSize: '0.7rem', 
-                fontWeight: '700',
-                background: `${getStatusColor(p.status)}20`,
-                color: getStatusColor(p.status),
-                textTransform: 'uppercase'
-              }}>
-                {p.status.replace('_', ' ')}
-              </span>
-            </td>
-            <td style={{ padding: '1rem', textAlign: 'center' }}>
-              <button 
-                onClick={() => onView(p)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.4rem' }}
-              >
-                <Eye size={18} />
-              </button>
-            </td>
+const PedidosTable: React.FC<{ pedidos: any[]; onView: (p: any) => void; getStatusColor: (s: string) => any; getStatusLabel: (s: string) => string }> = ({ pedidos, onView, getStatusColor, getStatusLabel }) => (
+  <Card>
+    <CardContent className="p-0 overflow-x-auto custom-scrollbar">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted/20">
+            <th className="text-left p-4 font-semibold text-muted-foreground">Nº Pedido</th>
+            <th className="text-left p-4 font-semibold text-muted-foreground">Fornecedor</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Data</th>
+            <th className="text-right p-4 font-semibold text-muted-foreground">Total</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Status</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">Ações</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {pedidos.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                Nenhum pedido de compra encontrado nesta categoria.
+              </td>
+            </tr>
+          ) : (
+            pedidos.map(p => (
+              <tr key={p.id} className="hover:bg-muted/10 transition-colors">
+                <td className="p-4 font-bold text-primary">{p.numero}</td>
+                <td className="p-4 text-foreground">{p.fornecedor_nome || 'Não definido'}</td>
+                <td className="p-4 text-center text-muted-foreground">
+                  {new Date(p.data_pedido || p.criado_em).toLocaleDateString('pt-BR')}
+                </td>
+                <td className="p-4 text-right font-semibold text-foreground">
+                  R$ {Number(p.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </td>
+                <td className="p-4 text-center">
+                  <Badge variant={getStatusColor(p.status)}>
+                    {getStatusLabel(p.status)}
+                  </Badge>
+                </td>
+                <td className="p-4 text-center">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onView(p)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Eye size={18} className="text-muted-foreground hover:text-foreground" />
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </CardContent>
+  </Card>
 );
 
 const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => void }> = ({ pedido, onClose, onSave }) => {
@@ -263,13 +256,6 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
         api.compras.getPedido(pedido.id).then(res => setFormData(res));
     }
   }, [pedido]);
-
-  // Close modal on ESC
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const addItem = () => {
     const mat = materiais.find(m => m.id === newItem.material_id);
@@ -333,37 +319,31 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   }, [pedido, onSave, confirmAction, toastError, success]);
 
   return (
-    <div className="modal-overlay" onClick={onClose} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
-      <div className="modal-content" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <ShoppingCart className="text-primary" /> 
-            {pedido ? `Pedido ${pedido.numero}` : 'Novo Pedido de Compra'}
-          </h2>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={handleDeletePedido} className="btn btn-danger">Excluir</button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-              <ArrowRight size={24} />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="form-group">
-            <label>Fornecedor</label>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={pedido ? `Visualizar / Editar Pedido: ${pedido.numero}` : 'Novo Pedido de Compra'}
+      size="xl"
+    >
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-foreground">Fornecedor</label>
             <select 
               value={formData.fornecedor_id} 
               onChange={e => setFormData({ ...formData, fornecedor_id: e.target.value })}
+              className="w-full bg-background border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground"
             >
               <option value="">Selecione um fornecedor</option>
               {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label>Status</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-foreground">Status</label>
             <select 
               value={formData.status} 
               onChange={e => setFormData({ ...formData, status: e.target.value })}
+              className="w-full bg-background border border-border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground"
             >
               <option value="rascunho">Rascunho</option>
               <option value="enviado">Enviado</option>
@@ -374,13 +354,13 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
         </div>
 
         {/* Itens do Pedido */}
-        <div style={{ marginTop: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-             <h3 style={{ fontSize: '1rem', margin: 0 }}>Itens do Pedido</h3>
-             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                   <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Material</label>
-                   <div style={{ width: 300 }}>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-border">
+             <h3 className="text-lg font-bold text-foreground">Itens do Pedido</h3>
+             <div className="flex flex-wrap items-end gap-3">
+                 <div className="flex flex-col gap-1.5">
+                   <label className="text-xs font-semibold text-muted-foreground">Material</label>
+                   <div className="w-[280px]">
                      <SearchableSelect
                        items={materiais.map(m => ({ id: m.id, label: m.nome, sku: m.sku, _meta: m.fornecedor_principal }))}
                        value={newItem.material_id}
@@ -392,94 +372,112 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                      />
                    </div>
                  </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Qtd</label>
-                  <input 
+                <div className="flex flex-col gap-1.5 w-16">
+                  <label className="text-xs font-semibold text-muted-foreground">Qtd</label>
+                  <Input 
                     type="number" 
-                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '60px' }}
                     value={newItem.quantidade}
                     onChange={e => setNewItem({ ...newItem, quantidade: Number(e.target.value) })}
+                    className="p-2.5 text-sm"
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>V. Unit.</label>
-                  <input 
+                <div className="flex flex-col gap-1.5 w-24">
+                  <label className="text-xs font-semibold text-muted-foreground">V. Unit.</label>
+                  <Input 
                     type="number" 
-                    style={{ padding: '0.3rem', fontSize: '0.8rem', width: '90px' }}
                     value={newItem.preco}
                     onChange={e => setNewItem({ ...newItem, preco: Number(e.target.value) })}
+                    className="p-2.5 text-sm"
                   />
                 </div>
-                <button 
-                  className="btn-primary" 
-                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
+                <Button 
+                  variant="primary"
                   onClick={addItem}
                   disabled={!newItem.material_id}
+                  className="flex items-center gap-1 py-2.5"
                 >
                   <Plus size={16} /> Add
-                </button>
+                </Button>
              </div>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
-             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  <tr>
-                    <th style={{ textAlign: 'left', padding: '0.75rem' }}>SKU / Material</th>
-                    <th style={{ textAlign: 'center', padding: '0.75rem' }}>Qtd</th>
-                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Unitário</th>
-                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Subtotal</th>
-                    <th style={{ textAlign: 'center', padding: '0.75rem' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.itens?.length === 0 ? (
-                    <tr><td colSpan={5} style={{ padding: 0 }}><div className="empty-state" style={{ border: 'none', borderRadius: 0, padding: '2rem' }}>Adicione itens ao pedido</div></td></tr>
-                  ) : (
-                    formData.itens?.map((itm: any, idx: number) => (
-                      <tr key={idx} style={{ borderTop: '1px solid var(--border)' }}>
-                        <td style={{ padding: '0.75rem' }}>
-                            <div style={{ fontWeight: '600' }}>{itm.descricao}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{itm.sku}</div>
-                        </td>
-                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>{itm.quantidade_pedida} {itm.unidade}</td>
-                        <td style={{ padding: '0.75rem', textAlign: 'right' }}>R$ {Number(itm.preco_unitario).toFixed(2)}</td>
-                        <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '700' }}>R$ {Number(itm.subtotal).toFixed(2)}</td>
-                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                            <button 
-                                onClick={() => removeItem(idx)}
-                                style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', opacity: 0.7 }}
-                            >
-                                <Trash2 size={16} />
-                            </button>
+          <Card>
+            <CardContent className="p-0 overflow-x-auto custom-scrollbar">
+               <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/20">
+                      <th className="text-left p-3 font-semibold text-muted-foreground">SKU / Material</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground">Qtd</th>
+                      <th className="text-right p-3 font-semibold text-muted-foreground">Unitário</th>
+                      <th className="text-right p-3 font-semibold text-muted-foreground">Subtotal</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {formData.itens?.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Adicione itens ao pedido
                         </td>
                       </tr>
-                    ))
+                    ) : (
+                      formData.itens?.map((itm: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-muted/10 transition-colors">
+                          <td className="p-3">
+                              <div className="font-semibold text-foreground">{itm.descricao}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{itm.sku}</div>
+                          </td>
+                          <td className="p-3 text-center text-foreground">{itm.quantidade_pedida} {itm.unidade}</td>
+                          <td className="p-3 text-right font-medium text-foreground">R$ {Number(itm.preco_unitario).toFixed(2)}</td>
+                          <td className="p-3 text-right font-bold text-foreground">R$ {Number(itm.subtotal).toFixed(2)}</td>
+                          <td className="p-3 text-center">
+                              <Button 
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeItem(idx)}
+                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                              >
+                                  <Trash2 size={16} />
+                              </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  {formData.itens?.length > 0 && (
+                    <tfoot className="bg-muted/20 border-t border-border font-semibold">
+                      <tr>
+                          <td colSpan={3} className="text-right p-4 text-muted-foreground">TOTAL DO PEDIDO:</td>
+                          <td className="text-right p-4 font-bold text-primary text-base">
+                              R$ {Number(formData.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td></td>
+                      </tr>
+                    </tfoot>
                   )}
-                </tbody>
-                {formData.itens?.length > 0 && (
-                  <tfoot style={{ background: 'rgba(255,b255,b255,0.01)', borderTop: '2px solid var(--border)' }}>
-                    <tr>
-                        <td colSpan={3} style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '600' }}>TOTAL DO PEDIDO:</td>
-                        <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '800', color: 'var(--primary)', fontSize: '1rem' }}>
-                            R$ {Number(formData.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td></td>
-                    </tr>
-                  </tfoot>
-                )}
-             </table>
-          </div>
+               </table>
+            </CardContent>
+          </Card>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-          <button className="btn-secondary" onClick={onClose}>Cancelar</button>
-          <button className="btn-primary" onClick={handleSave}>Salvar Pedido</button>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border">
+          <div>
+            {pedido?.id && (
+              <Button variant="danger" onClick={handleDeletePedido}>
+                Excluir Pedido
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto justify-end">
+            <Button variant="secondary" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
+            <Button variant="primary" onClick={handleSave} className="w-full sm:w-auto">Salvar Pedido</Button>
+          </div>
         </div>
         {ConfirmDialogElement}
       </div>
-    </div>
+    </Modal>
   );
 };
 
 export default ComprasPage;
+

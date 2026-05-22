@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Modal } from '../design-system/components/Modal';
+import { Button, Modal, Card, CardContent, Badge, Input } from '../design-system/components';
 import { Plus, Edit2, Trash2, ChevronDown, ChevronRight, Layers, Activity } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -95,7 +95,7 @@ function TreeNode({
           aria-label={expanded ? `Recolher ${node.nome}` : `Expandir ${node.nome}`}
           aria-expanded={expanded}
         >
-          {hasChildren ? (expanded ? <ChevronDown /> : <ChevronRight />) : <span style={{ width: '14px' }} />}
+          {hasChildren ? (expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />) : <span style={{ width: '14px' }} />}
         </button>
 
         {/* Código */}
@@ -106,38 +106,40 @@ function TreeNode({
 
         {/* Badges */}
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ 
-            fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '999px',
-            background: (node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            color: (node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'var(--success)' : 'var(--danger)'
-          }}>{(node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'RECEITA' : 'DESPESA'}</span>
+          <Badge variant={(node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'success' : 'destructive'}>
+            {(node.tipo === 'receita' || node.natureza === 'credora' || node.codigo?.startsWith('1')) ? 'RECEITA' : 'DESPESA'}
+          </Badge>
           
           {!node.ativa && (
-            <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '999px', background: 'rgba(156,163,175,0.2)', color: 'var(--text-muted)', fontWeight: 700 }}>INATIVA</span>
+            <Badge variant="secondary">INATIVA</Badge>
           )}
           
           {usage > 0 && (
-            <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '999px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Activity style={{ fontSize: '0.6rem' }} /> {usage} título{usage !== 1 ? 's' : ''}
-            </span>
+            <Badge variant="outline" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Activity size={12} /> {usage} título{usage !== 1 ? 's' : ''}
+            </Badge>
           )}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '0.25rem', opacity: 0.7 }}>
-            <button 
+            <Button 
+              variant="ghost"
+              size="sm"
               onClick={() => onEdit(node)} 
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '0.25rem' }}
+              style={{ padding: '0.25rem' }}
               aria-label={`Editar classe ${node.nome}`}
             >
               <Edit2 size={13} />
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm"
               onClick={() => onDelete(node.id)} 
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '0.25rem' }}
+              style={{ padding: '0.25rem', color: 'var(--danger)' }}
               aria-label={`Excluir classe ${node.nome}`}
             >
               <Trash2 size={13} />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -231,24 +233,24 @@ export default function FinanceiroClassesPage() {
   const despesasCount = classes.filter(isDespesa).length;
 
   return (
-    <div className="page-container anim-fade-in">
+    <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
             <Layers style={{ color: 'var(--primary)' }} /> PLANO DE CONTAS
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Hierarquia financeira de receitas e despesas</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Hierarquia financeira de receitas e despesas</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           {classes.length === 0 && (
-            <button className="btn btn-outline" onClick={handleSeed} disabled={seeding} style={{ fontSize: '0.8rem' }}>
+            <Button variant="outline" onClick={handleSeed} disabled={seeding} style={{ fontSize: '0.8rem' }}>
               {seeding ? '⏳ Criando...' : '✨ CRIAR PLANO MARCENARIA'}
-            </button>
+            </Button>
           )}
-          <button className="btn btn-primary" onClick={() => setModal({})} style={{ fontSize: '0.85rem' }}>
-            <Plus /> NOVA CLASSE
-          </button>
+          <Button variant="primary" onClick={() => setModal({})} style={{ fontSize: '0.85rem' }}>
+            <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVA CLASSE
+          </Button>
         </div>
       </div>
 
@@ -259,44 +261,48 @@ export default function FinanceiroClassesPage() {
           { label: 'Classes de Receita', value: receitasCount, color: 'var(--success)' },
           { label: 'Classes de Despesa', value: despesasCount, color: 'var(--danger)' },
         ].map((stat, i) => (
-          <div key={i} className="card glass" style={{ padding: '1rem', textAlign: 'center', borderTop: `3px solid ${stat.color}` }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{stat.label}</div>
-            <div style={{ fontSize: '2rem', fontWeight: 900, color: stat.color }}>{stat.value}</div>
-          </div>
+          <Card key={i} style={{ borderTop: `3px solid ${stat.color}` }}>
+            <CardContent style={{ padding: '1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{stat.label}</div>
+              <div style={{ fontSize: '2rem', fontWeight: 900, color: stat.color }}>{stat.value}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Árvore */}
-      <div className="card glass" style={{ overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <CardSkeleton />
-            <CardSkeleton />
-          </div>
-        ) : tree.length === 0 ? (
-          <div className="empty-state">
-            Nenhuma classe financeira encontrada.
-          </div>
-        ) : (
-          <>
-            {/* Receitas */}
-            <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--border)' }}>
-              RECEITAS ({tree.filter(isReceita).length} categorias)
+      <Card style={{ overflow: 'hidden' }}>
+        <CardContent style={{ padding: 0 }}>
+          {loading ? (
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <CardSkeleton />
+              <CardSkeleton />
             </div>
-            {tree.filter(isReceita).map(node => (
-              <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
-            ))}
+          ) : tree.length === 0 ? (
+            <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Nenhuma classe financeira encontrada.
+            </div>
+          ) : (
+            <>
+              {/* Receitas */}
+              <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--border)' }}>
+                RECEITAS ({tree.filter(isReceita).length} categorias)
+              </div>
+              {tree.filter(isReceita).map(node => (
+                <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
+              ))}
 
-            {/* Despesas */}
-            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-              DESPESAS ({tree.filter(isDespesa).length} categorias)
-            </div>
-            {tree.filter(isDespesa).map(node => (
-              <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
-            ))}
-          </>
-        )}
-      </div>
+              {/* Despesas */}
+              <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', fontSize: '0.75rem', fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.08em', borderTop: '2px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                DESPESAS ({tree.filter(isDespesa).length} categorias)
+              </div>
+              {tree.filter(isDespesa).map(node => (
+                <TreeNode key={node.id} node={node} depth={0} onEdit={c => setModal(c)} onDelete={handleDelete} usageMap={usageMap} />
+              ))}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Modal */}
       {modal !== null && (
@@ -304,27 +310,27 @@ export default function FinanceiroClassesPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
               <div>
-                <label className="label-base">Código *</label>
-                <input className="input-base" placeholder="ex: 1.1.2" value={modal.codigo || ''} onChange={e => setModal(m => ({ ...m, codigo: e.target.value }))} />
+                <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Código *</label>
+                <Input placeholder="ex: 1.1.2" value={modal.codigo || ''} onChange={e => setModal(m => ({ ...m, codigo: e.target.value }))} />
               </div>
               <div>
-                <label className="label-base">Nome *</label>
-                <input className="input-base" placeholder="Nome da categoria" value={modal.nome || ''} onChange={e => setModal(m => ({ ...m, nome: e.target.value }))} />
+                <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Nome *</label>
+                <Input placeholder="Nome da categoria" value={modal.nome || ''} onChange={e => setModal(m => ({ ...m, nome: e.target.value }))} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
-                <label className="label-base">Tipo *</label>
-                <select className="input-base" value={modal.tipo || 'despesa'} onChange={e => setModal(m => ({ ...m, tipo: e.target.value, natureza: e.target.value === 'receita' ? 'credora' : 'devedora' }))}>
-                  <option value="receita">Receita</option>
-                  <option value="despesa">Despesa</option>
+                <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Tipo *</label>
+                <select className="input-base" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none' }} value={modal.tipo || 'despesa'} onChange={e => setModal(m => ({ ...m, tipo: e.target.value, natureza: e.target.value === 'receita' ? 'credora' : 'devedora' }))}>
+                  <option value="receita" style={{ background: '#1e293b' }}>Receita</option>
+                  <option value="despesa" style={{ background: '#1e293b' }}>Despesa</option>
                 </select>
               </div>
               <div>
-                <label className="label-base">Natureza</label>
-                <select className="input-base" value={modal.natureza || 'devedora'} onChange={e => setModal(m => ({ ...m, natureza: e.target.value }))}>
-                  <option value="credora">Credora (Receita)</option>
-                  <option value="devedora">Devedora (Despesa)</option>
+                <label className="label-base" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Natureza</label>
+                <select className="input-base" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none' }} value={modal.natureza || 'devedora'} onChange={e => setModal(m => ({ ...m, natureza: e.target.value }))}>
+                  <option value="credora" style={{ background: '#1e293b' }}>Credora (Receita)</option>
+                  <option value="devedora" style={{ background: '#1e293b' }}>Devedora (Despesa)</option>
                 </select>
               </div>
             </div>
@@ -339,8 +345,8 @@ export default function FinanceiroClassesPage() {
               </label>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <button className="btn btn-outline" onClick={() => setModal(null)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={handleSave}>Salvar</button>
+              <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
+              <Button variant="primary" onClick={handleSave}>Salvar</Button>
             </div>
           </div>
         </Modal>

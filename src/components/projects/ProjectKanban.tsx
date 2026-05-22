@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import { Modal } from '../../design-system/components/Modal';
+import { Button, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Card, CardContent } from '../../design-system/components';
 import { useAppContext } from '../../context/AppContext';
 import type { ProjectStatus } from '../../context/AppContext';
 
@@ -17,7 +17,7 @@ const ProjectKanban: React.FC = () => {
     responsavel: '',
     observacoes: '',
     status: 'lead' as ProjectStatus,
-    visitaId: ''
+    visitaId: 'none'
   });
 
   const visitas = events?.filter((e: any) => e.tipo === 'visita') || [];
@@ -39,11 +39,11 @@ const ProjectKanban: React.FC = () => {
     'Área Gourmet', 'Varanda', 'Sala de Jantar', 'Outro'
   ];
 
-const handleMove = (id: string, newStatus: string) => {
+  const handleMove = (id: string, newStatus: string) => {
     updateProject(id, { status: newStatus as ProjectStatus });
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const selectedClient = clients.find(c => c.id === formData.clientId);
     const data = {
@@ -56,7 +56,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       responsavel: formData.responsavel || undefined,
       observacoes: formData.observacoes,
       status: formData.status,
-      visitaId: formData.visitaId || undefined
+      visitaId: formData.visitaId === 'none' ? undefined : (formData.visitaId || undefined)
     };
 
     if (editingItem) {
@@ -79,17 +79,17 @@ const handleSubmit = async (e: React.FormEvent) => {
       responsavel: item.responsavel || '',
       observacoes: item.observacoes || item.observations || '',
       status: item.status,
-      visitaId: item.visitaId || ''
+      visitaId: item.visitaId || 'none'
     });
     setIsModalOpen(true);
   };
 
-const closeModal = () => {
+  const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
     setFormData({
       clientId: '', ambiente: '', descricao: '', valorEstimado: '',
-      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: ''
+      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: 'none'
     });
   };
 
@@ -107,8 +107,7 @@ const closeModal = () => {
       type: 'project' as const,
       value: p.valorEstimado,
       badges,
-      tag: p.tag, // Adicionado explicitamente para ser usado pelo KanbanBoard se suportado
-      // Carry original project data
+      tag: p.tag,
       clientId: p.clientId,
       clientName: p.clientName,
       ambiente: p.ambiente,
@@ -122,69 +121,51 @@ const closeModal = () => {
     };
   });
 
-  const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    color: 'white',
-    fontSize: '0.95rem',
-    width: '100%',
-    outline: 'none',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: '0.4rem',
-    display: 'block'
-  };
-
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
-  };
-
   // Summary stats
   const totalValue = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
   const inProduction = projects.filter(p => p.status === 'em_producao').length;
   const approved = projects.filter(p => p.status === 'aprovado').length;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="animate-fade-in flex flex-col gap-8">
+      <header className="flex justify-between items-center">
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Pipeline de Projetos</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Acompanhe cada projeto do lead à instalação.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Pipeline de Projetos</h2>
+          <p className="text-muted-foreground">Acompanhe cada projeto do lead à instalação.</p>
         </div>
-        <button className="btn" onClick={() => { setEditingItem(null); setIsModalOpen(true); }}
-          style={{
-            background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-            fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
-          }}>
+        <Button onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
           + Novo Projeto
-        </button>
+        </Button>
       </header>
 
       {/* Mini KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #d4af37' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Projetos</p>
-          <h4 style={{ fontSize: '1.25rem', color: '#d4af37' }}>{projects.length}</h4>
-        </div>
-        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #10b981' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Aprovados</p>
-          <h4 style={{ fontSize: '1.25rem', color: '#10b981' }}>{approved}</h4>
-        </div>
-        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #3b82f6' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Em Produção</p>
-          <h4 style={{ fontSize: '1.25rem', color: '#3b82f6' }}>{inProduction}</h4>
-        </div>
-        <div className="card glass" style={{ padding: '1rem', borderLeft: '3px solid #f59e0b' }}>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Valor Total Pipeline</p>
-          <h4 style={{ fontSize: '1rem', color: '#f59e0b' }}>R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Total Projetos</p>
+            <h4 className="text-2xl font-extrabold text-primary">{projects.length}</h4>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-success">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Aprovados</p>
+            <h4 className="text-2xl font-extrabold text-success">{approved}</h4>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Em Produção</p>
+            <h4 className="text-2xl font-extrabold text-blue-500">{inProduction}</h4>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-amber-500">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Valor Total Pipeline</p>
+            <h4 className="text-xl font-extrabold text-amber-500">
+              R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </h4>
+          </CardContent>
+        </Card>
       </div>
 
       <KanbanBoard
@@ -196,97 +177,95 @@ const closeModal = () => {
       />
 
       <Modal isOpen={isModalOpen} onClose={closeModal}
-        title={editingItem ? "Editar Projeto" : "Novo Projeto"} width="650px">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '80vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+        title={editingItem ? "Editar Projeto" : "Novo Projeto"} size="lg">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Cliente *</label>
-              <select style={selectStyle} required
-                value={formData.clientId} onChange={e => setFormData({ ...formData, clientId: e.target.value })}>
-                <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id} style={{ background: '#1a1a1a' }}>{c.nome}</option>
-                ))}
-              </select>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Cliente *</label>
+              <Select value={formData.clientId} onValueChange={val => setFormData({ ...formData, clientId: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label style={labelStyle}>Ambiente *</label>
-              <select style={selectStyle} required
-                value={formData.ambiente} onChange={e => setFormData({ ...formData, ambiente: e.target.value })}>
-                <option value="" style={{ background: '#1a1a1a' }}>Selecione...</option>
-                {ambientes.map(a => (
-                  <option key={a} value={a} style={{ background: '#1a1a1a' }}>{a}</option>
-                ))}
-              </select>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Ambiente *</label>
+              <Select value={formData.ambiente} onValueChange={val => setFormData({ ...formData, ambiente: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ambientes.map(a => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Valor Estimado (R$)</label>
-              <input type="number" step="0.01" style={inputStyle} placeholder="0,00"
-                value={formData.valorEstimado} onChange={e => setFormData({ ...formData, valorEstimado: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>Prazo de Entrega</label>
-              <input type="date" style={inputStyle}
-                value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Valor Estimado (R$)" type="number" step="0.01" placeholder="0,00"
+              value={formData.valorEstimado} onChange={e => setFormData({ ...formData, valorEstimado: e.target.value })} />
+            <Input label="Prazo de Entrega" type="date"
+              value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
           </div>
 
           <div>
-            <label style={labelStyle}>Vincular à Visita</label>
-            <select style={selectStyle}
-              value={formData.visitaId} onChange={e => setFormData({ ...formData, visitaId: e.target.value })}>
-              <option value="" style={{ background: '#1a1a1a' }}>Nenhuma visita vinculada</option>
-              {visitas.map((v: any) => (
-                <option key={v.id} value={v.id} style={{ background: '#1a1a1a' }}>
-                  {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
-                </option>
-              ))}
-            </select>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular à Visita</label>
+            <Select value={formData.visitaId} onValueChange={val => setFormData({ ...formData, visitaId: val })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhuma visita vinculada" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhuma visita vinculada</SelectItem>
+                {visitas.map((v: any) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div style={{ padding: '1rem', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex justify-between items-center">
             <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Identificador Único (TAG)</span>
-              <span style={{ fontSize: '1.1rem', fontWeight: '900', color: '#d4af37' }}>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Identificador Único (TAG)</span>
+              <span className="text-base font-extrabold text-primary">
                 {editingItem?.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`}
               </span>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Status Atual</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--primary)' }}>{formData.status.toUpperCase()}</span>
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Status Atual</span>
+              <span className="text-xs font-bold text-primary">{formData.status.toUpperCase()}</span>
             </div>
           </div>
 
-          <div>
-            <label style={labelStyle}>Responsável (Marceneiro)</label>
-            <input style={inputStyle} placeholder="Ex: João"
-              value={formData.responsavel} onChange={e => setFormData({ ...formData, responsavel: e.target.value })} />
-          </div>
+          <Input label="Responsável (Marceneiro)" placeholder="Ex: João"
+            value={formData.responsavel} onChange={e => setFormData({ ...formData, responsavel: e.target.value })} />
 
           <div>
-            <label style={labelStyle}>Descrição do Projeto</label>
-            <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+            <label className="mb-2 block text-sm font-medium text-foreground/90">Descrição do Projeto</label>
+            <textarea
+              className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-h-[80px] resize-vertical transition-colors"
               placeholder="Detalhes: materiais, acabamento, referências..."
-              value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} />
+              value={formData.descricao}
+              onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+            />
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-            <button type="submit" className="btn"
-              style={{
-                background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-                border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '0.5rem'
-              }}>
+          <div className="flex gap-4 mt-4">
+            <Button type="submit" className="flex-1">
               ✓ {editingItem ? 'Salvar' : 'Criar Projeto'}
-            </button>
-            <button type="button" onClick={closeModal}
-              style={{ background: '#333', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>
+            </Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>
               Cancelar
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -295,4 +274,3 @@ const closeModal = () => {
 };
 
 export default ProjectKanban;
-

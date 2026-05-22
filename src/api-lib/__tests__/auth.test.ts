@@ -13,7 +13,7 @@ vi.mock('../_db.js', () => ({
 const { sql, extractAndVerifyToken } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200, jd: any = null, ended = false;
   const self: any = {
     status: vi.fn((c: number) => { sc = c; return self; }),
     json: vi.fn((d: any) => { jd = d; return self; }),

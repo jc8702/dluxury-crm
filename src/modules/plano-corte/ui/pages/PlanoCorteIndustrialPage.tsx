@@ -24,6 +24,7 @@ import { BuscaSKU } from '../components/BuscaSKU';
 import { AbasProjetoChapaS } from '../components/AbasProjetoChapaS';
 import { CanvasComAbas } from '../components/CanvasComAbas';
 import { PainelPecasChapa } from '../components/PainelPecasChapa';
+import { Button } from '../../../../design-system/components';
 
 // Camada de Aplicação / Casos de Uso
 import { OtimizarPorChapa } from '../../application/use-cases/OtimizarPorChapa';
@@ -369,13 +370,14 @@ export default function PlanoCorteIndustrialPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <label id="btn-importar-desenho" className="flex items-center gap-3 px-6 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-[#333] cursor-pointer transition-all group">
-            <Upload size={18} className="text-[#666] group-hover:text-[#FFA500]" />
-            <span className="text-xs font-black uppercase tracking-widest text-[#888] group-hover:text-white">IMPORTAR DESENHO PDF</span>
+          <label id="btn-importar-desenho" className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-foreground/5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-foreground/10 cursor-pointer transition-all group">
+            <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
+            <span>Importar Desenho PDF</span>
             <input type="file" className="hidden" accept=".pdf,.dxf" onChange={handleImportPDF} />
           </label>
 
-          <button 
+          <Button 
+            variant="outline"
             onClick={() => {
               // Simulação de PDF para teste
               showToast('Simulando processamento de PDF...', 'info');
@@ -391,51 +393,62 @@ export default function PlanoCorteIndustrialPage() {
                 }
               }, 1000);
             }}
-            className="flex items-center gap-3 px-4 h-12 rounded-xl border border-dashed border-[#444] hover:border-[#FFA500]/50 hover:bg-[#FFA500]/5 transition-all group"
+            className="flex items-center gap-2 h-11"
           >
-            <Zap size={16} className="text-[#444] group-hover:text-[#FFA500]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#444] group-hover:text-[#FFA500]">Demo PDF</span>
-          </button>
+            <Zap size={14} />
+            Demo PDF
+          </Button>
           
-          <button 
+          <Button 
+            variant={executionMode ? "primary" : "secondary"}
             onClick={() => setExecutionMode(!executionMode)} 
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black border transition-all uppercase tracking-widest ${executionMode ? 'bg-[#10B981]/20 border-[#10B981]/30 text-[#10B981]' : 'bg-white/5 border-[#333] hover:bg-white/10'}`}
+            className="flex items-center gap-2 h-11"
           >
-            <Cpu size={16} className={executionMode ? 'animate-pulse' : ''} /> 
+            <Cpu size={14} className={executionMode ? 'animate-pulse' : ''} /> 
             {executionMode ? 'Execução Ativa' : 'Modo Projeto'}
-          </button>
+          </Button>
 
           {projeto.status !== 'producao' && (
-            <button 
+            <Button 
+              variant="primary"
               onClick={handleAprovarProducao}
               disabled={loading || Object.keys(resultados).length === 0}
-              className="px-6 h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/20 flex items-center gap-3 disabled:opacity-30"
+              className="bg-success text-success-foreground hover:bg-success/90 h-11 flex items-center gap-2"
             >
-              <CheckCircle size={18} />
+              <CheckCircle size={16} />
               Aprovar Produção
-            </button>
+            </Button>
           )}
 
-          <button 
+          <Button 
+            variant="primary"
             onClick={handleSalvarProjeto}
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black bg-[#FFA500] hover:bg-[#FF6B35] text-black transition-all uppercase tracking-widest shadow-lg shadow-[#FFA500]/10 disabled:opacity-30"
+            className="flex items-center gap-2 h-11"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Salvar Projeto
-          </button>
+          </Button>
 
-          <button 
+          <Button 
+            variant="ghost"
+            size="icon"
             onClick={handleLimparProjeto}
-            className="p-3 rounded-xl bg-white/5 hover:bg-red-500/10 border border-[#333] hover:border-red-500/30 transition-all group"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-11 w-11"
             title="Limpar Projeto"
           >
-            <X size={20} className="text-[#666] group-hover:text-red-500" />
-          </button>
+            <X size={18} />
+          </Button>
 
-          <button onClick={() => setShowHistorico(true)} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-[#333] transition-all">
-            <Clock size={20} className="text-[#666]" />
-          </button>
+          <Button 
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHistorico(true)} 
+            className="text-muted-foreground hover:bg-foreground/10 h-11 w-11"
+            title="Histórico de Planos"
+          >
+            <Clock size={18} />
+          </Button>
         </div>
       </header>
 
@@ -500,21 +513,27 @@ export default function PlanoCorteIndustrialPage() {
                 <div className="pt-6 border-t border-[#222] space-y-4">
                   <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em]">Ações da Chapa</span>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all"
+                    >
                       <Printer size={14} /> Mapa
-                    </button>
-                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all">
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all"
+                    >
                       <FileText size={14} /> Etiquetas
-                    </button>
+                    </Button>
                   </div>
-                  <button 
+                  <Button 
                     onClick={handleAprovarProducao}
                     disabled={loading}
-                    className="w-full h-12 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
+                    className="w-full h-12 bg-[#10B981] hover:bg-[#059669] text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     Aprovar Produção
-                  </button>
+                  </Button>
                 </div>
               )}
             </>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { Button, Input } from '../design-system/components';
 
 const _MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
@@ -13,6 +14,7 @@ export default function FinanceiroTitulosReceberWizard() {
   const [classes, setClasses] = useState<any[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
   const [formasRecebimento, setFormasRecebimento] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState(1);
 
@@ -110,85 +112,80 @@ export default function FinanceiroTitulosReceberWizard() {
 
   // ─── PASSO 1: Identificação ───────────────────────────────────────────────
   const renderStep1 = () => (
-    <div className="animate-fade-in">
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Identificação</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <div>
-          <label className="label-base">Cliente / Origem</label>
-          <select className="input-base" value={formData.cliente_id}
+    <div className="animate-fade-in space-y-6">
+      <h3 className="text-xl font-bold text-white uppercase tracking-wider">Identificação</h3>
+      <div className="flex flex-col gap-5">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Cliente / Origem</label>
+          <select className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold" value={formData.cliente_id}
             onChange={e => setFormData({ ...formData, cliente_id: e.target.value })}>
             <option value="">Selecione um cliente...</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.nome || c.name || c.razao_social}</option>)}
+            {clients.map(c => <option key={c.id} value={c.id}>{String(c.nome || c.name || c.razao_social).toUpperCase()}</option>)}
           </select>
         </div>
-        <div>
-          <label className="label-base">Classe Financeira</label>
-          <select className="input-base" value={formData.classe_financeira_id}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Classe Financeira</label>
+          <select className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold" value={formData.classe_financeira_id}
             onChange={e => setFormData({ ...formData, classe_financeira_id: e.target.value })}>
             <option value="">Selecione uma categoria...</option>
             {classes.filter(c => c.tipo.toLowerCase() === 'receita' && c.permite_lancamento)
-              .map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nome}</option>)}
+              .map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nome.toUpperCase()}</option>)}
           </select>
         </div>
-        <div>
-          <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Número do Documento / Título
-            <Info title="Gerado automaticamente. Pode editar para o número da NF." />
-          </label>
-          <input type="text" className="input-base" value={formData.numero_titulo}
-            onChange={e => setFormData({ ...formData, numero_titulo: e.target.value })}
-            placeholder="Ex: NF-12345" />
-        </div>
+        <Input 
+          label="Número do Documento / Título"
+          value={formData.numero_titulo}
+          onChange={e => setFormData({ ...formData, numero_titulo: e.target.value })}
+          placeholder="Ex: NF-12345"
+          helperText="Gerado automaticamente. Pode editar para o número da NF."
+        />
       </div>
     </div>
   );
 
   // ─── PASSO 2: Valores + Forma + Parcelas ──────────────────────────────────
   const renderStep2 = () => (
-    <div className="animate-fade-in">
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Valores e Recebimento</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="animate-fade-in space-y-6">
+      <h3 className="text-xl font-bold text-white uppercase tracking-wider">Valores e Recebimento</h3>
+      <div className="flex flex-col gap-5">
 
         {/* Valor base */}
-        <div>
-          <label className="label-base">Valor a Receber (sem taxas)</label>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>R$</span>
-            <input type="number" className="input-base" style={{ paddingLeft: '2.5rem' }}
-              value={formData.valor_base}
-              onChange={e => setFormData({ ...formData, valor_base: Number(e.target.value) })} />
-          </div>
-        </div>
+        <Input 
+          type="number"
+          label="Valor a Receber (sem taxas)"
+          value={formData.valor_base}
+          onChange={e => setFormData({ ...formData, valor_base: Number(e.target.value) })}
+          placeholder="0.00"
+        />
 
         {/* Forma de Recebimento */}
-        <div>
-          <label className="label-base">Forma de Recebimento</label>
-          <select className="input-base" value={formData.forma_recebimento_id}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Forma de Recebimento</label>
+          <select className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold" value={formData.forma_recebimento_id}
             onChange={e => { setFormData({ ...formData, forma_recebimento_id: e.target.value }); setTaxaFinanceira(0); }}>
             <option value="">Selecione a forma...</option>
-            {formasRecebimento.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            {formasRecebimento.map(f => <option key={f.id} value={f.id}>{f.nome.toUpperCase()}</option>)}
           </select>
         </div>
 
         {/* Taxa Financeira – Sempre disponível para ajuste manual */}
-        <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--warning, #f59e0b)', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--warning, #f59e0b)', fontWeight: 700, fontSize: '0.9rem' }}>
-            <AlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
+        <div className="animate-fade-in p-4 border border-amber-500/30 rounded-xl bg-amber-500/5">
+          <div className="flex items-center gap-2 mb-3 text-amber-400 font-black text-xs uppercase tracking-widest">
+            <AlertCircle size={16} /> CUSTO FINANCEIRO / TAXAS (%)
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-            <div>
-              <label className="label-base">Taxa (%)</label>
-              <div style={{ position: 'relative' }}>
-                <input type="number" className="input-base" min={0} max={100} step={0.01}
-                  value={taxaFinanceira}
-                  onChange={e => setTaxaFinanceira(Number(e.target.value))}
-                  style={{ paddingRight: '2.5rem' }} />
-                <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>%</span>
-              </div>
-            </div>
-            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>VALOR TOTAL COM TAXAS</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary)' }}>
+          <div className="grid grid-cols-2 gap-4 items-end">
+            <Input 
+              type="number"
+              label="Taxa (%)"
+              min={0}
+              max={100}
+              step={0.01}
+              value={taxaFinanceira}
+              onChange={e => setTaxaFinanceira(Number(e.target.value))}
+            />
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-right">
+              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">VALOR TOTAL COM TAXAS</div>
+              <div className="text-xl font-black text-primary italic">
                 R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </div>
             </div>
@@ -196,95 +193,102 @@ export default function FinanceiroTitulosReceberWizard() {
         </div>
 
         {/* Parcelas Manual */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label className="label-base">Quantidade de Parcelas</label>
-            <input type="number" className="input-base" min={1} max={60}
-              value={totalParcelas}
-              onChange={e => setTotalParcelas(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="label-base">Repetir por X meses (Recorrência)</label>
-            <input type="number" className="input-base" min={1} max={36}
-              value={formData.recorrencia_meses || 1}
-              onChange={e => setFormData({ ...formData, recorrencia_meses: Number(e.target.value) })} />
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input 
+            type="number"
+            label="Quantidade de Parcelas"
+            min={1}
+            max={60}
+            value={totalParcelas}
+            onChange={e => setTotalParcelas(Number(e.target.value))}
+          />
+          <Input 
+            type="number"
+            label="Repetir por X meses (Recorrência)"
+            min={1}
+            max={36}
+            value={formData.recorrencia_meses || 1}
+            onChange={e => setFormData({ ...formData, recorrencia_meses: Number(e.target.value) })}
+          />
         </div>
 
         {/* Data + Observação */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label className="label-base">Data Base de Vencimento</label>
-            <input type="date" className="input-base" value={formData.data_base}
-              onChange={e => setFormData({ ...formData, data_base: e.target.value })} />
-          </div>
-          <div>
-             <label className="label-base">Rateio por Projeto? (Opcional)</label>
-             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}
-               onClick={() => setFormData({ ...formData, showRateio: !formData.showRateio })}>
-               {formData.showRateio ? 'REMOVER RATEIO' : 'ADICIONAR RATEIO'}
-             </button>
+        <div className="grid grid-cols-2 gap-4">
+          <Input 
+            type="date"
+            label="Data Base de Vencimento"
+            value={formData.data_base}
+            onChange={e => setFormData({ ...formData, data_base: e.target.value })}
+          />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Rateio por Projeto? (Opcional)</label>
+            <Button variant="outline" className="w-full h-[46px] uppercase font-black italic text-xs tracking-widest"
+              onClick={() => setFormData({ ...formData, showRateio: !formData.showRateio })}>
+              {formData.showRateio ? 'REMOVER RATEIO' : 'ADICIONAR RATEIO'}
+            </Button>
           </div>
         </div>
 
         {formData.showRateio && (
-          <div className="animate-fade-in" style={{ padding: '1.25rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="animate-fade-in p-5 border border-dashed border-white/10 rounded-xl bg-white/[0.01] space-y-4">
+            <div className="text-xs font-black uppercase tracking-widest text-muted-foreground flex justify-between items-center">
                DISTRIBUIÇÃO POR PROJETO
-               <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+               <Button variant="primary" size="sm" className="px-3 py-1.5 uppercase font-black italic text-[9px]"
                  onClick={() => {
                    const r = formData.rateios || [];
                    setFormData({ ...formData, rateios: [...r, { projeto_id: '', classe_id: formData.classe_financeira_id, valor: 0 }] });
-                 }}>+ ADICIONAR LINHA</button>
+                 }}>+ ADICIONAR LINHA</Button>
             </div>
             {(formData.rateios || []).map((r: any, idx: number) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
-                <div>
-                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Projeto</label>
-                  <select className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+              <div key={idx} className="grid grid-cols-[2fr_1.5fr_1fr_40px] gap-3 items-end">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Projeto</label>
+                  <select className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                     value={r.projeto_id} onChange={e => {
                       const newR = [...formData.rateios];
                       newR[idx].projeto_id = e.target.value;
                       setFormData({ ...formData, rateios: newR });
                     }}>
                     <option value="">Selecione...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.ambiente || 'Sem Nome'} - {p.client_name || p.cliente_nome || 'Sem Cliente'}</option>)}
+                    {projects.map(p => <option key={p.id} value={p.id}>{String(p.ambiente || 'Sem Nome').toUpperCase()} - {String(p.client_name || p.cliente_nome || 'Sem Cliente').toUpperCase()}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Classe</label>
-                  <select className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Classe</label>
+                  <select className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold"
                     value={r.classe_id} onChange={e => {
                       const newR = [...formData.rateios];
                       newR[idx].classe_id = e.target.value;
                       setFormData({ ...formData, rateios: newR });
                     }}>
                     <option value="">Mesma do Título</option>
-                    {classes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Valor (R$)</label>
-                  <input type="number" className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
-                    value={r.valor} onChange={e => {
-                      const newR = [...formData.rateios];
-                      newR[idx].valor = Number(e.target.value);
-                      setFormData({ ...formData, rateios: newR });
-                    }} />
-                </div>
-                <button className="btn btn-outline" style={{ height: '36px', padding: 0, color: 'var(--danger)' }}
+                <Input 
+                  type="number"
+                  label="Valor (R$)"
+                  className="h-10 text-xs font-bold"
+                  value={r.valor}
+                  onChange={e => {
+                    const newR = [...formData.rateios];
+                    newR[idx].valor = Number(e.target.value);
+                    setFormData({ ...formData, rateios: newR });
+                  }}
+                />
+                <Button variant="outline" className="h-10 w-10 p-0 text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-500/10 flex items-center justify-center text-lg font-bold"
                   onClick={() => {
                     const newR = formData.rateios.filter((_: any, i: number) => i !== idx);
                     setFormData({ ...formData, rateios: newR });
-                  }}>×</button>
+                  }}>×</Button>
               </div>
             ))}
           </div>
         )}
         
-        <div>
-          <label className="label-base">Descrição / Observação</label>
-          <textarea className="input-base" rows={2} value={formData.descricao}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Descrição / Observação</label>
+          <textarea className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" rows={2} value={formData.descricao}
             onChange={e => setFormData({ ...formData, descricao: e.target.value })}
             style={{ textTransform: 'none' }} />
         </div>
@@ -294,35 +298,35 @@ export default function FinanceiroTitulosReceberWizard() {
 
   // ─── PASSO 3: Confirmação ─────────────────────────────────────────────────
   const renderStep3 = () => (
-    <div className="animate-fade-in">
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Confirmar Parcelamento</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+    <div className="animate-fade-in space-y-6">
+      <h3 className="text-xl font-bold text-white uppercase tracking-wider">Confirmar Parcelamento</h3>
+      <div className="flex flex-col gap-3">
         {preview.map((p, i) => (
-          <div key={i} className="card" style={{ padding: '1rem', background: 'var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--primary)' }}>
+          <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center border-l-4 border-l-primary">
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>PARCELA {p.numero_parcela}</div>
-              <div style={{ fontWeight: 600 }}>{new Date(p.data_vencimento).toLocaleDateString('pt-BR')}</div>
+              <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">PARCELA {p.numero_parcela}</div>
+              <div className="font-bold text-white text-sm">{new Date(p.data_vencimento).toLocaleDateString('pt-BR')}</div>
               {taxaFinanceira > 0 && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <div className="text-[10px] text-muted-foreground italic mt-0.5">
                   Base: R$ {(formData.valor_base / totalParcelas).toFixed(2)} + {taxaFinanceira}% taxa
                 </div>
               )}
             </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+            <div className="text-lg font-black text-white italic">
               R$ {Number(p.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
         ))}
-        <div style={{ marginTop: '1.5rem', padding: '1rem', borderTop: '2px dashed var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)' }}>
+        <div className="mt-6 p-5 border border-dashed border-white/10 flex justify-between items-center bg-white/[0.01] rounded-xl">
           <div>
-            <div style={{ fontWeight: 700 }}>TOTAL A RECEBER</div>
+            <div className="text-xs font-black uppercase tracking-widest text-white">TOTAL A RECEBER</div>
             {taxaFinanceira > 0 && (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <div className="text-[10px] text-muted-foreground italic mt-1">
                 Inclui {taxaFinanceira}% de custo financeiro
               </div>
             )}
           </div>
-          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)' }}>
+          <span className="text-2xl font-black text-primary italic">
             R$ {valorComTaxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </span>
         </div>
@@ -331,55 +335,52 @@ export default function FinanceiroTitulosReceberWizard() {
   );
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <button className="btn btn-outline" style={{ marginBottom: '2rem' }}
+    <div className="py-10 max-w-4xl mx-auto px-4">
+      <Button variant="outline" className="mb-8 uppercase font-black italic text-xs tracking-widest"
         onClick={() => window.location.hash = '#/financeiro/titulos-receber'}>
-        <ArrowLeft /> VOLTAR PARA LISTAGEM
-      </button>
+        <ArrowLeft size={16} /> VOLTAR PARA LISTAGEM
+      </Button>
 
-      <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
+      <div className="glass-elevated p-8 md:p-12 animate-pop-in">
         {/* Stepper – 3 passos */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '15px', left: 0, right: 0, height: '2px', background: 'var(--border)', zIndex: 0 }} />
+        <div className="flex justify-between mb-12 relative">
+          <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />
           {[1, 2, 3].map(s => (
-            <div key={s} style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '50%',
-                background: step >= s ? 'var(--primary)' : 'var(--surface)',
-                color: step >= s ? 'var(--primary-text)' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, border: '2px solid',
-                borderColor: step >= s ? 'var(--primary)' : 'var(--border)'
-              }}>
-                {step > s ? <Check /> : s}
+            <div key={s} className="z-10 flex flex-col items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm border-2 transition-all ${
+                step >= s 
+                  ? 'bg-primary border-primary text-black' 
+                  : 'bg-background border-border text-muted-foreground'
+              }`}>
+                {step > s ? <Check size={14} /> : s}
               </div>
             </div>
           ))}
         </div>
 
         {/* Conteúdo */}
-        <div style={{ minHeight: '320px' }}>
+        <div className="min-h-[320px]">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
         </div>
 
         {/* Botões */}
-        <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
-          <button className="btn btn-outline" disabled={step === 1 || loading}
-            onClick={() => setStep(step - 1)}>ANTERIOR</button>
+        <div className="mt-10 flex gap-4 justify-between">
+          <Button variant="outline" className="px-6 uppercase font-black italic text-xs tracking-widest" disabled={step === 1 || loading}
+            onClick={() => setStep(step - 1)}>ANTERIOR</Button>
 
           {step < 3 ? (
-            <button className="btn btn-primary"
+            <Button variant="primary" className="px-6 uppercase font-black italic text-xs tracking-widest"
               disabled={loading || !formData.cliente_id || !formData.classe_financeira_id}
               onClick={handleNext}>
-              {loading ? <Loader className="animate-spin" /> : <>PRÓXIMO <ArrowRight /></>}
-            </button>
+              {loading ? <Loader className="animate-spin" size={16} /> : <>PRÓXIMO <ArrowRight size={16} /></>}
+            </Button>
           ) : (
-            <button className="btn btn-primary" style={{ background: 'var(--success)' }}
+            <Button variant="primary" className="px-6 uppercase font-black italic text-xs tracking-widest bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 text-black shadow-lg shadow-emerald-500/20"
               disabled={loading} onClick={handleSave}>
-              {loading ? <Loader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
-            </button>
+              {loading ? <Loader className="animate-spin" size={16} /> : 'CONFIRMAR E GERAR TÍTULOS'}
+            </Button>
           )}
         </div>
       </div>

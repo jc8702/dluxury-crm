@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
 import { useAppContext } from '../../context/AppContext';
+import { Button, Card, CardContent } from '../../design-system/components';
 import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {
@@ -44,83 +44,62 @@ const VisitKanban: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+    <div className="animate-fade-in flex flex-col gap-8">
       {/* Header Estilizado */}
-      <header style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        paddingBottom: '1rem',
-        borderBottom: '1px solid var(--border)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ 
-            padding: '1rem', 
-            background: 'var(--icon-bg)', 
-            borderRadius: 'var(--radius-md)', 
-            color: 'var(--icon-color)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
+      <header className="flex justify-between items-center pb-4 border-b border-border">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary shadow-sm">
             <Users size={28} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0, letterSpacing: '-0.02em' }}>
-              GESTÃO DE <span style={{ color: 'var(--primary)' }}>VISITAS</span>
+            <h2 className="text-2xl font-bold tracking-tight uppercase">
+              Gestão de <span className="text-primary">Visitas</span>
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500', marginTop: '0.25rem' }}>
-              FLUXO COMERCIAL E TÉCNICO INTEGRADO À AGENDA INDUSTRIAL.
+            <p className="text-xs text-muted-foreground mt-1">
+              Fluxo comercial e técnico integrado à agenda industrial.
             </p>
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            className="btn btn-outline" 
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
             onClick={fetchVisits} 
             disabled={loading}
           >
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> ATUALIZAR
-          </button>
-          <button 
-            className="btn btn-primary"
+            <RefreshCw size={18} className={`mr-2 ${loading ? 'animate-spin' : ''}`} /> Atualizar
+          </Button>
+          <Button 
             onClick={() => { setSelectedItem({ tipo: 'visita' }); setIsModalOpen(true); }}
-            style={{ padding: '0.75rem 1.5rem' }}
           >
-            <Plus size={20} /> AGENDAR VISITA
-          </button>
+            <Plus size={20} className="mr-2" /> Agendar Visita
+          </Button>
         </div>
       </header>
 
-      {/* Grid de Resumo Rápido (Opcional, mas melhora a UX) */}
-      <div className="grid-3">
-        {columns.map(col => (
-          <div key={col.id} className="card glass" style={{ padding: '1rem', borderLeft: `3px solid ${col.id === 'agendado' ? 'var(--info)' : col.id === 'realizado' ? 'var(--success)' : 'var(--warning)'}` }}>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>{col.title}</p>
-            <h4 style={{ fontSize: '1.5rem', margin: '0.25rem 0' }}>
-              {visits.filter(v => v.status === col.id).length}
-            </h4>
-          </div>
-        ))}
+      {/* Grid de Resumo Rápido */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {columns.map(col => {
+          const borderClass = col.id === 'agendado' ? 'border-l-blue-500' : col.id === 'realizado' ? 'border-l-success' : 'border-l-amber-500';
+          const count = visits.filter(v => v.status === col.id).length;
+          return (
+            <Card key={col.id} className={`border-l-4 ${borderClass}`}>
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground font-bold uppercase">{col.title}</p>
+                <h4 className="text-2xl font-extrabold mt-1">{count}</h4>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Quadro Kanban */}
-      <div style={{ position: 'relative', marginTop: '1rem' }}>
+      <div className="relative mt-4">
         {loading && (
-          <div style={{ 
-            position: 'absolute', 
-            inset: 0, 
-            zIndex: 10, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            background: 'rgba(0,0,0,0.2)', 
-            backdropFilter: 'blur(2px)',
-            borderRadius: 'var(--radius-lg)'
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl">
+            <div className="flex flex-col items-center gap-2">
               <RefreshCw className="animate-spin" size={32} color="var(--primary)" />
-              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)', letterSpacing: '0.1em' }}>SINCRONIZANDO...</span>
+              <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Sincronizando...</span>
             </div>
           </div>
         )}

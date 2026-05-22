@@ -3,6 +3,7 @@
 import React from 'react';
 import { Plus, Trash2, Scissors } from 'lucide-react';
 import type { Peca } from '../../domain/types';
+import { Button } from '../../../../design-system/components';
 
 interface PainelPecasChapaProps {
   chapaId: string;
@@ -35,13 +36,15 @@ export function PainelPecasChapa({
             <p className="text-[9px] font-mono text-[#666]">{pecas.length} itens configurados</p>
           </div>
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="icon"
           onClick={onAddPeca}
-          className="p-2 rounded-lg bg-[#FFA500]/10 text-[#FFA500] hover:bg-[#FFA500] hover:text-black transition-all border border-[#FFA500]/20"
+          className="h-9 w-9 hover:bg-[#FFA500] hover:text-black border-[#FFA500]/20 text-[#FFA500]"
           title="Adicionar Peça"
         >
           <Plus size={18} />
-        </button>
+        </Button>
       </div>
 
       {/* Lista de Peças */}
@@ -49,12 +52,12 @@ export function PainelPecasChapa({
         {pecas.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center">
             <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peça adicionada</p>
-            <button
+            <Button
               onClick={onAddPeca}
-              className="px-4 py-2 bg-[#FFA500] text-black text-[10px] font-black rounded-lg hover:bg-[#FFD700] transition-all flex items-center gap-2 uppercase tracking-wider"
+              className="bg-[#FFA500] text-black hover:bg-[#FFD700] px-4 py-2 h-auto text-[10px] font-black flex items-center gap-2 uppercase tracking-wider"
             >
               <Plus size={14} /> Adicionar Primeira Peça
-            </button>
+            </Button>
           </div>
         ) : (
           pecas.map(p => (
@@ -67,12 +70,14 @@ export function PainelPecasChapa({
                   className="bg-transparent text-[11px] font-black text-white w-full focus:outline-none uppercase tracking-wider"
                   placeholder="NOME DA PEÇA"
                 />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onRemovePeca(p.id)}
-                  className="p-1.5 text-[#444] hover:text-red-500 transition-colors"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 size={14} />
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -143,17 +148,13 @@ export function PainelPecasChapa({
       {/* Footer com Ação */}
       {pecas.length > 0 && (
         <div className="p-4 bg-[#222] border-t border-[#333]">
-          <button
+          <Button
             onClick={onOtimizar}
             disabled={isOtimizando}
-            className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all ${
-              isOtimizando 
-                ? 'bg-[#333] text-[#555] cursor-not-allowed'
-                : 'bg-[#FFA500] text-black hover:bg-[#FFD700] shadow-[0_4px_20px_rgba(255,165,0,0.2)]'
-            }`}
+            className={`w-full py-4 h-auto font-black text-xs uppercase tracking-[0.2em] transition-all bg-[#FFA500] text-black hover:bg-[#FFD700] disabled:bg-[#333] disabled:text-[#555] shadow-[0_4px_20px_rgba(255,165,0,0.2)]`}
           >
             {isOtimizando ? 'PROCESSANDO...' : 'OTIMIZAR CORTE'}
-          </button>
+          </Button>
         </div>
       )}
     </div>

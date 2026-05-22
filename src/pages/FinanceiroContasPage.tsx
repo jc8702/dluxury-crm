@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
-import { Modal } from '../design-system/components/Modal';
+import { Modal, Button, Input } from '../design-system/components';
 
 import { api } from '../lib/api';
 import { 
@@ -277,25 +277,27 @@ const FinanceiroContasPage = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <button className="btn btn-outline h-12 px-6 group" onClick={fetchContas}>
+          <Button variant="outline" className="h-12 px-6 group border-border/40 hover:bg-white/5" onClick={fetchContas}>
             <RefreshCw className={`w-4 h-4 mr-2 transition-transform group-hover:rotate-180 ${loading ? 'animate-spin' : ''}`} /> ATUALIZAR
-          </button>
-          <button 
-            className="btn btn-outline h-12 px-6 border-blue-500/30 text-blue-400 hover:bg-blue-500/10" 
+          </Button>
+          <Button 
+            variant="outline"
+            className="h-12 px-6 border-blue-500/30 text-blue-400 hover:bg-blue-500/10" 
             onClick={() => { setTransferErro(''); setShowTransferencia(true); }}
             disabled={contas.length < 2}
           >
             <Repeat className="w-4 h-4 mr-2" /> TRANSFERIR
-          </button>
-          <button 
-            className="btn btn-outline h-12 px-6 border-orange-500/30 text-orange-400 hover:bg-orange-500/10" 
+          </Button>
+          <Button 
+            variant="outline"
+            className="h-12 px-6 border-orange-500/30 text-orange-400 hover:bg-orange-500/10" 
             onClick={() => setShowFechamento(true)}
           >
             <Lock className="w-4 h-4 mr-2" /> FECHAMENTOS
-          </button>
-          <button className="btn btn-primary h-12 px-8 font-black italic tracking-tight shadow-lg shadow-primary/20" onClick={openNew}>
+          </Button>
+          <Button variant="primary" className="h-12 px-8 font-black italic tracking-tight shadow-lg shadow-primary/20" onClick={openNew}>
             <Plus className="w-5 h-5 mr-2" /> NOVA CONTA
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -316,7 +318,7 @@ const FinanceiroContasPage = () => {
               <p className="text-muted-foreground mb-10 max-w-md mx-auto font-medium">
                 Sua infraestrutura financeira ainda não possui contas ativas. Configure seus caixas ou contas bancárias para iniciar a gestão.
               </p>
-              <button className="btn btn-primary px-12 h-14 font-black italic" onClick={openNew}>ADICIONAR PRIMEIRA CONTA</button>
+              <Button variant="primary" className="px-12 h-14 font-black italic shadow-lg shadow-primary/20" onClick={openNew}>ADICIONAR PRIMEIRA CONTA</Button>
             </div>
           </div>
         ) : contas.map(c => {
@@ -374,25 +376,29 @@ const FinanceiroContasPage = () => {
               </div>
 
               <div className="flex border-t border-white/5 bg-black/40 p-2 gap-2">
-                <button 
-                  className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                <Button 
+                  variant="ghost"
+                  className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest"
                   onClick={() => openEdit(c)}
                 >
                   <Edit2 className="w-3.5 h-3.5 text-muted-foreground" /> EDITAR
-                </button>
-                <button 
-                  className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
                   onClick={() => openExtrato(c)}
                 >
                   <History className="w-4 h-4" /> EXTRATO
-                </button>
-                <button 
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all"
+                </Button>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 rounded-2xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all"
                   onClick={() => doDelete(c.id, c.nome)}
                   title="EXCLUIR CONTA"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           );
@@ -400,12 +406,11 @@ const FinanceiroContasPage = () => {
       </div>
 
       {/* Modal Nova/Editar Conta */}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'REVISÃO DE CONTA' : 'ABERTURA DE CONTA'} width="600px">
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? 'REVISÃO DE CONTA' : 'ABERTURA DE CONTA'} size="md">
         <div className="space-y-8 p-4">
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic">IDENTIFICAÇÃO OPERACIONAL</label>
-            <input 
-              className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 text-lg font-bold focus:outline-none focus:border-primary/50 transition-all shadow-inner" 
+            <Input 
               value={form.nome} 
               onChange={e => setForm({...form, nome: e.target.value})} 
               placeholder="Ex: ITAÚ EMPRESARIAL" 
@@ -431,8 +436,8 @@ const FinanceiroContasPage = () => {
             </div>
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">CÓDIGO BANCO</label>
-              <input 
-                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+              <Input 
+                className="font-mono"
                 value={form.banco_codigo} 
                 onChange={e => setForm({...form, banco_codigo: e.target.value})} 
                 placeholder="Ex: 341, 001..." 
@@ -443,8 +448,8 @@ const FinanceiroContasPage = () => {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">AGÊNCIA</label>
-              <input 
-                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+              <Input 
+                className="font-mono"
                 placeholder="0001" 
                 value={form.agencia} 
                 onChange={e => setForm({...form, agencia: e.target.value})} 
@@ -452,8 +457,8 @@ const FinanceiroContasPage = () => {
             </div>
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">NÚMERO DA CONTA</label>
-              <input 
-                className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-mono font-bold" 
+              <Input 
+                className="font-mono"
                 placeholder="12345-6" 
                 value={form.conta} 
                 onChange={e => setForm({...form, conta: e.target.value})} 
@@ -465,10 +470,10 @@ const FinanceiroContasPage = () => {
             <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 block italic text-center">APORTE INICIAL DE CAPITAL</label>
               <div className="relative">
-                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-primary opacity-50">R$</span>
-                <input 
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-primary opacity-50 z-10">R$</span>
+                <Input 
                   type="number" 
-                  className="w-full bg-black/40 border border-primary/20 rounded-2xl pl-14 pr-6 py-5 text-3xl font-black focus:outline-none focus:border-primary transition-all font-mono text-primary italic tracking-tighter" 
+                  className="pl-14 text-3xl font-mono text-primary italic tracking-tighter" 
                   value={form.saldo_inicial} 
                   onChange={e => setForm({...form, saldo_inicial: Number(e.target.value)})} 
                 />
@@ -477,14 +482,14 @@ const FinanceiroContasPage = () => {
           )}
 
           <div className="flex gap-4 pt-4">
-            <button className="flex-1 btn btn-outline h-14 font-black italic" onClick={() => setIsOpen(false)}>DESCARTAR</button>
-            <button className="flex-[2] btn btn-primary h-14 font-black italic text-lg" onClick={save}>FINALIZAR CONFIGURAÇÃO</button>
+            <Button variant="outline" className="flex-1 h-14 font-black italic border-border/40 hover:bg-white/5" onClick={() => setIsOpen(false)}>DESCARTAR</Button>
+            <Button variant="primary" className="flex-[2] h-14 font-black italic text-lg" onClick={save}>FINALIZAR CONFIGURAÇÃO</Button>
           </div>
         </div>
       </Modal>
 
       {/* Modal Transferência */}
-      <Modal isOpen={showTransferencia} onClose={() => setShowTransferencia(false)} title="MOVIMENTAÇÃO DE TESOURARIA" width="600px">
+      <Modal isOpen={showTransferencia} onClose={() => setShowTransferencia(false)} title="MOVIMENTAÇÃO DE TESOURARIA" size="md">
         <div className="space-y-8 p-4">
           <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[2rem] flex gap-4 items-start">
             <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
@@ -528,9 +533,9 @@ const FinanceiroContasPage = () => {
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic text-center">VALOR DO REPASSE</label>
-              <input 
+              <Input 
                 type="number" 
-                className="w-full bg-transparent border-b-2 border-primary/30 rounded-none text-center text-3xl font-black focus:outline-none focus:border-primary transition-all font-mono text-primary italic tracking-tighter" 
+                className="bg-transparent border-b-2 border-primary/30 rounded-none text-center text-3xl font-mono text-primary italic tracking-tighter focus:ring-0 focus:border-primary" 
                 value={transferForm.valor}
                 onChange={e => setTransferForm({...transferForm, valor: e.target.value})}
                 placeholder="0,00"
@@ -539,21 +544,18 @@ const FinanceiroContasPage = () => {
             <div className="flex flex-col justify-end">
               <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">DATA DA OPERAÇÃO</label>
               <div className="relative">
-                <input 
+                <Input 
                   type="date" 
-                  className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-bold" 
                   value={transferForm.data_movimento}
                   onChange={e => setTransferForm({...transferForm, data_movimento: e.target.value})}
                 />
-                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none" />
               </div>
             </div>
           </div>
 
           <div>
             <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">MEMORIAL DESCRITIVO / OBSERVAÇÃO</label>
-            <input 
-              className="w-full bg-black/60 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-all font-bold" 
+            <Input 
               placeholder="EX: REFORÇO DE CAIXA, PAGAMENTO DE TAXAS..."
               value={transferForm.descricao}
               onChange={e => setTransferForm({...transferForm, descricao: e.target.value})}
@@ -567,20 +569,21 @@ const FinanceiroContasPage = () => {
           )}
 
           <div className="flex gap-4 pt-4">
-            <button className="flex-1 btn btn-outline h-14 font-black italic" onClick={() => setShowTransferencia(false)}>DESCARTAR</button>
-            <button 
-              className="flex-[2] btn btn-primary h-14 font-black italic text-lg shadow-lg shadow-primary/20" 
+            <Button variant="outline" className="flex-1 h-14 font-black italic border-border/40 hover:bg-white/5" onClick={() => setShowTransferencia(false)}>DESCARTAR</Button>
+            <Button 
+              variant="primary"
+              className="flex-[2] h-14 font-black italic text-lg shadow-lg shadow-primary/20" 
               onClick={doTransferencia}
               disabled={transferLoading}
             >
               {transferLoading ? 'PROCESSANDO...' : 'EXECUTAR TRANSFERÊNCIA'}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
 
       {/* Modal Extrato */}
-      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`EXTRATO ANALÍTICO — ${extratoContaNome.toUpperCase()}`} width="1300px">
+      <Modal isOpen={showExtrato} onClose={() => setShowExtrato(false)} title={`EXTRATO ANALÍTICO — ${extratoContaNome.toUpperCase()}`} size="full">
         {extratoLoading ? (
           <div className="h-[600px] p-8 space-y-8 animate-pulse">
             <div className="grid grid-cols-4 gap-4 h-32 bg-white/5 rounded-3xl" />
@@ -613,9 +616,9 @@ const FinanceiroContasPage = () => {
               <div className="flex-1 w-full space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">PESQUISA DINÂMICA</label>
                 <div className="relative">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-50" />
-                  <input 
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:border-primary/50 transition-all" 
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-50 z-10" />
+                  <Input 
+                    className="pl-14" 
                     placeholder="Filtrar por descrição, origem ou tipo de operação..."
                     value={filtroBusca}
                     onChange={e => setFiltroBusca(e.target.value)}
@@ -638,12 +641,12 @@ const FinanceiroContasPage = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button className="btn btn-outline h-[58px] px-8 font-black italic tracking-widest group" onClick={exportCSV}>
+                <Button variant="outline" className="h-[58px] px-8 font-black italic tracking-widest group border-border/40 hover:bg-white/5" onClick={exportCSV}>
                   <Download className="w-5 h-5 mr-2 group-hover:-translate-y-1 transition-transform" /> CSV
-                </button>
-                <button className="btn btn-primary h-[58px] px-8 font-black italic tracking-widest" onClick={() => window.print()}>
+                </Button>
+                <Button variant="primary" className="h-[58px] px-8 font-black italic tracking-widest" onClick={() => window.print()}>
                   <FileText className="w-5 h-5 mr-2" /> PDF
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -715,14 +718,14 @@ const FinanceiroContasPage = () => {
             </div>
 
             <div className="flex justify-end pt-4">
-              <button className="btn btn-primary px-16 h-14 font-black italic text-lg" onClick={() => setShowExtrato(false)}>FECHAR AUDITORIA</button>
+              <Button variant="primary" className="px-16 h-14 font-black italic text-lg" onClick={() => setShowExtrato(false)}>FECHAR AUDITORIA</Button>
             </div>
           </div>
         )}
       </Modal>
 
       {/* Modal Fechamentos */}
-      <Modal isOpen={showFechamento} onClose={() => setShowFechamento(false)} title="FECHAMENTOS DE CICLO" width="750px">
+      <Modal isOpen={showFechamento} onClose={() => setShowFechamento(false)} title="FECHAMENTOS DE CICLO" size="lg">
         <div className="space-y-10 p-4">
           <div className="bg-orange-500/5 border border-orange-500/20 p-8 rounded-[2.5rem] flex gap-6 items-start relative overflow-hidden">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />
@@ -764,7 +767,7 @@ const FinanceiroContasPage = () => {
                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rotate-90 text-primary pointer-events-none" />
               </div>
             </div>
-            <button className="btn btn-primary h-[58px] font-black italic tracking-tight text-base" onClick={saveFechamento}>EFETUAR LACRE</button>
+            <Button variant="primary" className="h-[58px] font-black italic tracking-tight text-base" onClick={saveFechamento}>EFETUAR LACRE</Button>
           </div>
 
           <div>

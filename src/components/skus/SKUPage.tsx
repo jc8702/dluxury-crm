@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, Plus, Search, Loader2, Save, Tag, DollarSign, Package } from 'lucide-react';
 import { api } from '../../lib/api';
-import { Modal } from '../../design-system/components/Modal';
+import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../design-system/components';
 import DataTable from '../ui/DataTable';
 
 const SKUPage: React.FC = () => {
@@ -55,44 +55,45 @@ const SKUPage: React.FC = () => {
   });
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: '2.25rem', fontWeight: '900', color: 'var(--text)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Layers size={32} style={{ color: 'var(--primary)' }} /> Catálogo de Peças / SKUs
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.25rem' }}>
-             Gerenciamento atômico de insumos técnicos e acessórios.
-          </p>
+    <div className="animate-fade-in flex flex-col gap-8">
+      <header className="flex justify-between items-center pb-4 border-b border-border">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary shadow-sm">
+            <Layers size={28} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight uppercase flex items-center gap-2">
+              Catálogo de Peças / SKUs
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Gerenciamento atômico de insumos técnicos e acessórios.
+            </p>
+          </div>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn btn-primary" 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}
-        >
-          <Plus size={20} /> Novo SKU
-        </button>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus size={20} className="mr-2" /> Novo SKU
+        </Button>
       </header>
 
-      <div className="card" style={{ padding: '0.75rem 1.25rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              className="input-base" 
-              style={{ paddingLeft: '2.5rem', width: '100%' }}
+      <Card className="p-4">
+        <CardContent className="p-0 flex gap-4 items-center">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input 
+              className="pl-10" 
               placeholder="Buscar por descrição ou código SKU..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="card" style={{ padding: '0' }}>
+      <div className="card p-6">
         {loading ? (
-          <div style={{ padding: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)' }}>
-            <Loader2 className="animate-spin" /> Sincronizando com o banco industrial...
+          <div className="py-20 flex flex-col justify-center items-center gap-3 text-muted-foreground">
+            <Loader2 className="animate-spin text-primary" size={32} />
+            <span className="text-sm font-semibold tracking-wider">Sincronizando com o banco industrial...</span>
           </div>
         ) : (
           <DataTable 
@@ -100,13 +101,13 @@ const SKUPage: React.FC = () => {
             data={filteredSkus}
             renderRow={(s) => (
               <>
-                <td style={{ padding: '1rem' }}><span className="badge badge-primary">{s.sku}</span></td>
-                <td style={{ padding: '1rem', fontWeight: '600' }}>{s.nome}</td>
-                <td style={{ padding: '1rem' }}>{s.unidade_medida}</td>
-                <td style={{ padding: '1rem' }}>R$ {Number(s.preco_base).toFixed(2)}</td>
-                <td style={{ padding: '1rem' }}>
-                  <span style={{ color: s.ativo ? '#10b981' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.ativo ? '#10b981' : 'var(--text-muted)' }} />
+                <td className="p-4"><span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold border border-primary/20">{s.sku}</span></td>
+                <td className="p-4 font-semibold">{s.nome}</td>
+                <td className="p-4 text-sm">{s.unidade_medida}</td>
+                <td className="p-4 text-sm font-semibold">R$ {Number(s.preco_base).toFixed(2)}</td>
+                <td className="p-4">
+                  <span className={`flex items-center gap-1.5 text-xs font-bold ${s.ativo ? 'text-success' : 'text-muted-foreground'}`}>
+                    <div className={`w-2 h-2 rounded-full ${s.ativo ? 'bg-success' : 'bg-muted-foreground'}`} />
                     {s.ativo ? 'ATIVO' : 'INATIVO'}
                   </span>
                 </td>
@@ -117,73 +118,71 @@ const SKUPage: React.FC = () => {
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo SKU">
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label className="label">Código SKU</label>
-              <div style={{ position: 'relative' }}>
-                <Tag size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  required
-                  className="input-base w-full" 
-                  style={{ paddingLeft: '2.5rem' }}
-                  placeholder="Ex: SKU-FER-001"
-                  value={formData.sku_code}
-                  onChange={e => setFormData({...formData, sku_code: e.target.value})}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="label">Unidade de Medida</label>
-              <select 
-                className="input-base w-full"
-                value={formData.unidade_medida}
-                onChange={e => setFormData({...formData, unidade_medida: e.target.value})}
-              >
-                <option value="UN">Unidade (UN)</option>
-                <option value="MT">Metro (MT)</option>
-                <option value="M2">Metro Quadrado (M2)</option>
-                <option value="KG">Quilo (KG)</option>
-                <option value="CX">Caixa (CX)</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="label">Nome da Peça / SKU</label>
-            <div style={{ position: 'relative' }}>
-              <Package size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input 
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo SKU" size="md">
+        <form onSubmit={handleSave} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <Tag size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
+              <Input 
                 required
-                className="input-base w-full" 
-                style={{ paddingLeft: '2.5rem' }}
-                placeholder="Ex: Dobradiça 35mm Click"
-                value={formData.nome}
-                onChange={e => setFormData({...formData, nome: e.target.value})}
+                label="Código SKU *"
+                className="pl-10" 
+                placeholder="Ex: SKU-FER-001"
+                value={formData.sku_code}
+                onChange={e => setFormData({...formData, sku_code: e.target.value})}
               />
             </div>
-          </div>
-          <div>
-            <label className="label">Preço Base de Custo (R$)</label>
-            <div style={{ position: 'relative' }}>
-              <DollarSign size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input 
-                required
-                type="number"
-                step="0.01"
-                className="input-base w-full" 
-                style={{ paddingLeft: '2.5rem' }}
-                placeholder="0.00"
-                value={formData.preco_base}
-                onChange={e => setFormData({...formData, preco_base: Number(e.target.value)})}
-              />
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Unidade de Medida</label>
+              <Select value={formData.unidade_medida} onValueChange={val => setFormData({...formData, unidade_medida: val})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UN">Unidade (UN)</SelectItem>
+                  <SelectItem value="MT">Metro (MT)</SelectItem>
+                  <SelectItem value="M2">Metro Quadrado (M2)</SelectItem>
+                  <SelectItem value="KG">Quilo (KG)</SelectItem>
+                  <SelectItem value="CX">Caixa (CX)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline flex-1">Cancelar</button>
-            <button type="submit" className="btn btn-primary flex-1" disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" size={20} /> : <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Save size={20} /> Salvar SKU</div>}
-            </button>
+          
+          <div className="relative">
+            <Package size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
+            <Input 
+              required
+              label="Nome da Peça / SKU *"
+              className="pl-10" 
+              placeholder="Ex: Dobradiça 35mm Click"
+              value={formData.nome}
+              onChange={e => setFormData({...formData, nome: e.target.value})}
+            />
+          </div>
+
+          <div className="relative">
+            <DollarSign size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
+            <Input 
+              required
+              type="number"
+              step="0.01"
+              label="Preço Base de Custo (R$) *"
+              className="pl-10" 
+              placeholder="0.00"
+              value={formData.preco_base || ''}
+              onChange={e => setFormData({...formData, preco_base: Number(e.target.value)})}
+            />
+          </div>
+
+          <div className="flex gap-4 mt-4">
+            <Button type="submit" className="flex-1" disabled={saving}>
+              {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
+              Salvar SKU
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
           </div>
         </form>
       </Modal>
@@ -192,4 +191,3 @@ const SKUPage: React.FC = () => {
 };
 
 export default SKUPage;
-

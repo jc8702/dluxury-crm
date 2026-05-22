@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { Chapa } from '../../infrastructure/repositories/ChapaRepository';
+import { Button } from '../../../../design-system/components';
 
 interface CardChapaProps {
   chapa: Chapa;
@@ -20,7 +21,6 @@ export function CardChapa({ chapa, onAdicionar, jaAdicionada }: CardChapaProps) 
           <span role="img" aria-label="board">📦</span>
         )}
       </div>
-+
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1">
@@ -35,17 +35,16 @@ export function CardChapa({ chapa, onAdicionar, jaAdicionada }: CardChapaProps) 
           <span>{chapa.largura}×{chapa.altura} mm</span>
         </div>
 
-        <button
-          className={`w-full py-1.5 rounded font-black transition-all text-[9px] uppercase tracking-widest ${
-            jaAdicionada 
-              ? 'bg-[#404040] text-[#888] cursor-not-allowed' 
-              : 'bg-[#FFA500]/10 text-[#FFA500] border border-[#FFA500]/20 hover:bg-[#FFA500] hover:text-black'
+        <Button
+          variant={jaAdicionada ? "secondary" : "outline"}
+          className={`w-full py-1.5 h-auto text-[9px] uppercase tracking-widest ${
+            !jaAdicionada && 'hover:bg-[#FFA500] hover:text-black border-[#FFA500]/20 text-[#FFA500]'
           }`}
           onClick={onAdicionar}
           disabled={jaAdicionada}
         >
           {jaAdicionada ? 'ADICIONADA' : 'USAR CHAPA'}
-        </button>
+        </Button>
       </div>
     </div>
 

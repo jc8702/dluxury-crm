@@ -9,12 +9,13 @@ import { api } from '../lib/api';
 import type { Notificacao } from '../api-lib/types';
 import { useToast } from '../context/ToastContext';
 import { CardSkeleton } from '../design-system/components/Skeleton';
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '../design-system/components';
 
 const NotificacoesPage: React.FC = () => {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'todas' | 'não_lidas'>('todas');
-  const { error: toastError } = useToast();
+  const { error: toastError, success: toastSuccess } = useToast();
 
   useEffect(() => {
     fetchNotificacoes();
@@ -36,6 +37,7 @@ const NotificacoesPage: React.FC = () => {
     try {
       await api.notificacoes.markAllRead();
       fetchNotificacoes();
+      toastSuccess('Todas as notificações foram marcadas como lidas');
     } catch (_error) {
       toastError('Erro ao marcar todas como lidas');
     }
@@ -52,10 +54,19 @@ const NotificacoesPage: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critica': return '#EF4444';
-      case 'alta': return '#F59E0B';
-      case 'normal': return '#3B82F6';
+      case 'critica': return 'var(--danger)';
+      case 'alta': return 'var(--warning)';
+      case 'normal': return 'var(--primary)';
       default: return 'var(--text-muted)';
+    }
+  };
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    switch (priority) {
+      case 'critica': return 'destructive';
+      case 'alta': return 'warning';
+      case 'normal': return 'primary';
+      default: return 'outline';
     }
   };
 
@@ -70,41 +81,61 @@ const NotificacoesPage: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, color: 'var(--primary)' }}>Central de Notificações</h1>
-          <p style={{ color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>Alertas automáticos do sistema e monitoramento de prazos críticos.</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
+            <Bell style={{ color: 'var(--primary)' }} /> CENTRAL DE NOTIFICAÇÕES
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Alertas automáticos do sistema e monitoramento de prazos críticos</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn-secondary" onClick={() => (api.notificacoes as any).generate().then(fetchNotificacoes)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <RefreshCw size={18} /> Forçar Verificação
-            </button>
-            <button className="btn-primary" onClick={markAllRead} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={18} /> Marcar Todas como Lidas
-            </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Button variant="outline" onClick={() => (api.notificacoes as any).generate().then(fetchNotificacoes)} style={{ fontSize: '0.85rem' }}>
+            <RefreshCw size={16} style={{ marginRight: '0.25rem' }} /> Forçar Verificação
+          </Button>
+          <Button variant="primary" onClick={markAllRead} style={{ fontSize: '0.85rem' }}>
+            <CheckCircle size={16} style={{ marginRight: '0.25rem' }} /> Marcar Todas como Lidas
+          </Button>
         </div>
-      </header>
+      </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ 
+      <Card style={{ overflow: 'hidden' }}>
+        <CardHeader style={{ 
           padding: '1rem 1.5rem', 
           borderBottom: '1px solid var(--border)', 
           display: 'flex', 
+          flexDirection: 'row',
           justifyContent: 'space-between', 
           alignItems: 'center',
-          background: 'rgba(255,b255,255,0.02)'
+          background: 'rgba(255,255,255,0.02)',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-                <TabSmall active={filter === 'todas'} onClick={() => setFilter('todas')}>Todas</TabSmall>
-                <TabSmall active={filter === 'não_lidas'} onClick={() => setFilter('não_lidas')}>Pendentes</TabSmall>
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                {notificacoes.length} notificações encontradas
-            </div>
-        </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button 
+              variant={filter === 'todas' ? 'primary' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('todas')}
+              style={{ borderRadius: '20px', padding: '0.4rem 1rem', fontSize: '0.8rem', fontWeight: 700 }}
+            >
+              Todas
+            </Button>
+            <Button 
+              variant={filter === 'não_lidas' ? 'primary' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('não_lidas')}
+              style={{ borderRadius: '20px', padding: '0.4rem 1rem', fontSize: '0.8rem', fontWeight: 700 }}
+            >
+              Pendentes
+            </Button>
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            {notificacoes.length} notificação{notificacoes.length !== 1 ? 'es' : ''} encontrada{notificacoes.length !== 1 ? 's' : ''}
+          </div>
+        </CardHeader>
 
-        <div style={{ minHeight: '400px' }}>
+        <CardContent style={{ padding: 0, minHeight: '400px' }}>
           {loading ? (
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <CardSkeleton />
@@ -112,121 +143,107 @@ const NotificacoesPage: React.FC = () => {
               <CardSkeleton />
             </div>
           ) : notificacoes.length === 0 ? (
-            <div className="empty-state">
-                <CheckCircle size={48} />
-                <div>
-                  <h3 style={{ margin: 0 }}>Tudo em dia!</h3>
-                  <p style={{ margin: '0.5rem 0 0' }}>Nenhuma notificação {filter === 'não_lidas' ? 'pendente' : 'registrada'}.</p>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', gap: '1rem', color: 'var(--text-secondary)' }}>
+              <CheckCircle size={48} style={{ color: 'var(--success)', opacity: 0.8 }} />
+              <div style={{ textAlign: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>Tudo em dia!</h3>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>Nenhuma notificação {filter === 'não_lidas' ? 'pendente' : 'registrada'}.</p>
+              </div>
             </div>
           ) : (
-            notificacoes.map((n) => (
-              <div 
-                key={n.id} 
-                className="notification-row"
-                style={{ 
-                  display: 'flex', 
-                  gap: '1.5rem', 
-                  padding: '1.5rem', 
-                  borderBottom: '1px solid var(--border)',
-                  background: n.lida ? 'transparent' : 'rgba(226, 172, 0, 0.03)',
-                  transition: 'background 0.2s',
-                  position: 'relative'
-                }}
-              >
-                {!n.lida && (
+            <div>
+              {notificacoes.map((n) => (
+                <div 
+                  key={n.id} 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '1.25rem', 
+                    padding: '1.25rem 1.5rem', 
+                    borderBottom: '1px solid var(--border)',
+                    background: n.lida ? 'transparent' : 'rgba(212, 175, 55, 0.02)',
+                    transition: 'background 0.2s',
+                    position: 'relative'
+                  }}
+                  className="hover:bg-[rgba(255,255,255,0.01)]"
+                >
+                  {!n.lida && (
                     <div style={{ 
-                        position: 'absolute', 
-                        left: 0, 
-                        top: 0, 
-                        bottom: 0, 
-                        width: '4px', 
-                        background: 'var(--primary)' 
+                      position: 'absolute', 
+                      left: 0, 
+                      top: 0, 
+                      bottom: 0, 
+                      width: '4px', 
+                      background: 'var(--primary)' 
                     }} />
-                )}
+                  )}
 
-                <div style={{ 
-                    width: '42px', 
-                    height: '42px', 
+                  <div style={{ 
+                    width: '40px', 
+                    height: '40px', 
                     borderRadius: '50%', 
-                    background: 'rgba(255,255,255,0.05)', 
+                    background: 'rgba(255,255,255,0.04)', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
                     color: getPriorityColor(n.prioridade),
                     flexShrink: 0
-                }}>
-                  {getIcon(n.tipo)}
-                </div>
+                  }}>
+                    {getIcon(n.tipo)}
+                  </div>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text)' }}>
-                      {n.titulo}
-                    </h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Clock size={12} /> {new Date(n.created_at!).toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0.5rem 0 1rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                    {n.mensagem}
-                  </p>
-                  
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    {n.url_destino && (
-                        <button 
-                            className="btn-secondary" 
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                            onClick={() => {
-                                handleMarkRead(n.id);
-                                window.location.hash = n.url_destino!;
-                            }}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text)' }}>
+                          {n.titulo}
+                        </h4>
+                        <Badge variant={getPriorityBadgeVariant(n.prioridade)} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                          {n.prioridade.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Clock size={12} /> {new Date(n.created_at!).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    
+                    <p style={{ margin: '0.5rem 0 0.85rem', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                      {n.mensagem}
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      {n.url_destino && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                          onClick={() => {
+                            handleMarkRead(n.id);
+                            window.location.hash = n.url_destino!;
+                          }}
                         >
-                            Ver Detalhes <ChevronRight size={14} />
-                        </button>
-                    )}
-                    {!n.lida && (
-                        <button 
-                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '600' }}
-                            onClick={() => handleMarkRead(n.id)}
+                          Ver Detalhes <ChevronRight size={14} style={{ marginLeft: '0.25rem' }} />
+                        </Button>
+                      )}
+                      {!n.lida && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600 }}
+                          onClick={() => handleMarkRead(n.id)}
                         >
-                            Marcar como lida
-                        </button>
-                    )}
+                          Marcar como lida
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
-        </div>
-      </div>
-
-      <style>{`
-        .notification-row:hover {
-          background: rgba(255,255,255,0.02) !important;
-        }
-      `}</style>
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-const TabSmall: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    style={{
-      background: active ? 'rgba(226, 172, 0, 0.1)' : 'transparent',
-      color: active ? 'var(--primary)' : 'var(--text-muted)',
-      border: 'none',
-      cursor: 'pointer',
-      fontSize: '0.8rem',
-      fontWeight: '700',
-      padding: '0.4rem 1rem',
-      borderRadius: '20px',
-      transition: 'all 0.2s'
-    }}
-  >
-    {children}
-  </button>
-);
 
 export default NotificacoesPage;

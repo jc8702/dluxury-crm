@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { PieChart, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { Button } from '../design-system/components';
+
 
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -77,12 +79,12 @@ export default function FinanceiroDREPage() {
             {isNegative ? '(' : ''}{fmt(Math.abs(value))}{isNegative ? ')' : ''}
           </div>
           {sectionKey && children && (
-            <button 
+            <Button 
               onClick={() => toggleSection(sectionKey)} 
               className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'}`}
             >
               <TrendingUp className={`w-4 h-4 transition-transform ${expandedSections[sectionKey] ? 'rotate-90' : ''}`} />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -127,19 +129,20 @@ export default function FinanceiroDREPage() {
 
         <div className="flex flex-wrap items-center gap-4">
           {/* Toggle Regime Industrial */}
-          <button
+          <Button
+            variant="outline"
             onClick={() => {
               const novoRegime = regime === 'competencia' ? 'caixa' : 'competencia';
               setRegime(novoRegime);
               loadDRE(periodo.inicio, periodo.fim, novoRegime);
             }}
-            className="btn-outline h-12 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-3 group transition-all"
+            className="h-12 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-3 group transition-all"
           >
             {regime === 'competencia' ? <ToggleLeft className="w-5 h-5 text-muted-foreground" /> : <ToggleRight className="w-5 h-5 text-primary" />}
             <span className={regime === 'caixa' ? 'text-primary' : 'text-muted-foreground'}>
               REGIME: {regime === 'competencia' ? 'COMPETÊNCIA' : 'CAIXA'}
             </span>
-          </button>
+          </Button>
 
           {/* Filtro de Período Industrial */}
           <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-white/5">
@@ -156,12 +159,13 @@ export default function FinanceiroDREPage() {
               value={periodo.fim}
               onChange={e => setPeriodo(p => ({ ...p, fim: e.target.value }))} 
             />
-            <button 
-              className="btn-primary h-10 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-2"
+            <Button 
+              variant="primary"
+              className="h-10 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-2"
               onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}
             >
               <Calendar className="w-4 h-4" /> APLICAR
-            </button>
+            </Button>
           </div>
         </div>
       </div>

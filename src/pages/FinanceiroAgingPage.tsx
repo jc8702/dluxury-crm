@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, X } from 'lucide-react';
+import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../design-system/components/Skeleton';
+import { Button, Modal, Card, CardContent, CardHeader, CardTitle, Badge } from '../design-system/components';
 
 export default function FinanceiroAgingPage() {
   const { warning } = useToast();
@@ -42,7 +43,7 @@ export default function FinanceiroAgingPage() {
     const dataVenc = new Date(item.data_vencimento).toLocaleDateString('pt-BR');
     
     const subject = encodeURIComponent(`Cobrança - Título ${item.numero_titulo}`);
-    const body = encodeURIComponent(`Prezado(a) ${nome},\n\nInformamos que o título ${item.numero_titulo} no valor de ${valor} venceu em ${dataVenc}.\n\nPor favor, entre em contato para regularizar a situação.\n\nAtenciosamente,\nD'LUXURY Ambientes`);
+    const body = encodeURIComponent(`Prezado(a) ${nome},\n\nInformamos que o título ${item.numero_titulo} no valor de ${valor} venceu in ${dataVenc}.\n\nPor favor, entre em contato para regularizar a situação.\n\nAtenciosamente,\nD'LUXURY Ambientes`);
     
     if (email) {
       window.open(`mailto:${email}?subject=${subject}&body=${body}`);
@@ -97,34 +98,30 @@ export default function FinanceiroAgingPage() {
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Análise de atrasos e gestão de cobrança</p>
         </div>
 
-        <div style={{ display: 'flex', background: 'var(--surface-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-          <button 
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Button 
+            variant={modo === 'receber' ? 'primary' : 'ghost'} 
+            size="sm"
             onClick={() => setModo('receber')}
-            style={{ 
-              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-              background: modo === 'receber' ? 'var(--primary)' : 'transparent',
-              color: modo === 'receber' ? 'white' : 'var(--text-muted)',
-              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s'
-            }}>RECEBER</button>
-          <button 
+          >
+            RECEBER
+          </Button>
+          <Button 
+            variant={modo === 'pagar' ? 'primary' : 'ghost'} 
+            size="sm"
             onClick={() => setModo('pagar')}
-            style={{ 
-              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-              background: modo === 'pagar' ? 'var(--primary)' : 'transparent',
-              color: modo === 'pagar' ? 'white' : 'var(--text-muted)',
-              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s'
-            }}>PAGAR</button>
-          <div style={{ width: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
-          <button 
+          >
+            PAGAR
+          </Button>
+          <div style={{ width: '1px', background: 'var(--border)', height: '24px', margin: '0 0.25rem' }} />
+          <Button 
+            variant={historico ? 'secondary' : 'ghost'} 
+            size="sm"
             onClick={() => setHistorico(!historico)}
-            style={{ 
-              padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-              background: historico ? 'var(--warning)' : 'transparent',
-              color: historico ? 'black' : 'var(--text-muted)',
-              fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
-            <Filter />{historico ? 'HISTÓRICO' : 'VENCIDOS'}
-          </button>
+          >
+            <Filter className="w-4 h-4 mr-1" />
+            {historico ? 'HISTÓRICO' : 'VENCIDOS'}
+          </Button>
         </div>
       </div>
 
@@ -136,28 +133,31 @@ export default function FinanceiroAgingPage() {
           const isLate = faixa !== 'A Vencer';
           
           return (
-            <div key={faixa} className="card glass" style={{ 
-              padding: '1.25rem', 
+            <Card key={faixa} className="glass" style={{ 
               borderTop: `4px solid ${isLate ? (total > 0 ? 'var(--danger)' : 'var(--border)') : 'var(--success)'}`,
               opacity: total === 0 ? 0.6 : 1
-            }}>
-              <div className="label-base" style={{ fontSize: '0.65rem' }}>{faixa.toUpperCase()}</div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0.5rem 0' }}>
-                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                {item?.qtd_titulos || 0} título(s)
-              </div>
-            </div>
+            }} padding="none">
+              <CardContent style={{ padding: '1.25rem' }}>
+                <div className="label-base" style={{ fontSize: '0.65rem' }}>{faixa.toUpperCase()}</div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0.5rem 0' }}>
+                  R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  {item?.qtd_titulos || 0} título(s)
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
       {/* Lista Detalhada */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <Card padding="none" style={{ overflow: 'hidden' }}>
         <div style={{ background: 'var(--surface-hover)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800 }}>DETALHAMENTO DE TÍTULOS VENCIDOS</h3>
-          <span className="badge badge-danger">TOTAL VENCIDO: R$ {totalVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+          <Badge variant={totalVencido > 0 ? 'destructive' : 'success'}>
+            TOTAL VENCIDO: R$ {totalVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </Badge>
         </div>
         
         <div style={{ overflowX: 'auto' }}>
@@ -202,7 +202,7 @@ export default function FinanceiroAgingPage() {
                       <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.numero_titulo}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Calendar style={{ opacity: 0.5 }} />
+                          <Calendar style={{ opacity: 0.5 }} className="w-4 h-4" />
                           {new Date(t.data_vencimento).toLocaleDateString('pt-BR')}
                         </div>
                       </td>
@@ -216,9 +216,9 @@ export default function FinanceiroAgingPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="E-mail Cobrança" onClick={() => handleEmail(t)}><Mail /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="WhatsApp" onClick={() => handleWhatsApp(t)}><Phone /></button>
-                          <button className="btn btn-outline" style={{ padding: '0.4rem' }} title="Histórico" onClick={() => handleHistory(t)}><Clock /></button>
+                          <Button variant="outline" size="sm" title="E-mail Cobrança" onClick={() => handleEmail(t)}><Mail className="w-4 h-4" /></Button>
+                          <Button variant="outline" size="sm" title="WhatsApp" onClick={() => handleWhatsApp(t)}><Phone className="w-4 h-4" /></Button>
+                          <Button variant="outline" size="sm" title="Histórico" onClick={() => handleHistory(t)}><Clock className="w-4 h-4" /></Button>
                         </div>
                       </td>
                     </tr>
@@ -228,7 +228,7 @@ export default function FinanceiroAgingPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       <style>{`
         .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); }
@@ -236,47 +236,41 @@ export default function FinanceiroAgingPage() {
       `}</style>
 
       {/* History Modal */}
-      {showHistoryModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
-        }}>
-          <div className="card" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-              <h3>Histórico de Pagamentos</h3>
-              <button onClick={() => setShowHistoryModal(false)} className="btn btn-outline" style={{ padding: '0.5rem' }}><X /></button>
-            </div>
-            {selectedItem && (
-              <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '8px' }}>
-                <strong>{selectedItem.entidade_nome}</strong><br/>
-                <small style={{ color: 'var(--text-muted)' }}>Título: {selectedItem.numero_titulo}</small>
-              </div>
-            )}
-            {historyData.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum histórico encontrado</p>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Data Vencimento</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyData.map((h: any, i: number) => (
-                    <tr key={h.id || i}>
-                      <td>{new Date(h.data_vencimento).toLocaleDateString('pt-BR')}</td>
-                      <td>R$ {Number(h.valor_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                      <td><span className="badge badge-success">{h.status}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+      <Modal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        title="Histórico de Pagamentos"
+        size="md"
+      >
+        {selectedItem && (
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '8px' }}>
+            <strong>{selectedItem.entidade_nome}</strong><br/>
+            <small style={{ color: 'var(--text-muted)' }}>Título: {selectedItem.numero_titulo}</small>
           </div>
-        </div>
-      )}
+        )}
+        {historyData.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Nenhum histórico encontrado</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Data Vencimento</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyData.map((h: any, i: number) => (
+                <tr key={h.id || i}>
+                  <td>{new Date(h.data_vencimento).toLocaleDateString('pt-BR')}</td>
+                  <td>R$ {Number(h.valor_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  <td><Badge variant="success">{h.status}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Modal>
     </div>
   );
 }

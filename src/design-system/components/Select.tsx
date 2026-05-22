@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { cva } from 'class-variance-authority';
 import { cn } from '../utils';
 
@@ -23,6 +23,26 @@ const selectTriggerVariants = cva(
     },
   }
 );
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      selectTriggerVariants({ className }),
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
+  </SelectPrimitive.Trigger>
+));
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
@@ -104,6 +124,7 @@ export {
   Select,
   SelectGroup,
   SelectValue,
+  SelectTrigger,
   SelectContent,
   SelectLabel,
   SelectItem,

@@ -8,8 +8,9 @@ import getDay from 'date-fns/getDay';
 import ptBR from 'date-fns/locale/pt-BR';
 import { 
   Plus, RefreshCw, ChevronLeft, ChevronRight, 
-  Check, AlertTriangle
+  Check, AlertTriangle, Calendar as CalendarIcon
 } from 'lucide-react';
+import { Button, Modal } from '../design-system/components';
 import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
@@ -56,17 +57,6 @@ interface MyEvent {
   data_inicio?: string;
   data_fim?: string;
 }
-
-const DARK_COLORS = {
-  background: '#0f172a',
-  surface: '#1e293b',
-  surfaceHover: '#334155',
-  border: '#334155',
-  text: '#f1f5f9',
-  textMuted: '#94a3b8',
-  primary: '#d4af37',
-  primaryHover: '#e5c158',
-};
 
 const CalendarioPage: React.FC = () => {
   const { loadEvents } = useAppContext();
@@ -181,6 +171,7 @@ const CalendarioPage: React.FC = () => {
         data_fim: new Date(dragConfirm.newEnd).toISOString(),
       });
       await loadEvents();
+      fetchEvents();
     } catch (err) {
       console.error('Erro ao mover evento:', err);
       toastError('Erro ao alterar data do evento');
@@ -222,88 +213,40 @@ const CalendarioPage: React.FC = () => {
     setDate(newDate);
   };
 
-  const styles = {
-    container: {
-      display: 'flex',
-      height: '100vh',
-      background: DARK_COLORS.background,
-      flexDirection: 'column' as const,
-      color: DARK_COLORS.text,
-    },
-    header: {
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'space-between',
-      padding: '16px 24px',
-      borderBottom: `1px solid ${DARK_COLORS.border}`,
-      background: DARK_COLORS.surface,
-    },
-    sidebar: {
-      width: '280px',
-      background: DARK_COLORS.surface,
-      borderRight: `1px solid ${DARK_COLORS.border}`,
-      padding: '20px',
-      overflow: 'auto' as const,
-    },
-    btnPrimary: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '10px 20px',
-      borderRadius: '8px',
-      border: 'none',
-      background: DARK_COLORS.primary,
-      color: '#000',
-      fontSize: '0.9rem',
-      fontWeight: '600',
-      cursor: 'pointer',
-      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.3)',
-    },
-    btnOutline: {
-      padding: '8px 16px',
-      border: `1px solid ${DARK_COLORS.border}`,
-      borderRadius: '6px',
-      background: 'transparent',
-      color: DARK_COLORS.text,
-      cursor: 'pointer',
-    },
-    title: {
-      fontSize: '1.3rem',
-      fontWeight: '700' as const,
-      color: DARK_COLORS.text,
-    },
-    label: {
-      fontSize: '0.75rem',
-      fontWeight: '600' as const,
-      color: DARK_COLORS.textMuted,
-      marginBottom: '8px',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.05em',
-    },
-  };
-
   return (
-    <div style={styles.container}>
+    <div className="page-container anim-fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)', padding: '1rem', gap: '1rem' }}>
       {/* HEADER PREMIUM */}
-      <header style={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <button onClick={() => setDate(new Date())} style={styles.btnOutline}>
+      <header style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        padding: '1rem 1.5rem',
+        borderRadius: '16px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <Button variant="outline" onClick={() => setDate(new Date())} style={{ fontSize: '0.85rem' }}>
             HOJE
-          </button>
+          </Button>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <button onClick={() => navigate(-1)} style={{ ...styles.btnOutline, padding: '8px', borderRadius: '6px' }}>
-              <ChevronLeft size={20} />
-            </button>
-            <button onClick={() => navigate(1)} style={{ ...styles.btnOutline, padding: '8px', borderRadius: '6px' }}>
-              <ChevronRight size={20} />
-            </button>
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)} style={{ padding: '0.5rem' }} aria-label="Anterior">
+              <ChevronLeft size={18} />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)} style={{ padding: '0.5rem' }} aria-label="Próximo">
+              <ChevronRight size={18} />
+            </Button>
           </div>
-          <h2 style={styles.title}>
-            {format(date, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CalendarIcon size={20} style={{ color: 'var(--primary)' }} />
+            {format(date, "MMMM yyyy", { locale: ptBR })}
           </h2>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', background: DARK_COLORS.surfaceHover, borderRadius: '10px', padding: '4px' }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', background: 'hsl(var(--surface-hover))', borderRadius: '10px', padding: '3px', border: '1px solid var(--border)' }}>
             {[
               { id: Views.WEEK, label: 'SEMANA' },
               { id: Views.MONTH, label: 'MÊS' },
@@ -313,15 +256,15 @@ const CalendarioPage: React.FC = () => {
                 key={v.id}
                 onClick={() => setView(v.id)}
                 style={{
-                  padding: '8px 16px',
+                  padding: '0.5rem 1rem',
                   borderRadius: '8px',
                   border: 'none',
-                  background: view === v.id ? DARK_COLORS.primary : 'transparent',
-                  color: view === v.id ? '#000' : DARK_COLORS.textMuted,
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
+                  background: view === v.id ? 'var(--primary)' : 'transparent',
+                  color: view === v.id ? 'black' : 'var(--text-secondary)',
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
                   cursor: 'pointer',
-                  textTransform: 'uppercase',
+                  transition: '0.2s',
                   letterSpacing: '0.05em',
                 }}
               >
@@ -329,76 +272,88 @@ const CalendarioPage: React.FC = () => {
               </button>
             ))}
           </div>
-          <button onClick={fetchEvents} style={{ ...styles.btnOutline, padding: '10px' }}>
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-          </button>
-          <button onClick={() => { setSelectedEvent(null); setShowModal(true); }} style={styles.btnPrimary}>
-            <Plus size={18} />
-            NOVO EVENTO
-          </button>
+          
+          <Button variant="outline" onClick={fetchEvents} disabled={loading} style={{ padding: '0.6rem' }} aria-label="Atualizar agenda">
+            <RefreshCw size={16} className={loading ? 'anim-spin' : ''} />
+          </Button>
+          
+          <Button variant="primary" onClick={() => { setSelectedEvent(null); setShowModal(true); }} style={{ fontSize: '0.85rem' }}>
+            <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVO EVENTO
+          </Button>
         </div>
       </header>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* SIDEBAR DARK */}
-        <aside style={styles.sidebar}>
-          <button
-            onClick={() => { setSelectedEvent(null); setShowModal(true); }}
-            style={styles.btnPrimary}
-          >
-            <Plus size={20} />
-            CRIAR
-          </button>
+      <div style={{ display: 'flex', flex: 1, gap: '1rem', overflow: 'hidden' }}>
+        {/* SIDEBAR */}
+        <aside style={{ 
+          width: '280px', 
+          background: 'var(--surface)', 
+          border: '1px solid var(--border)',
+          borderRadius: '16px',
+          padding: '1.25rem', 
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem',
+          overflowY: 'auto'
+        }} className="custom-scrollbar hidden md:flex">
+          <Button variant="primary" onClick={() => { setSelectedEvent(null); setShowModal(true); }} style={{ width: '100%' }}>
+            <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVO EVENTO
+          </Button>
 
-          <div style={{ marginTop: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <button onClick={() => { const d = new Date(date); d.setMonth(d.getMonth() - 1); setDate(d); }} style={{ ...styles.btnOutline, padding: '6px' }}>
-                <ChevronLeft size={18} />
-              </button>
-              <span style={{ fontSize: '0.95rem', fontWeight: '600', color: DARK_COLORS.text }}>
-                {format(date, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <Button variant="ghost" size="sm" onClick={() => { const d = new Date(date); d.setMonth(d.getMonth() - 1); setDate(d); }} style={{ padding: '0.25rem' }}>
+                <ChevronLeft size={16} />
+              </Button>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'capitalize' }}>
+                {format(date, "MMMM yyyy", { locale: ptBR })}
               </span>
-              <button onClick={() => { const d = new Date(date); d.setMonth(d.getMonth() + 1); setDate(d); }} style={{ ...styles.btnOutline, padding: '6px' }}>
-                <ChevronRight size={18} />
-              </button>
+              <Button variant="ghost" size="sm" onClick={() => { const d = new Date(date); d.setMonth(d.getMonth() + 1); setDate(d); }} style={{ padding: '0.25rem' }}>
+                <ChevronRight size={16} />
+              </Button>
             </div>
-            <Calendar
-              localizer={localizer}
-              date={date}
-              onNavigate={setDate}
-              view={Views.MONTH}
-              onView={() => {}}
-              events={[]}
-              style={{ height: 260 }}
-              toolbar={false}
-            />
+            
+            <div className="mini-calendar-wrapper" style={{ fontSize: '0.75rem' }}>
+              <Calendar
+                localizer={localizer}
+                date={date}
+                onNavigate={setDate}
+                view={Views.MONTH}
+                onView={() => {}}
+                events={[]}
+                style={{ height: 220 }}
+                toolbar={false}
+              />
+            </div>
           </div>
 
-          <div style={{ marginTop: '32px' }}>
-            <h3 style={styles.label}>Calendários</h3>
-            {calendars.map(cal => (
-              <label key={cal.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 8px', borderRadius: '8px', cursor: 'pointer', marginBottom: '4px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={cal.visible}
-                  onChange={() => toggleCalendar(cal.id)}
-                  style={{ accentColor: DARK_COLORS.primary }}
-                />
-                <div style={{ width: '14px', height: '14px', background: cal.color, borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: '500', color: DARK_COLORS.text }}>{cal.label}</span>
-              </label>
-            ))}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtros de Visão</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {calendars.map(cal => (
+                <label key={cal.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s' }} className="hover:bg-[hsl(var(--surface-hover))]">
+                  <input 
+                    type="checkbox" 
+                    checked={cal.visible}
+                    onChange={() => toggleCalendar(cal.id)}
+                    style={{ accentColor: 'var(--primary)' }}
+                  />
+                  <div style={{ width: '12px', height: '12px', background: cal.color, borderRadius: '3px' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{cal.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </aside>
 
         {/* CALENDAR AREA */}
-        <div style={{ flex: 1, padding: '16px' }}>
+        <div style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1rem', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <DragAndDropCalendar
             localizer={localizer}
             events={events.filter(e => calendars.find(c => c.id === e.tipo)?.visible !== false)}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: '100%', background: DARK_COLORS.surface, borderRadius: '16px', padding: '16px' }}
+            style={{ height: '100%' }}
             culture="pt-BR"
             messages={messages}
             eventPropGetter={eventStyleGetter}
@@ -427,172 +382,161 @@ const CalendarioPage: React.FC = () => {
       />
 
       {/* CONFIRM DRAG MODAL */}
-      {dragConfirm.show && dragConfirm.event && dragConfirm.newStart && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-        }}>
-          <div style={{
-            background: DARK_COLORS.surface,
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '90%',
-            border: `1px solid ${DARK_COLORS.border}`,
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-          }}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ 
-                width: '60px', 
-                height: '60px', 
-                borderRadius: '50%', 
-                background: 'rgba(212, 175, 55, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-              }}>
-                <AlertTriangle size={28} color={DARK_COLORS.primary} />
-              </div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: DARK_COLORS.text, marginBottom: '8px' }}>
-                Alterar Data/Hora?
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: DARK_COLORS.textMuted }}>
-                {dragConfirm.event?.title}
-              </p>
-              <div style={{ 
-                marginTop: '12px', 
-                padding: '12px', 
-                background: 'rgba(212, 175, 55, 0.1)', 
-                borderRadius: '8px',
-                border: `1px solid ${DARK_COLORS.primary}`,
-              }}>
-                <p style={{ fontSize: '0.8rem', fontWeight: '600', color: DARK_COLORS.primary }}>
-                  📅 {dragConfirm.newStart?.toLocaleDateString('pt-BR')}
-                </p>
-                <p style={{ fontSize: '0.8rem', color: DARK_COLORS.textMuted }}>
-                  🕐 {dragConfirm.newStart?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
-                  {' - '} 
-                  {dragConfirm.newEnd?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
+      <Modal 
+        isOpen={dragConfirm.show} 
+        onClose={() => handleConfirmDrag(false)} 
+        title="Alterar Data/Hora?"
+      >
+        {dragConfirm.event && dragConfirm.newStart && dragConfirm.newEnd && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center' }}>
+            <div style={{ 
+              width: '56px', 
+              height: '56px', 
+              borderRadius: '50%', 
+              background: 'rgba(212, 175, 55, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto',
+            }}>
+              <AlertTriangle size={24} style={{ color: 'var(--primary)' }} />
             </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => handleConfirmDrag(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${DARK_COLORS.border}`,
-                  background: 'transparent',
-                  color: DARK_COLORS.text,
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-              >
-                CANCELAR
-              </button>
-              <button
-                onClick={() => handleConfirmDrag(true)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: DARK_COLORS.primary,
-                  color: '#000',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                <Check size={18} /> CONFIRMAR
-              </button>
+            
+            <div>
+              <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.25rem 0' }}>
+                {dragConfirm.event.title}
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Tem certeza de que deseja remarcar este evento para a nova data?
+              </p>
+            </div>
+            
+            <div style={{ 
+              padding: '1rem', 
+              background: 'hsl(var(--surface-hover))', 
+              borderRadius: '12px',
+              border: '1px solid var(--border)',
+            }}>
+              <p style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)', margin: '0 0 0.25rem 0' }}>
+                📅 {dragConfirm.newStart.toLocaleDateString('pt-BR')}
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, fontFamily: 'monospace' }}>
+                🕐 {dragConfirm.newStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} 
+                {' - '} 
+                {dragConfirm.newEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <Button variant="outline" onClick={() => handleConfirmDrag(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={() => handleConfirmDrag(true)}>
+                Confirmar
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* GLOBAL STYLES */}
       <style>{`
-        * { box-sizing: border-box; }
-        
         .rbc-calendar { 
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-          background: ${DARK_COLORS.surface};
-          border-radius: 16px;
+          background: transparent;
         }
         .rbc-header { 
-          padding: 14px 0; 
+          padding: 12px 0; 
           font-weight: 700; 
-          color: ${DARK_COLORS.textMuted}; 
-          border-bottom: 1px solid ${DARK_COLORS.border};
+          color: var(--text-secondary); 
+          border-bottom: 1px solid var(--border);
           font-size: 0.75rem;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.05em;
         }
         .rbc-month-view { 
-          border: none; 
+          border: 1px solid var(--border) !important; 
           border-radius: 12px;
+          overflow: hidden;
         }
         .rbc-day-bg { 
-          border-left: 1px solid ${DARK_COLORS.border} !important;
-          background: ${DARK_COLORS.surface};
+          border-left: 1px solid var(--border) !important;
         }
-        .rbc-day-bg + .rbc-day-bg { border-left: 1px solid ${DARK_COLORS.border} !important; }
+        .rbc-day-bg + .rbc-day-bg { border-left: 1px solid var(--border) !important; }
         .rbc-month-row { border-top: none !important; }
-        .rbc-month-row + .rbc-month-row { border-top: 1px solid ${DARK_COLORS.border} !important; }
-        .rbc-off-range-bg { background: ${DARK_COLORS.background} !important; opacity: 0.6; }
+        .rbc-month-row + .rbc-month-row { border-top: 1px solid var(--border) !important; }
+        .rbc-off-range-bg { background: rgba(255,255,255,0.01) !important; opacity: 0.5; }
         .rbc-today { 
-          background: rgba(212, 175, 55, 0.15) !important;
+          background: rgba(212, 175, 55, 0.08) !important;
         }
         .rbc-event { 
           border: none; 
           outline: none;
           font-weight: 600;
         }
-        .rbc-event:focus { outline: 2px solid ${DARK_COLORS.primary}; }
+        .rbc-event:focus { outline: 2px solid var(--primary); }
         .rbc-time-view { 
-          border: none; 
-          background: ${DARK_COLORS.surface};
+          border: 1px solid var(--border) !important; 
           border-radius: 12px;
+          overflow: hidden;
         }
         .rbc-time-header { 
-          border-bottom: 1px solid ${DARK_COLORS.border};
-          background: ${DARK_COLORS.surface};
+          background: var(--surface) !important;
         }
-        .rbc-time-content { border-top: 1px solid ${DARK_COLORS.border}; }
-        .rbc-timeslot-group { border-bottom: 1px solid ${DARK_COLORS.border}; }
-        .rbc-time-slot { border-top: 1px solid rgba(255,255,255,0.03); }
+        .rbc-time-header-content {
+          border-left: 1px solid var(--border) !important;
+        }
+        .rbc-time-content { border-top: 1px solid var(--border); }
+        .rbc-timeslot-group { border-bottom: 1px solid var(--border); min-height: 50px; }
+        .rbc-time-slot { border-top: 1px solid rgba(255,255,255,0.02); }
         .rbc-current-time-indicator {
-          background: ${DARK_COLORS.primary};
+          background: var(--primary);
           height: 2px;
         }
         .rbc-allday-cell { display: none; }
         .rbc-date-cell {
-          padding: 8px;
+          padding: 6px;
           text-align: right;
-          color: ${DARK_COLORS.textMuted};
+          color: var(--text-secondary);
+          font-size: 0.8rem;
         }
         .rbc-date-cell.rbc-now {
-          color: ${DARK_COLORS.primary};
-          font-weight: 700;
+          color: var(--primary);
+          font-weight: 800;
+        }
+        .rbc-label {
+          color: var(--text-secondary) !important;
+          font-size: 0.75rem;
+          padding: 0 6px;
+        }
+        .rbc-month-row {
+          overflow: visible !important;
         }
         
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
+        .mini-calendar-wrapper .rbc-calendar {
+          height: auto !important;
+        }
+        .mini-calendar-wrapper .rbc-month-view {
+          border: none !important;
+        }
+        .mini-calendar-wrapper .rbc-date-cell {
+          padding: 2px;
+          text-align: center;
+          font-size: 0.7rem;
+        }
+        .mini-calendar-wrapper .rbc-header {
+          padding: 4px 0;
+          font-size: 0.65rem;
+        }
+        .mini-calendar-wrapper .rbc-day-bg {
+          border: none !important;
+        }
+        
+        @media (max-width: 768px) {
+          .hidden.md\\:flex {
+            display: none !important;
+          }
+        }
       `}</style>
     </div>
   );

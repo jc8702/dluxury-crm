@@ -3,6 +3,8 @@ import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { CardSkeleton } from '../design-system/components/Skeleton';
+import { Button, Input } from '../design-system/components';
+
 
 // Meios que exigem campo de taxa financeira
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
@@ -172,12 +174,10 @@ export default function FinanceiroTitulosPagarWizard() {
           <div className="animate-fade-in" style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--surface-hover)' }}>
             <label className="label-base">Possui Ordem de Compra (OC)?</label>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <button className={`btn ${hasOC === 'sim' ? 'btn-primary' : 'btn-outline'}`}
-                style={hasOC === 'sim' ? { background: 'var(--danger)' } : {}}
-                onClick={() => setHasOC('sim')}>SIM</button>
-              <button className={`btn ${hasOC === 'nao' ? 'btn-primary' : 'btn-outline'}`}
-                style={hasOC === 'nao' ? { background: 'var(--danger)' } : {}}
-                onClick={() => { setHasOC('nao'); setFormData({ ...formData, pedido_compra_id: '', valor_base: 0 }); }}>NÃO</button>
+              <Button variant={hasOC === 'sim' ? 'danger' : 'outline'}
+                onClick={() => setHasOC('sim')}>SIM</Button>
+              <Button variant={hasOC === 'nao' ? 'danger' : 'outline'}
+                onClick={() => { setHasOC('nao'); setFormData({ ...formData, pedido_compra_id: '', valor_base: 0 }); }}>NÃO</Button>
             </div>
             {hasOC === 'sim' && (
               <div style={{ marginTop: '1rem' }} className="animate-fade-in">
@@ -214,12 +214,8 @@ export default function FinanceiroTitulosPagarWizard() {
           </select>
         </div>
 
-        <div>
-          <label className="label-base" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Número da Duplicata / Título
-            <Info title="Gerado automaticamente. Pode editar para colocar o número da NF." />
-          </label>
-          <input type="text" className="input-base" value={formData.numero_titulo}
+        <div className="space-y-2">
+          <Input type="text" label="Número da Duplicata / Título" value={formData.numero_titulo}
             onChange={e => setFormData({ ...formData, numero_titulo: e.target.value })}
             placeholder="Ex: NF-12345" />
         </div>
@@ -234,14 +230,10 @@ export default function FinanceiroTitulosPagarWizard() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
         {/* Valor base */}
-        <div>
-          <label className="label-base">Valor da Obrigação (sem taxas)</label>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>R$</span>
-            <input type="number" className="input-base" style={{ paddingLeft: '2.5rem' }}
-              value={formData.valor_base}
-              onChange={e => setFormData({ ...formData, valor_base: Number(e.target.value) })} />
-          </div>
+        <div className="space-y-2">
+          <Input type="number" label="Valor da Obrigação (sem taxas)"
+            value={formData.valor_base}
+            onChange={e => setFormData({ ...formData, valor_base: Number(e.target.value) })} />
         </div>
 
         {/* Conta + Meio */}
@@ -270,15 +262,10 @@ export default function FinanceiroTitulosPagarWizard() {
             <AlertCircle /> CUSTO FINANCEIRO / TAXAS (%)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
-            <div>
-              <label className="label-base">Taxa (%)</label>
-              <div style={{ position: 'relative' }}>
-                <input type="number" className="input-base" min={0} max={100} step={0.01}
-                  value={taxaFinanceira}
-                  onChange={e => setTaxaFinanceira(Number(e.target.value))}
-                  style={{ paddingRight: '2.5rem' }} />
-                <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>%</span>
-              </div>
+            <div className="space-y-2">
+              <Input type="number" label="Taxa (%)" min={0} max={100} step={0.01}
+                value={taxaFinanceira}
+                onChange={e => setTaxaFinanceira(Number(e.target.value))} />
             </div>
             <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--surface)', textAlign: 'right' }}>
               {loading ? (
@@ -300,33 +287,24 @@ export default function FinanceiroTitulosPagarWizard() {
 
         {/* Parcelas Manual */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label className="label-base">Quantidade de Parcelas</label>
-            <input type="number" className="input-base" min={1} max={60}
-              value={totalParcelas}
-              onChange={e => setTotalParcelas(Number(e.target.value))} />
-          </div>
-          <div>
-            <label className="label-base">Repetir por X meses (Recorrência)</label>
-            <input type="number" className="input-base" min={1} max={36}
-              value={formData.recorrencia_meses || 1}
-              onChange={e => setFormData({ ...formData, recorrencia_meses: Number(e.target.value) })} />
-          </div>
+          <Input type="number" label="Quantidade de Parcelas" min={1} max={60}
+            value={totalParcelas}
+            onChange={e => setTotalParcelas(Number(e.target.value))} />
+          <Input type="number" label="Repetir por X meses (Recorrência)" min={1} max={36}
+            value={formData.recorrencia_meses || 1}
+            onChange={e => setFormData({ ...formData, recorrencia_meses: Number(e.target.value) })} />
         </div>
 
         {/* Data + Observação */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label className="label-base">Data de Emissão / Competência</label>
-            <input type="date" className="input-base" value={formData.data_base}
-              onChange={e => setFormData({ ...formData, data_base: e.target.value })} />
-          </div>
-          <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+          <Input type="date" label="Data de Emissão / Competência" value={formData.data_base}
+            onChange={e => setFormData({ ...formData, data_base: e.target.value })} />
+          <div className="space-y-2">
              <label className="label-base">Rateio por Projeto? (Opcional)</label>
-             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}
+             <Button variant="outline" style={{ width: '100%', justifyContent: 'center' }}
                onClick={() => setFormData({ ...formData, showRateio: !formData.showRateio })}>
                {formData.showRateio ? 'REMOVER RATEIO' : 'ADICIONAR RATEIO'}
-             </button>
+             </Button>
           </div>
         </div>
 
@@ -334,11 +312,11 @@ export default function FinanceiroTitulosPagarWizard() {
           <div className="animate-fade-in" style={{ padding: '1.25rem', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                DISTRIBUIÇÃO POR PROJETO
-               <button className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+               <Button variant="danger" size="sm" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
                  onClick={() => {
                    const r = formData.rateios || [];
                    setFormData({ ...formData, rateios: [...r, { projeto_id: '', classe_id: formData.classe_financeira_id, valor: 0 }] });
-                 }}>+ ADICIONAR LINHA</button>
+                 }}>+ ADICIONAR LINHA</Button>
             </div>
             {(formData.rateios || []).map((r: any, idx: number) => (
               <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'end' }}>
@@ -366,20 +344,19 @@ export default function FinanceiroTitulosPagarWizard() {
                     {classes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.7rem', opacity: 0.6 }}>Valor (R$)</label>
-                  <input type="number" className="input-base" style={{ height: '36px', fontSize: '0.8rem' }}
+                <div className="space-y-2">
+                  <Input type="number" label="Valor (R$)" style={{ height: '36px', fontSize: '0.8rem' }}
                     value={r.valor} onChange={e => {
                       const newR = [...formData.rateios];
                       newR[idx].valor = Number(e.target.value);
                       setFormData({ ...formData, rateios: newR });
                     }} />
                 </div>
-                <button className="btn btn-outline" style={{ height: '36px', padding: 0, color: 'var(--danger)' }}
+                <Button variant="outline" style={{ height: '36px', padding: 0, color: 'var(--danger)', borderColor: 'var(--danger)' }}
                   onClick={() => {
                     const newR = formData.rateios.filter((_: any, i: number) => i !== idx);
                     setFormData({ ...formData, rateios: newR });
-                  }}>×</button>
+                  }}>×</Button>
               </div>
             ))}
           </div>
@@ -435,10 +412,10 @@ export default function FinanceiroTitulosPagarWizard() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <button className="btn btn-outline" style={{ marginBottom: '2rem' }}
+      <Button variant="outline" style={{ marginBottom: '2rem' }}
         onClick={() => window.location.hash = '#/financeiro/titulos-pagar'}>
         <ArrowLeft /> VOLTAR PARA LISTAGEM
-      </button>
+      </Button>
 
       <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
         {/* Stepper – 3 passos */}
@@ -469,20 +446,21 @@ export default function FinanceiroTitulosPagarWizard() {
 
         {/* Botões */}
         <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
-          <button className="btn btn-outline" disabled={step === 1 || loading}
-            onClick={() => setStep(step - 1)}>ANTERIOR</button>
+          <Button variant="outline" disabled={step === 1} isLoading={loading}
+            onClick={() => setStep(step - 1)}>ANTERIOR</Button>
 
           {step < 3 ? (
-            <button className="btn btn-primary" style={{ background: 'var(--danger)' }}
-              disabled={loading || !formData.fornecedor_id || !formData.classe_financeira_id}
+            <Button variant="danger"
+              disabled={!formData.fornecedor_id || !formData.classe_financeira_id}
+              isLoading={loading}
               onClick={handleNext}>
-              {loading ? <Loader className="animate-spin" /> : <>PRÓXIMO <ArrowRight /></>}
-            </button>
+              PRÓXIMO <ArrowRight />
+            </Button>
           ) : (
-            <button className="btn btn-primary" style={{ background: 'var(--success)' }}
-              disabled={loading} onClick={handleSave}>
-              {loading ? <Loader className="animate-spin" /> : 'CONFIRMAR E GERAR TÍTULOS'}
-            </button>
+            <Button style={{ background: 'var(--success)', borderColor: 'var(--success)', color: '#fff' }}
+              isLoading={loading} onClick={handleSave}>
+              CONFIRMAR E GERAR TÍTULOS
+            </Button>
           )}
         </div>
       </div>

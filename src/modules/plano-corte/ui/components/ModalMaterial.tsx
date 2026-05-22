@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Box, Settings2, Search, X } from 'lucide-react';
+import { Box, Settings2 } from 'lucide-react';
+import { Modal, Button, Input } from '../../../../design-system/components';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
 const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
@@ -15,55 +16,46 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
   );
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hide-on-print" 
-      onClick={onClose} 
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} 
-      tabIndex={-1}
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Selecionar Chapa / Material"
+      size="xl"
     >
-      <div 
-        className="glass-elevated w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-border/40 shadow-2xl flex animate-in fade-in zoom-in duration-300"
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Esquerda: Cadastro do Estoque */}
-        <div className="flex-1 flex flex-col p-8 gap-6 border-r border-border/40 min-h-[500px]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black flex items-center gap-3 tracking-tight">
-              <Box className="text-primary" size={24} /> 
-              Selecionar do Estoque
-            </h3>
-          </div>
+        <div className="md:col-span-2 flex flex-col gap-4 pr-0 md:pr-6 border-r-0 md:border-r border-border min-h-[400px]">
+          <h3 className="text-base font-bold flex items-center gap-2">
+            <Box className="text-primary" size={20} /> 
+            Selecionar do Estoque
+          </h3>
           
-          <div className="relative group">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Buscar por Nome ou SKU..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 bg-background/50 border border-border/40 rounded-xl text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
-            />
-          </div>
+          <Input 
+            type="text" 
+            placeholder="Buscar por Nome ou SKU..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+          <div className="flex-1 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar space-y-2">
             {filtered.map((m: any) => (
               <div 
                 key={m.id} 
                 onClick={() => onAddEstoque(m)} 
-                className="group relative p-4 cursor-pointer bg-white/[0.02] border border-border/40 rounded-2xl hover:border-primary/30 hover:bg-white/[0.04] transition-all"
+                className="group relative p-3 cursor-pointer bg-foreground/5 border border-border/40 rounded-xl hover:border-primary/50 hover:bg-foreground/10 transition-all flex justify-between items-center"
               >
-                <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{m.nome}</div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase">{m.sku}</span>
-                  <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded">
-                    {m.espessura || '?'}MM
-                  </span>
+                <div>
+                  <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{m.nome}</div>
+                  <div className="text-xs font-mono text-muted-foreground mt-1 uppercase tracking-wider">{m.sku}</div>
                 </div>
+                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                  {m.espessura || '?'}MM
+                </span>
               </div>
             ))}
             {filtered.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground opacity-30">
-                <Box size={48} className="mb-4" />
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground opacity-50">
+                <Box size={40} className="mb-2" />
                 <p className="text-xs font-bold uppercase tracking-widest">Nenhuma chapa encontrada</p>
               </div>
             )}
@@ -71,28 +63,24 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
         </div>
 
         {/* Direita: Adição Manual */}
-        <div className="w-[340px] flex flex-col p-8 gap-8 bg-card/20">
-          <div className="flex justify-between items-start">
-            <h3 className="text-xl font-black flex items-center gap-3 tracking-tight">
-              <Settings2 className="text-primary" size={24} /> 
-              Manual
-            </h3>
-            <button onClick={onClose} className="p-1.5 hover:bg-white/5 rounded-lg text-muted-foreground transition-all">
-              <X size={20} />
-            </button>
-          </div>
+        <div className="flex flex-col gap-6">
+          <h3 className="text-base font-bold flex items-center gap-2">
+            <Settings2 className="text-primary" size={20} /> 
+            Inserção Manual
+          </h3>
           
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">ESPESSURA (mm)</label>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Espessura (mm)</label>
               <div className="grid grid-cols-2 gap-2">
                 {ESPESSURAS_PADRAO.map(e => (
                   <button 
                     key={e}
+                    type="button"
                     onClick={() => setManualEsp(e)}
-                    className={`h-10 rounded-xl text-xs font-black border transition-all ${
+                    className={`h-9 rounded-lg text-xs font-bold border transition-all ${
                       manualEsp === e 
-                        ? 'bg-primary border-primary text-primary-foreground shadow-primary' 
+                        ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
                         : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
                     }`}
                   >
@@ -102,16 +90,17 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
               </div>
             </div>
 
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">TIPO DE MATERIAL</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo de Material</label>
               <div className="grid grid-cols-2 gap-2">
                 {TIPOS_PADRAO.map(t => (
                   <button 
                     key={t}
+                    type="button"
                     onClick={() => setManualTipo(t)}
-                    className={`h-10 rounded-xl text-xs font-black border transition-all ${
+                    className={`h-9 rounded-lg text-xs font-bold border transition-all ${
                       manualTipo === t 
-                        ? 'bg-primary border-primary text-primary-foreground shadow-primary' 
+                        ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
                         : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
                     }`}
                   >
@@ -121,16 +110,17 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
               </div>
             </div>
 
-            <button 
+            <Button 
+              type="button"
               onClick={() => onAddManual({ nome: `MDF ${manualTipo}`, sku: `MDF-${manualTipo.toUpperCase()}-${manualEsp}MM`, espessura: manualEsp, tipo: manualTipo })}
-              className="w-full h-12 mt-4 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-primary-foreground font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
+              className="w-full mt-2"
             >
-              + INSERIR CHAPA
-            </button>
+              + Inserir Chapa
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

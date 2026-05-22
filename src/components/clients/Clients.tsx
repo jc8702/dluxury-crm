@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DataTable from '../ui/DataTable';
-import { Modal } from '../../design-system/components/Modal';
+import { Button, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../design-system/components';
 import { useAppContext } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import type { Client } from '../../context/AppContext';
@@ -131,115 +131,84 @@ const Clients: React.FC = () => {
     return projects.filter(p => p.clientName === clientName).length;
   };
 
-  const inputStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    color: 'white',
-    fontSize: '0.95rem',
-    width: '100%',
-    outline: 'none',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '0.75rem',
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: '0.25rem',
-    display: 'block'
-  };
-
   const sectionTitle = (text: string) => (
-    <div style={{
-      fontSize: '0.7rem', fontWeight: 700, color: '#d4af37',
-      textTransform: 'uppercase', letterSpacing: '0.08em',
-      borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem',
-      marginBottom: '0.75rem', marginTop: '1.25rem'
-    }}>{text}</div>
+    <div className="text-[10px] font-bold text-primary uppercase tracking-wider border-b border-border pb-1 mb-3 mt-5">
+      {text}
+    </div>
   );
 
   const headers = ['Cliente', 'WhatsApp', 'Cidade/UF', 'Origem', 'Projetos', 'Status', 'Ações'];
 
   const renderRow = (client: Client) => (
     <>
-      <td style={{ padding: '1rem' }}>
-        <div style={{ fontWeight: '600' }}>{client.nome}</div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+      <td className="p-4">
+        <div className="font-semibold">{client.nome}</div>
+        <div className="text-[11px] text-muted-foreground">
           {client.tipoImovel === 'casa' ? '🏠' : client.tipoImovel === 'apartamento' ? '🏢' : '🏪'} {client.tipoImovel || '-'}
         </div>
       </td>
-      <td style={{ padding: '1rem' }}>
+      <td className="p-4">
         <a href={`https://wa.me/55${client.telefone?.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-          style={{ color: '#25D366', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>
+          className="text-success font-semibold hover:underline text-sm flex items-center gap-1">
           📱 {client.telefone || '-'}
         </a>
       </td>
-      <td style={{ padding: '1rem' }}>{client.cidade ? `${client.cidade}/${client.uf}` : '-'}</td>
-      <td style={{ padding: '1rem' }}>
-        <span style={{
-          fontSize: '0.7rem', fontWeight: 'bold',
-          padding: '0.2rem 0.6rem', borderRadius: '12px',
-          background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37',
-          border: '1px solid rgba(212, 175, 55, 0.2)'
-        }}>
+      <td className="p-4 text-sm text-foreground/80">{client.cidade ? `${client.cidade}/${client.uf}` : '-'}</td>
+      <td className="p-4">
+        <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
           {origemLabels[client.origem || 'outro'] || client.origem}
         </span>
       </td>
-      <td style={{ padding: '1rem', textAlign: 'center' }}>
-        <span style={{
-          fontWeight: 'bold', fontSize: '1rem',
-          color: getProjectCount(client.nome) > 0 ? '#d4af37' : 'var(--text-muted)'
-        }}>
+      <td className="p-4 text-center">
+        <span className={`font-bold text-base ${
+          getProjectCount(client.nome) > 0 ? 'text-primary' : 'text-muted-foreground'
+        }`}>
           {getProjectCount(client.nome)}
         </span>
       </td>
-      <td style={{ padding: '1rem' }}>
-        <span style={{
-          padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold',
-          background: client.status === 'ativo' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          color: client.status === 'ativo' ? '#10b981' : '#ef4444'
-        }}>
+      <td className="p-4">
+        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+          client.status === 'ativo' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+        }`}>
           {client.status === 'ativo' ? 'ATIVO' : 'INATIVO'}
         </span>
       </td>
-      <td style={{ padding: '1rem', display: 'flex', gap: '0.75rem' }}>
-        <button onClick={() => handleEdit(client)}
-          style={{ all: 'unset', cursor: 'pointer', color: '#d4af37', fontSize: '0.75rem', fontWeight: 'bold' }}>Editar</button>
-        <button onClick={() => removeClient(client.id)}
-          style={{ all: 'unset', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 'bold' }}>Excluir</button>
+      <td className="p-4">
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 font-bold" onClick={() => handleEdit(client)}>
+            Editar
+          </Button>
+          <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 font-bold" onClick={() => removeClient(client.id)}>
+            Excluir
+          </Button>
+        </div>
       </td>
     </>
   );
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="animate-fade-in flex flex-col gap-8">
+      <header className="flex justify-between items-center">
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Clientes</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>
-            <p style={{ color: 'var(--text-muted)' }}>Gerencie sua base de clientes pessoa física.</p>
-            <span style={{
-              background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37',
-              padding: '2px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold',
-              border: '1px solid rgba(212, 175, 55, 0.2)'
-            }}>
+          <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-muted-foreground">Gerencie sua base de clientes pessoa física.</p>
+            <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold border border-primary/20">
               {clients.length} Clientes
             </span>
           </div>
         </div>
-        <button className="btn" onClick={() => { setEditingClient(null); resetForm(); setIsModalOpen(true); }}
-          style={{ background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e', fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>
+        <Button onClick={() => { setEditingClient(null); resetForm(); setIsModalOpen(true); }}>
           + Novo Cliente
-        </button>
+        </Button>
       </header>
 
-      <div className="card">
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-          <input
-            type="text" className="input"
+      <div className="card p-6">
+        <div className="flex gap-4 mb-6">
+          <Input
+            type="text"
             placeholder="Buscar por nome, telefone ou cidade..."
-            style={{ flex: 1 }}
+            className="flex-1"
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
@@ -248,156 +217,134 @@ const Clients: React.FC = () => {
         <DataTable headers={headers} data={paginatedClients} renderRow={renderRow} />
 
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn" style={{ padding: '0.5rem 0.75rem', background: 'var(--surface)', border: '1px solid var(--border)' }}
-              disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>←</button>
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <Button variant="secondary" size="sm"
+              disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>←</Button>
             {[...Array(totalPages)].map((_, idx) => (
-              <button key={idx} className="btn"
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: currentPage === idx + 1 ? 'linear-gradient(135deg, #d4af37, #b49050)' : 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: currentPage === idx + 1 ? '#1a1a2e' : 'var(--text-muted)',
-                  fontWeight: 'bold'
-                }}
-                onClick={() => setCurrentPage(idx + 1)}>{idx + 1}</button>
+              <Button key={idx} size="sm"
+                variant={currentPage === idx + 1 ? 'primary' : 'secondary'}
+                onClick={() => setCurrentPage(idx + 1)}>{idx + 1}</Button>
             ))}
-            <button className="btn" style={{ padding: '0.5rem 0.75rem', background: 'var(--surface)', border: '1px solid var(--border)' }}
-              disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>→</button>
+            <Button variant="secondary" size="sm"
+              disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>→</Button>
           </div>
         )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={resetForm}
-        title={editingClient ? `Editar: ${editingClient.nome}` : "Novo Cliente"} width="700px">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        title={editingClient ? `Editar: ${editingClient.nome}` : "Novo Cliente"} size="lg">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           {sectionTitle('Dados Pessoais')}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Nome Completo *</label>
-              <input style={inputStyle} required placeholder="Ex: Maria da Silva"
-                value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>CPF (opcional)</label>
-              <input style={inputStyle} placeholder="000.000.000-00"
-                value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4">
+            <Input label="Nome Completo *" required placeholder="Ex: Maria da Silva"
+              value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
+            <Input label="CPF (opcional)" placeholder="000.000.000-00"
+              value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
           </div>
 
           {sectionTitle('Contato')}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>WhatsApp *</label>
-              <input style={inputStyle} required placeholder="(47) 99789-6229"
-                value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>E-mail</label>
-              <input type="email" style={inputStyle} placeholder="email@exemplo.com"
-                value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="WhatsApp *" required placeholder="(47) 99789-6229"
+              value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} />
+            <Input type="email" label="E-mail" placeholder="email@exemplo.com"
+              value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
           </div>
 
           {sectionTitle('Endereço')}
-          <div>
-            <label style={labelStyle}>Endereço</label>
-            <input style={inputStyle} placeholder="Rua, número"
-              value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Bairro</label>
-              <input style={inputStyle}
-                value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>Cidade</label>
-              <input style={inputStyle}
-                value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>UF</label>
-              <input style={inputStyle} maxLength={2} placeholder="SC"
-                value={formData.uf} onChange={e => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} />
-            </div>
+          <Input label="Endereço" placeholder="Rua, número"
+            value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} />
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr] gap-4">
+            <Input label="Bairro" value={formData.bairro}
+              onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
+            <Input label="Cidade" value={formData.cidade}
+              onChange={e => setFormData({ ...formData, city: e.target.value, cidade: e.target.value })} />
+            <Input label="UF" maxLength={2} placeholder="SC"
+              value={formData.uf} onChange={e => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} />
           </div>
 
           {sectionTitle('Perfil do Lead')}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Tipo de Imóvel</label>
-              <select style={{ ...inputStyle, cursor: 'pointer' }}
-                value={formData.tipoImovel} onChange={e => setFormData({ ...formData, tipoImovel: e.target.value as any })}>
-                <option value="casa" style={{ background: '#1a1a1a' }}>🏠 Casa</option>
-                <option value="apartamento" style={{ background: '#1a1a1a' }}>🏢 Apartamento</option>
-                <option value="comercial" style={{ background: '#1a1a1a' }}>🏪 Comercial</option>
-              </select>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Tipo de Imóvel</label>
+              <Select value={formData.tipoImovel} onValueChange={val => setFormData({ ...formData, tipoImovel: val as any })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="casa">🏠 Casa</SelectItem>
+                  <SelectItem value="apartamento">🏢 Apartamento</SelectItem>
+                  <SelectItem value="comercial">🏪 Comercial</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label style={labelStyle}>Como chegou</label>
-              <select style={{ ...inputStyle, cursor: 'pointer' }}
-                value={formData.origem} onChange={e => setFormData({ ...formData, origem: e.target.value as any })}>
-                <option value="indicacao" style={{ background: '#1a1a1a' }}>👥 Indicação</option>
-                <option value="instagram" style={{ background: '#1a1a1a' }}>📸 Instagram</option>
-                <option value="google" style={{ background: '#1a1a1a' }}>🔍 Google</option>
-                <option value="feira" style={{ background: '#1a1a1a' }}>🎪 Feira/Evento</option>
-                <option value="passante" style={{ background: '#1a1a1a' }}>🚶 Passante</option>
-                <option value="outro" style={{ background: '#1a1a1a' }}>📌 Outro</option>
-              </select>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Como chegou</label>
+              <Select value={formData.origem} onValueChange={val => setFormData({ ...formData, origem: val as any })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a origem..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="indicacao">👥 Indicação</SelectItem>
+                  <SelectItem value="instagram">📸 Instagram</SelectItem>
+                  <SelectItem value="google">🔍 Google</SelectItem>
+                  <SelectItem value="feira">🎪 Feira/Evento</SelectItem>
+                  <SelectItem value="passante">🚶 Passante</SelectItem>
+                  <SelectItem value="outro">📌 Outro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Cômodos de Interesse</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
-              {comodos.map(c => (
-                <button key={c} type="button" onClick={() => toggleComodo(c)}
-                  style={{
-                    padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem',
-                    fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
-                    border: formData.comodosInteresse?.includes(c) ? '1px solid #d4af37' : '1px solid var(--border)',
-                    background: formData.comodosInteresse?.includes(c) ? 'rgba(212,175,55,0.15)' : 'transparent',
-                    color: formData.comodosInteresse?.includes(c) ? '#d4af37' : 'var(--text-muted)',
-                  }}>
-                  {c}
-                </button>
-              ))}
+            <label className="mb-2 block text-sm font-medium text-foreground/90">Cômodos de Interesse</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {comodos.map(c => {
+                const isSelected = formData.comodosInteresse?.includes(c);
+                return (
+                  <Button
+                    key={c}
+                    type="button"
+                    variant={isSelected ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => toggleComodo(c)}
+                  >
+                    {c}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Observações</label>
-            <textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+            <label className="mb-2 block text-sm font-medium text-foreground/90">Observações</label>
+            <textarea
+              className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-h-[80px] resize-vertical transition-colors"
               placeholder="Notas sobre o cliente, referências, preferências..."
-              value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} />
+              value={formData.observacoes}
+              onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
+            />
           </div>
 
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem',
-            background: formData.status === 'ativo' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-            borderRadius: '8px', border: '1px solid var(--border)'
-          }}>
-            <label style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase' }}>Status</label>
-            <select style={{
-              ...inputStyle, fontSize: '1.1rem', fontWeight: 'bold',
-              color: formData.status === 'ativo' ? '#10b981' : '#ef4444'
-            }}
-              value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-              <option value="ativo">✅ ATIVO</option>
-              <option value="inativo">❌ INATIVO</option>
-            </select>
+          <div className={`flex flex-col gap-2 p-4 rounded-xl border border-border mt-2 ${
+            formData.status === 'ativo' ? 'bg-success/5 border-success/10' : 'bg-destructive/5 border-destructive/10'
+          }`}>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</label>
+            <Select value={formData.status} onValueChange={val => setFormData({ ...formData, status: val as any })}>
+              <SelectTrigger className={formData.status === 'ativo' ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                <SelectValue placeholder="Status..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativo">✅ ATIVO</SelectItem>
+                <SelectItem value="inativo">❌ INATIVO</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <button type="submit" className="btn"
-            style={{
-              marginTop: '1rem', padding: '1rem', justifyContent: 'center', fontSize: '1rem',
-              background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
-              fontWeight: '700', border: 'none', borderRadius: '8px', cursor: 'pointer'
-            }}>
+          <Button type="submit" size="lg" fullWidth className="mt-4">
             {editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
-          </button>
+          </Button>
         </form>
       </Modal>
     </div>

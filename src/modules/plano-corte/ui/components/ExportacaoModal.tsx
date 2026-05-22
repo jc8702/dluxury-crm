@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Download, Layers, Printer, X, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Download, Layers, Printer, FileSpreadsheet, Loader2 } from 'lucide-react';
 import type { ResultadoPlano, Superficie } from '../../../../utils/planodeCorte';
 import { exportarMapaCorte } from '../../application/usecases/ExportarMapaCorte';
 import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas';
 import { exportarCNC, salvarArquivoCNC } from '../../application/usecases/ExportarCNC';
 import { useToast } from '../../../../context/ToastContext';
 import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
+import { Modal } from '../../../../design-system/components';
 
 interface ExportacaoModalProps {
   resultado: ResultadoPlano;
@@ -153,61 +154,52 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="glass-elevated w-full max-w-2xl overflow-hidden rounded-3xl border border-border/40 shadow-2xl animate-in zoom-in duration-300">
-        <div className="p-8 border-b border-border/40 flex items-center justify-between bg-card/40">
-          <div>
-            <h2 className="text-2xl font-black text-foreground tracking-tight">CENTRAL DE EXPORTAÇÃO</h2>
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Escolha o formato de saída para produção industrial</p>
-          </div>
-          <button 
-            onClick={onClose} 
-            className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-          >
-            <X size={28} />
-          </button>
-        </div>
-
-        <div className="p-8 grid grid-cols-2 gap-6 bg-card/20">
-          
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Central de Exportação"
+      size="lg"
+    >
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mapa de Corte */}
           <button 
             onClick={handleExportMapaPDF} 
             disabled={isExporting}
-            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-primary/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+            className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform border border-primary/20">
-              <Download size={28} />
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3 group-hover:scale-105 transition-transform border border-primary/20">
+              <Download size={24} />
             </div>
-            <h3 className="font-black text-foreground group-hover:text-primary transition-colors tracking-tight">MAPA DE CORTE (PDF)</h3>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Escala 1:8 em formato A3 para montagem.</p>
+            <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">Mapa de Corte (PDF)</h3>
+            <p className="text-[10px] text-muted-foreground mt-1">Escala 1:8 em formato A3 para montagem na fábrica.</p>
           </button>
 
           {/* Etiquetas */}
           <button 
             onClick={handleExportEtiquetas} 
             disabled={isExporting}
-            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-info/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+            className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 bg-info/10 rounded-xl flex items-center justify-center text-info mb-4 group-hover:scale-110 transition-transform border border-info/20">
-              <Printer size={28} />
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3 group-hover:scale-105 transition-transform border border-primary/20">
+              <Printer size={24} />
             </div>
-            <h3 className="font-black text-foreground group-hover:text-info transition-colors tracking-tight">ETIQUETAS (TÉRMICA)</h3>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Etiquetas 100x50mm com QR Code industrial.</p>
+            <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">Etiquetas (Térmica)</h3>
+            <p className="text-[10px] text-muted-foreground mt-1">Etiquetas 100x50mm com QR Code e informações industriais.</p>
           </button>
 
           {/* G-Code CNC */}
           <button 
             onClick={handleExportGCode} 
             disabled={isExporting || !activeSuperficie}
-            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-success/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+            className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 bg-success/10 rounded-xl flex items-center justify-center text-success mb-4 group-hover:scale-110 transition-transform border border-success/20">
-              <Layers size={28} />
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3 group-hover:scale-105 transition-transform border border-primary/20">
+              <Layers size={24} />
             </div>
-            <h3 className="font-black text-foreground group-hover:text-success transition-colors tracking-tight">ARQUIVO CNC (G-CODE)</h3>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">
-              {activeSuperficie ? `CHAPA ATUAL (${activeSuperficie.id})` : 'SELECIONE UMA CHAPA NO PAINEL PRIMEIRO.'}
+            <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">Arquivo CNC (G-Code)</h3>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {activeSuperficie ? `Chapa atual (Chapa ${activeChapaIdx + 1})` : 'Selecione uma chapa no painel primeiro.'}
             </p>
           </button>
 
@@ -215,25 +207,24 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
           <button 
             onClick={handleExportCSV} 
             disabled={isExporting}
-            className="group flex flex-col items-start p-6 bg-white/[0.02] border border-border/40 rounded-2xl hover:border-pink-500/30 hover:bg-white/[0.04] transition-all text-left disabled:opacity-50"
+            className="group flex flex-col items-start p-5 bg-foreground/5 border border-border/40 rounded-2xl hover:border-primary/50 hover:bg-foreground/10 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-14 h-14 bg-pink-500/10 rounded-xl flex items-center justify-center text-pink-500 mb-4 group-hover:scale-110 transition-transform border border-pink-500/20">
-              <FileSpreadsheet size={28} />
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-3 group-hover:scale-105 transition-transform border border-primary/20">
+              <FileSpreadsheet size={24} />
             </div>
-            <h3 className="font-black text-foreground group-hover:text-pink-500 transition-colors tracking-tight">LISTA DE PEÇAS (CSV)</h3>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-2">Lista bruta para ERPs e sistemas externos.</p>
+            <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">Lista de Peças (CSV)</h3>
+            <p className="text-[10px] text-muted-foreground mt-1">Exportação bruta de peças para ERPs e planilhas externas.</p>
           </button>
-
         </div>
         
         {isExporting && (
-          <div className="p-6 bg-primary/5 border-t border-border/40 flex items-center justify-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <span className="text-xs font-black text-primary uppercase tracking-widest">Gerando arquivo industrial, aguarde...</span>
+          <div className="p-4 bg-primary/5 border border-primary/15 rounded-xl flex items-center justify-center gap-3">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-xs font-bold text-primary">Gerando arquivos de exportação...</span>
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 };
 
