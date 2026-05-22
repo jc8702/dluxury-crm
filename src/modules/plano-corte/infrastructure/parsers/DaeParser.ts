@@ -20,7 +20,7 @@ export class DaeParser {
 
     for (let i = 0; i < geometries.length; i++) {
       const geo = geometries[i];
-      let id = geo.getAttribute('id') || geo.getAttribute('name') || `Componente_${i}`;
+      const id = geo.getAttribute('id') || geo.getAttribute('name') || `Componente_${i}`;
       
       // 1. Tentar parser de tags customizadas (ex: Plugins de Marcenaria)
       const extras = geo.getElementsByTagName("dimensions");

@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { Superficie, PecaPositionada } from '../../../utils/planodeCorte';
+import { Superficie } from '../../../utils/planodeCorte';
 
 export class ExportadorPDF {
   static async exportarPlano(superficies: Superficie[], nomePlano: string) {

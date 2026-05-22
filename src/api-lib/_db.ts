@@ -2,7 +2,10 @@ import { neon } from '@neondatabase/serverless';
 import jwt from 'jsonwebtoken';
 
 const dbUrl = process.env.DATABASE_URL || '';
-const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
+const JWT_SECRET = process.env.APP_JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('APP_JWT_SECRET environment variable is required');
+}
 
 let _neonInstance: any = null;
 
@@ -52,7 +55,7 @@ export const extractAndVerifyToken = (req: any) => {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     
     return { user: decoded, error: null };
-  } catch (e: any) {
+  } catch {
     return { user: null, error: 'Sessão expirada ou inválida' };
   }
 };
@@ -60,8 +63,10 @@ export const extractAndVerifyToken = (req: any) => {
 export const validateAuth = (req: any) => {
   const { user, error } = extractAndVerifyToken(req);
   if (error) {
-    // Para depuração industrial, permitimos sem token, mas com aviso
-    return { authorized: true, user: { id: 'system', name: 'System Admin', role: 'admin' }, error: null };
+    return { authorized: false, user: null, error };
+  }
+  if (!user) {
+    return { authorized: false, user: null, error: 'Token inválido' };
   }
   return { 
     authorized: true, 

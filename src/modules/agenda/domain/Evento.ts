@@ -83,7 +83,7 @@ export class EventoDomain {
     return evento.tipo === 'visita';
   }
 
-  static canMoveTo(evento: Evento, newStatus: string): boolean {
+  static canMoveTo(evento: Evento, _newStatus: string): boolean {
     if (evento.tipo !== 'visita') return false;
     // Regras de transição se houver (ex: não pode voltar de realizado para agendado?)
     // Por enquanto, livre.

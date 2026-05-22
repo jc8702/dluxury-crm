@@ -46,7 +46,6 @@ export function CanvasAvancado({
   layout,
   chapaDimensoes,
   onPecaClick,
-  onExportarPDF,
   executionMode = false,
   pecasCortadasIds = new Set(),
   recomendacaoRetalho,
@@ -237,7 +236,7 @@ export function CanvasAvancado({
   // CLICK EM PEÇA
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = useCallback((_e: React.MouseEvent) => {
     if (!executionMode || !onPecaClick || !hoveredPeca || !localLayout) return;
     const peca = localLayout?.pecas_posicionadas?.find(p => p.id === hoveredPeca);
     if (peca) onPecaClick(peca);
@@ -279,6 +278,7 @@ export function CanvasAvancado({
 
   useEffect(() => {
     fitToScreen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapaDimensoes]);
 
   // ─────────────────────────────────────────────────────────────────────────────

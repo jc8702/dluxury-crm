@@ -21,7 +21,7 @@ describe('Comparação de Otimizadores', () => {
     const initMax = performance.now();
     const max = new MaxRectsOptimizer(2750, 1830, 3);
     const resultMax = max.otimizar(pecas);
-    const tempoMax = performance.now() - initMax;
+    const _tempoMax = performance.now() - initMax;
 
     const initGuil = performance.now();
     const guil = new GuillotineOptimizer(2750, 1830, 3);
@@ -47,12 +47,12 @@ describe('Comparação de Otimizadores', () => {
     const initMax = performance.now();
     const max = new MaxRectsOptimizer(2750, 1830, 3);
     const resultMax = max.otimizar(pecas);
-    const tempoMax = performance.now() - initMax;
+    const _tempoMax = performance.now() - initMax;
 
     const initHybrid = performance.now();
     const hybrid = new HybridOptimizer(2750, 1830, 3);
     const resultHybrid = hybrid.otimizar(pecas, 10);
-    const tempoHybrid = performance.now() - initHybrid;
+    const _tempoHybrid = performance.now() - initHybrid;
 
     // Hybrid deve ter aproveitamento >= MaxRects (tem 10 iterações)
     expect(resultHybrid.aproveitamento).toBeGreaterThanOrEqual(resultMax.aproveitamento * 0.95);

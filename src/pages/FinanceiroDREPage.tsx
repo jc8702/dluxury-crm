@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { PieChart, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
-import { TableSkeleton } from '../design-system/components/Skeleton';
+
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = (v: number) => `${(v || 0).toFixed(1)}%`;
@@ -38,7 +38,7 @@ export default function FinanceiroDREPage() {
     const fim = hoje.toISOString().split('T')[0];
     setPeriodo({ inicio, fim });
     loadDRE(inicio, fim, regime);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDRE = async (inicio: string, fim: string, reg: string) => {
     setLoading(true);

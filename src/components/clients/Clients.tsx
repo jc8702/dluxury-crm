@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import DataTable from '../ui/DataTable';
 import { Modal } from '../../design-system/components/Modal';
 import { useAppContext } from '../../context/AppContext';
+import { useToast } from '../../context/ToastContext';
 import type { Client } from '../../context/AppContext';
 
 const Clients: React.FC = () => {
+  const { error: showToastError } = useToast();
   const { clients, projects, addClient, updateClient, removeClient } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -90,7 +92,7 @@ const Clients: React.FC = () => {
       }
       resetForm();
     } catch (error: any) {
-      alert('Erro ao salvar cliente: ' + error.message);
+      showToastError('Erro ao salvar cliente', error.message);
     }
   };
 

@@ -1,6 +1,6 @@
-import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
+import { sql, validateAuth } from './_db.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { generateText, generateObject, tool } from 'ai';
+import { generateText, generateObject } from 'ai';
 import { z } from 'zod';
 import { gerarProjetoCompleto, gerarOrdemProducao } from '../utils/industrialCopilot.js';
 
@@ -13,13 +13,13 @@ const google = createGoogleGenerativeAI({
 const modelFlash = google('gemini-2.0-flash');
 const modelPro = google('gemini-2.0-flash');
 
-async function listAvailableModels(key: string) {
+async function _listAvailableModels(key: string) {
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
     const data = await res.json();
     if (data.models) return data.models.map((m: any) => m.name.replace('models/', '')).join(', ');
     return 'Nenhum (Chave inválida ou sem permissão)';
-  } catch (e) {
+  } catch {
     return 'Erro ao consultar Google AI';
   }
 }
@@ -43,7 +43,7 @@ async function generateBOM(payload: any) {
       prompt: `Gere uma lista de materiais (BOM) para: ${payload.tipo} (Dimensões: L:${payload.medidas.L}, A:${payload.medidas.A}, P:${payload.medidas.P}). Materiais: ${JSON.stringify(materiais)}`
     });
     return object;
-  } catch (error) {
+  } catch {
     console.warn("Fallback on generateBOM due to error.");
     return { itens: [], estimativa_custo_total: 0, dificuldade_producao: 'media' };
   }
@@ -64,7 +64,7 @@ async function auditSKU(payload: any) {
       prompt: `Verifique se o SKU "${payload.nome}" (${payload.descricao}) é duplicado. Itens: ${JSON.stringify(existentes)}`
     });
     return object;
-  } catch (err) {
+  } catch {
     return { is_duplicado: false, similaridade_pct: 0, categoria_sugerida: 'Geral', recomendacao: 'Falha na validação IA.' };
   }
 }
@@ -89,7 +89,7 @@ async function purchaseSuggestion() {
       prompt: `Analise o estoque e sugira compras: ${JSON.stringify(estoque)}`
     });
     return object;
-  } catch(e) { return { pedidos_sugeridos: [] }; }
+  } catch { return { pedidos_sugeridos: [] }; }
 }
 
 async function detectAnomalies() {
@@ -107,7 +107,7 @@ async function detectAnomalies() {
       prompt: `Identifique anomalias nos dados: ${JSON.stringify(dados)}`
     });
     return object;
-  } catch(e) { return { anomalias: [] }; }
+  } catch { return { anomalias: [] }; }
 }
 
 async function analyzeProposal(payload: any) {
@@ -127,7 +127,7 @@ async function analyzeProposal(payload: any) {
       prompt: `Analise esta proposta comercial:\n\nCliente: ${cliente}\nItens: ${JSON.stringify(itens)}\n\nConsidere: margens, complexidade, prazo e histórico do cliente.`
     });
     return object;
-  } catch(e) { return { viability_score: 50, pontos_fortes: [], pontos_fracos: [], risco_factor: 'medio', sugestao_preco: 0, observacoes: 'Erro na análise' }; }
+  } catch { return { viability_score: 50, pontos_fortes: [], pontos_fracos: [], risco_factor: 'medio', sugestao_preco: 0, observacoes: 'Erro na análise' }; }
 }
 
 async function translateDescription(payload: any) {
@@ -138,7 +138,7 @@ async function translateDescription(payload: any) {
       prompt: `Traduza para ${targetLang || 'inglês'}: ${text}`
     });
     return { original: text, translated, lang: targetLang };
-  } catch(e) { return { original: text, translated: text, lang: targetLang }; }
+  } catch { return { original: text, translated: text, lang: targetLang }; }
 }
 
 async function generateProposalPDF(payload: any) {
@@ -149,10 +149,10 @@ async function generateProposalPDF(payload: any) {
       prompt: `Gere um orçamento profissional em formato markdown para:\n\nCliente: ${cliente}\nItens: ${JSON.stringify(itens)}\nTotal: R$ ${total}\nValidade: ${validade}\n\nInclua: cabeçalho, descrição dos serviços, valores, condições.`
     });
     return { markdown: text, generated_at: new Date().toISOString() };
-  } catch(e) { return { markdown: 'Erro ao gerar PDF', generated_at: new Date().toISOString() }; }
+  } catch { return { markdown: 'Erro ao gerar PDF', generated_at: new Date().toISOString() }; }
 }
 
-async function forecastDemand(payload: any) {
+async function forecastDemand(_payload: any) {
   const historico = await sql`
     SELECT DATE_TRUNC('month', created_at) as mes, SUM(valor_total) as receita
     FROM titulos_receber 
@@ -172,7 +172,7 @@ async function forecastDemand(payload: any) {
       prompt: `Analise o histórico de vendas e faça previsão de demanda:\n\nHistórico: ${JSON.stringify(historico)}\n\nUse análise de série temporal simples.`
     });
     return object;
-  } catch(e) { return { previsao_proximo_mes: 0, tendencia: 'estavel', sazonalidade: [], recomendacoes: [] }; }
+  } catch { return { previsao_proximo_mes: 0, tendencia: 'estavel', sazonalidade: [], recomendacoes: [] }; }
 }
 
 // ===============================
@@ -267,7 +267,7 @@ async function parseIntent(message: string, history: any[] = []): Promise<Intent
   try {
     // Chamada direta para evitar problemas de fetch em ambiente serverless
     const text = await getRawLLMIntent(message, history);
-    console.log("RAW LLM RESPONSE:", text);
+    /* console.log("RAW LLM RESPONSE:", text); */
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
 
@@ -287,7 +287,6 @@ async function parseIntent(message: string, history: any[] = []): Promise<Intent
 
 const SKUService = {
   async checkDuplicity(descricao: string) {
-    const searchString = `%${descricao.split(' ')[0]}%${descricao.split(' ').slice(-1)}%`;
     const r = await sql`SELECT sku, nome FROM materiais WHERE nome ILIKE ${'%' + descricao + '%'} LIMIT 1`;
     return r.length > 0 ? r[0] : null;
   },
@@ -475,7 +474,7 @@ async function handleAnalyzeStock() {
   return { message: report };
 }
 
-async function handleGetLast() {
+async function _handleGetLast() {
   const sku = await SKUService.getLast();
   if (!sku) return { message: "Nenhum item encontrado no banco de dados." };
   return { message: `Último item cadastrado:\n\nSKU: ${sku.skuId}\nDescrição: ${sku.descricao}` };
@@ -487,7 +486,7 @@ async function handleSearch(entities: Entities) {
   return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
 }
 
-async function handleListByFamilia(entities: Entities) {
+async function _handleListByFamilia(entities: Entities) {
   if (!entities.familia) return { message: "Qual família deseja listar?" };
   const r = await SKUService.listByFamilia(entities.familia);
   if (!r || !r.length) return { message: "Nenhum item encontrado." };
@@ -498,7 +497,7 @@ async function processUserMessage(message: string, history: any[] = []) {
   try {
     // 1. Identificar a INTENÇÃO do usuário usando o LLM
     const intent = await parseIntent(message, history);
-    console.log("INTENT IDENTIFICADA:", intent.type);
+    /* console.log("INTENT IDENTIFICADA:", intent.type); */
 
     // 2. Despachar para o Handler Específico
     switch (intent.type) {

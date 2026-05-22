@@ -49,7 +49,7 @@ export async function handleProduction(req: any, res: any) {
  * Sincroniza as previsões de entrega de toda a fila ativa
  */
 async function syncQueueForecasting() {
-  const allOps = await sql`SELECT * FROM ordens_producao WHERE status != 'FINALIZADA' ORDER BY created_at ASC`;
+  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' ORDER BY created_at ASC`;
   if (allOps.length === 0) return;
 
   const previstos = calcularPrevisaoEntrega(allOps as any);
@@ -66,14 +66,14 @@ async function syncQueueForecasting() {
 }
 
 async function listOPs(res: any) {
-  const ops = await sql`SELECT * FROM ordens_producao WHERE deleted_at IS NULL ORDER BY created_at DESC`;
+  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL ORDER BY created_at DESC`;
   
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
   const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
   if (precisaSincronizar) {
-    console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...');
+    /* console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
     await syncQueueForecasting();
-    const opsAtualizadas = await sql`SELECT * FROM ordens_producao ORDER BY created_at DESC`;
+    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao ORDER BY created_at DESC`;
     return res.status(200).json({ success: true, data: opsAtualizadas });
   }
 
@@ -86,7 +86,7 @@ async function listOPs(res: any) {
 async function createOP(req: any, res: any) {
   const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id } = req.body;
 
-  console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, orcamento_id });
+  /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, orcamento_id }); */
 
   if (!op_id || !produto) {
     console.error('[CREATE_OP] Missing required fields:', { op_id, produto });
@@ -113,7 +113,7 @@ async function createOP(req: any, res: any) {
     const { user } = validateAuth(req);
     await auditLog('ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
 
-    console.log('[CREATE_OP] Created:', novaOP);
+    /* console.log('[CREATE_OP] Created:', novaOP); */
 
     // Atualizar fila
     await syncQueueForecasting();
@@ -157,7 +157,7 @@ async function updateOPDetails(req: any, res: any) {
   // If changed peças, recalcula previsões
   await syncQueueForecasting();
 
-  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch (e) {
+  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch {
     // Ignore window reference error on server-side
   }
 
@@ -213,9 +213,9 @@ async function updateOPStatus(req: any, res: any) {
       for (const p of pecas) {
         if (p && p.operator_checked === false) { piecesComplete = false; break; }
       }
-    } catch (e) {
-      // Ignore metadata parsing issues
-    }
+  } catch {
+    // Ignore window reference error on server-side
+  }
 
     // If attempting to advance to next productive stage (not allowing revert to AGUARDANDO), block if incomplete
     const fluxo: string[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];

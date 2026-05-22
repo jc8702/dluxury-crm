@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Bell, CheckCircle, Mail, AlertTriangle, 
-  Trash2, Filter, Search, ChevronRight, 
+  Bell, CheckCircle, Mail, 
+  ChevronRight, 
   Clock, Package, FileText, Calendar, 
-  Settings, RefreshCw
+  RefreshCw
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Notificacao } from '../api-lib/types';
@@ -18,7 +18,7 @@ const NotificacoesPage: React.FC = () => {
 
   useEffect(() => {
     fetchNotificacoes();
-  }, [filter]);
+  }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchNotificacoes = async () => {
     setLoading(true);
@@ -36,7 +36,7 @@ const NotificacoesPage: React.FC = () => {
     try {
       await api.notificacoes.markAllRead();
       fetchNotificacoes();
-    } catch (error) {
+    } catch (_error) {
       toastError('Erro ao marcar todas como lidas');
     }
   };

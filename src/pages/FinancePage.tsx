@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  TrendingUp, DollarSign, CreditCard, ArrowUpRight, ArrowDownLeft, 
+  TrendingUp, DollarSign, ArrowUpRight, ArrowDownLeft, 
   Layers, AlertTriangle, CheckCircle, PieChart as PieChartIcon, 
-  AlertCircle, Repeat, RefreshCw, Activity, Wallet, Calendar,
-  ExternalLink, ChevronRight
+  AlertCircle, Repeat, RefreshCw, Activity, Wallet,
+  ExternalLink
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend, ReferenceLine
 } from 'recharts';
-import { CardSkeleton, TableSkeleton } from '../design-system/components/Skeleton';
+ 
 import type { KPIFinanceiro, CapitalGiroHistorico } from '../modules/financeiro/domain/types';
 
 // ────────────────────────────────────────────────────────────────────────────────

@@ -81,9 +81,10 @@ export class InsumosService {
           data: new Date().toISOString()
         });
       }
-      console.log(`[Estoque] Baixa de ${ferragens.length} tipos de ferragens processada.`);
+      /* console.log(`[Estoque] Baixa de ${ferragens.length} tipos de ferragens processada.`) */;
     } catch (err) {
       console.error('Erro ao baixar ferragens no estoque:', err);
     }
   }
 }
+

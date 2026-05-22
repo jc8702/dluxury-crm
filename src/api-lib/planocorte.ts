@@ -1,5 +1,5 @@
 import { db } from './drizzle-db.js';
-import { planosDeCorte, erpChapas, erpSkusEngenharia, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
+import { planosDeCorte, erpChapas, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
 import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
@@ -144,7 +144,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           });
         } else {
           const { user } = validateAuth(req);
-          const { plano_id, materiais, resultado, KPIs } = req.body;
+          const { plano_id, materiais, resultado } = req.body;
           const [before] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, plano_id));
           
           const [atualizado] = await db.update(planosDeCorte)
@@ -420,7 +420,7 @@ export async function handleImportarDesenho(req: any, res: any) {
         return p;
       });
     
-    console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas.`);
+    /* console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas.`); */
     
     return res.status(200).json({ 
       success: true, 

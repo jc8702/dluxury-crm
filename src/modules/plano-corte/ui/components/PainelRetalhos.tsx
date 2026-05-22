@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Retalho, FiltrosRetalho } from '../../domain/entities/Retalho';
 import { retalhosRepository } from '../../infrastructure/repositories/RetalhosRepository';
+import { useToast } from '../../../../context/ToastContext';
 import { 
   Package, 
   Search, 
@@ -11,11 +12,11 @@ import {
   Filter,
   CheckCircle2,
   AlertTriangle,
-  RefreshCcw,
   Loader2
 } from 'lucide-react';
 
 export const PainelRetalhos: React.FC = () => {
+  const { error: toastError } = useToast();
   const [retalhos, setRetalhos] = useState<Retalho[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<FiltrosRetalho>({ disponivel: true });
@@ -23,6 +24,7 @@ export const PainelRetalhos: React.FC = () => {
 
   useEffect(() => {
     carregarEstoque();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtro]);
 
   const carregarEstoque = async () => {
@@ -54,8 +56,8 @@ export const PainelRetalhos: React.FC = () => {
     try {
       await retalhosRepository.descartarRetalho(id, 'Descarte manual via painel');
       carregarEstoque();
-    } catch (error) {
-      alert('Erro ao descartar retalho');
+    } catch (_error) {
+      toastError('Erro ao descartar retalho');
     }
   };
 

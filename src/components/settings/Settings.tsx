@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { useToast } from '../../context/ToastContext';
+import { CardSkeleton } from '../../design-system/components/Skeleton';
 import { api } from '../../lib/api';
 import type { ConfiguracaoPrecificacao } from '../../context/AppContext';
 
 const Settings: React.FC = () => {
   const { 
     user, systemUsers, loadSystemUsers,
-    condicoesPagamento, addCondicaoPagamento, updateCondicaoPagamento, removeCondicaoPagamento
+    addCondicaoPagamento, updateCondicaoPagamento
   } = useAppContext();
 
   const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
@@ -19,12 +21,14 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     loadSystemUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Gestão de Condições de Pagamento
   const [showCondModal, setShowCondModal] = useState(false);
   const [newCond, setNewCond] = useState({ nome: '', n_parcelas: 1 });
   const [editingCondId, setEditingCondId] = useState<string | null>(null);
+  const { error: toastError, success: toastSuccess } = useToast();
 
   const handleAddCond = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +41,9 @@ const Settings: React.FC = () => {
       setShowCondModal(false);
       setNewCond({ nome: '', n_parcelas: 1 });
       setEditingCondId(null);
-    } catch (err: any) {
-      alert('Erro ao salvar condição');
+      toastSuccess('Condição salva com sucesso');
+    } catch (_err: any) {
+      toastError('Erro ao salvar condição');
     }
   };
 
@@ -61,7 +66,7 @@ const Settings: React.FC = () => {
         await api.users.delete(id);
         await loadSystemUsers();
       } catch (err: any) {
-        alert(err.message || 'Erro ao remover usuário');
+        toastError(err.message || 'Erro ao remover usuário');
       }
     }
   };
@@ -313,6 +318,7 @@ export default Settings;
 
 // ─── SEÇÃO DE PRECIFICAÇÃO TÉCNICA ───────────────────────
 const TechnicalPricingSection: React.FC = () => {
+  const { error: toastError, success: toastSuccess } = useToast();
   const [config, setConfig] = useState<ConfiguracaoPrecificacao | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -328,9 +334,9 @@ const TechnicalPricingSection: React.FC = () => {
     setSaving(true);
     try {
       await api.orcamentoTecnico.updateConfig(config);
-      alert('Configurações salvas com sucesso!');
-    } catch (err) {
-      alert('Erro ao salvar configurações.');
+      toastSuccess('Configurações salvas com sucesso!');
+    } catch (_err) {
+      toastError('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
@@ -341,7 +347,7 @@ const TechnicalPricingSection: React.FC = () => {
     borderRadius: '8px', padding: '0.75rem', color: 'white', width: '100%', outline: 'none',
   };
 
-  if (loading) return null;
+  if (loading) return <CardSkeleton />;
 
   return (
     <div className="card glass" style={{ marginTop: '2rem' }}>

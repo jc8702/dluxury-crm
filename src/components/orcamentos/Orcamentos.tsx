@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useAppContext } from '../../context/AppContext';
 import { api } from '../../lib/api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
   Plus, Search, Trash2, Edit2, 
-  Save, FileDown, Send, Link as LinkIcon,
+  Send,
   AlertCircle, Check
 } from 'lucide-react';
 import { useEscClose } from '../../hooks/useEscClose';
@@ -26,6 +27,7 @@ interface EstimateItem {
 }
 
 const Estimates: React.FC = () => {
+  const { error: toastError, success: toastSuccess } = useToast();
   const { clients, projects } = useAppContext();
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
@@ -35,7 +37,7 @@ const Estimates: React.FC = () => {
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [showItemForm, setShowItemForm] = useState(false);
   const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [skuSearch, setSkuSearch] = useState('');
@@ -126,8 +128,8 @@ const Estimates: React.FC = () => {
       }));
       setItems(mappedItems);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
-      alert("Erro ao carregar orçamento para edição.");
+    } catch (_e) {
+      toastError("Erro ao carregar orçamento para edição.");
     } finally {
       setLoading(false);
     }
@@ -135,17 +137,18 @@ const Estimates: React.FC = () => {
 
   useEffect(() => {
     loadHistory();
+     
   }, []);
 
   useEscClose(() => { if (showItemForm) setShowItemForm(false); });
 
   const saveBudget = async () => {
     if (!selectedClient) {
-      alert("Selecione um cliente para salvar o orçamento.");
+      toastError("Selecione um cliente para salvar o orçamento.");
       return;
     }
     if (items.length === 0) {
-      alert("Adicione pelo menos um móvel ao orçamento.");
+      toastError("Adicione pelo menos um móvel ao orçamento.");
       return;
     }
 
@@ -178,17 +181,17 @@ const Estimates: React.FC = () => {
 
       if (editingId) {
         await api.orcamentos.update(editingId, orcData);
-        alert("Orçamento atualizado com sucesso!");
+        toastSuccess("Orçamento atualizado com sucesso!");
       } else {
         await api.orcamentos.create(orcData);
-        alert("Orçamento gravado com sucesso no histórico!");
+        toastSuccess("Orçamento gravado com sucesso no histórico!");
       }
       
       setEditingId(null);
       loadHistory();
       clearDraft();
     } catch (e: any) {
-      alert("Erro ao salvar orçamento: " + e.message);
+      toastError("Erro ao salvar orçamento", e.message);
     } finally {
       setSaving(false);
     }
@@ -198,10 +201,10 @@ const Estimates: React.FC = () => {
     try {
       setSaving(true);
       await api.orcamentos.update(id, { status: newStatus });
-      alert(`Status atualizado para ${newStatus.toUpperCase()}!`);
+      toastSuccess(`Status atualizado para ${newStatus.toUpperCase()}!`);
       loadHistory();
     } catch (e: any) {
-      alert("Erro ao atualizar status: " + e.message);
+      toastError("Erro ao atualizar status", e.message);
     } finally {
       setSaving(false);
     }
@@ -222,15 +225,15 @@ const [newItem, setNewItem] = useState({
     laborHours: 0, laborRate: 0, woodPrice: 0, precoEngenharia: 0
   });
 
-  const woodTypes = ['MDF 15mm', 'MDF 18mm', 'MDF 25mm', 'MDP 15mm', 'MDP 18mm', 'Compensado 15mm', 'Compensado 18mm', 'Madeira Maciça', 'Natulac', 'Freijó', 'Imbuia', 'Fórmica', 'Laminado'];
+  const _woodTypes = ['MDF 15mm', 'MDF 18mm', 'MDF 25mm', 'MDP 15mm', 'MDP 18mm', 'Compensado 15mm', 'Compensado 18mm', 'Madeira Maciça', 'Natulac', 'Freijó', 'Imbuia', 'Fórmica', 'Laminado'];
 
   const addItem = () => {
     if (!newItem.sku) {
-      alert("Selecione um SKU de engenharia.");
+      toastError("Selecione um SKU de engenharia.");
       return;
     }
     if (newItem.quantity < 1) {
-      alert("Quantidade deve ser pelo menos 1.");
+      toastError("Quantidade deve ser pelo menos 1.");
       return;
     }
     const item: EstimateItem = { ...newItem, id: Date.now().toString() };
@@ -251,7 +254,7 @@ const [newItem, setNewItem] = useState({
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const clientProjects = useMemo(() => {
+  const _clientProjects = useMemo(() => {
     if (!selectedClient) return [];
     return projects.filter(p => {
       if (p.clientId && p.clientId === selectedClient) return true;
@@ -260,7 +263,7 @@ const [newItem, setNewItem] = useState({
     });
   }, [projects, clients, selectedClient]);
 
-  const generatePDF_Export = async (itemsList: any[], clientName: string, budgetNum: string, total: number, obs: string) => {
+  const generatePDF_Export = async (itemsList: any[], clientName: string, budgetNum: string, total: number, _obs: string) => {
     const doc = new jsPDF();
     
     // Header

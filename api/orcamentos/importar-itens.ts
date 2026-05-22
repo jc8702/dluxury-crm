@@ -1,5 +1,5 @@
 import { db } from '../../src/api-lib/drizzle-db.js';
-import { orcamentoItens, skuComponente, orcamentoListaExplodida } from '../../src/db/schema/engenharia-orcamentos.js';
+import { skuComponente } from '../../src/db/schema/engenharia-orcamentos.js';
 import { recalcularOrcamento } from '../../src/api-lib/orcamentos_pro.js';
 import { eq, sql } from 'drizzle-orm';
 
@@ -8,7 +8,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  console.log('📥 [IMPORTAÇÃO] Iniciando processamento de itens...');
+  /* console.log('📥 [IMPORTAÇÃO] Iniciando processamento de itens...') */
 
   try {
     const { orcamento_id, itens } = req.body;
@@ -64,7 +64,7 @@ export default async function handler(req: any, res: any) {
             precoVenda = parseFloat(componente.precoVenda?.toString() || (custoUnitario * 1.3).toString());
             matchedSKU = componente.id;
             countComSKU++;
-            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por código explícito`);
+            /* console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por código explícito`) */;
           }
         } catch (err) {
           console.warn(`⚠️ [MATCH] Erro ao buscar SKU ${skuCsvExplicito}:`, err);
@@ -97,7 +97,7 @@ export default async function handler(req: any, res: any) {
             precoVenda = parseFloat(comp.preco_venda?.toString() || (custoUnitario * 1.3).toString());
             matchedSKU = comp.id;
             countComSKU++;
-            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por dimensões similares`);
+            /* console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por dimensões similares`) */;
           }
         } catch (err) {
           console.warn(`⚠️ [MATCH] Erro ao buscar por dimensões:`, err);
@@ -131,7 +131,7 @@ export default async function handler(req: any, res: any) {
             precoVenda = parseFloat(comp.preco_venda?.toString() || (custoUnitario * 1.3).toString());
             matchedSKU = comp.id;
             countComSKU++;
-            console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por similaridade de nome`);
+            /* console.log(`✅ [MATCH] SKU ${skuCodigo} encontrado por similaridade de nome`) */;
           }
         } catch (err) {
           console.warn(`⚠️ [MATCH] Erro ao buscar por nome:`, err);
@@ -141,7 +141,7 @@ export default async function handler(req: any, res: any) {
       // Se não encontrou nada, marca como sem SKU
       if (!matchedSKU) {
         countSemSKU++;
-        console.log(`⚠️ [MATCH] Item "${nomeFinal}" sem SKU encontrado - será adicionado como avulso`);
+        /* console.log(`⚠️ [MATCH] Item "${nomeFinal}" sem SKU encontrado - será adicionado como avulso`) */;
       }
 
       const observacoes = [
@@ -168,8 +168,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    console.log(`📝 [IMPORTAÇÃO] Inserindo ${itensProcessados.length} itens no banco...`);
-    console.log(`📊 [RESUMO] ${countComSKU} com SKU | ${countSemSKU} sem SKU`);
+    /* console.log(`📝 [IMPORTAÇÃO] Inserindo ${itensProcessados.length} itens no banco...`) */;
+    /* console.log(`📊 [RESUMO] ${countComSKU} com SKU | ${countSemSKU} sem SKU`) */;
 
     const itensInseridos = [];
     
@@ -220,13 +220,13 @@ export default async function handler(req: any, res: any) {
     if (itensInseridos.length > 0) {
       try {
         await recalcularOrcamento(orcamento_id);
-        console.log(`💰 [IMPORTAÇÃO] Orçamento recalculado com sucesso.`);
+        /* console.log(`💰 [IMPORTAÇÃO] Orçamento recalculado com sucesso.`) */;
       } catch (recalcErr) {
         console.error('❌ [IMPORTAÇÃO] Erro no recalculo:', recalcErr);
       }
     }
 
-    console.log(`✅ [IMPORTAÇÃO] Sucesso: ${itensInseridos.length}/${itensProcessados.length} itens importados.`);
+    /* console.log(`✅ [IMPORTAÇÃO] Sucesso: ${itensInseridos.length}/${itensProcessados.length} itens importados.`) */;
 
     return res.status(200).json({
       success: true,
@@ -257,3 +257,4 @@ export default async function handler(req: any, res: any) {
 }
 
 export const handleImportarItensOrcamento = handler;
+

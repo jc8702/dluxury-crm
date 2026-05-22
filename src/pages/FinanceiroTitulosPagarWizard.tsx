@@ -46,8 +46,8 @@ export default function FinanceiroTitulosPagarWizard() {
   const valorComTaxa = formData.valor_base + valorCustoFinanceiro;
 
   // Forma selecionada
-  const formaSelecionada = formasPagamento.find(f => f.id === formData.forma_pagamento_id);
-  const exibeTaxa = formaSelecionada && MEIOS_COM_TAXA.includes(formaSelecionada.tipo);
+  const _formaSelecionada = formasPagamento.find(f => f.id === formData.forma_pagamento_id);
+  const _exibeTaxa = _formaSelecionada && MEIOS_COM_TAXA.includes(_formaSelecionada.tipo);
 
   useEffect(() => {
     const loadOpts = async () => {
@@ -116,7 +116,7 @@ export default function FinanceiroTitulosPagarWizard() {
         });
         setPreview(res.data?.parcelas || res.parcelas || []);
         setStep(3);
-      } catch (err: any) {
+      } catch (_err: any) {
         error('Erro ao calcular parcelas. Verifique os dados preenchidos.');
       } finally {
         setLoading(false);

@@ -1,4 +1,4 @@
-import { ParseadorProjeto, TipoMovelEnum } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto.js';
+import { ParseadorProjeto } from '../modules/plano-corte/infrastructure/parsers/ParseadorProjeto.js';
 import { ProcessadorProjeto } from '../modules/engenharia/application/usecases/ProcessadorProjeto.js';
 import { sql } from '../api-lib/_db.js';
 import { HybridOptimizer } from '../modules/plano-corte/domain/services/HybridOptimizer.js';
@@ -99,7 +99,7 @@ export async function gerarPecas(p: Projeto): Promise<Peca[]> {
       // TODO: Implementar interpretador de fórmulas para regras_bom
       // Por enquanto, seguimos com a heurística local mais segura
     }
-  } catch (e) {
+  } catch (_e) {
     console.warn("Tabela projeto_tipos não encontrada ou erro no DB. Usando heurística local.");
   }
 
@@ -248,7 +248,7 @@ export function gerarNumeroOP(): string {
 
 export async function gerarOrdemProducao(msg: string): Promise<OrdemProducao> {
   const projetoCompleto = await gerarProjetoCompleto(msg);
-  const { projeto, pecas, planoDeCorte, analise_financeira } = projetoCompleto;
+  const { projeto, pecas, planoDeCorte } = projetoCompleto;
 
   return {
     opId: gerarNumeroOP(),

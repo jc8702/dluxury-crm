@@ -8,18 +8,18 @@
 export function withMiddleware(handler: (req: any, res: any) => any) {
   return async (req: any, res: any) => {
     try {
-      const start = Date.now();
+      const _start = Date.now();
 
       // SANITIZAÇÃO BÁSICA DE INPUTS
       const body = sanitize(req.body);
 
       // LOG DE REQUISIÇÃO
       if (process.env.NODE_ENV !== 'test') {
-        console.log('[REQUEST]', {
+        /* console.log('[REQUEST]', {
           path: req.url,
           method: req.method,
           ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
-        });
+        }) */;
       }
 
       // EXECUTA O HANDLER
@@ -27,7 +27,7 @@ export function withMiddleware(handler: (req: any, res: any) => any) {
 
       // LOG DE RESPOSTA
       if (process.env.NODE_ENV !== 'test') {
-        console.log('[RESPONSE TIME]', Date.now() - start, 'ms');
+        /* console.log('[RESPONSE TIME]', Date.now() - start, 'ms') */;
       }
 
       return result;

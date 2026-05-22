@@ -10,7 +10,7 @@ import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroTitulosReceberPage() {
-  const { success, error, warning } = useToast();
+  const { success, error } = useToast();
   const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [rows, setRows] = useState<Titulo[]>([]);
   const [page, setPage] = useState(1);
@@ -83,7 +83,8 @@ export default function FinanceiroTitulosReceberPage() {
     }
   };
 
-  useEffect(() => { load(page); }, [page]);
+  useEffect(() => { load(page);
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 

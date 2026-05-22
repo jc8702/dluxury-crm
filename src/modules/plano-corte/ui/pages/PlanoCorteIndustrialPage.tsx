@@ -2,29 +2,15 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
-  Plus, 
-  Trash2, 
-  Search, 
   Upload, 
   Scissors, 
   Save, 
   Clock, 
-  Box, 
-  ChevronRight, 
-  Layers, 
-  Maximize2, 
   Zap, 
   FileText, 
-  Download, 
-  Settings, 
-  Play, 
-  Info, 
-  AlertCircle,
   X,
   CheckCircle,
   Printer, 
-  Settings2, 
-  FileUp, 
   Cpu, 
   Loader2
 } from 'lucide-react';
@@ -162,7 +148,6 @@ export default function PlanoCorteIndustrialPage() {
   }, [resultados]);
 
   const handleAddPeca = useCallback((chapaId: string) => {
-    console.log('[Industrial] Adicionando peça na chapa:', chapaId);
     const novaPeca: Peca = {
       id: `peca_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       nome: 'NOVA PEÇA',
@@ -177,7 +162,6 @@ export default function PlanoCorteIndustrialPage() {
         if (c.id !== chapaId) return c;
         return { ...c, pecas: [...c.pecas, novaPeca] };
       });
-      console.log('[Industrial] Novas chapas:', novasChapas);
       return { ...prev, chapas: novasChapas };
     });
 
@@ -402,7 +386,7 @@ export default function PlanoCorteIndustrialPage() {
                   setProjeto(p);
                   if (p.chapas.length > 0) setChapaAtivaId(p.chapas[0].id);
                   showToast('PDF Demo carregado com sucesso!', 'success');
-                } catch (err) {
+                } catch (_err) {
                   showToast('Erro ao carregar demo.', 'error');
                 }
               }, 1000);

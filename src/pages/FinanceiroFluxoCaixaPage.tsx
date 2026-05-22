@@ -32,7 +32,7 @@ export default function FinanceiroFluxoCaixaPage() {
 
   useEffect(() => {
     loadFluxo(granularity, regime);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadFluxo = async (gran: Granularity, reg: Regime) => {
     setLoading(true);

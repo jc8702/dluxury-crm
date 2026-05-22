@@ -87,7 +87,7 @@ export class ExportadorEtiquetas {
     }
 
     if (isFirst) {
-      alert("Nenhuma peça para gerar etiqueta.");
+      console.warn("Nenhuma peça para gerar etiqueta.");
       return;
     }
 

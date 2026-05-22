@@ -1,9 +1,10 @@
-import React, { Suspense, lazy, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
+const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
@@ -119,41 +120,31 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// Componente para garantir que o usuário admin esteja sempre logado
-function AuthBypass({ children }: { children: React.ReactNode }) {
-  const { setUser, user } = useAppContext();
+function AuthGuard() {
+  const { user, authLoading } = useAppContext();
 
-  useEffect(() => {
-    if (!user) {
-      setUser({
-        id: 'bypass-id',
-        name: 'Administrador',
-        email: 'admin@dluxury.com',
-        role: 'admin'
-      });
-    }
-  }, [user, setUser]);
-
-  return <>{children}</>;
+  if (authLoading) return <LoadingScreen />;
+  if (!user) return <LoginPage />;
+  return <Outlet />;
 }
 
 import OrcamentoForm from './modules/orcamentos/pages/OrcamentoForm';
 
 export default function App() {
   return (
-    <AppProvider>
-      <ErrorBoundary>
-        <ToastProvider>
+    <ToastProvider>
+      <AppProvider>
+        <ErrorBoundary>
           <HashRouter>
             <Suspense fallback={<LoadingScreen />}>
-              <AuthBypass>
-                <Routes>
+              <Routes>
                   {/* Rotas Públicas */}
                   <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
                   <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
                   
-                  {/* Rotas Principais */}
-                  <Route path="/" element={<Layout />}>
+                  {/* Rotas Autenticadas */}
+                  <Route element={<AuthGuard />}>
+                    <Route path="/" element={<Layout />}>
                     <Route index element={<Navigate to="/painel" replace />} />
                     <Route path="painel" element={<DashboardPage />} />
                     <Route path="clientes" element={<ClientsPage />} />
@@ -189,14 +180,14 @@ export default function App() {
                     <Route path="notificacoes" element={<NotificacoesPage />} />
                     <Route path="compras" element={<ComprasPage />} />
                   </Route>
+                  </Route>
 
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-              </AuthBypass>
             </Suspense>
           </HashRouter>
-        </ToastProvider>
-      </ErrorBoundary>
-    </AppProvider>
+        </ErrorBoundary>
+      </AppProvider>
+    </ToastProvider>
   );
 }

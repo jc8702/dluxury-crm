@@ -1,56 +1,193 @@
-# Relatório de Achados Técnicos e Auditoria (Fase 4)
+# Achados Técnicos - Auditoria Profunda
 
-Este documento detalha as falhas e vulnerabilidades detectadas durante a auditoria de qualidade técnica profunda realizada no ERP D'Luxury, abrangendo lógica de negócio, integrações, performance, UX/UI e segurança.
+Este documento contém os achados técnicos da auditoria realizada, classificados por severidade.
+
+## Resumo
+
+| Severidade | Quantidade | IDs |
+|------------|-----------|------|
+| Crítica | 4 | F001, F002, F003, F004 |
+| Alta | 6 | F005, F009, F010, F011, F014, F022 |
+| Média | 13 | F006, F007, F008, F012, F013, F016, F017, F019, F020, F023, F024, F025, F028 |
+| Baixa | 5 | F015, F018, F021, F026, F027 |
+| **Total** | **28** | |
+
+## Lista Detalhada de Achados
+
+### 🔴 CRÍTICOS (4)
+
+#### F001 - AuthBypass forçando admin sem autenticação
+- **Módulo:** Autenticação
+- **Arquivo:** `src/App.tsx:123-138`
+- **Descrição:** AuthBypass define usuário admin automaticamente quando user é null, ignorando fluxo de login
+- **Causa Provável:** Bypass de desenvolvimento mantido em produção
+- **Impacto:** Acesso admin total sem autenticação
+
+#### F002 - validateAuth sempre retorna authorized=true
+- **Módulo:** Autenticação
+- **Arquivo:** `src/api-lib/_db.ts:60-71`
+- **Descrição:** Função de validação de token JWT sempre permite acesso mesmo sem token válido
+- **Causa Provável:** "Depuração industrial" nunca removida
+- **Impacto:** APIs aceitam requisições sem token
+
+#### F003 - Auth comentada no handleClients
+- **Módulo:** Autenticação
+- **Arquivo:** `src/api-lib/crm.ts:6-8`
+- **Descrição:** Verificação de token completamente comentada no CRUD de clientes
+- **Causa Provável:** Debug local nunca reativado
+- **Impacto:** Dados de clientes expostos sem autenticação
+
+#### F004 - JWT Secret hardcoded
+- **Módulo:** Segurança
+- **Arquivo:** `src/api-lib/auth.ts:6, src/api-lib/_db.ts:5`
+- **Descrição:** Secret 'dluxury-industrial-secret-2024' hardcoded como fallback
+- **Causa Provável:** Valor padrão inseguro para variável de ambiente
+- **Impacto:** Qualquer um pode forjar JWTs
+
+### 🟠 ALTOS (6)
+
+#### F005 - CORS '*' no servidor dev
+- **Módulo:** Segurança
+- **Arquivo:** `dev-api-server.js:17`
+- **Descrição:** Access-Control-Allow-Origin: '*'
+- **Causa Provável:** Config genérica para dev
+- **Impacto:** Qualquer origem pode acessar API em dev
+
+#### F009 - Bundle principal com 1.4MB
+- **Módulo:** Performance
+- **Arquivo:** `dist/assets/index-CZAzboHn.js`
+- **Descrição:** Código principal sem code-splitting granular
+- **Causa Provável:** Configuração manualChunks sub-ótima
+- **Impacto:** Carregamento inicial lento
+
+#### F010 - CartesianChart com 333KB
+- **Módulo:** Performance
+- **Arquivo:** `dist/assets/CartesianChart-DGcE6D9H.js`
+- **Descrição:** Recharts sem tree-shaking
+- **Causa Provável:** Biblioteca pesada sem lazy loading
+- **Impacto:** 333KB extra em páginas com gráficos
+
+#### F011 - Páginas individuais muito grandes
+- **Módulo:** Performance
+- **Arquivo:** `CalendarioPage (251KB), RetalhosPage (257KB)`
+- **Descrição:** Páginas com dependências pesadas não code-splitted
+- **Causa Provável:** react-big-calendar e plano de corte sem divisão
+- **Impacto:** 250KB+ para páginas específicas
+
+#### F014 - Uso excessivo de 'any'
+- **Módulo:** Qualidade de Código
+- **Arquivo:** `src/pages/*.tsx (94 ocorrências)`
+- **Descrição:** ESLint config com '@typescript-eslint/no-explicit-any': 'off'
+- **Causa Provável:** Desenvolvimento rápido prioriza funcionalidade
+- **Impacto:** Perda de segurança de tipos
+
+#### F022 - Rotas da API duplicadas
+- **Módulo:** Integração
+- **Arquivo:** `api/index.ts vs src/lib/api.ts`
+- **Descrição:** Rotas inconsistentes e abreviações não documentadas
+- **Causa Provável:** Crescimento orgânico sem padrão
+- **Impacto:** Manutenção confusa, possíveis conflitos
+
+### 🟡 MÉDIOS (13)
+
+#### F006 - Stack traces expostas em erros 500
+- **Módulo:** Segurança
+- **Arquivo:** `api/index.ts:351-355`
+- **Descrição:** err.stack incluso na resposta de erro
+- **Impacto:** Vazamento de informação interna
+
+#### F007 - SELECT * generalizado
+- **Módulo:** Segurança
+- **Arquivo:** `Múltiplos (59 ocorrências)`
+- **Descrição:** Over-fetching de dados sensíveis
+- **Impacto:** Dados desnecessários trafegados
+
+#### F008 - Falta validação de entrada em auth
+- **Módulo:** Segurança
+- **Arquivo:** `src/api-lib/auth.ts:13-14`
+- **Descrição:** Sem validação de formato de email/senha
+- **Impacto:** Dados malformatados
+
+#### F012 - PDF worker 1.2MB global
+- **Módulo:** Performance
+- **Arquivo:** `dist/assets/pdf.worker.min-iDqQPrd3.mjs`
+- **Descrição:** pdfjs-dist carregado globalmente
+- **Impacto:** Download desnecessário de 1.2MB
+
+#### F013 - 249 console.log em produção
+- **Módulo:** Qualidade de Código
+- **Arquivo:** `Múltiplos (249 ocorrências)`
+- **Descrição:** Logs de debug no código
+- **Impacto:** Poluição do console, vazamento de info
+
+#### F016 - useEffect com deps ausentes
+- **Módulo:** Qualidade de Código
+- **Arquivo:** `Múltiplos componentes`
+- **Descrição:** 10+ useEffect com array vazio []
+- **Impacto:** Possíveis bugs de stale closures
+
+#### F017 - Código de debug comentado
+- **Módulo:** Qualidade de Código
+- **Arquivo:** `src/api-lib/crm.ts, _init.ts`
+- **Descrição:** Bypass de auth comentado no código
+- **Impacto:** Risco de reativação acidental
+
+#### F019 - alert() para erros
+- **Módulo:** UX/UI
+- **Arquivo:** `src/components/clients/Clients.tsx:93, Settings.tsx:41`
+- **Descrição:** alert() bloqueante em vez de toasts
+- **Impacto:** Má experiência do usuário
+
+#### F020 - Tratamento de erros inconsistente
+- **Módulo:** UX/UI
+- **Arquivo:** `Múltiplas páginas`
+- **Descrição:** Alguns alert(), outros console.error()
+- **Impacto:** Erros silenciosos
+
+#### F023 - Rotas duplicadas financeiro
+- **Módulo:** Integração
+- **Arquivo:** `api/index.ts:236-239`
+- **Descrição:** handleFinanceiro gerencia rotas duplicadas
+- **Impacto:** Comportamento imprevisível
+
+#### F024 - Import TS sem transpilação
+- **Módulo:** Integração
+- **Arquivo:** `dev-api-server.js:3`
+- **Descrição:** import de .ts sem loader configurado
+- **Impacto:** dev:api pode falhar
+
+#### F025 - Rate limiting por IP
+- **Módulo:** Segurança
+- **Arquivo:** `api/index.ts:60-66`
+- **Descrição:** Rate limit por IP pode ser contornado
+- **Impacto:** Bloqueio de usuários legítimos
+
+#### F028 - html2canvas 198KB global
+- **Módulo:** Performance
+- **Arquivo:** `package.json:32`
+- **Descrição:** Dependência pesada sem lazy loading
+- **Impacto:** 198KB desnecessários
+
+### 🔵 BAIXOS (5)
+
+#### F015 - Ordem de definição no Settings
+#### F018 - Nomenclatura inconsistente case
+#### F021 - Falta tratamento de loading
+#### F026 - chunkSizeWarningLimit alto
+#### F027 - EmptyState inconsistente
 
 ---
 
-## 1. FALHAS CRÍTICAS
+## Plano de Correção
 
-### 🔴 BUG 01: Falha de JOIN por Incompatibilidade de Tipos no Pós-Venda
-* **Módulo Impactado:** Pós-Vendas (After-Sales)
-* **Arquivo/Rota:** `src/api-lib/after_sales.ts` (Linha 23) -> GET `/api/after-sales`
-* **Descrição:** A listagem de chamados de garantia faz um JOIN entre `chamados_garantia` e `clients`. No banco de dados físico Neon Postgres, a tabela `clients` define `id` como `INTEGER`, mas a tabela `chamados_garantia` armazena `cliente_id` como `TEXT`. O banco não realiza cast automático, lançando o erro `operator does not exist: text = integer` e respondendo com status HTTP 500.
-* **Impacto:** Bloqueio completo do uso do módulo de Pós-Venda.
-* **Causa Provável:** Falta de alinhamento estrutural durante as migrações incrementais do banco de dados.
-* **Ação Corretiva:** Aplicar cast explícito no JOIN na query: `c.cliente_id = CAST(cl.id AS TEXT)`.
+### Prioridade Crítica/ Alta (10 itens):
+1. F004 - Remover JWT secret hardcoded
+2. F005 - Corrigir CORS dev-api-server
+3. F006 - Remover stack trace de erros
+4. F013 - Configurar ESLint para console
+5. F019 - Substituir alert() por toast
 
----
+### Prioridade Média (baixo risco):
+6. F024 - Corrigir import TS
 
-## 2. FALHAS ALTAS / MÉDIAS
-
-### 🟡 BUG 02: Falha Silenciosa de Migração Kanban para Projetos
-* **Módulo Impactado:** Projetos
-* **Arquivo/Rota:** `src/api-lib/projects.ts` (Linha 69) -> GET/POST `/api/projects`
-* **Descrição:** O script tenta sincronizar de forma automatizada os projetos a partir do histórico legado de `kanban_items`. A query SQL de inserção tenta consultar `ki.created_at`, mas essa coluna não existe fisicamente na tabela `kanban_items` (que possui apenas `updated_at`, `date_time`, etc.). A migração falha silenciosamente, registrando o erro no console de backend mas respondendo HTTP 200 OK porque o erro é interceptado por um bloco `catch`.
-* **Impacto:** Itens legados do Kanban não são migrados automaticamente para novos Projetos, impedindo a transição fluida do sistema legado.
-* **Causa Provável:** Definição da tabela `kanban_items` alterada em outra etapa sem o correspondente ajuste na query de migração do módulo de Projetos.
-* **Ação Corretiva:** Remover o campo `ki.created_at` e usar `ki.updated_at` ou `NOW()`.
-
-### 🟡 GAP 01: Vulnerabilidade à Falta de Tipagem (High ESLint Noise)
-* **Módulo Impactado:** Geral (Backend & Frontend)
-* **Descrição:** Presença de 3595 problemas no ESLint. A maioria são erros de tipo `any` declarados no backend (`@typescript-eslint/no-explicit-any`) e falhas de nomenclatura `camelcase` devido aos nomes de campos baseados nas colunas físicas do banco de dados (ex: `cliente_id`).
-* **Impacto:** O alto volume de ruído de lint mascara erros reais de tipagem que poderiam ser capturados pelo compilador do TypeScript antes do deploy, aumentando a fragilidade do código.
-* **Causa Provável:** Mapeamento direto de schemas SQL sem o uso de DTOs ou adaptadores de tipagem adequados.
-* **Ação Corretiva:** Configurar exceções no linter ou tipar os retornos e entradas das APIs de forma estrita.
-
----
-
-## 3. FALHAS BAIXAS
-
-### 🟢 BUG 03: Instabilidade e Flakiness de Testes no Plano de Corte
-* **Módulo Impactado:** Plano de Corte
-* **Arquivo/Rota:** `src/modules/plano-corte/__tests__/Comparacao.test.ts` (Linha 35)
-* **Descrição:** O teste automatizado de comparação de performance realiza uma otimização com 4 peças simples e assenta que o algoritmo Guillotine (`tempoGuil`) deve ser estritamente mais rápido que o MaxRects (`tempoMax`). Devido à curtíssima duração do processamento para poucas peças (frações de milissegundo), variações no agendamento do processador (CPU jitter) e aquecimento de VM JIT geram falhas de asserção intermitentes no Vitest.
-* **Impacto:** Quebra ocasional e falsa da suíte de testes (CI/CD vermelho) sem que exista de fato um bug na lógica de otimização de plano de corte.
-* **Causa Provável:** Asserção de tempo muito rígida sobre operações de micro-segundos.
-* **Ação Corretiva:** Alterar a asserção rígida para uma asserção de corretude ou de estabilidade de execução.
-
----
-
-## 4. ANÁLISE DE SEGURANÇA E PERFORMANCE
-* **Segurança Básica:**
-  - As chaves de acesso sensíveis e URLs de banco de dados estão centralizadas em arquivos `.env` e `.env.local` e devidamente listadas no `.gitignore`, prevenindo vazamentos acidentais no GitHub.
-  - No entanto, a ausência de sanitização explícita e tratamento forte em inputs de APIs complexas como Financeiro representa uma superfície de risco.
-* **Performance:**
-  - O módulo avançado de Orçamentos PRO já conta com índices de banco de dados aplicados no Neon Postgres para explosão de BOM.
-  - A paginação e o limite de queries no backend de projetos (`LIMIT 10` ou `LIMIT 20` dependendo da busca) ajudam a mitigar payloads gigantescos.
+### Demais itens: Requerem refatoração maior (não aplicado nesta rodada)

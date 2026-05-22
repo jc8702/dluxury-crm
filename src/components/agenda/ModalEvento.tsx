@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, MapPin, User, FileText, CheckCircle, Clock, Trash2, Tag } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { X, Calendar, MapPin, Clock, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 import { useEscClose } from '../../hooks/useEscClose';
@@ -13,8 +14,9 @@ interface ModalEventoProps {
 }
 
 const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, eventToEdit }) => {
+  const { error: toastError } = useToast();
   useEscClose(isOpen ? onClose : () => {});
-  const { clients, projects } = useAppContext();
+  const { clients } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     tipo: 'compromisso',
@@ -88,21 +90,19 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
       onSave();
       onClose();
     } catch (error: any) {
-      alert('Erro ao salvar: ' + error.message);
-    } finally {
-      setLoading(false);
+      toastError('Erro ao salvar', error.message);
+
     }
   };
 
   const handleDelete = async () => {
-    if (!eventToEdit?.id || !window.confirm('Tem certeza que deseja excluir este evento?')) return;
     setLoading(true);
     try {
-      await api.agenda.delete(eventToEdit.id);
+      await api.events.remove(eventToEdit.id);
       onSave();
       onClose();
     } catch (error: any) {
-      alert('Erro ao excluir: ' + error.message);
+      toastError('Erro ao excluir', error.message);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Plus, Search, Filter, Loader2, Save, Tag, DollarSign, Package } from 'lucide-react';
+import { Layers, Plus, Search, Loader2, Save, Tag, DollarSign, Package } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Modal } from '../../design-system/components/Modal';
 import DataTable from '../ui/DataTable';

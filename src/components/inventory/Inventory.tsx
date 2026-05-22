@@ -6,20 +6,20 @@ import MovimentacaoModal from './components/MovimentacaoModal';
 import MaterialFormModal from './components/MaterialFormModal';
 import EstoqueAlertasBanner from './components/EstoqueAlertasBanner';
 import { statusEstoque } from '../../utils/estoque';
+import { useToast } from '../../context/ToastContext';
 import { 
   Package, 
   Plus, 
   Search, 
-  Filter, 
   History, 
   LayoutGrid, 
-  List,
-  AlertTriangle 
+  List
 } from 'lucide-react';
 
 type MainTab = 'materials' | 'history';
 
 const Inventory: React.FC = () => {
+  const { error: toastError } = useToast();
   const { materiais, categorias, movimentacoes, removeMaterial, reloadData } = useAppContext();
   const [activeTab, setActiveTab] = useState<MainTab>('materials');
   const [search, setSearch] = useState('');
@@ -66,7 +66,7 @@ const Inventory: React.FC = () => {
         await removeMaterial(m.id);
         reloadData();
       } catch (err) {
-        alert('Erro ao excluir material: ' + (err as Error).message);
+        toastError('Erro ao excluir material', (err as Error).message);
       }
     }
   };

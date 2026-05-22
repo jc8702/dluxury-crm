@@ -18,7 +18,7 @@ export function NotificacoesBadge() {
         if (mountedRef.current) {
           setCount(typeof data.total === 'number' ? data.total : 0);
         }
-      } catch (err) {
+      } catch (_err) {
         // Silencioso para não interromper a experiência do usuário
         if (mountedRef.current) setCount(0);
       }

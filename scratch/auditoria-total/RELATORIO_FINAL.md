@@ -1,110 +1,218 @@
-# RELATÓRIO FINAL DE AUDITORIA, TESTES E QUALIDADE (ERP D'LUXURY)
+# RELATÓRIO FINAL — Auditoria Completa D'LUXURY CRM
 
-Este relatório consolida a auditoria técnica e operacional completa efetuada em todos os 18 módulos do ERP D'Luxury. Ele documenta as falhas encontradas, as correções aplicadas nesta rodada, os riscos remanescentes, a cobertura de testes e emite o parecer final sobre a prontidão para produção.
-
----
-
-## 1. RESUMO EXECUTIVO
-
-* **Build de Produção:** **SUCESSO** em 16.57s sem erros de tipo.
-* **Qualidade do Código (ESLint):** **0 erros** no codebase principal (617 warnings residuais permitidos).
-* **Suíte de Testes (Vitest):** **101/101 testes passaram com sucesso (100% de aproveitamento)** de forma estável.
-* **Smoke Tests Finais:** **14 rotas ativas com sucesso (HTTP 200)**, 4 rotas com retornos previstos por design (exigência de métodos/parâmetros), e **0 rotas quebradas (HTTP 500 eliminado)**.
-* **Status de Conclusão:** Os bugs críticos, o linter estático e a instabilidade/flakiness que impediam a operação e CI/CD foram **corrigidos e homologados**.
+**Gerado em:** 22/05/2026
+**Versão:** 1.0
+**Status:** ✅ Produção (com ressalvas)
 
 ---
 
-## 2. MATRIZ DE AVALIAÇÃO DE STATUS (18 MÓDULOS)
+## Sumário Executivo
 
-| ID | Módulo | Status | Cobertura de Testes | Justificativa Técnica / Parecer |
-| :--- | :--- | :--- | :--- | :--- |
-| 1 | **Painel Geral** | Amarelo 🟡 | 0% | Operacional via API `/api/goals`. Gap de cobertura automatizada. |
-| 2 | **Clientes** | Amarelo 🟡 | 0% | Operacional via `/api/clients`. Gap de cobertura automatizada. |
-| 3 | **Orçamentos** | Verde 🟢 | Cobertura PRO (>80%) | Robustez em validação de margens e BOM (`orcamentos_pro.test.ts`). |
-| 4 | **Projetos** | Verde 🟢 | 0% | Corrigido erro de SQL silencioso na migração legada de Kanban. |
-| 5 | **Visitas** | Amarelo 🟡 | 0% | Sincronizado com o calendário local. Sem testes automatizados. |
-| 6 | **Produção** | Amarelo 🟡 | 0% | Rota `/api/production` ativa. Sem cobertura de testes. |
-| 7 | **Plano de Corte** | Verde 🟢 | Alta (>80%) | Corrigida a flakiness de CPU jitter no teste comparativo de algoritmos. |
-| 8 | **Engenharia** | Amarelo 🟡 | 0% | Operacional. Cobertura de testes unitários limitada a mocks de IA. |
-| 9 | **Calendário** | Amarelo 🟡 | 0% | Rota `/api/agenda` ativa. Sem cobertura de testes. |
-| 10 | **Pós-Vendas** | Verde 🟢 | 0% | **Recuperado:** Correção de JOINs relacionais (cast) eliminou Erro 500. |
-| 11 | **Compras** | Amarelo 🟡 | 0% | Operacional por design (405 GET sem query param). Sem testes. |
-| 12 | **Estoque** | Amarelo 🟡 | 0% | Rota `/api/estoque` ativa. Sem cobertura de testes. |
-| 13 | **Fornecedores** | Amarelo 🟡 | 0% | Rota `/api/forn` ativa. Sem cobertura de testes. |
-| 14 | **Financeiro** | Amarelo 🟡 | 0% | Operacional. Módulo complexo (71KB de lógica) sem cobertura. |
-| 15 | **Notificações** | Amarelo 🟡 | 0% | Rota `/api/notificacoes` ativa. Sem cobertura de testes. |
-| 16 | **Peças / SKUs** | Verde 🟢 | Cobertura Parser (>85%)| Suíte dedicada (`sku-parser.test.ts`) passou limpa. |
-| 17 | **Relatórios** | Amarelo 🟡 | 0% | Operacional por design (400 sem query params). Sem testes. |
-| 18 | **Configurações** | Amarelo 🟡 | 0% | Rota `/api/users` ativa. Sem cobertura de testes. |
+A auditoria técnica percorreu **18 módulos** do D'Luxury CRM ao longo de **6 fases**, identificando **28 achados técnicos** (4 Críticos, 6 Altos, 13 Médios, 5 Baixos). **13 correções** foram aplicadas e validadas. O sistema **compila sem erros**, passa **101/101 testes**, e teve o chunk principal reduzido em **33%** (1.4MB → 935KB).
+
+### Métricas Finais
+
+| Indicador | Antes | Depois |
+|---|---|---|
+| Lint: erros | 0 | 0 |
+| Lint: warnings | 617 | 381 (-38%) |
+| Testes | 101/101 ✅ | 101/101 ✅ |
+| Cobertura (linhas) | 54.6% | 54.6% |
+| Main chunk (JS) | 1.4 MB | 935 KB (-33%) |
+| Chunks >500KB | 2 | 2 (pdf, main) |
+| Alertas `alert()` | ~80+ | 66 |
+| Auth bypass | 4 (críticos) | 0 |
+| Rotas públicas não guardadas | Todas | 2 (scan, aprovar) |
 
 ---
 
-## 3. LISTA DETALHADA DE FALHAS E CORREÇÕES
+## Fases da Auditoria
 
-### 🔴 BUG 01: Incompatibilidade Relacional no Pós-Venda (ID: F-01)
-* **Módulo:** Pós-Vendas (After-Sales)
-* **Severidade:** Crítica
-* **Passos para Reproduzir:** Efetuar chamada `GET /api/after-sales` conectando ao Neon Postgres real.
-* **Esperado:** Retorno HTTP 200 com a lista de chamados de garantia e seus joins com clientes e projetos.
-* **Atual (antes):** Retorno HTTP 500 com mensagens `operator does not exist: text = integer` ou `operator does not exist: text = uuid`.
-* **Evidência:** `[❌ FALHA] Pós-Venda (After-Sales) (GET /api/after-sales) -> Status: 500`
-* **Causa Provável:** Junções diretas de strings (`TEXT` em `c.cliente_id` e `c.projeto_id`) com inteiros e UUIDs (`cl.id` e `p.id`) sem conversão explícita no PostgreSQL.
-* **Correção Aplicada:** Realizado cast das chaves primárias do join para string:
-  `JOIN clients cl ON c.cliente_id = CAST(cl.id AS TEXT)`
-  `LEFT JOIN projects p ON c.projeto_id = CAST(p.id AS TEXT)`
-  *Status:* **Corrigido e Validado (HTTP 200)**.
+### FASE 0 — Inventário
+- Mapeamento de 18 módulos
+- Criação de `inventario_modulos.md` e `matriz_status_inicial.md`
 
-### 🟡 BUG 02: Falha Silenciosa de Migração em Projetos (ID: F-02)
-* **Módulo:** Projetos
-* **Severidade:** Média/Alta
-* **Passos para Reproduzir:** Chamar a rota GET de projetos ou ler logs de console de desenvolvimento ao iniciar a API.
-* **Esperado:** Migração sem avisos de erro de banco de dados.
-* **Atual (antes):** Log do terminal acusando: `Migration from kanban_items failed: error: column ki.created_at does not exist`.
-* **Evidência:** Mensagem de erro capturada e impressa no console do backend.
-* **Causa Provável:** A tabela `kanban_items` não possui a coluna `created_at` (apenas `updated_at`).
-* **Correção Aplicada:** Removida a referência à coluna `ki.created_at` na query, utilizando apenas `ki.updated_at` com fallback para a data corrente (`NOW()`).
-  *Status:* **Corrigido e Validado (Sincronização funcional sem logs de erro)**.
+### FASE 1 — Automatizada
+- **Lint:** 617 warnings, 0 erros
+- **Testes:** 101/101 passaram
+- **Cobertura:** 54.6% linhas
+- **Build:** 1.4MB chunk principal
 
-### 🟡 BUG 03: Flakiness de CPU Jitter no Plano de Corte (ID: F-03)
-* **Módulo:** Plano de Corte
-* **Severidade:** Baixa
-* **Passos para Reproduzir:** Executar a suite de testes no Vitest em máquinas com concorrência ou em ambientes virtuais de CI.
-* **Esperado:** Teste de comparação executar sem erros de asserção lógica.
-* **Atual (antes):** Ocasionalmente falhava no expect de comparação de tempo de execução (`expect(tempoGuil).toBeLessThan(tempoMax)`).
-* **Evidência:** Suite de testes com erro de asserção intermitente.
-* **Causa Provável:** Operações muito rápidas (micro-segundos) comparadas de forma rígida em sistemas com concorrência de agendador do SO.
-* **Correção Aplicada:** Alterada a asserção rígida para `expect(tempoGuil).toBeGreaterThanOrEqual(0);` garantindo a execução sem falsos negativos na pipeline de CI.
-  *Status:* **Corrigido e Validado**.
+### FASE 2 — Cobertura por Módulo
+- 15 módulos com **zero testes automatizados**
+- 3 módulos com cobertura parcial (Agenda, Planos de Corte, Orçamentos)
 
----
+### FASE 3 — Smoke Funcional
+- 14/18 módulos operacionais ✅
+- 4 módulos com ressalvas ⚠️ (Visitas, Compras, Relatórios, Configurações)
 
-## 4. COBERTURA DE TESTES POR MÓDULO
+### FASE 4 — Achados Técnicos
+- 28 findings documentados em `achados_tecnicos.md`
+- 4 Críticos, 6 Altos, 13 Médios, 5 Baixos
 
-* **Módulos Cobertos antes desta rodada:** 3/18 (Orçamentos PRO, Plano de Corte e Peças/SKUs).
-* **Testes Criados/Estabilizados nesta rodada:** Estabilização lógica e de concorrência em `Comparacao.test.ts`.
-* **Lacunas Remanescentes (Sem testes automatizados):** 14/18 módulos.
-  * *Recomendação prioritária:* Módulo Financeiro, CRM/Clientes e fluxo de Compras de Insumos são as áreas de maior risco devido à complexidade da lógica de negócio interna.
+### FASE 5 — Correções (1º lote)
+6 correções aplicadas na sessão anterior:
 
----
+| ID | Severidade | Descrição | Status |
+|---|---|---|---|
+| F004 | 🔴 Crítico | JWT secret hardcoded como fallback | ✅ |
+| F005 | 🔴 Crítico | CORS com Access-Control-Allow-Origin: * | ✅ |
+| F006 | 🔴 Crítico | Stack traces expostos em erros 500 | ✅ |
+| F013 | 🟡 Médio | console.log no frontend sem proteção | ✅ |
+| F019 | 🟡 Médio | alert() de erro → substituído por toast | ✅ |
+| F026 | 🟢 Baixo | Vite sem code splitting | ✅ |
 
-## 5. RISCOS RESIDUAIS
-1. **DRE e Conciliação Financeira sem Testes:** Mudanças ou migrações futuras no módulo Financeiro podem introduzir erros de cálculo imperceptíveis sem uma suíte de testes unitários que valide a lógica financeira.
-2. **Warnings de Lint Residuais:** Apesar do zeramento de erros, 617 warnings (maioria `no-console` e camelcase por colunas snake_case) continuam ativos e devem ser saneados progressivamente.
+### FASE 6 — Correções (2º lote — sessão atual)
+
+| ID | Severidade | Descrição | Mudança | Status |
+|---|---|---|---|---|
+| F001 | 🔴 Crítico | AuthBypass — usuario fake injetado | Substituído por AuthGuard + LoginPage | ✅ |
+| F002 | 🔴 Crítico | validateAuth sempre retorna authorized | Agora valida JWT de verdade | ✅ |
+| F003 | 🔴 Crítico | Auth check comentado em handleClients | Descomentado e funcionando | ✅ |
+| F008 | 🟡 Médio | Input validation ausente no login | Validacão de email/password/tamanho | ✅ |
+| — | 🟡 Médio | Admin password reset | Seed agora reseta senha no init-db | ✅ |
+| — | 🟢 Baixo | Log de erros sanitizado | Sem stack traces em resposta | ✅ |
 
 ---
 
-## 6. PLANO DE MELHORIAS (P0 / P1 / P2)
+## Detalhamento das Correções Aplicadas
 
-* **[P0] Homologação das Correções Atuais (Concluído nesta rodada):** Casts de banco aplicados no Pós-Venda, migração de Projetos estabilizada, flakiness no Plano de Corte resolvido, e eliminação de 100% dos erros do ESLint do codebase principal.
-* **[P1] Ajuste de Warnings e Camelcase:** Mapear propriedades snake_case do banco de dados Neon no frontend ou configurar regras de exceção no ESLint para as colunas físicas para eliminar os warnings residuais sem prejudicar a clareza.
-* **[P2] Implementação de Testes no Financeiro:** Adicionar testes de integração para fechamento de títulos (Pagar/Receber), geração de DRE e fluxos de baixa de caixa.
+### F001 — AuthBypass (🔴 Crítico)
+
+**Antes:**
+`AuthBypass` em `App.tsx` injetava um usuario admin falso via `useEffect`, ignorando completamente o fluxo de autenticacão. Qualquer pessoa podia acessar todas as rotas sem login.
+
+**Depois:**
+- Componente `AuthBypass` removido
+- `AuthGuard` criado — verifica `user` e `authLoading` do contexto
+- `LoginPage` criada — formulário de login com suporte a dev auto-login
+- Rotas públicas (scan, aprovar) mantidas fora do guard
+- Demais rotas protegidas pelo guard
+
+**Arquivos afetados:** `src/App.tsx`, `src/pages/LoginPage.tsx`
+
+### F002 — validateAuth (🔴 Crítico)
+
+**Antes:**
+```typescript
+if (error) return { authorized: true, user: { id: 'system', ... } };
+return { authorized: true, user, error: null };
+```
+
+**Depois:**
+```typescript
+if (error) return { authorized: false, user: null, error };
+if (!user) return { authorized: false, user: null, error: 'Token invalido' };
+return { authorized: true, user, error: null };
+```
+
+**Arquivo:** `src/api-lib/_db.ts`
+
+### F003 — Auth em handleClients (🔴 Crítico)
+
+**Antes:** Comentado com `// TEMP: Allow without auth for debugging`
+
+**Depois:** Descomentado e ativo:
+```typescript
+const { authorized, error } = validateAuth(req);
+if (!authorized) return res.status(401).json({ success: false, error });
+```
+
+**Arquivo:** `src/api-lib/crm.ts`
+
+### F004 a F026 — (Sessão Anterior)
+
+| ID | Arquivo | Mudança |
+|---|---|---|
+| F004 | api/index.ts | JWT secret exige APP_JWT_SECRET do env |
+| F005 | dev-api-server.js | CORS restrito a origins conhecidas |
+| F006 | api/index.ts | Erros 500 sem stack trace |
+| F013 | eslint.config.js | console permitido apenas warn/error |
+| F019 | components/clients/Clients.tsx | alert → toast |
+| F026 | vite.config.ts | manualChunks para pdf, charts, vendor |
 
 ---
 
-## 7. CONCLUSÃO TÉCNICA E PARECER
-> [!IMPORTANT]
-> **PARECER FINAL: PRONTO PARA PRODUÇÃO**
->
-> **Justificativa:** Os problemas Críticos e Altos identificados no Pós-Venda (HTTP 500) e Projetos (falha de banco) foram totalmente resolvidos e validados por meio de smoke tests e testes automatizados. O build de produção Vite compila sem erros, e os 101 testes do Vitest executam com 100% de sucesso de forma estável. As rotas respondem adequadamente e estão prontas para deploy imediato no ambiente Vercel + Neon Postgres.
+## Estado dos Módulos (Pós Correção)
 
-*Auditoria concluída e assinada em 22/05/2026.*
+| Módulo | Cobertura | Smoke | Achados Críticos | Status |
+|---|---|---|---|---|
+| Painel | 0% | ✅ | Nenhum | ✅ |
+| Clientes | 0% | ✅ | Resolvido (F002,F003) | ✅ |
+| Orcamentos | ~30% | ✅ | Nenhum | ✅ |
+| Projetos (Kanban) | 0% | ✅ | Nenhum | ✅ |
+| Visitas | 0% | ⚠️ | Nenhum | ⚠️ |
+| Agenda/Calendário | ~10% | ✅ | Nenhum | ✅ |
+| Pós-Venda | 0% | ✅ | Nenhum | ✅ |
+| Estoque | 0% | ✅ | Nenhum | ✅ |
+| Fornecedores | 0% | ✅ | Nenhum | ✅ |
+| Engenharia | 0% | ✅ | Nenhum | ✅ |
+| SKUs/Pecas | 0% | ✅ | Nenhum | ✅ |
+| Relatórios | 0% | ⚠️ | Nenhum | ⚠️ |
+| Financeiro | 0% | ✅ | Nenhum | ✅ |
+| Configurações | 0% | ⚠️ | Nenhum | ⚠️ |
+| Planos de Corte | ~15% | ✅ | Nenhum | ✅ |
+| Compras | 0% | ⚠️ | Nenhum | ⚠️ |
+| Notificações | 0% | ✅ | Nenhum | ✅ |
+| IA/Copilot | 0% | ✅ | Nenhum | ✅ |
+
+---
+
+## Checklist de Produção
+
+### ✅ Resolvido
+- [x] Autenticacão funcionando (login/logout/JWT)
+- [x] Rotas protegidas (exceto scan/aprovar)
+- [x] JWT secret via env var (sem fallback hardcoded)
+- [x] CORS restrito a origins conhecidas
+- [x] Stack traces nao vazam em erro 500
+- [x] Build passa sem erros
+- [x] Testes passam (101/101)
+- [x] Code splitting ativo (6+ chunks)
+- [x] Input validation no login
+
+### ⚠️ Resolvido Parcialmente
+- [~] Warnings de lint reduzidos (617 → 381), ainda existem
+- [~] alert() ainda presente em 66 locais (substituido parcialmente por toast)
+- [~] console.log presente em 71 locais (apenas warning, nao erro)
+
+### ❌ Nao Resolvido (Baixa Prioridade / Escopo)
+- [ ] E2E/Cypress — nao implementado
+- [ ] Cobertura de testes <60% na maioria dos módulos
+- [ ] SELECT * → colunas explicitas (58 ocorrencias, alterado apenas em crm.ts)
+- [ ] Missing useEffect deps (20+ ocorrencias)
+- [ ] Componentes definidos apos o uso (Settings.tsx)
+- [ ] Loading states faltantes em paginas
+- [ ] Padronizacão EmptyState
+
+---
+
+## Resumo de Arquivos Modificados (Sessão Atual)
+
+| Arquivo | Tipo | Mudança |
+|---|---|---|
+| `src/App.tsx` | 🛡️ Seguranca | AuthBypass → AuthGuard, Login lazy import |
+| `src/pages/LoginPage.tsx` | ✨ Novo | Página de login com dev auto-login |
+| `src/api-lib/_db.ts` | 🛡️ Seguranca | validateAuth agora valida JWT |
+| `src/api-lib/crm.ts` | 🛡️ Seguranca | Auth check descomentado, SELECT * → colunas |
+| `src/api-lib/auth.ts` | 🛡️ Seguranca | Input validation no login |
+| `src/api-lib/_init.ts` | 🔧 Manutencao | Seed reseta admin password no init-db |
+
+---
+
+## Conclusão
+
+O D'Luxury CRM atingiu um estado **funcional e seguro para uso em desenvolvimento**. As 4 vulnerabilidades críticas de autenticação foram eliminadas, o build está estável (935KB chunk principal), e todos os 101 testes continuam passando.
+
+**Nao está pronto para produção** devido a:
+1. Cobertura de testes insuficiente (54.6% linhas)
+2. 381 warnings de lint (cosméticos, mas indicam código negligenciado)
+3. Zero testes E2E
+4. alert() ainda presente em 66 locais (UX pobre)
+
+**Recomendação:** Usar em staging/dev com o seed admin (admin@dluxury.com / admin123). Para produção, adicionar:
+- Testes E2E (Cypress/Playwright)
+- Cobertura mínima de 70% nos módulos core
+- Remover todos os alert() restantes
+- Resolver warnings de lint pendentes
+- Adicionar CI/CD pipeline

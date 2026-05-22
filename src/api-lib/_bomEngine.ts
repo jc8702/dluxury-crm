@@ -49,7 +49,7 @@ export async function calculateBOM(paramsJson: any, bom: BOMItem[]) {
       try {
         const rawLoss = math.evaluate(item.formula_perda || '1.10', context);
         lossFactor = typeof rawLoss === 'number' && !isNaN(rawLoss) ? rawLoss : 1.10;
-      } catch (e) {
+      } catch {
         console.warn(`Erro na fórmula de perda para ${item.componente_nome}, usando default 1.10`);
       }
 

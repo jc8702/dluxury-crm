@@ -8,10 +8,11 @@ import getDay from 'date-fns/getDay';
 import ptBR from 'date-fns/locale/pt-BR';
 import { 
   Plus, RefreshCw, ChevronLeft, ChevronRight, 
-  Calendar as CalendarIcon, X, Check, AlertTriangle
+  Check, AlertTriangle
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAppContext } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
 import ModalEvento from '../components/agenda/ModalEvento';
 import { useEscClose } from '../hooks/useEscClose';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -68,7 +69,8 @@ const DARK_COLORS = {
 };
 
 const CalendarioPage: React.FC = () => {
-  const { user, loadEvents } = useAppContext();
+  const { loadEvents } = useAppContext();
+  const { error: toastError } = useToast();
   const [events, setEvents] = useState<MyEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -92,6 +94,7 @@ const CalendarioPage: React.FC = () => {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEscClose(() => { setShowModal(false); setSelectedEvent(null); }, showModal);
@@ -180,7 +183,7 @@ const CalendarioPage: React.FC = () => {
       await loadEvents();
     } catch (err) {
       console.error('Erro ao mover evento:', err);
-      alert('Erro ao alterar data do evento');
+      toastError('Erro ao alterar data do evento');
     } finally {
       setLoading(false);
       setDragConfirm({ show: false, event: null, newStart: null, newEnd: null });

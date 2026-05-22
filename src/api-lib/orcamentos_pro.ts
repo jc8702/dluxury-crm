@@ -1,7 +1,6 @@
 import { db } from './drizzle-db.js';
 import { 
-    skuEngenharia, skuMontagem, skuComponente, 
-    bomEngenhariaMontagem, bomMontagemComponente,
+    skuEngenharia, skuComponente, 
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
 import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
@@ -30,8 +29,8 @@ const CONFIG = {
 
 // Logger condicional para produção
 const logger = {
-  debug: (...args: any[]) => CONFIG.LOG_LEVEL === 'debug' && console.log('[ORCAMENTOS_PRO]', ...args),
-  info: (...args: any[]) => ['info', 'debug'].includes(CONFIG.LOG_LEVEL) && console.log('[ORCAMENTOS_PRO]', ...args),
+  debug: (..._args: any[]) => CONFIG.LOG_LEVEL === 'debug' && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
+  info: (..._args: any[]) => ['info', 'debug'].includes(CONFIG.LOG_LEVEL) && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
   warn: (...args: any[]) => console.warn('[ORCAMENTOS_PRO]', ...args),
   error: (...args: any[]) => console.error('[ORCAMENTOS_PRO]', ...args)
 };
@@ -568,11 +567,11 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 // FALLBACK: Se não encontrou na tabela PRO, busca na tabela comercial legada
                 if (!result) {
                     logger.info(`🔍 ID ${id} não encontrado na tabela PRO. Buscando na tabela comercial...`);
-                    const oldOrc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+                    const oldOrc = (await sql`SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
                     
                     if (oldOrc) {
                         logger.info(`✅ Orçamento legado encontrado. Mapeando para formato PRO...`);
-                        const oldItens = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id}`;
+                        const oldItens = await sql`SELECT id, descricao, quantidade, largura_cm, altura_cm, material, valor_unitario, valor_total FROM itens_orcamento WHERE orcamento_id = ${id}`;
                         
                         // Converte o formato legado para o formato PRO
                         result = {
@@ -739,7 +738,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora.
                     if (!exists) {
                         logger.info(`🚀 Migrando orçamento ${id} da tabela legada para a PRO durante atualização...`);
-                        const oldOrc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+                        const oldOrc = (await sql`SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
                         
                         if (oldOrc) {
                             try {
@@ -1063,7 +1062,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 .where(and(eq(orcamentoItens.orcamentoId, id), inArray(orcamentoItens.id, itemIds)));
 
                             for (const item of items) {
-                                let finalUpdates = { ...updates };
+                                const finalUpdates = { ...updates };
 
                                 // Lógica especial para ajustes percentuais de preço/custo
                                 if (updates.percentualPreco) {

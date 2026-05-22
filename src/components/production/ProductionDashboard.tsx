@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../design-system/components/Card';
 import { api } from '../../lib/api';
 import { CardSkeleton } from '../../design-system/components/Skeleton';
 

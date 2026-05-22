@@ -1,15 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
 import ProductionPanel from './ProductionPanel';
 import ProductionDashboard from './ProductionDashboard';
 
 const Production: React.FC = () => {
-  const { projects, updateProject } = useAppContext();
-
-  const handleMarkReady = async (project: any) => {
-    await updateProject(project.id, { status: 'pronto_entrega', etapaProducao: 'entrega' });
-  };
-
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -1,21 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
-import type { OrcamentoAmbiente, OrcamentoMovel, Material, ConfiguracaoPrecificacao } from '../../../context/AppContext';
-import { 
-  X, 
-  Trash2, 
-  ChevronRight, 
-  Search, 
-  FileText, 
-  Package, 
-  Truck, 
-  Calendar, 
-  Settings, 
-  Plus, 
-  Zap,
-  Info
-} from 'lucide-react';
+import type { OrcamentoAmbiente, ConfiguracaoPrecificacao } from '../../../context/AppContext';
+import { Zap } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
 import { TableSkeleton } from '../../../design-system/components/Skeleton';
@@ -41,6 +28,7 @@ interface CompositorOrcamentoProps {
 
 const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, onClose, onSettle }) => {
   const { materiais } = useAppContext();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   useEscClose(onClose);
   
@@ -195,10 +183,10 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
         });
       }
       
-      alert('BOM recalculado com sucesso!');
+      toastSuccess('BOM recalculado com sucesso!');
       await loadTree();
     } catch (err: any) {
-      alert(`Erro no recálculo: ${err.message}`);
+      toastError(`Erro no recálculo: ${err.message}`);
     } finally {
       setLoading(false);
     }

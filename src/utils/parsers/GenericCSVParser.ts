@@ -20,7 +20,7 @@ export class GenericCSVParser {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
-                let text = e.target?.result as string;
+                const text = e.target?.result as string;
                 
                 // Se o texto contém o caractere de substituição (), provavelmente é encoding Latin1/Win1252
                 if (text.includes('')) {
@@ -37,7 +37,7 @@ export class GenericCSVParser {
         });
     }
 
-    private static processText(text: string, resolve: any, reject: any, file: File) {
+    private static processText(text: string, resolve: any, reject: any, _file: File) {
         const delimiter = CSVDetector.detectDelimiter(text.substring(0, 1000));
         
         Papa.parse(text, {
@@ -48,8 +48,8 @@ export class GenericCSVParser {
                 const fields = (results.meta.fields || []).map(f => f.trim());
                 const mapping = CSVDetector.mapColumns(fields);
 
-                console.log('[CSVParser] Colunas detectadas:', fields);
-                console.log('[CSVParser] Mapeamento:', mapping);
+                /* console.log('[CSVParser] Colunas detectadas:', fields) */;
+                /* console.log('[CSVParser] Mapeamento:', mapping) */;
 
                 // Fallback inteligente para o Nome (Função no SketchUp)
                 if (!mapping.nome && fields.length > 0) {
@@ -106,3 +106,4 @@ export class GenericCSVParser {
         };
     }
 }
+

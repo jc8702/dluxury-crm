@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from '../design-system/components/Modal';
-import { Printer, X, CheckCircle } from 'lucide-react';
+import { Printer, X } from 'lucide-react';
 
 interface ReciboModalProps {
   isOpen: boolean;

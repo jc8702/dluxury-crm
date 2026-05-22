@@ -1,29 +1,32 @@
-# Matriz de Status Inicial (ERP D'Luxury)
+# Matriz de Status Inicial - Auditoria Total
 
-Esta matriz apresenta a avaliação inicial de qualidade e confiabilidade de todos os 18 módulos do sistema antes de qualquer correção de código (Fase 0/1).
+Este documento contém a matriz de status inicial para cada módulo antes de iniciar os testes.
 
-| ID | Módulo | Status | Justificativa | Testes Unitários | Observação |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | **Painel Geral** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 2 | **Clientes** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 3 | **Orçamentos** | Verde 🟢 | Testes específicos aprovados. Smoke test aprovado sem erros. | Cobertura PRO (>80%) | Bem estruturado e robusto. |
-| 4 | **Projetos** | Amarelo 🟡 | Falha de migração interna silenciosa capturada no console. | 0% | Coluna ki.created_at inexistente. |
-| 5 | **Visitas** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 6 | **Produção** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 7 | **Plano de Corte** | Verde 🟢 | Suíte de testes densa aprovada. Smoke test local respondendo 200 OK. | Alta (>80%) | Ótima cobertura, mas teste flaky ocasional de CPU jitter. |
-| 8 | **Engenharia** | Amarelo 🟡 | Sem testes de integração reais. Smoke test responde 200 OK. | 0% (Cobertura indireta) | Depende de mocks. |
-| 9 | **Calendário** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 10 | **Pós-Vendas** | Vermelho 🔴 | Falha Crítica Funcional (HTTP 500) por incompatibilidade de tipos na query SQL. | 0% | operator does not exist: text = integer. |
-| 11 | **Compras** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 12 | **Estoque** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 13 | **Fornecedores** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 14 | **Financeiro** | Amarelo 🟡 | Módulo muito complexo, mas sem testes automatizados. Smoke test funciona. | 0% | Risco de regressão devido à falta de testes. |
-| 15 | **Notificações** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 16 | **Peças / SKUs** | Verde 🟢 | Suíte de testes dedicada aprovada. Smoke test local OK. | Cobertura do Parser (>85%) | Bom nível de cobertura inicial no parser. |
-| 17 | **Relatórios** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
-| 18 | **Configurações** | Amarelo 🟡 | Sem testes automatizados. Funciona no smoke test local. | 0% | Sem cobertura direta. |
+| Módulo | Status Inicial | Observações Iniciais |
+|--------|----------------|----------------------|
+| 1. painel geral | pendente | Página DashboardPage.tsx encontrada |
+| 2. clientes | pendente | Página ClientsPage.tsx encontrada |
+| 3. orçamentos | pendente | Página AprovacaoPage.tsx e módulo orcamentos/ encontrados |
+| 4. projetos | pendente | Página ProjectsPage.tsx encontrada |
+| 5. visitas | pendente | Página VisitsPage.tsx encontrada |
+| 6. produção | pendente | Página ProductionPage.tsx encontrada |
+| 7. plano de corte | pendente | Páginas CuttingPlanPage.tsx e PlanoCorteDemo.tsx, módulo plano-corte/ encontrados |
+| 8. engenharia | pendente | Página EngineeringPage.tsx e módulo engenharia/ encontrados |
+| 9. calendário | pendente | Página CalendarioPage.tsx e módulo agenda/ encontrados |
+| 10. pós-vendas | pendente | Página PosVendaPage.tsx encontrada |
+| 11. compras | pendente | Página ComprasPage.tsx encontrada |
+| 12. estoque | pendente | Página InventoryPage.tsx encontrada |
+| 13. fornecedores | pendente | Página SuppliersPage.tsx encontrada |
+| 14. financeiro | pendente | Página FinancePage.tsx, módulo financeiro/ e várias páginas de finanças encontradas |
+| 15. notificações | pendente | Página NotificacoesPage.tsx encontrada |
+| 16. peças / skus | pendente | Página SKUsPage.tsx encontrada |
+| 17. relatórios | pendente | Página ReportsPage.tsx encontrada |
+| 18. configurações | pendente | Página SettingsPage.tsx encontrada |
 
-### Legenda de Status
-* 🟢 **Verde:** Validado com testes e smoke tests sem falhas operacionais.
-* 🟡 **Amarelo:** Funciona no smoke test, mas cobertura de testes inexistente/incompleta ou falha silenciosa de menor gravidade.
-* 🔴 **Vermelho:** Falha funcional impeditiva (Erro HTTP 500 ou quebra em operação crítica).
+**Legenda de Status:**
+- pendente: Ainda não auditado
+- em_andamento: Em processo de auditoria
+- concluído: Auditoria concluída
+- com_problemas: Problemas identificados durante auditoria
+
+*Este é o estado inicial antes de qualquer teste ou auditoria.*

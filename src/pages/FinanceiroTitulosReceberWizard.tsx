@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
-const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
+const _MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
 export default function FinanceiroTitulosReceberWizard() {
   const { success, error } = useToast();
@@ -15,7 +15,6 @@ export default function FinanceiroTitulosReceberWizard() {
   const [formasRecebimento, setFormasRecebimento] = useState<any[]>([]);
   const [taxaFinanceira, setTaxaFinanceira] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState(1);
-  const [projects, setProjects] = useState<any[]>([]);
 
   const normalizeList = (value: any) => (Array.isArray(value) ? value : value?.data || []);
 
@@ -36,7 +35,7 @@ export default function FinanceiroTitulosReceberWizard() {
   const valorCustoFinanceiro = formData.valor_base * (taxaFinanceira / 100);
   const valorComTaxa = formData.valor_base + valorCustoFinanceiro;
 
-  const formaSelecionada = formasRecebimento.find(f => f.id === formData.forma_recebimento_id);
+  const _formaSelecionada = formasRecebimento.find(f => f.id === formData.forma_recebimento_id);
   // exibeTaxa removido para ser sempre visível como solicitado
 
   useEffect(() => {
@@ -73,7 +72,7 @@ export default function FinanceiroTitulosReceberWizard() {
         });
         setPreview(res.data?.parcelas || res.parcelas || []);
         setStep(3);
-      } catch (err: any) {
+      } catch (_err: any) {
         error('Erro ao calcular parcelas. Verifique os dados preenchidos.');
       } finally {
         setLoading(false);

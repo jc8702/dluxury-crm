@@ -13,7 +13,7 @@ export async function handleCompras(req: any, res: any) {
       if (method === 'GET') {
         if (id) {
           const pedido = (await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id WHERE p.id = ${id}`)[0];
-          const itens = await sql`SELECT * FROM pedido_compra_itens WHERE pedido_id = ${id} ORDER BY id ASC`;
+          const itens = await sql`SELECT id, pedido_id, material_id, sku, descricao, quantidade_pedida, quantidade_recebida, unidade, preco_unitario, subtotal, status_item, created_at, updated_at FROM pedido_compra_itens WHERE pedido_id = ${id} ORDER BY id ASC`;
           return res.status(200).json({ success: true, data: { ...pedido, itens } });
         }
         if (req.query.fornecedor_id) {
@@ -91,7 +91,7 @@ export async function handleCompras(req: any, res: any) {
           const existing = await sql`SELECT id FROM titulos_pagar WHERE pedido_compra_id = ${id}`;
           if (existing.length === 0) {
             // Tenta pegar condição de pagamento do pedido ou assume 1 parcela
-            const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null}`)[0];
+            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null}`)[0];
             const totalParcelas = cond?.parcelas || 1;
             const valorParcela = Number(pedido.valor_total) / totalParcelas;
             const dataEmissao = new Date();

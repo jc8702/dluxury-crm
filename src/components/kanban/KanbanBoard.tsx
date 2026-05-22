@@ -37,7 +37,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
 
   const handleDrop = (e: React.DragEvent, status: string) => {
     e.preventDefault();
-    console.log('[Kanban] Drop: status=', status, 'draggedId=', draggedId);
     if (draggedId) {
       onMove(draggedId, status);
     }

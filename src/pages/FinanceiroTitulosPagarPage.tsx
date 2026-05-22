@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Modal } from '../design-system/components/Modal';
-import { Plus, Filter, CheckCircle, Trash2, ArrowUpRight, Calendar, Truck, ChevronDown, ChevronRight, Edit2, Printer, RefreshCw, FileText, Square, CheckSquare, Layers } from 'lucide-react';
+import { Plus, CheckCircle, Trash2, ArrowUpRight, Calendar, ChevronDown, ChevronRight, Edit2, Printer, FileText, CheckSquare, Layers } from 'lucide-react';
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -84,9 +84,10 @@ export default function FinanceiroTitulosPagarPage() {
     }
   };
 
-  useEffect(() => { load(page); }, [page]);
+  useEffect(() => { load(page);
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const confirmarBaixa = async () => {
+  const _confirmarBaixa = async () => {
     try {
       const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
       if (!contaId) throw new Error('Selecione uma conta');
@@ -173,7 +174,7 @@ export default function FinanceiroTitulosPagarPage() {
     }
   };
 
-  const getStatusStyle = (status: string, vencimento: string) => {
+  const _getStatusStyle = (status: string, vencimento: string) => {
     if (status === 'pago') return { background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' };
     if (new Date(vencimento) < new Date()) return { background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' };
     return { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' };

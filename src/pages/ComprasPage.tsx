@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import SearchableSelect from '../components/ui/SearchableSelect';
 import { 
-  Plus, Search, Filter, ShoppingCart, 
-  Trash2, Eye, CheckCircle2, AlertCircle, 
-  History, TrendingUp, Package, ChevronRight,
-  Printer, ArrowRight
+  Plus, ShoppingCart, 
+  Trash2, Eye, AlertCircle, 
+  History, ArrowRight
 } from 'lucide-react';
 import { api } from '../lib/api';
-import type { PedidoCompra, Material } from '../api-lib/types';
+
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { CardSkeleton } from '../design-system/components/Skeleton';
@@ -22,7 +21,7 @@ const ComprasPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     setLoading(true);
@@ -135,7 +134,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
   </button>
 );
 
-const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ sugestoes, onAction }) => (
+const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ sugestoes, onAction: _onAction }) => (
   <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead style={{ background: 'rgba(255,255,255,0.02)' }}>

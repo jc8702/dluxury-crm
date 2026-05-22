@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
+import { useToast } from '../../context/ToastContext';
 import { useAppContext } from '../../context/AppContext';
-import { CheckSquare, ArrowLeft, ArrowRight, Edit2, Play, CheckCircle2, Trash2, Plus, X, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Plus, X } from 'lucide-react';
 import { WhatsAppService } from '../../modules/plano-corte/infrastructure/services/WhatsAppService';
 
 type StatusCol = "AGUARDANDO" | "PRODUCAO" | "MONTAGEM" | "PINTURA" | "INSPECAO" | "PRONTO" | "FINALIZADO";
@@ -32,8 +33,9 @@ const ProductionPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingOP, setEditingOP] = useState<OrdemProducao | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [showNewOPModal, setShowNewOPModal] = useState(false);
+  const [, setShowNewOPModal] = useState(false);
   const [newOPData, setNewOPData] = useState({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
+  const { error: toastError, success: toastSuccess } = useToast();
   const { projects, updateProject } = useAppContext();
 
   const fetchOPs = async () => {
@@ -64,7 +66,6 @@ const ProductionPanel: React.FC = () => {
       window.removeEventListener('op_updated', onOpUpdated as any);
       window.removeEventListener('op_deleted', onOpDeleted as any);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Close modal with ESC
@@ -93,10 +94,10 @@ const ProductionPanel: React.FC = () => {
         for (const p of pecas) {
           if (p && p.operator_checked === false) { piecesComplete = false; break; }
         }
-      } catch (e) { piecesComplete = true; }
+      } catch (_e) { piecesComplete = true; }
 
       if (!isComplete || !piecesComplete) {
-        alert("⚠️ Checklist ou peças pendentes! Conclua todas as tarefas antes de avançar.");
+        toastError("Checklist ou peças pendentes", "Conclua todas as tarefas antes de avançar.");
         return;
       }
       novoStatus = fluxo[index + 1] || op.status;
@@ -131,7 +132,7 @@ const ProductionPanel: React.FC = () => {
       }
     } catch (e: any) {
       console.error('Erro ao atualizar status da OP', e);
-      alert("Erro ao atualizar status: " + e.message);
+      toastError("Erro ao atualizar status", e.message);
     }
   };
 
@@ -143,7 +144,7 @@ const ProductionPanel: React.FC = () => {
         setEditingOP(null);
       }
     } catch (e: any) {
-      alert("Erro ao salvar detalhes: " + e.message);
+      toastError("Erro ao salvar detalhes", e.message);
     }
   };
 
@@ -159,15 +160,15 @@ const deleteOP = useCallback(async (op_id: string) => {
       setOps(prev => prev.filter(o => o.op_id !== op_id));
       setEditingOP(null);
     } catch (e: any) {
-      alert('Erro: ' + e.message);
+      toastError('Erro', e.message);
     } finally {
       setDeleting(false);
     }
-  }, []);
+  }, [toastError]);
 
-  const createNewOP = async () => {
+  const _createNewOP = async () => {
     if (!newOPData.op_id || !newOPData.produto) {
-      alert('Preencha o ID da OP e o Produto.');
+      toastError('Preencha o ID da OP e o Produto.');
       return;
     }
     try {
@@ -176,7 +177,7 @@ const deleteOP = useCallback(async (op_id: string) => {
       setNewOPData({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
       fetchOPs();
     } catch (e: any) {
-      alert('Erro ao criar OP: ' + e.message);
+      toastError('Erro ao criar OP', e.message);
     }
   };
 
@@ -214,7 +215,6 @@ const deleteOP = useCallback(async (op_id: string) => {
   const renderCard = (op: OrdemProducao, col: any) => {
     const checklist = op.checklist || [];
     const completed = checklist.filter(i => i.completed).length;
-    const total = checklist.length;
     const tasks = defaultTasksByStatus[col.id] || [];
     const progress = calculateProgress(op);
     const allTasksDone = tasks.length === 0 || completed === tasks.length;
@@ -319,7 +319,7 @@ const deleteOP = useCallback(async (op_id: string) => {
             const canAdvance = allTasksDone;
             return (
               <button
-                onClick={() => canAdvance ? updateStatus(op, 'avancar') : alert('⚠️ Checklist ou peças pendentes! Conclua todas as tarefas antes de avançar.')}
+                onClick={() => canAdvance ? updateStatus(op, 'avancar') : toastError('Checklist ou peças pendentes', 'Conclua todas as tarefas antes de avançar.')}
                 disabled={!canAdvance}
                 title={!canAdvance ? 'Checklist ou peças pendentes' : 'Avançar OP'}
                 style={{
@@ -406,9 +406,9 @@ const deleteOP = useCallback(async (op_id: string) => {
                     if (!res.ok) throw new Error(data.error || 'Erro ao criar OP');
                     await updateProject(project.id, { status: 'em_producao', etapaProducao: 'corte', ordem_producao_id: opId });
                     fetchOPs();
-                    alert(`OP ${opId} criada!`);
+                    toastSuccess(`OP ${opId} criada!`);
                   } catch(e: any) {
-                    alert('Erro: ' + e.message);
+                    toastError('Erro', e.message);
                   }
                 }}
                   style={{ width: '100%', background: '#d4af37', color: '#1a1a2e', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}>
@@ -539,7 +539,7 @@ const deleteOP = useCallback(async (op_id: string) => {
                               setEditingOP(saved as any);
                             } catch (err: any) {
                               console.error('Erro salvando metadata da OP:', err);
-                              alert('Erro ao salvar conferência da peça: ' + (err.message || err));
+                              toastError('Erro ao salvar conferência da peça', err.message || err);
                             }
                           }} />
                         <div style={{ fontSize: '0.9rem' }}>{p.nome}</div>

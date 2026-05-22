@@ -3,16 +3,12 @@ import type {
   GrupoMaterial, 
   ResultadoPlano, 
   ResultadoGrupo as ResultadoGrupoERP,
-  Superficie as SuperficieERP,
-  PecaPositionada as PecaPositionadaERP,
-  Sobra as SobraERP
+  Superficie as SuperficieERP
 } from '../../../../utils/planodeCorte';
 
 import type { 
   Peca as PecaEngine, 
-  ResultadoOtimizacao as ResultadoEngine,
-  PecaPosicionada as PecaPosicionadaEngine,
-  Sobra as SobraEngine
+  ResultadoOtimizacao as ResultadoEngine
 } from '../types';
 
 export class CuttingMapper {
@@ -53,7 +49,7 @@ export class CuttingMapper {
     const gruposResultados: ResultadoGrupoERP[] = engineResults.map(res => {
       const grupoERP = gruposERP.find(g => g.id === res.grupo_id);
       const isRetalho = res.is_retalho || false;
-      const larguraOriginal = isRetalho ? (res.area_total / res.area_total) : (grupoERP?.larguraChapaMm || 2750); // Simplificado para o mapper
+      const _larguraOriginal = isRetalho ? (res.area_total / res.area_total) : (grupoERP?.larguraChapaMm || 2750); // Simplificado para o mapper
       
       const superficies: SuperficieERP[] = [{
         id: `${isRetalho ? 'retalho' : 'inteira'}-${res.chapa_id}`,

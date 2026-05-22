@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    env: {
+      APP_JWT_SECRET: 'test-secret-key-for-jwt',
+    },
     setupFiles: './src/test/setup.ts',
     coverage: {
       provider: 'v8',

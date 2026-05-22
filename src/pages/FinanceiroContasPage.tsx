@@ -2,18 +2,17 @@ import { useEffect, useState, useMemo } from 'react';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../design-system/components/Modal';
-import { TableSkeleton } from '../design-system/components/Skeleton';
+
 import { api } from '../lib/api';
 import { 
   Download, Filter, RefreshCw, Plus, Edit2, 
   FileText, Search, X, Repeat, AlertCircle, 
   Trash2, Lock, ArrowUpCircle, ArrowDownCircle,
-  History, Wallet, Building2, Banknote, TrendingUp, TrendingDown,
+  History, Wallet, Building2, TrendingUp,
   ChevronRight, Calendar, Info
 } from 'lucide-react';
 import type { 
   ContaInterna, 
-  MovimentacaoExtrato, 
   ExtratoPayload, 
   Fechamento, 
   FormTransferencia,
@@ -105,6 +104,7 @@ const FinanceiroContasPage = () => {
 
   useEffect(() => {
     if (showFechamento) fetchFechamentos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showFechamento]);
 
   const saveFechamento = async () => {

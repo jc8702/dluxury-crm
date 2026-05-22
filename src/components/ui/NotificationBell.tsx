@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Info, AlertTriangle, AlertCircle, ShoppingCart, Calendar, FileText, CheckCircle } from 'lucide-react';
+import { Bell, Info, ShoppingCart, Calendar, FileText, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Notificacao } from '../../api-lib/types';
 
@@ -37,6 +37,7 @@ const NotificationBell: React.FC = () => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000); // Polling a cada 60s (seguro)
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

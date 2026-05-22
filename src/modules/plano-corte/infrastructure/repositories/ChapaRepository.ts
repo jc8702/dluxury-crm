@@ -42,7 +42,7 @@ export class ChapaRepository {
       // mas podemos filtrar na lista ou assumir que o handleChapas suporta se q=ID
       const results = await this.buscarPorSKU(id);
       return results.find(c => c.id === id || c.sku === id) || null;
-    } catch (err) {
+    } catch (_err) {
       return null;
     }
   }

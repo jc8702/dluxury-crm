@@ -1,5 +1,5 @@
 import { db } from '../../src/api-lib/drizzle-db.js';
-import { orcamentos, orcamentoItens } from '../../src/db/schema/engenharia-orcamentos.js';
+import { orcamentos } from '../../src/db/schema/engenharia-orcamentos.js';
 import { eq } from 'drizzle-orm';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';

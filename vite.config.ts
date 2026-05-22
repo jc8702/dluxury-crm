@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   define: {
     'process.env': {},
@@ -14,16 +14,23 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: {
+    drop: mode === 'production' ? ['console'] : [],
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
           'lucide': ['lucide-react'],
-          'vendor': ['react', 'react-dom']
+          'charts': ['recharts'],
+          'calendar': ['react-big-calendar'],
+          'pdf': ['jspdf', 'jspdf-autotable', 'html2canvas'],
+          'date': ['date-fns']
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 500
   },
   server: {
     proxy: {
@@ -34,4 +41,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

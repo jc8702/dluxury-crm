@@ -61,7 +61,7 @@ export class ProcessarPDF {
       });
 
       // Criar uma "chapa" para cada agrupamento encontrado
-      for (const [key, pecas] of Object.entries(agrupamentos)) {
+      for (const [, pecas] of Object.entries(agrupamentos)) {
         const materialDetectado = pecas[0]?.material || '';
         const espessuraNum = pecas[0]?.espessura || 18;
         
@@ -147,3 +147,4 @@ export class ProcessarPDF {
     };
   }
 }
+

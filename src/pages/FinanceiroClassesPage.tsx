@@ -151,11 +151,11 @@ function TreeNode({
 }
 
 export default function FinanceiroClassesPage() {
-  const { success, error, warning } = useToast();
+  const { success, error } = useToast();
   const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [classes, setClasses] = useState<ClasseFinanceira[]>([]);
   const [tree, setTree] = useState<ClasseFinanceira[]>([]);
-  const [usageMap, setUsageMap] = useState<Record<string, number>>({});
+  const [usageMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<Partial<ClasseFinanceira> | null>(null);
   const [seeding, setSeeding] = useState(false);

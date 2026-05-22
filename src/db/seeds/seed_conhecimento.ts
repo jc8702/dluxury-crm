@@ -144,7 +144,7 @@ async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
 }
 
 async function seed() {
-  console.log('--- INICIANDO SEEDING DA BASE DE CONHECIMENTO VETORIAL RAG ---');
+  /* console.log('--- INICIANDO SEEDING DA BASE DE CONHECIMENTO VETORIAL RAG ---') */;
 
   if (!db) {
     console.error('❌ Erro: Conexão com o banco de dados (db) não pôde ser estabelecida ou DATABASE_URL está vazia.');
@@ -160,13 +160,13 @@ async function seed() {
   }
 
   try {
-    console.log('Limpando dados antigos da base de conhecimento para evitar duplicados...');
+    /* console.log('Limpando dados antigos da base de conhecimento para evitar duplicados...') */;
     await db.delete(conhecimentoMarcenaria);
-    console.log('Tabela limpa com sucesso!');
+    /* console.log('Tabela limpa com sucesso!') */;
 
-    console.log(`Populando ${CONHECIMENTO_ITEMS.length} tópicos na base de marcenaria...`);
+    /* console.log(`Populando ${CONHECIMENTO_ITEMS.length} tópicos na base de marcenaria...`) */;
 
-    let inseridos = 0;
+    let _inseridos = 0;
     for (let i = 0; i < CONHECIMENTO_ITEMS.length; i++) {
       const item = CONHECIMENTO_ITEMS[i];
       const textToEmbed = `${item.titulo}\n\n${item.conteudo}`;
@@ -191,11 +191,11 @@ async function seed() {
         embedding: vector,
       });
       
-      inseridos++;
-      console.log(`✅ [${inseridos}/${CONHECIMENTO_ITEMS.length}] Gravado no Neon Postgres: "${item.titulo}"`);
+      _inseridos++;
+      /* console.log(`✅ [${_inseridos}/${CONHECIMENTO_ITEMS.length}] Gravado no Neon Postgres: "${item.titulo}"`) */;
     }
 
-    console.log('🎉 Seeding do banco de RAG concluído com sucesso!');
+    /* console.log('🎉 Seeding do banco de RAG concluído com sucesso!') */;
     process.exit(0);
   } catch (error) {
     console.error('❌ Erro durante o seeding:', error);
@@ -204,3 +204,4 @@ async function seed() {
 }
 
 seed();
+

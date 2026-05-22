@@ -1,13 +1,12 @@
 import { sql, validateAuth, auditLog } from './_db.js';
-import { ApiResponse, Client, KanbanItem } from './types.js';
+
 
 export async function handleClients(req: any, res: any) {
   try {
-    // TEMP: Allow without auth for debugging
-    // const { authorized, error } = validateAuth(req);
-    // if (!authorized) return res.status(401).json({ success: false, error });
+    const { authorized, error } = validateAuth(req);
+    if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM clients WHERE deleted_at IS NULL ORDER BY created_at DESC`;
+      const result = await sql`SELECT id, nome, cpf, telefone, email, endereco, bairro, cidade, uf, tipo_imovel, comodos_interesse, origem, observacoes, status, created_at, razao_social, cnpj, municipio, situacao_cadastral FROM clients WHERE deleted_at IS NULL ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {

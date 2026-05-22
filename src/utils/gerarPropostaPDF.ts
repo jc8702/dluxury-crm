@@ -44,7 +44,7 @@ export async function gerarPropostaPDF(orcamento: any, cliente: any): Promise<vo
 
   } catch (error) {
     console.error('Falha ao gerar PDF:', error);
-    alert('Erro ao gerar PDF. Verifique o console para mais detalhes.');
+    console.error('Erro ao gerar PDF. Verifique o console para mais detalhes.');
   }
 }
 

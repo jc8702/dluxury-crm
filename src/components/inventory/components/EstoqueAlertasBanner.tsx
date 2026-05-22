@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../../../context/AppContext';
-import { AlertTriangle, PackageX } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface EstoqueAlertasBannerProps {
   onFilterCritico: () => void;

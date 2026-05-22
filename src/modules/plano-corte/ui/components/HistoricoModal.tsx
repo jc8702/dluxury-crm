@@ -6,7 +6,7 @@ import {
   ChevronRight, X, Clock, Box, Loader2
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { CardSkeleton } from '../../../../design-system/components/Skeleton';
+
 
 interface HistoricoModalProps {
   onLoadPlan: (plan: any) => void;

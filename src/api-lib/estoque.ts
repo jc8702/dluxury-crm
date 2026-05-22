@@ -1,5 +1,5 @@
 import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
-import { Material } from './types.js';
+
 
 export async function handleEstoque(req: any, res: any) {
   try {
@@ -35,7 +35,7 @@ export async function handleEstoque(req: any, res: any) {
 
     if (type === 'fornecedores') {
       if (method === 'GET') {
-        const result = id ? (await sql`SELECT * FROM fornecedores WHERE id = ${id}`)[0] : await sql`SELECT * FROM fornecedores WHERE ativo = true ORDER BY nome ASC`;
+        const result = id ? (await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE id = ${id}`)[0] : await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE ativo = true ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
@@ -58,7 +58,7 @@ export async function handleEstoque(req: any, res: any) {
 
     if (type === 'categories') {
       if (method === 'GET') {
-        const result = await sql`SELECT * FROM erp_categories ORDER BY nome ASC`;
+        const result = await sql`SELECT id, nome, slug, icone, created_at, updated_at FROM erp_categories ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
@@ -70,7 +70,7 @@ export async function handleEstoque(req: any, res: any) {
     if (method === 'GET') {
       if (id) {
         const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
-        const movs = await sql`SELECT * FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
+        const movs = await sql`SELECT id, material_id, tipo, quantidade, quantidade_uso, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
       const { q } = req.query;

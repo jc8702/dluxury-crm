@@ -1,9 +1,12 @@
 import { sql, extractAndVerifyToken } from './_db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { AuthenticatedUser, ApiResponse } from './types.js';
 
-const JWT_SECRET = process.env.APP_JWT_SECRET || 'dluxury-industrial-secret-2024';
+
+const JWT_SECRET = process.env.APP_JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('APP_JWT_SECRET environment variable is required');
+}
 
 export async function handleAuth(req: any, res: any): Promise<void> {
   try {
@@ -11,8 +14,11 @@ export async function handleAuth(req: any, res: any): Promise<void> {
     if (req.method === 'POST') {
       if (action === 'login') {
         const { email, password } = req.body;
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const users = await sql`SELECT * FROM users WHERE email = ${normalizedEmail}`;
+        if (!email || !password) return res.status(400).json({ success: false, error: 'Email e senha são obrigatórios' });
+        if (typeof email !== 'string' || typeof password !== 'string') return res.status(400).json({ success: false, error: 'Formato inválido' });
+        const normalizedEmail = email.trim().toLowerCase();
+        if (normalizedEmail.length > 254) return res.status(400).json({ success: false, error: 'Email muito longo' });
+        const users = await sql`SELECT id, name, email, role, password_hash FROM users WHERE email = ${normalizedEmail}`;
         if (users.length === 0) return res.status(401).json({ success: false, error: 'Usuário não encontrado' });
         const user = users[0];
         const valid = await bcrypt.compare(password, user.password_hash);

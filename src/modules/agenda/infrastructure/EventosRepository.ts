@@ -45,7 +45,7 @@ export class EventosRepository {
     
     // NORMALIZAÇÃO FORÇADA - ponto único de entrada
     const objetivoNormalizado = normalizeObjetivo(validated.objetivo);
-    console.log('[REPO] objetivo normalizado:', objetivoNormalizado);
+    /* console.log('[REPO] objetivo normalizado:', objetivoNormalizado) */;
     
     const results = await sql`
       INSERT INTO eventos (
@@ -127,3 +127,4 @@ export class EventosRepository {
     `;
   }
 }
+

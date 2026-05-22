@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Package, Pencil, Trash2, DollarSign, X, Check, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, Pencil, Trash2, DollarSign, Loader2 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 import { SKUAutocomplete } from './SKUAutocomplete';
 
 interface ItemCardProps {
@@ -13,6 +14,7 @@ interface ItemCardProps {
  * Estrutura refatorada para separar estados de rascunho, persistidos e calculados.
  */
 export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
+  const { error: toastError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -44,7 +46,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
 
   // Atualizar estado quando o item mudar externamente (ex: após save)
   useEffect(() => {
-    console.log(`[ItemCard] 🔄 Item atualizado externamente: ${item.id}`);
     setState(prev => ({
         ...prev,
         persisted: { ...item },
@@ -66,7 +67,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     if (!isEditing) return;
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-            console.log("[ItemCard] 🎹 ESC detectado - Cancelando edição");
             handleCancel();
         }
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -75,6 +75,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, state.draft]);
 
   // 🧮 CÁLCULO FINANCEIRO (Markup Simples)
@@ -115,8 +116,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const handleSave = async () => {
     if (!onUpdate) return;
     setIsSaving(true);
-    console.log(`[ItemCard] 💾 Salvando alterações para o item ${item.id}...`);
-    
     const payload = {
         ...state.draft,
         possuiOverride: state.draft.precoVendaSobrescrito !== null,
@@ -127,15 +126,12 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         precoVendaSobrescrito: state.draft.precoVendaSobrescrito?.toFixed(2) || null
     };
 
-    console.log("[ItemCard] 📤 Payload de envio:", payload);
-
     try {
         await onUpdate(item.id, payload);
         setIsEditing(false);
-        console.log("[ItemCard] ✅ Item salvo com sucesso.");
     } catch (err) {
         console.error("[ItemCard] ❌ Erro ao salvar item:", err);
-        alert("Erro ao salvar alterações.");
+        toastError("Erro ao salvar alterações.");
     } finally {
         setIsSaving(false);
     }
@@ -254,7 +250,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                         <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Vincular SKU</label>
                         <SKUAutocomplete 
                             onSelect={(sku) => {
-                                console.log("[ItemCard] 🔍 Novo SKU selecionado:", sku);
                                 const novoCusto = Number(sku.precoUnitario) || 0;
                                 
                                 // Criar novo rascunho com o SKU atualizado

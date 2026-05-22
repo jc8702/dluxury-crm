@@ -28,10 +28,10 @@ export default function FinanceiroAgingPage() {
 
   useEffect(() => {
     load();
-  }, [modo, historico]);
+  }, [modo, historico]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const faixasPrioridade = ['Acima de 90 Dias', '61-90 Dias', '31-60 Dias', '0-30 Dias', 'A Vencer'];
-  const summarySorted = [...data.summary].sort((a, b) => 
+  const _summarySorted = [...data.summary].sort((a, b) => 
     faixasPrioridade.indexOf(a.faixa) - faixasPrioridade.indexOf(b.faixa)
   );
 

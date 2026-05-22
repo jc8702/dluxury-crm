@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FileText, Download, Layers, Printer, X, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Download, Layers, Printer, X, FileSpreadsheet, Loader2 } from 'lucide-react';
 import type { ResultadoPlano, Superficie } from '../../../../utils/planodeCorte';
 import { exportarMapaCorte } from '../../application/usecases/ExportarMapaCorte';
 import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas';
 import { exportarCNC, salvarArquivoCNC } from '../../application/usecases/ExportarCNC';
+import { useToast } from '../../../../context/ToastContext';
 import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
 
 interface ExportacaoModalProps {
@@ -19,11 +20,11 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   resultado, 
   planoNome, 
   activeSuperficie, 
-  activeChapaIdx = 0, 
-  kerfMm = 3,
+  activeChapaIdx = 0,
   onClose 
 }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const { error: toastError } = useToast();
 
   // Mapeamento De-Para: Legado (utils/planodeCorte) -> Domínio (entities/CuttingPlan)
   const mapearParaDominio = (): ResultadoOtimizacao => {
@@ -86,7 +87,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
       await exportarMapaCorte(dadosDominio);
     } catch (e) {
       console.error(e);
-      alert('Erro ao gerar PDF do Mapa de Corte.');
+      toastError('Erro ao gerar PDF do Mapa de Corte.');
     } finally {
       setIsExporting(false);
       onClose();
@@ -109,7 +110,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
       await exportarEtiquetas(todasPecas, planoNome);
     } catch (e) {
       console.error(e);
-      alert('Erro ao gerar PDF de Etiquetas.');
+      toastError('Erro ao gerar PDF de Etiquetas.');
     } finally {
       setIsExporting(false);
       onClose();
@@ -118,7 +119,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
 
   const handleExportGCode = async () => {
     if (!activeSuperficie) {
-      alert("Selecione uma chapa no painel principal para exportar o G-Code.");
+      toastError("Selecione uma chapa no painel principal para exportar o G-Code.");
       return;
     }
     setIsExporting(true);
@@ -144,7 +145,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
       salvarArquivoCNC(gcode, `cnc_${planoNome.replace(/\s+/g, '_')}_chapa_${activeChapaIdx + 1}.nc`);
     } catch (e) {
       console.error(e);
-      alert('Erro ao gerar G-Code.');
+      toastError('Erro ao gerar G-Code.');
     } finally {
       setIsExporting(false);
       onClose();

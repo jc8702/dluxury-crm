@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Modal, Button } from '@/design-system/components';
-import { Upload, CheckCircle2, AlertCircle, FileDigit } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useToast } from '@/context/ToastContext';
 
 export function ImportacaoModal({ isOpen, onClose, onAddItems }: { isOpen: boolean, onClose: () => void, onAddItems: (items: any[]) => Promise<void> }) {
+    const { error: toastError } = useToast();
     const [status, setStatus] = useState<'idle' | 'uploading' | 'success'>('idle');
     const [results, setResults] = useState<any[] | null>(null);
     const [isAdding, setIsAdding] = useState(false);
@@ -33,7 +35,7 @@ export function ImportacaoModal({ isOpen, onClose, onAddItems }: { isOpen: boole
             setStatus('success');
         } catch (err: any) {
             console.error('Erro na importação:', err);
-            alert('Falha ao processar arquivo: ' + (err.message || 'Erro desconhecido'));
+            toastError('Falha ao processar arquivo', err.message || 'Erro desconhecido');
             setStatus('idle');
         }
     };
@@ -44,8 +46,8 @@ export function ImportacaoModal({ isOpen, onClose, onAddItems }: { isOpen: boole
         try {
             await onAddItems(results);
             onClose();
-        } catch (err) {
-            alert('Erro ao adicionar itens ao orçamento');
+        } catch (_err) {
+            toastError('Erro ao adicionar itens ao orçamento');
         } finally {
             setIsAdding(false);
         }

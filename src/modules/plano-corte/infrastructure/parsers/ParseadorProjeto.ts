@@ -300,7 +300,7 @@ export class ParseadorProjeto {
     // Atribuir largura, altura, profundidade
     let largura_mm = dimensoes[0].valor_mm; // Maior
     let altura_mm = dimensoes[1].valor_mm;  // Segundo maior
-    let profundidade_mm =
+    const profundidade_mm =
       dimensoes.length === 3 ? dimensoes[2].valor_mm : 450; // Default 450mm
 
     // Heurística: se altura > largura 1.5x, provavelmente trocou
@@ -500,7 +500,7 @@ export class ParseadorProjeto {
   private static sugerirMaterial(
     tipo: TipoMovelEnum,
     altura: number,
-    profundidade: number
+    _profundidade: number
   ): string {
     // Gaveteir/armário com altura < 1200mm: 18mm é suficiente
     if (altura < 1200) {

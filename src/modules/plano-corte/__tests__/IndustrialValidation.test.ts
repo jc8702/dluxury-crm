@@ -29,10 +29,10 @@ describe('Validação Industrial do Plano de Corte', () => {
     const optimizer = new HybridOptimizer(CHAPA_PADRAO.largura, CHAPA_PADRAO.altura, KERF);
     const resultado = optimizer.otimizar(PECAS_TESTE, 50); // 50 iterações para alta qualidade
 
-    console.log(`\n--- RESULTADO DA OTIMIZAÇÃO ---`);
-    console.log(`Aproveitamento: ${resultado.aproveitamento.toFixed(2)}%`);
-    console.log(`Peças Posicionadas: ${resultado.pecas_posicionadas.length}/${PECAS_TESTE.length}`);
-    console.log(`Tempo de Cálculo: ${resultado.tempo_calculo_ms}ms`);
+    /* console.log(`\n--- RESULTADO DA OTIMIZAÇÃO ---`) */;
+    /* console.log(`Aproveitamento: ${resultado.aproveitamento.toFixed(2)}%`) */;
+    /* console.log(`Peças Posicionadas: ${resultado.pecas_posicionadas.length}/${PECAS_TESTE.length}`) */;
+    /* console.log(`Tempo de Cálculo: ${resultado.tempo_calculo_ms}ms`) */;
 
     expect(resultado.aproveitamento).toBeGreaterThan(60);
     expect(resultado.pecas_posicionadas.length).toBeGreaterThanOrEqual(7);
@@ -55,8 +55,8 @@ describe('Validação Industrial do Plano de Corte', () => {
 
     const gcode = exportarCNC(layout);
     
-    console.log(`\n--- G-CODE GERADO (PREVIEW) ---`);
-    console.log(gcode.substring(0, 500) + '...');
+    /* console.log(`\n--- G-CODE GERADO (PREVIEW) ---`) */;
+    /* console.log(gcode.substring(0, 500) + '...') */;
 
     expect(gcode).toContain('G21'); // Unidades mm
     expect(gcode).toContain('M03'); // Spindle ON
@@ -64,3 +64,4 @@ describe('Validação Industrial do Plano de Corte', () => {
     expect(gcode).toContain('M30'); // Fim do programa
   });
 });
+

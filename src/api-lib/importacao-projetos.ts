@@ -52,13 +52,13 @@ export async function handleImportarProjeto(req: any, res: any) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
 
     try {
-        const { type, jsonData } = req.body;
+        const { jsonData } = req.body;
         
         if (!jsonData || !Array.isArray(jsonData)) {
             return res.status(400).json({ success: false, error: 'Dados JSON inválidos ou ausentes.' });
         }
 
-        console.log(`[API IMPORTADOR] Processando ${jsonData.length} itens do tipo ${type}`);
+        /* console.log(`[API IMPORTADOR] Processando ${jsonData.length} itens do tipo ${type}`); */
 
         // O mapeamento para SKUs é a única responsabilidade pesada que ficou no backend
         const result = await ImportadorProjeto.mapearParaSKUs(jsonData);

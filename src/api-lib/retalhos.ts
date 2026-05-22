@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { retalhosEstoque } from '../db/schema/planos-de-corte.js';
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, and, gte } from 'drizzle-orm';
 
 /**
  * HANDLER PARA GESTÃO DE RETALHOS (BLOCO 2)
@@ -20,7 +20,7 @@ export async function handleRetalhos(req: any, res: any) {
           // Listagem com filtros
           const { sku_chapa, largura_min, altura_min, disponivel, descartado } = req.query || {};
           
-          let query = db.select().from(retalhosEstoque);
+          const query = db.select().from(retalhosEstoque);
           const filters = [];
 
           if (sku_chapa) filters.push(eq(retalhosEstoque.sku_chapa, sku_chapa));

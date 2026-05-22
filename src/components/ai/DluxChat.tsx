@@ -126,7 +126,7 @@ async function retryWithBackoff<T>(
         const jitter = Math.random() * 0.3 * delay; // ±30% jitter
         const waitTime = delay + jitter;
 
-        console.info(`[${context}] Aguardando ${Math.round(waitTime)}ms antes da próxima tentativa...`);
+        /* console.info(`[${context}] Aguardando ${Math.round(waitTime)}ms antes da próxima tentativa...`) */
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
@@ -325,7 +325,7 @@ function TableBlock({ table }: { table: TableData }) {
   );
 }
 
-export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
+export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps) {
   const { user } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -548,6 +548,7 @@ export default function DluxChat({ onSuggestBOM }: DluxChatProps) {
     return () => {
       window.removeEventListener('dlux-open-chat', handleOpenChatEvent);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, memorySummary, user, loading]);
 
   return (

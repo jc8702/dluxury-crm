@@ -1,6 +1,6 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
-import type { Project } from './types.js';
+
 
 export async function handleProjects(req: any, res: any) {
   try {
@@ -78,7 +78,7 @@ export async function handleProjects(req: any, res: any) {
             )
             ON CONFLICT DO NOTHING
           `;
-          console.log('Migration from kanban_items completed successfully.');
+          /* console.log('Migration from kanban_items completed successfully.'); */
         } catch (migErr) {
           console.error('Migration from kanban_items failed:', migErr);
         }
@@ -250,10 +250,10 @@ export async function handleReports(req: any, res: any) {
     if (!authorized) return res.status(401).json({ success: false, error });
     const { type, projectId } = req.query || {};
     let result;
-    if (type === 'fin-rentabilidade') result = await sql`SELECT * FROM bi_custos_projeto ORDER BY custo_material_total DESC`;
+    if (type === 'fin-rentabilidade') result = await sql`SELECT id, projeto_id, custo_material_total, custo_mao_obra_total, custo_total, receita_total, margem_percentual, created_at FROM bi_custos_projeto ORDER BY custo_material_total DESC`;
     if (type === 'ind-romaneio') result = await sql`SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku as sku_code, cr.quantidade_com_perda, s.unidade_uso as unidade_medida FROM erp_project_items pi JOIN erp_consumption_results cr ON cr.project_item_id = pi.id JOIN materiais s ON s.id = cr.sku_id WHERE pi.project_id = ${projectId} ORDER BY pi.label, cr.componente_nome`;
     if (type === 'com-necessidade') result = await sql`SELECT s.sku as sku_code, s.nome, s.estoque_atual, s.estoque_minimo FROM materiais s WHERE s.estoque_atual <= s.estoque_minimo ORDER BY (s.estoque_minimo - s.estoque_atual) DESC`;
-    if (type === 'ind-desvios') result = await sql`SELECT * FROM bi_desvio_producao`;
+    if (type === 'ind-desvios') result = await sql`SELECT id, projeto_id, op_id, tipo_desvio, descricao, data_ocorrencia, created_at FROM bi_desvio_producao`;
     if (!result) return res.status(400).json({ success: false, error: 'Tipo inválido' });
     return res.status(200).json({ success: true, data: result });
   } catch (err: any) {
@@ -293,13 +293,13 @@ export async function handleEngineering(req: any, res: any) {
             END LOOP;
         END $$;
       `;
-    } catch (e) {
+    } catch {
       // Ignore migration errors for existing structures
     }
 
     try {
       await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`;
-    } catch (e) {
+    } catch {
       // Ignore if constraint already exists
     }
 

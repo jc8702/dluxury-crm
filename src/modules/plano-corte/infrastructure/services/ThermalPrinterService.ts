@@ -48,7 +48,7 @@ export class ThermalPrinterService {
     `;
 
     // No ambiente real, enviaríamos o buffer para o device USB
-    console.log('Imprimindo via WebUSB (ZPL):', zpl);
+    /* console.log('Imprimindo via WebUSB (ZPL):', zpl) */;
     return zpl;
   }
 
@@ -62,3 +62,4 @@ export class ThermalPrinterService {
     return bordas.join('/') || 'Nenhuma';
   }
 }
+

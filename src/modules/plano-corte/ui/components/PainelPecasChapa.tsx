@@ -15,7 +15,6 @@ interface PainelPecasChapaProps {
 }
 
 export function PainelPecasChapa({
-  chapaId,
   pecas,
   onAddPeca,
   onUpdatePeca,

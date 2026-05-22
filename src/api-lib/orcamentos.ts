@@ -1,7 +1,7 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { calculateBOM } from './_bomEngine.js';
 import { reserveStockForProject } from './_inventory.js';
-import { Orcamento } from './types.js';
+
 
 export async function handleOrcamentos(req: any, res: any) {
   try {
@@ -11,14 +11,17 @@ export async function handleOrcamentos(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (id) {
-        const orc = (await sql`SELECT * FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+        const orc = (await sql`SELECT id, cliente_id, projeto_id, visita_id, numero, status, valor_base, taxa_mensal, condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos, created_at, updated_at FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
         if (!orc) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
-        const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} ORDER BY id ASC`;
+        const itms = await sql`SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE orcamento_id = ${id} ORDER BY id ASC`;
         return res.status(200).json({ success: true, data: { ...orc, itens: itms } });
       }
       const result = await sql`
         SELECT 
-          o.*, 
+          o.id, o.cliente_id, o.projeto_id, o.numero, o.status,
+          o.valor_base, o.taxa_mensal, o.condicao_pagamento_id, o.valor_final,
+          o.prazo_entrega_dias, o.prazo_tipo, o.adicional_urgencia_pct,
+          o.observacoes, o.created_at, o.updated_at,
           c.nome as cliente_nome,
           p.title as projeto_nome
         FROM orcamentos o 
@@ -100,9 +103,9 @@ export async function handleOrcamentos(req: any, res: any) {
 
       await auditLog('orcamentos', id, 'UPDATE', user?.id, before[0], orc[0]);
       if (f.status === 'aprovado') {
-        const itms = await sql`SELECT * FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL`;
+        const itms = await sql`SELECT id, orcamento_id, descricao, erp_product_id, erp_parametros FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL`;
         for (const itm of itms) {
-          const bom = await sql`SELECT * FROM erp_product_bom WHERE product_id = ${itm.erp_product_id}`;
+          const bom = await sql`SELECT id, nome, codigo_modelo, regras_calculo FROM erp_product_bom WHERE product_id = ${itm.erp_product_id}`;
           if (bom.length) {
             const results = await calculateBOM(itm.erp_parametros, bom as any);
             const pItem = await sql`INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status) VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'aprovado') RETURNING id`;
@@ -119,7 +122,7 @@ export async function handleOrcamentos(req: any, res: any) {
           // Evitar duplicidade: verificar se já existem títulos para este orçamento
           const existing = await sql`SELECT id FROM titulos_receber WHERE orcamento_id = ${id}`;
           if (existing.length === 0) {
-            const cond = (await sql`SELECT * FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id}`)[0];
+            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id}`)[0];
             if (cond) {
               const totalParcelas = cond.n_parcelas || 1; // Note: schema in migration used 'parcelas', in handleCondicoesPagamento 'n_parcelas'
               const valorTotal = Number(currentOrc.valor_final) || 0;
@@ -182,19 +185,19 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (type === 'config') {
-        const result = (await sql`SELECT * FROM configuracoes_precificacao LIMIT 1`)[0] || {};
+        const result = (await sql`SELECT id, fator_perda_padrao, markup_padrao, aliquota_imposto, mo_producao_pct_padrao, mo_instalacao_pct_padrao, margem_minima_alerta, espessura_chapa_padrao, recuo_fundo_padrao, created_at, updated_at FROM configuracoes_precificacao LIMIT 1`)[0] || {};
         return res.status(200).json({ success: true, data: result });
       }
       if (orcamento_id && type === 'tree') {
-        const ambs = await sql`SELECT * FROM orcamento_ambientes WHERE orcamento_id = ${orcamento_id} ORDER BY ordem ASC`;
+        const ambs = await sql`SELECT id, orcamento_id, nome, ordem, created_at, updated_at FROM orcamento_ambientes WHERE orcamento_id = ${orcamento_id} ORDER BY ordem ASC`;
         for (const amb of ambs) {
-          amb.moveis = await sql`SELECT * FROM orcamento_moveis WHERE ambiente_id = ${amb.id} ORDER BY ordem ASC`;
+          amb.moveis = await sql`SELECT id, ambiente_id, nome, tipo_movel, largura_total_cm, altura_total_cm, profundidade_total_cm, observacoes, ordem, erp_product_id, erp_parametros, created_at, updated_at FROM orcamento_moveis WHERE ambiente_id = ${amb.id} ORDER BY ordem ASC`;
           for (const mov of amb.moveis) {
-            mov.pecas = await sql`SELECT * FROM orcamento_pecas WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
-            mov.ferragens = await sql`SELECT * FROM orcamento_ferragens WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
+            mov.pecas = await sql`SELECT id, movel_id, material_id, sku, descricao_peca, largura_cm, altura_cm, espessura_mm, quantidade, m2_unitario, m2_total, fator_perda_pct, m2_com_perda, preco_custo_m2, custo_total_peca, metros_fita_borda, fita_material_id, sentido_veio, desconto_fita_mm, created_at, updated_at FROM orcamento_pecas WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
+            mov.ferragens = await sql`SELECT id, movel_id, material_id, sku, descricao, quantidade, unidade, preco_custo_unitario, custo_total, created_at, updated_at FROM orcamento_ferragens WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
           }
         }
-        const extras = await sql`SELECT * FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} ORDER BY created_at ASC`;
+        const extras = await sql`SELECT id, orcamento_id, descricao, tipo, forma_calculo, percentual_ou_valor, m2_total_referencia, valor_calculado, created_at, updated_at FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} ORDER BY created_at ASC`;
         return res.status(200).json({ success: true, data: { ambientes: ambs, extras } });
       }
     }
@@ -250,7 +253,7 @@ export async function handleCondicoesPagamento(req: any, res: any) {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     if (req.method === 'GET') {
-      const result = await sql`SELECT * FROM condicoes_pagamento WHERE ativo = true ORDER BY n_parcelas ASC`;
+      const result = await sql`SELECT id, nome, n_parcelas, ativo, created_at, updated_at FROM condicoes_pagamento WHERE ativo = true ORDER BY n_parcelas ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {

@@ -54,7 +54,7 @@ export class CustosService {
       custoFerragens += precoUni * item.quantidade;
     }
 
-    const custoBase = custoMaterial + custoFerragens;
+    const _custoBase = custoMaterial + custoFerragens;
     const desperdicio = custoMaterial * (this.MARGEM_SEGURANCA - 1);
     const materialComDesperdicio = custoMaterial * this.MARGEM_SEGURANCA;
     
@@ -93,7 +93,7 @@ export class CustosService {
       });
       
       return precos;
-    } catch (e) {
+    } catch (_e) {
       console.error("Erro ao buscar preços reais, usando simulado.");
       return {
         "MDF": 125,

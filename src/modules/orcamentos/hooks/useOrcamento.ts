@@ -1,14 +1,16 @@
 // src/modules/orcamentos/hooks/useOrcamento.ts
 import { useState, useCallback, useEffect } from 'react';
+import { useToast } from '@/context/ToastContext';
 
 export function useOrcamento(orcamentoId?: string) {
+  const { error: toastError } = useToast();
   const [orcamento, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ✅ FUNÇÃO DE CARREGAMENTO CENTRALIZADA (API PRO)
   const carregar = useCallback(async (id: string) => {
-    console.log(`🔄 [useOrcamento] Carregando orçamento PRO ${id}...`);
+    /* console.log(`🔄 [useOrcamento] Carregando orçamento PRO ${id}...`) */;
     setLoading(true);
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${id}`); 
@@ -21,7 +23,7 @@ export function useOrcamento(orcamentoId?: string) {
       
       if (result.success) {
         setOrcamento(result.data);
-        console.log("✅ [useOrcamento] Dados carregados:", result.data);
+        /* console.log("✅ [useOrcamento] Dados carregados:", result.data) */;
         return result.data;
       } else {
         throw new Error(result.error || 'Erro ao carregar dados');
@@ -50,7 +52,7 @@ export function useOrcamento(orcamentoId?: string) {
         espessura: item.espessura?.toString() || ''
     }));
 
-    console.log(`📤 [useOrcamento] Enviando request de importação (${normalizedItems.length} itens)...`);
+    /* console.log(`📤 [useOrcamento] Enviando request de importação (${normalizedItems.length} itens)...`) */;
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=import-items`, {
         method: 'PUT',
@@ -61,17 +63,17 @@ export function useOrcamento(orcamentoId?: string) {
       const result = await response.json();
       
       if (result.success) {
-        console.log("✅ [useOrcamento] Importação concluída com sucesso!");
+        /* console.log("✅ [useOrcamento] Importação concluída com sucesso!") */;
         await carregar(orcamentoId); 
         return true;
       } else {
         console.error("❌ [useOrcamento] Erro retornado pela API:", result.error);
-        alert(`Erro na importação: ${result.error || 'Erro desconhecido no servidor'}`);
+        toastError(`Erro na importação`, result.error || 'Erro desconhecido no servidor');
         return false;
       }
     } catch (err: any) {
       console.error("❌ [useOrcamento] Falha na comunicação com a API:", err);
-      alert(`Erro de rede ou conexão: ${err.message}`);
+      toastError('Erro de rede ou conexão', err.message);
       return false;
     }
   }, [orcamentoId, carregar]);
@@ -298,3 +300,4 @@ export function useOrcamento(orcamentoId?: string) {
     carregar: () => orcamentoId ? carregar(orcamentoId) : null
   };
 }
+

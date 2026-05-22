@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { db } from '../../src/api-lib/drizzle-db.js';
 import { sql } from '../../src/api-lib/_db.js';
-import { orcamentos, skuComponente } from '../../src/db/schema/index.js';
-import { eq, sql as dsql } from 'drizzle-orm';
+import { skuComponente } from '../../src/db/schema/index.js';
+import { sql as dsql } from 'drizzle-orm';
 
 // Configurações
 const MODEL_PRO = 'gemini-2.5-pro';
@@ -10,7 +10,7 @@ const MODEL_FLASH = 'gemini-2.5-flash';
 const MAX_TOKENS = 4096;
 const TEMPERATURE = 0.3;
 const MAX_CONVERSATION_TURNS = 10;
-const TIMEOUT_MS = 45000;
+const _TIMEOUT_MS = 45000;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
 
@@ -134,7 +134,7 @@ async function chamarGemini(params: {
 
   for (const model of modelsToTry) {
     try {
-      console.log(`[AI_CHAT] Tentando chamada no modelo ${model}...`);
+      /* console.log(`[AI_CHAT] Tentando chamada no modelo ${model}...`) */;
       const response = await ai.models.generateContent({
         model,
         contents: params.contents,
@@ -146,7 +146,7 @@ async function chamarGemini(params: {
           responseSchema: params.responseSchema,
         }
       });
-      console.log(`[AI_CHAT] Sucesso na execução com ${model}`);
+      /* console.log(`[AI_CHAT] Sucesso na execução com ${model}`) */;
       return response;
     } catch (err: any) {
       console.error(`[AI_ERROR] Erro na execução com ${model}:`, err.message || err);
@@ -168,7 +168,7 @@ async function chamarGemini(params: {
 
 // Roteador semântico de agentes
 export async function rotearAgente(userMessage: string, historySummary?: string): Promise<{ agente_escolhido: string; confianca: number; razao: string }> {
-  console.log(`[AI_ROUTER] Roteando mensagem: "${userMessage.slice(0, 60)}..."`);
+  /* console.log(`[AI_ROUTER] Roteando mensagem: "${userMessage.slice(0, 60)}..."`) */;
   
   const prompt = `Analise a mensagem do usuário e decida qual é o agente especialista apropriado do D'LUXURY ERP.
 
@@ -221,7 +221,7 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
     const confianca = typeof parsed.confianca === 'number' ? parsed.confianca : 0.5;
     const razao = parsed.razao || 'Seleção padrão';
 
-    console.log(`[AI_ROUTER] Roteamento concluído: ${agente} (Confiança: ${confianca})`);
+    /* console.log(`[AI_ROUTER] Roteamento concluído: ${agente} (Confiança: ${confianca})`) */;
     return { agente_escolhido: agente, confianca, razao };
   } catch (err) {
     console.error('[AI_ERROR] Erro no roteador semântico. Usando fallback administrativo:', err);
@@ -241,7 +241,7 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
 async function consultar_orcamentos(input: { status?: string; limite?: number }) {
   const status = input.status || 'APROVADO';
   const limit = input.limite || 10;
-  console.log(`[AI_TOOL] consultar_orcamentos chamado: status=${status}, limite=${limit}`);
+  /* console.log(`[AI_TOOL] consultar_orcamentos chamado: status=${status}, limite=${limit}`) */;
 
   try {
     const rows = await sql`
@@ -298,7 +298,7 @@ async function consultar_orcamentos(input: { status?: string; limite?: number })
 async function calcular_margem(input: { custo: number; venda: number }) {
   const custo = Number(input.custo);
   const venda = Number(input.venda);
-  console.log(`[AI_TOOL] calcular_margem chamado: custo=${custo}, venda=${venda}`);
+  /* console.log(`[AI_TOOL] calcular_margem chamado: custo=${custo}, venda=${venda}`) */;
 
   if (isNaN(custo) || isNaN(venda) || venda === 0) {
     return {
@@ -344,7 +344,7 @@ async function buscar_materiais(input: { termo: string; limite?: number }) {
   const termoLimpo = input.termo || '';
   const termo = `%${termoLimpo}%`;
   const limit = input.limite || 10;
-  console.log(`[AI_TOOL] buscar_materiais chamado: termo="${termoLimpo}", limite=${limit}`);
+  /* console.log(`[AI_TOOL] buscar_materiais chamado: termo="${termoLimpo}", limite=${limit}`) */;
 
   try {
     // Consulta primária na tabela legada materiais
@@ -438,7 +438,7 @@ async function ragConhecimentoTecnico(input: { query: string }, apiKey: string) 
 }
 
 export async function executarFerramenta(toolName: string, toolInput: any): Promise<any> {
-  console.log(`[AI_TOOL] Executando ferramenta ${toolName}...`);
+  /* console.log(`[AI_TOOL] Executando ferramenta ${toolName}...`) */;
   try {
     switch (toolName) {
       case 'consultar_orcamentos':
@@ -474,7 +474,7 @@ export async function processarChat(payload: {
   context?: Record<string, any>;
   memory_summary?: string;
 }): Promise<any> {
-  console.log('[AI_CHAT] Iniciando processamento do chat...');
+  /* console.log('[AI_CHAT] Iniciando processamento do chat...') */;
   
   const userMessage = payload.message.trim();
   const agentMode = payload.agentMode || 'auto';
@@ -488,21 +488,21 @@ export async function processarChat(payload: {
 
   // 1. Decidir Agente (Se modo manual, respeitamos; senão, roteamos automaticamente)
   let chosenAgent = 'marcenaria';
-  let routeConfidence = 1.0;
-  let routeReason = 'Seleção manual de agente.';
+  let _routeConfidence = 1.0;
+  let _routeReason = 'Seleção manual de agente.';
 
   if (agentMode !== 'auto' && SYSTEM_PROMPTS[agentMode]) {
     chosenAgent = agentMode;
-    console.log(`[AI_CHAT] Modo manual: usando agente "${chosenAgent}"`);
+    /* console.log(`[AI_CHAT] Modo manual: usando agente "${chosenAgent}"`) */;
   } else {
     const route = await rotearAgente(userMessage, historySummary);
     chosenAgent = route.agente_escolhido;
-    routeConfidence = route.confianca;
-    routeReason = route.razao;
+    _routeConfidence = route.confianca;
+    _routeReason = route.razao;
   }
 
   // Montamos o contexto enriquecido
-  const contextText = Object.entries(context)
+  const _contextText = Object.entries(context)
     .filter(([k, v]) => v !== undefined && v !== null && k !== 'token')
     .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
     .join('\n') || 'Sem contexto adicional.';
@@ -525,7 +525,7 @@ export async function processarChat(payload: {
   });
 
   // Definindo as ferramentas disponíveis na API do Gemini
-  const toolDeclarations = [
+  const toolDeclarations: any[] = [
     {
       name: 'consultar_orcamentos',
       description: 'Consulta no banco de dados orçamentos por status (APROVADO, RASCUNHO, etc.). Útil para saber orçamentos fechados, andamento ou totais.',
@@ -585,14 +585,14 @@ export async function processarChat(payload: {
   const maxIterations = 5;
   let hasPendingCalls = true;
   let finalResponseText = '';
-  let finalConfidence = Math.round(routeConfidence * 100);
+  let finalConfidence = Math.round(_routeConfidence * 100);
   let finalSources: string[] = ['Conhecimento Geral da IA'];
   
   let primaryToolResult: any = null;
 
   while (hasPendingCalls && currentIteration < maxIterations) {
     currentIteration++;
-    console.log(`[AI_CHAT] Iteração do loop de tools: ${currentIteration}/${maxIterations}`);
+    /* console.log(`[AI_CHAT] Iteração do loop de tools: ${currentIteration}/${maxIterations}`) */;
 
     // Chamada ao Gemini
     const geminiResponse = await chamarGemini({
@@ -609,7 +609,7 @@ export async function processarChat(payload: {
     const functionCalls = parts.filter(p => p.functionCall);
 
     if (functionCalls.length > 0) {
-      console.log(`[AI_CHAT] Gemini solicitou ${functionCalls.length} chamada(s) de ferramentas.`);
+      /* console.log(`[AI_CHAT] Gemini solicitou ${functionCalls.length} chamada(s) de ferramentas.`) */;
       
       // Adiciona a chamada de ferramenta feita pelo modelo ao histórico do Gemini
       contents.push(candidate.content);
@@ -623,7 +623,7 @@ export async function processarChat(payload: {
         const toolName = fc.name;
         const toolArgs = fc.args || {};
 
-        console.log(`[AI_TOOL] Executando chamada para a tool: ${toolName}`);
+        /* console.log(`[AI_TOOL] Executando chamada para a tool: ${toolName}`) */;
         
         // Executamos a ferramenta correspondente
         const result = await executarFerramenta(toolName, toolArgs);
@@ -649,7 +649,7 @@ export async function processarChat(payload: {
       });
 
     } else {
-      console.log('[AI_CHAT] Nenhuma chamada de ferramenta pendente. Coletando resposta final.');
+      /* console.log('[AI_CHAT] Nenhuma chamada de ferramenta pendente. Coletando resposta final.') */;
       finalResponseText = geminiResponse.text || '';
       hasPendingCalls = false;
     }
@@ -663,10 +663,10 @@ export async function processarChat(payload: {
   // ----------------------------------------------------
   // Geração de Resposta Estruturada Final
   // ----------------------------------------------------
-  console.log('[AI_CHAT] Formatando resposta final estruturada...');
+  /* console.log('[AI_CHAT] Formatando resposta final estruturada...') */;
   
   let formattedText = finalResponseText;
-  let chartData = primaryToolResult?.chart_data || null;
+  const chartData = primaryToolResult?.chart_data || null;
   let tableData = primaryToolResult?.table_data || null;
   let suggestions = primaryToolResult?.suggestions || ['Como posso te ajudar mais?', 'Verificar orçamentos aprovados', 'Calcular margens de vendas'];
 
@@ -753,7 +753,7 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
     console.error('[AI_ERROR] Falha ao atualizar memória:', memErr);
   }
 
-  console.log(`[AI_CHAT] Processamento finalizado com sucesso para o agente ${chosenAgent}.`);
+  /* console.log(`[AI_CHAT] Processamento finalizado com sucesso para o agente ${chosenAgent}.`) */;
 
   return {
     text: formattedText,
@@ -804,3 +804,4 @@ Siga as regras:
     return params.memorySummary;
   }
 }
+

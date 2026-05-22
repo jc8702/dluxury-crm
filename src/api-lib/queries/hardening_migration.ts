@@ -1,7 +1,7 @@
 import { sql } from '../_db.js';
 
 export async function runHardeningMigration() {
-  console.log('--- Iniciando Hardening de Banco de Dados (v1) ---');
+  /* console.log('--- Iniciando Hardening de Banco de Dados (v1) ---') */
   
   const steps = [
     // 1. Tabela de Auditoria
@@ -56,6 +56,6 @@ export async function runHardeningMigration() {
     }
   }
 
-  console.log('--- Hardening Concluído ---');
+  /* console.log('--- Hardening Concluído ---') */
   return { success: true };
 }

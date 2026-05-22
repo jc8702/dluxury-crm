@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { HeartHandshake, Plus, Clock, CheckCircle, AlertTriangle, Loader2, Save } from 'lucide-react';
 import { api } from '../lib/api';
 import { Modal } from '../design-system/components/Modal';
+import { useToast } from '../context/ToastContext';
 import DataTable from '../components/ui/DataTable';
 
 const PosVendaPage: React.FC = () => {
+  const { error: toastError } = useToast();
   const [activeTab, setActiveTab ] = useState<'abertos' | 'historico' | 'indicadores'>('abertos');
   const [chamados, setChamados] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ const PosVendaPage: React.FC = () => {
       });
       await fetchData();
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      toastError('Erro', err.message);
     } finally {
       setSaving(false);
     }

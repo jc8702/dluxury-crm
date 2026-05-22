@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, BarChart3, TrendingUp, AlertCircle, ShoppingCart, Calendar, Search, Loader2 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { Download, BarChart3, TrendingUp, AlertCircle, ShoppingCart, Loader2 } from 'lucide-react';
 import { reportService } from '../../services/reportService';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 
 const ReportsPage: React.FC = () => {
+  const { info: toastInfo } = useToast();
   const { projects } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [activeReport, setActiveReport] = useState<string | null>(null);
@@ -15,7 +17,7 @@ const ReportsPage: React.FC = () => {
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(projects[0].id);
     }
-  }, [projects]);
+  }, [projects]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadReportData = async (type: string, params: any = {}) => {
     setLoading(true);
@@ -41,7 +43,7 @@ const ReportsPage: React.FC = () => {
          const prj = projects.find(p => p.id === selectedProjectId);
          await reportService.generateRomaneioProducao(prj?.ambiente || 'Projeto', reportData);
       } else {
-        alert('Exportação para este relatório está sendo preparada.');
+        toastInfo('Exportação para este relatório está sendo preparada.');
       }
     } finally {
       setLoading(false);

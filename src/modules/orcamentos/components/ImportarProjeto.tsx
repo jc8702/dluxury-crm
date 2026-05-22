@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button } from '@/design-system/components';
-import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, FileText } from 'lucide-react';
-import { api } from '@/lib/api';
-import { PDFParser } from '../services/PDFParser';
+import { CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 import { ImportarCSV } from './ImportarCSV';
 
 /**
@@ -15,21 +14,19 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
     onAddItems: (items: any[]) => Promise<void>,
     orcamentoId: string
 }) {
+    const { error: toastError, success: toastSuccess } = useToast();
     const [status, setStatus] = useState<'idle' | 'parsing' | 'uploading' | 'success'>('idle');
     const [results, setResults] = useState<any[] | null>(null);
     const [isAdding, setIsAdding] = useState(false);
     const [isCSVModalOpen, setIsCSVModalOpen] = useState(false);
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Lógica de PDF removida
-    };
-
     const handleConfirmarImportacao = async () => {
         if (!results) return;
         setIsAdding(true);
         try {
-            console.log('[ImportarProjeto] Confirmando importação de', results.length, 'itens');
-            console.log('[ImportarProjeto] Orçamento ID:', orcamentoId);
+
+
+
 
             // Chamar callback que vem do pai (importItems do hook)
             await onAddItems(results);
@@ -40,10 +37,10 @@ export function ImportarProjeto({ isOpen, onClose, onAddItems, orcamentoId }: {
             setStatus('idle');
             setResults(null);
             
-            alert(`${results.length} itens importados com sucesso!`);
+            toastSuccess(`${results.length} itens importados com sucesso!`);
         } catch (error: any) {
             console.error('❌ [ImportarProjeto] Erro:', error);
-            alert(`Erro ao importar: ${error.message}`);
+            toastError(`Erro ao importar: ${error.message}`);
         } finally {
             setIsAdding(false);
         }

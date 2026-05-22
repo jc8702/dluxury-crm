@@ -99,7 +99,7 @@ export default async function handler(req: any, res: any) {
     });
   }
 
-  console.log(`[ROUTER] Request: ${req.method} ${cleanUrl} from ${clientIP}`);
+  // console.log(`[ROUTER] Request: ${req.method} ${cleanUrl} from ${clientIP}`);
 
   try {
     // Roteamento Dinâmico (Lazy Loading)
@@ -350,8 +350,7 @@ export default async function handler(req: any, res: any) {
     console.error('API Router Error:', err);
     return res.status(500).json({ 
       success: false, 
-      error: err.message || 'Erro interno no servidor da API', 
-      details: err.stack
+      error: err.message || 'Erro interno no servidor da API'
     });
   }
 }

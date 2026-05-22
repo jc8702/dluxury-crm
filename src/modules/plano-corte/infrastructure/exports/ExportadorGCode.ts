@@ -1,7 +1,7 @@
 import { Superficie } from '../../../utils/planodeCorte';
 
 export class ExportadorGCode {
-  static gerarGCodeString(superficie: Superficie, index: number, kerf: number): string {
+  static gerarGCodeString(superficie: Superficie, index: number, _kerf: number): string {
     let gcode = `(Plano de Corte - Chapa ${index + 1})\n`;
     gcode += `(Dimensões: ${superficie.largura} x ${superficie.altura} mm)\n`;
     gcode += `G21 (Metrico)\nG90 (Absoluto)\nG0 Z50 (Seguranca)\n`;
@@ -47,7 +47,8 @@ export class ExportadorGCode {
       link.download = `chapa_${index + 1}.gcode`;
       link.click();
     } else {
-      console.log("ExportadorGCode: Ambiente sem DOM, ignorando download. Gcode gerado:\n", gcode.substring(0, 200) + '...');
+      /* console.log("ExportadorGCode: Ambiente sem DOM, ignorando download. Gcode gerado:\n", gcode.substring(0, 200) + '...') */;
     }
   }
 }
+

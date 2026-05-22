@@ -1,5 +1,5 @@
 
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum, index, check } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 // Referências externas são tratadas via colunas raw para evitar dependências circulares ou quebra de build
 

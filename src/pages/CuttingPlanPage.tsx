@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Scissors, Plus, Save, Trash2, RefreshCcw,
-  Box, Info, X, CheckCircle, ChevronRight,
-  FileUp, Search, Wallet, TrendingUp, History, 
-  ArrowUpCircle, ArrowDownCircle, Layout, Download,
-  Layers, Maximize2, Settings2, Printer, FileText
+  Box, X, CheckCircle, ChevronRight,
+  FileUp, Search, TrendingUp, History, 
+  Download,
+  Layers, Settings2
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { 
   PecaInput, 
   GrupoMaterial, 
-  ResultadoPlano,
-  Superficie
+  ResultadoPlano
 } from '../utils/planodeCorte';
 import { useCuttingWorker } from '../modules/plano-corte/infrastructure/hooks/useCuttingWorker';
 import { retalhosRepository } from '../modules/plano-corte/infrastructure/repositories/RetalhosRepository';
-import { PainelRetalhos } from '../modules/plano-corte/ui/components/PainelRetalhos';
 import { CanvasAvancado } from '../modules/plano-corte/ui/components/CanvasAvancado';
 import { ImportadorEngenharia } from '../modules/plano-corte/ui/components/ImportadorEngenharia';
 import { ExportacaoModal } from '../modules/plano-corte/ui/components/ExportacaoModal';
@@ -356,7 +354,7 @@ const CuttingPlanPage: React.FC = () => {
       for (const orc of approvedOrcs) {
         const data = await api.orcamentoTecnico.getTree(orc.id);
         const tree = data.ambientes || [];
-        let pecasParaProcessar: any[] = [];
+        const pecasParaProcessar: any[] = [];
 
         if (tree && Array.isArray(tree) && tree.length > 0) {
           tree.forEach((amb: any) => {
@@ -439,7 +437,7 @@ const CuttingPlanPage: React.FC = () => {
       if (totalImportado > 0) {
         success(`${totalImportado} peças importadas com sucesso!`);
       }
-    } catch (e) { 
+    } catch (_e) { 
       error("FALHA AO IMPORTAR PEÇAS.");
     } finally { 
       setLoading(false); 

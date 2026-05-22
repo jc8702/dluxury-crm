@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
-import { eq, ilike, or, sql } from 'drizzle-orm';
+import { ilike, or, sql } from 'drizzle-orm';
 
 /**
  * Endpoint para buscar SKUs no banco baseado nos dados do CSV/PDF ou busca manual

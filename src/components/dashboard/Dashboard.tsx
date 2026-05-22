@@ -5,7 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { Project, ProjectStatus } from '../../context/AppContext';
 
 const Dashboard: React.FC = () => {
-  const { projects, clients, billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, monthlyGoals, setMonthlyGoal } = useAppContext();
+  const { projects, clients, billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } = useAppContext();
   const [editGoal, setEditGoal] = React.useState(false);
   const [goalValue, setGoalValue] = React.useState('');
 
@@ -32,14 +32,14 @@ const Dashboard: React.FC = () => {
     concluido: '🏁 Concluído',
   };
 
-  const statusCounts = Object.keys(statusLabels).map(status => ({
+  const _statusCounts = Object.keys(statusLabels).map(status => ({
     status: status as ProjectStatus,
     label: statusLabels[status as ProjectStatus],
     count: projects.filter(p => p.status === status).length,
     value: projects.filter(p => p.status === status).reduce((acc, p) => acc + (p.valorEstimado || 0), 0),
   }));
 
-  const totalPipeline = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
+  const _totalPipeline = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
   const inProduction = projects.filter(p => p.status === 'em_producao').length;
   const concluidos = projects.filter(p => p.status === 'concluido').length;
   const ticketMedio = concluidos > 0

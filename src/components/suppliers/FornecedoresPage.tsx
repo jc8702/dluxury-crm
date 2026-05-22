@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useEscClose } from '../../hooks/useEscClose';
 import { useAppContext } from '../../context/AppContext';
 import type { Fornecedor } from '../../context/AppContext';
-import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2, X, Save } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2 } from 'lucide-react';
 
 import FornecedorFormModal from './components/FornecedorFormModal';
 
 const FornecedoresPage: React.FC = () => {
+  const { error: toastError } = useToast();
   const { fornecedores, removeFornecedor, reloadData } = useAppContext();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +33,7 @@ const FornecedoresPage: React.FC = () => {
       try {
         await removeFornecedor(id);
       } catch (e: any) {
-        alert("Erro ao excluir fornecedor: " + (e.message || "Acesso negado"));
+        toastError("Erro ao excluir fornecedor", e.message || "Acesso negado");
       }
     }
   };

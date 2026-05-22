@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Settings2, Plus, Zap, Box, Ruler, Loader2, Save, X } from 'lucide-react';
+import { Settings2, Plus, Zap, Loader2, Save, X } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useConfirm } from '../../hooks/useConfirm';
 import { CardSkeleton } from '../../design-system/components/Skeleton';
 import { api } from '../../lib/api';
 import { Modal } from '../../design-system/components/Modal';
@@ -9,6 +8,7 @@ import DataTable from '../ui/DataTable';
 import SearchableSelect from '../ui/SearchableSelect';
 
 const EngineeringPage: React.FC = () => {
+  const { error: toastError } = useToast();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +21,7 @@ const EngineeringPage: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
+     
   }, []);
 
   const fetchProducts = async () => {
@@ -51,7 +52,7 @@ const EngineeringPage: React.FC = () => {
       await fetchProducts();
     } catch (err: any) {
       console.error('Failed to save product:', err);
-      alert(`Erro ao salvar: ${err.message || 'Erro desconhecido'}`);
+      toastError(`Erro ao salvar: ${err.message || 'Erro desconhecido'}`);
     } finally {
       setSaving(false);
     }
@@ -142,7 +143,7 @@ const EngineeringPage: React.FC = () => {
                             await api.engineering.delete(p.id);
                             fetchProducts();
                           } catch (err: any) {
-                            alert('Erro ao excluir: ' + err.message);
+                            toastError('Erro ao excluir: ' + err.message);
                           }
                         }
                       }} className="btn btn-outline btn-sm" style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>Excluir</button>

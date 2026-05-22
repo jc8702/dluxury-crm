@@ -7,7 +7,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 
 export default function FinanceiroRecorrentesPage() {
-  const { success, error, warning } = useToast();
+  const { success, error } = useToast();
   const [ConfirmDialogElement, confirmAction] = useConfirm();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,8 @@ export default function FinanceiroRecorrentesPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openNew = () => {
     setEditing(null);

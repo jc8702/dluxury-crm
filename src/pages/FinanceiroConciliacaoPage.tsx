@@ -83,7 +83,7 @@ function autoMatch(ofxTxns: OFXTransaction[], internals: InternalEntry[]): OFXTr
 }
 
 export default function FinanceiroConciliacaoPage() {
-  const { success, error: toastError, warning } = useToast();
+  const { success, warning } = useToast();
   const [ofxTxns, setOfxTxns] = useState<OFXTransaction[]>([]);
   const [internals, setInternals] = useState<InternalEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -236,7 +236,7 @@ export default function FinanceiroConciliacaoPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ofxTxns.map((txn, i) => (
+                  {ofxTxns.map((txn, _i) => (
                     <React.Fragment key={txn.id}>
                       <tr style={{ background: txn.status === 'matched' ? 'rgba(34,197,94,0.04)' : txn.status === 'manual' ? 'rgba(59,130,246,0.04)' : txn.status === 'ignored' ? 'rgba(0,0,0,0.1)' : 'transparent', opacity: txn.status === 'ignored' ? 0.5 : 1 }}>
                         <td style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', fontFamily: 'monospace' }}>{txn.date}</td>

@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
 import { useAppContext } from '../../context/AppContext';
 import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {
+  const { error: toastError } = useToast();
   const { events, visits, loadEvents, updateKanbanStatus, removeVisit } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,24 +26,19 @@ const VisitKanban: React.FC = () => {
   };
 
   const handleMove = async (id: string, newStatus: string) => {
-    console.log('[VisitKanban] handleMove:', id, '->', newStatus);
-    console.log('[VisitKanban] visiting id type:', typeof id, 'value:', id);
     try {
       setLoading(true);
-      const result = await updateKanbanStatus(id, newStatus);
-      console.log('[VisitKanban] Result:', result);
+      await updateKanbanStatus(id, newStatus);
     } catch (err: any) {
       console.error('[VisitKanban] Erro ao mover:', err);
-      alert(err?.message || err?.error || 'Erro ao mover visita');
+      toastError(err?.message || err?.error || 'Erro ao mover visita');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (item: any) => {
-    console.log('[VisitKanban] handleEdit item:', item);
     const fullItem = events.find(e => String(e.id) === String(item.id));
-    console.log('[VisitKanban] Found fullItem:', fullItem);
     setSelectedItem(fullItem);
     setIsModalOpen(true);
   };

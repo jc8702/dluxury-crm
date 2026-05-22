@@ -1,16 +1,18 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { 
-  CheckCircle2, AlertCircle, FileText, 
-  XCircle, Send, ShieldCheck, Clock, 
-  User, Check, MapPin, Phone, Mail
+  CheckCircle2, AlertCircle, 
+  XCircle, ShieldCheck, Clock, 
+  MapPin, Phone, Mail
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 interface AprovacaoPageProps {
   token: string;
 }
 
 const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
+  const { error: toastError } = useToast();
   const [orcamento, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -35,22 +37,22 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
   };
 
   const handleApprove = async () => {
-    if (!formName) return alert('Por favor, informe seu nome para assinar a aprovaÃ§Ã£o.');
+    if (!formName) return toastError('Por favor, informe seu nome para assinar a aprovação.');
     try {
       await api.aprovacao.aprovar(token, { nome: formName });
       setSuccess('approved');
     } catch (err: any) {
-      alert(err.message);
+      toastError(err.message);
     }
   };
 
   const handleReject = async () => {
-    if (!formReason) return alert('Por favor, informe o motivo da revisÃ£o.');
+    if (!formReason) return toastError('Por favor, informe o motivo da revisão.');
     try {
       await api.aprovacao.recusar(token, { motivo: formReason });
       setSuccess('rejected');
     } catch (err: any) {
-      alert(err.message);
+      toastError(err.message);
     }
   };
 

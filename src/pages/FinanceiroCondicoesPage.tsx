@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from '../design-system/components/Modal';
-import { CreditCard, Plus, Save, Trash2 } from 'lucide-react';
+
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 import { api } from '../lib/api';

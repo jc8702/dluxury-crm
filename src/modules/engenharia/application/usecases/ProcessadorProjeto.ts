@@ -251,7 +251,7 @@ export class ProcessadorProjeto {
     return totalArea > 0 ? (areaUsada / totalArea) * 100 : 0;
   }
 
-  private async buscarChapaPadraoParaSKU(sku: string) {
+  private async buscarChapaPadraoParaSKU(_sku: string) {
     return { largura_mm: 2750, altura_mm: 1830 };
   }
 }

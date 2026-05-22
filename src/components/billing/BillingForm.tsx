@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useToast } from '../../context/ToastContext';
 import DataTable from '../ui/DataTable';
 import { Modal } from '../../design-system/components/Modal';
 import { useAppContext } from '../../context/AppContext';
 import type { Billing } from '../../context/AppContext';
 
 const BillingModule: React.FC = () => {
+  const { error: toastError } = useToast();
   const { billings, addBilling, updateBilling, removeBilling, projects } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBilling, setEditingBilling] = useState<any>(null);
@@ -71,7 +73,7 @@ const BillingModule: React.FC = () => {
       }
       resetForm();
     } catch (err: any) {
-      alert('Erro: ' + err.message);
+      toastError('Erro', err.message);
     }
   };
 

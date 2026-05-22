@@ -59,7 +59,7 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
   // 2. Formatador JSON Estruturado Final
   if (responseMimeType === 'application/json' && JSON.stringify(config.responseSchema).includes('response')) {
     const promptText = typeof contents === 'string' ? contents : JSON.stringify(contents);
-    console.log('[MOCK_DEBUG] promptText:', promptText);
+    /* console.log('[MOCK_DEBUG] promptText:', promptText) */
 
     if (promptText.includes('BALC-COZ-1200-2P-2G-MDF18')) {
       return {

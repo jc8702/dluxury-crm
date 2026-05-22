@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, type ReactNode } from 'react';
-import { api, removeAuthToken, hasAuthToken, setAuthToken } from '../lib/api';
+import { api, removeAuthToken, hasAuthToken } from '../lib/api';
+import { useToast } from './ToastContext';
 
 // ─── TIPOS ────────────────────────────────────────────────
 
@@ -391,6 +392,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { error: toastError } = useToast();
 
   // ─── STATE ─────────────────────────────────────────────
   const [user, setUser] = useState<User | null>(null);
@@ -465,7 +467,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 
       setCategorias(Array.isArray(catsData) ? catsData : []);
-      let mappedMaterials: any[] = [];
+      const mappedMaterials: any[] = [];
       if (Array.isArray(matsData)) {
         matsData.forEach((m: any) => {
           try {
@@ -498,7 +500,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setMateriais(mappedMaterials);
       setFornecedores(Array.isArray(fornsData) ? fornsData : []);
 
-      let mappedOrcamentos: any[] = [];
+      const mappedOrcamentos: any[] = [];
       if (Array.isArray(orcamentosData)) {
         orcamentosData.forEach((o: any) => {
           try {
@@ -517,7 +519,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       setOrcamentos(mappedOrcamentos);
 
-      let mappedMovs: any[] = [];
+      const mappedMovs: any[] = [];
       if (Array.isArray(movsData)) {
         movsData.forEach((m: any) => {
           try {
@@ -581,7 +583,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Agenda & Kanban (Merge for events and projects)
       setEvents(Array.isArray(agendaData) ? agendaData : []);
       
-      const allKanbanItems = [
+      const _allKanbanItems = [
         ...(Array.isArray(realKanbanData) ? realKanbanData : []),
         ...(Array.isArray(agendaData) ? agendaData : [])
       ];
@@ -761,7 +763,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await api.projects.delete(id);
       setProjects((prev: Project[]) => prev.filter((p: Project) => p.id !== id));
     } catch (e: any) {
-      alert('Erro ao excluir projeto: ' + e.message);
+      toastError('Erro ao excluir projeto', e.message);
     }
   };
 
@@ -772,7 +774,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Refresh kanban items in state if they come from merged list
       reloadData(); 
     } catch (e: any) {
-      alert('Erro ao excluir visita: ' + e.message);
+      toastError('Erro ao excluir visita', e.message);
     }
   };
 

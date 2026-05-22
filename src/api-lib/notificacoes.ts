@@ -3,7 +3,7 @@ import { sql, validateAuth } from './_db.js';
 export async function handleNotificacoes(req: any, res: any) {
   try {
     const { method } = req;
-    const { id, type } = req.query;
+    const { id } = req.query;
 
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
@@ -19,8 +19,8 @@ export async function handleNotificacoes(req: any, res: any) {
       const limit = req.query.limit || 50;
       const unreadOnly = req.query.unread === 'true';
       const query = unreadOnly 
-        ? sql`SELECT * FROM notificacoes WHERE lida = false ORDER BY created_at DESC LIMIT ${limit}`
-        : sql`SELECT * FROM notificacoes ORDER BY created_at DESC LIMIT ${limit}`;
+        ? sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE lida = false ORDER BY created_at DESC LIMIT ${limit}`
+        : sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes ORDER BY created_at DESC LIMIT ${limit}`;
       
       const result = await query;
       return res.status(200).json({ success: true, data: result });

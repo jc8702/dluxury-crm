@@ -62,7 +62,7 @@ export class MaxRectsOptimizer {
       );
 
       if (melhorEncaixe) {
-        const { posicao, rotacionada } = melhorEncaixe;
+        const { posicao: _posicao, rotacionada: _rotacionada } = melhorEncaixe;
         
         // Adicionar peça posicionada
         const larguraFinal = melhorEncaixe.rotacionada ? peca.altura : peca.largura;

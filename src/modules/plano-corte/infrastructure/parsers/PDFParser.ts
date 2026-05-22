@@ -53,7 +53,7 @@ export class PDFParser {
 
   private extrairDados(texto: string): ChapaExtraida[] {
     const chapas: ChapaExtraida[] = [];
-    console.log('[PDFParser] Iniciando extração de dados do texto (comprimento:', texto.length, ')');
+    /* console.log('[PDFParser] Iniciando extração de dados do texto (comprimento:', texto.length, ')') */;
     
     // Regex ultra-flexível para materiais
     // Padrão: (Nome Material) ... (Espessura) [MM] ... (Largura) x (Altura)
@@ -115,7 +115,7 @@ export class PDFParser {
       
       let pMatch;
       while ((pMatch = pecaRegex.exec(textoBloco)) !== null) {
-        let nomeRaw = pMatch[1].trim();
+        const nomeRaw = pMatch[1].trim();
         
         if (nomeRaw.toUpperCase().includes(blocos[i].info.material) || /^\d+$/.test(nomeRaw) || nomeRaw.length < 2) continue;
 
@@ -148,3 +148,4 @@ export class PDFParser {
     return chapas;
   }
 }
+

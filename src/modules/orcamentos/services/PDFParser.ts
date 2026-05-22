@@ -58,7 +58,8 @@ export class PDFParser {
             }
         }
 
-        console.log(`[PDFParser] ${itens.length} itens extraídos do PDF.`);
+        /* console.log(`[PDFParser] ${itens.length} itens extraídos do PDF.`) */;
         return itens;
     }
 }
+

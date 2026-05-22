@@ -1,41 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/design-system/components';
 import { 
-    Calculator, FileText, Upload, Plus, Trash2, 
-    ChevronDown, ChevronUp, Layers, CheckCircle2, FileDown, Search, ArrowLeft
+    FileText, Upload, Plus, Trash2, 
+    Layers, CheckCircle2, FileDown, Search, ArrowLeft
 } from 'lucide-react';
 import { useOrcamento } from '../hooks/useOrcamento';
-import { ListaExplodidaGrid } from '../components/ListaExplodidaGrid';
 import { ImportarProjeto } from '../components/ImportarProjeto';
-import { ResumoFinanceiro } from '../components/ResumoFinanceiro';
 import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
-import { exportBudgetToPDF } from '../services/export-pdf';
 import { api } from '@/lib/api';
-import { debounce } from 'lodash';
-import { SKUAutocomplete } from '@/modules/orcamentos/components/SKUAutocomplete';
-import { Info } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 import { ItemCard } from '../components/ItemCard';
 
 export default function OrcamentoForm() {
+    const { error: toastError, success: toastSuccess } = useToast();
     // Pegar ID da URL se existir (Simulando roteamento)
     const urlParams = new URLSearchParams(window.location.search);
     const orcamentoId = urlParams.get('id');
 
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
-        importItems, updateItem, removerItem, updateItemExplosion, updateItemSku, 
-        bulkUpdateItems, resetToGlobalMargin, applyGlobalMargin, deletarOrcamento, error 
+        importItems, updateItem, removerItem,
+        applyGlobalMargin, deletarOrcamento, error 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
-    const [expandedItem, setExpandedItem] = useState<string | null>(null);
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedItems, setSelectedItems] = useState<string[]>([]);
-    const [isBulkBarOpen, setIsBulkBarOpen] = useState(false);
-    const [bulkPercentage, setBulkPercentage] = useState(0);
+    const [, setSelectedItems] = useState<string[]>([]);
+    const [, setIsBulkBarOpen] = useState(false);
     const [orcamentosRecentes, setOrcamentosRecentes] = useState<any[]>([]);
 
     const [localComercial, setLocalComercial] = useState({
@@ -92,6 +86,7 @@ export default function OrcamentoForm() {
             const cleanUrl = orcamentoId ? `${newUrl}?id=${orcamentoId}` : newUrl;
             window.history.replaceState({}, '', cleanUrl);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orcamentoId]);
 
     // Atalho ESC para fechar barra de ações
@@ -132,22 +127,9 @@ export default function OrcamentoForm() {
                 validadeDias: 15
             });
             window.location.href = `?id=${res.id}#/orcamentos`;
-        } catch (err) {
-            alert('Erro ao criar rascunho');
+        } catch (_err) {
+            toastError('Erro ao criar rascunho');
         }
-    };
-
-    const handleAddSku = async (sku: any) => {
-        if (!orcamentoId) {
-            alert('Crie o rascunho primeiro');
-            return;
-        }
-        await addItem(sku.id, 1);
-        setSearchTerm('');
-    };
-
-    const handleBulkPriceAdjustment = async (type: 'percentualPreco' | 'percentualCusto') => {
-        // Removido conforme pedido
     };
 
     if (loading && !orcamento) {
@@ -193,8 +175,8 @@ export default function OrcamentoForm() {
                 validadeDias: 15
             });
             window.location.href = `?id=${res.id}&import=true#/orcamentos`;
-        } catch (err) {
-            alert('Erro ao criar rascunho');
+        } catch (_err) {
+            window.location.href = `?id=${res.id}&import=true#/orcamentos`;
         }
     };
 
@@ -204,11 +186,11 @@ export default function OrcamentoForm() {
         try {
             const success = await deletarOrcamento(id);
             if (success) {
-                alert('Orçamento excluído com sucesso');
+                toastSuccess('Orçamento excluído com sucesso');
                 fetchRecentes();
             }
-        } catch (err) {
-            alert('Erro ao excluir orçamento');
+        } catch (_err) {
+            toastError('Erro ao excluir orçamento');
         }
     };
 
@@ -467,9 +449,9 @@ export default function OrcamentoForm() {
                                             onClick={async () => {
                                                 try {
                                                     const res = await applyGlobalMargin(localComercial.margemLucroPercentual);
-                                                    alert(res.message);
+                                                    toastSuccess(res.message);
                                                 } catch (err: any) {
-                                                    alert('Erro: ' + err.message);
+                                                    toastError('Erro', err.message);
                                                 }
                                             }}
                                         >

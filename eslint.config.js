@@ -52,21 +52,21 @@ export default tseslint.config(
       'no-unused-vars': 'off', // Desligado pois usamos a regra do typescript-eslint
       '@typescript-eslint/no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_' 
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
       }],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       'react/no-unescaped-entities': 'off',
       'prefer-const': 'warn',
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'eqeqeq': ['error', 'always'],
       
       // Nomenclatura
       'camelcase': 'off'
     }
   },
-
   // Arquivos TypeScript (não JSX)
   {
     files: ['**/*.ts'],
@@ -85,13 +85,14 @@ export default tseslint.config(
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_' 
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
       }],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       'prefer-const': 'warn',
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'eqeqeq': ['error', 'always'],
       'camelcase': 'off'
     }

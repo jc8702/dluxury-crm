@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
-import type { Material, Project, Orcamento } from '../../../context/AppContext';
-import { converterParaUso } from '../../../utils/estoque';
+import type { Material } from '../../../context/AppContext';
 import { X, ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
 
 interface MovimentacaoModalProps {

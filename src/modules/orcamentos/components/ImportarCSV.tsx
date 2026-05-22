@@ -8,12 +8,11 @@ interface ImportarCSVProps {
   isOpen: boolean;
   onClose: () => void;
   onAddItems: (items: any[]) => Promise<any>;
-  orcamentoId: string;
 }
 
 type ImportStatus = 'idle' | 'parsing' | 'review' | 'saving' | 'success' | 'error';
 
-export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: ImportarCSVProps) {
+export function ImportarCSV({ isOpen, onClose, onAddItems }: ImportarCSVProps) {
   const [items, setItems] = useState<any[]>([]);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +28,6 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
-        console.log(`📄 [ImportarCSV] Arquivo parseado: ${results.data.length} linhas`);
-        
         // Mapeamento inteligente de colunas (Novo layout + Fallbacks)
         const mappedData = results.data
           .map((row: any) => {
@@ -61,7 +58,6 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
         
         if (filtered.length > 0) {
           try {
-            console.log(`🔍 [ImportarCSV] Buscando SKUs para ${filtered.length} itens...`);
             const matchResponse = await fetch('/api/match-skus', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -70,7 +66,6 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
             const matchResult = await matchResponse.json();
             
             if (matchResult.success) {
-              console.log("✅ [ImportarCSV] SKUs reconhecidos!");
               // Transformar o formato do match-skus para o esperado pelo importar-itens
               const enriched = matchResult.data.map((it: any) => ({
                 ...it,
@@ -107,8 +102,6 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
     setError(null);
 
     try {
-      console.log(`📤 [ImportarCSV] Preparando payload para ${items.length} itens...`);
-      
       // Validação prévia de sanidade dos itens
       const sanitizedItems = items.map((it, idx) => {
         const q = parseFloat(it.quantidade);
@@ -122,12 +115,9 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
         };
       });
 
-      console.log(`📤 [ImportarCSV] Payload sanitizado:`, sanitizedItems);
-      
       const success = await onAddItems(sanitizedItems);
 
       if (success) {
-        console.log(`✅ [ImportarCSV] Importação confirmada pelo servidor.`);
         setStatus('success');
         setTimeout(() => {
           onClose();

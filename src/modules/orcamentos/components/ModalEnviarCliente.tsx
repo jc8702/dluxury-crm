@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button } from '@/design-system/components';
 import { Save, Send, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useToast } from '@/context/ToastContext';
 
 export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: { 
     isOpen: boolean, 
@@ -9,6 +10,7 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
     orcamento: any,
     onSave: () => Promise<void>
 }) {
+    const { error: toastError, success: toastSuccess } = useToast();
     const [step, setStep] = useState<'save' | 'method'>('save');
     const [method, setMethod] = useState<'email' | 'whatsapp'>('whatsapp');
     const [loading, setLoading] = useState(false);
@@ -18,8 +20,8 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
         try {
             await onSave();
             setStep('method');
-        } catch (err) {
-            alert('Erro ao salvar orçamento antes do envio.');
+        } catch {
+            toastError('Erro ao salvar orçamento antes do envio.');
         } finally {
             setLoading(false);
         }
@@ -34,16 +36,16 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
                 window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
             } else {
                 // Simulação de envio de email
-                alert('Funcionalidade de e-mail em fase de homologação. O orçamento foi marcado como enviado.');
+                toastSuccess('E-mail em homologação', 'O orçamento foi marcado como enviado.');
             }
             
             // Marcar como enviado no banco
             await api.orcamentosPro.update(orcamento.id, { status: 'ENVIADO' });
             
             onClose();
-            alert('Orçamento processado com sucesso!');
-        } catch (err) {
-            alert('Erro ao enviar orçamento.');
+            toastSuccess('Orçamento processado com sucesso!');
+        } catch {
+            toastError('Erro ao enviar orçamento.');
         } finally {
             setLoading(false);
         }

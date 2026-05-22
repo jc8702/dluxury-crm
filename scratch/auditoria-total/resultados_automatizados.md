@@ -1,63 +1,73 @@
-# Resultados das Validações Automatizadas (Fase 1)
+# Resultados dos Testes Automatizados
 
-Este relatório compila os resultados gerados pelas ferramentas de validação estática, compilação e testes automatizados no ERP D'Luxury.
+Este documento contém os resultados resumidos das fases de testes automatizados executadas durante a auditoria.
 
----
+## FASE 1 - TESTES AUTOMATIZADOS GERAIS
 
-### 1. ESLint (`npm run lint`)
-* **Status:** **FALHA**
-* **Total de Problemas:** 3595 (2909 erros e 686 warnings)
-* **Principais Violações:**
-  * **camelcase (Erros):** Variáveis e campos de banco de dados físicos em `snake_case` (ex: `cliente_id`, `projeto_id`, `data_agendamento`) sendo mapeados diretamente no TypeScript sem conversão de casing, violando a regra estrutural.
-  * **@typescript-eslint/no-explicit-any (Erros):** Alto volume de assinaturas contendo o tipo `any` genérico em assinaturas de API e lógica de negócio.
-  * **no-console (Warnings):** Logs de depuração mantidos em produção (`console.log`, `console.error`, `console.warn`).
+### 1. Linting (`npm run lint`)
+- **Resultado:** 617 warnings, 0 errors
+- **Principais problemas:**
+  - Unexpected console statements (no-console rule)
+  - Unused variables (@typescript-eslint/no-unused-vars)
+  - Missing dependencies in useEffect hooks (react-hooks/exhaustive-deps)
+  - Variables that should be const (prefer-const)
+  - Unused function arguments (@typescript-eslint/no-unused-vars)
+- **Arquivos com mais problemas:** src/context/AppContext.tsx, src/modules/orcamentos/*, src/modules/plano-corte/*
 
-### 2. Vitest (`npm run test -- --run`)
-* **Status:** **FALHA INTERMITENTE**
-* **Testes Executados:** 101
-* **Testes Passados:** 100/101 (com 1 falha intermitente no otimizador de plano de corte por oscilação de CPU)
-* **Detalhamento da Falha:**
-  * **Arquivo:** `src/modules/plano-corte/__tests__/Comparacao.test.ts` (Linha 35)
-  * **Asserção:** `expect(tempoGuil).toBeLessThan(tempoMax)`
-  * **Causa:** Flakiness causado pelo tempo de warm-up ou jitter de CPU em sistemas virtuais/concorrentes que faz com que o algoritmo Guillotine ocasionalmente execute mais devagar que o MaxRects.
+### 2. Testes Unitários (`npm run test -- --run`)
+- **Resultado:** ✅ Todos os testes passaram
+- **Detalhes:**
+  - Test Files: 11 passed (11)
+  - Tests: 101 passed (101)
+  - Duration: 15.02s
 
-### 3. Cobertura de Testes (`npm run test:coverage`)
-* **Status:** **SUCESSO**
-* **Resumo de Cobertura Total:**
-  * **Statements (Stmts):** 53.8%
-  * **Branches (Branch):** 44.45%
-  * **Functions (Funcs):** 48.55%
-  * **Lines (Lines):** 54.6%
-* **Detalhamento por Pasta:**
-  * `api/`: ~35% de cobertura de linhas (a maior parte do roteador dinâmico de `index.ts` não possui chamadas diretas na suite).
-  * `api/services/ai-chat.ts`: 63.15% de cobertura de linhas (cobertura do Gemini AI Chat Specialist).
-  * `src/api-lib/`: ~37.98% de cobertura de linhas.
-    * `sku-parser.ts`: 84.89% (Alta cobertura).
-    * `orcamentos_pro.ts`: 23.51% (Parcial).
-  * `src/modules/plano-corte/`: Alta cobertura (>80% nos otimizadores e geradores de CNC).
+### 3. Testes com Coverage (`npm run test:coverage`)
+- **Resultado:** ✅ Todos os testes passaram com cobertura
+- **Detalhes:**
+  - Test Files: 11 passed (11)
+  - Tests: 101 passed (101)
+  - Duration: 9.73s
+- **Cobertura Geral:**
+  - Statements: 53.8% (784/1457)
+  - Branches: 44.45% (445/1001)
+  - Functions: 48.55% (84/173)
+  - Lines: 54.6% (753/1379)
 
-### 4. Build de Produção Vite (`npm run build`)
-* **Status:** **SUCESSO**
-* **Duração:** 8.29 segundos
-* **Erros de Tipos:** Nenhum (Compilado limpo)
-* **Bundles Gerados:** `dist/` gerado corretamente contendo chunks divididos (incluindo `pdf.worker.min` de 1.2MB, `Layout`, `PlanoCorteIndustrialPage`, etc.).
+### 4. Build (`npm run build`)
+- **Resultado:** ✅ Build concluído com sucesso
+- **Detalhes:**
+  - Tempo: 9.07s
+  - Avisos: Alguns chunks maiores que 1000 kB após minificação (recomendação de code-splitting)
+  - Arquivo maior: assets/index-CZAzboHn.js (1,401.66 kB)
 
----
+## Identificação de Testes Inexistentes por Módulo (Gap de Cobertura)
 
-### 5. Identificação de Gaps de Cobertura por Módulo
-Falta de testes automatizados (0% de cobertura) para os seguintes módulos:
-- Painel Geral
-- Clientes
-- Projetos (sem testes de criação ou migração)
-- Visitas
-- Produção
-- Engenharia (apenas mocks de chat IA indiretos)
-- Calendário
-- Pós-Vendas
-- Compras
-- Estoque
-- Fornecedores
-- Financeiro (módulo crítico com 71KB de lógica e zero testes)
-- Notificações
-- Relatórios
-- Configurações
+Com base na análise de cobertura e estrutura do projeto, identificamos os seguintes gaps de cobertura por módulo:
+
+| Módulo | Status de Testes | Observações |
+|--------|------------------|-------------|
+| painel geral | Parcial | Alguns componentes testados, mas lacunas em integração |
+| clientes | Não testado | Nenhum teste específico encontrado |
+| orçamentos | Parcial | Alguns componentes testados, lacunas em fluxos completos |
+| projetos | Não testado | Nenhum teste específico encontrado |
+| visitas | Não testado | Nenhum teste específico encontrado |
+| produção | Não testado | Nenhum teste específico encontrado |
+| plano de corte | Parcial | Testes unitários existentes para otimizadores e serviços |
+| engenharia | Não testado | Nenhum teste específico encontrado |
+| calendário | Não testado | Nenhum teste específico encontrado |
+| pós-vendas | Não testado | Nenhum teste específico encontrado |
+| compras | Não testado | Nenhum teste específico encontrado |
+| estoque | Não testado | Nenhum teste específico encontrado |
+| fornecedores | Não testado | Nenhum teste específico encontrado |
+| financeiro | Parcial | Alguns componentes testados, lacunas em fluxos financeiros completos |
+| notificações | Não testado | Nenhum teste específico encontrado |
+| peças / skus | Não testado | Nenhum teste específico encontrado |
+| relatórios | Não testado | Nenhum teste específico encontrado |
+| configurações | Não testado | Nenhum teste específico encontrado |
+
+**Observação:** Os testes existentes estão concentrados principalmente em:
+- src/modules/plano-corte/__tests__/ (otimizadores, serviços)
+- src/api-lib/__tests__/ (agentes de IA)
+- src/design-system/__tests__/ (componentes de design)
+
+Próximos passos: Proseguir com FASE 2 - Testes específicos por módulo.

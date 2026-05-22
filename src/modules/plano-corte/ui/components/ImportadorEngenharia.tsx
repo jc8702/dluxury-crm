@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Box, CheckCircle2 } from 'lucide-react';
+import { useToast } from '../../../../context/ToastContext';
+import { Upload, Box } from 'lucide-react';
 import { DaeParser } from '../../infrastructure/parsers/DaeParser';
 import type { PecaInput } from '../../../../utils/planodeCorte';
 
@@ -10,10 +11,11 @@ interface ImportadorProps {
 export const ImportadorEngenharia: React.FC<ImportadorProps> = ({ onImport }) => {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { error: toastError, warning: toastWarning } = useToast();
 
   const handleProcessFile = async (file: File) => {
     if (!file.name.endsWith('.dae')) {
-      alert("Apenas arquivos .dae (Collada) do SketchUp são suportados por enquanto.");
+      toastError("Formato não suportado", "Apenas arquivos .dae (Collada) do SketchUp são suportados por enquanto.");
       return;
     }
     const text = await file.text();
@@ -21,7 +23,7 @@ export const ImportadorEngenharia: React.FC<ImportadorProps> = ({ onImport }) =>
     if (pecas.length > 0) {
       onImport(pecas);
     } else {
-      alert("Nenhuma peça detectada no arquivo. Verifique se o plugin de exportação gerou as dimensões corretamente.");
+      toastWarning("Nenhuma peça detectada", "Verifique se o plugin de exportação gerou as dimensões corretamente.");
     }
   };
 
