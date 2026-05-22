@@ -14,6 +14,7 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/auth': { max: 10, windowMs: 60_000 },       // 10 req/min para auth
   '/api/init-db': { max: 3, windowMs: 300_000 },    // 3 req/5min para init
+  '/api/ai/chat': { max: 5, windowMs: 10_000 },     // 5 req/10s para chat de IA
   default: { max: 100, windowMs: 60_000 },          // 100 req/min default
 };
 
@@ -57,14 +58,16 @@ function cleanupRateLimitMap() {
 setInterval(cleanupRateLimitMap, 5 * 60_000);
 
 function getClientIP(req: any): string {
-  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() 
-    || req.headers['x-real-ip'] 
+  const headers = req.headers || {};
+  return headers['x-forwarded-for']?.split(',')[0]?.trim() 
+    || headers['x-real-ip'] 
     || req.socket?.remoteAddress 
     || 'unknown';
 }
 
 function getCorsOrigin(req: any): string {
-  const requestOrigin = req.headers['origin'];
+  const headers = req.headers || {};
+  const requestOrigin = headers['origin'];
   if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
     return requestOrigin;
   }

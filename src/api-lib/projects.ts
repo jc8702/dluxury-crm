@@ -66,7 +66,7 @@ export async function handleProjects(req: any, res: any) {
               COALESCE(ki.title, ki.label, 'Projeto Sem Nome') as title,
               ki.status, 
               ki.observations, 
-              COALESCE(ki.updated_at, ki.created_at, NOW()), 
+              COALESCE(ki.updated_at, NOW()), 
               NOW()
             FROM kanban_items ki
             LEFT JOIN clients c ON TRIM(UPPER(c.nome)) = TRIM(UPPER(COALESCE(ki.subtitle, ki.contact_name)))
@@ -293,9 +293,15 @@ export async function handleEngineering(req: any, res: any) {
             END LOOP;
         END $$;
       `;
-    } catch (e) {}
+    } catch (e) {
+      // Ignore migration errors for existing structures
+    }
 
-    try { await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`; } catch(e){}
+    try {
+      await sql`ALTER TABLE erp_product_bom ADD CONSTRAINT erp_product_bom_unique_code UNIQUE (codigo_modelo)`;
+    } catch (e) {
+      // Ignore if constraint already exists
+    }
 
     if (req.method === 'GET') {
       const term = req.query.q as string;

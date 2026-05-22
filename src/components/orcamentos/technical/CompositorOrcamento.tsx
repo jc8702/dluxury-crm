@@ -41,6 +41,8 @@ interface CompositorOrcamentoProps {
 
 const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, onClose, onSettle }) => {
   const { materiais } = useAppContext();
+
+  useEscClose(onClose);
   
   // -- State --
   const [loading, setLoading] = useState(true);
@@ -279,8 +281,6 @@ const CompositorOrcamento: React.FC<CompositorOrcamentoProps> = ({ orcamentoId, 
       </div>
     );
   }
-
-  useEscClose(onClose);
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background)', zIndex: 1000, display: 'flex', flexDirection: 'column' }} onClick={onClose} tabIndex={-1}>

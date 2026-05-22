@@ -693,7 +693,21 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
         properties: {
           response: { type: 'STRING', description: 'A resposta completa do assistente formatada em Markdown limpo.' },
           confidence: { type: 'NUMBER', description: 'Nível de confiança da resposta (0 a 100).' },
-          sources: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Fontes utilizadas para a resposta (ex: Banco de Dados ERP, RAG Marcenaria).' }
+          sources: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Fontes utilizadas para a resposta (ex: Banco de Dados ERP, RAG Marcenaria).' },
+          table_data: {
+            type: 'OBJECT',
+            description: 'Tabela de dados opcional gerada ou extraída da resposta.',
+            properties: {
+              headers: { type: 'ARRAY', items: { type: 'STRING' } },
+              rows: { type: 'ARRAY', items: { type: 'ARRAY', items: { type: 'STRING' } } }
+            },
+            required: ['headers', 'rows']
+          },
+          suggestions: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: 'Sugestões de follow-up inteligentes sugeridas para o usuário.'
+          }
         },
         required: ['response', 'confidence', 'sources']
       }
@@ -708,6 +722,12 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
     }
     if (Array.isArray(parsedFinal.sources)) {
       finalSources = parsedFinal.sources;
+    }
+    if (parsedFinal.table_data) {
+      tableData = parsedFinal.table_data;
+    }
+    if (Array.isArray(parsedFinal.suggestions)) {
+      suggestions = parsedFinal.suggestions;
     }
   } catch (err: any) {
     console.warn('[AI_CHAT] Erro ao estruturar resposta final em JSON. Usando fallbacks seguros:', err.message || err);

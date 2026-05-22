@@ -14,7 +14,7 @@ export class DrawingParserFactory {
     const extension = file.name.split('.').pop()?.toLowerCase();
     
     switch (extension) {
-      case 'pdf':
+      case 'pdf': {
         const pdfParser = new PDFParser();
         const chapas = await pdfParser.parsearArquivo(file);
         return {
@@ -22,6 +22,7 @@ export class DrawingParserFactory {
           confidence: 0.9, // PDF digital tem alta confiança
           format: 'pdf'
         };
+      }
       
       case 'dxf':
         // Placeholder para implementação futura ou integração com ezdxf/dxf-parser

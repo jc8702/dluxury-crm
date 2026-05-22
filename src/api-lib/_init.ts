@@ -112,7 +112,9 @@ export async function runInitDB() {
     if (cc.length && parseInt(cc[0].count, 10) === 0) {
       await sql`INSERT INTO categorias_material (slug, nome, icone) VALUES ('chapas', 'Chapas', 'Layers'), ('fitas_borda', 'Fitas', 'Ruler'), ('fixacoes', 'Fixações', 'Pin')`;
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore error
+  }
 
   // 9. Admin Seed
   try {
@@ -122,7 +124,9 @@ export async function runInitDB() {
       const hash = await bcrypt.hash('admin123', salt);
       await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('Administrador', 'admin@dluxury.com', ${hash}, 'admin')`;
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore error
+  }
 
   // 10. ERP Simulations Table
   await safeSql(sql`
@@ -543,7 +547,9 @@ export async function runInitDB() {
         ('MDF-BRA-18', 'MDF Branco 18mm', 2750, 1830, 18, 320.00),
         ('MDF-GRA-15', 'MDF Grafite 15mm', 2750, 1830, 15, 310.00)`;
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore error
+  }
 
   console.log('--- Sincronização Concluída ---');
 

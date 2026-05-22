@@ -50,3 +50,6 @@ emergency_*.mjs
 scratch_*.js
 scratch_*.mjs
 scratch_*.cjs
+
+# Test coverage
+coverage/

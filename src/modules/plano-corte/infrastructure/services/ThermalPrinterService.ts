@@ -13,7 +13,7 @@ export class ThermalPrinterService {
    */
   static async conectar() {
     try {
-      // @ts-ignore - WebUSB API
+      // @ts-expect-error - WebUSB API
       const device = await navigator.usb.requestDevice({
         filters: [
           { vendorId: 0x0a5f }, // Zebra

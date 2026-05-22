@@ -157,7 +157,9 @@ async function updateOPDetails(req: any, res: any) {
   // If changed peças, recalcula previsões
   await syncQueueForecasting();
 
-  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch (e) {}
+  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch (e) {
+    // Ignore window reference error on server-side
+  }
 
   return res.status(200).json({ success: true, data: atualizada });
 }
@@ -211,7 +213,9 @@ async function updateOPStatus(req: any, res: any) {
       for (const p of pecas) {
         if (p && p.operator_checked === false) { piecesComplete = false; break; }
       }
-    } catch (e) {}
+    } catch (e) {
+      // Ignore metadata parsing issues
+    }
 
     // If attempting to advance to next productive stage (not allowing revert to AGUARDANDO), block if incomplete
     const fluxo: string[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];

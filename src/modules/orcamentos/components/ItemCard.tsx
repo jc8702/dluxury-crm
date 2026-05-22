@@ -169,6 +169,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   let descLimpa = currentDesc.trim();
   
   // Remover o SKU do início da descrição se ele já estiver lá (evita SKU - SKU - Descrição)
+  // eslint-disable-next-line no-useless-escape
   const prefixoRemover = new RegExp(`^${skuLimpo.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*[-–—:]*\\s*`, 'i');
   descLimpa = descLimpa.replace(prefixoRemover, '').trim();
   

@@ -54,6 +54,7 @@ export const CardHeader = forwardRef<
     {...props}
   />
 ));
+CardHeader.displayName = 'CardHeader';
 
 export const CardTitle = forwardRef<
   HTMLParagraphElement,
@@ -65,6 +66,7 @@ export const CardTitle = forwardRef<
     {...props}
   />
 ));
+CardTitle.displayName = 'CardTitle';
 
 export const CardDescription = forwardRef<
   HTMLParagraphElement,
@@ -76,6 +78,7 @@ export const CardDescription = forwardRef<
     {...props}
   />
 ));
+CardDescription.displayName = 'CardDescription';
 
 export const CardContent = forwardRef<
   HTMLDivElement,
@@ -83,6 +86,7 @@ export const CardContent = forwardRef<
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
 ));
+CardContent.displayName = 'CardContent';
 
 export const CardFooter = forwardRef<
   HTMLDivElement,
@@ -94,3 +98,4 @@ export const CardFooter = forwardRef<
     {...props}
   />
 ));
+CardFooter.displayName = 'CardFooter';

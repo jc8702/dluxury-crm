@@ -517,7 +517,7 @@ async function processUserMessage(message: string, history: any[] = []) {
       case "SEARCH_SKU":
         return await handleSearch(intent.entities);
 
-      default:
+      default: {
         // Fallback: Chat Genérico com Dados do Contexto
         const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days'`;
         const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
@@ -540,6 +540,7 @@ async function processUserMessage(message: string, history: any[] = []) {
         });
 
         return { message: text };
+      }
     }
     
   } catch (error) {

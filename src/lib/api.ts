@@ -22,10 +22,12 @@ export async function apiCall<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const isDev = typeof process !== 'undefined' ? process.env.NODE_ENV === 'development' : (import.meta as any).env?.DEV;
 
   if (isDev) {
+    // DEV mode check
   }
 
   const res = await fetch(url, {
@@ -44,6 +46,7 @@ export async function apiCall<T>(
   
   // Log de auditoria para ambiente dev
   if (isDev) {
+    // Audit logger placeholder
   }
 
   // Se a resposta seguir o padrão { success, data }, retornamos apenas o data

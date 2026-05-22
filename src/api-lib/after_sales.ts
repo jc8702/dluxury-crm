@@ -20,8 +20,8 @@ export async function handleAfterSales(req: any, res: any) {
       const chamados = await sql`
         SELECT c.*, cl.nome as cliente_nome, p.ambiente as projeto_ambiente
         FROM chamados_garantia c
-        JOIN clients cl ON c.cliente_id = cl.id
-        LEFT JOIN projects p ON c.projeto_id = p.id
+        JOIN clients cl ON c.cliente_id = CAST(cl.id AS TEXT)
+        LEFT JOIN projects p ON c.projeto_id = CAST(p.id AS TEXT)
         ORDER BY c.data_abertura DESC
       `;
       return res.status(200).json({ success: true, data: chamados });

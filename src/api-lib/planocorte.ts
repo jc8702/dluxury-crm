@@ -25,7 +25,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           return res.status(200).json({ success: true, data: planos });
         }
 
-      case 'POST':
+      case 'POST': {
         // Criar ou Salvar Resultado
         const { action } = req.query || {};
         
@@ -160,15 +160,17 @@ export async function handlePlanoCorte(req: any, res: any) {
           
           return res.status(200).json({ success: true, data: atualizado });
         }
+      }
 
-      case 'PUT':
+      case 'PUT': {
         const [upd] = await db.update(planosDeCorte)
           .set({ ...req.body, updated_at: new Date() })
           .where(eq(planosDeCorte.id, id))
           .returning();
         return res.status(200).json({ success: true, data: upd });
+      }
 
-      case 'DELETE':
+      case 'DELETE': {
         const { user } = validateAuth(req);
         const [existing] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, id));
         if (!existing) return res.status(404).json({ success: false, error: 'Plano não encontrado' });
@@ -178,6 +180,7 @@ export async function handlePlanoCorte(req: any, res: any) {
         await auditLog('planos_de_corte', id, 'DELETE', user?.id, existing, { status: 'deleted' });
         
         return res.status(200).json({ success: true });
+      }
 
       default:
         return res.status(405).json({ success: false, error: 'Método não permitido' });
@@ -338,7 +341,8 @@ export async function handleImportarDesenho(req: any, res: any) {
       if (!trimmedLine || trimmedLine.length < 5) continue;
 
       // Limpeza de ruído de PDF (caracteres de controle)
-      const cleanLine = trimmedLine.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+      // eslint-disable-next-line no-control-regex
+      const cleanLine = trimmedLine.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
       // 1. Tenta Padrão de Dimensões Explícitas
       let match = cleanLine.match(regexDimensoes);
@@ -387,7 +391,7 @@ export async function handleImportarDesenho(req: any, res: any) {
             // Pega a palavra do material e possivelmente o próximo termo (ex: MDF BRANCO)
             const parts = upperLine.split(/\s+/);
             const idx = parts.findIndex(p => p.includes(kw));
-            materialDetectado = parts.slice(idx, idx + 2).join(' ').replace(/[:\d\-\*xX]/g, '').trim();
+            materialDetectado = parts.slice(idx, idx + 2).join(' ').replace(/[:\d\-*xX]/g, '').trim();
             break;
           }
         }

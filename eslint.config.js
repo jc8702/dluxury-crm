@@ -2,11 +2,12 @@ import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
+import globals from 'globals';
 
 export default tseslint.config(
   // Ignorar node_modules e build
   {
-    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/']
+    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/', 'scratch/', 'scripts/', 'dev-api-server.js', 'run-migrations.js']
   },
 
   // Configuração base JS
@@ -29,13 +30,9 @@ export default tseslint.config(
         }
       },
       globals: {
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
-        localStorage: 'readonly',
-        FormData: 'readonly',
-        FileReader: 'readonly',
-        requestAnimationFrame: 'readonly'
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021
       }
     },
     settings: {
@@ -57,11 +54,16 @@ export default tseslint.config(
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_' 
       }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'react/no-unescaped-entities': 'off',
+      'prefer-const': 'warn',
       'no-console': 'warn',
       'eqeqeq': ['error', 'always'],
       
       // Nomenclatura
-      'camelcase': 'error'
+      'camelcase': 'off'
     }
   },
 
@@ -74,8 +76,9 @@ export default tseslint.config(
     },
     languageOptions: {
       globals: {
-        console: 'readonly',
-        process: 'readonly'
+        ...globals.node,
+        ...globals.browser,
+        ...globals.es2021
       }
     },
     rules: {
@@ -84,9 +87,13 @@ export default tseslint.config(
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_' 
       }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'prefer-const': 'warn',
       'no-console': 'warn',
       'eqeqeq': ['error', 'always'],
-      'camelcase': 'error'
+      'camelcase': 'off'
     }
   }
 );

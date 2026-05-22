@@ -69,7 +69,7 @@ export async function handleRetalhos(req: any, res: any) {
           throw dbErr;
         }
 
-      case 'PATCH':
+      case 'PATCH': {
         // Atualizar retalho (usar ou descartar)
         if (!id) return res.status(400).json({ success: false, error: 'ID necessário' });
 
@@ -94,6 +94,7 @@ export async function handleRetalhos(req: any, res: any) {
           .returning();
         
         return res.status(200).json({ success: true, data: atualizado });
+      }
 
       case 'DELETE':
         if (!id) return res.status(400).json({ success: false, error: 'ID necessário' });

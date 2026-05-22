@@ -1,9 +1,13 @@
 import http from 'http';
 import url from 'url';
-import { default as handler } from './api/index.js';
+import { default as handler } from './api/index.ts';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Prevenir queda por EPIPE (Broken Pipe) se os streams de console forem fechados no background pela IDE
+process.stdout.on('error', () => {});
+process.stderr.on('error', () => {});
 
 const PORT = 3000;
 

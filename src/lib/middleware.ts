@@ -5,7 +5,7 @@
  * Pode ser usado para envolver handlers de API.
  */
 
-export function withMiddleware(handler: Function) {
+export function withMiddleware(handler: (req: any, res: any) => any) {
   return async (req: any, res: any) => {
     try {
       const start = Date.now();
