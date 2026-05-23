@@ -94,6 +94,13 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_por TO created_by`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS projeto_id UUID`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS orcamento_id UUID`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS preco_unitario NUMERIC(12,2)`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS valor_total NUMERIC(12,2)`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_antes NUMERIC(12,4)`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_depois NUMERIC(12,4)`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`).catch(() => {});
   await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});

@@ -95,6 +95,58 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     };
   }, [form.preco_custo, form.fator_conversao, form.margem_lucro, form.unidade_compra]);
 
+  const handleDimensionChange = (field: 'largura_mm' | 'altura_mm', val: number) => {
+    setForm(prev => {
+      const next = { ...prev, [field]: val };
+      if (next.unidade_compra === 'chapa' && next.unidade_uso === 'm2') {
+        const area = (next.largura_mm * next.altura_mm) / 1000000;
+        next.fator_conversao = Number(area.toFixed(4));
+      }
+      
+      // Recalcula o preço de venda para manter sincronia
+      const custoNF = next.preco_custo;
+      const margemVal = next.margem_lucro;
+      const fator = next.fator_conversao || 1;
+      const fatorPerda = next.unidade_compra === 'chapa' ? 1.10 : 1.05;
+      const calcVenda = ((custoNF / fator) * fatorPerda) + margemVal;
+      next.preco_venda = Number(calcVenda.toFixed(2));
+      
+      return next;
+    });
+  };
+
+  const handleUnitChange = (field: 'unidade_compra' | 'unidade_uso', val: string) => {
+    setForm(prev => {
+      const next = { ...prev, [field]: val };
+      if (next.unidade_compra === 'chapa' && next.unidade_uso === 'm2') {
+        const area = (next.largura_mm * next.altura_mm) / 1000000;
+        next.fator_conversao = area > 0 ? Number(area.toFixed(4)) : 5.0325;
+      } else if (next.unidade_compra === 'rolo 50m' && next.unidade_uso === 'm') {
+        next.fator_conversao = 50;
+      } else if (next.unidade_compra === 'caixa c/200un' && next.unidade_uso === 'un') {
+        next.fator_conversao = 200;
+      } else if (next.unidade_compra === 'caixa c/100un' && next.unidade_uso === 'un') {
+        next.fator_conversao = 100;
+      } else if (next.unidade_compra === 'caixa c/500un' && next.unidade_uso === 'un') {
+        next.fator_conversao = 500;
+      } else if (next.unidade_compra === 'caixa c/20un' && next.unidade_uso === 'un') {
+        next.fator_conversao = 20;
+      } else if (next.unidade_compra === next.unidade_uso) {
+        next.fator_conversao = 1;
+      }
+      
+      // Recalcula o preço de venda para manter sincronia
+      const custoNF = next.preco_custo;
+      const margemVal = next.margem_lucro;
+      const fator = next.fator_conversao || 1;
+      const fatorPerda = next.unidade_compra === 'chapa' ? 1.10 : 1.05;
+      const calcVenda = ((custoNF / fator) * fatorPerda) + margemVal;
+      next.preco_venda = Number(calcVenda.toFixed(2));
+      
+      return next;
+    });
+  };
+
   const handlePriceChange = (field: 'preco_custo' | 'margem_lucro', value: number) => {
     setForm(prev => {
       const next = { ...prev, [field]: value };
@@ -204,7 +256,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <select 
                     className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
                     value={form.unidade_compra} 
-                    onChange={e => setForm({...form, unidade_compra: e.target.value})}
+                    onChange={e => handleUnitChange('unidade_compra', e.target.value)}
                   >
                     <option value="chapa">Chapa</option>
                     <option value="rolo 50m">Rolo 50m</option>
@@ -222,7 +274,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   <select 
                     className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
                     value={form.unidade_uso} 
-                    onChange={e => setForm({...form, unidade_uso: e.target.value})}
+                    onChange={e => handleUnitChange('unidade_uso', e.target.value)}
                   >
                     <option value="un">Unidade</option>
                     <option value="m">Metro (m)</option>
@@ -247,14 +299,14 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                     type="number"
                     label="Largura Chapa (mm)"
                     value={form.largura_mm}
-                    onChange={e => setForm({...form, largura_mm: Number(e.target.value)})}
+                    onChange={e => handleDimensionChange('largura_mm', Number(e.target.value))}
                     placeholder="2750"
                   />
                   <Input
                     type="number"
                     label="Altura Chapa (mm)"
                     value={form.altura_mm}
-                    onChange={e => setForm({...form, altura_mm: Number(e.target.value)})}
+                    onChange={e => handleDimensionChange('altura_mm', Number(e.target.value))}
                     placeholder="1830"
                   />
                 </div>
