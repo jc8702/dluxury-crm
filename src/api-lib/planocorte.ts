@@ -160,7 +160,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               });
 
               // Sincronizar entrada com Módulo Estoque Principal (materiais / movimentacoes_estoque)
-              const nomeRetalho = `Retalho MDF ${r.espessura_mm}mm - ${r.largura_mm}x${r.altura_mm} (Chapa: ${r.sku_chapa})`;
+              const nomeRetalho = `RETALHO MDF ${r.espessura_mm}MM - ${r.largura_mm}X${r.altura_mm} (CHAPA: ${r.sku_chapa.toUpperCase()})`;
               const novoMat = await rawSql`
                 INSERT INTO materiais (sku, nome, descricao, unidade_compra, unidade_uso, fator_conversao, estoque_atual, ativo, largura_mm, altura_mm)
                 VALUES (${retalhoSku}, ${nomeRetalho}, 'Sobra de Plano de Corte Automática', 'UN', 'UN', 1, ${r.quantidade}, true, ${r.largura_mm}, ${r.altura_mm})

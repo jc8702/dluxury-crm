@@ -56,6 +56,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           aria-invalid={isInvalid}
           aria-describedby={isInvalid ? `${inputId}-error` : undefined}
           {...props}
+          onChange={(e) => {
+            if (props.type !== 'password' && props.type !== 'email' && typeof e.target.value === 'string') {
+              e.target.value = e.target.value.toUpperCase();
+            }
+            props.onChange?.(e);
+          }}
         />
         {error && (
           <p id={`${inputId}-error`} className="mt-1.5 text-xs text-destructive">
