@@ -51,7 +51,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
     }
 
     onAdicionarChapa({
-      id: `chapa_${Date.now()}`,
+      id: chapa.id,
       sku_chapa: chapa.sku,
       nome_exibicao: `${chapa.material} ${chapa.espessura}mm`.toUpperCase(),
       largura_mm: chapa.largura,
