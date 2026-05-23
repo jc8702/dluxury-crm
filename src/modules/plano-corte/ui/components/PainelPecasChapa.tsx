@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Plus, Trash2, Scissors } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Plus, Trash2, Scissors, AlertTriangle, Layers } from 'lucide-react';
 import type { Peca } from '../../domain/types';
 import { Button } from '../../../../design-system/components';
 
@@ -13,6 +13,8 @@ interface PainelPecasChapaProps {
   onRemovePeca: (pecaId: string) => void;
   onOtimizar: () => void;
   isOtimizando: boolean;
+  larguraChapa?: number;
+  alturaChapa?: number;
 }
 
 export function PainelPecasChapa({
@@ -21,8 +23,26 @@ export function PainelPecasChapa({
   onUpdatePeca,
   onRemovePeca,
   onOtimizar,
-  isOtimizando
+  isOtimizando,
+  larguraChapa,
+  alturaChapa
 }: PainelPecasChapaProps) {
+  const areaInfo = useMemo(() => {
+    if (!larguraChapa || !alturaChapa || pecas.length === 0) return null;
+
+    const areaChapa = larguraChapa * alturaChapa;
+    const areaTotalPecas = pecas.reduce((sum, p) => {
+      const qtd = p.quantidade || 1;
+      return sum + (p.largura * p.altura * qtd);
+    }, 0);
+
+    const chapasEstimadas = Math.ceil(areaTotalPecas / areaChapa);
+    const extrapolou = areaTotalPecas > areaChapa;
+    const percentualArea = (areaTotalPecas / areaChapa) * 100;
+
+    return { areaChapa, areaTotalPecas, chapasEstimadas, extrapolou, percentualArea };
+  }, [pecas, larguraChapa, alturaChapa]);
+
   return (
     <div className="flex flex-col h-full bg-[#1a1a1a] rounded-xl border border-[#333] overflow-hidden">
       {/* Header */}
@@ -46,6 +66,33 @@ export function PainelPecasChapa({
           <Plus size={18} />
         </Button>
       </div>
+
+      {/* Area Warning Bar */}
+      {areaInfo && areaInfo.extrapolou && (
+        <div className="px-4 py-2.5 bg-[#FFA500]/10 border-b border-[#FFA500]/20 flex items-center gap-2.5">
+          <AlertTriangle size={14} className="text-[#FFA500] flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider leading-tight">
+              Área total das peças excede a chapa
+            </p>
+            <p className="text-[8px] font-mono text-[#888] mt-0.5">
+              {areaInfo.areaTotalPecas.toLocaleString()} mm² necessário · {areaInfo.areaChapa.toLocaleString()} mm² disponível · ~{areaInfo.chapasEstimadas} chapas
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-md">
+            <Layers size={10} className="text-[#FFA500]" />
+            <span className="text-[10px] font-black text-[#FFA500]">{areaInfo.chapasEstimadas}x</span>
+          </div>
+        </div>
+      )}
+
+      {areaInfo && !areaInfo.extrapolou && pecas.length > 0 && (
+        <div className="px-4 py-2 bg-white/5 border-b border-[#333]">
+          <p className="text-[8px] font-mono text-[#555]">
+            {areaInfo.areaTotalPecas.toLocaleString()} mm² de {areaInfo.areaChapa.toLocaleString()} mm² ({areaInfo.percentualArea.toFixed(0)}%)
+          </p>
+        </div>
+      )}
 
       {/* Lista de Peças */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -148,6 +195,11 @@ export function PainelPecasChapa({
       {/* Footer com Ação */}
       {pecas.length > 0 && (
         <div className="p-4 bg-[#222] border-t border-[#333]">
+          {areaInfo && areaInfo.extrapolou && (
+            <p className="text-[8px] font-bold text-[#FFA500] uppercase tracking-wider text-center mb-2">
+              A otimização distribuirá as peças em {areaInfo.chapasEstimadas} chapas
+            </p>
+          )}
           <Button
             onClick={onOtimizar}
             disabled={isOtimizando}

@@ -110,6 +110,8 @@ export interface ResultadoOtimizacaoPorChapa {
   chapas_necessarias: number;
   tempo_calculo_ms: number;
   retalhos_utilizados: number;
+  pecas_rejeitadas?: Peca[];
+  pecas_total_count?: number;
 }
 export interface ChapaMaterial {
   sku: string;

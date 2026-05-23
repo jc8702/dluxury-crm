@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Printer, 
   Cpu, 
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 
 import { api } from '@/lib/api';
@@ -572,12 +573,32 @@ export default function PlanoCorteIndustrialPage() {
                   onRemovePeca={(id) => handleRemovePeca(chapaAtiva.id, id)}
                   onOtimizar={() => handleOtimizarChapa(chapaAtiva.id)}
                   isOtimizando={loading}
+                  larguraChapa={chapaAtiva.largura_mm}
+                  alturaChapa={chapaAtiva.altura_mm}
                 />
               </div>
 
               {resultadoAtivo && (
                 <div className="pt-6 border-t border-[#222] space-y-4">
                   <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em]">Ações da Chapa</span>
+                  
+                  {resultadoAtivo.chapas_necessarias > 1 && (
+                    <div className="px-4 py-3 rounded-xl bg-[#FFA500]/10 border border-[#FFA500]/20 flex items-start gap-3">
+                      <AlertTriangle size={14} className="text-[#FFA500] mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider">
+                          {resultadoAtivo.chapas_necessarias} Chapas Necessárias
+                        </p>
+                        <p className="text-[8px] text-[#888] mt-0.5 font-mono">
+                          {resultadoAtivo.pecas_total_count || 0} peças distribuídas em {resultadoAtivo.layouts.length} layouts
+                          {resultadoAtivo.pecas_rejeitadas && resultadoAtivo.pecas_rejeitadas.length > 0 
+                            ? ` · ${resultadoAtivo.pecas_rejeitadas.length} não couberam` 
+                            : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2">
                     <Button 
                       variant="outline"
