@@ -45,6 +45,7 @@ export const erpSkusEngenharia = pgTable('erp_skus_engenharia', {
 // 4. Tabela de Retalhos (Sobras Reutilizáveis)
 export const retalhosEstoque = pgTable('retalhos_estoque', {
   id: uuid('id').defaultRandom().primaryKey(),
+  sku: varchar('sku', { length: 20 }).unique(),
   largura_mm: integer('largura_mm').notNull(),
   altura_mm: integer('altura_mm').notNull(),
   espessura_mm: integer('espessura_mm').notNull(),

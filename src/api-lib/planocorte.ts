@@ -4,6 +4,16 @@ import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 
+async function proximoSkuRetalho(): Promise<string> {
+  const result = await rawSql`
+    SELECT COALESCE(MAX(CAST(SUBSTRING(sku, 5) AS INTEGER)), 0) + 1 AS prox
+    FROM retalhos_estoque
+    WHERE sku ~ '^RET-[0-9]+$'
+  `;
+  const prox = result[0]?.prox || 1;
+  return `RET-${String(prox).padStart(4, '0')}`;
+}
+
 /**
  * MÓDULO PLANO DE CORTE INDUSTRIAL - REESCRITA COM DRIZZLE
  */
@@ -94,7 +104,9 @@ export async function handlePlanoCorte(req: any, res: any) {
           // 2. Gerar Novos Retalhos (Sobras Reutilizáveis)
           if (retalhos_gerados && Array.isArray(retalhos_gerados)) {
             for (const r of retalhos_gerados) {
+              const retalhoSku = await proximoSkuRetalho();
               const [novoRetalho] = await db.insert(retalhosEstoque).values({
+                sku: retalhoSku,
                 largura_mm: r.largura_mm,
                 altura_mm: r.altura_mm,
                 espessura_mm: r.espessura_mm,

@@ -45,17 +45,25 @@ export async function handleRetalhos(req: any, res: any) {
           const usuario_criou = req.user?.nome || req.body.usuario_criou || 'Sistema';
           const now = new Date().toISOString();
 
-          // Usando o utilitário sql importado de _db.js para uma query direta e segura
           const { sql: rawSql } = await import('./_db.js');
-          
+
+          // Gerar SKU no padrão RET-XXXX
+          const skuResult = await (rawSql as any)`
+            SELECT COALESCE(MAX(CAST(SUBSTRING(sku, 5) AS INTEGER)), 0) + 1 AS prox
+            FROM retalhos_estoque
+            WHERE sku ~ '^RET-[0-9]+$'
+          `;
+          const prox = Array.isArray(skuResult) ? skuResult[0]?.prox || 1 : 1;
+          const sku = `RET-${String(prox).padStart(4, '0')}`;
+
           const result = await (rawSql as any)`
             INSERT INTO retalhos_estoque (
-              largura_mm, altura_mm, espessura_mm, sku_chapa, origem, 
+              sku, largura_mm, altura_mm, espessura_mm, sku_chapa, origem, 
               plano_corte_origem_id, projeto_origem, observacoes, 
               localizacao, disponivel, descartado, usuario_criou, 
               created_at, updated_at, metadata
             ) VALUES (
-              ${largura_mm}, ${altura_mm}, ${espessura_mm}, ${sku_chapa}, ${origem}, 
+              ${sku}, ${largura_mm}, ${altura_mm}, ${espessura_mm}, ${sku_chapa}, ${origem}, 
               ${plano_corte_origem_id || null}, ${projeto_origem || null}, ${observacoes || null}, 
               ${localizacao || 'Geral'}, ${disponivel ?? true}, ${descartado ?? false}, ${usuario_criou}, 
               ${now}, ${now}, ${JSON.stringify(metadata || {})}

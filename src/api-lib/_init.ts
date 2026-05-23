@@ -68,6 +68,7 @@ export async function runInitDB() {
   // Migrações Plano de Corte / Industrial
   await safeSql(sql`ALTER TABLE erp_chapas ADD COLUMN IF NOT EXISTS estoque INTEGER DEFAULT 0`);
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
+  await safeSql(sql`ALTER TABLE retalhos_estoque ADD COLUMN IF NOT EXISTS sku VARCHAR(20) UNIQUE`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS orcamento_id TEXT`);
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS cfop TEXT`);

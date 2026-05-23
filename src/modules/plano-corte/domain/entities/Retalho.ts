@@ -1,5 +1,6 @@
 export interface Retalho {
   id: string;
+  sku?: string;
   largura_mm: number;
   altura_mm: number;
   espessura_mm: number;
