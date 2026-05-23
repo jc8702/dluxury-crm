@@ -31,32 +31,32 @@ export interface AnaliseSKU {
 
 // Dicionários de Mapeamento Técnico de Marcenaria
 const CATEGORIAS: Record<string, string> = {
-  BALC: 'Balcão',
-  BAL: 'Balcão',
-  ARM: 'Armário',
-  AER: 'Aéreo',
-  COL: 'Coluna',
-  PAN: 'Paneleiro',
-  PAI: 'Painel',
-  GAV: 'Gaveteiro',
-  ROU: 'Roupeiro',
-  CLO: 'Closet',
-  LAV: 'Lavanderia',
-  NIC: 'Nicho',
-  NICH: 'Nicho',
-  BANC: 'Bancada',
+  BALC: 'BALCÃO',
+  BAL: 'BALCÃO',
+  ARM: 'ARMÁRIO',
+  AER: 'AÉREO',
+  COL: 'COLUNA',
+  PAN: 'PANELEIRO',
+  PAI: 'PAINEL',
+  GAV: 'GAVETEIRO',
+  ROU: 'ROUPEIRO',
+  CLO: 'CLOSET',
+  LAV: 'LAVANDERIA',
+  NIC: 'NICHO',
+  NICH: 'NICHO',
+  BANC: 'BANCADA',
 };
 
 const AMBIENTES: Record<string, string> = {
-  COZ: 'Cozinha',
-  DOR: 'Dormitório',
-  QUAR: 'Quarto',
-  BAN: 'Banheiro',
-  WC: 'Banheiro',
-  SAL: 'Sala',
-  LAV: 'Lavanderia',
-  COR: 'Corporativo',
-  OFF: 'Escritório',
+  COZ: 'COZINHA',
+  DOR: 'DORMITÓRIO',
+  QUAR: 'QUARTO',
+  BAN: 'BANHEIRO',
+  WC: 'BANHEIRO',
+  SAL: 'SALA',
+  LAV: 'LAVANDERIA',
+  COR: 'CORPORATIVO',
+  OFF: 'ESCRITÓRIO',
 };
 
 const MATERIAIS: Record<string, 'MDF' | 'MDP' | 'COMPENSADO' | 'VIDRO'> = {
@@ -76,8 +76,8 @@ export function parseSKU(sku: string): ParsedSKU {
 
   const result: ParsedSKU = {
     sku: cleanSku,
-    categoria: 'Desconhecido',
-    ambiente: 'Geral',
+    categoria: 'DESCONHECIDO',
+    ambiente: 'GERAL',
     dimensoes: {},
     portas: 0,
     tipoPorta: 'giro',
@@ -90,7 +90,7 @@ export function parseSKU(sku: string): ParsedSKU {
   // Processar cada segmento do SKU
   parts.forEach((part, index) => {
     // 1. Identificar Categoria (apenas se for o primeiro índice ou ainda desconhecido, e a sigla não for usada em outra posição como gaveta/ambiente)
-    const isFirstOrUnknown = result.categoria === 'Desconhecido' || index === 0;
+    const isFirstOrUnknown = result.categoria === 'DESCONHECIDO' || index === 0;
     const isCategorySigla = CATEGORIAS[part] && (part !== 'GAV' || index === 0) && (part !== 'LAV' || index === 0);
 
     if (isCategorySigla && isFirstOrUnknown) {
@@ -106,7 +106,7 @@ export function parseSKU(sku: string): ParsedSKU {
 
     // 2. Identificar Ambiente (apenas se for geral ou nos primeiros índices)
     if (AMBIENTES[part]) {
-      if (result.ambiente === 'Geral' || index === 1) {
+      if (result.ambiente === 'GERAL' || index === 1) {
         result.ambiente = AMBIENTES[part];
       }
       return;
@@ -198,7 +198,7 @@ export function parseSKU(sku: string): ParsedSKU {
   });
 
   // Heurísticas de Fallback se não identificar pelo padrão por hífen
-  if (result.categoria === 'Desconhecido') {
+  if (result.categoria === 'DESCONHECIDO') {
     if (cleanSku.includes('BALC')) result.categoria = 'Balcão';
     else if (cleanSku.includes('AER')) result.categoria = 'Aéreo';
     else if (cleanSku.includes('ARM')) result.categoria = 'Armário';
@@ -265,7 +265,7 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
   }
 
   // 2. Regra de Fixação para Aéreos Grandes
-  if (categoria === 'Aéreo' && largura >= 1000) {
+  if (categoria === 'AÉREO' && largura >= 1000) {
     alertas.push({
       nivel: 'AVISO',
       mensagem: `Reforço de Fixação na Instalação Necessário.`,
@@ -294,7 +294,7 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
   }
 
   // 5. Dimensionamento Ergonômico de Cozinha
-  if (parsed.ambiente === 'Cozinha' && categoria === 'Balcão' && parsed.dimensoes.profundidade_mm) {
+  if (parsed.ambiente === 'COZINHA' && categoria === 'BALCÃO' && parsed.dimensoes.profundidade_mm) {
     const prof = parsed.dimensoes.profundidade_mm;
     if (prof < 550) {
       alertas.push({
@@ -315,7 +315,7 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
   }
 
   // 7. Qualidade de Materiais em Banheiros
-  if (parsed.ambiente === 'Banheiro' && material === 'MDP') {
+  if (parsed.ambiente === 'BANHEIRO' && material === 'MDP') {
     alertas.push({
       nivel: 'CRITICO',
       mensagem: `Incompatibilidade de Material para Área Úmida.`,
@@ -370,7 +370,7 @@ export function analisarSKUCompleto(sku: string): AnaliseSKU {
       sugestoesMelhoria.push(`UPSELL COMERCIAL: Sugerir ao cliente a migração para MDF 18mm por um acréscimo de 8% a 12% no custo de chapas, garantindo estabilidade e visual robusto premium.`);
     }
 
-    if (parsed.categoria === 'Balcão' && parsed.portas >= 2 && parsed.gavetas === 0) {
+    if (parsed.categoria === 'BALCÃO' && parsed.portas >= 2 && parsed.gavetas === 0) {
       sugestoesMelhoria.push(`OTIMIZAÇÃO ERGONÔMICA: Substituir uma das portas de giro por gavetões internos para melhorar a acessibilidade de panelas e mantimentos no fundo do móvel.`);
     }
 

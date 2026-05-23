@@ -131,7 +131,7 @@ export async function runInitDB() {
   try {
     const cc = await sql`SELECT count(*) as count FROM categorias_material`;
     if (cc.length && parseInt(cc[0].count, 10) === 0) {
-      await sql`INSERT INTO categorias_material (slug, nome, icone) VALUES ('chapas', 'Chapas', 'Layers'), ('fitas_borda', 'Fitas', 'Ruler'), ('fixacoes', 'Fixações', 'Pin')`;
+      await sql`INSERT INTO categorias_material (slug, nome, icone) VALUES ('chapas', 'CHAPAS', 'Layers'), ('fitas_borda', 'FITAS', 'Ruler'), ('fixacoes', 'FIXAÇÕES', 'Pin')`;
     }
   } catch {
     // Ignore error
@@ -143,7 +143,7 @@ export async function runInitDB() {
     if (uc.length && parseInt(uc[0].count, 10) === 0) {
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash('admin123', salt);
-      await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('Administrador', 'admin@dluxury.com', ${hash}, 'admin')`;
+      await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin')`;
     } else {
       // Reset admin password on every init in dev
       const salt = await bcrypt.genSalt(10);
@@ -196,7 +196,7 @@ export async function runInitDB() {
   `);
 
   // Seed categoria Retalho
-  await safeSql(sql`INSERT INTO erp_categories (id, nome) VALUES ('RET', 'Retalho') ON CONFLICT (id) DO NOTHING`);
+  await safeSql(sql`INSERT INTO erp_categories (id, nome) VALUES ('RET', 'RETALHO') ON CONFLICT (id) DO NOTHING`);
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS erp_subfamilies (
@@ -553,7 +553,7 @@ export async function runInitDB() {
       plano_corte_origem_id UUID REFERENCES planos_de_corte(id),
       utilizado_em_id UUID REFERENCES planos_de_corte(id),
       projeto_origem VARCHAR(255),
-      localizacao VARCHAR(100) DEFAULT 'Geral',
+      localizacao VARCHAR(100) DEFAULT 'GERAL',
       observacoes TEXT,
       disponivel BOOLEAN DEFAULT true,
       descartado BOOLEAN DEFAULT false,
@@ -572,9 +572,9 @@ export async function runInitDB() {
     const cc = await sql`SELECT count(*) as count FROM erp_chapas`;
     if (cc.length && parseInt(cc[0].count, 10) === 0) {
       await sql`INSERT INTO erp_chapas (sku, nome, largura_mm, altura_mm, espessura_mm, preco_unitario) VALUES 
-        ('MDF-BRA-15', 'MDF Branco 15mm', 2750, 1830, 15, 280.00),
-        ('MDF-BRA-18', 'MDF Branco 18mm', 2750, 1830, 18, 320.00),
-        ('MDF-GRA-15', 'MDF Grafite 15mm', 2750, 1830, 15, 310.00)`;
+        ('MDF-BRA-15', 'MDF BRANCO 15MM', 2750, 1830, 15, 280.00),
+        ('MDF-BRA-18', 'MDF BRANCO 18MM', 2750, 1830, 18, 320.00),
+        ('MDF-GRA-15', 'MDF GRAFITE 15MM', 2750, 1830, 15, 310.00)`;
     }
   } catch {
     // Ignore error

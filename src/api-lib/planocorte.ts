@@ -28,7 +28,7 @@ export async function handlePlanoCorte(req: any, res: any) {
       case 'GET':
         if (id) {
           const [plano] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), isNull(planosDeCorte.deleted_at)));
-          if (!plano) return res.status(404).json({ success: false, error: 'Plano não encontrado' });
+          if (!plano) return res.status(404).json({ success: false, error: 'PLANO NÃO ENCONTRADO' });
           return res.status(200).json({ success: true, data: plano });
         } else {
           const planos = await db.select().from(planosDeCorte).where(isNull(planosDeCorte.deleted_at));
@@ -94,7 +94,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 retalho_id: item.id_retalho,
                 plano_corte_id: item.plano_id,
                 quantidade: 1,
-                motivo: 'Consumo em produção',
+                motivo: 'CONSUMO EM PRODUÇÃO',
                 usuario_id: user?.id
               });
 
@@ -105,7 +105,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
                 await rawSql`
                   INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${matId}, 'saida', 'material', 1, 'Consumo de retalho em produção', ${user?.id || null})
+                  VALUES (${matId}, 'saida', 'material', 1, 'CONSUMO DE RETALHO EM PRODUÇÃO', ${user?.id || null})
                 `;
               }
             } else {
@@ -124,7 +124,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 chapa_id: chapaRecord.length > 0 ? chapaRecord[0].id : null,
                 plano_corte_id: item.plano_id,
                 quantidade: item.qtd || 1,
-                motivo: `Consumo SKU: ${item.sku}`,
+                motivo: `CONSUMO SKU: ${item.sku}`,
                 usuario_id: user?.id
               });
 
@@ -136,7 +136,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - ${qtdConsumida}, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
                 await rawSql`
                   INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${matId}, 'saida', 'material', ${qtdConsumida}, 'Consumo de chapa em produção (Plano de Corte)', ${user?.id || null})
+                  VALUES (${matId}, 'saida', 'material', ${qtdConsumida}, 'CONSUMO DE CHAPA EM PRODUÇÃO (PLANO DE CORTE)', ${user?.id || null})
                 `;
               }
             }
@@ -191,7 +191,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 retalho_id: novoRetalho.id,
                 plano_corte_id: r.plano_corte_id,
                 quantidade: r.quantidade,
-                motivo: 'Geração automática de sobra',
+                motivo: 'GERAÇÃO AUTOMÁTICA DE SOBRA',
                 usuario_id: user?.id
               });
 
@@ -245,7 +245,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               if (novoMat.length > 0) {
                 await rawSql`
                   INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${novoMat[0].id}, 'entrada', 'material', ${r.quantidade}, 'Geração automática de sobra de corte', ${user?.id || null})
+                  VALUES (${novoMat[0].id}, 'entrada', 'material', ${r.quantidade}, 'GERAÇÃO AUTOMÁTICA DE SOBRA DE CORTE', ${user?.id || null})
                 `;
               }
             }
@@ -271,7 +271,7 @@ export async function handlePlanoCorte(req: any, res: any) {
 
           return res.status(200).json({ 
             success: true, 
-            message: 'Produção aprovada! Ordem de Produção gerada e estoque atualizado.',
+            message: 'PRODUÇÃO APROVADA! ORDEM DE PRODUÇÃO GERADA E ESTOQUE ATUALIZADO.',
             data: { op_id }
           });
         } else {
@@ -305,7 +305,7 @@ export async function handlePlanoCorte(req: any, res: any) {
       case 'DELETE': {
         const { user } = validateAuth(req);
         const [existing] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, id));
-        if (!existing) return res.status(404).json({ success: false, error: 'Plano não encontrado' });
+        if (!existing) return res.status(404).json({ success: false, error: 'PLANO NÃO ENCONTRADO' });
 
         await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(eq(planosDeCorte.id, id));
         
@@ -444,7 +444,7 @@ export async function handleImportarDesenho(req: any, res: any) {
   
   try {
     const { fileBase64 } = req.body;
-    if (!fileBase64) return res.status(400).json({ success: false, error: 'Arquivo não fornecido' });
+    if (!fileBase64) return res.status(400).json({ success: false, error: 'ARQUIVO NÃO FORNECIDO' });
     
     // Decodificar Base64
     const { fileName } = req.body;
@@ -507,7 +507,7 @@ export async function handleImportarDesenho(req: any, res: any) {
         console.error('[API] Falha crítica na extração de PDF:', pdfErr);
         return res.status(500).json({ 
           success: false, 
-          error: 'Este PDF não contém dados de texto extraíveis. Tente usar o arquivo DXF original.',
+          error: 'ESTE PDF NÃO CONTÉM DADOS DE TEXTO EXTRAÍVEIS. TENTE USAR O ARQUIVO DXF ORIGINAL.',
           details: pdfErr.message 
         });
       }
@@ -631,6 +631,6 @@ export async function handleImportarDesenho(req: any, res: any) {
     });
   } catch (err: any) {
     console.error('IMPORT_DESENHO_ERROR:', err);
-    return res.status(500).json({ success: false, error: 'Erro ao processar PDF: ' + err.message });
+    return res.status(500).json({ success: false, error: 'ERRO AO PROCESSAR PDF: ' + err.message });
   }
 }

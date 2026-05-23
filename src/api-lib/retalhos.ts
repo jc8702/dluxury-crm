@@ -42,7 +42,7 @@ export async function handleRetalhos(req: any, res: any) {
             localizacao, disponivel, descartado, metadata 
           } = req.body;
 
-          const usuario_criou = req.user?.nome || req.body.usuario_criou || 'Sistema';
+          const usuario_criou = req.user?.nome || req.body.usuario_criou || 'SISTEMA';
           const now = new Date().toISOString();
 
           const { sql: rawSql } = await import('./_db.js');
@@ -65,7 +65,7 @@ export async function handleRetalhos(req: any, res: any) {
             ) VALUES (
               ${sku}, ${largura_mm}, ${altura_mm}, ${espessura_mm}, ${sku_chapa}, ${origem}, 
               ${plano_corte_origem_id || null}, ${projeto_origem || null}, ${observacoes || null}, 
-              ${localizacao || 'Geral'}, ${disponivel ?? true}, ${descartado ?? false}, ${usuario_criou}, 
+              ${localizacao || 'GERAL'}, ${disponivel ?? true}, ${descartado ?? false}, ${usuario_criou}, 
               ${now}, ${now}, ${JSON.stringify(metadata || {})}
             ) RETURNING *
           `;
@@ -84,7 +84,7 @@ export async function handleRetalhos(req: any, res: any) {
         const updateData: any = { 
           ...req.body, 
           updated_at: new Date(),
-          usuario_atualizou: req.user?.nome || 'Sistema'
+          usuario_atualizou: req.user?.nome || 'SISTEMA'
         };
 
         if (action === 'usar') {

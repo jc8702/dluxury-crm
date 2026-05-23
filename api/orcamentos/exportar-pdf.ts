@@ -48,7 +48,7 @@ export default async function handler(req: any, res: any) {
             item.nomeCustomizado || item.skuEngenharia?.nome || 'Item Avulso',
             item.quantidade,
             `${item.largura || '-'} x ${item.altura || '-'} x ${item.espessura || '-'}`,
-            item.material || 'Padrão',
+            item.material || 'PADRÃO',
             new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.precoVendaUnitario || 0))
         ]);
 

@@ -276,7 +276,7 @@ async function consultar_orcamentos(input: { status?: string; limite?: number })
     return {
       text: `Encontrados ${rows.length} orçamentos com status ${status}.`,
       table_data: {
-        headers: ['Orçamento', 'Cliente', 'Valor Venda', 'Status', 'Data'],
+        headers: ['ORÇAMENTO', 'CLIENTE', 'VALOR VENDA', 'STATUS', 'DATA'],
         rows: tableRows
       },
       chart_data: rows.length > 0 ? {
@@ -484,7 +484,7 @@ export async function processarChat(payload: {
   const today = context.data_atual ? new Date(context.data_atual) : new Date();
 
   // Histórico resumido para os prompts
-  const historySummary = history.map(h => `${h.role === 'user' ? 'Usuário' : 'Dlux'}: ${h.content}`).join('\n');
+  const historySummary = history.map(h => `${h.role === 'user' ? 'USUÁRIO' : 'DLUX'}: ${h.content}`).join('\n');
 
   // 1. Decidir Agente (Se modo manual, respeitamos; senão, roteamos automaticamente)
   let chosenAgent = 'marcenaria';

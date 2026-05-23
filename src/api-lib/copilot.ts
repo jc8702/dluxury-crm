@@ -65,7 +65,7 @@ async function auditSKU(payload: any) {
     });
     return object;
   } catch {
-    return { is_duplicado: false, similaridade_pct: 0, categoria_sugerida: 'Geral', recomendacao: 'Falha na validação IA.' };
+    return { is_duplicado: false, similaridade_pct: 0, categoria_sugerida: 'GERAL', recomendacao: 'FALHA NA VALIDAÇÃO IA.' };
   }
 }
 
@@ -206,7 +206,7 @@ interface Intent {
  * Lógica central de extração bruta do LLM com suporte a Histórico
  */
 async function getRawLLMIntent(message: string, history: any[] = []): Promise<string> {
-  const context = history.map(h => `${h.role === 'user' ? 'Usuário' : 'Copiloto'}: ${h.content}`).join('\n');
+  const context = history.map(h => `${h.role === 'user' ? 'USUÁRIO' : 'COPILOTO'}: ${h.content}`).join('\n');
   
   const prompt = `Você é o COPILOTO INDUSTRIAL da D'Luxury, especialista em marcenaria.
   Sua função é interpretar a intenção do usuário no ERP.
@@ -316,7 +316,7 @@ const SKUService = {
       VALUES (
         ${proximoSku}, ${data.descricao}, ${data.descricao}, ${data.unidade}, ${data.unidade}, 
         0, 50, 0, ${categoryId}, true,
-        'Geral', 1, 0, 0,
+        'GERAL', 1, 0, 0,
         '', '', 'D-Luxury'
       )
     `;
@@ -343,7 +343,7 @@ async function handleSuggestCreateSKU(entities: Entities) {
   
   const similar = await SKUService.checkDuplicity(entities.descricao);
   const suggestion = {
-    familia: entities.familia || entities.descricao.split(' ')[0] || 'Geral',
+    familia: entities.familia || entities.descricao.split(' ')[0] || 'GERAL',
     descricao: entities.descricao,
     unidade: entities.unidade || 'UN'
   };
