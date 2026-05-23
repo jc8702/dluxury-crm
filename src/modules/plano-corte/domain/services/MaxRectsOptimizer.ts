@@ -25,11 +25,13 @@ export class MaxRectsOptimizer {
   private largura_chapa: number;
   private altura_chapa: number;
   private kerf_mm: number;
+  private margem_mm: number;
 
-  constructor(largura: number, altura: number, kerf: number = 3) {
+  constructor(largura: number, altura: number, kerf: number = 3, margem: number = 0) {
     this.largura_chapa = largura;
     this.altura_chapa = altura;
-    this.kerf_mm = Math.max(0, kerf); // Garantir kerf positivo
+    this.kerf_mm = Math.max(0, kerf);
+    this.margem_mm = Math.max(0, margem);
   }
 
   /**
@@ -46,12 +48,29 @@ export class MaxRectsOptimizer {
     const pecas_posicionadas: PecaPosicionada[] = [];
     const pecas_rejeitadas: Peca[] = [];
     
-    // Iniciar com um retângulo vazio representando a chapa inteira
+    // Iniciar com retângulo vazio representando a área útil (descontando margem)
+    const margem = this.margem_mm;
+    const efetivaLargura = this.largura_chapa - (margem * 2);
+    const efetivaAltura = this.altura_chapa - (margem * 2);
+
+    if (efetivaLargura <= 0 || efetivaAltura <= 0) {
+      return {
+        pecas_posicionadas: [],
+        pecas_rejeitadas: pecas,
+        aproveitamento: 0,
+        area_usada: 0,
+        area_total: this.largura_chapa * this.altura_chapa,
+        area_desperdicada: this.largura_chapa * this.altura_chapa,
+        tempo_ms: 0,
+        espacos_vazios: []
+      };
+    }
+
     const espacosVazios: Retangulo[] = [{
-      x: 0,
-      y: 0,
-      largura: this.largura_chapa,
-      altura: this.altura_chapa
+      x: margem,
+      y: margem,
+      largura: efetivaLargura,
+      altura: efetivaAltura
     }];
 
     // Tentar posicionar cada peça
@@ -89,13 +108,13 @@ export class MaxRectsOptimizer {
       }
     }
 
-    // Calcular métricas
+    // Calcular métricas com base na área útil
     const area_usada = pecas_posicionadas.reduce(
       (sum, p) => sum + (p.largura * p.altura),
       0
     );
-    const area_total = this.largura_chapa * this.altura_chapa;
-    const aproveitamento = (area_usada / area_total) * 100;
+    const area_total = efetivaLargura * efetivaAltura;
+    const aproveitamento = area_total > 0 ? (area_usada / area_total) * 100 : 0;
 
     const tempo_ms = performance.now() - inicio;
 

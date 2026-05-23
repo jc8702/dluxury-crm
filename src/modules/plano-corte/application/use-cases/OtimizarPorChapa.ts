@@ -14,7 +14,7 @@ export class OtimizarPorChapa {
     while (pecasParaProcessar.length > 0 && indiceChapa < maxChapas) {
       indiceChapa++;
 
-      const optimizer = new MaxRectsOptimizer(chapa.largura_mm, chapa.altura_mm, 3);
+      const optimizer = new MaxRectsOptimizer(chapa.largura_mm, chapa.altura_mm, 3, 15);
       const resultadoRaw = optimizer.otimizar(pecasParaProcessar);
 
       layouts.push({
