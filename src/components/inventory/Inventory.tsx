@@ -311,7 +311,12 @@ const Inventory: React.FC = () => {
                         {mov.tipo === 'saida' ? '-' : '+'}{mov.quantidade} {mov.material_unidade}
                       </td>
                       <td className="p-4 max-w-[250px] truncate text-foreground">
-                        {mov.motivo}
+                        <div>{mov.motivo}</div>
+                        {mov.nota_fiscal && (
+                          <div className="text-xs text-primary font-medium mt-0.5">
+                            NF: {mov.nota_fiscal}
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 text-muted-foreground">
                         {mov.criado_por}

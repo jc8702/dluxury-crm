@@ -101,6 +101,9 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_antes NUMERIC(12,4)`).catch(() => {});
   await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_depois NUMERIC(12,4)`).catch(() => {});
   await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo DROP NOT NULL`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo SET DEFAULT 'material'`).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS nota_fiscal TEXT`).catch(() => {});
   await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});

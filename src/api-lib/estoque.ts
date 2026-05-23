@@ -16,7 +16,7 @@ export async function handleEstoque(req: any, res: any) {
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
-        const { material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario } = req.body;
+        const { material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, nota_fiscal } = req.body;
         const mRes = await sql`SELECT estoque_atual, fator_conversao, preco_custo, nome FROM materiais WHERE id = ${material_id}`;
         if (!mRes.length) throw new Error('Material não encontrado');
         const mat = mRes[0];
@@ -27,7 +27,7 @@ export async function handleEstoque(req: any, res: any) {
         if (estD < 0 && tipo === 'saida') throw new Error('Estoque insuficiente');
         
         const { user } = extractAndVerifyToken(req);
-        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by) VALUES (${material_id}, ${tipo}, ${quantidade}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}) RETURNING *`;
+        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, nota_fiscal) VALUES (${material_id}, ${tipo}, ${quantidade}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}, ${nota_fiscal || null}) RETURNING *`;
         await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, updated_at = CURRENT_TIMESTAMP WHERE id = ${material_id}`;
         return res.status(201).json({ success: true, data: mov[0] });
       }
@@ -45,7 +45,7 @@ export async function handleEstoque(req: any, res: any) {
       }
       if (method === 'PATCH') {
         const f = req.body;
-        const r = await sql`UPDATE fornecedores SET nome = ${f.nome}, cnpj = ${f.cnpj}, contato = ${f.contato}, telefone = ${f.telefone}, email = ${f.email}, cidade = ${f.cidade}, estado = ${f.estado}, observacoes = ${f.observacoes} WHERE id = ${id} RETURNING *`;
+        const r = await sql`UPDATE fornecedores SET nome = ${f.nome}, cnpj = ${f.cnpj}, contato = ${f.contato}, telefone = ${f.telefone}, email = ${f.email}, cidade = ${f.cidade}, estado = ${f.estado}, observacoes = ${f.observacoes}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
         return res.status(200).json({ success: true, data: r[0] });
       }
       if (method === 'DELETE') {
@@ -70,7 +70,7 @@ export async function handleEstoque(req: any, res: any) {
     if (method === 'GET') {
       if (id) {
         const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
-        const movs = await sql`SELECT id, material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
+        const movs = await sql`SELECT id, material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at, nota_fiscal FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
       const { q } = req.query;

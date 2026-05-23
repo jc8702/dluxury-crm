@@ -284,6 +284,7 @@ export type MovimentacaoEstoque = {
   estoque_depois: number;
   criado_por: string;
   created_at: string;
+  nota_fiscal?: string;
 };
 
 export type Fornecedor = {

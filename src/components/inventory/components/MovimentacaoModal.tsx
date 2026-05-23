@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../../context/AppContext';
 import type { Material } from '../../../context/AppContext';
 import { ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
 import { Modal, Button, Input } from '../../../design-system/components';
+import { api } from '../../../lib/api';
 
 interface MovimentacaoModalProps {
   material: Material;
@@ -20,6 +21,39 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
   const [precoUnitario, setPrecoUnitario] = useState<number>(material.preco_custo || 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [titulos, setTitulos] = useState<any[]>([]);
+  const [loadingTitulos, setLoadingTitulos] = useState(false);
+  const [selecaoNF, setSelecaoNF] = useState<string>('');
+  const [notaFiscal, setNotaFiscal] = useState<string>('');
+
+  useEffect(() => {
+    if (tipo === 'entrada') {
+      setLoadingTitulos(true);
+      api.financeiro.titulosPagar.list()
+        .then(res => {
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          let filtered = list;
+          if (material.fornecedor_principal) {
+            filtered = list.filter((t: any) => String(t.fornecedor_id) === String(material.fornecedor_principal));
+          }
+          setTitulos(filtered);
+        })
+        .catch(err => console.error('Erro ao carregar títulos para notas fiscais:', err))
+        .finally(() => setLoadingTitulos(false));
+    } else {
+      setTitulos([]);
+      setNotaFiscal('');
+      setSelecaoNF('');
+    }
+  }, [tipo, material.fornecedor_principal]);
+
+  const notasFiscaisUnicas = useMemo(() => {
+    const nfs = titulos
+      .map((t: any) => t.nota_fiscal)
+      .filter((nf: any) => nf && typeof nf === 'string' && nf.trim() !== '');
+    return Array.from(new Set(nfs)) as string[];
+  }, [titulos]);
 
   const equivalencia = useMemo(() => {
     const qty = Number(quantidade || 0);
@@ -57,7 +91,8 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
         motivo,
         projeto_id: projetoId || null,
         orcamento_id: orcamentoId || null,
-        preco_unitario: tipo === 'entrada' ? precoUnitario : null
+        preco_unitario: tipo === 'entrada' ? precoUnitario : null,
+        nota_fiscal: tipo === 'entrada' && notaFiscal.trim() !== '' ? notaFiscal.trim() : null
       });
       onSuccess();
       onClose();
@@ -137,6 +172,44 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
             required
           />
         </div>
+
+        {tipo === 'entrada' && (
+          <div className="grid grid-cols-2 gap-4 animate-fade-in">
+            <div>
+              <label className="block text-sm font-medium text-foreground/90 mb-2">
+                Nota Fiscal {loadingTitulos && <span className="text-xs text-muted-foreground">(carregando...)</span>}
+              </label>
+              <select 
+                className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+                value={selecaoNF} 
+                onChange={e => {
+                  setSelecaoNF(e.target.value);
+                  if (e.target.value !== 'manual') {
+                    setNotaFiscal(e.target.value);
+                  } else {
+                    setNotaFiscal('');
+                  }
+                }}
+              >
+                <option value="">Nenhuma / Sem NF</option>
+                {notasFiscaisUnicas.map(nf => (
+                  <option key={nf} value={nf}>NF {nf}</option>
+                ))}
+                <option value="manual">+ Digitar Manualmente...</option>
+              </select>
+            </div>
+            {(selecaoNF === 'manual' || notasFiscaisUnicas.length === 0) && (
+              <div className="animate-fade-in">
+                <Input 
+                  label="Número da NF" 
+                  placeholder="Ex: 000123" 
+                  value={notaFiscal} 
+                  onChange={e => setNotaFiscal(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {tipo === 'saida' && (
           <div className="grid grid-cols-2 gap-4">

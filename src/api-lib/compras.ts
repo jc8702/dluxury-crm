@@ -183,8 +183,8 @@ export async function handleCompras(req: any, res: any) {
 
           // 4. Criar movimentacao_estoque
           await sql`
-            INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, preco_unitario, valor_total, criado_por)
-            VALUES (${item.material_id}, 'entrada', ${r.quantidade}, ${`PC-${pedido_id.substring(0,8)}`}, ${item.preco_unitario}, ${r.quantidade * item.preco_unitario}, ${user?.name || 'Sistema'})
+            INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, preco_unitario, valor_total, created_by, nota_fiscal)
+            VALUES (${item.material_id}, 'entrada', ${r.quantidade}, ${`PC-${pedido_id.substring(0,8)}`}, ${item.preco_unitario}, ${r.quantidade * item.preco_unitario}, ${user?.name || 'Sistema'}, ${nota_fiscal || null})
           `;
 
           // 5. Atualizar estoque_atual em materiais
