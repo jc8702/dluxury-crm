@@ -339,7 +339,7 @@ export default function PlanoCorteIndustrialPage() {
                 espessura_mm: projeto.chapas.find(c => c.id === res.chapa_id)?.espessura_mm || 18,
                 sku_chapa: projeto.chapas.find(c => c.id === res.chapa_id)?.sku_chapa,
                 plano_corte_id: projeto.id,
-                quantidade: qtdChapas
+                projeto_origem: projeto.nome
               });
             }
           });

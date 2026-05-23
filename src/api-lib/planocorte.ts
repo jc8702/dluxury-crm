@@ -178,10 +178,10 @@ export async function handlePlanoCorte(req: any, res: any) {
                 sku_chapa: r.sku_chapa,
                 origem: 'sobra_plano_corte',
                 plano_corte_origem_id: r.plano_corte_id,
+                projeto_origem: r.projeto_origem || null,
                 usuario_criou: user?.id || 'sistema',
                 disponivel: true,
                 descartado: false,
-                quantidade: r.quantidade,
                 metadata: { automatico: true }
               }).returning();
 
