@@ -96,8 +96,14 @@ export function CanvasAvancado({
     ctx.scale(viewport.zoom, viewport.zoom);
     ctx.beginPath();
     ctx.rect(0, 0, chapaDimensoes.largura, chapaDimensoes.altura);
+    ctx.clip();
     if (showGrid) desenharGrid(ctx, chapaDimensoes);
     desenharBordaChapa(ctx, chapaDimensoes);
+
+    // Desenhar espaços livres (retalhos em potencial)
+    if (localLayout && localLayout.espacos_livres) {
+      desenharEspacosLivres(ctx, localLayout.espacos_livres, viewport.zoom);
+    }
     
     if (localLayout && localLayout.pecas_posicionadas) {
       localLayout.pecas_posicionadas.forEach(peca => {
@@ -493,6 +499,64 @@ function desenharBordaChapa(ctx: CanvasRenderingContext2D, dimensoes: { largura:
   ctx.beginPath(); ctx.moveTo(dimensoes.largura - cornerSize, dimensoes.altura); ctx.lineTo(dimensoes.largura, dimensoes.altura); ctx.lineTo(dimensoes.largura, dimensoes.altura - cornerSize); ctx.stroke();
   
   ctx.restore();
+}
+
+function desenharEspacosLivres(
+  ctx: CanvasRenderingContext2D,
+  espacos: Array<{ x: number; y: number; largura: number; altura: number }>,
+  zoom: number
+) {
+  const MIN_RETALHO_MM = 300;
+  const ROTULO_OFFSET = 6 / Math.max(1, zoom);
+
+  for (const espaco of espacos) {
+    const isRetalho = espaco.largura >= MIN_RETALHO_MM && espaco.altura >= MIN_RETALHO_MM;
+
+    ctx.save();
+
+    // Fundo sutil
+    ctx.fillStyle = isRetalho ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255, 255, 255, 0.02)';
+    ctx.fillRect(espaco.x, espaco.y, espaco.largura, espaco.altura);
+
+    // Borda tracejada
+    ctx.setLineDash(isRetalho ? [6, 4] : [3, 4]);
+    ctx.lineWidth = isRetalho ? (2 / zoom) : (1 / zoom);
+    ctx.strokeStyle = isRetalho ? '#10B981' : 'rgba(255, 255, 255, 0.12)';
+    ctx.strokeRect(espaco.x, espaco.y, espaco.largura, espaco.altura);
+    ctx.setLineDash([]);
+
+    // Rótulo
+    const labelSize = Math.max(8, 10 / zoom);
+    ctx.font = `bold ${labelSize}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (isRetalho) {
+      ctx.fillStyle = '#10B981';
+      ctx.fillText(
+        'RETALHO',
+        espaco.x + espaco.largura / 2,
+        espaco.y + espaco.altura / 2 - ROTULO_OFFSET
+      );
+      ctx.font = `${Math.max(7, 9 / zoom)}px monospace`;
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.7)';
+      ctx.fillText(
+        `${espaco.largura}×${espaco.altura}`,
+        espaco.x + espaco.largura / 2,
+        espaco.y + espaco.altura / 2 + ROTULO_OFFSET + 2 / zoom
+      );
+    } else {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.font = `${Math.max(6, 8 / zoom)}px monospace`;
+      ctx.fillText(
+        `${espaco.largura}×${espaco.altura}`,
+        espaco.x + espaco.largura / 2,
+        espaco.y + espaco.altura / 2
+      );
+    }
+
+    ctx.restore();
+  }
 }
 
 function desenharPeca(
