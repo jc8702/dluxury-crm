@@ -3,6 +3,7 @@ import { useEscClose } from '../../../hooks/useEscClose';
 import { useAppContext } from '../../../context/AppContext';
 import type { Fornecedor } from '../../../context/AppContext';
 import { X, Save } from 'lucide-react';
+import { Input, Modal, Button } from '../../../design-system/components';
 
 interface FornecedorFormModalProps {
   fornecedor?: Fornecedor | null;
@@ -65,66 +66,72 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1200 }} onKeyDown={(e) => { if ((e as any).key === 'Escape') onClose(); }} tabIndex={-1}>
-      <div className="modal-content animate-pop-in" style={{ maxWidth: '600px', width: '90%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
-            {fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}
-          </h3>
-          <button onClick={onClose} style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--muted-foreground))' }}><X /></button>
+    <Modal isOpen={true} onClose={onClose} title={fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <Input 
+          label="Razão Social / Nome *" 
+          value={form.nome} 
+          onChange={e => setForm({...form, nome: e.target.value})} 
+          required 
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <Input 
+            label="CNPJ" 
+            value={form.cnpj} 
+            onChange={e => setForm({...form, cnpj: e.target.value})} 
+          />
+          <Input 
+            label="Pessoa de Contato" 
+            value={form.contato} 
+            onChange={e => setForm({...form, contato: e.target.value})} 
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input 
+            label="Telefone" 
+            value={form.telefone} 
+            onChange={e => setForm({...form, telefone: e.target.value})} 
+          />
+          <Input 
+            label="E-mail" 
+            type="email" 
+            value={form.email} 
+            onChange={e => setForm({...form, email: e.target.value})} 
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input 
+            label="Cidade" 
+            value={form.cidade} 
+            onChange={e => setForm({...form, cidade: e.target.value})} 
+          />
+          <Input 
+            label="Estado" 
+            maxLength={2} 
+            value={form.estado} 
+            onChange={e => setForm({...form, estado: e.target.value.toUpperCase()})} 
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground/90 mb-2">Observações</label>
+          <textarea 
+            className="flex w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+            style={{ height: '80px', resize: 'none' }} 
+            value={form.observacoes} 
+            onChange={e => setForm({...form, observacoes: e.target.value})} 
+          />
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div>
-            <label className="label-base">Razão Social / Nome *</label>
-            <input className="input-base" value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} required />
-          </div>
-          <div className="grid-2">
-            <div>
-              <label className="label-base">CNPJ</label>
-              <input className="input-base" value={form.cnpj} onChange={e => setForm({...form, cnpj: e.target.value})} />
-            </div>
-            <div>
-              <label className="label-base">Pessoa de Contato</label>
-              <input className="input-base" value={form.contato} onChange={e => setForm({...form, contato: e.target.value})} />
-            </div>
-          </div>
-          <div className="grid-2">
-            <div>
-              <label className="label-base">Telefone</label>
-              <input className="input-base" value={form.telefone} onChange={e => setForm({...form, telefone: e.target.value})} />
-            </div>
-            <div>
-              <label className="label-base">E-mail</label>
-              <input type="email" className="input-base" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-            </div>
-          </div>
-          <div className="grid-2">
-            <div>
-              <label className="label-base">Cidade</label>
-              <input className="input-base" value={form.cidade} onChange={e => setForm({...form, cidade: e.target.value})} />
-            </div>
-            <div>
-              <label className="label-base">Estado</label>
-              <input className="input-base" maxLength={2} value={form.estado} onChange={e => setForm({...form, estado: e.target.value.toUpperCase()})} />
-            </div>
-          </div>
-          <div>
-            <label className="label-base">Observações</label>
-            <textarea className="input-base" style={{ height: '80px', resize: 'none' }} value={form.observacoes} onChange={e => setForm({...form, observacoes: e.target.value})} />
-          </div>
+        {error && <p className="text-destructive text-sm text-center">{error}</p>}
 
-          {error && <p style={{ color: 'hsl(var(--destructive))', fontSize: '0.85rem', textAlign: 'center' }}>{error}</p>}
-
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button type="button" onClick={onClose} className="btn btn-outline" style={{ flex: 1 }}>Cancelar</button>
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-              <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Fornecedor'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex gap-4 mt-4">
+          <Button type="button" onClick={onClose} variant="outline" className="flex-1">Cancelar</Button>
+          <Button type="submit" disabled={loading} variant="primary" className="flex-[2] flex items-center justify-center gap-2">
+            <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Fornecedor'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

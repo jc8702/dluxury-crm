@@ -58,11 +58,11 @@ export async function handleEstoque(req: any, res: any) {
 
     if (type === 'categories') {
       if (method === 'GET') {
-        const result = await sql`SELECT id, nome, slug, icone, created_at, updated_at FROM erp_categories ORDER BY nome ASC`;
+        const result = await sql`SELECT id, nome, ativo, created_at FROM erp_categories ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
-        const r = await sql`INSERT INTO categorias_material (nome, slug, icone) VALUES (${req.body.nome}, ${req.body.slug}, ${req.body.icone}) RETURNING *`;
+        const r = await sql`INSERT INTO erp_categories (id, nome, ativo) VALUES (${req.body.slug?.toUpperCase() || req.body.nome.substring(0,3).toUpperCase()}, ${req.body.nome}, true) RETURNING *`;
         return res.status(201).json({ success: true, data: r[0] });
       }
     }

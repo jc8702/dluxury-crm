@@ -12,7 +12,7 @@ interface MaterialFormModalProps {
 }
 
 const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose, onSuccess }) => {
-  const { categorias, addMaterial, updateMaterial } = useAppContext();
+  const { categorias, materiais, addMaterial, updateMaterial } = useAppContext();
   const [form, setForm] = useState({
     sku: '', nome: '', descricao: '', categoria_id: '', subcategoria: '',
     unidade_compra: 'chapa', unidade_uso: 'm2', fator_conversao: 1,
@@ -25,6 +25,28 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
   const [error, setError] = useState('');
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const { fornecedores } = useAppContext();
+
+  useEffect(() => {
+    if (!material && form.categoria_id) {
+      const prefix = form.categoria_id;
+      const matCat = materiais.filter(m => m.categoria_id === form.categoria_id && m.sku && m.sku.startsWith(`${prefix}-`));
+      let nextNum = 1;
+      if (matCat.length > 0) {
+        const nums = matCat.map(m => {
+          const parts = m.sku.split('-');
+          if (parts.length >= 2) {
+            const num = parseInt(parts[1], 10);
+            return isNaN(num) ? 0 : num;
+          }
+          return 0;
+        });
+        nextNum = Math.max(...nums) + 1;
+      }
+      const nextSku = `${prefix}-${nextNum.toString().padStart(4, '0')}`;
+      
+      setForm(prev => ({ ...prev, sku: nextSku }));
+    }
+  }, [form.categoria_id, material]); // Ignorando 'materiais' de propósito para rodar apenas ao trocar categoria
 
   useEffect(() => {
     if (material) {

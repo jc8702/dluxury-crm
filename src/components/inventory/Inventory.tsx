@@ -41,7 +41,12 @@ const Inventory: React.FC = () => {
       const matchSearch = nome.toLowerCase().includes(search.toLowerCase()) || 
                           sku.toLowerCase().includes(search.toLowerCase());
       const matchCat = filterCategory ? m.categoria_id === filterCategory : true;
-      const matchStatus = filterStatus ? statusEstoque(m.estoque_atual, m.estoque_minimo) === filterStatus : true;
+      const status = statusEstoque(m.estoque_atual, m.estoque_minimo);
+      const matchStatus = filterStatus 
+        ? filterStatus === 'critico_zerado'
+          ? (status === 'critico' || status === 'zerado')
+          : status === filterStatus
+        : true;
       return matchSearch && matchCat && matchStatus;
     });
   }, [materiais, search, filterCategory, filterStatus]);
@@ -98,7 +103,7 @@ const Inventory: React.FC = () => {
         </Button>
       </header>
 
-      <EstoqueAlertasBanner onFilterCritico={() => setFilterStatus('critico')} />
+      <EstoqueAlertasBanner onFilterCritico={() => setFilterStatus('critico_zerado')} />
 
       {/* Navegação e Filtros */}
       <Card>
@@ -148,6 +153,7 @@ const Inventory: React.FC = () => {
               <option value="alerta">Alerta</option>
               <option value="critico">Crítico</option>
               <option value="zerado">Zerado</option>
+              <option value="critico_zerado">Atenção (Crítico/Zerado)</option>
             </select>
           </div>
         </CardContent>
