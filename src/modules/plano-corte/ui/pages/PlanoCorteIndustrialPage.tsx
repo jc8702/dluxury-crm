@@ -299,7 +299,7 @@ export default function PlanoCorteIndustrialPage() {
       const retalhos_gerados: any[] = [];
       Object.values(resultados).forEach(res => {
         res.layouts.forEach(layout => {
-          layout.sobra_retalhos?.forEach(sobra => {
+          layout.espacos_livres?.forEach(sobra => {
             if (sobra.largura >= 300 && sobra.altura >= 300) {
               retalhos_gerados.push({
                 largura_mm: sobra.largura,
