@@ -15,6 +15,9 @@ import {
   YAxis,
 } from 'recharts';
 import { Bot, Loader2, MessageCircle, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { Rnd } from 'react-rnd';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 
@@ -580,15 +583,23 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
       )}
 
       {isOpen && (
-        <div
-          className="dlux-panel-mobile"
+        <Rnd
+          default={{
+            x: window.innerWidth > 600 ? window.innerWidth - 460 : 16,
+            y: window.innerHeight > 800 ? window.innerHeight - 700 : 16,
+            width: window.innerWidth > 600 ? 440 : window.innerWidth - 32,
+            height: window.innerHeight > 800 ? 680 : window.innerHeight - 32,
+          }}
+          minWidth={320}
+          minHeight={400}
+          bounds="window"
+          dragHandleClassName="dlux-drag-handle"
+          enableResizing={{
+            top: true, right: true, bottom: true, left: true,
+            topRight: true, bottomRight: true, bottomLeft: true, topLeft: true
+          }}
           style={{
-            position: 'fixed',
-            right: '1rem',
-            bottom: '1rem',
             zIndex: 1200,
-            width: 'min(440px, calc(100vw - 1.5rem))',
-            height: 'min(680px, calc(100vh - 1.5rem))',
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 24,
@@ -598,9 +609,25 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             backdropFilter: 'blur(18px)',
             boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
             color: '#fff',
+            position: 'fixed' as any,
           }}
         >
+          <style>{`
+            .dlux-markdown-container p { margin-bottom: 0.8rem; }
+            .dlux-markdown-container p:last-child { margin-bottom: 0; }
+            .dlux-markdown-container table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 13px; overflow: hidden; display: block; overflow-x: auto; }
+            .dlux-markdown-container th, .dlux-markdown-container td { border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; text-align: left; }
+            .dlux-markdown-container th { background: rgba(255,255,255,0.04); font-weight: 600; color: rgba(255,255,255,0.9); }
+            .dlux-markdown-container td { color: rgba(255,255,255,0.8); }
+            .dlux-markdown-container strong { font-weight: 700; color: #E2AC00; }
+            .dlux-markdown-container ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+            .dlux-markdown-container li { margin-bottom: 0.3rem; }
+            .dlux-drag-handle { cursor: grab; }
+            .dlux-drag-handle:active { cursor: grabbing; }
+          `}</style>
+          
           <header
+            className="dlux-drag-handle"
             style={{
               padding: '1rem 1.1rem',
               display: 'flex',
@@ -724,6 +751,7 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             {messages.map((message, index) => (
               <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: message.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
                 <div
+                  className={message.role === 'assistant' ? 'dlux-markdown-container' : ''}
                   style={{
                     maxWidth: '100%',
                     width: 'fit-content',
@@ -732,12 +760,18 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
                     background: message.role === 'user' ? 'linear-gradient(135deg, #00A99D, #007c73)' : 'rgba(255,255,255,0.05)',
                     border: message.role === 'assistant' ? '1px solid rgba(255,255,255,0.06)' : 'none',
                     color: '#fff',
-                    whiteSpace: 'pre-wrap',
+                    whiteSpace: message.role === 'user' ? 'pre-wrap' : 'normal',
                     lineHeight: 1.5,
                     fontSize: 14,
                   }}
                 >
-                  {message.text}
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.text}
+                    </ReactMarkdown>
+                  ) : (
+                    message.text
+                  )}
                 </div>
 
                 {message.role === 'assistant' && message.chart_data && (
@@ -868,7 +902,7 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
               </button>
             </div>
           </form>
-        </div>
+        </Rnd>
       )}
 
       <style>{`

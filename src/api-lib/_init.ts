@@ -97,6 +97,8 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE materiais RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE materiais RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE erp_product_bom RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   
   // Garantir que updated_at exista se não existir
