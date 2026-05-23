@@ -81,6 +81,17 @@ export async function handlePlanoCorte(req: any, res: any) {
                 motivo: 'Consumo em produção',
                 usuario_id: user?.id
               });
+
+              // Sincronizar saída com Módulo Estoque Principal (materiais / movimentacoes_estoque)
+              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = (SELECT sku FROM retalhos_estoque WHERE id = ${item.id_retalho})`;
+              if (matRes.length > 0) {
+                const matId = matRes[0].id;
+                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
+                await rawSql`
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, created_by)
+                  VALUES (${matId}, 'saida', 1, 1, 'Consumo de retalho em produção', ${user?.name || 'Sistema'})
+                `;
+              }
             } else {
               // Uso de Chapa Inteira
               await db.execute(sql`
@@ -147,6 +158,20 @@ export async function handlePlanoCorte(req: any, res: any) {
                 motivo: 'Geração automática de sobra',
                 usuario_id: user?.id
               });
+
+              // Sincronizar entrada com Módulo Estoque Principal (materiais / movimentacoes_estoque)
+              const nomeRetalho = `Retalho MDF ${r.espessura_mm}mm - ${r.largura_mm}x${r.altura_mm} (Chapa: ${r.sku_chapa})`;
+              const novoMat = await rawSql`
+                INSERT INTO materiais (sku, nome, descricao, unidade_compra, unidade_uso, fator_conversao, estoque_atual, ativo, largura_mm, altura_mm)
+                VALUES (${retalhoSku}, ${nomeRetalho}, 'Sobra de Plano de Corte Automática', 'UN', 'UN', 1, ${r.quantidade}, true, ${r.largura_mm}, ${r.altura_mm})
+                RETURNING id
+              `;
+              if (novoMat.length > 0) {
+                await rawSql`
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, created_by)
+                  VALUES (${novoMat[0].id}, 'entrada', ${r.quantidade}, ${r.quantidade}, 'Geração automática de sobra de corte', ${user?.name || 'Sistema'})
+                `;
+              }
             }
           }
 
