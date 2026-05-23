@@ -104,10 +104,31 @@ export async function handleRetalhos(req: any, res: any) {
         return res.status(200).json({ success: true, data: atualizado });
       }
 
-      case 'DELETE':
+      case 'DELETE': {
         if (!id) return res.status(400).json({ success: false, error: 'ID necessário' });
+
+        const [retalho] = await db.select({ sku: retalhosEstoque.sku }).from(retalhosEstoque).where(eq(retalhosEstoque.id, id));
+        
+        if (retalho && retalho.sku) {
+          const { sql: rawSql } = await import('./_db.js');
+          
+          // Encontrar material vinculado
+          const matRes = await (rawSql as any)`SELECT id FROM materiais WHERE sku = ${retalho.sku}`;
+          if (Array.isArray(matRes) && matRes.length > 0) {
+            const matId = matRes[0].id;
+            // Remover movimentações vinculadas ao material
+            await (rawSql as any)`DELETE FROM movimentacoes_estoque WHERE material_id = ${matId}`;
+            // Remover da tabela materiais
+            await (rawSql as any)`DELETE FROM materiais WHERE id = ${matId}`;
+          }
+
+          // Remover também movimentações vinculadas ao ID do retalho
+          await (rawSql as any)`DELETE FROM movimentacoes_estoque WHERE retalho_id = ${id}`;
+        }
+
         await db.delete(retalhosEstoque).where(eq(retalhosEstoque.id, id));
         return res.status(200).json({ success: true });
+      }
 
       default:
         return res.status(405).json({ success: false, error: 'Método não permitido' });
