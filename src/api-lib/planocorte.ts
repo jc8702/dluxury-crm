@@ -89,10 +89,12 @@ export async function handlePlanoCorte(req: any, res: any) {
                 WHERE sku = ${item.sku}
               `);
 
+              const chapaRecord = await db.select({ id: erpChapas.id }).from(erpChapas).where(eq(erpChapas.sku, item.sku)).limit(1);
+
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'uso_plano',
                 item_tipo: 'chapa',
-                chapa_id: item.chapa_id, // Idealmente passar o ID
+                chapa_id: chapaRecord.length > 0 ? chapaRecord[0].id : null,
                 plano_corte_id: item.plano_id,
                 quantidade: item.qtd || 1,
                 motivo: `Consumo SKU: ${item.sku}`,
@@ -103,7 +105,23 @@ export async function handlePlanoCorte(req: any, res: any) {
 
           // 2. Gerar Novos Retalhos (Sobras Reutilizáveis)
           if (retalhos_gerados && Array.isArray(retalhos_gerados)) {
+            // Agrupar retalhos idênticos
+            const retalhosAgrupados: any[] = [];
             for (const r of retalhos_gerados) {
+               const existente = retalhosAgrupados.find(ra => 
+                  ra.largura_mm === r.largura_mm && 
+                  ra.altura_mm === r.altura_mm && 
+                  ra.espessura_mm === r.espessura_mm && 
+                  ra.sku_chapa === r.sku_chapa
+               );
+               if (existente) {
+                  existente.quantidade += (r.quantidade || 1);
+               } else {
+                  retalhosAgrupados.push({ ...r, quantidade: r.quantidade || 1 });
+               }
+            }
+
+            for (const r of retalhosAgrupados) {
               const retalhoSku = await proximoSkuRetalho();
               const [novoRetalho] = await db.insert(retalhosEstoque).values({
                 sku: retalhoSku,
@@ -116,6 +134,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 usuario_criou: user?.id || 'sistema',
                 disponivel: true,
                 descartado: false,
+                quantidade: r.quantidade,
                 metadata: { automatico: true }
               }).returning();
 
@@ -124,7 +143,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 item_tipo: 'retalho',
                 retalho_id: novoRetalho.id,
                 plano_corte_id: r.plano_corte_id,
-                quantidade: 1,
+                quantidade: r.quantidade,
                 motivo: 'Geração automática de sobra',
                 usuario_id: user?.id
               });

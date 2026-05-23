@@ -295,9 +295,9 @@ export default function PlanoCorteIndustrialPage() {
         };
       });
 
-      // 2. Preparar retalhos gerados (sobras acima de 300x300)
       const retalhos_gerados: any[] = [];
       Object.values(resultados).forEach(res => {
+        const qtdChapas = res.chapas_necessarias || 1;
         res.layouts.forEach(layout => {
           layout.espacos_livres?.forEach(sobra => {
             if (sobra.largura >= 300 && sobra.altura >= 300) {
@@ -306,7 +306,8 @@ export default function PlanoCorteIndustrialPage() {
                 altura_mm: sobra.altura,
                 espessura_mm: projeto.chapas.find(c => c.id === res.chapa_id)?.espessura_mm || 18,
                 sku_chapa: projeto.chapas.find(c => c.id === res.chapa_id)?.sku_chapa,
-                plano_corte_id: projeto.id
+                plano_corte_id: projeto.id,
+                quantidade: qtdChapas
               });
             }
           });

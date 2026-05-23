@@ -57,6 +57,7 @@ export const retalhosEstoque = pgTable('retalhos_estoque', {
   disponivel: boolean('disponivel').default(true).notNull(),
   utilizado_em_id: uuid('utilizado_em_id'),
   data_utilizacao: timestamp('data_utilizacao', { withTimezone: true }),
+  quantidade: integer('quantidade').default(1).notNull(),
   descartado: boolean('descartado').default(false).notNull(),
   motivo_descarte: varchar('motivo_descarte', { length: 255 }),
   data_descarte: timestamp('data_descarte', { withTimezone: true }),

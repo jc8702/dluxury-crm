@@ -126,6 +126,7 @@ export const PainelRetalhos: React.FC = () => {
               <tr className="bg-white/[0.02] border-b border-border/40">
                 <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Material / SKU</th>
                 <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Dimensões (mm)</th>
+                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Qtd</th>
                 <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Origem</th>
                 <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
                 <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Data</th>
@@ -135,14 +136,14 @@ export const PainelRetalhos: React.FC = () => {
             <tbody className="divide-y divide-border/40">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-6 py-20 text-center text-muted-foreground">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
                     <p className="text-xs font-bold uppercase tracking-widest opacity-50">Sincronizando estoque industrial...</p>
                   </td>
                 </tr>
               ) : retalhos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-6 py-20 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center opacity-30">
                       <Package size={48} className="mb-4" />
                       <p className="text-xs font-bold uppercase tracking-widest">Nenhum retalho disponível em estoque</p>
@@ -163,6 +164,9 @@ export const PainelRetalhos: React.FC = () => {
                         </span>
                         <span className="text-muted-foreground text-[10px] font-bold">{retalho.espessura_mm}mm</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-[12px] font-black text-foreground">{retalho.quantidade || 1}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-tight">

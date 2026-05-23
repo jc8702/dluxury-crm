@@ -20,6 +20,7 @@ export interface Retalho {
   atualizado_em: Date;
   usuario_criou?: string;
   usuario_atualizou?: string;
+  quantidade?: number;
   metadata?: Record<string, any>;
 }
 
