@@ -76,6 +76,7 @@ export const api = {
     list: (params?: any) => apiCall<any[]>(`estoque${params?.q ? `?q=${params.q}` : ''}`),
     create: (data: any) => apiCall<any>('estoque', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`estoque?id=${id}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`estoque?id=${id}`, 'DELETE'),
     getMovimentacoes: (materialId?: string) => apiCall<any[]>(`estoque?type=movimentacoes${materialId ? `&material_id=${materialId}` : ''}`),
     addMovimentacao: (data: any) => apiCall<any>('estoque?type=movimentacoes', 'POST', data),
     fornecedores: {
