@@ -209,12 +209,12 @@ export async function handlePlanoCorte(req: any, res: any) {
               const chapaInfo = Array.isArray(resOrigem) ? resOrigem[0] : null;
               
               if (chapaInfo) {
-                 marca = chapaInfo.marca;
-                 fornecedor = chapaInfo.fornecedor_principal;
-                 ncm = chapaInfo.ncm;
-                 cfop = chapaInfo.cfop;
-                 categoria_id = chapaInfo.categoria_id || 'fb8b3352-6540-4255-af44-e5da02822217';
-                 subcategoria = chapaInfo.subcategoria;
+                  marca = chapaInfo.marca;
+                  fornecedor = chapaInfo.fornecedor_principal;
+                  ncm = chapaInfo.ncm;
+                  cfop = chapaInfo.cfop;
+                  categoria_id = 'RET';
+                  subcategoria = chapaInfo.subcategoria;
                  
                  const pCusto = Number(chapaInfo.preco_custo) || 0;
                  const lChapa = Number(chapaInfo.largura_mm) || 0;

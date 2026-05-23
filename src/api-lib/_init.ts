@@ -195,6 +195,9 @@ export async function runInitDB() {
     )
   `);
 
+  // Seed categoria Retalho
+  await safeSql(sql`INSERT INTO erp_categories (id, nome) VALUES ('RET', 'Retalho') ON CONFLICT (id) DO NOTHING`);
+
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS erp_subfamilies (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
