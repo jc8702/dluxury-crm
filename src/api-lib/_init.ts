@@ -108,6 +108,11 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE materiais RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE erp_product_bom RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
   
+  // Migrações e padronizações da tabela fornecedores
+  await safeSql(sql`ALTER TABLE fornecedores RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+  await safeSql(sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+  
   // Garantir que updated_at exista se não existir
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
   await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
