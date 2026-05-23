@@ -88,8 +88,8 @@ export async function handlePlanoCorte(req: any, res: any) {
                 const matId = matRes[0].id;
                 await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
                 await rawSql`
-                  INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, created_by)
-                  VALUES (${matId}, 'saida', 1, 1, 'Consumo de retalho em produção', ${user?.name || 'Sistema'})
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
+                  VALUES (${matId}, 'saida', 'material', 1, 'Consumo de retalho em produção', ${user?.id || null})
                 `;
               }
             } else {
@@ -168,8 +168,8 @@ export async function handlePlanoCorte(req: any, res: any) {
               `;
               if (novoMat.length > 0) {
                 await rawSql`
-                  INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, created_by)
-                  VALUES (${novoMat[0].id}, 'entrada', ${r.quantidade}, ${r.quantidade}, 'Geração automática de sobra de corte', ${user?.name || 'Sistema'})
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
+                  VALUES (${novoMat[0].id}, 'entrada', 'material', ${r.quantidade}, 'Geração automática de sobra de corte', ${user?.id || null})
                 `;
               }
             }
