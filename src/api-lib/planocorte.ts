@@ -160,10 +160,50 @@ export async function handlePlanoCorte(req: any, res: any) {
               });
 
               // Sincronizar entrada com Módulo Estoque Principal (materiais / movimentacoes_estoque)
+              // Obter dados do material de origem (Chapa) para herdar informações e calcular o custo
+              let preco_calculado = 0;
+              let marca = null;
+              let fornecedor = null;
+              let ncm = null;
+              let cfop = null;
+              let categoria_id = null;
+              let subcategoria = null;
+
+              const resOrigem = await rawSql`SELECT preco_custo, largura_mm, altura_mm, marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria FROM materiais WHERE sku = ${r.sku_chapa}`;
+              const chapaInfo = Array.isArray(resOrigem) ? resOrigem[0] : null;
+              
+              if (chapaInfo) {
+                 marca = chapaInfo.marca;
+                 fornecedor = chapaInfo.fornecedor_principal;
+                 ncm = chapaInfo.ncm;
+                 cfop = chapaInfo.cfop;
+                 categoria_id = chapaInfo.categoria_id;
+                 subcategoria = chapaInfo.subcategoria;
+                 
+                 const pCusto = Number(chapaInfo.preco_custo) || 0;
+                 const lChapa = Number(chapaInfo.largura_mm) || 0;
+                 const aChapa = Number(chapaInfo.altura_mm) || 0;
+                 
+                 if (pCusto > 0 && lChapa > 0 && aChapa > 0) {
+                    const areaChapa = lChapa * aChapa;
+                    const areaRetalho = Number(r.largura_mm) * Number(r.altura_mm);
+                    const proporcao = areaRetalho / areaChapa;
+                    preco_calculado = Number((pCusto * proporcao).toFixed(2));
+                 }
+              }
+
               const nomeRetalho = `RETALHO MDF ${r.espessura_mm}MM - ${r.largura_mm}X${r.altura_mm} (CHAPA: ${r.sku_chapa.toUpperCase()})`;
               const novoMat = await rawSql`
-                INSERT INTO materiais (sku, nome, descricao, unidade_compra, unidade_uso, fator_conversao, estoque_atual, ativo, largura_mm, altura_mm)
-                VALUES (${retalhoSku}, ${nomeRetalho}, 'Sobra de Plano de Corte Automática', 'UN', 'UN', 1, ${r.quantidade}, true, ${r.largura_mm}, ${r.altura_mm})
+                INSERT INTO materiais (
+                  sku, nome, descricao, unidade_compra, unidade_uso, fator_conversao, 
+                  estoque_atual, ativo, largura_mm, altura_mm, preco_custo,
+                  marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria
+                )
+                VALUES (
+                  ${retalhoSku}, ${nomeRetalho}, 'SOBRA DE PLANO DE CORTE AUTOMATICA', 'UN', 'UN', 1, 
+                  ${r.quantidade}, true, ${r.largura_mm}, ${r.altura_mm}, ${preco_calculado},
+                  ${marca}, ${fornecedor}, ${ncm}, ${cfop}, ${categoria_id}, ${subcategoria}
+                )
                 RETURNING id
               `;
               if (novoMat.length > 0) {
