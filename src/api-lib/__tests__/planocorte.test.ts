@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handlePlanoCorte } from '../planocorte.js';
+import { handlePlanoCorte, handleChapas } from '../planocorte.js';
 
 vi.mock('../drizzle-db.js', () => {
   const mock = {
@@ -82,5 +82,23 @@ describe('handlePlanoCorte', () => {
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(405);
+  });
+});
+
+describe('handleChapas', () => {
+  it('deve listar chapas e mesclar com materiais do estoque', async () => {
+    const { sql: mockSql } = await import('../_db.js');
+    vi.mocked(mockSql).mockResolvedValue([{ id: 'm1', sku: 'CHP-0007', nome: 'MDF 15MM BRANCO TX', largura_mm: '2750', altura_mm: '1830', preco_custo: '230.00' }]);
+    
+    const mockDb = (await import('../drizzle-db.js')).db;
+    (mockDb as any).where.mockResolvedValue([{ id: 'e1', sku: 'MDF-BRA-15', nome: 'MDF Branco 15mm', largura_mm: 2750, altura_mm: 1830, espessura_mm: 15, preco_unitario: '280.00', ativo: true }]);
+    
+    const req = { method: 'GET', query: { q: '0007' } };
+    const res = mockRes();
+    
+    await handleChapas(req, res);
+    expect(res._s()).toBe(200);
+    expect(res._d().data).toBeDefined();
+    expect(res._d().data.some((c: any) => c.sku === 'CHP-0007')).toBe(true);
   });
 });

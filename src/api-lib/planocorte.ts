@@ -316,9 +316,51 @@ export async function handleChapas(req: any, res: any) {
   const { q } = req.query || {};
   try {
     const termText = String(q || '').trim();
+    
+    // 1. Buscar no Estoque (Tabela materiais)
+    let queryMats;
     if (termText) {
       const term = `%${termText}%`;
-      const results = await db.select()
+      queryMats = await rawSql`
+        SELECT id, sku, nome, largura_mm, altura_mm, preco_custo
+        FROM materiais
+        WHERE ativo = true 
+          AND (sku LIKE 'CHP-%' OR categoria_id = 'CHP')
+          AND (sku ILIKE ${term} OR nome ILIKE ${term})
+      `;
+    } else {
+      queryMats = await rawSql`
+        SELECT id, sku, nome, largura_mm, altura_mm, preco_custo
+        FROM materiais
+        WHERE ativo = true 
+          AND (sku LIKE 'CHP-%' OR categoria_id = 'CHP')
+      `;
+    }
+
+    const matsMapped = queryMats.map((m: any) => {
+      const nome = m.nome || '';
+      const espessuraMatch = nome.match(/(\d+)\s*MM/i);
+      const espessura_mm = espessuraMatch ? parseInt(espessuraMatch[1], 10) : 15;
+      
+      return {
+        id: m.id,
+        sku: m.sku,
+        nome: m.nome,
+        largura_mm: Number(m.largura_mm || 2750),
+        altura_mm: Number(m.altura_mm || 1830),
+        espessura_mm: espessura_mm,
+        preco_unitario: String(m.preco_custo || '0.00'),
+        estoque: 0,
+        estoque_minimo: 5,
+        ativo: true
+      };
+    });
+
+    // 2. Buscar nas Chapas Industriais (Tabela erp_chapas)
+    let queryErp;
+    if (termText) {
+      const term = `%${termText}%`;
+      queryErp = await db.select()
         .from(erpChapas)
         .where(or(
           ilike(erpChapas.sku, term), 
@@ -326,11 +368,36 @@ export async function handleChapas(req: any, res: any) {
           sql`LOWER(${erpChapas.nome}) LIKE LOWER(${term})`,
           sql`LOWER(${erpChapas.sku}) = LOWER(${termText})`
         ));
-      return res.status(200).json({ success: true, data: results });
+    } else {
+      queryErp = await db.select().from(erpChapas);
     }
-    const all = await db.select().from(erpChapas);
-    return res.status(200).json({ success: true, data: all });
+
+    const erpMapped = queryErp.map((e: any) => ({
+      id: e.id,
+      sku: e.sku,
+      nome: e.nome,
+      largura_mm: Number(e.largura_mm),
+      altura_mm: Number(e.altura_mm),
+      espessura_mm: Number(e.espessura_mm),
+      preco_unitario: String(e.preco_unitario || '0.00'),
+      estoque: Number(e.estoque || 0),
+      estoque_minimo: Number(e.estoque_minimo || 5),
+      ativo: e.ativo
+    }));
+
+    // 3. Mesclar resultados eliminando SKUs duplicados (priorizando materiais de estoque)
+    const combined = [...matsMapped];
+    const skusEstoque = new Set(matsMapped.map(m => m.sku.toUpperCase()));
+
+    for (const e of erpMapped) {
+      if (!skusEstoque.has(e.sku.toUpperCase())) {
+        combined.push(e);
+      }
+    }
+
+    return res.status(200).json({ success: true, data: combined });
   } catch (err: any) {
+    console.error('ERRO_BUSCA_CHAPAS:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
