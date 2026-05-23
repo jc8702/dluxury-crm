@@ -377,6 +377,8 @@ export const api = {
     update: (id: string, data: any) => apiCall<any>(`plano-corte?id=${id}`, 'PUT', data),
     aprovarProducao: (materiais_consumidos: any[], retalhos_gerados: any[] = [], meta: any = {}) => 
       apiCall<any>('plano-corte?action=aprovar_producao', 'POST', { materiais_consumidos, retalhos_gerados, ...meta }),
+    verificarRetalhosDuplicados: (plano_id: string, retalhos_gerados: any[]) =>
+      apiCall<any>('plano-corte?action=verificar_retalhos_duplicados', 'POST', { plano_id, retalhos_gerados }),
     importarDesenho: (fileBase64: string, fileName: string) => apiCall<any>('plano-corte/importar-desenho', 'POST', { fileBase64, fileName }),
   },
   cuttingPlan: {

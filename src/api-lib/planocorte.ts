@@ -55,9 +55,25 @@ export async function handlePlanoCorte(req: any, res: any) {
           await auditLog('planos_de_corte', novo.id, 'CREATE', user?.id, null, novo);
           
           return res.status(201).json({ success: true, data: novo });
+        } else if (action === 'verificar_retalhos_duplicados') {
+          const { plano_id, retalhos_gerados } = req.body;
+          if (!plano_id || !retalhos_gerados || !Array.isArray(retalhos_gerados) || retalhos_gerados.length === 0) {
+             return res.status(200).json({ success: true, duplicados: [] });
+          }
+
+          const duplicados = [];
+          for (const r of retalhos_gerados) {
+             const result = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${plano_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} LIMIT 1`;
+             if (result && result.length > 0) {
+                duplicados.push(r);
+             }
+          }
+
+          return res.status(200).json({ success: true, duplicados });
+
         } else if (action === 'aprovar_producao') {
           const { user } = validateAuth(req);
-          const { materiais_consumidos, retalhos_gerados } = req.body;
+          const { materiais_consumidos, retalhos_gerados, ignorar_retalhos_duplicados } = req.body;
           
           // 1. Processar Materiais Consumidos
           for (const item of materiais_consumidos) {
@@ -119,6 +135,14 @@ export async function handlePlanoCorte(req: any, res: any) {
             // Agrupar retalhos idênticos
             const retalhosAgrupados: any[] = [];
             for (const r of retalhos_gerados) {
+               if (ignorar_retalhos_duplicados && r.plano_corte_id) {
+                  // Verificar se já existe retalho idêntico no banco para este plano
+                  const existeNoBanco = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${r.plano_corte_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} LIMIT 1`;
+                  if (existeNoBanco && existeNoBanco.length > 0) {
+                     continue; // Pula este retalho pois já foi gerado anteriormente e o usuário pediu para ignorar duplicados
+                  }
+               }
+
                const existente = retalhosAgrupados.find(ra => 
                   ra.largura_mm === r.largura_mm && 
                   ra.altura_mm === r.altura_mm && 
@@ -177,7 +201,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                  fornecedor = chapaInfo.fornecedor_principal;
                  ncm = chapaInfo.ncm;
                  cfop = chapaInfo.cfop;
-                 categoria_id = chapaInfo.categoria_id;
+                 categoria_id = chapaInfo.categoria_id || 'fb8b3352-6540-4255-af44-e5da02822217';
                  subcategoria = chapaInfo.subcategoria;
                  
                  const pCusto = Number(chapaInfo.preco_custo) || 0;

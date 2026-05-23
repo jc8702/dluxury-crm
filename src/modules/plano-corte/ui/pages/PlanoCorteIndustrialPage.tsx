@@ -86,6 +86,8 @@ export default function PlanoCorteIndustrialPage() {
   const [loading, setLoading] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
+  const [showDuplicateScrapsModal, setShowDuplicateScrapsModal] = useState(false);
+  const [duplicateScrapsPayload, setDuplicateScrapsPayload] = useState<any>(null);
   const [executionMode, setExecutionMode] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -210,6 +212,36 @@ export default function PlanoCorteIndustrialPage() {
     }
   }, [projeto.chapas, otimizador]);
 
+  // --- CARREGAR PLANO DO HISTÓRICO ---
+  const handleLoadPlan = useCallback((plano: any) => {
+    setProjeto({
+      id: plano.id || `proj_${Date.now()}`,
+      nome: plano.nome || 'PLANO CARREGADO',
+      chapas: plano.materiais || [],
+      criado_em: new Date(plano.created_at || Date.now()),
+      status: 'rascunho', // Mantemos como rascunho para permitir edição
+      projeto_id: plano.projeto_id,
+      orcamento_id: plano.orcamento_id,
+      visita_id: plano.visita_id,
+      ordem_producao_id: plano.ordem_producao_id,
+    });
+    
+    if (plano.resultado && plano.resultado.perChapa) {
+      setResultados(plano.resultado.perChapa);
+    } else {
+      setResultados({});
+    }
+
+    if (plano.materiais && plano.materiais.length > 0) {
+      setChapaAtivaId(plano.materiais[0].id);
+    } else {
+      setChapaAtivaId(null);
+    }
+    
+    setShowHistorico(false);
+    showToast('Plano carregado com sucesso!', 'success');
+  }, []);
+
   // --- IMPORTAÇÃO PDF ---
   const handleImportPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -314,16 +346,49 @@ export default function PlanoCorteIndustrialPage() {
         });
       });
 
-      const res = await api.planoCorte.aprovarProducao(materiais_consumidos, retalhos_gerados, {
+      // Verificação de retalhos duplicados se o plano já tem ID (foi salvo ou carregado)
+      if (projeto.id && !projeto.id.startsWith('proj_')) {
+         const retalhosDuplicadosResponse = await api.planoCorte.verificarRetalhosDuplicados(projeto.id, retalhos_gerados);
+         if (retalhosDuplicadosResponse?.duplicados?.length > 0) {
+            setDuplicateScrapsPayload({
+               materiais_consumidos,
+               retalhos_gerados,
+               extras: {
+                  nome_projeto: projeto.nome,
+                  projeto_id: projeto.projeto_id,
+                  orcamento_id: projeto.orcamento_id,
+                  visita_id: projeto.visita_id
+               },
+               duplicados: retalhosDuplicadosResponse.duplicados
+            });
+            setShowDuplicateScrapsModal(true);
+            setLoading(false);
+            return;
+         }
+      }
+
+      await executeAprovarProducao(materiais_consumidos, retalhos_gerados, {
         nome_projeto: projeto.nome,
         projeto_id: projeto.projeto_id,
         orcamento_id: projeto.orcamento_id,
         visita_id: projeto.visita_id
-      });
+      }, false);
+      
+    } catch (err: any) {
+      showToast(`Erro na aprovação: ${err.message}`, 'error');
+      setLoading(false);
+    }
+  };
+
+  const executeAprovarProducao = async (materiais_consumidos: any, retalhos_gerados: any, extras: any, ignorarDuplicados: boolean) => {
+    setLoading(true);
+    try {
+      const res = await api.planoCorte.aprovarProducao(materiais_consumidos, retalhos_gerados, { ...extras, ignorar_retalhos_duplicados: ignorarDuplicados });
 
       if (res) {
         const opId = res.data?.op_id || 'N/A';
         setProjeto(prev => ({ ...prev, status: 'producao' }));
+        setShowDuplicateScrapsModal(false);
         showToast(`Produção aprovada! OP: ${opId}. Estoque atualizado e sobras registradas.`, 'success');
       }
     } catch (err: any) {
@@ -559,7 +624,46 @@ export default function PlanoCorteIndustrialPage() {
           onClose={() => setShowExportModal(false)} 
         />
       )}
-      {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={() => {}} />}
+      {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlan} />}
+      {showDuplicateScrapsModal && duplicateScrapsPayload && (
+         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-[#111] border border-border/40 rounded-3xl max-w-lg w-full p-8 shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-orange-500" />
+               <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
+                  <Scissors className="text-yellow-500" size={24} />
+                  Atenção: Sobras Duplicadas
+               </h3>
+               <p className="text-sm text-muted-foreground mb-6">
+                  Notamos que você já gerou sobras deste mesmo plano de corte com dimensões idênticas anteriormente. 
+                  Como você editou e tentou aprovar novamente, isso pode duplicar os retalhos no estoque.
+               </p>
+               <div className="bg-foreground/5 rounded-xl p-4 mb-8 max-h-[150px] overflow-y-auto custom-scrollbar">
+                  {duplicateScrapsPayload.duplicados.map((dup: any, i: number) => (
+                     <div key={i} className="text-xs text-muted-foreground flex justify-between py-1 border-b border-border/10 last:border-0">
+                        <span>{dup.largura_mm}x{dup.altura_mm} mm (Esp. {dup.espessura_mm}mm)</span>
+                        <span className="font-bold text-white">Qtd: {dup.quantidade}</span>
+                     </div>
+                  ))}
+               </div>
+               <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setShowDuplicateScrapsModal(false)}>Cancelar</Button>
+                  <Button 
+                     variant="secondary"
+                     className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
+                     onClick={() => executeAprovarProducao(duplicateScrapsPayload.materiais_consumidos, duplicateScrapsPayload.retalhos_gerados, duplicateScrapsPayload.extras, true)}
+                  >
+                     Ignorar Sobras Duplicadas
+                  </Button>
+                  <Button 
+                     variant="primary"
+                     onClick={() => executeAprovarProducao(duplicateScrapsPayload.materiais_consumidos, duplicateScrapsPayload.retalhos_gerados, duplicateScrapsPayload.extras, false)}
+                  >
+                     Gerar Tudo Novamente
+                  </Button>
+               </div>
+            </div>
+         </div>
+      )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
