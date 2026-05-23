@@ -275,7 +275,6 @@ export type MovimentacaoEstoque = {
   material_unidade?: string;
   tipo: 'entrada' | 'saida' | 'ajuste';
   quantidade: number;
-  quantidade_uso: number;
   motivo?: string;
   projeto_id?: string;
   orcamento_id?: string;
@@ -527,7 +526,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               ...m,
               id: String(m.id || ''),
               quantidade: Number(m.quantidade || 0),
-              quantidade_uso: Number(m.quantidade_uso || 0),
               estoque_antes: Number(m.estoque_antes || 0),
               estoque_depois: Number(m.estoque_depois || 0),
               preco_unitario: Number(m.preco_unitario || 0),

@@ -27,7 +27,7 @@ export async function handleEstoque(req: any, res: any) {
         if (estD < 0 && tipo === 'saida') throw new Error('Estoque insuficiente');
         
         const { user } = extractAndVerifyToken(req);
-        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, quantidade_uso, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by) VALUES (${material_id}, ${tipo}, ${quantidade}, ${Number(quantidade) * Number(mat.fator_conversao)}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}) RETURNING *`;
+        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by) VALUES (${material_id}, ${tipo}, ${quantidade}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'Sistema'}) RETURNING *`;
         await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, updated_at = CURRENT_TIMESTAMP WHERE id = ${material_id}`;
         return res.status(201).json({ success: true, data: mov[0] });
       }
@@ -70,7 +70,7 @@ export async function handleEstoque(req: any, res: any) {
     if (method === 'GET') {
       if (id) {
         const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
-        const movs = await sql`SELECT id, material_id, tipo, quantidade, quantidade_uso, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
+        const movs = await sql`SELECT id, material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
       const { q } = req.query;
