@@ -11,7 +11,13 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
   const [manualTipo, setManualTipo] = useState('Branco');
 
   const filtered = materiais.filter((m: any) => 
-    (m.categoria_id === 'chapas' || m.unidade === 'CHAPA') &&
+    (
+      m.categoria_id?.toLowerCase() === 'chp' || 
+      m.categoria_id?.toLowerCase() === 'chapas' ||
+      m.categoria_nome?.toLowerCase().includes('chapa') ||
+      m.sku?.toUpperCase().startsWith('CHP-') ||
+      m.unidade?.toLowerCase() === 'chapa'
+    ) &&
     (m.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (m.sku && m.sku.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 

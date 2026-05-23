@@ -127,6 +127,18 @@ export async function handlePlanoCorte(req: any, res: any) {
                 motivo: `Consumo SKU: ${item.sku}`,
                 usuario_id: user?.id
               });
+
+              // Sincronizar saída de Chapa Inteira com Módulo Estoque Principal (materiais / movimentacoes_estoque)
+              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = ${item.sku}`;
+              if (matRes.length > 0) {
+                const matId = matRes[0].id;
+                const qtdConsumida = Number(item.qtd || 1);
+                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - ${qtdConsumida}, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
+                await rawSql`
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
+                  VALUES (${matId}, 'saida', 'material', ${qtdConsumida}, 'Consumo de chapa em produção (Plano de Corte)', ${user?.id || null})
+                `;
+              }
             }
           }
 
@@ -322,18 +334,20 @@ export async function handleChapas(req: any, res: any) {
     if (termText) {
       const term = `%${termText}%`;
       queryMats = await rawSql`
-        SELECT id, sku, nome, largura_mm, altura_mm, preco_custo
-        FROM materiais
-        WHERE ativo = true 
-          AND (sku LIKE 'CHP-%' OR categoria_id = 'CHP')
-          AND (sku ILIKE ${term} OR nome ILIKE ${term})
+        SELECT m.id, m.sku, m.nome, m.largura_mm, m.altura_mm, m.preco_custo
+        FROM materiais m
+        LEFT JOIN erp_categories c ON m.categoria_id = c.id
+        WHERE m.ativo = true 
+          AND (m.sku ILIKE 'CHP-%' OR m.categoria_id = 'CHP' OR c.nome ILIKE '%chapa%')
+          AND (m.sku ILIKE ${term} OR m.nome ILIKE ${term})
       `;
     } else {
       queryMats = await rawSql`
-        SELECT id, sku, nome, largura_mm, altura_mm, preco_custo
-        FROM materiais
-        WHERE ativo = true 
-          AND (sku LIKE 'CHP-%' OR categoria_id = 'CHP')
+        SELECT m.id, m.sku, m.nome, m.largura_mm, m.altura_mm, m.preco_custo
+        FROM materiais m
+        LEFT JOIN erp_categories c ON m.categoria_id = c.id
+        WHERE m.ativo = true 
+          AND (m.sku ILIKE 'CHP-%' OR m.categoria_id = 'CHP' OR c.nome ILIKE '%chapa%')
       `;
     }
 
