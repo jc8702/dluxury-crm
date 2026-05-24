@@ -516,7 +516,7 @@ export default function SimuladorCortePage() {
                     )}
                   </div>
                 </div>
-                <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
+                <div className={`${telaCheia ? 'h-[calc(100vh-100px)]' : 'h-[500px]'} rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]`}>
                   <CanvasSimulador3D
                     layout={layoutAtual}
                     onSelecionarPeca={handleSelecionarPeca}
@@ -652,7 +652,7 @@ export default function SimuladorCortePage() {
                     )}
                   </div>
                 </div>
-                <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
+                <div className={`${telaCheia ? 'h-[calc(100vh-100px)]' : 'h-[500px]'} rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]`}>
                   <CanvasSimulador3D
                     layout={layoutAtual}
                     onSelecionarPeca={handleSelecionarPeca}

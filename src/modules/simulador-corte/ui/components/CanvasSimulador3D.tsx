@@ -196,9 +196,16 @@ const Cena3D = React.memo(function Cena3D({
 
 function GerenciadorCamera({ layout, controlsRef }: { layout: LayoutSimulacao | null; controlsRef: React.RefObject<any> }) {
   const { camera } = useThree();
+  const ultimoLayoutIdRef = useRef<string>('');
 
   useEffect(() => {
     if (!layout) return;
+
+    const layoutId = `${layout.chapa.sku}_${layout.chapa.largura}_${layout.chapa.altura}_${layout.pecas.length}`;
+    if (ultimoLayoutIdRef.current === layoutId) {
+      return;
+    }
+    ultimoLayoutIdRef.current = layoutId;
 
     const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
     const sheetW = layout.chapa.largura / escala;
