@@ -36,44 +36,63 @@ function gerarId() {
   return `peca_${Date.now()}_${idCounter}`;
 }
 
+function extrairEspessura(plano: PlanoCorteCarregado, chapaId: string, chapaSku?: string): number {
+  const mats = (plano.materiais || []) as any[];
+  for (const m of mats) {
+    if (m.id === chapaId || m.sku_chapa === chapaSku || m.sku === chapaSku) {
+      return Number(m.espessura_mm) || 18;
+    }
+  }
+  return 18;
+}
+
 function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[] {
+  const layouts: LayoutSimulacao[] = [];
+
+  const mats = (plano.materiais || []) as any[];
+  const matsMap = new Map<string, any>();
+  for (const m of mats) {
+    matsMap.set(m.id, m);
+    if (m.sku_chapa) matsMap.set(m.sku_chapa, m);
+  }
+
   const resultado = plano.resultado;
   if (resultado?.perChapa) {
-    const layouts: LayoutSimulacao[] = [];
     for (const chapaId of Object.keys(resultado.perChapa)) {
       const res = resultado.perChapa[chapaId];
-      if (res?.layouts) {
-        for (const l of res.layouts) {
-          layouts.push({
-            chapa: {
-              sku: l.chapa_sku || chapaId,
-              largura: l.largura_original_mm || 2750,
-              altura: l.altura_original_mm || 1830,
-              espessura: 18,
-            },
-            pecas: (l.pecas_posicionadas || []).map((p: any) => ({
-              id: p.id,
-              nome: p.nome,
-              comprimento: p.rotacionada ? p.altura : p.largura,
-              largura: p.rotacionada ? p.largura : p.altura,
-              espessura: 18,
-              x: p.x,
-              y: p.y,
-              rotacionada: p.rotacionada,
-            })),
-            area_aproveitada_mm2: l.area_aproveitada_mm2 || 0,
-            area_total_mm2: l.area_total_mm2 || 1,
-            aproveitamento_percentual: l.aproveitamento_percentual || 0,
-          });
-        }
+      if (!res?.layouts) continue;
+      const mat = matsMap.get(chapaId);
+      const esp = mat ? Number(mat.espessura_mm) || 18 : 18;
+      for (const l of res.layouts) {
+        const larg = l.largura_original_mm || (mat ? Number(mat.largura_mm) : 0) || 2750;
+        const alt = l.altura_original_mm || (mat ? Number(mat.altura_mm) : 0) || 1830;
+        layouts.push({
+          chapa: {
+            sku: l.chapa_sku || mat?.sku_chapa || chapaId,
+            largura: larg,
+            altura: alt,
+            espessura: esp,
+          },
+          pecas: (l.pecas_posicionadas || []).map((p: any) => ({
+            id: p.id,
+            nome: p.nome,
+            comprimento: p.rotacionada ? p.altura : p.largura,
+            largura: p.rotacionada ? p.largura : p.altura,
+            espessura: esp,
+            x: p.x,
+            y: p.y,
+            rotacionada: p.rotacionada,
+          })),
+          area_aproveitada_mm2: l.area_aproveitada_mm2 || 0,
+          area_total_mm2: l.area_total_mm2 || 1,
+          aproveitamento_percentual: l.aproveitamento_percentual || 0,
+        });
       }
     }
     return layouts;
   }
 
-  if (plano.materiais && plano.materiais.length > 0) {
-    const mats = plano.materiais as any[];
-    const layouts: LayoutSimulacao[] = [];
+  if (mats.length > 0) {
     for (const chapa of mats) {
       if (!chapa.pecas || chapa.pecas.length === 0) continue;
       const larg = Number(chapa.largura_mm) || 2750;

@@ -24,30 +24,30 @@ interface PecaBlockProps {
 }
 
 function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) {
-  const comp = (peca.comprimento / escala);
-  const larg = (peca.largura / escala);
-  const esp = Math.max((peca.espessura / escala), 0.08);
-  const posX = (peca.x / escala) + comp / 2;
-  const posZ = (peca.y / escala) + larg / 2;
+  const c = peca.comprimento / escala;
+  const l = peca.largura / escala;
+  const e = Math.max(peca.espessura / escala, 0.06);
+  const px = peca.x / escala + c / 2;
+  const pz = peca.y / escala + l / 2;
 
   return (
     <mesh
-      position={[posX, esp / 2, posZ]}
+      position={[px, e / 2, pz]}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'default'; }}
     >
-      <boxGeometry args={[comp, esp, larg]} />
+      <boxGeometry args={[c, e, l]} />
       <meshStandardMaterial
-        color={selecionada ? '#FFFFFF' : cor}
+        color={selecionada ? '#ffffff' : cor}
         emissive={selecionada ? '#E2AC00' : '#000000'}
         emissiveIntensity={selecionada ? 0.3 : 0}
         roughness={0.6}
         metalness={0.1}
       />
       <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(comp, esp, larg)]} />
-        <lineBasicMaterial color="#1F2937" linewidth={1} />
+        <edgesGeometry args={[new THREE.BoxGeometry(c, e, l)]} />
+        <lineBasicMaterial color={selecionada ? '#E2AC00' : '#1F2937'} />
       </lineSegments>
     </mesh>
   );
@@ -57,10 +57,11 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
   const escala = useMemo(() => Math.max(layout.chapa.largura, layout.chapa.altura) / 10, [layout]);
 
-  const chapaComp = layout.chapa.largura / escala;
-  const chapaLarg = layout.chapa.altura / escala;
-  const metadeComp = chapaComp / 2;
-  const metadeLarg = chapaLarg / 2;
+  const sheetW = layout.chapa.largura / escala;
+  const sheetD = layout.chapa.altura / escala;
+  const sheetH = 0.3;
+  const cx = sheetW / 2;
+  const cz = sheetD / 2;
 
   const pecasComCor = useMemo(() =>
     layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] })),
@@ -69,23 +70,26 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
 
   return (
     <>
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={0.5} />
       <directionalLight position={[10, 20, 10]} intensity={0.8} />
-      <directionalLight position={[-10, 10, -10]} intensity={0.3} />
+      <directionalLight position={[-10, 5, -10]} intensity={0.3} />
 
+      {/* Chapa — base sólida */}
       <mesh
-        position={[metadeComp, -0.01, metadeLarg]}
+        position={[cx, -sheetH / 2, cz]}
         onClick={() => { setPecaSelecionada(null); onSelecionarPeca?.(null); }}
       >
-        <planeGeometry args={[chapaComp + 0.5, chapaLarg + 0.5]} />
+        <boxGeometry args={[sheetW, sheetH, sheetD]} />
         <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
       </mesh>
 
-      <gridHelper
-        args={[Math.max(chapaComp, chapaLarg) + 1, 10, '#374151', '#1F2937']}
-        position={[metadeComp, 0.01, metadeLarg]}
-      />
+      {/* Borda da chapa — linha clara para delimitar */}
+      <lineSegments position={[cx, 0.01, cz]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.01, sheetD)]} />
+        <lineBasicMaterial color="#4B5563" />
+      </lineSegments>
 
+      {/* Peças */}
       {pecasComCor.map((peca) => (
         <PecaBlock
           key={peca.id}
@@ -102,10 +106,10 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
 
       <OrbitControls
         enableDamping
-        dampingFactor={0.1}
-        target={[metadeComp, 0, metadeLarg]}
-        minDistance={2}
-        maxDistance={50}
+        dampingFactor={0.15}
+        target={[cx, 0, cz]}
+        minDistance={1}
+        maxDistance={30}
       />
     </>
   );
@@ -126,8 +130,8 @@ export default function CanvasSimulador3D({ layout, onSelecionarPeca }: CanvasSi
     <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
       <Canvas
         camera={{
-          position: [escalaView * 0.8, escalaView * 0.4, escalaView * 0.8],
-          fov: 50,
+          position: [escalaView * 0.7, escalaView * 0.4, escalaView * 0.7],
+          fov: 45,
           near: 0.1,
           far: 100,
         }}
