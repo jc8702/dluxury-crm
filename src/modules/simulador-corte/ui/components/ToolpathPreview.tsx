@@ -178,34 +178,67 @@ export default function ToolpathPreview({
       {/* Active cut head (Spindle CNC Industrial) */}
       {cabecaPos && animando && (
         <group position={[cabecaPos.x, 0.01, cabecaPos.z]}>
+          {/* Luz de Trabalho do Spindle (LED apontado para o corte) */}
+          <pointLight position={[0, 0.1, 0]} intensity={1.5} distance={1.2} color="#00FFFF" />
+          
           {/* Broca de corte (Fresa dourada de metal duro) */}
           <mesh position={[0, 0.08, 0]}>
             <cylinderGeometry args={[0.012, 0.012, 0.16, 8]} />
-            <meshStandardMaterial color="#E2AC00" metalness={0.9} roughness={0.1} />
+            <meshStandardMaterial color="#FBBF24" emissive="#D97706" emissiveIntensity={0.2} metalness={0.9} roughness={0.1} />
           </mesh>
           
-          {/* Mandril (Collet porta-fresa preto) */}
-          <mesh position={[0, 0.2, 0]}>
-            <cylinderGeometry args={[0.04, 0.04, 0.08, 12]} />
-            <meshStandardMaterial color="#374151" metalness={0.8} roughness={0.3} />
+          {/* Mandril (Collet porta-fresa em Cromo Polido) */}
+          <mesh position={[0, 0.18, 0]}>
+            <cylinderGeometry args={[0.04, 0.04, 0.05, 12]} />
+            <meshStandardMaterial color="#F3F4F6" metalness={0.95} roughness={0.05} />
+          </mesh>
+
+          {/* Anel Inferior de LED de Trabalho (Neon Ciano) */}
+          <mesh position={[0, 0.19, 0]}>
+            <torusGeometry args={[0.041, 0.006, 8, 20]} />
+            <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={3} />
           </mesh>
           
-          {/* Corpo do motor (Spindle de Alumínio Escovado) */}
-          <mesh position={[0, 0.45, 0]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.42, 16]} />
-            <meshStandardMaterial color="#6B7280" metalness={0.9} roughness={0.25} />
+          {/* Porca do Mandril (Preto Industrial) */}
+          <mesh position={[0, 0.22, 0]}>
+            <cylinderGeometry args={[0.045, 0.045, 0.03, 6]} />
+            <meshStandardMaterial color="#1F2937" metalness={0.8} roughness={0.4} />
           </mesh>
           
-          {/* Topo do Spindle (Tampa de Destaque Dourada) */}
+          {/* Corpo do motor - Parte Inferior (Laranja Industrial Vibrante) */}
+          <mesh position={[0, 0.35, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.22, 16]} />
+            <meshStandardMaterial color="#EA580C" metalness={0.3} roughness={0.15} />
+          </mesh>
+
+          {/* Aletas de Refrigeração Cromadas / Detalhe Central de Aço */}
+          <mesh position={[0, 0.48, 0]}>
+            <cylinderGeometry args={[0.078, 0.078, 0.06, 16]} />
+            <meshStandardMaterial color="#E5E7EB" metalness={0.95} roughness={0.05} />
+          </mesh>
+          
+          {/* Corpo do motor - Parte Superior (Laranja Industrial Vibrante) */}
+          <mesh position={[0, 0.60, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.18, 16]} />
+            <meshStandardMaterial color="#EA580C" metalness={0.3} roughness={0.15} />
+          </mesh>
+          
+          {/* Topo do Spindle (Tampa Metálica Cromada) */}
+          <mesh position={[0, 0.70, 0]}>
+            <cylinderGeometry args={[0.08, 0.06, 0.03, 16]} />
+            <meshStandardMaterial color="#F3F4F6" metalness={0.95} roughness={0.05} />
+          </mesh>
+
+          {/* Tampa do Cooler do Topo (Preto Industrial) */}
+          <mesh position={[0, 0.72, 0]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.01, 16]} />
+            <meshStandardMaterial color="#111827" metalness={0.8} roughness={0.5} />
+          </mesh>
+          
+          {/* Anel de LED Superior indicativo de operação (Azul Neon) */}
           <mesh position={[0, 0.68, 0]}>
-            <cylinderGeometry args={[0.08, 0.06, 0.04, 16]} />
-            <meshStandardMaterial color="#E2AC00" metalness={0.6} roughness={0.4} />
-          </mesh>
-          
-          {/* Anel de LED indicativo de operação (Verde brilhoso) */}
-          <mesh position={[0, 0.67, 0]}>
             <torusGeometry args={[0.081, 0.008, 8, 24]} />
-            <meshBasicMaterial color="#10B981" />
+            <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={3} />
           </mesh>
         </group>
       )}

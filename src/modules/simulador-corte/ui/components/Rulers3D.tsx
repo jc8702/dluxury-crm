@@ -10,11 +10,11 @@ interface Rulers3DProps {
   passoGrade?: number;
 }
 
-const TICK_COLOR = '#6B7280';
-const TICK_MAJOR_COLOR = '#9CA3AF';
-const LABEL_COLOR = '#9CA3AF';
-const GRID_COLOR = '#1F2937';
-const GRID_SUB_COLOR = '#1A1F2E';
+const TICK_COLOR = '#7C5E43'; // Marrom médio para ticks secundários
+const TICK_MAJOR_COLOR = '#4A3321'; // Marrom escuro para ticks principais
+const LABEL_COLOR = '#F3F4F6'; // Cinza claro/branco para leitura em cima do canvas escuro
+const GRID_COLOR = '#8C6D53'; // Linhas principais do grid
+const GRID_SUB_COLOR = '#A38A75'; // Linhas secundárias do grid
 
 export default function Rulers3D({
   sheetWidth,
@@ -27,8 +27,8 @@ export default function Rulers3D({
   const rulerConfig = useMemo(() => {
     const rawStep = 100; // 100mm base step
     const majorEvery = 5;
-    const tickHeight = 0.15;
-    const majorTickHeight = 0.3;
+    const tickHeight = 0.12;
+    const majorTickHeight = 0.22;
 
     const totalWidth = sheetWidth * escala;
     const totalDepth = sheetDepth * escala;
@@ -79,10 +79,11 @@ export default function Rulers3D({
   }, [gridStep, gridZCount]);
 
   const labelScale = Math.max(0.3, Math.min(1, cenaSize * 0.04));
+  const fontSize = `${Math.max(12, 16 * labelScale)}px`;
 
   return (
     <group>
-      {/* RULER X (bottom edge) */}
+      {/* RULER X (bottom/front edge - deitada para frente) */}
       {rulerConfig.xTicks.map((tick, i) => {
         const isMajor = tick.isMajor;
         const h = isMajor ? rulerConfig.majorTickHeight : rulerConfig.tickHeight;
@@ -94,26 +95,26 @@ export default function Rulers3D({
                   attach="attributes-position"
                   count={2}
                   array={new Float32Array([
-                    tick.pos, -h, 0,
-                    tick.pos, 0, 0,
+                    tick.pos, 0.002, 0,
+                    tick.pos, 0.002, -h,
                   ])}
                   itemSize={3}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} />
+              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} linewidth={isMajor ? 2 : 1} />
             </lineSegments>
             {isMajor && (
               <Html
-                position={[tick.pos, -h - 0.08, 0]}
+                position={[tick.pos, 0.003, -h - 0.08]}
                 center
-                style={{ pointerEvents: 'none', transform: 'translateY(4px)' }}
+                style={{ pointerEvents: 'none', transform: 'translateY(-2px)' }}
               >
                 <span style={{
                   color: LABEL_COLOR,
-                  fontSize: `${7 * labelScale}px`,
+                  fontSize,
                   fontFamily: 'monospace',
-                  fontWeight: 500,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                  fontWeight: 600,
+                  textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
                 }}>
                   {tick.label}
                 </span>
@@ -123,7 +124,7 @@ export default function Rulers3D({
         );
       })}
 
-      {/* RULER Z (left edge) */}
+      {/* RULER Z (left edge - deitada para a esquerda) */}
       {rulerConfig.zTicks.map((tick, i) => {
         const isMajor = tick.isMajor;
         const h = isMajor ? rulerConfig.majorTickHeight : rulerConfig.tickHeight;
@@ -135,26 +136,26 @@ export default function Rulers3D({
                   attach="attributes-position"
                   count={2}
                   array={new Float32Array([
-                    0, -h, tick.pos,
-                    0, 0, tick.pos,
+                    0, 0.002, tick.pos,
+                    -h, 0.002, tick.pos,
                   ])}
                   itemSize={3}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} />
+              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} linewidth={isMajor ? 2 : 1} />
             </lineSegments>
             {isMajor && (
               <Html
-                position={[-0.12, -h - 0.08, tick.pos]}
+                position={[-h - 0.08, 0.003, tick.pos]}
                 center
-                style={{ pointerEvents: 'none', transform: 'translateX(-6px)' }}
+                style={{ pointerEvents: 'none', transform: 'translateX(-2px)' }}
               >
                 <span style={{
                   color: LABEL_COLOR,
-                  fontSize: `${7 * labelScale}px`,
+                  fontSize,
                   fontFamily: 'monospace',
-                  fontWeight: 500,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                  fontWeight: 600,
+                  textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
                 }}>
                   {tick.label}
                 </span>
@@ -164,7 +165,7 @@ export default function Rulers3D({
         );
       })}
 
-      {/* RULER X (top edge) */}
+      {/* RULER X (top/back edge - deitada para trás) */}
       {rulerConfig.xTicks.map((tick, i) => (
         <lineSegments key={`xt-${i}`}>
           <bufferGeometry>
@@ -172,8 +173,8 @@ export default function Rulers3D({
               attach="attributes-position"
               count={2}
               array={new Float32Array([
-                tick.pos, -rulerConfig.tickHeight, sheetDepth,
-                tick.pos, 0, sheetDepth,
+                tick.pos, 0.002, sheetDepth,
+                tick.pos, 0.002, sheetDepth + rulerConfig.tickHeight,
               ])}
               itemSize={3}
             />
@@ -182,7 +183,7 @@ export default function Rulers3D({
         </lineSegments>
       ))}
 
-      {/* RULER Z (right edge) */}
+      {/* RULER Z (right edge - deitada para a direita) */}
       {rulerConfig.zTicks.map((tick, i) => (
         <lineSegments key={`zr-${i}`}>
           <bufferGeometry>
@@ -190,8 +191,8 @@ export default function Rulers3D({
               attach="attributes-position"
               count={2}
               array={new Float32Array([
-                sheetWidth, -rulerConfig.tickHeight, tick.pos,
-                sheetWidth, 0, tick.pos,
+                sheetWidth, 0.002, tick.pos,
+                sheetWidth + rulerConfig.tickHeight, 0.002, tick.pos,
               ])}
               itemSize={3}
             />
@@ -200,7 +201,7 @@ export default function Rulers3D({
         </lineSegments>
       ))}
 
-      {/* GRADE DO CHÃO */}
+      {/* GRADE SOBRE A CHAPA (Projetada a Y = 0.001) */}
       {habilitarGrade && gridStep >= 0.01 && (
         <group>
           {/* Linhas Z (horizontal) */}
@@ -211,8 +212,8 @@ export default function Rulers3D({
                   attach="attributes-position"
                   count={2}
                   array={new Float32Array([
-                    0, -0.005, line.z,
-                    sheetWidth, -0.005, line.z,
+                    0, 0.001, line.z,
+                    sheetWidth, 0.001, line.z,
                   ])}
                   itemSize={3}
                 />
@@ -220,7 +221,7 @@ export default function Rulers3D({
               <lineBasicMaterial
                 color={i % 5 === 0 ? GRID_COLOR : GRID_SUB_COLOR}
                 transparent
-                opacity={i % 5 === 0 ? 0.6 : 0.25}
+                opacity={i % 5 === 0 ? 0.35 : 0.15}
               />
             </lineSegments>
           ))}
@@ -232,8 +233,8 @@ export default function Rulers3D({
                   attach="attributes-position"
                   count={2}
                   array={new Float32Array([
-                    line.x, -0.005, 0,
-                    line.x, -0.005, sheetDepth,
+                    line.x, 0.001, 0,
+                    line.x, 0.001, sheetDepth,
                   ])}
                   itemSize={3}
                 />
@@ -241,7 +242,7 @@ export default function Rulers3D({
               <lineBasicMaterial
                 color={i % 5 === 0 ? GRID_COLOR : GRID_SUB_COLOR}
                 transparent
-                opacity={i % 5 === 0 ? 0.6 : 0.25}
+                opacity={i % 5 === 0 ? 0.35 : 0.15}
               />
             </lineSegments>
           ))}

@@ -105,11 +105,11 @@ function SceneContent({ layout, onSheetClick }: {
     <group>
       <mesh position={[cx, -sheetH / 2, cz]} onClick={onSheetClick}>
         <boxGeometry args={[sheetW, sheetH, sheetD]} />
-        <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
+        <meshStandardMaterial color="#C49A6C" roughness={0.6} metalness={0.0} />
       </mesh>
-      <lineSegments position={[cx, 0.01, cz]}>
-        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.01, sheetD)]} />
-        <lineBasicMaterial color="#4B5563" />
+      <lineSegments position={[cx, 0.001, cz]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.002, sheetD)]} />
+        <lineBasicMaterial color="#5C4033" />
       </lineSegments>
     </group>
   );

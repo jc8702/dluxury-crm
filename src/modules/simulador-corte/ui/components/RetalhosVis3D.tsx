@@ -14,7 +14,7 @@ const THRESHOLD_MM2 = 300 * 300; // 300×300 min for retalho inventory
 
 export default function RetalhosVis3D({ layout, escala, cenaSize }: RetalhosVis3DProps) {
   const labelScale = Math.max(0.3, Math.min(1, cenaSize * 0.04));
-  const fontSize = `${6 * labelScale}px`;
+  const fontSize = `${Math.max(10, 12 * labelScale)}px`;
 
   // Calculate free spaces from gaps between pieces
   const espacos = React.useMemo(() => {
@@ -94,32 +94,32 @@ export default function RetalhosVis3D({ layout, escala, cenaSize }: RetalhosVis3
         return (
           <group key={`retalho-${i}`}>
             {/* Fill */}
-            <mesh position={[ex + ew / 2, 0.002, ez + ed / 2]} renderOrder={-1}>
+            <mesh position={[ex + ew / 2, 0.002, ez + ed / 2]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
               <planeGeometry args={[ew - 0.02, ed - 0.02]} />
               <meshBasicMaterial
                 color="#10B981"
                 transparent
-                opacity={0.08}
+                opacity={0.12}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Border */}
-            <lineSegments position={[0, 0.003, 0]}>
-              <edgesGeometry args={[new THREE.BoxGeometry(ew - 0.02, 0.01, ed - 0.02)]} />
-              <lineBasicMaterial color={R_BORDER} transparent opacity={0.35} />
+            <lineSegments position={[ex + ew / 2, 0.003, ez + ed / 2]}>
+              <edgesGeometry args={[new THREE.BoxGeometry(ew - 0.02, 0.002, ed - 0.02)]} />
+              <lineBasicMaterial color={R_BORDER} transparent opacity={0.45} />
             </lineSegments>
 
             {/* Dashed inner border */}
-            <lineSegments position={[0, 0.004, 0]}>
-              <edgesGeometry args={[new THREE.BoxGeometry(ew - 0.06, 0.01, ed - 0.06)]} />
-              <lineBasicMaterial color={R_BORDER} transparent opacity={0.15} />
+            <lineSegments position={[ex + ew / 2, 0.004, ez + ed / 2]}>
+              <edgesGeometry args={[new THREE.BoxGeometry(ew - 0.06, 0.002, ed - 0.06)]} />
+              <lineBasicMaterial color={R_BORDER} transparent opacity={0.2} />
             </lineSegments>
 
             {/* Label */}
             {ew > 0.5 && ed > 0.5 && (
               <Html
-                position={[ex + ew / 2, 0.01, ez + ed / 2]}
+                position={[ex + ew / 2, 0.015, ez + ed / 2]}
                 center
                 style={{ pointerEvents: 'none' }}
               >
@@ -127,9 +127,9 @@ export default function RetalhosVis3D({ layout, escala, cenaSize }: RetalhosVis3
                   color: R_BORDER,
                   fontSize,
                   fontFamily: 'monospace',
-                  fontWeight: 500,
-                  opacity: 0.5,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                  fontWeight: 600,
+                  opacity: 0.8,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.8), 0 0 4px rgba(16,185,129,0.3)',
                 }}>
                   RETALHO {areaM2}M²
                 </span>
