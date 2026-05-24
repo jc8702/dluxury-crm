@@ -255,6 +255,7 @@ const Cena3D = React.memo(function Cena3D({
         program={program}
         tempoAtual={tempoAtual}
         mostrarCaminho={!!mostrarCaminho}
+        escala={escala}
       />
     </>
   );

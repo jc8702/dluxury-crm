@@ -5,6 +5,7 @@ interface ToolpathPreviewProps {
   program: SimulationProgram;
   tempoAtual: number;
   mostrarCaminho: boolean;
+  escala: number;
 }
 
 // CORES INDUSTRIAIS DO TOOLPATH (Padrão CAM)
@@ -18,6 +19,7 @@ export default function ToolpathPreview({
   program,
   tempoAtual,
   mostrarCaminho,
+  escala,
 }: ToolpathPreviewProps) {
   
   // Se o percurso estiver desabilitado, não renderiza nada
@@ -54,8 +56,8 @@ export default function ToolpathPreview({
           else if (s.tipo === 'lead_in' || s.tipo === 'lead_out') cor = COR_LEAD;
 
           list.push({
-            from: [s.from.x, s.from.z, s.from.y], // Converte para o referencial XYZ do R3F
-            to: [s.to.x, s.to.z, s.to.y],
+            from: [s.from.x / escala, s.from.z / escala, s.from.y / escala], // Converte para o referencial XYZ do R3F [X, Y(Z_fisico), Z(Y_fisico)]
+            to: [s.to.x / escala, s.to.z / escala, s.to.y / escala],
             cor,
             opacidade: 0.15,
             espessura: 1,
@@ -69,8 +71,8 @@ export default function ToolpathPreview({
             : COR_RAPIDO;
 
           list.push({
-            from: [s.from.x, s.from.z, s.from.y],
-            to: [s.to.x, s.to.z, s.to.y],
+            from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
+            to: [s.to.x / escala, s.to.z / escala, s.to.y / escala],
             cor,
             opacidade: 0.45,
             espessura: s.tipo === 'cutting' ? 2 : 1,
@@ -96,8 +98,8 @@ export default function ToolpathPreview({
           if (accSegTempo > tempoNoCmd) {
             // Segmento futuro deste comando ativo
             list.push({
-              from: [s.from.x, s.from.z, s.from.y],
-              to: [s.to.x, s.to.z, s.to.y],
+              from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
+              to: [s.to.x / escala, s.to.z / escala, s.to.y / escala],
               cor,
               opacidade: 0.15,
               espessura: 1,
@@ -109,8 +111,8 @@ export default function ToolpathPreview({
               : COR_RAPIDO;
 
             list.push({
-              from: [s.from.x, s.from.z, s.from.y],
-              to: [s.to.x, s.to.z, s.to.y],
+              from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
+              to: [s.to.x / escala, s.to.z / escala, s.to.y / escala],
               cor: concluidoCor,
               opacidade: 0.7,
               espessura: 2,
@@ -124,8 +126,8 @@ export default function ToolpathPreview({
 
             // Parte concluída
             list.push({
-              from: [s.from.x, s.from.z, s.from.y],
-              to: [stopX, stopY, stopZ],
+              from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
+              to: [stopX / escala, stopZ / escala, stopY / escala],
               cor: s.tipo === 'cutting' ? COR_CONCLUIDO : COR_RAPIDO,
               opacidade: 0.9,
               espessura: 3,
@@ -133,8 +135,8 @@ export default function ToolpathPreview({
 
             // Parte futura restante
             list.push({
-              from: [stopX, stopY, stopZ],
-              to: [s.to.x, s.to.z, s.to.y],
+              from: [stopX / escala, stopZ / escala, stopY / escala],
+              to: [s.to.x / escala, s.to.z / escala, s.to.y / escala],
               cor,
               opacidade: 0.2,
               espessura: 1,
@@ -148,7 +150,7 @@ export default function ToolpathPreview({
     }
 
     return list;
-  }, [program, tempoAtual]);
+  }, [program, tempoAtual, escala]);
 
   return (
     <group>
@@ -159,8 +161,8 @@ export default function ToolpathPreview({
               attach="attributes-position"
               count={2}
               array={new Float32Array([
-                r.from[0], r.from[2], r.from[1],
-                r.to[0], r.to[2], r.to[1],
+                r.from[0], r.from[1], r.from[2],
+                r.to[0], r.to[1], r.to[2],
               ])}
               itemSize={3}
             />
