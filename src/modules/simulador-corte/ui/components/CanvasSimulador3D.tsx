@@ -194,8 +194,9 @@ const Cena3D = React.memo(function Cena3D({
   );
 });
 
-function GerenciadorCamera({ layout, controlsRef }: { layout: LayoutSimulacao | null; controlsRef: React.RefObject<any> }) {
+function GerenciadorCamera({ layout }: { layout: LayoutSimulacao | null }) {
   const { camera } = useThree();
+  const controls = useThree((state: any) => state.controls);
   const ultimoLayoutIdRef = useRef<string>('');
 
   useEffect(() => {
@@ -218,11 +219,11 @@ function GerenciadorCamera({ layout, controlsRef }: { layout: LayoutSimulacao | 
     camera.lookAt(cx, 0, cz);
     camera.updateProjectionMatrix();
 
-    if (controlsRef.current) {
-      controlsRef.current.target.set(cx, 0, cz);
-      controlsRef.current.update();
+    if (controls) {
+      controls.target.set(cx, 0, cz);
+      controls.update();
     }
-  }, [layout, camera, controlsRef]);
+  }, [layout, camera, controls]);
 
   return null;
 }
@@ -238,8 +239,6 @@ export default function CanvasSimulador3D({
 }: CanvasSimulador3DProps) {
   const onSelecionarPecaRef = useRef(onSelecionarPeca);
   onSelecionarPecaRef.current = onSelecionarPeca;
-
-  const controlsRef = useRef<any>(null);
 
   const scene = useMemo(() => {
     if (!layout) return null;
@@ -284,10 +283,10 @@ export default function CanvasSimulador3D({
         
         {scene}
         
-        <GerenciadorCamera layout={layout} controlsRef={controlsRef} />
+        <GerenciadorCamera layout={layout} />
         
         <OrbitControls
-          ref={controlsRef}
+          makeDefault
           enableDamping
           dampingFactor={0.15}
           target={[cx, 0, cz]}
