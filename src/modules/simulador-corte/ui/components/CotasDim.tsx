@@ -17,7 +17,7 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
   const sheetW = layout.chapa.largura / escala;
   const sheetD = layout.chapa.altura / escala;
   const labelScale = Math.max(0.3, Math.min(1, cenaSize * 0.04));
-  const fontSize = `${7 * labelScale}px`;
+  const fontSize = `${Math.max(12, 16 * labelScale)}px`;
 
   // Cotas externas da chapa
   const sheetDims = useMemo(() => [

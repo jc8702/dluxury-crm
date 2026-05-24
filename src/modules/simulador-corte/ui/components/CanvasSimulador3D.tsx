@@ -75,7 +75,7 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
         <div style={{
           background: selecionada ? '#E2AC00' : 'rgba(0,0,0,0.7)',
           color: selecionada ? '#000' : '#fff',
-          fontSize: '8px',
+          fontSize: '11px',
           padding: '2px 4px',
           borderRadius: '3px',
           whiteSpace: 'nowrap',

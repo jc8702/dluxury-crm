@@ -96,7 +96,7 @@ export default function ToolpathPreview({
 
     lastTime.current = performance.now();
     let accTime = 0;
-    const duracaoTotal = Math.max(1000, segmentos.length * (350 / velocidadeAnimacao));
+    const duracaoTotal = Math.max(1000, segmentos.length * (1600 / velocidadeAnimacao));
 
     function animate(now: number) {
       const dt = now - lastTime.current;
