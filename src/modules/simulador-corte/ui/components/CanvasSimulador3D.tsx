@@ -151,6 +151,8 @@ const Cena3D = React.memo(function Cena3D({
   cncConfig,
   focoPosicao,
   mostrarRiscos,
+  ghostPreview,
+  onClampDragEnd,
 }: {
   layout: LayoutSimulacao;
   onSelecionarPecaRef: React.MutableRefObject<((peca: PecaSimulacao | null) => void) | undefined>;
