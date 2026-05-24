@@ -2,11 +2,14 @@ import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import type { LayoutSimulacao, PecaSimulacao } from '../../domain/types';
+import type { LayoutSimulacao, PecaSimulacao, SimulationProgram } from '../../domain/types';
 import Rulers3D from './Rulers3D';
 import CotasDim from './CotasDim';
 import ToolpathPreview from './ToolpathPreview';
 import RetalhosVis3D from './RetalhosVis3D';
+import CncMachine3D from './CncMachine3D';
+import StockRemoval3D from './StockRemoval3D';
+import { obterEstadoNoInstante, obterFixturesPadrao, TOOL_DEFAULT } from '../../domain/simulationEngine';
 
 interface CanvasSimulador3DProps {
   layout: LayoutSimulacao | null;
@@ -15,11 +18,16 @@ interface CanvasSimulador3DProps {
   habilitarCotas?: boolean;
   habilitarAnimacao?: boolean;
   habilitarRetalhos?: boolean;
-  velocidadeAnimacao?: number;
+  mostrarMaquina?: boolean;
+  mostrarStock?: boolean;
+  mostrarClamps?: boolean;
+  mostrarCaminho?: boolean;
+  program: SimulationProgram;
+  tempoAtual: number;
 }
 
 const CORES = [
-  '#E2AC00', '#3B82F6', '#EF4444', '#10B981', '#8B5CF6',
+  '#3B82F6', '#EF4444', '#10B981', '#8B5CF6',
   '#F97316', '#06B6D4', '#EC4899', '#84CC16', '#14B8A6',
   '#D946EF', '#F43F5E', '#0EA5E9', '#A855F7', '#22C55E',
 ];
@@ -27,8 +35,8 @@ const CORES = [
 const GL_CONFIG = { antialias: true };
 
 const CAMERA_CONFIG = {
-  position: [7, 5, 7] as [number, number, number],
-  fov: 45,
+  position: [7, 6, 9] as [number, number, number],
+  fov: 42,
   near: 0.1,
   far: 100,
 };
@@ -45,7 +53,7 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
 }) {
   const c = peca.comprimento / escala;
   const l = peca.largura / escala;
-  const e = Math.max(peca.espessura / escala, 0.06);
+  const e = Math.max(peca.espessura / escala, 0.05);
   const px = peca.x / escala + c / 2;
   const pz = peca.y / escala + l / 2;
   const py = e / 2;
@@ -62,26 +70,27 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
         <meshStandardMaterial
           color={selecionada ? '#ffffff' : cor}
           emissive={selecionada ? '#E2AC00' : '#000000'}
-          emissiveIntensity={selecionada ? 0.3 : 0}
-          roughness={0.6}
+          emissiveIntensity={selecionada ? 0.35 : 0}
+          roughness={0.65}
           metalness={0.1}
         />
         <lineSegments>
           <edgesGeometry args={[new THREE.BoxGeometry(c, e, l)]} />
-          <lineBasicMaterial color={selecionada ? '#E2AC00' : '#1F2937'} />
+          <lineBasicMaterial color={selecionada ? '#E2AC00' : '#111827'} />
         </lineSegments>
       </mesh>
-      <Html position={[px, py + e + 0.05, pz]} center style={{ pointerEvents: 'none' }}>
+      <Html position={[px, py + e + 0.04, pz]} center style={{ pointerEvents: 'none' }}>
         <div style={{
-          background: selecionada ? '#E2AC00' : 'rgba(0,0,0,0.7)',
-          color: selecionada ? '#000' : '#fff',
+          background: selecionada ? '#E2AC00' : 'rgba(15,23,42,0.85)',
+          color: selecionada ? '#0f172a' : '#f8fafc',
           fontSize: '11px',
-          padding: '2px 4px',
-          borderRadius: '3px',
+          padding: '2px 5px',
+          borderRadius: '4px',
           whiteSpace: 'nowrap',
           fontFamily: 'monospace',
-          fontWeight: 600,
-          border: '1px solid rgba(255,255,255,0.1)',
+          fontWeight: 700,
+          border: selecionada ? '1px solid #E2AC00' : '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
         }}>
           {peca.nome} {peca.comprimento}×{peca.largura}
         </div>
@@ -90,25 +99,28 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   );
 }
 
-function SceneContent({ layout, onSheetClick }: {
+function SceneContent({ layout, onSheetClick, mostrarStock }: {
   layout: LayoutSimulacao;
   onSheetClick: () => void;
+  mostrarStock: boolean;
 }) {
   const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
   const sheetW = layout.chapa.largura / escala;
   const sheetD = layout.chapa.altura / escala;
   const cx = sheetW / 2;
   const cz = sheetD / 2;
-  const sheetH = 0.3;
+  const sheetH = Math.max(layout.chapa.espessura / escala, 0.05);
 
   return (
     <group>
+      {/* Corpo principal do MDF (Placa base) */}
+      {/* Se o stock removal estiver ativado, a placa de MDF tem cor levemente alterada embaixo ou é desenhada */}
       <mesh position={[cx, -sheetH / 2, cz]} onClick={onSheetClick}>
         <boxGeometry args={[sheetW, sheetH, sheetD]} />
-        <meshStandardMaterial color="#C49A6C" roughness={0.6} metalness={0.0} />
+        <meshStandardMaterial color="#A27D54" roughness={0.7} metalness={0.0} />
       </mesh>
       <lineSegments position={[cx, 0.001, cz]}>
-        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.002, sheetD)]} />
+        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, sheetH + 0.002, sheetD)]} />
         <lineBasicMaterial color="#5C4033" />
       </lineSegments>
     </group>
@@ -122,7 +134,12 @@ const Cena3D = React.memo(function Cena3D({
   habilitarCotas,
   habilitarAnimacao,
   habilitarRetalhos,
-  velocidadeAnimacao,
+  mostrarMaquina,
+  mostrarStock,
+  mostrarClamps,
+  mostrarCaminho,
+  program,
+  tempoAtual,
 }: {
   layout: LayoutSimulacao;
   onSelecionarPecaRef: React.MutableRefObject<((peca: PecaSimulacao | null) => void) | undefined>;
@@ -130,15 +147,27 @@ const Cena3D = React.memo(function Cena3D({
   habilitarCotas?: boolean;
   habilitarAnimacao?: boolean;
   habilitarRetalhos?: boolean;
-  velocidadeAnimacao?: number;
+  mostrarMaquina?: boolean;
+  mostrarStock?: boolean;
+  mostrarClamps?: boolean;
+  mostrarCaminho?: boolean;
+  program: SimulationProgram;
+  tempoAtual: number;
 }) {
   const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
   const sheetW = layout.chapa.largura / escala;
   const sheetD = layout.chapa.altura / escala;
-  const cx = sheetW / 2;
-  const cz = sheetD / 2;
 
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
+
+  const fixtures = useMemo(() => {
+    return obterFixturesPadrao(layout.chapa.largura, layout.chapa.altura);
+  }, [layout.chapa.largura, layout.chapa.altura]);
+
+  // Calcula a posição física instantânea e dados da fresa no tempo atual
+  const estadoFresa = useMemo(() => {
+    return obterEstadoNoInstante(program, tempoAtual);
+  }, [program, tempoAtual]);
 
   const pecasComCor = useMemo(() => {
     const coloridas = layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] }));
@@ -162,34 +191,71 @@ const Cena3D = React.memo(function Cena3D({
 
   return (
     <>
-      <SceneContent layout={layout} onSheetClick={handleClickSheet} />
+      {/* 1. MDF BASE (STOCK) */}
+      <SceneContent layout={layout} onSheetClick={handleClickSheet} mostrarStock={!!mostrarStock} />
 
+      {/* 2. REMOÇÃO PROGRESSIVA DE ESTOQUE (STOCK REMOVAL) */}
+      {mostrarStock && (
+        <StockRemoval3D
+          layout={layout}
+          escala={escala}
+          tempoAtual={tempoAtual}
+          program={program}
+          tool={TOOL_DEFAULT}
+          mostrarStock={!!mostrarStock}
+        />
+      )}
+
+      {/* 3. MÁQUINA CNC REALISTA E CLAMPS (CINEMÁTICA) */}
+      <CncMachine3D
+        x={estadoFresa.x}
+        y={estadoFresa.y}
+        z={estadoFresa.z}
+        escala={escala}
+        sheetWidth={sheetW}
+        sheetDepth={sheetD}
+        fixtures={fixtures}
+        spindleOn={estadoFresa.spindleOn}
+        rpm={estadoFresa.rpm}
+        mostrarMaquina={mostrarMaquina}
+        mostrarClamps={mostrarClamps}
+      />
+
+      {/* 4. RÉGUAS E GRADES MILIMÉTRICAS */}
       {habilitarGrade && (
         <Rulers3D sheetWidth={sheetW} sheetDepth={sheetD} escala={escala} cenaSize={Math.max(sheetW, sheetD)} habilitarGrade />
       )}
 
+      {/* 5. COTAS DIMENSIONAIS */}
       {habilitarCotas && (
         <CotasDim layout={layout} escala={escala} pecaSelecionada={pecaSelecionadaObj} cenaSize={Math.max(sheetW, sheetD)} />
       )}
 
+      {/* 6. RETALHOS E SOBRAS DE CHAPA */}
       {habilitarRetalhos && (
         <RetalhosVis3D layout={layout} escala={escala} cenaSize={Math.max(sheetW, sheetD)} />
       )}
 
+      {/* 7. PEÇAS DO PLANO (Rótulo/Block) */}
+      {/* Escondemos os blocos 3D originais se a visualização for puramente o Stock usinado,
+          ou mostramos os blocos semi-transparentes para guiar visualmente */}
       {pecasComCor.map((peca) => (
         <PecaBlock
           key={peca.id}
           peca={peca}
-          cor={peca.cor}
+          cor={mostrarStock ? `${peca.cor}44` : peca.cor} // mais transparente se tiver usinagem ativa
           escala={escala}
           selecionada={pecaSelecionada === peca.id}
           onClick={() => handleClickPeca(peca)}
         />
       ))}
 
-      {habilitarAnimacao && (
-        <ToolpathPreview layout={layout} escala={escala} animando={true} velocidadeAnimacao={velocidadeAnimacao ?? 1} />
-      )}
+      {/* 8. DESENHO DO TOOLPATH DE CORTE (CAM) */}
+      <ToolpathPreview
+        program={program}
+        tempoAtual={tempoAtual}
+        mostrarCaminho={!!mostrarCaminho}
+      />
     </>
   );
 });
@@ -214,7 +280,6 @@ function GerenciadorCamera({ layout }: { layout: LayoutSimulacao | null }) {
     const cx = sheetW / 2;
     const cz = sheetD / 2;
 
-    // Enquadramento estático e fixo inicial da chapa
     camera.position.set(cx, 8, cz + 8);
     camera.lookAt(cx, 0, cz);
     camera.updateProjectionMatrix();
@@ -235,7 +300,12 @@ export default function CanvasSimulador3D({
   habilitarCotas = true,
   habilitarAnimacao = false,
   habilitarRetalhos = true,
-  velocidadeAnimacao = 1,
+  mostrarMaquina = true,
+  mostrarStock = true,
+  mostrarClamps = true,
+  mostrarCaminho = true,
+  program,
+  tempoAtual,
 }: CanvasSimulador3DProps) {
   const onSelecionarPecaRef = useRef(onSelecionarPeca);
   onSelecionarPecaRef.current = onSelecionarPeca;
@@ -251,10 +321,27 @@ export default function CanvasSimulador3D({
         habilitarCotas={habilitarCotas}
         habilitarAnimacao={habilitarAnimacao}
         habilitarRetalhos={habilitarRetalhos}
-        velocidadeAnimacao={velocidadeAnimacao}
+        mostrarMaquina={mostrarMaquina}
+        mostrarStock={mostrarStock}
+        mostrarClamps={mostrarClamps}
+        mostrarCaminho={mostrarCaminho}
+        program={program}
+        tempoAtual={tempoAtual}
       />
     );
-  }, [layout, habilitarGrade, habilitarCotas, habilitarAnimacao, habilitarRetalhos, velocidadeAnimacao]);
+  }, [
+    layout,
+    habilitarGrade,
+    habilitarCotas,
+    habilitarAnimacao,
+    habilitarRetalhos,
+    mostrarMaquina,
+    mostrarStock,
+    mostrarClamps,
+    mostrarCaminho,
+    program,
+    tempoAtual,
+  ]);
 
   const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
     gl.setClearColor('#0D1117');

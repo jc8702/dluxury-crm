@@ -1,277 +1,178 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import type { LayoutSimulacao } from '../../domain/types';
+import React, { useMemo } from 'react';
+import type { SimulationProgram } from '../../domain/types';
 
 interface ToolpathPreviewProps {
-  layout: LayoutSimulacao;
-  escala: number;
-  animando: boolean;
-  velocidadeAnimacao: number;
+  program: SimulationProgram;
+  tempoAtual: number;
+  mostrarCaminho: boolean;
 }
 
-const TP_COLOR = '#EF4444';
-const TP_ACTIVE_COLOR = '#F97316';
-const TP_COMPLETED_COLOR = '#10B981';
-
-interface CorteSegmento {
-  from: { x: number; z: number };
-  to: { x: number; z: number };
-  tipo: 'serra' | 'passe_livre';
-}
-
-function calcularSequenciaCorte(layout: LayoutSimulacao, escala: number): CorteSegmento[] {
-  const segmentos: CorteSegmento[] = [];
-
-  // Sort pieces by position for optimal cutting order
-  const sorted = [...layout.pecas].sort((a, b) => {
-    const distA = a.x + a.y;
-    const distB = b.x + b.y;
-    return distA - distB;
-  });
-
-  let currentPos = { x: 0, z: 0 };
-
-  for (const peca of sorted) {
-    const px = peca.x / escala;
-    const pz = peca.y / escala;
-    const pc = peca.comprimento / escala;
-    const pl = peca.largura / escala;
-
-    // Travel to piece start (lifted pass)
-    segmentos.push({
-      from: { x: currentPos.x, z: currentPos.z },
-      to: { x: px, z: pz },
-      tipo: 'passe_livre',
-    });
-
-    // Cut vertical edges (left + right)
-    segmentos.push({
-      from: { x: px, z: pz },
-      to: { x: px, z: pz + pl },
-      tipo: 'serra',
-    });
-    segmentos.push({
-      from: { x: px + pc, z: pz },
-      to: { x: px + pc, z: pz + pl },
-      tipo: 'serra',
-    });
-
-    // Cut horizontal edges (top + bottom)
-    segmentos.push({
-      from: { x: px, z: pz },
-      to: { x: px + pc, z: pz },
-      tipo: 'serra',
-    });
-    segmentos.push({
-      from: { x: px, z: pz + pl },
-      to: { x: px + pc, z: pz + pl },
-      tipo: 'serra',
-    });
-
-    currentPos = { x: px + pc, z: pz + pl };
-  }
-
-  return segmentos;
-}
+// CORES INDUSTRIAIS DO TOOLPATH (Padrão CAM)
+const COR_RAPIDO = '#4B5563';       // Cinza médio tracejado para G00
+const COR_MERGULHO = '#F97316';     // Laranja para mergulhos e retração (Z vertical)
+const COR_CORTE = '#EF4444';        // Vermelho para corte linear (G01)
+const COR_LEAD = '#E2AC00';         // Amarelo para lead-in/lead-out suaves
+const COR_CONCLUIDO = '#10B981';    // Verde para indicar caminhos já usinados
 
 export default function ToolpathPreview({
-  layout,
-  escala,
-  animando,
-  velocidadeAnimacao,
+  program,
+  tempoAtual,
+  mostrarCaminho,
 }: ToolpathPreviewProps) {
-  const segmentos = useMemo(
-    () => calcularSequenciaCorte(layout, escala),
-    [layout, escala],
-  );
+  
+  // Se o percurso estiver desabilitado, não renderiza nada
+  if (!mostrarCaminho) {
+    return null;
+  }
 
-  const [progresso, setProgresso] = useState(0);
-  const animRef = useRef<number>(0);
-  const lastTime = useRef(0);
+  // Mapeia e divide os segmentos do SimulationProgram para renderização
+  const segmentosRender = useMemo(() => {
+    const list: {
+      from: [number, number, number];
+      to: [number, number, number];
+      cor: string;
+      opacidade: number;
+      espessura: number;
+    }[] = [];
 
-  useEffect(() => {
-    if (!animando) {
-      setProgresso(0);
-      return;
+    let accTempo = 0;
+
+    for (let c = 0; c < program.commands.length; c++) {
+      const cmd = program.commands[c];
+      const cmdDur = cmd.tempoEstimado || 0;
+
+      const concluidoTotalmente = accTempo + cmdDur <= tempoAtual;
+      const emAndamento = accTempo <= tempoAtual && accTempo + cmdDur > tempoAtual;
+
+      // Se o comando ainda não foi iniciado no tempoAtual
+      if (accTempo > tempoAtual) {
+        // Renderiza com opacidade baixa e cor nominal para o operador ver o percurso futuro
+        cmd.segments.forEach((s) => {
+          let cor = COR_CORTE;
+          if (s.tipo === 'rapid') cor = COR_RAPIDO;
+          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move') cor = COR_MERGULHO;
+          else if (s.tipo === 'lead_in' || s.tipo === 'lead_out') cor = COR_LEAD;
+
+          list.push({
+            from: [s.from.x, s.from.z, s.from.y], // Converte para o referencial XYZ do R3F
+            to: [s.to.x, s.to.z, s.to.y],
+            cor,
+            opacidade: 0.15,
+            espessura: 1,
+          });
+        });
+      } else if (concluidoTotalmente) {
+        // Comando totalmente executado e cortado
+        cmd.segments.forEach((s) => {
+          const cor = s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
+            ? COR_CONCLUIDO
+            : COR_RAPIDO;
+
+          list.push({
+            from: [s.from.x, s.from.z, s.from.y],
+            to: [s.to.x, s.to.z, s.to.y],
+            cor,
+            opacidade: 0.45,
+            espessura: s.tipo === 'cutting' ? 2 : 1,
+          });
+        });
+      } else if (emAndamento) {
+        // Comando sendo usinado neste exato milissegundo!
+        const tempoNoCmd = tempoAtual - accTempo;
+        let accSegTempo = 0;
+
+        cmd.segments.forEach((s) => {
+          const dx = s.to.x - s.from.x;
+          const dy = s.to.y - s.from.y;
+          const dz = s.to.z - s.from.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          const segDur = dist / (s.velocidade / 60);
+
+          let cor = COR_CORTE;
+          if (s.tipo === 'rapid') cor = COR_RAPIDO;
+          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move') cor = COR_MERGULHO;
+          else if (s.tipo === 'lead_in' || s.tipo === 'lead_out') cor = COR_LEAD;
+
+          if (accSegTempo > tempoNoCmd) {
+            // Segmento futuro deste comando ativo
+            list.push({
+              from: [s.from.x, s.from.z, s.from.y],
+              to: [s.to.x, s.to.z, s.to.y],
+              cor,
+              opacidade: 0.15,
+              espessura: 1,
+            });
+          } else if (accSegTempo + segDur <= tempoNoCmd) {
+            // Segmento concluído deste comando ativo
+            const concluidoCor = s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
+              ? COR_CONCLUIDO
+              : COR_RAPIDO;
+
+            list.push({
+              from: [s.from.x, s.from.z, s.from.y],
+              to: [s.to.x, s.to.z, s.to.y],
+              cor: concluidoCor,
+              opacidade: 0.7,
+              espessura: 2,
+            });
+          } else {
+            // Segmento ativo sendo usinado no momento exato (interpolado)
+            const frac = (tempoNoCmd - accSegTempo) / (segDur || 1);
+            const stopX = s.from.x + (s.to.x - s.from.x) * frac;
+            const stopY = s.from.y + (s.to.y - s.from.y) * frac;
+            const stopZ = s.from.z + (s.to.z - s.from.z) * frac;
+
+            // Parte concluída
+            list.push({
+              from: [s.from.x, s.from.z, s.from.y],
+              to: [stopX, stopY, stopZ],
+              cor: s.tipo === 'cutting' ? COR_CONCLUIDO : COR_RAPIDO,
+              opacidade: 0.9,
+              espessura: 3,
+            });
+
+            // Parte futura restante
+            list.push({
+              from: [stopX, stopY, stopZ],
+              to: [s.to.x, s.to.z, s.to.y],
+              cor,
+              opacidade: 0.2,
+              espessura: 1,
+            });
+          }
+          accSegTempo += segDur;
+        });
+      }
+
+      accTempo += cmdDur;
     }
 
-    lastTime.current = performance.now();
-    let accTime = 0;
-    const duracaoTotal = Math.max(1000, segmentos.length * (1600 / velocidadeAnimacao));
-
-    function animate(now: number) {
-      const dt = now - lastTime.current;
-      lastTime.current = now;
-      accTime += dt;
-      const pct = Math.min(accTime / duracaoTotal, 1);
-      setProgresso(pct);
-      if (pct < 1) {
-        animRef.current = requestAnimationFrame(animate);
-      }
-    }
-
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [animando, velocidadeAnimacao, segmentos.length]);
-
-  const segmentosVisiveis = useMemo(() => {
-    const total = segmentos.length;
-    const ateIdx = Math.floor(progresso * total);
-
-    return segmentos.map((seg, i) => {
-      let cor: string;
-      if (i < ateIdx) {
-        cor = seg.tipo === 'serra' ? TP_COMPLETED_COLOR : '#374151';
-      } else if (i === ateIdx && animando) {
-        cor = TP_ACTIVE_COLOR;
-      } else {
-        cor = seg.tipo === 'serra' ? TP_COLOR : 'transparent';
-      }
-      const opacity = i === ateIdx && animando ? 1 : i < ateIdx ? 0.6 : seg.tipo === 'serra' ? 0.35 : 0;
-      return { seg, cor, opacity, isActive: i === ateIdx && animando };
-    });
-  }, [segmentos, progresso, animando]);
-
-  // Active cut head position
-  const cabecaPos = useMemo(() => {
-    if (!animando || segmentos.length === 0) return null;
-    const total = segmentos.length;
-    const idx = Math.min(Math.floor(progresso * total), total - 1);
-    const seg = segmentos[idx];
-    const frac = (progresso * total) - idx;
-    if (!seg) return null;
-    return {
-      x: seg.from.x + (seg.to.x - seg.from.x) * frac,
-      z: seg.from.z + (seg.to.z - seg.from.z) * frac,
-    };
-  }, [segmentos, progresso, animando]);
-
-  if (segmentos.length === 0) return null;
+    return list;
+  }, [program, tempoAtual]);
 
   return (
     <group>
-      {/* Linhas de corte */}
-      {segmentosVisiveis.map((sv, i) => {
-        if (sv.opacity === 0) return null;
-        return (
-          <lineSegments key={`corte-${i}`}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                count={2}
-                array={new Float32Array([
-                  sv.seg.from.x, 0.005, sv.seg.from.z,
-                  sv.seg.to.x, 0.005, sv.seg.to.z,
-                ])}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
-              color={sv.cor}
-              transparent
-              opacity={sv.opacity}
-              linewidth={sv.isActive ? 2 : 1}
+      {segmentosRender.map((r, i) => (
+        <lineSegments key={`tp-${i}`}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={2}
+              array={new Float32Array([
+                r.from[0], r.from[2], r.from[1],
+                r.to[0], r.to[2], r.to[1],
+              ])}
+              itemSize={3}
             />
-          </lineSegments>
-        );
-      })}
-
-      {/* Active cut head (Spindle CNC Industrial) */}
-      {cabecaPos && animando && (
-        <group position={[cabecaPos.x, 0.01, cabecaPos.z]}>
-          {/* Luz de Trabalho do Spindle (LED apontado para o corte) */}
-          <pointLight position={[0, 0.1, 0]} intensity={1.5} distance={1.2} color="#00FFFF" />
-          
-          {/* Broca de corte (Fresa dourada de metal duro) */}
-          <mesh position={[0, 0.08, 0]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.16, 8]} />
-            <meshStandardMaterial color="#FBBF24" emissive="#D97706" emissiveIntensity={0.2} metalness={0.9} roughness={0.1} />
-          </mesh>
-          
-          {/* Mandril (Collet porta-fresa em Cromo Polido) */}
-          <mesh position={[0, 0.18, 0]}>
-            <cylinderGeometry args={[0.04, 0.04, 0.05, 12]} />
-            <meshStandardMaterial color="#F3F4F6" metalness={0.95} roughness={0.05} />
-          </mesh>
-
-          {/* Anel Inferior de LED de Trabalho (Neon Ciano) */}
-          <mesh position={[0, 0.19, 0]}>
-            <torusGeometry args={[0.041, 0.006, 8, 20]} />
-            <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={3} />
-          </mesh>
-          
-          {/* Porca do Mandril (Preto Industrial) */}
-          <mesh position={[0, 0.22, 0]}>
-            <cylinderGeometry args={[0.045, 0.045, 0.03, 6]} />
-            <meshStandardMaterial color="#1F2937" metalness={0.8} roughness={0.4} />
-          </mesh>
-          
-          {/* Corpo do motor - Parte Inferior (Laranja Industrial Vibrante) */}
-          <mesh position={[0, 0.35, 0]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.22, 16]} />
-            <meshStandardMaterial color="#EA580C" metalness={0.3} roughness={0.15} />
-          </mesh>
-
-          {/* Aletas de Refrigeração Cromadas / Detalhe Central de Aço */}
-          <mesh position={[0, 0.48, 0]}>
-            <cylinderGeometry args={[0.078, 0.078, 0.06, 16]} />
-            <meshStandardMaterial color="#E5E7EB" metalness={0.95} roughness={0.05} />
-          </mesh>
-          
-          {/* Corpo do motor - Parte Superior (Laranja Industrial Vibrante) */}
-          <mesh position={[0, 0.60, 0]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.18, 16]} />
-            <meshStandardMaterial color="#EA580C" metalness={0.3} roughness={0.15} />
-          </mesh>
-          
-          {/* Topo do Spindle (Tampa Metálica Cromada) */}
-          <mesh position={[0, 0.70, 0]}>
-            <cylinderGeometry args={[0.08, 0.06, 0.03, 16]} />
-            <meshStandardMaterial color="#F3F4F6" metalness={0.95} roughness={0.05} />
-          </mesh>
-
-          {/* Tampa do Cooler do Topo (Preto Industrial) */}
-          <mesh position={[0, 0.72, 0]}>
-            <cylinderGeometry args={[0.05, 0.05, 0.01, 16]} />
-            <meshStandardMaterial color="#111827" metalness={0.8} roughness={0.5} />
-          </mesh>
-          
-          {/* Anel de LED Superior indicativo de operação (Azul Neon) */}
-          <mesh position={[0, 0.68, 0]}>
-            <torusGeometry args={[0.081, 0.008, 8, 24]} />
-            <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={3} />
-          </mesh>
-        </group>
-      )}
-
-      {/* Serra disc indicators at each piece corner */}
-      {layout.pecas.map((peca) => {
-        const px = peca.x / escala;
-        const pz = peca.y / escala;
-        const pc = peca.comprimento / escala;
-        const pl = peca.largura / escala;
-        const corners = [
-          [px, pz],
-          [px + pc, pz],
-          [px, pz + pl],
-          [px + pc, pz + pl],
-        ];
-        return corners.map(([cx, cz], ci) => (
-          <lineSegments key={`kerf-${peca.id}-${ci}`}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                count={2}
-                array={new Float32Array([
-                  cx - 0.03, 0.005, cz - 0.03,
-                  cx + 0.03, 0.005, cz + 0.03,
-                ])}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color={TP_COLOR} transparent opacity={0.2} />
-          </lineSegments>
-        ));
-      })}
+          </bufferGeometry>
+          <lineBasicMaterial
+            color={r.cor}
+            transparent
+            opacity={r.opacidade}
+            linewidth={r.espessura}
+          />
+        </lineSegments>
+      ))}
     </group>
   );
 }

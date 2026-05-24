@@ -1,14 +1,28 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle } from 'lucide-react';
+import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle, Cpu, ShieldAlert, CheckCircle, FileCheck } from 'lucide-react';
 import { listarPlanos } from '../../infrastructure/repositories/PlanoCorteRepository';
 import { MaxRectsOptimizer } from '../../../plano-corte/domain/services/MaxRectsOptimizer';
 import CanvasSimulador3D from '../components/CanvasSimulador3D';
 import InfoCorte from '../components/InfoCorte';
 import PainelPecasRapido from '../components/PainelPecasRapido';
-import type { PlanoCorteCarregado, LayoutSimulacao, PecaSimulacao, ChapaSimulacao } from '../../domain/types';
+import type { PlanoCorteCarregado, LayoutSimulacao, PecaSimulacao } from '../../domain/types';
 import type { Peca } from '../../../plano-corte/domain/types';
 
+// NOVAS IMPORTAÇÕES DO MOTOR INDUSTRIAL CNC
+import {
+  gerarSimulationProgram,
+  calcularMetrics,
+  obterEstadoNoInstante,
+} from '../../domain/simulationEngine';
+import {
+  exportarRelatorioCNC,
+  exportarEtiquetasCNC,
+} from '../components/LabelExporter';
+import TimelineControls from '../components/TimelineControls';
+import MetricsPanel from '../components/MetricsPanel';
+
 type ModoSimulador = 'rapida' | 'carregar';
+type ModoExibicao = 'layout' | 'simulacao' | 'verificacao';
 
 interface PecaInput {
   id: string;
@@ -28,22 +42,10 @@ const DEFAULT_CHAPAS = [
   { label: 'PERSONALIZADO', largura: 2750, altura: 1830, espessura: 18 },
 ];
 
-const DEFAULT_ESPESSURA = 18;
-
 let idCounter = 0;
 function gerarId() {
   idCounter += 1;
   return `peca_${Date.now()}_${idCounter}`;
-}
-
-function extrairEspessura(plano: PlanoCorteCarregado, chapaId: string, chapaSku?: string): number {
-  const mats = (plano.materiais || []) as any[];
-  for (const m of mats) {
-    if (m.id === chapaId || m.sku_chapa === chapaSku || m.sku === chapaSku) {
-      return Number(m.espessura_mm) || 18;
-    }
-  }
-  return 18;
 }
 
 function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[] {
@@ -69,6 +71,15 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
         const larg = l.largura_original_mm || (mat ? Number(mat.largura_mm) : 0) || 2750;
         const alt = l.altura_original_mm || (mat ? Number(mat.altura_mm) : 0) || 1830;
         const skuChapa = l.chapa_sku || mat?.sku_chapa || chapaId;
+        
+        // Coleta os espaços vazios reais gerados no layout de nesting para exibir os retalhos
+        const espacosLivres = (l.espacos_livres || []).map((e: any) => ({
+          x: e.x || 0,
+          y: e.y || 0,
+          largura: e.largura || e.w || 0,
+          altura: e.altura || e.h || 0
+        }));
+
         layouts.push({
           chapa: {
             sku: `${skuChapa.toUpperCase()} - CHAPA ${layoutCount}`,
@@ -89,7 +100,7 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
           area_aproveitada_mm2: l.area_aproveitada_mm2 || 0,
           area_total_mm2: l.area_total_mm2 || 1,
           aproveitamento_percentual: l.aproveitamento_percentual || 0,
-          espacos_vazios: l.espacos_livres,
+          espacos_vazios: espacosLivres,
         });
       }
     }
@@ -140,7 +151,7 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
           area_aproveitada_mm2: res.area_usada,
           area_total_mm2: res.area_total,
           aproveitamento_percentual: res.aproveitamento,
-          espacos_vazios: res.espacos_vazios,
+          espacos_vazios: res.espacos_vazios.map(e => ({ x: e.x, y: e.y, largura: e.largura, altura: e.altura })),
         });
 
         if (res.pecas_rejeitadas.length === 0) {
@@ -167,11 +178,24 @@ export default function SimuladorCortePage() {
   const [telaCheia, setTelaCheia] = useState(false);
   const [loadingPlanos, setLoadingPlanos] = useState(false);
   const [processando, setProcessando] = useState(false);
+
+  // CONFIGURAÇÕES DE EXIBIÇÃO DO SIMULADOR CNC
+  const [modoExibicao, setModoExibicao] = useState<ModoExibicao>('simulacao');
   const [mostrarGrade, setMostrarGrade] = useState(true);
   const [mostrarCotas, setMostrarCotas] = useState(true);
-  const [mostrarAnimacao, setMostrarAnimacao] = useState(false);
   const [mostrarRetalhos, setMostrarRetalhos] = useState(true);
-  const [velocidadeAnimacao, setVelocidadeAnimacao] = useState(1);
+  
+  // Toggles industriais
+  const [mostrarMaquina, setMostrarMaquina] = useState(true);
+  const [mostrarStock, setMostrarStock] = useState(true);
+  const [mostrarClamps, setMostrarClamps] = useState(true);
+  const [mostrarCaminho, setMostrarCaminho] = useState(true);
+
+  // ESTADO DE PLAYBACK
+  const [tempoAtual, setTempoAtual] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [velocidadeSimulacao, setVelocidadeSimulacao] = useState(1);
+  const [stopOnCollision, setStopOnCollision] = useState(true);
 
   const [chapaLargura, setChapaLargura] = useState(2750);
   const [chapaAltura, setChapaAltura] = useState(1830);
@@ -194,6 +218,95 @@ export default function SimuladorCortePage() {
   const layoutAtual = layouts[indiceChapa] ?? null;
   const totalChapas = Math.max(layouts.length, 1);
 
+  // GERAÇÃO DO PROGRAMA DE SIMULAÇÃO INDUSTRIAL E MÉTRICAS
+  const program = useMemo(() => {
+    if (!layoutAtual) return null;
+    return gerarSimulationProgram(layoutAtual);
+  }, [layoutAtual]);
+
+  const metrics = useMemo(() => {
+    if (!layoutAtual || !program) return null;
+    return calcularMetrics(program, layoutAtual);
+  }, [layoutAtual, program]);
+
+  // Posição física instantânea da ferramenta
+  const posicaoAtual = useMemo(() => {
+    if (!program) {
+      return { x: 0, y: 0, z: 50, spindleOn: false, rpm: 0, tipoMovimento: 'safe_move' };
+    }
+    return obterEstadoNoInstante(program, tempoAtual);
+  }, [program, tempoAtual]);
+
+  // CONTROLADORES DE TIMELINE PLAYBACK (Loop em tempo real)
+  useEffect(() => {
+    if (!playing || !program) return;
+
+    let lastTime = performance.now();
+    const interval = setInterval(() => {
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000; // segundos
+      lastTime = now;
+
+      setTempoAtual((prev) => {
+        const next = prev + dt * velocidadeSimulacao;
+        const total = program.totalTempoEstimado;
+
+        // Se habilitado Parar em Colisão, analisa se cruzou algum erro
+        if (stopOnCollision) {
+          const erroDetectado = program.issues.find(
+            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
+          );
+          if (erroDetectado) {
+            setPlaying(false);
+            alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.`);
+            return erroDetectado.tempo; // para no instante exato da colisão
+          }
+        }
+
+        if (next >= total) {
+          setPlaying(false);
+          return total;
+        }
+        return next;
+      });
+    }, 30); // ~33 FPS para suavidade de 3D
+
+    return () => clearInterval(interval);
+  }, [playing, program, velocidadeSimulacao, stopOnCollision]);
+
+  // Reseta timeline ao trocar de layout
+  useEffect(() => {
+    setTempoAtual(0);
+    setPlaying(false);
+  }, [indiceChapa, modo]);
+
+  // Reseta visualizações baseadas no modo de exibição selecionado
+  useEffect(() => {
+    if (modoExibicao === 'layout') {
+      setMostrarMaquina(false);
+      setMostrarStock(false);
+      setMostrarClamps(false);
+      setMostrarCaminho(false);
+      setTempoAtual(0);
+      setPlaying(false);
+    } else if (modoExibicao === 'simulacao') {
+      setMostrarMaquina(true);
+      setMostrarStock(true);
+      setMostrarClamps(true);
+      setMostrarCaminho(true);
+    } else if (modoExibicao === 'verificacao') {
+      setMostrarMaquina(true);
+      setMostrarStock(true);
+      setMostrarClamps(true);
+      setMostrarCaminho(true);
+      if (program) {
+        setTempoAtual(program.totalTempoEstimado); // avança para o final para inspecionar
+      }
+      setPlaying(false);
+    }
+  }, [modoExibicao, program]);
+
+  // Busca planos
   useEffect(() => {
     if (modo !== 'carregar') return;
     setLoadingPlanos(true);
@@ -264,7 +377,7 @@ export default function SimuladorCortePage() {
           const optimizer = new MaxRectsOptimizer(chapaLargura, chapaAltura, 3, 15);
           const resultado = optimizer.otimizar(pecasParaProcessar);
 
-          const chapa: ChapaSimulacao = {
+          const chapa = {
             sku: `${chapaSku.toUpperCase()} - CHAPA ${chapaIndex}`,
             largura: chapaLargura,
             altura: chapaAltura,
@@ -286,7 +399,7 @@ export default function SimuladorCortePage() {
             area_aproveitada_mm2: resultado.area_usada,
             area_total_mm2: resultado.area_total,
             aproveitamento_percentual: resultado.aproveitamento,
-            espacos_vazios: resultado.espacos_vazios,
+            espacos_vazios: resultado.espacos_vazios.map(e => ({ x: e.x, y: e.y, largura: e.largura, altura: e.altura })),
           });
 
           if (resultado.pecas_rejeitadas.length === 0) {
@@ -303,6 +416,7 @@ export default function SimuladorCortePage() {
         setResultadoRapido(layoutsTemp);
         setIndiceChapa(0);
         setPecaSelecionada(null);
+        setModoExibicao('simulacao'); // joga para simulação após calcular
       } catch (err) {
         console.error('ERRO NA OTIMIZAÇÃO:', err);
       } finally {
@@ -315,6 +429,7 @@ export default function SimuladorCortePage() {
     setPlanoAtivo(plano);
     setIndiceChapa(0);
     setPecaSelecionada(null);
+    setModoExibicao('simulacao');
   }, []);
 
   const handleSelecionarPeca = useCallback((peca: PecaSimulacao | null) => {
@@ -337,6 +452,24 @@ export default function SimuladorCortePage() {
     setPecaSelecionada(null);
   }, []);
 
+  const handleJumpToIssue = useCallback((tempo: number, posicao: { x: number; y: number; z: number }) => {
+    setTempoAtual(tempo);
+    setPlaying(false);
+  }, []);
+
+  // EXPORTAÇÕES DE DOCUMENTAÇÃO E RELATÓRIO
+  const handleExportRelatorio = useCallback(() => {
+    if (!layoutAtual || !program || !metrics) return;
+    const nomeRelatorio = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
+    exportarRelatorioCNC(layoutAtual, program, metrics, nomeRelatorio);
+  }, [layoutAtual, program, metrics, modo, planoAtivo]);
+
+  const handleExportEtiquetas = useCallback(() => {
+    if (!layoutAtual) return;
+    const nomeEtiqueta = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
+    exportarEtiquetasCNC(layoutAtual, nomeEtiqueta);
+  }, [layoutAtual, modo, planoAtivo]);
+
   return (
     <div className="page-container anim-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -345,8 +478,8 @@ export default function SimuladorCortePage() {
             <Scissors className="text-[#E2AC00]" size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-white tracking-tight">SIMULADOR DE CORTE 3D</h1>
-            <p className="text-[#6B7280] text-xs tracking-wider">VISUALIZAÇÃO INTERATIVA DE LAYOUT DE CORTE</p>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">SIMULADOR INDUSTRIAL ROUTER CNC</h1>
+            <p className="text-[#6B7280] text-xs tracking-wider">MOTOR DE SIMULAÇÃO CAM, CINEMÁTICA DE MÁQUINA E VERIFICAÇÃO</p>
           </div>
         </div>
         <button
@@ -382,7 +515,7 @@ export default function SimuladorCortePage() {
       {/* MODO SIMULAÇÃO RÁPIDA */}
       {modo === 'rapida' && (
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="w-full lg:w-96 space-y-4">
+          <div className="w-full lg:w-96 space-y-4 shrink-0">
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
               <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider mb-3 flex items-center gap-2">
                 <Grid3x3 size={14} />
@@ -435,7 +568,7 @@ export default function SimuladorCortePage() {
                   <Plus size={12} /> ADICIONAR
                 </button>
               </div>
-              <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+              <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                 {pecasInput.map((peca, idx) => (
                   <div key={peca.id} className="bg-[#1F2937]/50 rounded-lg p-2.5 border border-[#1F2937]">
                     <div className="flex items-center justify-between mb-1.5">
@@ -453,7 +586,7 @@ export default function SimuladorCortePage() {
                       <div>
                         <label className="text-[#6B7280] text-[9px] block">COMP.</label>
                         <input type="number" value={peca.comprimento}
-                          onChange={(e) => handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))}
+                           onChange={(e) => handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))}
                           className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
                         />
                       </div>
@@ -487,102 +620,143 @@ export default function SimuladorCortePage() {
                 disabled={processando}
                 className="w-full mt-3 flex items-center justify-center gap-2 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs py-2.5 rounded-lg transition-all disabled:opacity-50"
               >
-                {processando ? <><RotateCw size={14} className="animate-spin" /> PROCESSANDO...</> : <><Play size={14} /> SIMULAR</>}
+                {processando ? <><RotateCw size={14} className="animate-spin" /> OTIMIZANDO...</> : <><Play size={14} /> EXECUTAR NESTING</>}
               </button>
             </div>
           </div>
 
-          {layoutAtual ? (
-            <>
-              <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                {/* Info bar */}
-                <div className="flex flex-col gap-1 bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[#E2AC00] text-xs font-bold tracking-wider">SIMULAÇÃO RÁPIDA</span>
-                      <span className="text-[#6B7280] text-[10px]">|</span>
-                      <span className="text-white text-xs">{layoutAtual.chapa.sku}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
-                      <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
-                    </div>
-                  </div>
-                  {/* Toggle controls */}
-                  <div className="flex items-center gap-2 pt-1 border-t border-[#1F2937]">
-                    <button
-                      onClick={() => setMostrarGrade(!mostrarGrade)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarGrade ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Grid3x3 size={11} /> GRADE
-                    </button>
-                    <button
-                      onClick={() => setMostrarCotas(!mostrarCotas)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarCotas ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Ruler size={11} /> COTAS
-                    </button>
-                    <button
-                      onClick={() => { setMostrarAnimacao(!mostrarAnimacao); if (!mostrarAnimacao) setMostrarRetalhos(false); }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarAnimacao ? 'bg-red-500/20 text-red-400' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <PlayCircle size={11} /> CORTE
-                    </button>
-                    <button
-                      onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarRetalhos ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Box size={11} /> RETALHOS
-                    </button>
-                    {mostrarAnimacao && (
-                      <div className="flex items-center gap-1 ml-2">
-                        <span className="text-[#6B7280] text-[10px]">VEL:</span>
-                        <input
-                          type="range"
-                          min={0.5}
-                          max={3}
-                          step={0.5}
-                          value={velocidadeAnimacao}
-                          onChange={(e) => setVelocidadeAnimacao(Number(e.target.value))}
-                          className="w-16 h-1 accent-[#EF4444]"
-                        />
-                        <span className="text-white text-[10px] w-4">{velocidadeAnimacao}x</span>
+          {layoutAtual && program && metrics ? (
+            <div className="flex-1 flex flex-col gap-4 min-w-0">
+              <div className={`flex flex-col lg:flex-row gap-4 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
+                <div className="flex-1 flex flex-col gap-3 min-w-0">
+                  {/* CONFIGURAÇÃO E ABAS DE MODO (PREVIEW vs SIMULAÇÃO vs VERIFICAÇÃO) */}
+                  <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
+                        <button
+                          onClick={() => setModoExibicao('layout')}
+                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                            modoExibicao === 'layout' ? 'bg-[#1F2937] text-white' : 'text-[#6B7280] hover:text-white'
+                          }`}
+                        >
+                          PREVIEW LAYOUT
+                        </button>
+                        <button
+                          onClick={() => setModoExibicao('simulacao')}
+                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                            modoExibicao === 'simulacao' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white'
+                          }`}
+                        >
+                          SIMULAÇÃO CNC
+                        </button>
+                        <button
+                          onClick={() => setModoExibicao('verificacao')}
+                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                            modoExibicao === 'verificacao' ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30' : 'text-[#6B7280] hover:text-white'
+                          }`}
+                        >
+                          VERIFICAÇÃO CAM
+                        </button>
                       </div>
-                    )}
+                      
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronLeft size={16} /></button>
+                        <span className="text-white text-xs font-semibold min-w-[50px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                        <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronRight size={16} /></button>
+                      </div>
+                    </div>
+
+                    {/* Toggles de Visualização 3D */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
+                      <button onClick={() => setMostrarGrade(!mostrarGrade)} className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GRADE</button>
+                      <button onClick={() => setMostrarCotas(!mostrarCotas)} className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>COTAS</button>
+                      <button onClick={() => setMostrarRetalhos(!mostrarRetalhos)} className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>SOBRAS</button>
+                      
+                      <span className="text-[#374151] font-bold">|</span>
+
+                      <button onClick={() => setMostrarMaquina(!mostrarMaquina)} className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>MÁQUINA</button>
+                      <button onClick={() => setMostrarStock(!mostrarStock)} className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>USINAGEM (STOCK)</button>
+                      <button onClick={() => setMostrarClamps(!mostrarClamps)} className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GARRAS</button>
+                      <button onClick={() => setMostrarCaminho(!mostrarCaminho)} className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>TOOLPATH</button>
+                    </div>
                   </div>
+
+                  {/* 3D CANVAS */}
+                  <div className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}>
+                    <CanvasSimulador3D
+                      layout={layoutAtual}
+                      onSelecionarPeca={handleSelecionarPeca}
+                      habilitarGrade={mostrarGrade}
+                      habilitarCotas={mostrarCotas}
+                      habilitarRetalhos={mostrarRetalhos}
+                      mostrarMaquina={mostrarMaquina}
+                      mostrarStock={mostrarStock}
+                      mostrarClamps={mostrarClamps}
+                      mostrarCaminho={mostrarCaminho}
+                      program={program}
+                      tempoAtual={tempoAtual}
+                    />
+                  </div>
+
+                  {/* CONTROLES DE TIMELINE */}
+                  {modoExibicao === 'simulacao' && (
+                    <TimelineControls
+                      program={program}
+                      tempoAtual={tempoAtual}
+                      onTempoChange={setTempoAtual}
+                      playing={playing}
+                      onPlayingChange={setPlaying}
+                      velocidade={velocidadeSimulacao}
+                      onVelocidadeChange={setVelocidadeSimulacao}
+                      stopOnCollision={stopOnCollision}
+                      onStopOnCollisionChange={setStopOnCollision}
+                    />
+                  )}
                 </div>
-                <div className={`${telaCheia ? 'h-[calc(100vh-100px)]' : 'h-[500px]'} rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]`}>
-                  <CanvasSimulador3D
-                    layout={layoutAtual}
-                    onSelecionarPeca={handleSelecionarPeca}
-                    habilitarGrade={mostrarGrade}
-                    habilitarCotas={mostrarCotas}
-                    habilitarAnimacao={mostrarAnimacao}
-                    habilitarRetalhos={mostrarRetalhos}
-                    velocidadeAnimacao={velocidadeAnimacao}
+
+                {/* PAINEL DE INFORMAÇÕES E ANÁLISE DE SEGURANÇA */}
+                <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+                  <div className="flex gap-2">
+                    <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                      <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO PDF
+                    </button>
+                    <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                      <Box size={14} className="text-[#10B981]" /> ETIQUETAS
+                    </button>
+                  </div>
+                  
+                  {/* Legenda CAM Toolpath */}
+                  {mostrarCaminho && (
+                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
+                      <span className="text-white font-bold block mb-1.5 text-[10px]">LEGENDA DO PERCURSO DE CORTE:</span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00 Deslocamento Rápido</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho Vertical</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso de Corte</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In / Out</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem Concluída</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <MetricsPanel
+                    program={program}
+                    metrics={metrics}
+                    tempoAtual={tempoAtual}
+                    posicaoAtual={posicaoAtual}
+                    onJumpToIssue={handleJumpToIssue}
                   />
+
+                  <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
                 </div>
               </div>
-              <div className="w-full lg:w-80 space-y-4">
-                <InfoCorte layout={layoutAtual} pecaSelecionada={pecaSelecionada} indiceChapa={indiceChapa} totalChapas={totalChapas} />
-                <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
-              </div>
-            </>
+            </div>
           ) : (
             <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl flex items-center justify-center min-h-[500px]">
               <div className="text-center">
                 <Scissors size={48} className="text-[#374151] mx-auto mb-3" />
-                <p className="text-[#6B7280] text-sm font-medium">ADICIONE PEÇAS E CLIQUE EM "SIMULAR"</p>
-                <p className="text-[#6B7280] text-[11px] mt-1">O RESULTADO APARECERÁ AQUI EM 3D</p>
+                <p className="text-[#6B7280] text-sm font-medium">ADICIONE PEÇAS E CLIQUE EM "EXECUTAR NESTING"</p>
+                <p className="text-[#6B7280] text-[11px] mt-1">A SIMULAÇÃO DE ROUTER 3D APARECERÁ AQUI</p>
               </div>
             </div>
           )}
@@ -595,7 +769,7 @@ export default function SimuladorCortePage() {
           {loadingPlanos && (
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
               <RotateCw size={32} className="text-[#374151] mx-auto mb-3 animate-spin" />
-              <p className="text-[#6B7280] text-xs">CARREGANDO PLANOS...</p>
+              <p className="text-[#6B7280] text-xs">CARREGANDO PLANOS DE CORTE DO ESTOQUE...</p>
             </div>
           )}
 
@@ -603,13 +777,13 @@ export default function SimuladorCortePage() {
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
               <FileText size={40} className="text-[#374151] mx-auto mb-3" />
               <h2 className="text-white font-bold text-sm mb-2">NENHUM PLANO DE CORTE DISPONÍVEL</h2>
-              <p className="text-[#6B7280] text-xs">CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE "SIMULAÇÃO RÁPIDA".</p>
+              <p className="text-[#6B7280] text-xs">CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE A "SIMULAÇÃO RÁPIDA".</p>
             </div>
           )}
 
           {!planoAtivo && !loadingPlanos && planos.length > 0 && (
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-6 mb-6">
-              <h3 className="text-white font-bold text-sm mb-4 tracking-wider">SELECIONE UM PLANO DE CORTE</h3>
+              <h3 className="text-white font-bold text-sm mb-4 tracking-wider">SELECIONE UM PLANO DE CORTE PARA A CNC</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {planos.map((plano) => {
                   const chaps = converterPlanoParaLayouts(plano);
@@ -630,87 +804,129 @@ export default function SimuladorCortePage() {
             </div>
           )}
 
-          {planoAtivo && layoutAtual && (
+          {planoAtivo && layoutAtual && program && metrics && (
             <div className="flex flex-col lg:flex-row gap-4">
-              <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                <div className="flex flex-col gap-1 bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 min-w-0 max-w-[60%]">
-                      <span className="text-[#E2AC00] text-xs font-bold tracking-wider shrink-0">PLANO:</span>
-                      <span className="text-white text-xs font-semibold truncate">{planoAtivo.nome}</span>
+              <div className={`flex-1 flex flex-col gap-3 min-w-0 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
+                
+                {/* Cabeçalho de Navegação e Configurações */}
+                <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
+                      <button
+                        onClick={() => setModoExibicao('layout')}
+                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          modoExibicao === 'layout' ? 'bg-[#1F2937] text-white' : 'text-[#6B7280] hover:text-white'
+                        }`}
+                      >
+                        PREVIEW LAYOUT
+                      </button>
+                      <button
+                        onClick={() => setModoExibicao('simulacao')}
+                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          modoExibicao === 'simulacao' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white'
+                        }`}
+                      >
+                        SIMULAÇÃO CNC
+                      </button>
+                      <button
+                        onClick={() => setModoExibicao('verificacao')}
+                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          modoExibicao === 'verificacao' ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30' : 'text-[#6B7280] hover:text-white'
+                        }`}
+                      >
+                        VERIFICAÇÃO CAM
+                      </button>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
-                      <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-[#6B7280] text-xs font-semibold truncate max-w-[200px]">{planoAtivo.nome}</span>
+                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronLeft size={16} /></button>
+                      <span className="text-white text-xs font-semibold min-w-[55px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronRight size={16} /></button>
                     </div>
                   </div>
-                  {/* Toggle controls */}
-                  <div className="flex items-center gap-2 pt-1 border-t border-[#1F2937]">
-                    <button
-                      onClick={() => setMostrarGrade(!mostrarGrade)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarGrade ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Grid3x3 size={11} /> GRADE
-                    </button>
-                    <button
-                      onClick={() => setMostrarCotas(!mostrarCotas)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarCotas ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Ruler size={11} /> COTAS
-                    </button>
-                    <button
-                      onClick={() => { setMostrarAnimacao(!mostrarAnimacao); if (!mostrarAnimacao) setMostrarRetalhos(false); }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarAnimacao ? 'bg-red-500/20 text-red-400' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <PlayCircle size={11} /> CORTE
-                    </button>
-                    <button
-                      onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
-                        mostrarRetalhos ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
-                      }`}
-                    >
-                      <Box size={11} /> RETALHOS
-                    </button>
-                    {mostrarAnimacao && (
-                      <div className="flex items-center gap-1 ml-2">
-                        <span className="text-[#6B7280] text-[10px]">VEL:</span>
-                        <input
-                          type="range"
-                          min={0.5}
-                          max={3}
-                          step={0.5}
-                          value={velocidadeAnimacao}
-                          onChange={(e) => setVelocidadeAnimacao(Number(e.target.value))}
-                          className="w-16 h-1 accent-[#EF4444]"
-                        />
-                        <span className="text-white text-[10px] w-4">{velocidadeAnimacao}x</span>
-                      </div>
-                    )}
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
+                    <button onClick={() => setMostrarGrade(!mostrarGrade)} className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GRADE</button>
+                    <button onClick={() => setMostrarCotas(!mostrarCotas)} className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>COTAS</button>
+                    <button onClick={() => setMostrarRetalhos(!mostrarRetalhos)} className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>SOBRAS</button>
+                    
+                    <span className="text-[#374151] font-bold">|</span>
+
+                    <button onClick={() => setMostrarMaquina(!mostrarMaquina)} className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>MÁQUINA</button>
+                    <button onClick={() => setMostrarStock(!mostrarStock)} className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>USINAGEM (STOCK)</button>
+                    <button onClick={() => setMostrarClamps(!mostrarClamps)} className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GARRAS</button>
+                    <button onClick={() => setMostrarCaminho(!mostrarCaminho)} className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>TOOLPATH</button>
                   </div>
                 </div>
-                <div className={`${telaCheia ? 'h-[calc(100vh-100px)]' : 'h-[500px]'} rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]`}>
+
+                {/* 3D CANVAS */}
+                <div className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}>
                   <CanvasSimulador3D
                     layout={layoutAtual}
                     onSelecionarPeca={handleSelecionarPeca}
                     habilitarGrade={mostrarGrade}
                     habilitarCotas={mostrarCotas}
-                    habilitarAnimacao={mostrarAnimacao}
                     habilitarRetalhos={mostrarRetalhos}
-                    velocidadeAnimacao={velocidadeAnimacao}
+                    mostrarMaquina={mostrarMaquina}
+                    mostrarStock={mostrarStock}
+                    mostrarClamps={mostrarClamps}
+                    mostrarCaminho={mostrarCaminho}
+                    program={program}
+                    tempoAtual={tempoAtual}
                   />
                 </div>
+
+                {/* TIMELINE */}
+                {modoExibicao === 'simulacao' && (
+                  <TimelineControls
+                    program={program}
+                    tempoAtual={tempoAtual}
+                    onTempoChange={setTempoAtual}
+                    playing={playing}
+                    onPlayingChange={setPlaying}
+                    velocidade={velocidadeSimulacao}
+                    onVelocidadeChange={setVelocidadeSimulacao}
+                    stopOnCollision={stopOnCollision}
+                    onStopOnCollisionChange={setStopOnCollision}
+                  />
+                )}
               </div>
-              <div className="w-full lg:w-80 space-y-4">
-                <InfoCorte layout={layoutAtual} pecaSelecionada={pecaSelecionada} indiceChapa={indiceChapa} totalChapas={totalChapas} />
+
+              {/* PAINEL LATERAL DIREITO */}
+              <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+                <div className="flex gap-2">
+                  <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO PDF
+                  </button>
+                  <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <Box size={14} className="text-[#10B981]" /> ETIQUETAS
+                  </button>
+                </div>
+
+                {mostrarCaminho && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
+                    <span className="text-white font-bold block mb-1.5 text-[10px]">LEGENDA DO PERCURSO DE CORTE:</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00 Deslocamento Rápido</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho Vertical</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso de Corte</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In / Out</div>
+                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem Concluída</div>
+                    </div>
+                  </div>
+                )}
+
+                <MetricsPanel
+                  program={program}
+                  metrics={metrics}
+                  tempoAtual={tempoAtual}
+                  posicaoAtual={posicaoAtual}
+                  onJumpToIssue={handleJumpToIssue}
+                />
+
                 <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
+
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
                   <button onClick={() => setPlanoAtivo(null)} className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold py-2.5 rounded-lg transition-all">
                     <Upload size={14} /> TROCAR PLANO
