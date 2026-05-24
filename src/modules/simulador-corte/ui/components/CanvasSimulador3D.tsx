@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { LayoutSimulacao, PecaSimulacao } from '../../domain/types';
 
@@ -29,27 +29,45 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) 
   const e = Math.max(peca.espessura / escala, 0.06);
   const px = peca.x / escala + c / 2;
   const pz = peca.y / escala + l / 2;
+  const py = e / 2;
 
   return (
-    <mesh
-      position={[px, e / 2, pz]}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
-      onPointerOut={() => { document.body.style.cursor = 'default'; }}
-    >
-      <boxGeometry args={[c, e, l]} />
-      <meshStandardMaterial
-        color={selecionada ? '#ffffff' : cor}
-        emissive={selecionada ? '#E2AC00' : '#000000'}
-        emissiveIntensity={selecionada ? 0.3 : 0}
-        roughness={0.6}
-        metalness={0.1}
-      />
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(c, e, l)]} />
-        <lineBasicMaterial color={selecionada ? '#E2AC00' : '#1F2937'} />
-      </lineSegments>
-    </mesh>
+    <group>
+      <mesh
+        position={[px, py, pz]}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'default'; }}
+      >
+        <boxGeometry args={[c, e, l]} />
+        <meshStandardMaterial
+          color={selecionada ? '#ffffff' : cor}
+          emissive={selecionada ? '#E2AC00' : '#000000'}
+          emissiveIntensity={selecionada ? 0.3 : 0}
+          roughness={0.6}
+          metalness={0.1}
+        />
+        <lineSegments>
+          <edgesGeometry args={[new THREE.BoxGeometry(c, e, l)]} />
+          <lineBasicMaterial color={selecionada ? '#E2AC00' : '#1F2937'} />
+        </lineSegments>
+      </mesh>
+      <Html position={[px, py + e + 0.05, pz]} center style={{ pointerEvents: 'none' }}>
+        <div style={{
+          background: selecionada ? '#E2AC00' : 'rgba(0,0,0,0.7)',
+          color: selecionada ? '#000' : '#fff',
+          fontSize: '8px',
+          padding: '2px 4px',
+          borderRadius: '3px',
+          whiteSpace: 'nowrap',
+          fontFamily: 'monospace',
+          fontWeight: 600,
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          {peca.nome} {peca.comprimento}×{peca.largura}
+        </div>
+      </Html>
+    </group>
   );
 }
 
@@ -63,10 +81,10 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
   const cx = sheetW / 2;
   const cz = sheetD / 2;
 
-  const pecasComCor = useMemo(() =>
-    layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] })),
-    [layout.pecas]
-  );
+  const pecasComCor = useMemo(() => {
+    const coloridas = layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] }));
+    return coloridas.sort((a, b) => b.y - a.y);
+  }, [layout.pecas]);
 
   return (
     <>
@@ -74,7 +92,6 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
       <directionalLight position={[10, 20, 10]} intensity={0.8} />
       <directionalLight position={[-10, 5, -10]} intensity={0.3} />
 
-      {/* Chapa — base sólida */}
       <mesh
         position={[cx, -sheetH / 2, cz]}
         onClick={() => { setPecaSelecionada(null); onSelecionarPeca?.(null); }}
@@ -83,13 +100,11 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
         <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
       </mesh>
 
-      {/* Borda da chapa — linha clara para delimitar */}
       <lineSegments position={[cx, 0.01, cz]}>
         <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.01, sheetD)]} />
         <lineBasicMaterial color="#4B5563" />
       </lineSegments>
 
-      {/* Peças */}
       {pecasComCor.map((peca) => (
         <PecaBlock
           key={peca.id}

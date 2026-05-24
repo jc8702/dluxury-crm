@@ -443,20 +443,24 @@ export default function SimuladorCortePage() {
           {layoutAtual ? (
             <>
               <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                <div className="h-full min-h-[500px]">
+                {/* Info bar */}
+                <div className="flex items-center justify-between bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[#E2AC00] text-xs font-bold tracking-wider">SIMULAÇÃO RÁPIDA</span>
+                    <span className="text-[#6B7280] text-[10px]">|</span>
+                    <span className="text-white text-xs">{layoutAtual.chapa.sku}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
+                    <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                    <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
                   <CanvasSimulador3D layout={layoutAtual} onSelecionarPeca={handleSelecionarPeca} />
                 </div>
               </div>
               <div className="w-full lg:w-80 space-y-4">
-                {layouts.length > 1 && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3">
-                    <div className="flex items-center justify-between">
-                      <button onClick={() => handleNavegarChapa(-1)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00]"><ChevronLeft size={18} /></button>
-                      <span className="text-white text-xs font-semibold">CHAPA {indiceChapa + 1} / {layouts.length}</span>
-                      <button onClick={() => handleNavegarChapa(1)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00]"><ChevronRight size={18} /></button>
-                    </div>
-                  </div>
-                )}
                 <InfoCorte layout={layoutAtual} pecaSelecionada={pecaSelecionada} indiceChapa={indiceChapa} totalChapas={totalChapas} />
                 <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
               </div>
@@ -517,20 +521,22 @@ export default function SimuladorCortePage() {
           {planoAtivo && layoutAtual && (
             <div className="flex flex-col lg:flex-row gap-4">
               <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                <div className="h-full min-h-[500px]">
+                <div className="flex items-center justify-between bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
+                  <div className="flex items-center gap-3 min-w-0 max-w-[60%]">
+                    <span className="text-[#E2AC00] text-xs font-bold tracking-wider shrink-0">PLANO:</span>
+                    <span className="text-white text-xs font-semibold truncate">{planoAtivo.nome}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
+                    <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                    <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
                   <CanvasSimulador3D layout={layoutAtual} onSelecionarPeca={handleSelecionarPeca} />
                 </div>
               </div>
               <div className="w-full lg:w-80 space-y-4">
-                {layouts.length > 1 && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3">
-                    <div className="flex items-center justify-between">
-                      <button onClick={() => handleNavegarChapa(-1)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00]"><ChevronLeft size={18} /></button>
-                      <span className="text-white text-xs font-semibold">CHAPA {indiceChapa + 1} / {layouts.length}</span>
-                      <button onClick={() => handleNavegarChapa(1)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00]"><ChevronRight size={18} /></button>
-                    </div>
-                  </div>
-                )}
                 <InfoCorte layout={layoutAtual} pecaSelecionada={pecaSelecionada} indiceChapa={indiceChapa} totalChapas={totalChapas} />
                 <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
