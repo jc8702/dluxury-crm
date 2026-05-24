@@ -6,8 +6,8 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
   describe('Análise Semântica de SKUs (Mapeamento de Siglas)', () => {
     it('deve parsear corretamente um SKU de balcão de cozinha com gavetas e portas em MDF 18mm', () => {
       const parsed = parseSKU('BALC-COZ-1200-2P-GAV-MDF18');
-      expect(parsed.categoria).toBe('Balcão');
-      expect(parsed.ambiente).toBe('Cozinha');
+      expect(parsed.categoria).toBe('BALCÃO');
+      expect(parsed.ambiente).toBe('COZINHA');
       expect(parsed.dimensoes.largura_mm).toBe(1200);
       expect(parsed.portas).toBe(2);
       expect(parsed.gavetas).toBe(1);
@@ -18,8 +18,8 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
 
     it('deve parsear corretamente um roupeiro de dormitório com portas de correr', () => {
       const parsed = parseSKU('ROU-DOR-2400-3P-RUN-MDF18');
-      expect(parsed.categoria).toBe('Roupeiro');
-      expect(parsed.ambiente).toBe('Dormitório');
+      expect(parsed.categoria).toBe('ROUPEIRO');
+      expect(parsed.ambiente).toBe('DORMITÓRIO');
       expect(parsed.dimensoes.largura_mm).toBe(2400);
       expect(parsed.portas).toBe(3);
       expect(parsed.tipoPorta).toBe('correr');
@@ -29,8 +29,8 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
 
     it('deve parsear corretamente um aéreo basculante de banheiro', () => {
       const parsed = parseSKU('AER-BAN-800-BASC-MDF15');
-      expect(parsed.categoria).toBe('Aéreo');
-      expect(parsed.ambiente).toBe('Banheiro');
+      expect(parsed.categoria).toBe('AÉREO');
+      expect(parsed.ambiente).toBe('BANHEIRO');
       expect(parsed.dimensoes.largura_mm).toBe(800);
       expect(parsed.tipoPorta).toBe('basculante');
       expect(parsed.material).toBe('MDF');
@@ -39,7 +39,7 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
 
     it('deve lidar com dimensões compostas como L X A X P', () => {
       const parsed = parseSKU('ARM-COZ-1200X600X350-2P-MDF18');
-      expect(parsed.categoria).toBe('Armário');
+      expect(parsed.categoria).toBe('ARMÁRIO');
       expect(parsed.dimensoes.largura_mm).toBe(1200);
       expect(parsed.dimensoes.altura_mm).toBe(600);
       expect(parsed.dimensoes.profundidade_mm).toBe(350);
@@ -57,8 +57,8 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
 
     it('deve lidar com marcas de MDP e espessuras variadas', () => {
       const parsed = parseSKU('BALC-LAV-800-MDP15-TX');
-      expect(parsed.categoria).toBe('Balcão');
-      expect(parsed.ambiente).toBe('Lavanderia');
+      expect(parsed.categoria).toBe('BALCÃO');
+      expect(parsed.ambiente).toBe('LAVANDERIA');
       expect(parsed.material).toBe('MDP');
       expect(parsed.espessura_mm).toBe(15);
       expect(parsed.caracteristicasExtra).toContain('Texturizado');
@@ -141,40 +141,40 @@ describe('Marcenaria SKU Parser & Validador de Engenharia', () => {
     // Lista de SKUs cobrindo 30 casos de teste com e sem problemas estruturais
     const cenarios = [
       // 1-10: Cozinha (BALC, AER, PAN)
-      { sku: 'BALC-COZ-600-1P-MDF18', categoria: 'Balcão', ambiente: 'Cozinha', hasAlerts: false },
-      { sku: 'BALC-COZ-900-2P-MDF15', categoria: 'Balcão', ambiente: 'Cozinha', hasAlerts: true }, // Flambagem
-      { sku: 'BALC-COZ-1200-2P-2G-MDF18', categoria: 'Balcão', ambiente: 'Cozinha', hasAlerts: true }, // Gavetas largas, Flambagem
-      { sku: 'AER-COZ-800-2P-MDF15', categoria: 'Aéreo', ambiente: 'Cozinha', hasAlerts: true }, // Flambagem
-      { sku: 'AER-COZ-1200-3P-MDF18', categoria: 'Aéreo', ambiente: 'Cozinha', hasAlerts: true }, // Fixação aéreo largo
-      { sku: 'PAN-COZ-600-2P-MDF18', categoria: 'Paneleiro', ambiente: 'Cozinha', hasAlerts: false },
-      { sku: 'AER-COZ-1000-BASC-MDF18', categoria: 'Aéreo', ambiente: 'Cozinha', hasAlerts: true }, // Basculante larga, Fixação
-      { sku: 'BALC-COZ-1200X750X500-3P-MDF18', categoria: 'Balcão', ambiente: 'Cozinha', hasAlerts: true }, // Profundidade rasa
-      { sku: 'AER-COZ-600-1P-MDF15', categoria: 'Aéreo', ambiente: 'Cozinha', hasAlerts: false },
-      { sku: 'BALC-COZ-800-2P-MDF18', categoria: 'Balcão', ambiente: 'Cozinha', hasAlerts: false },
+      { sku: 'BALC-COZ-600-1P-MDF18', categoria: 'BALCÃO', ambiente: 'COZINHA', hasAlerts: false },
+      { sku: 'BALC-COZ-900-2P-MDF15', categoria: 'BALCÃO', ambiente: 'COZINHA', hasAlerts: true }, // Flambagem
+      { sku: 'BALC-COZ-1200-2P-2G-MDF18', categoria: 'BALCÃO', ambiente: 'COZINHA', hasAlerts: true }, // Gavetas largas, Flambagem
+      { sku: 'AER-COZ-800-2P-MDF15', categoria: 'AÉREO', ambiente: 'COZINHA', hasAlerts: true }, // Flambagem
+      { sku: 'AER-COZ-1200-3P-MDF18', categoria: 'AÉREO', ambiente: 'COZINHA', hasAlerts: true }, // Fixação aéreo largo
+      { sku: 'PAN-COZ-600-2P-MDF18', categoria: 'PANELEIRO', ambiente: 'COZINHA', hasAlerts: false },
+      { sku: 'AER-COZ-1000-BASC-MDF18', categoria: 'AÉREO', ambiente: 'COZINHA', hasAlerts: true }, // Basculante larga, Fixação
+      { sku: 'BALC-COZ-1200X750X500-3P-MDF18', categoria: 'BALCÃO', ambiente: 'COZINHA', hasAlerts: true }, // Profundidade rasa
+      { sku: 'AER-COZ-600-1P-MDF15', categoria: 'AÉREO', ambiente: 'COZINHA', hasAlerts: false },
+      { sku: 'BALC-COZ-800-2P-MDF18', categoria: 'BALCÃO', ambiente: 'COZINHA', hasAlerts: false },
 
       // 11-20: Quartos/Dormitórios (ROU, CLO, NIC)
-      { sku: 'ROU-DOR-2400-3P-RUN-MDF18', categoria: 'Roupeiro', ambiente: 'Dormitório', hasAlerts: true }, // Vão largo (2400)
-      { sku: 'ROU-DOR-600-2P-MDF15', categoria: 'Roupeiro', ambiente: 'Dormitório', hasAlerts: false },
-      { sku: 'CLO-DOR-1000-MDF15', categoria: 'Closet', ambiente: 'Dormitório', hasAlerts: true }, // Vão largo cabideiro
-      { sku: 'NIC-DOR-400-MDF15', categoria: 'Nicho', ambiente: 'Dormitório', hasAlerts: false },
-      { sku: 'ROU-DOR-1200-2P-MDF18', categoria: 'Roupeiro', ambiente: 'Dormitório', hasAlerts: true }, // Cabideiro > 900
-      { sku: 'NIC-QUAR-900-MDF15', categoria: 'Nicho', ambiente: 'Quarto', hasAlerts: true }, // Flambagem
-      { sku: 'CLO-QUAR-600-MDF18', categoria: 'Closet', ambiente: 'Quarto', hasAlerts: false },
-      { sku: 'ARM-QUAR-800-2P-MDF18', categoria: 'Armário', ambiente: 'Quarto', hasAlerts: false },
-      { sku: 'ROU-DOR-1600-4P-MDF18', categoria: 'Roupeiro', ambiente: 'Dormitório', hasAlerts: true }, // Cabideiro > 900
-      { sku: 'ARM-DOR-700-2P-MDF15', categoria: 'Armário', ambiente: 'Dormitório', hasAlerts: false },
+      { sku: 'ROU-DOR-2400-3P-RUN-MDF18', categoria: 'ROUPEIRO', ambiente: 'DORMITÓRIO', hasAlerts: true }, // Vão largo (2400)
+      { sku: 'ROU-DOR-600-2P-MDF15', categoria: 'ROUPEIRO', ambiente: 'DORMITÓRIO', hasAlerts: false },
+      { sku: 'CLO-DOR-1000-MDF15', categoria: 'CLOSET', ambiente: 'DORMITÓRIO', hasAlerts: true }, // Vão largo cabideiro
+      { sku: 'NIC-DOR-400-MDF15', categoria: 'NICHO', ambiente: 'DORMITÓRIO', hasAlerts: false },
+      { sku: 'ROU-DOR-1200-2P-MDF18', categoria: 'ROUPEIRO', ambiente: 'DORMITÓRIO', hasAlerts: true }, // Cabideiro > 900
+      { sku: 'NIC-QUAR-900-MDF15', categoria: 'NICHO', ambiente: 'QUARTO', hasAlerts: true }, // Flambagem
+      { sku: 'CLO-QUAR-600-MDF18', categoria: 'CLOSET', ambiente: 'QUARTO', hasAlerts: false },
+      { sku: 'ARM-QUAR-800-2P-MDF18', categoria: 'ARMÁRIO', ambiente: 'QUARTO', hasAlerts: false },
+      { sku: 'ROU-DOR-1600-4P-MDF18', categoria: 'ROUPEIRO', ambiente: 'DORMITÓRIO', hasAlerts: true }, // Cabideiro > 900
+      { sku: 'ARM-DOR-700-2P-MDF15', categoria: 'ARMÁRIO', ambiente: 'DORMITÓRIO', hasAlerts: false },
 
       // 21-30: Banheiro, Lavanderia, Sala e Corporativo (BAN, LAV, SAL, COR)
-      { sku: 'BALC-BAN-600-MDP15', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: true }, // MDP em Banheiro
-      { sku: 'BALC-BAN-800-2P-MDF18', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: false },
-      { sku: 'BALC-LAV-950-2P-MDP15', categoria: 'Balcão', ambiente: 'Lavanderia', hasAlerts: true }, // Flambagem
-      { sku: 'PAI-SAL-1800-MDF18', categoria: 'Painel', ambiente: 'Sala', hasAlerts: true },
-      { sku: 'GAV-OFF-400-3G-MDF18', categoria: 'Gaveteiro', ambiente: 'Escritório', hasAlerts: false },
-      { sku: 'GAV-COR-900-4G-MDF15', categoria: 'Gaveteiro', ambiente: 'Corporativo', hasAlerts: true }, // Gaveta muito larga, Flambagem
-      { sku: 'BANC-COR-1500-MDF25', categoria: 'Bancada', ambiente: 'Corporativo', hasAlerts: true }, // Tampo grosso (25mm) resiste
-      { sku: 'ARM-COR-1000-2P-MDF15', categoria: 'Armário', ambiente: 'Corporativo', hasAlerts: true }, // Flambagem
-      { sku: 'BALC-BAN-700-1G-MDF15', categoria: 'Balcão', ambiente: 'Banheiro', hasAlerts: false },
-      { sku: 'PAI-SAL-1200-MDF15', categoria: 'Painel', ambiente: 'Sala', hasAlerts: false }
+      { sku: 'BALC-BAN-600-MDP15', categoria: 'BALCÃO', ambiente: 'BANHEIRO', hasAlerts: true }, // MDP em Banheiro
+      { sku: 'BALC-BAN-800-2P-MDF18', categoria: 'BALCÃO', ambiente: 'BANHEIRO', hasAlerts: false },
+      { sku: 'BALC-LAV-950-2P-MDP15', categoria: 'BALCÃO', ambiente: 'LAVANDERIA', hasAlerts: true }, // Flambagem
+      { sku: 'PAI-SAL-1800-MDF18', categoria: 'PAINEL', ambiente: 'SALA', hasAlerts: true },
+      { sku: 'GAV-OFF-400-3G-MDF18', categoria: 'GAVETEIRO', ambiente: 'ESCRITÓRIO', hasAlerts: false },
+      { sku: 'GAV-COR-900-4G-MDF15', categoria: 'GAVETEIRO', ambiente: 'CORPORATIVO', hasAlerts: true }, // Gaveta muito larga, Flambagem
+      { sku: 'BANC-COR-1500-MDF25', categoria: 'BANCADA', ambiente: 'CORPORATIVO', hasAlerts: true }, // Tampo grosso (25mm) resiste
+      { sku: 'ARM-COR-1000-2P-MDF15', categoria: 'ARMÁRIO', ambiente: 'CORPORATIVO', hasAlerts: true }, // Flambagem
+      { sku: 'BALC-BAN-700-1G-MDF15', categoria: 'BALCÃO', ambiente: 'BANHEIRO', hasAlerts: false },
+      { sku: 'PAI-SAL-1200-MDF15', categoria: 'PAINEL', ambiente: 'SALA', hasAlerts: false }
     ];
 
     cenarios.forEach((caso, index) => {

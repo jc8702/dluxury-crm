@@ -87,38 +87,36 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
         <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
           <Shield size={12} className="text-[#6B7280]" /> POLÍTICA DE COLISÃO
         </h4>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           {([
-            { value: 'stop' as const, label: 'Parar em colisão', desc: 'Interrompe e alerta o operador' },
-            { value: 'suggest' as const, label: 'Sugerir ajuste', desc: 'Mostra recomendação e aguarda confirmação' },
-            { value: 'auto' as const, label: 'Auto-ajustar seguro', desc: 'Aplica correções automáticas seguras' },
-          ]).map((opt) => (
-            <label
-              key={opt.value}
-              className={`flex items-start gap-2 p-1.5 rounded-lg cursor-pointer transition-all ${
-                machine.collisionPolicy === opt.value
-                  ? 'bg-[#E2AC00]/10 border border-[#E2AC00]/30'
-                  : 'bg-[#0D1117]/50 border border-transparent hover:bg-[#1F2937]/30'
-              }`}
-            >
-                <input
-                  type="radio"
-                  name="collisionPolicy"
-                  value={opt.value}
-                  checked={machine.collisionPolicy === opt.value}
-                  onChange={() => updateMachine('collisionPolicy', opt.value)}
-                  className="mt-0.5 accent-[#E2AC00] w-4 h-4 cursor-pointer"
-                />
-              <div>
-                <span className={`text-[10px] font-bold ${
-                  machine.collisionPolicy === opt.value ? 'text-[#E2AC00]' : 'text-white'
+            { value: 'stop' as const, label: 'Parar em colisão', desc: 'Interrompe e alerta o operador', color: 'border-red-500/10 hover:bg-red-500/5' },
+            { value: 'suggest' as const, label: 'Sugerir ajuste', desc: 'Mostra recomendação e aguarda confirmação', color: 'border-yellow-500/10 hover:bg-yellow-500/5' },
+            { value: 'auto' as const, label: 'Auto-ajustar seguro', desc: 'Aplica correções automáticas seguras', color: 'border-green-500/10 hover:bg-green-500/5' },
+          ]).map((opt) => {
+            const isSelected = machine.collisionPolicy === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateMachine('collisionPolicy', opt.value)}
+                className={`flex items-start text-left gap-2.5 p-2 rounded-lg border transition-all duration-150 ${
+                  isSelected
+                    ? 'bg-[#E2AC00]/10 border-[#E2AC00] text-[#E2AC00]'
+                    : `bg-[#0D1117]/50 border-[#1F2937] text-white ${opt.color}`
+                }`}
+              >
+                <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center mt-0.5 shrink-0 ${
+                  isSelected ? 'border-[#E2AC00]' : 'border-[#6B7280]'
                 }`}>
-                  {opt.label}
-                </span>
-                <p className="text-[#6B7280] text-[8px] leading-tight">{opt.desc}</p>
-              </div>
-            </label>
-          ))}
+                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#E2AC00]" />}
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold block">{opt.label}</span>
+                  <p className="text-[#6B7280] text-[8px] leading-tight mt-0.5">{opt.desc}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

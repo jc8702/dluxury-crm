@@ -312,12 +312,12 @@ const Cena3D = React.memo(function Cena3D({
   );
 });
 
-function GerenciadorCamera({ layout, focoPosicao }: {
+function GerenciadorCamera({ layout, focoPosicao, controlsRef }: {
   layout: LayoutSimulacao | null;
   focoPosicao?: { x: number; y: number; z: number } | null;
+  controlsRef: React.RefObject<any>;
 }) {
   const { camera } = useThree();
-  const controls = useThree((state: any) => state.controls);
   const ultimoLayoutIdRef = useRef<string>('');
 
   // Centraliza no layout quando ele muda
@@ -338,11 +338,12 @@ function GerenciadorCamera({ layout, focoPosicao }: {
     camera.lookAt(cx, 0, cz);
     camera.updateProjectionMatrix();
 
+    const controls = controlsRef.current;
     if (controls) {
       controls.target.set(cx, 0, cz);
       controls.update();
     }
-  }, [layout, camera, controls]);
+  }, [layout, camera, controlsRef]);
 
   // Jump para posição de foco (issue) — sempre executa quando focoPosicao muda
   const focoKeyRef = useRef(0);
@@ -361,11 +362,12 @@ function GerenciadorCamera({ layout, focoPosicao }: {
     camera.lookAt(fx, fy, fz);
     camera.updateProjectionMatrix();
 
+    const controls = controlsRef.current;
     if (controls) {
       controls.target.set(fx, fy, fz);
       controls.update();
     }
-  }, [focoPosicao, layout, camera, controls]);
+  }, [focoPosicao, layout, camera, controlsRef]);
 
   return null;
 }
@@ -389,6 +391,7 @@ export default function CanvasSimulador3D({
   ghostPreview = [],
   onClampDragEnd,
 }: CanvasSimulador3DProps) {
+  const controlsRef = useRef<any>(null);
   const onSelecionarPecaRef = useRef(onSelecionarPeca);
   onSelecionarPecaRef.current = onSelecionarPeca;
 
@@ -462,9 +465,10 @@ export default function CanvasSimulador3D({
         
         {scene}
         
-        <GerenciadorCamera layout={layout} focoPosicao={focoPosicao} />
+        <GerenciadorCamera layout={layout} focoPosicao={focoPosicao} controlsRef={controlsRef} />
         
         <OrbitControls
+          ref={controlsRef}
           makeDefault
           enableDamping
           dampingFactor={0.15}

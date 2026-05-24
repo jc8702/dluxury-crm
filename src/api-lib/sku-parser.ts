@@ -199,10 +199,10 @@ export function parseSKU(sku: string): ParsedSKU {
 
   // Heurísticas de Fallback se não identificar pelo padrão por hífen
   if (result.categoria === 'DESCONHECIDO') {
-    if (cleanSku.includes('BALC')) result.categoria = 'Balcão';
-    else if (cleanSku.includes('AER')) result.categoria = 'Aéreo';
-    else if (cleanSku.includes('ARM')) result.categoria = 'Armário';
-    else if (cleanSku.includes('ROU')) result.categoria = 'Roupeiro';
+    if (cleanSku.includes('BALC')) result.categoria = 'BALCÃO';
+    else if (cleanSku.includes('AER')) result.categoria = 'AÉREO';
+    else if (cleanSku.includes('ARM')) result.categoria = 'ARMÁRIO';
+    else if (cleanSku.includes('ROU')) result.categoria = 'ROUPEIRO';
   }
 
   if (result.material === 'DESCONHECIDO') {
@@ -237,14 +237,14 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
 
   // Categorias que possuem vãos livres estruturais horizontais (prateleiras ou tampos)
   const isVaoHorizontalPropenso = [
-    'Aéreo',
-    'Armário',
-    'Balcão',
-    'Roupeiro',
-    'Closet',
-    'Nicho',
-    'Paneleiro',
-    'Coluna'
+    'AÉREO',
+    'ARMÁRIO',
+    'BALCÃO',
+    'ROUPEIRO',
+    'CLOSET',
+    'NICHO',
+    'PANELEIRO',
+    'COLUNA'
   ].includes(categoria);
 
   // 1. Regra de Flambagem (Curvatura da prateleira/tampo)
@@ -306,7 +306,7 @@ export function validarEstrutura(parsed: ParsedSKU): AlertaEngenharia[] {
   }
 
   // 6. Cabideiro em Roupeiro/Closet/Armário
-  if (['Roupeiro', 'Closet', 'Armário'].includes(categoria) && largura > 900) {
+  if (['ROUPEIRO', 'CLOSET', 'ARMÁRIO'].includes(categoria) && largura > 900) {
     alertas.push({
       nivel: 'AVISO',
       mensagem: `Cabideiro com Vão Muito Extenso.`,

@@ -62,21 +62,23 @@ export default function GhostPreview3D({ items, escala }: GhostPreview3DProps) {
                 </lineSegments>
               </group>
             );
-          case 'safeZ_plane':
+          case 'safeZ_plane': {
+            const zH = (item.zHeight ?? 25) / escala;
             return (
               <group key={item.id}>
-                <mesh position={[px + pw / 2, item.largura / escala, pz + pd / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                <mesh position={[px + pw / 2, zH, pz + pd / 2]} rotation={[-Math.PI / 2, 0, 0]}>
                   <planeGeometry args={[pw, pd]} />
                   <meshBasicMaterial
                     color={cor}
                     transparent
-                    opacity={0.12}
+                    opacity={0.18}
                     depthWrite={false}
                     side={THREE.DoubleSide}
                   />
                 </mesh>
               </group>
             );
+          }
           default:
             return null;
         }

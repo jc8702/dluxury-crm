@@ -12,6 +12,7 @@ interface SafetyAnalysisPanelProps {
   onRerunSimulation: () => void;
   isRerunning?: boolean;
   onPreviewRecommendation?: (iwr: IssueWithRecommendation | null) => void;
+  onChangeCollisionPolicy?: (policy: CollisionPolicy) => void;
 }
 
 function formatarTempo(seg: number) {
@@ -29,6 +30,7 @@ export default function SafetyAnalysisPanel({
   onRerunSimulation,
   isRerunning,
   onPreviewRecommendation,
+  onChangeCollisionPolicy,
 }: SafetyAnalysisPanelProps) {
   const podeAutoAplicar = collisionPolicy === 'auto';
 
@@ -170,7 +172,7 @@ export default function SafetyAnalysisPanel({
                         <button
                           type="button"
                           onClick={() => {
-                            const novaPol = collisionPolicy === 'stop' ? 'suggest' : 'auto';
+                            onChangeCollisionPolicy?.(collisionPolicy === 'stop' ? 'suggest' : 'auto');
                           }}
                           className="flex-1 flex items-center justify-center gap-1 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] text-[8px] font-bold py-1 rounded transition-all"
                           title="Altere a política de colisão no painel CNC para desbloquear ajustes"

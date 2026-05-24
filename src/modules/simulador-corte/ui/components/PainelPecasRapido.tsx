@@ -1,10 +1,12 @@
 import React from 'react';
+import { Tag } from 'lucide-react';
 import type { PecaSimulacao } from '../../domain/types';
 
 interface PainelPecasRapidoProps {
   pecas: PecaSimulacao[];
   pecaSelecionada: PecaSimulacao | null;
   onSelecionar: (peca: PecaSimulacao) => void;
+  onExportarEtiqueta?: (peca: PecaSimulacao, index: number, total: number) => void;
 }
 
 const CORES = [
@@ -13,7 +15,7 @@ const CORES = [
   '#D946EF', '#F43F5E', '#0EA5E9', '#A855F7', '#22C55E',
 ];
 
-export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar }: PainelPecasRapidoProps) {
+export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar, onExportarEtiqueta }: PainelPecasRapidoProps) {
   return (
     <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
       <h3 className="text-[#E2AC00] font-bold text-sm tracking-wider mb-3">PEÇAS NO LAYOUT</h3>
@@ -27,27 +29,45 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
             const cor = CORES[index % CORES.length];
 
             return (
-              <button
+              <div
                 key={peca.id}
-                onClick={() => onSelecionar(peca)}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-150 ${
+                className={`w-full flex items-center gap-2 p-1.5 rounded-lg border transition-all duration-150 ${
                   isSelected
-                    ? 'bg-[#1F2937] border border-[#E2AC00]'
-                    : 'bg-[#1F2937]/50 hover:bg-[#1F2937] border border-transparent'
+                    ? 'bg-[#1F2937] border-[#E2AC00]'
+                    : 'bg-[#1F2937]/50 hover:bg-[#1F2937] border-transparent'
                 }`}
               >
-                <div
-                  className="w-3 h-3 rounded-sm shrink-0"
-                  style={{ backgroundColor: cor }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-medium truncate">{peca.nome}</p>
-                  <p className="text-[#6B7280] text-[10px]">
-                    {peca.comprimento}×{peca.largura}×{peca.espessura}MM
-                    {peca.rotacionada ? ' | 90°' : ''}
-                  </p>
-                </div>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => onSelecionar(peca)}
+                  className="flex-1 flex items-center gap-2.5 text-left min-w-0"
+                >
+                  <div
+                    className="w-3 h-3 rounded-sm shrink-0"
+                    style={{ backgroundColor: cor }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-medium truncate">{peca.nome}</p>
+                    <p className="text-[#6B7280] text-[10px]">
+                      {peca.comprimento}×{peca.largura}×{peca.espessura}MM
+                      {peca.rotacionada ? ' | 90°' : ''}
+                    </p>
+                  </div>
+                </button>
+                {onExportarEtiqueta && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onExportarEtiqueta(peca, index, pecas.length);
+                    }}
+                    className="p-2 hover:bg-[#374151] rounded text-[#E2AC00] hover:text-white transition-all shrink-0"
+                    title="Exportar etiqueta QR"
+                  >
+                    <Tag size={12} />
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -61,3 +81,4 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
     </div>
   );
 }
+

@@ -20,6 +20,7 @@ import {
   exportarRelatorioCNC,
   exportarEtiquetasCNC,
   exportarRelatorioSeguranca,
+  exportarEtiquetaIndividualCNC,
   type SafetyReportData,
 } from '../components/LabelExporter';
 import TimelineControls from '../components/TimelineControls';
@@ -307,8 +308,8 @@ export default function SimuladorCortePage() {
         const next = prev + dt * velocidadeSimulacao;
         const total = program.totalTempoEstimado;
 
-        // Se habilitado Parar em Colisão, analisa se cruzou algum erro
-        if (stopOnCollision || cncConfig.machine.collisionPolicy === 'stop') {
+        // Se a política de colisão estiver configurada como 'stop'
+        if (cncConfig.machine.collisionPolicy === 'stop') {
           const erroDetectado = program.issues.find(
             (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
           );
@@ -316,6 +317,15 @@ export default function SimuladorCortePage() {
             setPlaying(false);
             alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`);
             return erroDetectado.tempo; // para no instante exato da colisão
+          }
+        } else if (stopOnCollision) {
+          // Se for apenas a checkbox local do timeline mas sem o alert bloqueante da máquina
+          const erroDetectado = program.issues.find(
+            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
+          );
+          if (erroDetectado) {
+            setPlaying(false);
+            return erroDetectado.tempo;
           }
         }
 
@@ -563,8 +573,9 @@ export default function SimuladorCortePage() {
         items.push({
           type: 'safeZ_plane', id: 'safeZ_preview',
           x: 0, y: 0,
-          largura: novoZ,
-          altura: layoutAtual.chapa.largura,
+          largura: layoutAtual.chapa.largura,
+          altura: layoutAtual.chapa.altura,
+          zHeight: novoZ,
           cor: '#10B981',
         });
       }
@@ -576,8 +587,9 @@ export default function SimuladorCortePage() {
         items.push({
           type: 'safeZ_plane', id: 'margin_preview',
           x: 0, y: 0,
-          largura: margem,
-          altura: layoutAtual.chapa.largura,
+          largura: layoutAtual.chapa.largura,
+          altura: layoutAtual.chapa.altura,
+          zHeight: margem,
           cor: '#E2AC00',
         });
       }
@@ -653,6 +665,20 @@ export default function SimuladorCortePage() {
     const nomeEtiqueta = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
     exportarEtiquetasCNC(layoutAtual, nomeEtiqueta);
   }, [layoutAtual, modo, planoAtivo]);
+
+  const handleExportarEtiquetaIndividual = useCallback((peca: PecaSimulacao, index: number, total: number) => {
+    if (!layoutAtual) return;
+    const nomePlano = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
+    exportarEtiquetaIndividualCNC(peca, index, total, nomePlano, layoutAtual.chapa.sku);
+  }, [layoutAtual, modo, planoAtivo]);
+
+  const handleChangeCollisionPolicy = useCallback((policy: CollisionPolicy) => {
+    const newConfig = {
+      ...cncConfig,
+      machine: { ...cncConfig.machine, collisionPolicy: policy }
+    };
+    handleCncConfigChange(newConfig);
+  }, [cncConfig, handleCncConfigChange]);
 
   return (
     <div className="page-container anim-fade-in">
@@ -946,6 +972,7 @@ export default function SimuladorCortePage() {
                       onRerunSimulation={handleRerunSimulation}
                       isRerunning={isRerunning}
                       onPreviewRecommendation={handlePreviewRecommendation}
+                      onChangeCollisionPolicy={handleChangeCollisionPolicy}
                     />
                   )}
 
@@ -971,7 +998,12 @@ export default function SimuladorCortePage() {
                     onJumpToIssue={handleJumpToIssue}
                   />
 
-                  <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
+                  <PainelPecasRapido
+                    pecas={layoutAtual.pecas}
+                    pecaSelecionada={pecaSelecionada}
+                    onSelecionar={handleSelecionarPeca}
+                    onExportarEtiqueta={handleExportarEtiquetaIndividual}
+                  />
                 </div>
               </div>
             </div>
@@ -1165,6 +1197,7 @@ export default function SimuladorCortePage() {
                     onRerunSimulation={handleRerunSimulation}
                     isRerunning={isRerunning}
                     onPreviewRecommendation={handlePreviewRecommendation}
+                    onChangeCollisionPolicy={handleChangeCollisionPolicy}
                   />
                 )}
 
@@ -1189,7 +1222,12 @@ export default function SimuladorCortePage() {
                   onJumpToIssue={handleJumpToIssue}
                 />
 
-                <PainelPecasRapido pecas={layoutAtual.pecas} pecaSelecionada={pecaSelecionada} onSelecionar={handleSelecionarPeca} />
+                <PainelPecasRapido
+                  pecas={layoutAtual.pecas}
+                  pecaSelecionada={pecaSelecionada}
+                  onSelecionar={handleSelecionarPeca}
+                  onExportarEtiqueta={handleExportarEtiquetaIndividual}
+                />
 
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
                   <button onClick={() => setPlanoAtivo(null)} className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold py-2.5 rounded-lg transition-all">

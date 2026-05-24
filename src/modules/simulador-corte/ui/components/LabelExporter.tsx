@@ -548,3 +548,92 @@ export async function exportarRelatorioSeguranca(
 
   doc.save(`relatorio-seguranca-${nomePlano.replace(/\s+/g, '-').toLowerCase()}.pdf`);
 }
+
+/**
+ * Exporta uma etiqueta individual em formato PDF com código QR para o Simulador 3D (nesting).
+ */
+export async function exportarEtiquetaIndividualCNC(
+  peca: PecaSimulacao,
+  index: number,
+  totalPieces: number,
+  nomePlano: string = 'Simulação CNC',
+  skuChapa: string = 'MDF'
+) {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [100, 50],
+  });
+
+  // Background escuro industrial
+  doc.setFillColor(17, 24, 39);
+  doc.rect(0, 0, 100, 50, 'F');
+
+  // Linha superior amarela
+  doc.setFillColor(226, 172, 0);
+  doc.rect(0, 0, 100, 2, 'F');
+
+  // Cabeçalho da Etiqueta
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`${peca.nome.substring(0, 24)}`, 5, 8);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(156, 163, 175);
+  doc.text(`Plano: ${nomePlano.substring(0, 20)}`, 5, 13);
+  doc.text(`Origem Chapa: ${skuChapa.substring(0, 20)}`, 5, 17);
+
+  // Dimensões grandes para o operador identificar rápido
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(226, 172, 0); // Âmbar
+  doc.text(`${peca.comprimento} x ${peca.largura} mm`, 5, 26);
+
+  // Detalhe de espessura e rotação
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(156, 163, 175);
+  doc.text(`MDF Espessura: ${peca.espessura}mm`, 5, 32);
+  doc.text(`Rotacionada: ${peca.rotacionada ? 'SIM' : 'NÃO'}`, 5, 36);
+  doc.text(`Posicionamento: X:${peca.x} Y:${peca.y}`, 5, 41);
+  doc.text(`ID Peça: #${index + 1} de ${totalPieces}`, 5, 46);
+
+  // QR Code dinâmico para rastreamento de fábrica
+  try {
+    const qrData = JSON.stringify({
+      id: peca.id,
+      nome: peca.nome,
+      comprimento: peca.comprimento,
+      largura: peca.largura,
+      espessura: peca.espessura,
+      plano: nomePlano,
+    });
+
+    const qrCodeUrl = await QRCode.toDataURL(qrData, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 100,
+    });
+
+    doc.addImage(qrCodeUrl, 'PNG', 68, 4, 28, 28);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.setTextColor(156, 163, 175);
+    doc.text("SCAN RASTREAMENTO", 82, 34, { align: 'center' });
+  } catch (err) {
+    console.warn("Erro ao gerar código QR na etiqueta:", err);
+  }
+
+  // Rodapé
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(5);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`D'LUXURY — ${new Date().toLocaleDateString('pt-BR')}`, 82, 46, { align: 'center' });
+
+  const safeNome = peca.nome.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  doc.save(`etiqueta-${safeNome}-${peca.comprimento}x${peca.largura}.pdf`);
+}
+

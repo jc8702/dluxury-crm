@@ -289,6 +289,7 @@ export interface GhostPreviewItem {
   y: number;
   largura: number;
   altura: number;
+  zHeight?: number;
   label?: string;
   cor?: string;
 }
