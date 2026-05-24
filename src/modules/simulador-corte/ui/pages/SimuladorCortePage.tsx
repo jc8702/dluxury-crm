@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3 } from 'lucide-react';
+import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle } from 'lucide-react';
 import { listarPlanos } from '../../infrastructure/repositories/PlanoCorteRepository';
 import { MaxRectsOptimizer } from '../../../plano-corte/domain/services/MaxRectsOptimizer';
 import CanvasSimulador3D from '../components/CanvasSimulador3D';
@@ -86,6 +86,7 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
           area_aproveitada_mm2: l.area_aproveitada_mm2 || 0,
           area_total_mm2: l.area_total_mm2 || 1,
           aproveitamento_percentual: l.aproveitamento_percentual || 0,
+          espacos_vazios: l.espacos_livres,
         });
       }
     }
@@ -123,6 +124,7 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
         area_aproveitada_mm2: res.area_usada,
         area_total_mm2: res.area_total,
         aproveitamento_percentual: res.aproveitamento,
+        espacos_vazios: res.espacos_vazios,
       });
     }
     return layouts;
@@ -140,6 +142,11 @@ export default function SimuladorCortePage() {
   const [telaCheia, setTelaCheia] = useState(false);
   const [loadingPlanos, setLoadingPlanos] = useState(false);
   const [processando, setProcessando] = useState(false);
+  const [mostrarGrade, setMostrarGrade] = useState(true);
+  const [mostrarCotas, setMostrarCotas] = useState(true);
+  const [mostrarAnimacao, setMostrarAnimacao] = useState(false);
+  const [mostrarRetalhos, setMostrarRetalhos] = useState(true);
+  const [velocidadeAnimacao, setVelocidadeAnimacao] = useState(1);
 
   const [chapaLargura, setChapaLargura] = useState(2750);
   const [chapaAltura, setChapaAltura] = useState(1830);
@@ -246,6 +253,7 @@ export default function SimuladorCortePage() {
           area_aproveitada_mm2: resultado.area_usada,
           area_total_mm2: resultado.area_total,
           aproveitamento_percentual: resultado.aproveitamento,
+          espacos_vazios: resultado.espacos_vazios,
         };
 
         setResultadoRapido([layout]);
@@ -444,20 +452,80 @@ export default function SimuladorCortePage() {
             <>
               <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
                 {/* Info bar */}
-                <div className="flex items-center justify-between bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[#E2AC00] text-xs font-bold tracking-wider">SIMULAÇÃO RÁPIDA</span>
-                    <span className="text-[#6B7280] text-[10px]">|</span>
-                    <span className="text-white text-xs">{layoutAtual.chapa.sku}</span>
+                <div className="flex flex-col gap-1 bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[#E2AC00] text-xs font-bold tracking-wider">SIMULAÇÃO RÁPIDA</span>
+                      <span className="text-[#6B7280] text-[10px]">|</span>
+                      <span className="text-white text-xs">{layoutAtual.chapa.sku}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
+                      <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
-                    <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                    <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                  {/* Toggle controls */}
+                  <div className="flex items-center gap-2 pt-1 border-t border-[#1F2937]">
+                    <button
+                      onClick={() => setMostrarGrade(!mostrarGrade)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarGrade ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Grid3x3 size={11} /> GRADE
+                    </button>
+                    <button
+                      onClick={() => setMostrarCotas(!mostrarCotas)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarCotas ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Ruler size={11} /> COTAS
+                    </button>
+                    <button
+                      onClick={() => { setMostrarAnimacao(!mostrarAnimacao); if (!mostrarAnimacao) setMostrarRetalhos(false); }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarAnimacao ? 'bg-red-500/20 text-red-400' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <PlayCircle size={11} /> CORTE
+                    </button>
+                    <button
+                      onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarRetalhos ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Box size={11} /> RETALHOS
+                    </button>
+                    {mostrarAnimacao && (
+                      <div className="flex items-center gap-1 ml-2">
+                        <span className="text-[#6B7280] text-[10px]">VEL:</span>
+                        <input
+                          type="range"
+                          min={0.5}
+                          max={3}
+                          step={0.5}
+                          value={velocidadeAnimacao}
+                          onChange={(e) => setVelocidadeAnimacao(Number(e.target.value))}
+                          className="w-16 h-1 accent-[#EF4444]"
+                        />
+                        <span className="text-white text-[10px] w-4">{velocidadeAnimacao}x</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
-                  <CanvasSimulador3D layout={layoutAtual} onSelecionarPeca={handleSelecionarPeca} />
+                  <CanvasSimulador3D
+                    layout={layoutAtual}
+                    onSelecionarPeca={handleSelecionarPeca}
+                    habilitarGrade={mostrarGrade}
+                    habilitarCotas={mostrarCotas}
+                    habilitarAnimacao={mostrarAnimacao}
+                    habilitarRetalhos={mostrarRetalhos}
+                    velocidadeAnimacao={velocidadeAnimacao}
+                  />
                 </div>
               </div>
               <div className="w-full lg:w-80 space-y-4">
@@ -521,19 +589,79 @@ export default function SimuladorCortePage() {
           {planoAtivo && layoutAtual && (
             <div className="flex flex-col lg:flex-row gap-4">
               <div className={`flex-1 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                <div className="flex items-center justify-between bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
-                  <div className="flex items-center gap-3 min-w-0 max-w-[60%]">
-                    <span className="text-[#E2AC00] text-xs font-bold tracking-wider shrink-0">PLANO:</span>
-                    <span className="text-white text-xs font-semibold truncate">{planoAtivo.nome}</span>
+                <div className="flex flex-col gap-1 bg-[#111827] border border-[#1F2937] rounded-t-xl px-4 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0 max-w-[60%]">
+                      <span className="text-[#E2AC00] text-xs font-bold tracking-wider shrink-0">PLANO:</span>
+                      <span className="text-white text-xs font-semibold truncate">{planoAtivo.nome}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
+                      <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
+                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="CHAPA ANTERIOR"><ChevronLeft size={16} /></button>
-                    <span className="text-white text-xs font-semibold min-w-[60px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                    <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all" title="PRÓXIMA CHAPA"><ChevronRight size={16} /></button>
+                  {/* Toggle controls */}
+                  <div className="flex items-center gap-2 pt-1 border-t border-[#1F2937]">
+                    <button
+                      onClick={() => setMostrarGrade(!mostrarGrade)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarGrade ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Grid3x3 size={11} /> GRADE
+                    </button>
+                    <button
+                      onClick={() => setMostrarCotas(!mostrarCotas)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarCotas ? 'bg-[#E2AC00]/20 text-[#E2AC00]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Ruler size={11} /> COTAS
+                    </button>
+                    <button
+                      onClick={() => { setMostrarAnimacao(!mostrarAnimacao); if (!mostrarAnimacao) setMostrarRetalhos(false); }}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarAnimacao ? 'bg-red-500/20 text-red-400' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <PlayCircle size={11} /> CORTE
+                    </button>
+                    <button
+                      onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all ${
+                        mostrarRetalhos ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#1F2937]/50 text-[#6B7280] hover:text-white'
+                      }`}
+                    >
+                      <Box size={11} /> RETALHOS
+                    </button>
+                    {mostrarAnimacao && (
+                      <div className="flex items-center gap-1 ml-2">
+                        <span className="text-[#6B7280] text-[10px]">VEL:</span>
+                        <input
+                          type="range"
+                          min={0.5}
+                          max={3}
+                          step={0.5}
+                          value={velocidadeAnimacao}
+                          onChange={(e) => setVelocidadeAnimacao(Number(e.target.value))}
+                          className="w-16 h-1 accent-[#EF4444]"
+                        />
+                        <span className="text-white text-[10px] w-4">{velocidadeAnimacao}x</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="h-full min-h-[470px] rounded-b-xl overflow-hidden border border-t-0 border-[#1F2937]">
-                  <CanvasSimulador3D layout={layoutAtual} onSelecionarPeca={handleSelecionarPeca} />
+                  <CanvasSimulador3D
+                    layout={layoutAtual}
+                    onSelecionarPeca={handleSelecionarPeca}
+                    habilitarGrade={mostrarGrade}
+                    habilitarCotas={mostrarCotas}
+                    habilitarAnimacao={mostrarAnimacao}
+                    habilitarRetalhos={mostrarRetalhos}
+                    velocidadeAnimacao={velocidadeAnimacao}
+                  />
                 </div>
               </div>
               <div className="w-full lg:w-80 space-y-4">

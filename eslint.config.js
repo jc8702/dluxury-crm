@@ -43,6 +43,11 @@ export default tseslint.config(
     rules: {
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      'react/no-unknown-property': ['error', { ignore: [
+        'position', 'args', 'attach', 'count', 'array', 'itemSize',
+        'transparent', 'intensity', 'emissive', 'emissiveIntensity',
+        'roughness', 'metalness', 'depthWrite', 'renderOrder', 'linewidth',
+      ] }],
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'react-hooks/rules-of-hooks': 'error',

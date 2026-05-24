@@ -24,6 +24,7 @@ export interface LayoutSimulacao {
   area_aproveitada_mm2: number;
   area_total_mm2: number;
   aproveitamento_percentual: number;
+  espacos_vazios?: { x: number; y: number; largura: number; altura: number }[];
 }
 
 export interface PlanoCorteCarregado {

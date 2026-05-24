@@ -3,10 +3,19 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { LayoutSimulacao, PecaSimulacao } from '../../domain/types';
+import Rulers3D from './Rulers3D';
+import CotasDim from './CotasDim';
+import ToolpathPreview from './ToolpathPreview';
+import RetalhosVis3D from './RetalhosVis3D';
 
 interface CanvasSimulador3DProps {
   layout: LayoutSimulacao | null;
   onSelecionarPeca?: (peca: PecaSimulacao | null) => void;
+  habilitarGrade?: boolean;
+  habilitarCotas?: boolean;
+  habilitarAnimacao?: boolean;
+  habilitarRetalhos?: boolean;
+  velocidadeAnimacao?: number;
 }
 
 const CORES = [
@@ -71,7 +80,23 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) 
   );
 }
 
-function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelecionarPeca?: (peca: PecaSimulacao | null) => void }) {
+function Cena3D({
+  layout,
+  onSelecionarPeca,
+  habilitarGrade,
+  habilitarCotas,
+  habilitarAnimacao,
+  habilitarRetalhos,
+  velocidadeAnimacao,
+}: {
+  layout: LayoutSimulacao;
+  onSelecionarPeca?: (peca: PecaSimulacao | null) => void;
+  habilitarGrade?: boolean;
+  habilitarCotas?: boolean;
+  habilitarAnimacao?: boolean;
+  habilitarRetalhos?: boolean;
+  velocidadeAnimacao?: number;
+}) {
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
   const escala = useMemo(() => Math.max(layout.chapa.largura, layout.chapa.altura) / 10, [layout]);
   const sheetW = layout.chapa.largura / escala;
@@ -86,12 +111,18 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
     return coloridas.sort((a, b) => b.y - a.y);
   }, [layout.pecas]);
 
+  const pecaSelecionadaObj = useMemo(
+    () => pecasComCor.find((p) => p.id === pecaSelecionada) ?? null,
+    [pecasComCor, pecaSelecionada],
+  );
+
   return (
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[cenaSize * 2, cenaSize * 3, cenaSize * 2]} intensity={0.8} />
       <directionalLight position={[-cenaSize, cenaSize, -cenaSize]} intensity={0.3} />
 
+      {/* Sheet */}
       <mesh
         position={[cx, -sheetH / 2, cz]}
         onClick={() => { setPecaSelecionada(null); onSelecionarPeca?.(null); }}
@@ -105,6 +136,33 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
         <lineBasicMaterial color="#4B5563" />
       </lineSegments>
 
+      {/* Grade */}
+      {habilitarGrade && (
+        <Rulers3D
+          sheetWidth={sheetW}
+          sheetDepth={sheetD}
+          escala={escala}
+          cenaSize={cenaSize}
+          habilitarGrade
+        />
+      )}
+
+      {/* Cotas */}
+      {habilitarCotas && (
+        <CotasDim
+          layout={layout}
+          escala={escala}
+          pecaSelecionada={pecaSelecionadaObj}
+          cenaSize={cenaSize}
+        />
+      )}
+
+      {/* Retalhos */}
+      {habilitarRetalhos && (
+        <RetalhosVis3D layout={layout} escala={escala} cenaSize={cenaSize} />
+      )}
+
+      {/* Peças */}
       {pecasComCor.map((peca) => (
         <PecaBlock
           key={peca.id}
@@ -119,6 +177,16 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
         />
       ))}
 
+      {/* Toolpath */}
+      {habilitarAnimacao && (
+        <ToolpathPreview
+          layout={layout}
+          escala={escala}
+          animando={habilitarAnimacao}
+          velocidadeAnimacao={velocidadeAnimacao ?? 1}
+        />
+      )}
+
       <OrbitControls
         enableDamping
         dampingFactor={0.15}
@@ -130,7 +198,15 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
   );
 }
 
-export default function CanvasSimulador3D({ layout, onSelecionarPeca }: CanvasSimulador3DProps) {
+export default function CanvasSimulador3D({
+  layout,
+  onSelecionarPeca,
+  habilitarGrade = true,
+  habilitarCotas = true,
+  habilitarAnimacao = false,
+  habilitarRetalhos = true,
+  velocidadeAnimacao = 1,
+}: CanvasSimulador3DProps) {
   if (!layout) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-[#0D1117] rounded-xl border border-[#1F2937]">
@@ -156,7 +232,15 @@ export default function CanvasSimulador3D({ layout, onSelecionarPeca }: CanvasSi
         gl={{ antialias: true }}
         onCreated={({ gl }) => gl.setClearColor('#0D1117')}
       >
-        <Cena3D layout={layout} onSelecionarPeca={onSelecionarPeca} />
+        <Cena3D
+          layout={layout}
+          onSelecionarPeca={onSelecionarPeca}
+          habilitarGrade={habilitarGrade}
+          habilitarCotas={habilitarCotas}
+          habilitarAnimacao={habilitarAnimacao}
+          habilitarRetalhos={habilitarRetalhos}
+          velocidadeAnimacao={velocidadeAnimacao}
+        />
       </Canvas>
     </div>
   );
