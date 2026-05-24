@@ -9,7 +9,8 @@ import {
   simulateProductionScenario,
 } from '../../domain/productionEngine';
 import type { ProductionPieceInput, ProductionSimulationResult } from '../../domain/types';
-import { exportarEtiquetaProducao } from '../components/LabelExporterProducao';
+import { exportarEtiquetaProducao, exportarTodasEtiquetas } from '../components/LabelExporterProducao';
+import PlanoCorteVisao from '../components/PlanoCorteVisao';
 
 type SourceMode = 'manual' | 'plano';
 
@@ -503,6 +504,24 @@ export default function SimuladorProducaoPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[#E2AC00] font-bold text-xs tracking-wider flex items-center gap-2">
+                    <Layers3 size={14} />
+                    PLANO DE CORTE — VISÃO GERAL
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => exportarTodasEtiquetas(pieces)}
+                    className="flex items-center gap-2 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
+                  >
+                    <Tag size={12} />
+                    EXPORTAR ETIQUETAS
+                  </button>
+                </div>
+                <PlanoCorteVisao pieces={pieces} />
               </div>
             </>
           ) : (
