@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -24,15 +24,15 @@ const CORES = [
   '#D946EF', '#F43F5E', '#0EA5E9', '#A855F7', '#22C55E',
 ];
 
-interface PecaBlockProps {
+const GL_CONFIG = { antialias: true };
+
+function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   peca: PecaSimulacao;
   cor: string;
   escala: number;
   selecionada: boolean;
   onClick: () => void;
-}
-
-function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) {
+}) {
   const c = peca.comprimento / escala;
   const l = peca.largura / escala;
   const e = Math.max(peca.espessura / escala, 0.06);
@@ -82,7 +82,7 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) 
 
 function Cena3D({
   layout,
-  onSelecionarPeca,
+  onSelecionarPecaRef,
   habilitarGrade,
   habilitarCotas,
   habilitarAnimacao,
@@ -90,7 +90,7 @@ function Cena3D({
   velocidadeAnimacao,
 }: {
   layout: LayoutSimulacao;
-  onSelecionarPeca?: (peca: PecaSimulacao | null) => void;
+  onSelecionarPecaRef: React.MutableRefObject<((peca: PecaSimulacao | null) => void) | undefined>;
   habilitarGrade?: boolean;
   habilitarCotas?: boolean;
   habilitarAnimacao?: boolean;
@@ -98,13 +98,17 @@ function Cena3D({
   velocidadeAnimacao?: number;
 }) {
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
-  const escala = useMemo(() => Math.max(layout.chapa.largura, layout.chapa.altura) / 10, [layout]);
-  const sheetW = layout.chapa.largura / escala;
-  const sheetD = layout.chapa.altura / escala;
+
+  const layoutVars = useMemo(() => {
+    const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+    const sheetW = layout.chapa.largura / escala;
+    const sheetD = layout.chapa.altura / escala;
+    const cenaSize = Math.max(sheetW, sheetD);
+    return { escala, sheetW, sheetD, cenaSize, cx: sheetW / 2, cz: sheetD / 2 };
+  }, [layout]);
+
+  const { escala, sheetW, sheetD, cenaSize, cx, cz } = layoutVars;
   const sheetH = 0.3;
-  const cx = sheetW / 2;
-  const cz = sheetD / 2;
-  const cenaSize = Math.max(sheetW, sheetD);
 
   const pecasComCor = useMemo(() => {
     const coloridas = layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] }));
@@ -116,17 +120,30 @@ function Cena3D({
     [pecasComCor, pecaSelecionada],
   );
 
+  const handleClickSheet = useCallback(() => {
+    setPecaSelecionada(null);
+    onSelecionarPecaRef.current?.(null);
+  }, [onSelecionarPecaRef]);
+
+  const handleClickPeca = useCallback((peca: PecaSimulacao) => {
+    setPecaSelecionada(peca.id);
+    onSelecionarPecaRef.current?.(peca);
+  }, [onSelecionarPecaRef]);
+
+  const orbitControlsTarget = useMemo(() => [cx, 0, cz] as const, [cx, cz]);
+  const orbitMinDist = useMemo(() => cenaSize * 0.1, [cenaSize]);
+  const orbitMaxDist = useMemo(() => cenaSize * 5, [cenaSize]);
+
+  const lightPos1 = useMemo(() => [cenaSize * 2, cenaSize * 3, cenaSize * 2] as const, [cenaSize]);
+  const lightPos2 = useMemo(() => [-cenaSize, cenaSize, -cenaSize] as const, [cenaSize]);
+
   return (
     <>
       <ambientLight intensity={0.5} />
-      <directionalLight position={[cenaSize * 2, cenaSize * 3, cenaSize * 2]} intensity={0.8} />
-      <directionalLight position={[-cenaSize, cenaSize, -cenaSize]} intensity={0.3} />
+      <directionalLight position={lightPos1} intensity={0.8} />
+      <directionalLight position={lightPos2} intensity={0.3} />
 
-      {/* Sheet */}
-      <mesh
-        position={[cx, -sheetH / 2, cz]}
-        onClick={() => { setPecaSelecionada(null); onSelecionarPeca?.(null); }}
-      >
+      <mesh position={[cx, -sheetH / 2, cz]} onClick={handleClickSheet}>
         <boxGeometry args={[sheetW, sheetH, sheetD]} />
         <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
       </mesh>
@@ -136,33 +153,18 @@ function Cena3D({
         <lineBasicMaterial color="#4B5563" />
       </lineSegments>
 
-      {/* Grade */}
       {habilitarGrade && (
-        <Rulers3D
-          sheetWidth={sheetW}
-          sheetDepth={sheetD}
-          escala={escala}
-          cenaSize={cenaSize}
-          habilitarGrade
-        />
+        <Rulers3D sheetWidth={sheetW} sheetDepth={sheetD} escala={escala} cenaSize={cenaSize} habilitarGrade />
       )}
 
-      {/* Cotas */}
       {habilitarCotas && (
-        <CotasDim
-          layout={layout}
-          escala={escala}
-          pecaSelecionada={pecaSelecionadaObj}
-          cenaSize={cenaSize}
-        />
+        <CotasDim layout={layout} escala={escala} pecaSelecionada={pecaSelecionadaObj} cenaSize={cenaSize} />
       )}
 
-      {/* Retalhos */}
       {habilitarRetalhos && (
         <RetalhosVis3D layout={layout} escala={escala} cenaSize={cenaSize} />
       )}
 
-      {/* Peças */}
       {pecasComCor.map((peca) => (
         <PecaBlock
           key={peca.id}
@@ -170,29 +172,20 @@ function Cena3D({
           cor={peca.cor}
           escala={escala}
           selecionada={pecaSelecionada === peca.id}
-          onClick={() => {
-            setPecaSelecionada(peca.id);
-            onSelecionarPeca?.(peca);
-          }}
+          onClick={() => handleClickPeca(peca)}
         />
       ))}
 
-      {/* Toolpath */}
       {habilitarAnimacao && (
-        <ToolpathPreview
-          layout={layout}
-          escala={escala}
-          animando={habilitarAnimacao}
-          velocidadeAnimacao={velocidadeAnimacao ?? 1}
-        />
+        <ToolpathPreview layout={layout} escala={escala} animando={true} velocidadeAnimacao={velocidadeAnimacao ?? 1} />
       )}
 
       <OrbitControls
         enableDamping
         dampingFactor={0.15}
-        target={[cx, 0, cz]}
-        minDistance={cenaSize * 0.1}
-        maxDistance={cenaSize * 5}
+        target={orbitControlsTarget as [number, number, number]}
+        minDistance={orbitMinDist}
+        maxDistance={orbitMaxDist}
       />
     </>
   );
@@ -207,7 +200,28 @@ export default function CanvasSimulador3D({
   habilitarRetalhos = true,
   velocidadeAnimacao = 1,
 }: CanvasSimulador3DProps) {
-  if (!layout) {
+  const onSelecionarPecaRef = useRef(onSelecionarPeca);
+  onSelecionarPecaRef.current = onSelecionarPeca;
+
+  const cameraConfig = useMemo(() => {
+    if (!layout) return null;
+    const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+    const sheetW = layout.chapa.largura / escala;
+    const sheetD = layout.chapa.altura / escala;
+    const cenaSize = Math.max(sheetW, sheetD);
+    return {
+      position: [cenaSize * 0.7, cenaSize * 0.5, cenaSize * 0.7] as [number, number, number],
+      fov: 45,
+      near: 0.01,
+      far: cenaSize * 10,
+    };
+  }, [layout]);
+
+  const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
+    gl.setClearColor('#0D1117');
+  }, []);
+
+  if (!layout || !cameraConfig) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-[#0D1117] rounded-xl border border-[#1F2937]">
         <p className="text-[#6B7280] text-sm">NENHUM LAYOUT CARREGADO</p>
@@ -215,26 +229,12 @@ export default function CanvasSimulador3D({
     );
   }
 
-  const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
-  const sheetW = layout.chapa.largura / escala;
-  const sheetD = layout.chapa.altura / escala;
-  const cenaSize = Math.max(sheetW, sheetD);
-
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
-      <Canvas
-        camera={{
-          position: [cenaSize * 0.7, cenaSize * 0.5, cenaSize * 0.7],
-          fov: 45,
-          near: 0.01,
-          far: cenaSize * 10,
-        }}
-        gl={{ antialias: true }}
-        onCreated={({ gl }) => gl.setClearColor('#0D1117')}
-      >
+      <Canvas camera={cameraConfig} gl={GL_CONFIG} onCreated={handleCreated}>
         <Cena3D
           layout={layout}
-          onSelecionarPeca={onSelecionarPeca}
+          onSelecionarPecaRef={onSelecionarPecaRef}
           habilitarGrade={habilitarGrade}
           habilitarCotas={habilitarCotas}
           habilitarAnimacao={habilitarAnimacao}
