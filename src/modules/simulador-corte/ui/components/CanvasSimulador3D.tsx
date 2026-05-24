@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { LayoutSimulacao, PecaSimulacao } from '../../domain/types';
@@ -26,19 +26,15 @@ const CORES = [
 
 const GL_CONFIG = { antialias: true };
 
-function CameraInicializador({ cenaSize, cx, cz }: { cenaSize: number; cx: number; cz: number }) {
-  const { camera } = useThree();
+const CAMERA_CONFIG = {
+  position: [7, 5, 7] as [number, number, number],
+  fov: 45,
+  near: 0.1,
+  far: 100,
+};
 
-  useEffect(() => {
-    camera.position.set(cenaSize * 0.7, cenaSize * 0.5, cenaSize * 0.7);
-    camera.near = 0.01;
-    camera.far = cenaSize * 10;
-    camera.lookAt(cx, 0, cz);
-    camera.updateProjectionMatrix();
-  }, [cenaSize, cx, cz, camera]);
-
-  return null;
-}
+const ORBIT_MIN_DIST = 0.5;
+const ORBIT_MAX_DIST = 50;
 
 function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   peca: PecaSimulacao;
@@ -54,16 +50,13 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   const pz = peca.y / escala + l / 2;
   const py = e / 2;
 
-  const handlePointerOver = useCallback(() => { document.body.style.cursor = 'pointer'; }, []);
-  const handlePointerOut = useCallback(() => { document.body.style.cursor = 'default'; }, []);
-
   return (
     <group>
       <mesh
         position={[px, py, pz]}
         onClick={(e) => { e.stopPropagation(); onClick(); }}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'default'; }}
       >
         <boxGeometry args={[c, e, l]} />
         <meshStandardMaterial
@@ -97,6 +90,31 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   );
 }
 
+function SceneContent({ layout, onSheetClick }: {
+  layout: LayoutSimulacao;
+  onSheetClick: () => void;
+}) {
+  const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+  const sheetW = layout.chapa.largura / escala;
+  const sheetD = layout.chapa.altura / escala;
+  const cx = sheetW / 2;
+  const cz = sheetD / 2;
+  const sheetH = 0.3;
+
+  return (
+    <group>
+      <mesh position={[cx, -sheetH / 2, cz]} onClick={onSheetClick}>
+        <boxGeometry args={[sheetW, sheetH, sheetD]} />
+        <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
+      </mesh>
+      <lineSegments position={[cx, 0.01, cz]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.01, sheetD)]} />
+        <lineBasicMaterial color="#4B5563" />
+      </lineSegments>
+    </group>
+  );
+}
+
 const Cena3D = React.memo(function Cena3D({
   layout,
   onSelecionarPecaRef,
@@ -114,16 +132,11 @@ const Cena3D = React.memo(function Cena3D({
   habilitarRetalhos?: boolean;
   velocidadeAnimacao?: number;
 }) {
-  const layoutVars = useMemo(() => {
-    const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
-    const sheetW = layout.chapa.largura / escala;
-    const sheetD = layout.chapa.altura / escala;
-    const cenaSize = Math.max(sheetW, sheetD);
-    return { escala, sheetW, sheetD, cenaSize, cx: sheetW / 2, cz: sheetD / 2 };
-  }, [layout]);
-
-  const { escala, sheetW, sheetD, cenaSize, cx, cz } = layoutVars;
-  const sheetH = 0.3;
+  const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+  const sheetW = layout.chapa.largura / escala;
+  const sheetD = layout.chapa.altura / escala;
+  const cx = sheetW / 2;
+  const cz = sheetD / 2;
 
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
 
@@ -147,47 +160,24 @@ const Cena3D = React.memo(function Cena3D({
     onSelecionarPecaRef.current?.(peca);
   }, [onSelecionarPecaRef]);
 
-  const [controles, setControles] = useState<any>(null);
-  const controlesRef = useCallback((node: any) => {
-    if (node) setControles(node);
-  }, []);
-
-  useEffect(() => {
-    if (!controles) return;
-    controles.target.set(cx, 0, cz);
-    controles.minDistance = cenaSize * 0.1;
-    controles.maxDistance = cenaSize * 5;
-    controles.update();
-  }, [controles, cx, cz, cenaSize]);
-
   return (
     <>
-      <CameraInicializador cenaSize={cenaSize} cx={cx} cz={cz} />
-
       <ambientLight intensity={0.5} />
-      <directionalLight position={[cenaSize * 2, cenaSize * 3, cenaSize * 2]} intensity={0.8} />
-      <directionalLight position={[-cenaSize, cenaSize, -cenaSize]} intensity={0.3} />
+      <directionalLight position={[15, 20, 15]} intensity={0.8} />
+      <directionalLight position={[-10, 10, -10]} intensity={0.3} />
 
-      <mesh position={[cx, -sheetH / 2, cz]} onClick={handleClickSheet}>
-        <boxGeometry args={[sheetW, sheetH, sheetD]} />
-        <meshStandardMaterial color="#1F2937" roughness={0.9} metalness={0.1} />
-      </mesh>
-
-      <lineSegments position={[cx, 0.01, cz]}>
-        <edgesGeometry args={[new THREE.BoxGeometry(sheetW, 0.01, sheetD)]} />
-        <lineBasicMaterial color="#4B5563" />
-      </lineSegments>
+      <SceneContent layout={layout} onSheetClick={handleClickSheet} />
 
       {habilitarGrade && (
-        <Rulers3D sheetWidth={sheetW} sheetDepth={sheetD} escala={escala} cenaSize={cenaSize} habilitarGrade />
+        <Rulers3D sheetWidth={sheetW} sheetDepth={sheetD} escala={escala} cenaSize={Math.max(sheetW, sheetD)} habilitarGrade />
       )}
 
       {habilitarCotas && (
-        <CotasDim layout={layout} escala={escala} pecaSelecionada={pecaSelecionadaObj} cenaSize={cenaSize} />
+        <CotasDim layout={layout} escala={escala} pecaSelecionada={pecaSelecionadaObj} cenaSize={Math.max(sheetW, sheetD)} />
       )}
 
       {habilitarRetalhos && (
-        <RetalhosVis3D layout={layout} escala={escala} cenaSize={cenaSize} />
+        <RetalhosVis3D layout={layout} escala={escala} cenaSize={Math.max(sheetW, sheetD)} />
       )}
 
       {pecasComCor.map((peca) => (
@@ -206,9 +196,11 @@ const Cena3D = React.memo(function Cena3D({
       )}
 
       <OrbitControls
-        ref={controlesRef}
         enableDamping
         dampingFactor={0.15}
+        target={[cx, 0, cz]}
+        minDistance={ORBIT_MIN_DIST}
+        maxDistance={ORBIT_MAX_DIST}
       />
     </>
   );
@@ -230,6 +222,7 @@ export default function CanvasSimulador3D({
     if (!layout) return null;
     return (
       <Cena3D
+        key={layout.chapa.sku + layout.chapa.largura + layout.chapa.altura + layout.pecas.length}
         layout={layout}
         onSelecionarPecaRef={onSelecionarPecaRef}
         habilitarGrade={habilitarGrade}
@@ -255,7 +248,7 @@ export default function CanvasSimulador3D({
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
-      <Canvas gl={GL_CONFIG} onCreated={handleCreated}>
+      <Canvas camera={CAMERA_CONFIG} gl={GL_CONFIG} onCreated={handleCreated}>
         {scene}
       </Canvas>
     </div>
