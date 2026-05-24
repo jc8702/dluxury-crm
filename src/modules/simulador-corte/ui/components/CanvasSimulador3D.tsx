@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { LayoutSimulacao, PecaSimulacao } from '../../domain/types';
@@ -162,10 +162,6 @@ const Cena3D = React.memo(function Cena3D({
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[15, 20, 15]} intensity={0.8} />
-      <directionalLight position={[-10, 10, -10]} intensity={0.3} />
-
       <SceneContent layout={layout} onSheetClick={handleClickSheet} />
 
       {habilitarGrade && (
@@ -194,17 +190,35 @@ const Cena3D = React.memo(function Cena3D({
       {habilitarAnimacao && (
         <ToolpathPreview layout={layout} escala={escala} animando={true} velocidadeAnimacao={velocidadeAnimacao ?? 1} />
       )}
-
-      <OrbitControls
-        enableDamping
-        dampingFactor={0.15}
-        target={[cx, 0, cz]}
-        minDistance={ORBIT_MIN_DIST}
-        maxDistance={ORBIT_MAX_DIST}
-      />
     </>
   );
 });
+
+function GerenciadorCamera({ layout, controlsRef }: { layout: LayoutSimulacao | null; controlsRef: React.RefObject<any> }) {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    if (!layout) return;
+
+    const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+    const sheetW = layout.chapa.largura / escala;
+    const sheetD = layout.chapa.altura / escala;
+    const cx = sheetW / 2;
+    const cz = sheetD / 2;
+
+    // Enquadramento estático e fixo inicial da chapa
+    camera.position.set(cx, 8, cz + 8);
+    camera.lookAt(cx, 0, cz);
+    camera.updateProjectionMatrix();
+
+    if (controlsRef.current) {
+      controlsRef.current.target.set(cx, 0, cz);
+      controlsRef.current.update();
+    }
+  }, [layout, camera, controlsRef]);
+
+  return null;
+}
 
 export default function CanvasSimulador3D({
   layout,
@@ -217,6 +231,8 @@ export default function CanvasSimulador3D({
 }: CanvasSimulador3DProps) {
   const onSelecionarPecaRef = useRef(onSelecionarPeca);
   onSelecionarPecaRef.current = onSelecionarPeca;
+
+  const controlsRef = useRef<any>(null);
 
   const scene = useMemo(() => {
     if (!layout) return null;
@@ -246,10 +262,31 @@ export default function CanvasSimulador3D({
     );
   }
 
+  const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+  const sheetW = layout.chapa.largura / escala;
+  const sheetD = layout.chapa.altura / escala;
+  const cx = sheetW / 2;
+  const cz = sheetD / 2;
+
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
       <Canvas camera={CAMERA_CONFIG} gl={GL_CONFIG} onCreated={handleCreated}>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[15, 20, 15]} intensity={0.8} />
+        <directionalLight position={[-10, 10, -10]} intensity={0.3} />
+        
         {scene}
+        
+        <GerenciadorCamera layout={layout} controlsRef={controlsRef} />
+        
+        <OrbitControls
+          ref={controlsRef}
+          enableDamping
+          dampingFactor={0.15}
+          target={[cx, 0, cz]}
+          minDistance={ORBIT_MIN_DIST}
+          maxDistance={ORBIT_MAX_DIST}
+        />
       </Canvas>
     </div>
   );
