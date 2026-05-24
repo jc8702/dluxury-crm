@@ -63,12 +63,15 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
       if (!res?.layouts) continue;
       const mat = matsMap.get(chapaId);
       const esp = mat ? Number(mat.espessura_mm) || 18 : 18;
+      let layoutCount = 0;
       for (const l of res.layouts) {
+        layoutCount++;
         const larg = l.largura_original_mm || (mat ? Number(mat.largura_mm) : 0) || 2750;
         const alt = l.altura_original_mm || (mat ? Number(mat.altura_mm) : 0) || 1830;
+        const skuChapa = l.chapa_sku || mat?.sku_chapa || chapaId;
         layouts.push({
           chapa: {
-            sku: l.chapa_sku || mat?.sku_chapa || chapaId,
+            sku: `${skuChapa.toUpperCase()} - CHAPA ${layoutCount}`,
             largura: larg,
             altura: alt,
             espessura: esp,
@@ -76,8 +79,8 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
           pecas: (l.pecas_posicionadas || []).map((p: any) => ({
             id: p.id,
             nome: p.nome,
-            comprimento: p.rotacionada ? p.altura : p.largura,
-            largura: p.rotacionada ? p.largura : p.altura,
+            comprimento: p.largura,
+            largura: p.altura,
             espessura: esp,
             x: p.x,
             y: p.y,
@@ -107,25 +110,47 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
         rotacionavel: p.rotacionavel !== false,
       }));
       if (pecas.length === 0) continue;
-      const opt = new MaxRectsOptimizer(larg, alt, 3, 15);
-      const res = opt.otimizar(pecas);
-      layouts.push({
-        chapa: { sku: chapa.sku_chapa || 'CHAPA', largura: larg, altura: alt, espessura: esp },
-        pecas: res.pecas_posicionadas.map((p) => ({
-          id: p.id,
-          nome: p.nome,
-          comprimento: p.rotacionada ? p.altura : p.largura,
-          largura: p.rotacionada ? p.largura : p.altura,
-          espessura: esp,
-          x: p.x,
-          y: p.y,
-          rotacionada: p.rotacionada,
-        })),
-        area_aproveitada_mm2: res.area_usada,
-        area_total_mm2: res.area_total,
-        aproveitamento_percentual: res.aproveitamento,
-        espacos_vazios: res.espacos_vazios,
-      });
+
+      let pecasParaProcessar = [...pecas];
+      let chapaIndex = 0;
+      const maxChapas = 50;
+
+      while (pecasParaProcessar.length > 0 && chapaIndex < maxChapas) {
+        chapaIndex++;
+        const opt = new MaxRectsOptimizer(larg, alt, 3, 15);
+        const res = opt.otimizar(pecasParaProcessar);
+
+        layouts.push({
+          chapa: { 
+            sku: `${(chapa.sku_chapa || 'CHAPA').toUpperCase()} - CHAPA ${chapaIndex}`, 
+            largura: larg, 
+            altura: alt, 
+            espessura: esp 
+          },
+          pecas: res.pecas_posicionadas.map((p) => ({
+            id: p.id,
+            nome: p.nome,
+            comprimento: p.largura,
+            largura: p.altura,
+            espessura: esp,
+            x: p.x,
+            y: p.y,
+            rotacionada: p.rotacionada,
+          })),
+          area_aproveitada_mm2: res.area_usada,
+          area_total_mm2: res.area_total,
+          aproveitamento_percentual: res.aproveitamento,
+          espacos_vazios: res.espacos_vazios,
+        });
+
+        if (res.pecas_rejeitadas.length === 0) {
+          break;
+        }
+        if (res.pecas_posicionadas.length === 0) {
+          break;
+        }
+        pecasParaProcessar = res.pecas_rejeitadas;
+      }
     }
     return layouts;
   }
@@ -228,35 +253,54 @@ export default function SimuladorCortePage() {
           }
         }
 
-        const optimizer = new MaxRectsOptimizer(chapaLargura, chapaAltura, 3, 15);
-        const resultado = optimizer.otimizar(pecas);
+        const layoutsTemp: LayoutSimulacao[] = [];
+        let pecasParaProcessar = [...pecas];
+        let chapaIndex = 0;
+        const maxChapas = 50;
 
-        const chapa: ChapaSimulacao = {
-          sku: chapaSku.toUpperCase(),
-          largura: chapaLargura,
-          altura: chapaAltura,
-          espessura: chapaEspessura,
-        };
+        while (pecasParaProcessar.length > 0 && chapaIndex < maxChapas) {
+          chapaIndex++;
 
-        const layout: LayoutSimulacao = {
-          chapa,
-          pecas: resultado.pecas_posicionadas.map((p) => ({
-            id: p.id,
-            nome: p.nome,
-            comprimento: p.rotacionada ? p.altura : p.largura,
-            largura: p.rotacionada ? p.largura : p.altura,
+          const optimizer = new MaxRectsOptimizer(chapaLargura, chapaAltura, 3, 15);
+          const resultado = optimizer.otimizar(pecasParaProcessar);
+
+          const chapa: ChapaSimulacao = {
+            sku: `${chapaSku.toUpperCase()} - CHAPA ${chapaIndex}`,
+            largura: chapaLargura,
+            altura: chapaAltura,
             espessura: chapaEspessura,
-            x: p.x,
-            y: p.y,
-            rotacionada: p.rotacionada,
-          })),
-          area_aproveitada_mm2: resultado.area_usada,
-          area_total_mm2: resultado.area_total,
-          aproveitamento_percentual: resultado.aproveitamento,
-          espacos_vazios: resultado.espacos_vazios,
-        };
+          };
 
-        setResultadoRapido([layout]);
+          layoutsTemp.push({
+            chapa,
+            pecas: resultado.pecas_posicionadas.map((p) => ({
+              id: p.id,
+              nome: p.nome,
+              comprimento: p.largura,
+              largura: p.altura,
+              espessura: chapaEspessura,
+              x: p.x,
+              y: p.y,
+              rotacionada: p.rotacionada,
+            })),
+            area_aproveitada_mm2: resultado.area_usada,
+            area_total_mm2: resultado.area_total,
+            aproveitamento_percentual: resultado.aproveitamento,
+            espacos_vazios: resultado.espacos_vazios,
+          });
+
+          if (resultado.pecas_rejeitadas.length === 0) {
+            break;
+          }
+
+          if (resultado.pecas_posicionadas.length === 0) {
+            break;
+          }
+
+          pecasParaProcessar = resultado.pecas_rejeitadas;
+        }
+
+        setResultadoRapido(layoutsTemp);
         setIndiceChapa(0);
         setPecaSelecionada(null);
       } catch (err) {

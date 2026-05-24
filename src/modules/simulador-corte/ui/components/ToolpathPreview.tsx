@@ -96,7 +96,7 @@ export default function ToolpathPreview({
 
     lastTime.current = performance.now();
     let accTime = 0;
-    const duracaoTotal = Math.max(1000, segmentos.length * (80 / velocidadeAnimacao));
+    const duracaoTotal = Math.max(1000, segmentos.length * (350 / velocidadeAnimacao));
 
     function animate(now: number) {
       const dt = now - lastTime.current;
@@ -175,12 +175,39 @@ export default function ToolpathPreview({
         );
       })}
 
-      {/* Active cut head */}
+      {/* Active cut head (Spindle CNC Industrial) */}
       {cabecaPos && animando && (
-        <mesh position={[cabecaPos.x, 0.03, cabecaPos.z]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshBasicMaterial color={TP_ACTIVE_COLOR} />
-        </mesh>
+        <group position={[cabecaPos.x, 0.01, cabecaPos.z]}>
+          {/* Broca de corte (Fresa dourada de metal duro) */}
+          <mesh position={[0, 0.08, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 0.16, 8]} />
+            <meshStandardMaterial color="#E2AC00" metalness={0.9} roughness={0.1} />
+          </mesh>
+          
+          {/* Mandril (Collet porta-fresa preto) */}
+          <mesh position={[0, 0.2, 0]}>
+            <cylinderGeometry args={[0.04, 0.04, 0.08, 12]} />
+            <meshStandardMaterial color="#374151" metalness={0.8} roughness={0.3} />
+          </mesh>
+          
+          {/* Corpo do motor (Spindle de Alumínio Escovado) */}
+          <mesh position={[0, 0.45, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.42, 16]} />
+            <meshStandardMaterial color="#6B7280" metalness={0.9} roughness={0.25} />
+          </mesh>
+          
+          {/* Topo do Spindle (Tampa de Destaque Dourada) */}
+          <mesh position={[0, 0.68, 0]}>
+            <cylinderGeometry args={[0.08, 0.06, 0.04, 16]} />
+            <meshStandardMaterial color="#E2AC00" metalness={0.6} roughness={0.4} />
+          </mesh>
+          
+          {/* Anel de LED indicativo de operação (Verde brilhoso) */}
+          <mesh position={[0, 0.67, 0]}>
+            <torusGeometry args={[0.081, 0.008, 8, 24]} />
+            <meshBasicMaterial color="#10B981" />
+          </mesh>
+        </group>
       )}
 
       {/* Serra disc indicators at each piece corner */}
