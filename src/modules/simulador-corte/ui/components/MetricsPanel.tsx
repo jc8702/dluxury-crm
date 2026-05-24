@@ -130,10 +130,12 @@ export default function MetricsPanel({
             {program.issues.map((issue) => {
               const isError = issue.severidade === 'error';
               return (
-                <button
-                  key={issue.id}
+                <div
+                  className="w-full text-left p-2 hover:bg-[#1F2937]/50 transition-all flex flex-col gap-1 group cursor-pointer"
                   onClick={() => onJumpToIssue(issue.tempo, issue.posicao)}
-                  className="w-full text-left p-2 hover:bg-[#1F2937]/50 transition-all flex flex-col gap-1 group"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onJumpToIssue(issue.tempo, issue.posicao); } }}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="p-0.5 rounded bg-black/40">
@@ -152,10 +154,10 @@ export default function MetricsPanel({
                   <p className="text-[#6B7280] text-[9px] leading-normal truncate">
                     {issue.descricao}
                   </p>
-                  <span className="text-[#E2AC00] text-[9px] font-semibold mt-0.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[#E2AC00] text-[9px] font-semibold mt-0.5 flex items-center gap-0.5 transition-colors">
                     <Crosshair size={10} /> Corrigir / Jump
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Crosshair, CheckCircle, XCircle, HelpCircle, ArrowRight, Shield, ShieldAlert, Cpu, RotateCw } from 'lucide-react';
+import { AlertTriangle, Crosshair, CheckCircle, XCircle, HelpCircle, ArrowRight, Shield, ShieldAlert, Cpu, RotateCw, Eye } from 'lucide-react';
 import type { IssueWithRecommendation, SetupDiff, CollisionPolicy } from '../../domain/types';
 import { determinarAcao } from '../../domain/adjustmentEngine';
 
@@ -14,6 +14,12 @@ interface SafetyAnalysisPanelProps {
   onPreviewRecommendation?: (iwr: IssueWithRecommendation | null) => void;
 }
 
+function formatarTempo(seg: number) {
+  const mins = Math.floor(seg / 60);
+  const secs = Math.floor(seg % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 export default function SafetyAnalysisPanel({
   issuesWithRecs,
   diffs,
@@ -26,12 +32,6 @@ export default function SafetyAnalysisPanel({
 }: SafetyAnalysisPanelProps) {
   const podeAutoAplicar = collisionPolicy === 'auto';
 
-  const formatarTempo = (seg: number) => {
-    const mins = Math.floor(seg / 60);
-    const secs = Math.floor(seg % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const totalErros = issuesWithRecs.filter(i => i.issue.severidade === 'error').length;
   const totalWarnings = issuesWithRecs.filter(i => i.issue.severidade === 'warning').length;
   const totalResolviveis = issuesWithRecs.filter(i => i.bestRecommendation && i.bestRecommendation.action !== 'impossible').length;
@@ -39,7 +39,6 @@ export default function SafetyAnalysisPanel({
 
   return (
     <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 w-full flex flex-col gap-3 relative">
-      {/* HEADER */}
       <div className="flex items-center justify-between border-b border-[#1F2937] pb-2">
         <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider flex items-center gap-1.5">
           <ShieldAlert size={14} /> SEGURANÇA & AJUSTES
@@ -50,7 +49,6 @@ export default function SafetyAnalysisPanel({
         </div>
       </div>
 
-      {/* RESUMO DE DIFS APLICADOS */}
       {diffs.length > 0 && (
         <div className="border-b border-[#1F2937]/60 pb-2">
           <h4 className="text-[#10B981] font-bold text-[10px] flex items-center gap-1 mb-1.5">
@@ -72,7 +70,6 @@ export default function SafetyAnalysisPanel({
         </div>
       )}
 
-      {/* RECOMENDAÇÕES / ISSUES */}
       <div className="flex-1 space-y-2 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
         {issuesWithRecs.length === 0 ? (
           <div className="border border-dashed border-[#1F2937] rounded-xl flex items-center justify-center bg-[#0D1117]/40 p-4 text-center">
@@ -87,14 +84,15 @@ export default function SafetyAnalysisPanel({
             const rec = iwr.bestRecommendation;
             const isError = issue.severidade === 'error';
             const acao = rec ? determinarAcao(rec, collisionPolicy) : 'block';
+            const blocked = acao === 'block';
 
             return (
               <div
                 key={issue.id}
                 className="bg-[#0D1117]/60 border border-[#1F2937] rounded-lg overflow-hidden"
               >
-                {/* CABEÇALHO DO ISSUE */}
                 <button
+                  type="button"
                   onClick={() => onJumpToIssue(issue.tempo, issue.posicao)}
                   className="w-full text-left p-2 hover:bg-[#1F2937]/30 transition-all flex flex-col gap-1 group"
                 >
@@ -109,25 +107,30 @@ export default function SafetyAnalysisPanel({
                   <p className="text-[#6B7280] text-[8px] line-clamp-2">{issue.descricao}</p>
                 </button>
 
-                {/* RECOMENDAÇÃO */}
                 {rec && (
                   <div className="border-t border-[#1F2937]/60 px-2 py-1.5">
                     <div className="flex items-start gap-1.5">
-                      {acao === 'apply' ? (
-                        <CheckCircle size={10} className="text-[#10B981] mt-0.5 shrink-0" />
-                      ) : acao === 'suggest' ? (
-                        <HelpCircle size={10} className="text-[#E2AC00] mt-0.5 shrink-0" />
+                      {!blocked ? (
+                        acao === 'apply' ? (
+                          <CheckCircle size={10} className="text-[#10B981] mt-0.5 shrink-0" />
+                        ) : (
+                          <HelpCircle size={10} className="text-[#E2AC00] mt-0.5 shrink-0" />
+                        )
                       ) : (
                         <XCircle size={10} className="text-[#EF4444] mt-0.5 shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
                           <span className={`text-[9px] font-bold ${
-                            acao === 'apply' ? 'text-[#10B981]' : acao === 'suggest' ? 'text-[#E2AC00]' : 'text-[#EF4444]'
+                            !blocked ? (acao === 'apply' ? 'text-[#10B981]' : 'text-[#E2AC00]') : 'text-[#EF4444]'
                           }`}>
-                            {acao === 'apply' ? 'AUTO' : acao === 'suggest' ? 'SUGESTÃO' : 'BLOQUEIO'}
+                            {!blocked ? (acao === 'apply' ? 'AUTO' : 'SUGESTÃO') : 'BLOQUEIO'}
                           </span>
-                          <span className="text-[#6B7280] text-[8px]">{rec.paramName}: {rec.oldValue} → {rec.newValue}</span>
+                          <span className="text-[#6B7280] text-[8px]">
+                            {blocked
+                              ? `Política "${collisionPolicy === 'stop' ? 'Parar em Colisão' : collisionPolicy}" bloqueia ajuste automático`
+                              : `${rec.paramName}: ${rec.oldValue} → ${rec.newValue}`}
+                          </span>
                         </div>
                         <p className="text-[#6B7280] text-[8px] leading-tight mt-0.5">{rec.explanation}</p>
                         {rec.tradeoff && (
@@ -136,37 +139,44 @@ export default function SafetyAnalysisPanel({
                       </div>
                     </div>
 
-                    {/* BOTÃO DE AÇÃO */}
                     <div className="flex gap-1 mt-1">
-                      {acao !== 'block' && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onPreviewRecommendation?.(iwr); }}
+                        className="flex items-center justify-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-[8px] font-bold py-1 px-1.5 rounded transition-all"
+                        title="Visualizar na cena 3D"
+                      >
+                        <Eye size={10} /> 3D
+                      </button>
+                      {!blocked ? (
+                        acao === 'apply' ? (
+                          <button
+                            type="button"
+                            onClick={() => onApplyRecommendation(iwr)}
+                            className="flex-1 flex items-center justify-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-[8px] font-bold py-1 rounded transition-all"
+                          >
+                            <CheckCircle size={10} /> APLICAR
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onApplyRecommendation(iwr)}
+                            className="flex-1 flex items-center justify-center gap-1 bg-[#E2AC00]/20 hover:bg-[#E2AC00]/30 text-[#E2AC00] text-[8px] font-bold py-1 rounded transition-all"
+                          >
+                            <HelpCircle size={10} /> APLICAR SUGESTÃO
+                          </button>
+                        )
+                      ) : (
                         <button
-                          onClick={(e) => { e.stopPropagation(); onPreviewRecommendation?.(iwr); }}
-                          className="flex items-center justify-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-[8px] font-bold py-1 px-1.5 rounded transition-all"
-                          title="Visualizar na cena 3D"
+                          type="button"
+                          onClick={() => {
+                            const novaPol = collisionPolicy === 'stop' ? 'suggest' : 'auto';
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] text-[8px] font-bold py-1 rounded transition-all"
+                          title="Altere a política de colisão no painel CNC para desbloquear ajustes"
                         >
-                          <Crosshair size={10} /> 3D
+                          <XCircle size={10} /> MUDAR POLÍTICA
                         </button>
-                      )}
-                      {acao === 'apply' && (
-                        <button
-                          onClick={() => onApplyRecommendation(iwr)}
-                          className="flex-1 flex items-center justify-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-[8px] font-bold py-1 rounded transition-all"
-                        >
-                          <CheckCircle size={10} /> APLICAR
-                        </button>
-                      )}
-                      {acao === 'suggest' && (
-                        <button
-                          onClick={() => onApplyRecommendation(iwr)}
-                          className="flex-1 flex items-center justify-center gap-1 bg-[#E2AC00]/20 hover:bg-[#E2AC00]/30 text-[#E2AC00] text-[8px] font-bold py-1 rounded transition-all"
-                        >
-                          <HelpCircle size={10} /> VER SUGESTÃO
-                        </button>
-                      )}
-                      {acao === 'block' && (
-                        <div className="flex-1 flex items-center justify-center gap-1 bg-[#EF4444]/10 text-[#EF4444] text-[8px] font-bold py-1 rounded">
-                          <XCircle size={10} /> INTERVENÇÃO MANUAL NECESSÁRIA
-                        </div>
                       )}
                     </div>
                   </div>
@@ -177,7 +187,6 @@ export default function SafetyAnalysisPanel({
         )}
       </div>
 
-      {/* OVERLAY DE RERUN */}
       {isRerunning && (
         <div className="absolute inset-0 bg-[#111827]/90 flex flex-col items-center justify-center gap-2 z-10 rounded-xl">
           <RotateCw size={20} className="text-[#E2AC00] animate-spin" />
@@ -186,9 +195,9 @@ export default function SafetyAnalysisPanel({
         </div>
       )}
 
-      {/* BOTÃO DE RERUN */}
       {(diffs.length > 0 || totalResolviveis > 0) && (
         <button
+          type="button"
           onClick={onRerunSimulation}
           disabled={isRerunning}
           className="w-full flex items-center justify-center gap-1.5 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-[10px] py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"

@@ -101,14 +101,14 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
                   : 'bg-[#0D1117]/50 border border-transparent hover:bg-[#1F2937]/30'
               }`}
             >
-              <input
-                type="radio"
-                name="collisionPolicy"
-                value={opt.value}
-                checked={machine.collisionPolicy === opt.value}
-                onChange={() => updateMachine('collisionPolicy', opt.value)}
-                className="mt-0.5 accent-[#E2AC00] w-3 h-3"
-              />
+                <input
+                  type="radio"
+                  name="collisionPolicy"
+                  value={opt.value}
+                  checked={machine.collisionPolicy === opt.value}
+                  onChange={() => updateMachine('collisionPolicy', opt.value)}
+                  className="mt-0.5 accent-[#E2AC00] w-4 h-4 cursor-pointer"
+                />
               <div>
                 <span className={`text-[10px] font-bold ${
                   machine.collisionPolicy === opt.value ? 'text-[#E2AC00]' : 'text-white'
@@ -133,6 +133,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[#6B7280] text-[8px] font-bold">{clamp.id.toUpperCase()}</span>
                 <button
+                  type="button"
                   onClick={() => {
                     const novosClamps = config.fixture.clamps.filter((_, i) => i !== idx);
                     onChange({ ...config, fixture: { clamps: novosClamps } });
@@ -176,6 +177,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
           ))}
         </div>
         <button
+          type="button"
           onClick={() => {
             const nextId = config.fixture.clamps.length + 1;
             const novoClamp: ClampPosition = {
