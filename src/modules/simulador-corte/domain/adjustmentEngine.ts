@@ -374,16 +374,43 @@ export function applySafeAdjustment(
         diffs.push({ paramName: 'Lead-In', before: machine.leadInDist, after: novoLead, unit: 'mm' });
         machine.leadInDist = novoLead;
       }
-      if (rec.paramName === 'clampingMargin') {
-        const novaMargem = clampNumber(Number(rec.newValue), 0, 50);
-        if (novaMargem !== machine.clampingMargin) {
-          diffs.push({ paramName: 'Margem de Clamps', before: machine.clampingMargin, after: novaMargem, unit: 'mm' });
-          machine.clampingMargin = novaMargem;
-          newConfig.fixture = gerarFixtureSettings(
-            layout.chapa.largura,
-            layout.chapa.altura,
-            novaMargem + 15
-          );
+      break;
+    }
+    case 'ADJUST_CLAMP_MARGIN': {
+      const novaMargem = clampNumber(Number(rec.newValue), 0, 50);
+      if (novaMargem !== machine.clampingMargin) {
+        diffs.push({ paramName: 'Margem de Clamps', before: machine.clampingMargin, after: novaMargem, unit: 'mm' });
+        machine.clampingMargin = novaMargem;
+        newConfig.fixture = gerarFixtureSettings(
+          layout.chapa.largura,
+          layout.chapa.altura,
+          novaMargem + 15
+        );
+      }
+      break;
+    }
+    case 'REPOSITION_CLAMP': {
+      const clampIdMatch = rec.paramName.match(/^clamp_(.+)$/);
+      if (clampIdMatch) {
+        const fixtureId = clampIdMatch[1];
+        const newPosMatch = String(rec.newValue).match(/X:([\d.]+)\s+Y:([\d.]+)/);
+        if (newPosMatch) {
+          const nx = parseFloat(newPosMatch[1]);
+          const ny = parseFloat(newPosMatch[2]);
+          const clampIdx = newConfig.fixture.clamps.findIndex(c => c.id === fixtureId);
+          if (clampIdx !== -1) {
+            diffs.push({
+              paramName: `Clamp ${fixtureId}`,
+              before: String(rec.oldValue),
+              after: String(rec.newValue),
+              unit: 'mm',
+            });
+            newConfig.fixture.clamps[clampIdx] = {
+              ...newConfig.fixture.clamps[clampIdx],
+              x: clampNumber(nx, 0, machine.limiteX[1]),
+              y: clampNumber(ny, 0, machine.limiteY[1]),
+            };
+          }
         }
       }
       break;

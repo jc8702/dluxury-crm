@@ -552,10 +552,14 @@ export default function SimuladorCortePage() {
           x: parseFloat(matchNew[1]), y: parseFloat(matchNew[2]),
           largura: 45, altura: 80, cor: '#10B981', label: 'Proposto',
         });
+        setGhostPreview(items);
+        return;
       }
-    } else if (rec.type === 'ADJUST_SAFE_Z' && layoutAtual) {
+    }
+
+    if (rec.type === 'ADJUST_SAFE_Z') {
       const novoZ = Number(rec.newValue);
-      if (!isNaN(novoZ)) {
+      if (!isNaN(novoZ) && layoutAtual) {
         items.push({
           type: 'safeZ_plane', id: 'safeZ_preview',
           x: 0, y: 0,
@@ -564,6 +568,32 @@ export default function SimuladorCortePage() {
           cor: '#10B981',
         });
       }
+    }
+
+    if (rec.type === 'ADJUST_CLAMP_MARGIN') {
+      const margem = Number(rec.newValue);
+      if (!isNaN(margem) && layoutAtual) {
+        items.push({
+          type: 'safeZ_plane', id: 'margin_preview',
+          x: 0, y: 0,
+          largura: margem,
+          altura: layoutAtual.chapa.largura,
+          cor: '#E2AC00',
+        });
+      }
+    }
+
+    // Fallback: show a visual marker at the issue position for any recommendation type
+    if (items.length === 0) {
+      items.push({
+        type: 'part', id: 'rec_fallback',
+        x: iwr.issue.posicao.x,
+        y: iwr.issue.posicao.y,
+        largura: 60,
+        altura: 60,
+        cor: '#E2AC00',
+        label: rec.paramName,
+      });
     }
 
     setGhostPreview(items);
@@ -1069,6 +1099,8 @@ export default function SimuladorCortePage() {
                     program={program}
                     tempoAtual={tempoAtual}
                     cncConfig={cncConfig}
+                    focoPosicao={focoPosicao}
+                    mostrarRiscos={modoExibicao === 'verificacao'}
                     ghostPreview={ghostPreview}
                     onClampDragEnd={handleClampDragEnd}
                   />

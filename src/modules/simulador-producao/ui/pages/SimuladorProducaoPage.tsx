@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Upload, Sparkles, ArrowRight, Factory, CheckCircle2, CircleDot, Layers3, Scissors } from 'lucide-react';
+import { Plus, Trash2, Upload, Sparkles, ArrowRight, Factory, CheckCircle2, CircleDot, Layers3, Scissors, Tag } from 'lucide-react';
 import { listarPlanos } from '../../../simulador-corte/infrastructure/repositories/PlanoCorteRepository';
 import type { PlanoCorteCarregado } from '../../../simulador-corte/domain/types';
 import type { FioDeFita } from '../../../plano-corte/domain/types';
@@ -9,6 +9,7 @@ import {
   simulateProductionScenario,
 } from '../../domain/productionEngine';
 import type { ProductionPieceInput, ProductionSimulationResult } from '../../domain/types';
+import { exportarEtiquetaProducao } from '../components/LabelExporterProducao';
 
 type SourceMode = 'manual' | 'plano';
 
@@ -303,14 +304,24 @@ export default function SimuladorProducaoPage() {
                 <div key={piece.id} className="rounded-xl border border-[#1F2937] bg-[#0D1117] p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-semibold">Peça {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removePiece(piece.id)}
-                      className="text-[#6B7280] hover:text-red-400 transition-colors"
-                      title="Remover peça"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => exportarEtiquetaProducao(piece, index, pieces.length)}
+                        className="text-[#E2AC00] hover:text-white transition-colors"
+                        title="Exportar etiqueta QR"
+                      >
+                        <Tag size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePiece(piece.id)}
+                        className="text-[#6B7280] hover:text-red-400 transition-colors"
+                        title="Remover peça"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mb-2">

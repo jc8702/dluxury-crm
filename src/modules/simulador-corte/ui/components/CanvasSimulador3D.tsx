@@ -319,7 +319,6 @@ function GerenciadorCamera({ layout, focoPosicao }: {
   const { camera } = useThree();
   const controls = useThree((state: any) => state.controls);
   const ultimoLayoutIdRef = useRef<string>('');
-  const ultimoFocoRef = useRef<string>('');
 
   // Centraliza no layout quando ele muda
   useEffect(() => {
@@ -345,17 +344,17 @@ function GerenciadorCamera({ layout, focoPosicao }: {
     }
   }, [layout, camera, controls]);
 
-  // Jump para posição de foco (issue)
+  // Jump para posição de foco (issue) — sempre executa quando focoPosicao muda
+  const focoKeyRef = useRef(0);
   useEffect(() => {
     if (!focoPosicao || !layout) return;
 
-    const focoKey = `${focoPosicao.x.toFixed(1)}_${focoPosicao.y.toFixed(1)}_${focoPosicao.z.toFixed(1)}`;
-    if (ultimoFocoRef.current === focoKey) return;
-    ultimoFocoRef.current = focoKey;
+    const novaVersao = focoKeyRef.current + 1;
+    focoKeyRef.current = novaVersao;
 
     const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
     const fx = focoPosicao.x / escala;
-    const fz = focoPosicao.y / escala; // Y do simulador = Z no 3D
+    const fz = focoPosicao.y / escala;
     const fy = Math.max(focoPosicao.z / escala, 0);
 
     camera.position.set(fx + 2, fy + 3, fz + 3);
