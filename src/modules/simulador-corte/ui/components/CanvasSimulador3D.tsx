@@ -74,12 +74,12 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: PecaBlockProps) 
 function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelecionarPeca?: (peca: PecaSimulacao | null) => void }) {
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
   const escala = useMemo(() => Math.max(layout.chapa.largura, layout.chapa.altura) / 10, [layout]);
-
   const sheetW = layout.chapa.largura / escala;
   const sheetD = layout.chapa.altura / escala;
   const sheetH = 0.3;
   const cx = sheetW / 2;
   const cz = sheetD / 2;
+  const cenaSize = Math.max(sheetW, sheetD);
 
   const pecasComCor = useMemo(() => {
     const coloridas = layout.pecas.map((p, i) => ({ ...p, cor: CORES[i % CORES.length] }));
@@ -89,8 +89,8 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
   return (
     <>
       <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 20, 10]} intensity={0.8} />
-      <directionalLight position={[-10, 5, -10]} intensity={0.3} />
+      <directionalLight position={[cenaSize * 2, cenaSize * 3, cenaSize * 2]} intensity={0.8} />
+      <directionalLight position={[-cenaSize, cenaSize, -cenaSize]} intensity={0.3} />
 
       <mesh
         position={[cx, -sheetH / 2, cz]}
@@ -123,8 +123,8 @@ function Cena3D({ layout, onSelecionarPeca }: { layout: LayoutSimulacao; onSelec
         enableDamping
         dampingFactor={0.15}
         target={[cx, 0, cz]}
-        minDistance={1}
-        maxDistance={30}
+        minDistance={cenaSize * 0.1}
+        maxDistance={cenaSize * 5}
       />
     </>
   );
@@ -139,16 +139,19 @@ export default function CanvasSimulador3D({ layout, onSelecionarPeca }: CanvasSi
     );
   }
 
-  const escalaView = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+  const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+  const sheetW = layout.chapa.largura / escala;
+  const sheetD = layout.chapa.altura / escala;
+  const cenaSize = Math.max(sheetW, sheetD);
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
       <Canvas
         camera={{
-          position: [escalaView * 0.7, escalaView * 0.4, escalaView * 0.7],
+          position: [cenaSize * 0.7, cenaSize * 0.5, cenaSize * 0.7],
           fov: 45,
-          near: 0.1,
-          far: 100,
+          near: 0.01,
+          far: cenaSize * 10,
         }}
         gl={{ antialias: true }}
         onCreated={({ gl }) => gl.setClearColor('#0D1117')}
