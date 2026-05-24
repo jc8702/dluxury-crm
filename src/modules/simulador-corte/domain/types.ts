@@ -163,3 +163,22 @@ export interface PlaybackState {
   stopOnCollision: boolean;
   comandoAtivoIdx: number;
 }
+
+export type PathPrimitive = 'line' | 'arc' | 'spline';
+
+export interface SimulationState {
+  x: number;
+  y: number;
+  z: number;
+  spindleOn: boolean;
+  rpm: number;
+  comandoAtivoIdx: number;
+  tipoMovimento: ToolpathSegment['tipo'];
+}
+
+export interface StockRemovalState {
+  largura: number;
+  altura: number;
+  pixelsCortados: number;
+  totalPixels: number;
+}

@@ -8,6 +8,7 @@ import type {
   ToolpathSegment,
   SimulationIssue,
   SimulationMetrics,
+  SimulationState,
 } from './types';
 
 // CONSTANTES E CONFIGURAÇÕES PADRÃO (Router CNC Industrial de 3 eixos)
@@ -516,15 +517,7 @@ export function gerarSimulationProgram(
 export function obterEstadoNoInstante(
   program: SimulationProgram,
   tempo: number
-): {
-  x: number;
-  y: number;
-  z: number;
-  spindleOn: boolean;
-  rpm: number;
-  comandoAtivoIdx: number;
-  tipoMovimento: ToolpathSegment['tipo'];
-} {
+): SimulationState {
   let accTempo = 0;
   let lastPos = { x: 0, y: 0, z: 50 };
   let spindleOn = false;

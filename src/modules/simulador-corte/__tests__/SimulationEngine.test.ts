@@ -146,4 +146,26 @@ describe('Motor de Simulação CNC (SimulationEngine)', () => {
     expect(estado.spindleOn).toBe(true);
     expect(estado.rpm).toBeGreaterThan(0);
   });
+
+  it('deve simular integração de job MDF com timeline e playback', () => {
+    const program = gerarSimulationProgram(LAYOUT_MOCK);
+    const totalTempo = program.totalTempoEstimado;
+
+    let tempoAtual = 0;
+    const dt = 0.03; // 30ms por frame
+    const velMultiplier = 2.0;
+
+    const estadosColetados = [];
+    while (tempoAtual < totalTempo) {
+      tempoAtual += dt * velMultiplier;
+      if (tempoAtual > totalTempo) tempoAtual = totalTempo;
+
+      const estado = obterEstadoNoInstante(program, tempoAtual);
+      estadosColetados.push(estado);
+    }
+
+    expect(estadosColetados.length).toBeGreaterThan(0);
+    const ultimoEstado = estadosColetados[estadosColetados.length - 1];
+    expect(ultimoEstado.z).toBeCloseTo(50); // Home safe position
+  });
 });
