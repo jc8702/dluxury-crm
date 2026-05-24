@@ -32,8 +32,8 @@ export default function InfoCorte({ layout, pecaSelecionada, indiceChapa, totalC
           <span className="text-white font-semibold">{layout.chapa.sku}</span>
         </div>
         <div className="bg-[#1F2937] rounded-lg p-3">
-          <span className="text-[#6B7280] block">DIMENSÃO</span>
-          <span className="text-white font-semibold">{layout.chapa.largura}×{layout.chapa.altura}MM</span>
+          <span className="text-[#6B7280] block">DIMENSÃO CHAPA</span>
+          <span className="text-white font-semibold">{layout.chapa.largura}×{layout.chapa.altura}×{layout.chapa.espessura}MM</span>
         </div>
         <div className="bg-[#1F2937] rounded-lg p-3">
           <span className="text-[#6B7280] block">PEÇAS</span>
@@ -52,7 +52,7 @@ export default function InfoCorte({ layout, pecaSelecionada, indiceChapa, totalC
             <span className="text-[#6B7280]">NOME:</span>
             <span className="text-white font-medium text-right truncate">{pecaSelecionada.nome}</span>
             <span className="text-[#6B7280]">DIMENSÃO:</span>
-            <span className="text-white font-medium text-right">{pecaSelecionada.largura}×{pecaSelecionada.altura}MM</span>
+            <span className="text-white font-medium text-right">{pecaSelecionada.comprimento}×{pecaSelecionada.largura}×{pecaSelecionada.espessura}MM</span>
             <span className="text-[#6B7280]">POSIÇÃO:</span>
             <span className="text-white font-medium text-right">X:{pecaSelecionada.x} Y:{pecaSelecionada.y}</span>
             <span className="text-[#6B7280]">ROTAÇÃO:</span>

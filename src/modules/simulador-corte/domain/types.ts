@@ -1,8 +1,9 @@
 export interface PecaSimulacao {
   id: string;
   nome: string;
+  comprimento: number;
   largura: number;
-  altura: number;
+  espessura: number;
   x: number;
   y: number;
   rotacionada: boolean;
@@ -30,11 +31,8 @@ export interface PlanoCorteCarregado {
   nome: string;
   materiais: any[];
   resultado: {
-    layouts: LayoutSimulacao[];
-    pecas_rejeitadas: any[];
-    area_total_pecas_mm2: number;
-    area_total_chapas_mm2: number;
-    aproveitamento_medio: number;
+    perChapa?: Record<string, any>;
+    totalAproveitamento?: number;
   } | null;
   created_at: string;
   updated_at: string;

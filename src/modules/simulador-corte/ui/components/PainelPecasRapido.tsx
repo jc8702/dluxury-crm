@@ -7,7 +7,7 @@ interface PainelPecasRapidoProps {
   onSelecionar: (peca: PecaSimulacao) => void;
 }
 
-const cores = [
+const CORES = [
   '#E2AC00', '#3B82F6', '#EF4444', '#10B981', '#8B5CF6',
   '#F97316', '#06B6D4', '#EC4899', '#84CC16', '#14B8A6',
   '#D946EF', '#F43F5E', '#0EA5E9', '#A855F7', '#22C55E',
@@ -24,7 +24,7 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
         <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
           {pecas.map((peca, index) => {
             const isSelected = pecaSelecionada?.id === peca.id;
-            const cor = cores[index % cores.length];
+            const cor = CORES[index % CORES.length];
 
             return (
               <button
@@ -43,7 +43,7 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-xs font-medium truncate">{peca.nome}</p>
                   <p className="text-[#6B7280] text-[10px]">
-                    {peca.largura}×{peca.altura}MM
+                    {peca.comprimento}×{peca.largura}×{peca.espessura}MM
                     {peca.rotacionada ? ' | 90°' : ''}
                   </p>
                 </div>
@@ -54,16 +54,9 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #374151;
-          border-radius: 4px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
       `}</style>
     </div>
   );
