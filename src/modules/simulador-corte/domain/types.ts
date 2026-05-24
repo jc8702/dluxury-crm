@@ -137,6 +137,12 @@ export interface SimulationIssue {
   tempo: number; // em segundos na simulação
   posicao: { x: number; y: number; z: number };
   sugestao: string;
+  causa?: string;
+  parametro?: string;
+  autoResolvivel?: boolean;
+  fixtureId?: string;
+  valorAtual?: number;
+  valorSugerido?: number;
 }
 
 export interface SimulationMetrics {
@@ -181,4 +187,108 @@ export interface StockRemovalState {
   altura: number;
   pixelsCortados: number;
   totalPixels: number;
+}
+
+// ==========================================
+// TIPOS DE CONFIGURAÇÃO CNC / AUTO-AJUSTE
+// ==========================================
+
+export type CollisionPolicy = 'stop' | 'suggest' | 'auto';
+
+export interface MachineSettings {
+  safeZ: number;
+  feedCorte: number;
+  feedMergulho: number;
+  feedRapido: number;
+  rpmSpindle: number;
+  diametroFerramenta: number;
+  comprimentoUtil: number;
+  stickout: number;
+  alturaMaximaZ: number;
+  limiteX: [number, number];  // [min, max]
+  limiteY: [number, number];  // [min, max]
+  stepdown: number;
+  leadInDist: number;
+  leadOutDist: number;
+  clampingMargin: number;
+  collisionPolicy: CollisionPolicy;
+}
+
+export interface ClampPosition {
+  id: string;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+}
+
+export interface FixtureSettings {
+  clamps: ClampPosition[];
+}
+
+export interface CncConfig {
+  machine: MachineSettings;
+  fixture: FixtureSettings;
+}
+
+export type AdjustmentType =
+  | 'ADJUST_SAFE_Z'
+  | 'ADJUST_LEAD_IN'
+  | 'ADJUST_LEAD_OUT'
+  | 'ADJUST_STICKOUT'
+  | 'ADJUST_TOOL_LENGTH'
+  | 'ADJUST_CLAMP_MARGIN'
+  | 'ADJUST_FEED_RATE'
+  | 'ADJUST_PLUNGE_RATE'
+  | 'ADJUST_STEPDOWN'
+  | 'REPOSITION_CLAMP'
+  | 'REPOSITION_PART'
+  | 'ROTATE_PART'
+  | 'RECALCULATE_NESTING'
+  | 'MANUAL_INTERVENTION_REQUIRED';
+
+export type AdjustmentAction = 'auto' | 'suggested' | 'impossible';
+
+export interface AdjustmentRecommendation {
+  type: AdjustmentType;
+  action: AdjustmentAction;
+  paramName: string;
+  oldValue: number | string;
+  newValue: number | string;
+  reason: string;
+  explanation: string;
+  risk?: string;
+  tradeoff?: string;
+}
+
+export interface IssueWithRecommendation {
+  issue: SimulationIssue;
+  recommendations: AdjustmentRecommendation[];
+  bestRecommendation: AdjustmentRecommendation | null;
+}
+
+export interface SetupDiff {
+  paramName: string;
+  before: number | string;
+  after: number | string;
+  unit: string;
+}
+
+export interface AdjustmentResult {
+  applied: boolean;
+  config: CncConfig;
+  diffs: SetupDiff[];
+  recommendations: IssueWithRecommendation[];
+  hasUnresolvableIssues: boolean;
+}
+
+export interface GhostPreviewItem {
+  type: 'clamp' | 'part' | 'safeZ_plane';
+  id: string;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+  label?: string;
+  cor?: string;
 }

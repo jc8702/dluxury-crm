@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import * as THREE from 'three';
+import { DragControls } from '@react-three/drei';
 import type { FixtureDefinition } from '../../domain/types';
 
 interface CncMachine3DProps {
@@ -14,6 +15,7 @@ interface CncMachine3DProps {
   rpm: number;
   mostrarMaquina?: boolean;
   mostrarClamps?: boolean;
+  onClampDragEnd?: (clampId: string, newX: number, newY: number) => void;
 }
 
 export default function CncMachine3D({
@@ -28,6 +30,7 @@ export default function CncMachine3D({
   rpm,
   mostrarMaquina = true,
   mostrarClamps = true,
+  onClampDragEnd,
 }: CncMachine3DProps) {
   // Transforma mm físicos para escala do R3F 3D
   // No Three.js do simulador: X é largura, Z é profundidade, Y é a altura vertical.
@@ -228,7 +231,8 @@ export default function CncMachine3D({
           // Cada clamp consiste em um bloco base na lateral da chapa, e um braço de pressão metálico
           // que avança 20-30mm por cima do MDF para fixá-lo.
           const yBase = clamp.h / 2 - 0.15; // posicionado na spoilboard/MDF
-          return (
+
+          const clampMeshes = (
             <group key={clamp.id} position={[clamp.x + clamp.w / 2, yBase, clamp.z + clamp.d / 2]}>
               {/* Bloco de suporte traseiro (Cinza escuro) */}
               <mesh>
@@ -253,8 +257,6 @@ export default function CncMachine3D({
               </mesh>
 
               {/* Braço de fixação pivotado (Chapa de aço cromada que deita sobre o MDF) */}
-              {/* O braço avança na direção do centro da mesa. 
-                  Como o clamp fica nas extremidades, seu braço deve apontar para dentro do MDF. */}
               {(() => {
                 const zOffset = clamp.z < sheetDepth / 2 ? 0.03 : -0.03;
                 const rAngle = clamp.z < sheetDepth / 2 ? 0 : Math.PI;
@@ -274,6 +276,25 @@ export default function CncMachine3D({
               })()}
             </group>
           );
+
+          // Se tiver callback de drag, envolve em DragControls
+          if (onClampDragEnd) {
+            return (
+              <DragControls
+                key={clamp.id}
+                onDragEnd={(matrix) => {
+                  const pos = new THREE.Vector3().setFromMatrixPosition(matrix);
+                  const mmX = Math.round((pos.x - clamp.w / 2) * escala);
+                  const mmY = Math.round((pos.z - clamp.d / 2) * escala);
+                  onClampDragEnd(clamp.id, mmX, mmY);
+                }}
+              >
+                {clampMeshes}
+              </DragControls>
+            );
+          }
+
+          return clampMeshes;
         })}
     </group>
   );

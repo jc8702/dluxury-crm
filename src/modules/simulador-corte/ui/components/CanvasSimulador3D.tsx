@@ -1,15 +1,18 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import type { LayoutSimulacao, PecaSimulacao, SimulationProgram } from '../../domain/types';
+import type { LayoutSimulacao, PecaSimulacao, SimulationProgram, CncConfig } from '../../domain/types';
 import Rulers3D from './Rulers3D';
 import CotasDim from './CotasDim';
 import ToolpathPreview from './ToolpathPreview';
 import RetalhosVis3D from './RetalhosVis3D';
 import CncMachine3D from './CncMachine3D';
 import StockRemoval3D from './StockRemoval3D';
+import RiskZones3D from './RiskZones3D';
+import GhostPreview3D from './GhostPreview3D';
 import { obterEstadoNoInstante, obterFixturesPadrao, TOOL_DEFAULT } from '../../domain/simulationEngine';
+import type { GhostPreviewItem } from '../../domain/types';
 
 interface CanvasSimulador3DProps {
   layout: LayoutSimulacao | null;
@@ -24,6 +27,11 @@ interface CanvasSimulador3DProps {
   mostrarCaminho?: boolean;
   program: SimulationProgram;
   tempoAtual: number;
+  cncConfig?: CncConfig;
+  focoPosicao?: { x: number; y: number; z: number } | null;
+  mostrarRiscos?: boolean;
+  ghostPreview?: GhostPreviewItem[];
+  onClampDragEnd?: (clampId: string, newX: number, newY: number) => void;
 }
 
 const CORES = [
@@ -140,6 +148,9 @@ const Cena3D = React.memo(function Cena3D({
   mostrarCaminho,
   program,
   tempoAtual,
+  cncConfig,
+  focoPosicao,
+  mostrarRiscos,
 }: {
   layout: LayoutSimulacao;
   onSelecionarPecaRef: React.MutableRefObject<((peca: PecaSimulacao | null) => void) | undefined>;
@@ -153,6 +164,11 @@ const Cena3D = React.memo(function Cena3D({
   mostrarCaminho?: boolean;
   program: SimulationProgram;
   tempoAtual: number;
+  cncConfig?: CncConfig;
+  focoPosicao?: { x: number; y: number; z: number } | null;
+  mostrarRiscos?: boolean;
+  ghostPreview?: GhostPreviewItem[];
+  onClampDragEnd?: (clampId: string, newX: number, newY: number) => void;
 }) {
   const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
   const sheetW = layout.chapa.largura / escala;
@@ -161,8 +177,19 @@ const Cena3D = React.memo(function Cena3D({
   const [pecaSelecionada, setPecaSelecionada] = useState<string | null>(null);
 
   const fixtures = useMemo(() => {
+    if (cncConfig?.fixture?.clamps && cncConfig.fixture.clamps.length > 0) {
+      return cncConfig.fixture.clamps.map((c) => ({
+        id: c.id,
+        tipo: 'clamp' as const,
+        x: c.x,
+        y: c.y,
+        largura: c.largura,
+        altura: c.altura,
+        espessura: 22, // altura física do clamp
+      }));
+    }
     return obterFixturesPadrao(layout.chapa.largura, layout.chapa.altura);
-  }, [layout.chapa.largura, layout.chapa.altura]);
+  }, [cncConfig, layout.chapa.largura, layout.chapa.altura]);
 
   // Calcula a posição física instantânea e dados da fresa no tempo atual
   const estadoFresa = useMemo(() => {
@@ -194,6 +221,27 @@ const Cena3D = React.memo(function Cena3D({
       {/* 1. MDF BASE (STOCK) */}
       <SceneContent layout={layout} onSheetClick={handleClickSheet} mostrarStock={!!mostrarStock} />
 
+      {/* ZONAS DE RISCO (MODO VERIFICAÇÃO) */}
+      {mostrarRiscos && (
+        <RiskZones3D
+          fixtures={fixtures}
+          issues={program.issues}
+          escala={escala}
+          sheetWidth={sheetW}
+          sheetDepth={sheetD}
+        />
+      )}
+
+      {/* GHOST PREVIEW (PROPOSTA ANTES/DEPOIS) */}
+      {ghostPreview && ghostPreview.length > 0 && (
+        <GhostPreview3D
+          items={ghostPreview}
+          escala={escala}
+          sheetWidth={sheetW}
+          sheetDepth={sheetD}
+        />
+      )}
+
       {/* 2. REMOÇÃO PROGRESSIVA DE ESTOQUE (STOCK REMOVAL) */}
       {mostrarStock && (
         <StockRemoval3D
@@ -219,6 +267,7 @@ const Cena3D = React.memo(function Cena3D({
         rpm={estadoFresa.rpm}
         mostrarMaquina={mostrarMaquina}
         mostrarClamps={mostrarClamps}
+        onClampDragEnd={onClampDragEnd}
       />
 
       {/* 4. RÉGUAS E GRADES MILIMÉTRICAS */}
@@ -261,18 +310,21 @@ const Cena3D = React.memo(function Cena3D({
   );
 });
 
-function GerenciadorCamera({ layout }: { layout: LayoutSimulacao | null }) {
+function GerenciadorCamera({ layout, focoPosicao }: {
+  layout: LayoutSimulacao | null;
+  focoPosicao?: { x: number; y: number; z: number } | null;
+}) {
   const { camera } = useThree();
   const controls = useThree((state: any) => state.controls);
   const ultimoLayoutIdRef = useRef<string>('');
+  const ultimoFocoRef = useRef<string>('');
 
+  // Centraliza no layout quando ele muda
   useEffect(() => {
     if (!layout) return;
 
     const layoutId = `${layout.chapa.sku}_${layout.chapa.largura}_${layout.chapa.altura}_${layout.pecas.length}`;
-    if (ultimoLayoutIdRef.current === layoutId) {
-      return;
-    }
+    if (ultimoLayoutIdRef.current === layoutId) return;
     ultimoLayoutIdRef.current = layoutId;
 
     const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
@@ -291,6 +343,29 @@ function GerenciadorCamera({ layout }: { layout: LayoutSimulacao | null }) {
     }
   }, [layout, camera, controls]);
 
+  // Jump para posição de foco (issue)
+  useEffect(() => {
+    if (!focoPosicao || !layout) return;
+
+    const focoKey = `${focoPosicao.x.toFixed(1)}_${focoPosicao.y.toFixed(1)}_${focoPosicao.z.toFixed(1)}`;
+    if (ultimoFocoRef.current === focoKey) return;
+    ultimoFocoRef.current = focoKey;
+
+    const escala = Math.max(layout.chapa.largura, layout.chapa.altura) / 10;
+    const fx = focoPosicao.x / escala;
+    const fz = focoPosicao.y / escala; // Y do simulador = Z no 3D
+    const fy = Math.max(focoPosicao.z / escala, 0);
+
+    camera.position.set(fx + 2, fy + 3, fz + 3);
+    camera.lookAt(fx, fy, fz);
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.set(fx, fy, fz);
+      controls.update();
+    }
+  }, [focoPosicao, layout, camera, controls]);
+
   return null;
 }
 
@@ -307,6 +382,11 @@ export default function CanvasSimulador3D({
   mostrarCaminho = true,
   program,
   tempoAtual,
+  cncConfig,
+  focoPosicao,
+  mostrarRiscos,
+  ghostPreview = [],
+  onClampDragEnd,
 }: CanvasSimulador3DProps) {
   const onSelecionarPecaRef = useRef(onSelecionarPeca);
   onSelecionarPecaRef.current = onSelecionarPeca;
@@ -328,6 +408,11 @@ export default function CanvasSimulador3D({
         mostrarCaminho={mostrarCaminho}
         program={program}
         tempoAtual={tempoAtual}
+        cncConfig={cncConfig}
+        focoPosicao={focoPosicao}
+        mostrarRiscos={mostrarRiscos}
+        ghostPreview={ghostPreview}
+        onClampDragEnd={onClampDragEnd}
       />
     );
   }, [
@@ -342,6 +427,11 @@ export default function CanvasSimulador3D({
     mostrarCaminho,
     program,
     tempoAtual,
+    cncConfig,
+    focoPosicao,
+    mostrarRiscos,
+    ghostPreview,
+    onClampDragEnd,
   ]);
 
   const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
@@ -371,7 +461,7 @@ export default function CanvasSimulador3D({
         
         {scene}
         
-        <GerenciadorCamera layout={layout} />
+        <GerenciadorCamera layout={layout} focoPosicao={focoPosicao} />
         
         <OrbitControls
           makeDefault

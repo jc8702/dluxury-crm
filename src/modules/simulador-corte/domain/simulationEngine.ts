@@ -9,7 +9,16 @@ import type {
   SimulationIssue,
   SimulationMetrics,
   SimulationState,
+  CncConfig,
+  IssueWithRecommendation,
+  SetupDiff,
 } from './types';
+
+import {
+  analyzeIssues,
+  applySafeAdjustment,
+  determinarAcao,
+} from './adjustmentEngine';
 
 // CONSTANTES E CONFIGURAÇÕES PADRÃO (Router CNC Industrial de 3 eixos)
 export const MACHINE_DEFAULT: MachineDefinition = {
@@ -54,19 +63,79 @@ export function obterFixturesPadrao(larguraChapa: number, alturaChapa: number): 
 
 /**
  * Traduz o layout de corte em um programa de simulação neutro e realiza a análise física de colisões e métricas.
+ * Aceita configuração CNC explícita ou defaults.
  */
 export function gerarSimulationProgram(
   layout: LayoutSimulacao,
-  machine: MachineDefinition = MACHINE_DEFAULT,
-  tool: ToolDefinition = TOOL_DEFAULT,
-  fixtures: FixtureDefinition[] = obterFixturesPadrao(layout.chapa.largura, layout.chapa.altura)
+  config?: CncConfig
+): SimulationProgram;
+export function gerarSimulationProgram(
+  layout: LayoutSimulacao,
+  machine: MachineDefinition,
+  tool: ToolDefinition,
+  fixtures: FixtureDefinition[]
+): SimulationProgram;
+export function gerarSimulationProgram(
+  layout: LayoutSimulacao,
+  machineOrConfig?: MachineDefinition | CncConfig,
+  tool?: ToolDefinition,
+  fixtures?: FixtureDefinition[]
 ): SimulationProgram {
   const commands: SimulationCommand[] = [];
   const issues: SimulationIssue[] = [];
 
+  // Suporta tanto a chamada antiga (machine, tool, fixtures) quanto a nova (config)
+  let activeMachine: MachineDefinition;
+  let activeTool: ToolDefinition;
+  let activeFixtures: FixtureDefinition[];
+
+  if (machineOrConfig && 'machine' in machineOrConfig) {
+    const cfg = machineOrConfig as CncConfig;
+    const m = cfg.machine;
+    activeMachine = {
+      larguraMaximaXY: [m.limiteX[0], m.limiteX[1]] as [number, number],
+      alturaMaximaZ: m.alturaMaximaZ,
+      velocidadeMaximaXY: m.feedRapido,
+      velocidadeMaximaZ: Math.min(m.feedMergulho * 2, 8000),
+      aceleracaoXY: 1500,
+      aceleracaoZ: 800,
+      zonaSeguraZ: m.safeZ,
+      tipoMesa: 'vacuo',
+    };
+    activeTool = {
+      id: 'tool_fresa_custom',
+      nome: `Fresa ${m.diametroFerramenta.toFixed(1)}mm`,
+      diametro: m.diametroFerramenta,
+      comprimentoUtil: m.comprimentoUtil,
+      stickout: m.stickout,
+      rpmMax: Math.max(m.rpmSpindle, 30000),
+      rpmRecomendado: m.rpmSpindle,
+      feedCorteRecomendado: m.feedCorte,
+      feedMergulhoRecomendado: m.feedMergulho,
+    };
+    activeFixtures = (cfg.fixture.clamps || []).map((c) => ({
+      id: c.id,
+      tipo: 'clamp' as const,
+      x: c.x,
+      y: c.y,
+      largura: c.largura,
+      altura: c.altura,
+      espessura: 22,
+    }));
+    if (activeFixtures.length === 0) {
+      activeFixtures = obterFixturesPadrao(layout.chapa.largura, layout.chapa.altura);
+    }
+  } else {
+    activeMachine = (machineOrConfig as MachineDefinition) || MACHINE_DEFAULT;
+    activeTool = tool || TOOL_DEFAULT;
+      activeFixtures = fixtures || obterFixturesPadrao(layout.chapa.largura, layout.chapa.altura);
+  }
+
+  const machine = activeMachine;
+
   const safeZ = machine.zonaSeguraZ;
-  const feedCorte = tool.feedCorteRecomendado;
-  const feedMergulho = tool.feedMergulhoRecomendado;
+  const feedCorte = activeTool.feedCorteRecomendado;
+  const feedMergulho = activeTool.feedMergulhoRecomendado;
   const feedRapido = machine.velocidadeMaximaXY;
   const feedRapidoZ = machine.velocidadeMaximaZ;
 
@@ -77,7 +146,7 @@ export function gerarSimulationProgram(
   commands.push({
     id: novoCmdId(),
     tipo: 'SPINDLE_ON',
-    params: { rpm: tool.rpmRecomendado },
+    params: { rpm: activeTool.rpmRecomendado },
     segments: [],
     tempoEstimado: 1.5, // tempo para spindle atingir a rotação
   });
@@ -92,7 +161,7 @@ export function gerarSimulationProgram(
       to: { x: 0, y: 0, z: safeZ },
       tipo: 'safe_move',
       velocidade: feedRapidoZ,
-      toolId: tool.id,
+      toolId: activeTool.id,
     }],
     tempoEstimado: Math.abs(50 - safeZ) / (feedRapidoZ / 60),
   });
@@ -123,7 +192,9 @@ export function gerarSimulationProgram(
     const pl = peca.largura;
 
     // Ponto de entrada (Lead-In) no canto inferior esquerdo, ligeiramente recuado para evitar marcas directas no canto
-    const leadInDist = 12; // mm fora da peça
+    const leadInDist = machineOrConfig && 'machine' in (machineOrConfig as any)
+      ? (machineOrConfig as CncConfig).machine.leadInDist
+      : 12;
     const startX = px - leadInDist;
     const startY = py;
 
@@ -138,7 +209,7 @@ export function gerarSimulationProgram(
         to: { x: startX, y: startY, z: safeZ },
         tipo: 'rapid',
         velocidade: feedRapido,
-        toolId: tool.id,
+        toolId: activeTool.id,
       }],
       tempoEstimado: Math.hypot(startX - currentPos.x, startY - currentPos.y) / (feedRapido / 60),
     };
@@ -147,7 +218,9 @@ export function gerarSimulationProgram(
 
     // B. CORTAR PEÇA EM MULTIPLAS PASSADAS (Stepdown)
     const profundidadeTotal = -layout.chapa.espessura - 0.5; // passante: 0.5mm além da chapa
-    const profundidadePasso = 9.5; // stepdown
+    const profundidadePasso = machineOrConfig && 'machine' in (machineOrConfig as any)
+      ? (machineOrConfig as CncConfig).machine.stepdown
+      : 9.5;
     const numPassadas = Math.ceil(Math.abs(profundidadeTotal) / profundidadePasso);
 
     for (let p = 1; p <= numPassadas; p++) {
@@ -167,7 +240,7 @@ export function gerarSimulationProgram(
           to: { x: startX, y: startY, z: zCorte },
           tipo: 'plunge',
           velocidade: feedMergulho,
-          toolId: tool.id,
+          toolId: activeTool.id,
         }],
         tempoEstimado: Math.abs(zCorte - currentPos.z) / (feedMergulho / 60),
       };
@@ -185,7 +258,7 @@ export function gerarSimulationProgram(
           to: { x: px, y: py, z: zCorte },
           tipo: 'lead_in',
           velocidade: feedCorte,
-          toolId: tool.id,
+          toolId: activeTool.id,
         }],
         tempoEstimado: Math.hypot(px - currentPos.x, py - currentPos.y) / (feedCorte / 60),
       };
@@ -222,7 +295,7 @@ export function gerarSimulationProgram(
             to: { x: aresta.from.x < aresta.to.x ? tabXStart : tabXEnd, y: aresta.from.y, z: zCorte },
             tipo: 'cutting',
             velocidade: feedCorte,
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
 
           // Subida em rampa/mergulho na aba
@@ -232,7 +305,7 @@ export function gerarSimulationProgram(
             to: { x: aresta.from.x < aresta.to.x ? tabXStart + 2 : tabXEnd - 2, y: aresta.from.y, z: tabZ },
             tipo: 'cutting',
             velocidade: feedCorte * 0.7, // avanço um pouco menor no tab
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
 
           // Travessia da aba
@@ -242,7 +315,7 @@ export function gerarSimulationProgram(
             to: { x: aresta.from.x < aresta.to.x ? tabXEnd - 2 : tabXStart + 2, y: aresta.from.y, z: tabZ },
             tipo: 'cutting',
             velocidade: feedCorte,
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
 
           // Descida de volta ao corte profundo
@@ -252,7 +325,7 @@ export function gerarSimulationProgram(
             to: { x: aresta.from.x < aresta.to.x ? tabXEnd : tabXStart, y: aresta.from.y, z: zCorte },
             tipo: 'cutting',
             velocidade: feedMergulho,
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
 
           // Resto da aresta
@@ -262,7 +335,7 @@ export function gerarSimulationProgram(
             to: { ...aresta.to, z: zCorte },
             tipo: 'cutting',
             velocidade: feedCorte,
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
         } else {
           // Aresta sem aba
@@ -272,7 +345,7 @@ export function gerarSimulationProgram(
             to: { ...aresta.to, z: zCorte },
             tipo: 'cutting',
             velocidade: feedCorte,
-            toolId: tool.id,
+            toolId: activeTool.id,
           });
         }
 
@@ -298,8 +371,11 @@ export function gerarSimulationProgram(
 
       // Se for a última passada, executa um Lead-Out de saída suave
       if (p === numPassadas) {
-        const leadOutX = px - 8;
-        const leadOutY = py + 8;
+        const leadOutDist = machineOrConfig && 'machine' in (machineOrConfig as any)
+          ? (machineOrConfig as CncConfig).machine.leadOutDist
+          : 8;
+        const leadOutX = px - leadOutDist;
+        const leadOutY = py + leadOutDist;
         const leadOutCmd: SimulationCommand = {
           id: novoCmdId(),
           tipo: 'LEAD_OUT',
@@ -310,7 +386,7 @@ export function gerarSimulationProgram(
             to: { x: leadOutX, y: leadOutY, z: zCorte },
             tipo: 'lead_out',
             velocidade: feedCorte,
-            toolId: tool.id,
+            toolId: activeTool.id,
           }],
           tempoEstimado: Math.hypot(leadOutX - currentPos.x, leadOutY - currentPos.y) / (feedCorte / 60),
         };
@@ -330,7 +406,7 @@ export function gerarSimulationProgram(
         to: { x: currentPos.x, y: currentPos.y, z: safeZ },
         tipo: 'retract',
         velocidade: feedRapidoZ,
-        toolId: tool.id,
+        toolId: activeTool.id,
       }],
       tempoEstimado: Math.abs(safeZ - currentPos.z) / (feedRapidoZ / 60),
     };
@@ -357,7 +433,7 @@ export function gerarSimulationProgram(
       to: { x: 0, y: 0, z: 50 },
       tipo: 'safe_move',
       velocidade: feedRapido,
-      toolId: tool.id,
+      toolId: activeTool.id,
     }],
     tempoEstimado: Math.hypot(currentPos.x, currentPos.y) / (feedRapido / 60) + Math.abs(50 - currentPos.z) / (feedRapidoZ / 60),
   };
@@ -408,16 +484,19 @@ export function gerarSimulationProgram(
           tempo: totalTempo,
           posicao: { ...s.to },
           sugestao: 'Repositione a peça ou reduza a margem do plano de corte.',
+          causa: 'Coordenada do trajeto excede área útil da máquina',
+          parametro: 'origem_peca',
+          autoResolvivel: false,
         });
       }
 
       // --- DETECÇÃO DE COLISÃO COM FIXAÇÕES (CLAMPS) ---
-      // A fresa tem raio de tool.diametro/2. O spindle/cabeçote tem raio considerável (ex: 60mm).
+      // A fresa tem raio de activeTool.diametro/2. O spindle/cabeçote tem raio considerável (ex: 60mm).
       // Clamps são zonas proibidas.
-      const raioFresa = tool.diametro / 2;
+      const raioFresa = activeTool.diametro / 2;
       const margemColisao = raioFresa + 5; // fresa + 5mm de margem
 
-      for (const fx of fixtures) {
+      for (const fx of activeFixtures) {
         // Verifica se a trajetória (de from para to) cruza o bounding box da garra (clamp)
         // Simplificado: verifica se o ponto destino ou origem ou midpoint invade o clamp
         // Subdivide o segmento de linha para amostragem a cada 5mm para detectar clamps
@@ -445,16 +524,25 @@ export function gerarSimulationProgram(
             pt.y >= fx.y - margemColisao && pt.y <= fx.y + fx.altura + margemColisao &&
             pt.z <= fx.espessura + 5 // se a ferramenta estiver na altura física do clamp ou abaixo
           ) {
+            const margemColisaoUsada = machineOrConfig && 'machine' in (machineOrConfig as any)
+              ? (machineOrConfig as CncConfig).machine.clampingMargin
+              : 5;
             issues.push({
               id: `issue_colisao_fixture_${i}_${fx.id}`,
               severidade: 'error',
               codigo: 'COLLISION_FIXTURE',
               mensagem: 'Colisão com Garra de Fixação (Clamp)',
-              descricao: `A ferramenta colidiu com o clamp [${fx.id}] posicionado em X:${fx.x} Y:${fx.y} na altura Z:${pt.z.toFixed(1)}mm.`,
+              descricao: `A ferramenta colidiu com o clamp [${fx.id}] posicionado em X:${fx.x} Y:${fx.y} na altura Z:${pt.z.toFixed(1)}mm. Margem atual: ${margemColisaoUsada}mm.`,
               cmdIdx: i,
               tempo: totalTempo,
               posicao: { ...pt },
               sugestao: 'Afaste a peça da borda física da chapa ou altere a posição dos grampos/garras.',
+              causa: 'Trajetória da ferramenta cruza zona de fixação',
+              parametro: 'clampingMargin',
+              autoResolvivel: margemColisaoUsada < 20,
+              fixtureId: fx.id,
+              valorAtual: margemColisaoUsada,
+              valorSugerido: Math.min(margemColisaoUsada + 5, 25),
             });
             break; // evita duplicados para o mesmo comando/fixture
           }
@@ -464,16 +552,22 @@ export function gerarSimulationProgram(
       // --- DETECÇÃO DE RAPIDS INSEGUROS (RAPID CROSS STOCK) ---
       // Movimento rápido abaixo de 8mm cruzando o MDF
       if (s.tipo === 'rapid' && s.to.z < 8 && (s.from.x !== s.to.x || s.from.y !== s.to.y)) {
+        const safeZAtual = machine.zonaSeguraZ;
         issues.push({
           id: `issue_rapid_cross_${i}`,
           severidade: 'warning',
           codigo: 'INSECURE_RAPID',
           mensagem: 'Deslocamento rápido inseguro detectado',
-          descricao: `A máquina executou um movimento em velocidade máxima (G00) em Z:${s.to.z.toFixed(1)}mm, que está abaixo da altura segura acima da chapa.`,
+          descricao: `A máquina executou um movimento em velocidade máxima (G00) em Z:${s.to.z.toFixed(1)}mm, que está abaixo da altura segura (${safeZAtual}mm) acima da chapa.`,
           cmdIdx: i,
           tempo: totalTempo,
           posicao: { ...s.to },
           sugestao: 'Aumente a altura de segurança (Retract/Safe Height) nas configurações do plano.',
+          causa: 'G00 em altura abaixo de safeZ',
+          parametro: 'safeZ',
+          autoResolvivel: safeZAtual < machine.alturaMaximaZ,
+          valorAtual: safeZAtual,
+          valorSugerido: Math.min(safeZAtual + 10, machine.alturaMaximaZ),
         });
       }
     }
@@ -495,6 +589,9 @@ export function gerarSimulationProgram(
         tempo: 0,
         posicao: { x: peca.x, y: peca.y, z: 0 },
         sugestao: 'Recalcule o nesting de corte ou use uma chapa de MDF de dimensões maiores.',
+        causa: 'Peça maior que a chapa disponível',
+        parametro: 'dimensoes_chapa',
+        autoResolvivel: false,
       });
     }
   });
@@ -676,5 +773,69 @@ export function calcularMetrics(
     volumeRemovidoMm3: volRemovido,
     numWarnings,
     numErros,
+  };
+}
+
+/**
+ * Reexecuta a simulação após aplicar ajustes na configuração CNC.
+ * Útil para o fluxo de auto-ajuste: analisa issues, aplica correções,
+ * e gera novo programa com a configuração ajustada.
+ */
+export function recomputeSimulationAfterAdjustment(
+  layout: LayoutSimulacao,
+  config: CncConfig,
+): {
+  program: SimulationProgram;
+  metrics: SimulationMetrics;
+  issuesWithRecs: IssueWithRecommendation[];
+  diffs: SetupDiff[];
+  hasUnresolvableIssues: boolean;
+} {
+  const program = gerarSimulationProgram(layout, config);
+  const issuesWithRecs = analyzeIssues(program, config, layout);
+  const metrics = calcularMetrics(program, layout);
+
+  // Aplica ajustes automáticos de acordo com a política
+  let currentConfig = { ...config };
+  const allDiffs: SetupDiff[] = [];
+  let hasUnresolvable = false;
+
+  for (const iwr of issuesWithRecs) {
+    if (!iwr.bestRecommendation) continue;
+    const action = determinarAcao(
+      iwr.bestRecommendation,
+      config.machine.collisionPolicy
+    );
+    if (action === 'block') {
+      hasUnresolvable = true;
+      continue;
+    }
+    if (action === 'apply') {
+      const result = applySafeAdjustment(currentConfig, iwr.bestRecommendation, layout);
+      allDiffs.push(...result.diffs);
+      currentConfig = result.config;
+    }
+  }
+
+  // Se houve alteração, regenera o programa com a config ajustada
+  if (allDiffs.length > 0) {
+    const newProgram = gerarSimulationProgram(layout, currentConfig);
+    const newIssuesWithRecs = analyzeIssues(newProgram, currentConfig, layout);
+    const newMetrics = calcularMetrics(newProgram, layout);
+    return {
+      program: newProgram,
+      metrics: newMetrics,
+      issuesWithRecs: newIssuesWithRecs,
+      diffs: allDiffs,
+      hasUnresolvableIssues: hasUnresolvable,
+    };
+  }
+
+  return {
+    program,
+    metrics,
+    issuesWithRecs,
+    diffs: allDiffs,
+    hasUnresolvableIssues: hasUnresolvable,
   };
 }

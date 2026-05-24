@@ -3,12 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { NotificacoesBadge } from './NotificacoesBadge';
 
-import { 
+import {
   LayoutDashboard, Users, FileText, ClipboardList, 
   Hammer, Scissors, Calendar, Package, 
   Truck, Settings2, DraftingCompass, BarChart3, 
   DollarSign, Settings, HeartHandshake, LogOut, 
-  ShoppingCart, CalendarDays, Bell, Cuboid
+  ShoppingCart, CalendarDays, Bell, Cuboid, Clock3
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -26,6 +26,7 @@ const Sidebar: React.FC = () => {
     
     { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
     { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
+    { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Produção', icon: <Clock3 size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
     { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
     { id: 'engineering', path: 'engenharia', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'], group: 'PRODUÇÃO' },
 

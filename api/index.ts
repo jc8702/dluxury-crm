@@ -54,8 +54,8 @@ function cleanupRateLimitMap() {
   }
 }
 
-// Cleanup old entries every 5 minutes
-setInterval(cleanupRateLimitMap, 5 * 60_000);
+// Note: setInterval removed for Vercel serverless compatibility.
+// Rate limit map cleanup happens naturally as entries expire.
 
 function getClientIP(req: any): string {
   const headers = req.headers || {};

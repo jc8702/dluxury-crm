@@ -39,6 +39,7 @@ const AprovacaoPage = lazy(() => import('./pages/AprovacaoPage'));
 const PlanoCorteDemoPage = lazy(() => import('./pages/PlanoCorteDemo'));
 const RetalhosPage = lazy(() => import('./pages/RetalhosPage'));
 const SimuladorCortePage = lazy(() => import('./modules/simulador-corte/ui/pages/SimuladorCortePage'));
+const SimuladorProducaoPage = lazy(() => import('./modules/simulador-producao/ui/pages/SimuladorProducaoPage'));
 
 // Layout e Componentes
 const Layout = lazy(() => import('./components/layout/Layout'));
@@ -155,6 +156,7 @@ export default function App() {
                      <Route path="plano-de-corte" element={<CuttingPlanPage />} />
                      <Route path="plano-de-corte-demo" element={<PlanoCorteDemoPage />} />
                      <Route path="simulador-corte" element={<SimuladorCortePage />} />
+                     <Route path="simulador-producao" element={<SimuladorProducaoPage />} />
                      <Route path="retalhos" element={<RetalhosPage />} />
                      <Route path="visitas" element={<VisitsPage />} />
                     <Route path="calendario" element={<CalendarioPage />} />

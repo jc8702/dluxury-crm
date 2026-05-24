@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import type { LayoutSimulacao, SimulationProgram, SimulationMetrics } from '../../domain/types';
+import type { LayoutSimulacao, SimulationProgram, SimulationMetrics, CncConfig, SetupDiff, IssueWithRecommendation } from '../../domain/types';
 
 /**
  * Exporta um relatório técnico em formato PDF com os dados de simulação CNC e métricas de ciclo.
@@ -338,4 +338,213 @@ export async function exportarEtiquetasCNC(
   }
 
   doc.save(`etiquetas-cnc-${nomePlano.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+}
+
+export interface SafetyReportData {
+  config: CncConfig;
+  diffs: SetupDiff[];
+  issuesWithRecs: IssueWithRecommendation[];
+  totalErrors: number;
+  totalWarnings: number;
+  totalResolved: number;
+  totalBlocked: number;
+}
+
+export async function exportarRelatorioSeguranca(
+  report: SafetyReportData,
+  nomePlano: string = 'Simulação CNC',
+  dataSimulacao?: { tempoTotal: number; distanciaTotal: number }
+) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const { config, diffs, issuesWithRecs, totalErrors, totalWarnings, totalResolved, totalBlocked } = report;
+  const fmtTempo = (seg: number) => `${Math.floor(seg / 60).toString().padStart(2, '0')}:${Math.floor(seg % 60).toString().padStart(2, '0')} min`;
+
+  // Cabeçalho
+  doc.setFillColor(17, 24, 39);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(226, 172, 0);
+  doc.text("RELATÓRIO DE SEGURANÇA CNC", 14, 16);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175);
+  doc.text(`D'LUXURY AMBIENTES SOB MEDIDA - MÓDULO CAM/VERIFICATION`, 14, 23);
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
+
+  // Sumário executivo
+  const summaryY = 45;
+  doc.setFillColor(totalErrors > 0 ? 254 : 240, totalErrors > 0 ? 242 : 253, totalErrors > 0 ? 242 : 244);
+  doc.rect(14, summaryY, 182, 24, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(totalErrors > 0 ? 153 : 22, totalErrors > 0 ? 27 : 101, totalErrors > 0 ? 27 : 52);
+  doc.text(totalErrors > 0
+    ? `⚠ ${totalErrors} ERRO(S) DETECTADO(S) — INTERVENÇÃO RECOMENDADA`
+    : `✓ NENHUM ERRO — SIMULAÇÃO SEGURA`, 18, summaryY + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99);
+  doc.text(`Warnings: ${totalWarnings} | Resolvíveis: ${totalResolved} | Bloqueados: ${totalBlocked}`, 18, summaryY + 16);
+
+  if (dataSimulacao) {
+    doc.text(`Tempo total: ${fmtTempo(dataSimulacao.tempoTotal)} | Distância: ${(dataSimulacao.distanciaTotal / 1000).toFixed(2)} m`, 18, summaryY + 22);
+  }
+
+  // 1. Diffs aplicados
+  let yPos = summaryY + 32;
+  if (diffs.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(16, 185, 129);
+    doc.text("AJUSTES AUTOMÁTICOS APLICADOS", 14, yPos);
+    doc.line(14, yPos + 1, 196, yPos + 1);
+    yPos += 8;
+
+    diffs.forEach((d) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(75, 85, 99);
+      doc.text(`${d.paramName}: ${d.before} ${d.unit} → ${d.after} ${d.unit}`, 18, yPos);
+      yPos += 5;
+    });
+    yPos += 4;
+  }
+
+  // 2. Política de colisão
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(226, 172, 0);
+  doc.text("POLÍTICA DE COLISÃO", 14, yPos);
+  doc.line(14, yPos + 1, 196, yPos + 1);
+  yPos += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99);
+
+  const policyLabels: Record<string, string> = {
+    stop: 'PARAR EM COLISÃO — Bloqueia qualquer ajuste automático',
+    suggest: 'SUGERIR AJUSTE — Exibe recomendações e aguarda confirmação',
+    auto: 'AUTO-AJUSTAR SEGURO — Aplica correções automáticas',
+  };
+  doc.text(`Política atual: ${policyLabels[config.machine.collisionPolicy] || config.machine.collisionPolicy}`, 18, yPos);
+  yPos += 10;
+
+  // 3. Configuração da máquina
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(226, 172, 0);
+  doc.text("CONFIGURAÇÃO DA MÁQUINA", 14, yPos);
+  doc.line(14, yPos + 1, 196, yPos + 1);
+  yPos += 8;
+
+  const params = [
+    ['SafeZ', `${config.machine.safeZ} mm`],
+    ['Feed Corte', `${config.machine.feedCorte} mm/min`],
+    ['Feed Mergulho', `${config.machine.feedMergulho} mm/min`],
+    ['Feed Rápido', `${config.machine.feedRapido} mm/min`],
+    ['RPM Spindle', `${config.machine.rpmSpindle} rpm`],
+    ['Diâmetro Ferramenta', `${config.machine.diametroFerramenta} mm`],
+    ['Stickout', `${config.machine.stickout} mm`],
+    ['Stepdown', `${config.machine.stepdown} mm`],
+    ['Lead-In', `${config.machine.leadInDist} mm`],
+    ['Lead-Out', `${config.machine.leadOutDist} mm`],
+    ['Margem Clamp', `${config.machine.clampingMargin} mm`],
+    ['Z Máx', `${config.machine.alturaMaximaZ} mm`],
+    ['Limite X', `${config.machine.limiteX[0]}–${config.machine.limiteX[1]} mm`],
+    ['Limite Y', `${config.machine.limiteY[0]}–${config.machine.limiteY[1]} mm`],
+  ];
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(75, 85, 99);
+  let colX = 18;
+  let colIdx = 0;
+  params.forEach(([label, value]) => {
+    if (colIdx > 0 && colIdx % 2 === 0) { colX = 18; yPos += 5; }
+    doc.text(`${label}: ${value}`, colX, yPos);
+    colX += 95;
+    colIdx++;
+  });
+  yPos += 8;
+
+  // 4. Clamps
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(226, 172, 0);
+  doc.text(`CLAMPS (${config.fixture.clamps.length})`, 14, yPos);
+  doc.line(14, yPos + 1, 196, yPos + 1);
+  yPos += 8;
+
+  if (config.fixture.clamps.length > 0) {
+    config.fixture.clamps.forEach((c) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(75, 85, 99);
+      doc.text(`${c.id}: X=${c.x} Y=${c.y} ${c.largura}x${c.altura}mm`, 18, yPos);
+      yPos += 4.5;
+      if (yPos > 275) { doc.addPage(); yPos = 20; }
+    });
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.text("Nenhum clamp definido. Usando clamps padrão.", 18, yPos);
+    yPos += 5;
+  }
+  yPos += 4;
+
+  // 5. Issues detectados
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(226, 172, 0);
+  doc.text("HISTÓRICO DE ANOMALIAS DETECTADAS", 14, yPos);
+  doc.line(14, yPos + 1, 196, yPos + 1);
+  yPos += 8;
+
+  if (issuesWithRecs.length === 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(22, 101, 52);
+    doc.text("Nenhuma anomalia detectada. Simulação segura para execução.", 18, yPos);
+  } else {
+    issuesWithRecs.forEach((iwr) => {
+      if (yPos > 270) { doc.addPage(); yPos = 20; }
+      const issue = iwr.issue;
+      const isError = issue.severidade === 'error';
+      doc.setFillColor(isError ? 254 : 255, isError ? 242 : 251, isError ? 242 : 235);
+      doc.rect(14, yPos - 1, 182, 16, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(isError ? 185 : 146, isError ? 28 : 64, isError ? 28 : 14);
+      doc.text(`[${issue.codigo}] ${issue.mensagem} (${fmtTempo(issue.tempo)})`, 18, yPos + 3);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(75, 85, 99);
+      doc.text(`Posição: X:${issue.posicao.x.toFixed(0)} Y:${issue.posicao.y.toFixed(0)} Z:${issue.posicao.z.toFixed(0)}`, 18, yPos + 8);
+      doc.text(`Sugestão: ${issue.sugestao}`, 18, yPos + 12);
+
+      if (iwr.bestRecommendation) {
+        const rec = iwr.bestRecommendation;
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(226, 172, 0);
+        doc.text(`→ ${rec.paramName}: ${rec.oldValue} → ${rec.newValue}`, 60, yPos + 8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(107, 114, 128);
+        doc.text(rec.explanation.substring(0, 70), 60, yPos + 12);
+      }
+      yPos += 18;
+    });
+  }
+
+  // Rodapé
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(156, 163, 175);
+  doc.text("D'LUXURY AMBIENTES SOB MEDIDA — CNC Safety Report v1.0", 14, 290);
+  doc.text(`Página ${(doc as any).internalQueryObjectID || 1}`, 180, 290, { align: 'right' });
+
+  doc.save(`relatorio-seguranca-${nomePlano.replace(/\s+/g, '-').toLowerCase()}.pdf`);
 }

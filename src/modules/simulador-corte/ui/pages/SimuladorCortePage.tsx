@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle, Cpu, ShieldAlert, CheckCircle, FileCheck } from 'lucide-react';
+import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle, Cpu, ShieldAlert, CheckCircle, FileCheck, Settings, AlertTriangle } from 'lucide-react';
 import { listarPlanos } from '../../infrastructure/repositories/PlanoCorteRepository';
 import { MaxRectsOptimizer } from '../../../plano-corte/domain/services/MaxRectsOptimizer';
 import CanvasSimulador3D from '../components/CanvasSimulador3D';
 import InfoCorte from '../components/InfoCorte';
 import PainelPecasRapido from '../components/PainelPecasRapido';
-import type { PlanoCorteCarregado, LayoutSimulacao, PecaSimulacao } from '../../domain/types';
+import CncConfigPanel from '../components/CncConfigPanel';
+import SafetyAnalysisPanel from '../components/SafetyAnalysisPanel';
+import type { PlanoCorteCarregado, LayoutSimulacao, PecaSimulacao, CncConfig, IssueWithRecommendation, SetupDiff, CollisionPolicy } from '../../domain/types';
 import type { Peca } from '../../../plano-corte/domain/types';
 
 // NOVAS IMPORTAÇÕES DO MOTOR INDUSTRIAL CNC
@@ -17,9 +19,15 @@ import {
 import {
   exportarRelatorioCNC,
   exportarEtiquetasCNC,
+  exportarRelatorioSeguranca,
+  type SafetyReportData,
 } from '../components/LabelExporter';
 import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
+
+import { DEFAULT_CNC_CONFIG, analyzeIssues, applySafeAdjustment, gerarFixtureSettings } from '../../domain/adjustmentEngine';
+import { salvarConfigCNC, carregarConfigCNC } from '../../infrastructure/persistence';
+import type { GhostPreviewItem } from '../../domain/types';
 
 type ModoSimulador = 'rapida' | 'carregar';
 type ModoExibicao = 'layout' | 'simulacao' | 'verificacao';
@@ -197,6 +205,27 @@ export default function SimuladorCortePage() {
   const [velocidadeSimulacao, setVelocidadeSimulacao] = useState(1);
   const [stopOnCollision, setStopOnCollision] = useState(true);
 
+  // CONFIGURAÇÃO CNC (persistida localmente)
+  const [cncConfig, setCncConfig] = useState<CncConfig>(() => carregarConfigCNC());
+  const [mostrarConfigCNC, setMostrarConfigCNC] = useState(false);
+  const [issuesWithRecs, setIssuesWithRecs] = useState<IssueWithRecommendation[]>([]);
+  const [diffsAplicados, setDiffsAplicados] = useState<SetupDiff[]>([]);
+
+  // FOCO DE CÂMARA PARA JUMP EM ISSUES
+  const [focoPosicao, setFocoPosicao] = useState<{ x: number; y: number; z: number } | null>(null);
+
+  // ESTADO DE RERUN
+  const [isRerunning, setIsRerunning] = useState(false);
+
+  // ESTADO DE PREVIEW (GHOST 3D)
+  const [ghostPreview, setGhostPreview] = useState<GhostPreviewItem[]>([]);
+
+  // Persiste configuração CNC quando alterada
+  const handleCncConfigChange = useCallback((newConfig: CncConfig) => {
+    setCncConfig(newConfig);
+    salvarConfigCNC(newConfig);
+  }, []);
+
   const [chapaLargura, setChapaLargura] = useState(2750);
   const [chapaAltura, setChapaAltura] = useState(1830);
   const [chapaEspessura, setChapaEspessura] = useState(18);
@@ -221,13 +250,40 @@ export default function SimuladorCortePage() {
   // GERAÇÃO DO PROGRAMA DE SIMULAÇÃO INDUSTRIAL E MÉTRICAS
   const program = useMemo(() => {
     if (!layoutAtual) return null;
-    return gerarSimulationProgram(layoutAtual);
-  }, [layoutAtual]);
+    const configWithFixtures: CncConfig = {
+      ...cncConfig,
+      fixture: {
+        clamps: cncConfig.fixture.clamps.length > 0
+          ? cncConfig.fixture.clamps
+          : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
+      },
+    };
+    return gerarSimulationProgram(layoutAtual, configWithFixtures);
+  }, [layoutAtual, cncConfig]);
 
   const metrics = useMemo(() => {
     if (!layoutAtual || !program) return null;
     return calcularMetrics(program, layoutAtual);
   }, [layoutAtual, program]);
+
+  // Gera recomendações de ajuste
+  useEffect(() => {
+    if (!program || !layoutAtual) {
+      setIssuesWithRecs([]);
+      setDiffsAplicados([]);
+      return;
+    }
+    const configWithFixtures: CncConfig = {
+      ...cncConfig,
+      fixture: {
+        clamps: cncConfig.fixture.clamps.length > 0
+          ? cncConfig.fixture.clamps
+          : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
+      },
+    };
+    const recs = analyzeIssues(program, configWithFixtures, layoutAtual);
+    setIssuesWithRecs(recs);
+  }, [program, layoutAtual, cncConfig]);
 
   // Posição física instantânea da ferramenta
   const posicaoAtual = useMemo(() => {
@@ -252,13 +308,13 @@ export default function SimuladorCortePage() {
         const total = program.totalTempoEstimado;
 
         // Se habilitado Parar em Colisão, analisa se cruzou algum erro
-        if (stopOnCollision) {
+        if (stopOnCollision || cncConfig.machine.collisionPolicy === 'stop') {
           const erroDetectado = program.issues.find(
             (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
           );
           if (erroDetectado) {
             setPlaying(false);
-            alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.`);
+            alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`);
             return erroDetectado.tempo; // para no instante exato da colisão
           }
         }
@@ -272,7 +328,7 @@ export default function SimuladorCortePage() {
     }, 30); // ~33 FPS para suavidade de 3D
 
     return () => clearInterval(interval);
-  }, [playing, program, velocidadeSimulacao, stopOnCollision]);
+  }, [playing, program, velocidadeSimulacao, stopOnCollision, cncConfig.machine.collisionPolicy]);
 
   // Reseta timeline ao trocar de layout
   useEffect(() => {
@@ -455,6 +511,86 @@ export default function SimuladorCortePage() {
   const handleJumpToIssue = useCallback((tempo: number, posicao: { x: number; y: number; z: number }) => {
     setTempoAtual(tempo);
     setPlaying(false);
+    setFocoPosicao(posicao);
+  }, []);
+
+  // CLAMP DRAG NA CENA 3D
+  const handleClampDragEnd = useCallback((clampId: string, newX: number, newY: number) => {
+    setCncConfig((prev) => {
+      const novosClamps = prev.fixture.clamps.map((c) =>
+        c.id === clampId ? { ...c, x: Math.max(0, Math.min(newX, 3000)), y: Math.max(0, Math.min(newY, 2000)) } : c
+      );
+      const nova: CncConfig = { ...prev, fixture: { clamps: novosClamps } };
+      salvarConfigCNC(nova);
+      return nova;
+    });
+  }, []);
+
+  // PREVIEW DE RECOMENDAÇÃO NA CENA 3D
+  const handlePreviewRecommendation = useCallback((iwr: IssueWithRecommendation | null) => {
+    if (!iwr || !iwr.bestRecommendation || !layoutAtual) {
+      setGhostPreview([]);
+      return;
+    }
+    const rec = iwr.bestRecommendation;
+    const items: GhostPreviewItem[] = [];
+
+    if (rec.type === 'REPOSITION_CLAMP' && rec.paramName.startsWith('clamp_')) {
+      const clampId = rec.paramName.replace('clamp_', '');
+      const oldVal = String(rec.oldValue);
+      const newVal = String(rec.newValue);
+      const matchOld = oldVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
+      const matchNew = newVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
+      if (matchOld && matchNew) {
+        items.push({
+          type: 'clamp', id: `${clampId}_old`,
+          x: parseFloat(matchOld[1]), y: parseFloat(matchOld[2]),
+          largura: 45, altura: 80, cor: '#EF4444', label: 'Atual',
+        });
+        items.push({
+          type: 'clamp', id: `${clampId}_new`,
+          x: parseFloat(matchNew[1]), y: parseFloat(matchNew[2]),
+          largura: 45, altura: 80, cor: '#10B981', label: 'Proposto',
+        });
+      }
+    } else if (rec.type === 'ADJUST_SAFE_Z' && layoutAtual) {
+      const novoZ = Number(rec.newValue);
+      if (!isNaN(novoZ)) {
+        items.push({
+          type: 'safeZ_plane', id: 'safeZ_preview',
+          x: 0, y: 0,
+          largura: novoZ,
+          altura: layoutAtual.chapa.largura,
+          cor: '#10B981',
+        });
+      }
+    }
+
+    setGhostPreview(items);
+  }, [layoutAtual]);
+
+  // APLICA RECOMENDAÇÃO DE AJUSTE NA CONFIGURAÇÃO CNC
+  const handleApplyRecommendation = useCallback((iwr: IssueWithRecommendation) => {
+    if (!iwr.bestRecommendation || !layoutAtual) return;
+    const result = applySafeAdjustment(cncConfig, iwr.bestRecommendation, layoutAtual);
+    if (result.diffs.length > 0) {
+      setDiffsAplicados((prev) => [...prev, ...result.diffs]);
+      handleCncConfigChange(result.config);
+    }
+  }, [cncConfig, layoutAtual, handleCncConfigChange]);
+
+  // REEXECUTA SIMULAÇÃO APÓS AJUSTES (rerun)
+  const handleRerunSimulation = useCallback(() => {
+    setIsRerunning(true);
+    setTempoAtual(0);
+    setPlaying(false);
+    // Delay visual para mostrar progresso antes de limpar diffs
+    setTimeout(() => {
+      setDiffsAplicados([]);
+    }, 300);
+    setTimeout(() => {
+      setIsRerunning(false);
+    }, 800);
   }, []);
 
   // EXPORTAÇÕES DE DOCUMENTAÇÃO E RELATÓRIO
@@ -463,6 +599,24 @@ export default function SimuladorCortePage() {
     const nomeRelatorio = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
     exportarRelatorioCNC(layoutAtual, program, metrics, nomeRelatorio);
   }, [layoutAtual, program, metrics, modo, planoAtivo]);
+
+  const handleExportRelatorioSeguranca = useCallback(() => {
+    if (!program || !metrics) return;
+    const nomeRelatorio = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
+    const reportData: SafetyReportData = {
+      config: cncConfig,
+      diffs: diffsAplicados,
+      issuesWithRecs,
+      totalErrors: issuesWithRecs.filter(i => i.issue.severidade === 'error').length,
+      totalWarnings: issuesWithRecs.filter(i => i.issue.severidade === 'warning').length,
+      totalResolved: issuesWithRecs.filter(i => i.bestRecommendation && i.bestRecommendation.action !== 'impossible').length,
+      totalBlocked: issuesWithRecs.filter(i => i.bestRecommendation?.action === 'impossible').length,
+    };
+    exportarRelatorioSeguranca(reportData, nomeRelatorio, {
+      tempoTotal: metrics.tempoTotal,
+      distanciaTotal: metrics.distanciaTotal,
+    });
+  }, [cncConfig, diffsAplicados, issuesWithRecs, metrics, modo, planoAtivo, program]);
 
   const handleExportEtiquetas = useCallback(() => {
     if (!layoutAtual) return;
@@ -681,21 +835,26 @@ export default function SimuladorCortePage() {
                     </div>
                   </div>
 
-                  {/* 3D CANVAS */}
-                  <div className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}>
-                    <CanvasSimulador3D
-                      layout={layoutAtual}
-                      onSelecionarPeca={handleSelecionarPeca}
-                      habilitarGrade={mostrarGrade}
-                      habilitarCotas={mostrarCotas}
-                      habilitarRetalhos={mostrarRetalhos}
-                      mostrarMaquina={mostrarMaquina}
-                      mostrarStock={mostrarStock}
-                      mostrarClamps={mostrarClamps}
-                      mostrarCaminho={mostrarCaminho}
-                      program={program}
-                      tempoAtual={tempoAtual}
-                    />
+                {/* 3D CANVAS */}
+                <div className="h-[460px] rounded-xl overflow-hidden border border-[#1F2937]">
+                  <CanvasSimulador3D
+                    layout={layoutAtual}
+                    onSelecionarPeca={handleSelecionarPeca}
+                    habilitarGrade={mostrarGrade}
+                    habilitarCotas={mostrarCotas}
+                    habilitarRetalhos={mostrarRetalhos}
+                    mostrarMaquina={mostrarMaquina}
+                    mostrarStock={mostrarStock}
+                    mostrarClamps={mostrarClamps}
+                    mostrarCaminho={mostrarCaminho}
+                    program={program}
+                    tempoAtual={tempoAtual}
+                    cncConfig={cncConfig}
+                    focoPosicao={focoPosicao}
+                    mostrarRiscos={modoExibicao === 'verificacao'}
+                    ghostPreview={ghostPreview}
+                    onClampDragEnd={handleClampDragEnd}
+                  />
                   </div>
 
                   {/* CONTROLES DE TIMELINE */}
@@ -718,13 +877,48 @@ export default function SimuladorCortePage() {
                 <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
                   <div className="flex gap-2">
                     <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
-                      <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO PDF
+                      <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
+                    </button>
+                    <button onClick={handleExportRelatorioSeguranca} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                      <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
                     </button>
                     <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
                       <Box size={14} className="text-[#10B981]" /> ETIQUETAS
                     </button>
                   </div>
                   
+                  {/* TOGGLE CONFIGURAÇÃO CNC */}
+                  <button
+                    onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
+                    className={`flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${
+                      mostrarConfigCNC
+                        ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
+                        : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
+                    }`}
+                  >
+                    <Settings size={14} />
+                    {mostrarConfigCNC ? 'ESCONDER CONFIG CNC' : 'CONFIGURAÇÃO CNC'}
+                  </button>
+
+                  {/* PAINEL DE CONFIGURAÇÃO CNC */}
+                  {mostrarConfigCNC && (
+                    <CncConfigPanel config={cncConfig} onChange={handleCncConfigChange} />
+                  )}
+
+                  {/* PAINEL DE ANÁLISE DE SEGURANÇA E AJUSTES */}
+                  {program && (
+                    <SafetyAnalysisPanel
+                      issuesWithRecs={issuesWithRecs}
+                      diffs={diffsAplicados}
+                      collisionPolicy={cncConfig.machine.collisionPolicy}
+                      onJumpToIssue={handleJumpToIssue}
+                      onApplyRecommendation={handleApplyRecommendation}
+                      onRerunSimulation={handleRerunSimulation}
+                      isRerunning={isRerunning}
+                      onPreviewRecommendation={handlePreviewRecommendation}
+                    />
+                  )}
+
                   {/* Legenda CAM Toolpath */}
                   {mostrarCaminho && (
                     <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
@@ -874,6 +1068,9 @@ export default function SimuladorCortePage() {
                     mostrarCaminho={mostrarCaminho}
                     program={program}
                     tempoAtual={tempoAtual}
+                    cncConfig={cncConfig}
+                    ghostPreview={ghostPreview}
+                    onClampDragEnd={handleClampDragEnd}
                   />
                 </div>
 
@@ -897,12 +1094,47 @@ export default function SimuladorCortePage() {
               <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
                 <div className="flex gap-2">
                   <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
-                    <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO PDF
+                    <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
+                  </button>
+                  <button onClick={handleExportRelatorioSeguranca} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
                   </button>
                   <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
                     <Box size={14} className="text-[#10B981]" /> ETIQUETAS
                   </button>
                 </div>
+
+                {/* TOGGLE CONFIGURAÇÃO CNC */}
+                <button
+                  onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
+                  className={`flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${
+                    mostrarConfigCNC
+                      ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
+                      : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
+                  }`}
+                >
+                  <Settings size={14} />
+                  {mostrarConfigCNC ? 'ESCONDER CONFIG CNC' : 'CONFIGURAÇÃO CNC'}
+                </button>
+
+                {/* PAINEL DE CONFIGURAÇÃO CNC */}
+                {mostrarConfigCNC && (
+                  <CncConfigPanel config={cncConfig} onChange={handleCncConfigChange} />
+                )}
+
+                {/* PAINEL DE ANÁLISE DE SEGURANÇA E AJUSTES */}
+                {program && (
+                  <SafetyAnalysisPanel
+                    issuesWithRecs={issuesWithRecs}
+                    diffs={diffsAplicados}
+                    collisionPolicy={cncConfig.machine.collisionPolicy}
+                    onJumpToIssue={handleJumpToIssue}
+                    onApplyRecommendation={handleApplyRecommendation}
+                    onRerunSimulation={handleRerunSimulation}
+                    isRerunning={isRerunning}
+                    onPreviewRecommendation={handlePreviewRecommendation}
+                  />
+                )}
 
                 {mostrarCaminho && (
                   <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
