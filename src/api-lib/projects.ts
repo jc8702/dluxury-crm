@@ -278,6 +278,7 @@ export async function handleEngineering(req: any, res: any) {
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS horas_mo_padrao NUMERIC DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao NUMERIC DEFAULT 150`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao NUMERIC DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_total NUMERIC DEFAULT 0`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
     
@@ -306,61 +307,77 @@ export async function handleEngineering(req: any, res: any) {
     if (req.method === 'GET') {
       const term = req.query.q as string;
       let result;
-      
-      // Nova estrutura de orçamentos pro
+
       if (term) {
-        // Busca hibrida: Engenharia (Módulos) + Componentes (Estoque)
-        const engResult = await sql`
-          SELECT id, nome, codigo, categoria, tipo_produto as tipo, 'MODULO' as origem
-          FROM sku_engenharia 
-          WHERE nome ILIKE ${'%' + term + '%'} 
-          OR codigo ILIKE ${'%' + term + '%'} 
-          LIMIT 10
-        `;
-        
-        const compResult = await sql`
-          SELECT id, nome, codigo, tipo, 'COMPONENTE' as origem
-          FROM sku_componente 
-          WHERE nome ILIKE ${'%' + term + '%'} 
-          OR codigo ILIKE ${'%' + term + '%'} 
-          LIMIT 10
-        `;
-        
-        result = [...engResult, ...compResult];
-      } else {
         result = await sql`
-          SELECT id, nome, codigo, categoria, tipo_produto as tipo, 'MODULO' as origem
-          FROM sku_engenharia 
+          SELECT id, nome, codigo_modelo, descricao,
+            largura_padrao, altura_padrao, profundidade_padrao,
+            horas_mo_padrao, valor_hora_padrao, valor_total,
+            regras_calculo, created_at, updated_at
+          FROM erp_product_bom
+          WHERE nome ILIKE ${'%' + term + '%'}
+          OR codigo_modelo ILIKE ${'%' + term + '%'}
           ORDER BY created_at DESC
           LIMIT 20
+        `;
+      } else {
+        result = await sql`
+          SELECT id, nome, codigo_modelo, descricao,
+            largura_padrao, altura_padrao, profundidade_padrao,
+            horas_mo_padrao, valor_hora_padrao, valor_total,
+            regras_calculo, created_at, updated_at
+          FROM erp_product_bom
+          ORDER BY created_at DESC
         `;
       }
       return res.status(200).json({ success: true, data: result });
     }
     
     if (req.method === 'POST') {
-      const { 
+      let { 
         nome, codigo_modelo, descricao,
         largura_padrao, altura_padrao, profundidade_padrao,
-        horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao 
+        horas_mo_padrao, valor_hora_padrao, valor_total,
+        regras_calculo
       } = req.body;
-      
-      if (!nome || !codigo_modelo) {
-        return res.status(400).json({ success: false, error: 'Nome e Código são obrigatórios' });
+
+      if (!nome) {
+        return res.status(400).json({ success: false, error: 'Nome é obrigatório' });
+      }
+
+      // Auto-gera codigo_modelo se vazio
+      if (!codigo_modelo) {
+        const [last] = await sql`
+          SELECT codigo_modelo FROM erp_product_bom
+          WHERE codigo_modelo ~ '^MOD-[0-9]+$'
+          ORDER BY codigo_modelo DESC
+          LIMIT 1
+        `;
+        const nextNum = last
+          ? Number(last.codigo_modelo.replace('MOD-', '')) + 1
+          : 1;
+        codigo_modelo = `MOD-${String(nextNum).padStart(3, '0')}`;
+      }
+
+      // Calcula valor_total a partir das regras_calculo se nao veio explicito
+      if (!valor_total && Array.isArray(regras_calculo) && regras_calculo.length > 0) {
+        valor_total = regras_calculo.reduce((sum: number, r: any) => {
+          return sum + (Number(r.valor_unitario) || 0) * (Number(r.quantidade) || 0);
+        }, 0);
       }
 
       const [result] = await sql`
         INSERT INTO erp_product_bom (
           nome, codigo_modelo, descricao, 
           largura_padrao, altura_padrao, profundidade_padrao, 
-          horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao,
+          horas_mo_padrao, valor_hora_padrao, valor_total,
           regras_calculo
         ) 
         VALUES (
           ${nome}, ${codigo_modelo}, ${descricao},
           ${Number(largura_padrao) || 0}, ${Number(altura_padrao) || 0}, ${Number(profundidade_padrao) || 0},
-          ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(preco_material_m3_padrao) || 0},
-          ${JSON.stringify(req.body.regras_calculo || [])}::jsonb
+          ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(valor_total) || 0},
+          ${JSON.stringify(regras_calculo || [])}::jsonb
         ) 
         ON CONFLICT (codigo_modelo) 
         DO UPDATE SET 
@@ -371,8 +388,9 @@ export async function handleEngineering(req: any, res: any) {
           profundidade_padrao = EXCLUDED.profundidade_padrao,
           horas_mo_padrao = EXCLUDED.horas_mo_padrao,
           valor_hora_padrao = EXCLUDED.valor_hora_padrao,
-          preco_material_m3_padrao = EXCLUDED.preco_material_m3_padrao,
-          regras_calculo = EXCLUDED.regras_calculo
+          valor_total = EXCLUDED.valor_total,
+          regras_calculo = EXCLUDED.regras_calculo,
+          updated_at = NOW()
         RETURNING *
       `;
       return res.status(201).json({ success: true, data: result });
@@ -381,6 +399,15 @@ export async function handleEngineering(req: any, res: any) {
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const { id } = req.query;
       const f = req.body;
+
+      // Recalcula valor_total a partir das regras_calculo se informadas
+      let valor_total = f.valor_total;
+      if (f.regras_calculo && Array.isArray(f.regras_calculo)) {
+        valor_total = f.regras_calculo.reduce((sum: number, r: any) => {
+          return sum + (Number(r.valor_unitario) || 0) * (Number(r.quantidade) || 0);
+        }, 0);
+      }
+
       const [result] = await sql`
         UPDATE erp_product_bom SET
           nome = COALESCE(${f.nome}, nome),
@@ -391,7 +418,7 @@ export async function handleEngineering(req: any, res: any) {
           profundidade_padrao = COALESCE(${f.profundidade_padrao}, profundidade_padrao),
           horas_mo_padrao = COALESCE(${f.horas_mo_padrao}, horas_mo_padrao),
           valor_hora_padrao = COALESCE(${f.valor_hora_padrao}, valor_hora_padrao),
-          preco_material_m3_padrao = COALESCE(${f.preco_material_m3_padrao}, preco_material_m3_padrao),
+          valor_total = COALESCE(${Number(valor_total) || 0}, valor_total),
           regras_calculo = COALESCE(${f.regras_calculo ? JSON.stringify(f.regras_calculo) : null}::jsonb, regras_calculo),
           updated_at = NOW()
         WHERE id = ${id}

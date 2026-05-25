@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Settings2, Plus, Zap, Loader2, Save, X } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { CardSkeleton } from '../../design-system/components/Skeleton';
@@ -13,10 +13,10 @@ const EngineeringPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<any>({ 
+  const [formData, setFormData] = useState<any>({
     id: null, nome: '', codigo_modelo: '', descricao: '',
     largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
-    horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0,
+    horas_mo_padrao: 0, valor_hora_padrao: 150, valor_total: 0,
     regras_calculo: []
   });
 
@@ -36,6 +36,39 @@ const EngineeringPage: React.FC = () => {
     }
   };
 
+  // Auto-gera codigo_modelo ao abrir modal de novo modulo
+  const openNewModal = useCallback(async () => {
+    try {
+      const all = await api.engineering.list();
+      const mods = all
+        .map((p: any) => p.codigo_modelo)
+        .filter((c: string) => /^MOD-\d+$/.test(c))
+        .map((c: string) => Number(c.replace('MOD-', '')));
+      const nextNum = mods.length > 0 ? Math.max(...mods) + 1 : 1;
+      setFormData({
+        id: null, nome: '', codigo_modelo: `MOD-${String(nextNum).padStart(3, '0')}`, descricao: '',
+        largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
+        horas_mo_padrao: 0, valor_hora_padrao: 150, valor_total: 0,
+        regras_calculo: []
+      });
+      setIsModalOpen(true);
+    } catch {
+      setFormData({
+        id: null, nome: '', codigo_modelo: 'MOD-001', descricao: '',
+        largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
+        horas_mo_padrao: 0, valor_hora_padrao: 150, valor_total: 0,
+        regras_calculo: []
+      });
+      setIsModalOpen(true);
+    }
+  }, []);
+
+  const recalcularValorTotal = useCallback((regras: any[]) => {
+    return regras.reduce((sum: number, r: any) => {
+      return sum + (Number(r.valor_unitario) || 0) * (Number(r.quantidade) || 0);
+    }, 0);
+  }, []);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -45,7 +78,7 @@ const EngineeringPage: React.FC = () => {
       } else {
         await api.engineering.create(formData);
       }
-      
+
       setIsModalOpen(false);
       resetForm();
       await fetchProducts();
@@ -58,10 +91,10 @@ const EngineeringPage: React.FC = () => {
   };
 
   const resetForm = () => {
-    setFormData({ 
+    setFormData({
       id: null, nome: '', codigo_modelo: '', descricao: '',
       largura_padrao: 0, altura_padrao: 0, profundidade_padrao: 0,
-      horas_mo_padrao: 0, valor_hora_padrao: 150, preco_material_m3_padrao: 0,
+      horas_mo_padrao: 0, valor_hora_padrao: 150, valor_total: 0,
       regras_calculo: []
     });
   };
@@ -79,20 +112,35 @@ const EngineeringPage: React.FC = () => {
       formula_altura: 'A',
       formula_perda: '1.10',
       quantidade: 1,
+      valor_unitario: 0,
       sku_id: skus[0]?.id || '',
       tipo_regra: 'AREA'
     };
-    setFormData({ ...formData, regras_calculo: [...(formData.regras_calculo || []), newComponent] });
+    const novaLista = [...(formData.regras_calculo || []), newComponent];
+    setFormData({
+      ...formData,
+      regras_calculo: novaLista,
+      valor_total: recalcularValorTotal(novaLista)
+    });
   };
 
   const removeComponent = (id: string) => {
-    setFormData({ ...formData, regras_calculo: formData.regras_calculo.filter((c: any) => c.id !== id) });
+    const novaLista = formData.regras_calculo.filter((c: any) => c.id !== id);
+    setFormData({
+      ...formData,
+      regras_calculo: novaLista,
+      valor_total: recalcularValorTotal(novaLista)
+    });
   };
 
   const updateComponent = (id: string, updates: any) => {
-    setFormData({ 
-      ...formData, 
-      regras_calculo: formData.regras_calculo.map((c: any) => c.id === id ? { ...c, ...updates } : c) 
+    const novaLista = formData.regras_calculo.map((c: any) =>
+      c.id === id ? { ...c, ...updates } : c
+    );
+    setFormData({
+      ...formData,
+      regras_calculo: novaLista,
+      valor_total: recalcularValorTotal(novaLista)
     });
   };
 
@@ -112,7 +160,7 @@ const EngineeringPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={openNewModal}>
           <Plus size={20} className="mr-2" /> Novo Módulo
         </Button>
       </header>
@@ -125,8 +173,8 @@ const EngineeringPage: React.FC = () => {
             <CardSkeleton />
           </div>
         ) : (
-          <DataTable 
-            headers={['Nome', 'Modelo', 'Descrição', 'Criado em', 'Ações']}
+          <DataTable
+            headers={['Nome', 'Modelo', 'Descrição', 'Valor Total (R$)', 'Criado em', 'Ações']}
             data={products}
             renderRow={(p) => (
               <>
@@ -137,15 +185,25 @@ const EngineeringPage: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">{p.descricao}</td>
-                <td className="p-4 text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</td>
+                <td className="p-4 font-semibold">
+                  R$ {Number(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </td>
+                <td className="p-4 text-xs text-muted-foreground">
+                  {p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}
+                </td>
                 <td className="p-4">
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => { setFormData(p); setIsModalOpen(true); }}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      // Garantir que regras_calculo tenha valor_unitario para calculo
+                      const regras = Array.isArray(p.regras_calculo) ? p.regras_calculo : [];
+                      setFormData({ ...p, regras_calculo: regras, valor_total: Number(p.valor_total) || 0 });
+                      setIsModalOpen(true);
+                    }}>
                       Editar
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="text-destructive border-destructive/20 hover:bg-destructive/10 font-bold"
                       onClick={async () => {
                         if (confirm(`Tem certeza que deseja excluir o módulo "${p.nome}"?`)) {
@@ -185,7 +243,7 @@ const EngineeringPage: React.FC = () => {
         <form onSubmit={handleSave} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input required label="Nome do Módulo *" placeholder="Ex: Armário Superior" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} />
-            <Input required label="Código do Modelo *" placeholder="Ex: MOD-ARMS-01" value={formData.codigo_modelo} onChange={e => setFormData({...formData, codigo_modelo: e.target.value})} />
+            <Input required label="Código do Modelo" placeholder="MOD-XXX" value={formData.codigo_modelo} onChange={e => setFormData({...formData, codigo_modelo: e.target.value})} />
           </div>
 
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 border border-border/50 rounded-xl">
@@ -197,7 +255,7 @@ const EngineeringPage: React.FC = () => {
           <div className="grid grid-cols-3 gap-4">
             <Input type="number" label="Horas MO" value={formData.horas_mo_padrao} onChange={e => setFormData({...formData, horas_mo_padrao: Number(e.target.value)})} />
             <Input type="number" label="Valor/Hora (R$)" value={formData.valor_hora_padrao} onChange={e => setFormData({...formData, valor_hora_padrao: Number(e.target.value)})} />
-            <Input type="number" label="Mat/m³ (R$)" value={formData.preco_material_m3_padrao} onChange={e => setFormData({...formData, preco_material_m3_padrao: Number(e.target.value)})} />
+            <Input type="number" label="Valor Total (R$)" value={formData.valor_total} onChange={e => setFormData({...formData, valor_total: Number(e.target.value)})} />
           </div>
 
           <div className="mt-4 border-t border-border pt-4">
@@ -207,15 +265,15 @@ const EngineeringPage: React.FC = () => {
                 <Plus size={16} className="mr-1" /> Add Peça
               </Button>
             </div>
-            
+
             <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {(formData.regras_calculo || []).map((comp: any) => (
                 <div key={comp.id} className="p-4 bg-muted/20 border border-border/50 rounded-xl flex flex-col gap-3">
-                  <div className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1.5fr_auto] gap-3 items-end">
-                    <Input 
-                      placeholder="Nome da Peça" 
-                      value={comp.componente_nome} 
-                      onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })} 
+                  <div className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-3 items-end">
+                    <Input
+                      placeholder="Nome da Peça"
+                      value={comp.componente_nome}
+                      onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })}
                     />
                     <div>
                       <SearchableSelect
@@ -225,15 +283,22 @@ const EngineeringPage: React.FC = () => {
                         onChange={(id) => updateComponent(comp.id, { sku_id: id })}
                       />
                     </div>
-                    <Input 
-                      type="number" 
-                      placeholder="Qtd" 
-                      value={comp.quantidade} 
-                      onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })} 
+                    <Input
+                      type="number"
+                      placeholder="Qtd"
+                      value={comp.quantidade}
+                      onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })}
                     />
-                    <select 
-                      className="flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" 
-                      value={comp.sentido_veio || 'longitudinal'} 
+                    <Input
+                      type="number"
+                      placeholder="R$ unit."
+                      label="Valor Unit."
+                      value={comp.valor_unitario}
+                      onChange={e => updateComponent(comp.id, { valor_unitario: Number(e.target.value) })}
+                    />
+                    <select
+                      className="flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      value={comp.sentido_veio || 'longitudinal'}
                       onChange={e => updateComponent(comp.id, { sentido_veio: e.target.value })}
                       title="Sentido do Veio"
                     >
@@ -241,39 +306,39 @@ const EngineeringPage: React.FC = () => {
                       <option value="transversal">Transversal</option>
                       <option value="sem_sentido">Sem Sentido</option>
                     </select>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-destructive hover:bg-destructive/10" 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
                       onClick={() => removeComponent(comp.id)}
                     >
                       <X size={18} />
                     </Button>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <Input 
-                      label="Fórmula Largura (L)" 
-                      value={comp.formula_largura} 
-                      onChange={e => updateComponent(comp.id, { formula_largura: e.target.value })} 
+                    <Input
+                      label="Fórmula Largura (L)"
+                      value={comp.formula_largura}
+                      onChange={e => updateComponent(comp.id, { formula_largura: e.target.value })}
                     />
-                    <Input 
-                      label="Fórmula Altura (A)" 
-                      value={comp.formula_altura} 
-                      onChange={e => updateComponent(comp.id, { formula_altura: e.target.value })} 
+                    <Input
+                      label="Fórmula Altura (A)"
+                      value={comp.formula_altura}
+                      onChange={e => updateComponent(comp.id, { formula_altura: e.target.value })}
                     />
-                    <Input 
-                      label="Fator Perda" 
-                      value={comp.formula_perda} 
-                      onChange={e => updateComponent(comp.id, { formula_perda: e.target.value })} 
+                    <Input
+                      label="Fator Perda"
+                      value={comp.formula_perda}
+                      onChange={e => updateComponent(comp.id, { formula_perda: e.target.value })}
                     />
-                    <Input 
-                      type="number" 
-                      label="Desc. Fita (mm)" 
-                      required 
-                      value={comp.desconto_fita_mm || 0} 
-                      onChange={e => updateComponent(comp.id, { desconto_fita_mm: Number(e.target.value) })} 
+                    <Input
+                      type="number"
+                      label="Desc. Fita (mm)"
+                      required
+                      value={comp.desconto_fita_mm || 0}
+                      onChange={e => updateComponent(comp.id, { desconto_fita_mm: Number(e.target.value) })}
                     />
                   </div>
                 </div>
@@ -283,7 +348,17 @@ const EngineeringPage: React.FC = () => {
               )}
             </div>
           </div>
-          
+
+          {/* Resumo financeiro */}
+          {formData.regras_calculo?.length > 0 && (
+            <div className="bg-muted/30 border border-border/50 rounded-xl p-4 flex justify-between items-center">
+              <span className="text-sm font-semibold text-muted-foreground">Valor Total dos Materiais</span>
+              <span className="text-xl font-bold text-primary">
+                R$ {recalcularValorTotal(formData.regras_calculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+
           <div className="flex gap-4 mt-4">
             <Button type="submit" className="flex-1" disabled={saving}>
               {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
