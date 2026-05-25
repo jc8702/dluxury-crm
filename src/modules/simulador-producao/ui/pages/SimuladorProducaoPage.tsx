@@ -506,23 +506,6 @@ export default function SimuladorProducaoPage() {
                 </div>
               </div>
 
-              <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[#E2AC00] font-bold text-xs tracking-wider flex items-center gap-2">
-                    <Layers3 size={14} />
-                    PLANO DE CORTE — VISÃO GERAL
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => exportarTodasEtiquetas(pieces)}
-                    className="flex items-center gap-2 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
-                  >
-                    <Tag size={12} />
-                    EXPORTAR ETIQUETAS
-                  </button>
-                </div>
-                <PlanoCorteVisao pieces={pieces} />
-              </div>
             </>
           ) : (
             <div className="bg-[#111827] border border-dashed border-[#374151] rounded-xl p-8 text-center">
@@ -532,6 +515,26 @@ export default function SimuladorProducaoPage() {
                 Ajuste as peças, a quantidade de fita por borda e clique em simular. O módulo vai comparar
                 fluxo contínuo e lote separado para mostrar qual caminho tende a reduzir o tempo total.
               </p>
+            </div>
+          )}
+
+          {pieces.length > 0 && (
+            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[#E2AC00] font-bold text-xs tracking-wider flex items-center gap-2">
+                  <Layers3 size={14} />
+                  PLANO DE CORTE — VISÃO GERAL
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => exportarTodasEtiquetas(pieces)}
+                  className="flex items-center gap-2 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
+                >
+                  <Tag size={12} />
+                  EXPORTAR ETIQUETAS
+                </button>
+              </div>
+              <PlanoCorteVisao pieces={pieces} />
             </div>
           )}
         </div>
