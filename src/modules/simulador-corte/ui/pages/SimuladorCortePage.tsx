@@ -315,7 +315,7 @@ export default function SimuladorCortePage() {
             alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`);
             return erroDetectado.tempo; // para no instante exato da colisão
           }
-        } else if (stopOnCollision) {
+        } else if (stopOnCollision && cncConfig.machine.collisionPolicy !== 'auto') {
           // Se for apenas a checkbox local do timeline mas sem o alert bloqueante da máquina
           const erroDetectado = program.issues.find(
             (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
@@ -834,8 +834,8 @@ export default function SimuladorCortePage() {
 
           {layoutAtual && program && metrics ? (
             <div className="flex-1 flex flex-col gap-4 min-w-0">
-              <div className={`flex flex-col lg:flex-row gap-4 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                <div className="flex-1 flex flex-col gap-3 min-w-0">
+              <div className={`flex flex-col lg:flex-row gap-4 items-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
+                <div className="flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start">
                   {/* CONFIGURAÇÃO E ABAS DE MODO (PREVIEW vs SIMULAÇÃO vs VERIFICAÇÃO) */}
                   <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -927,7 +927,7 @@ export default function SimuladorCortePage() {
                 </div>
 
                 {/* PAINEL DE INFORMAÇÕES E ANÁLISE DE SEGURANÇA */}
-                <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+                <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                   <div className="flex gap-2">
                     <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
                       <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
@@ -1060,8 +1060,8 @@ export default function SimuladorCortePage() {
           )}
 
           {planoAtivo && layoutAtual && program && metrics && (
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className={`flex-1 flex flex-col gap-3 min-w-0 ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+              <div className={`flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
                 
                 {/* Cabeçalho de Navegação e Configurações */}
                 <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
@@ -1154,7 +1154,7 @@ export default function SimuladorCortePage() {
               </div>
 
               {/* PAINEL LATERAL DIREITO */}
-              <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+              <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                 <div className="flex gap-2">
                   <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
                     <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
