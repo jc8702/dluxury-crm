@@ -467,8 +467,71 @@ export async function handleSimulations(req: any, res: any) {
   try {
     const { authorized, error } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
-    return res.status(200).json({ success: true, data: [] });
+
+    // Migração: garantir colunas adicionais para cenários de produção
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS nome TEXT NOT NULL DEFAULT 'Simulação'`.catch(() => {});
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'generico'`.catch(() => {});
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE`.catch(() => {});
+
+    const method = req.method;
+    const url = req.url || '';
+
+    const { id, tipo } = req.query || {};
+    let pathId: string | null = null;
+    if (!id && url.includes('/simulations/')) {
+      pathId = url.split('/simulations/')[1].split('?')[0];
+    }
+    const recordId = id || pathId;
+
+    if (method === 'GET') {
+      if (recordId) {
+        const [row] = await sql`SELECT * FROM erp_simulations WHERE id = ${recordId}`;
+        if (!row) return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
+        return res.status(200).json({ success: true, data: row });
+      }
+      if (tipo) {
+        const rows = await sql`SELECT * FROM erp_simulations WHERE tipo = ${tipo} ORDER BY created_at DESC`;
+        return res.status(200).json({ success: true, data: rows });
+      }
+      const rows = await sql`SELECT * FROM erp_simulations ORDER BY created_at DESC`;
+      return res.status(200).json({ success: true, data: rows });
+    }
+
+    if (method === 'POST') {
+      const { nome, tipo: tipoBody, dados_simulacao, dados_input, cliente_id, cliente_nome } = req.body;
+      const [row] = await sql`
+        INSERT INTO erp_simulations (nome, tipo, dados_simulacao, dados_input, cliente_id, cliente_nome)
+        VALUES (${nome || 'Simulação'}, ${tipoBody || 'generico'}, ${JSON.stringify(dados_simulacao || {})}, ${JSON.stringify(dados_input || {})}, ${cliente_id || null}, ${cliente_nome || null})
+        RETURNING *
+      `;
+      return res.status(201).json({ success: true, data: row });
+    }
+
+    if (method === 'PUT') {
+      if (!recordId) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
+      const { nome, dados_simulacao, dados_input } = req.body;
+      const [row] = await sql`
+        UPDATE erp_simulations SET
+          nome = COALESCE(${nome}, nome),
+          dados_simulacao = CASE WHEN ${!!dados_simulacao} THEN ${JSON.stringify(dados_simulacao)}::jsonb ELSE dados_simulacao END,
+          dados_input = CASE WHEN ${!!dados_input} THEN ${JSON.stringify(dados_input)}::jsonb ELSE dados_input END,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${recordId}
+        RETURNING *
+      `;
+      if (!row) return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
+      return res.status(200).json({ success: true, data: row });
+    }
+
+    if (method === 'DELETE') {
+      if (!recordId) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
+      await sql`DELETE FROM erp_simulations WHERE id = ${recordId}`;
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
+    console.error('HANDLE_SIMULATIONS_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }

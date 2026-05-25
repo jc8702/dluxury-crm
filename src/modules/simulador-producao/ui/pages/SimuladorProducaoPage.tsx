@@ -1,15 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Upload, Sparkles, ArrowRight, Factory, CheckCircle2, CircleDot, Layers3, Scissors, Tag } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Check, Plus, Trash2, Upload, Sparkles, ArrowRight, Factory, CheckCircle2, CircleDot, Layers3, Scissors, Tag, Save, FolderOpen, FileText, X } from 'lucide-react';
 import { listarPlanos } from '../../../simulador-corte/infrastructure/repositories/PlanoCorteRepository';
 import type { PlanoCorteCarregado } from '../../../simulador-corte/domain/types';
 import type { FioDeFita } from '../../../plano-corte/domain/types';
 import {
   DEFAULT_PRODUCTION_CONFIG,
   formatEdgePattern,
+  formatMinutes,
   simulateProductionScenario,
 } from '../../domain/productionEngine';
 import type { ProductionPieceInput, ProductionSimulationResult } from '../../domain/types';
 import { exportarEtiquetaProducao, exportarTodasEtiquetas } from '../components/LabelExporterProducao';
+import { exportarRelatorioProducao } from '../components/ExportarRelatorioProducao';
+import { ProductionScenarioRepository } from '../../infrastructure/repositories/ProductionScenarioRepository';
+import type { ProductionScenarioRecord } from '../../infrastructure/repositories/ProductionScenarioRepository';
 import PlanoCorteVisao from '../components/PlanoCorteVisao';
 
 type SourceMode = 'manual' | 'plano';
@@ -86,14 +90,6 @@ function extrairPecasDoPlano(plano: PlanoCorteCarregado): PieceRow[] {
   return pecas;
 }
 
-function formatMinutes(minutes: number) {
-  if (!Number.isFinite(minutes)) return '0m';
-  if (minutes < 60) return `${minutes.toFixed(1)} min`;
-  const hours = Math.floor(minutes / 60);
-  const mins = Math.round(minutes % 60);
-  return `${hours}h ${String(mins).padStart(2, '0')}m`;
-}
-
 function EdgeToggle({ active, label, onClick }: { active: boolean; label: string; onClick: () => void; }) {
   return (
     <button
@@ -117,6 +113,14 @@ export default function SimuladorProducaoPage() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [pieces, setPieces] = useState<PieceRow[]>([]);
   const [result, setResult] = useState<ProductionSimulationResult | null>(null);
+
+  // Save/Load state
+  const [scenarioName, setScenarioName] = useState('');
+  const [savedScenarios, setSavedScenarios] = useState<ProductionScenarioRecord[]>([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingScenarios, setLoadingScenarios] = useState(false);
 
   useEffect(() => {
     setLoadingPlans(true);
@@ -179,6 +183,63 @@ export default function SimuladorProducaoPage() {
 
     setResult(simulateProductionScenario(normalized, DEFAULT_PRODUCTION_CONFIG));
   };
+
+  const handleSaveScenario = useCallback(async () => {
+    if (!scenarioName.trim() || pieces.length === 0) return;
+    setSaving(true);
+    try {
+      await ProductionScenarioRepository.create({
+        nome: scenarioName.trim(),
+        tipo: 'producao',
+        pieces: pieces.map((p) => ({ ...p })),
+        config: DEFAULT_PRODUCTION_CONFIG,
+        result: result ? { ...result } : null,
+      });
+      setShowSaveModal(false);
+      setScenarioName('');
+    } catch (err) {
+      console.error('Erro ao salvar cenário:', err);
+    } finally {
+      setSaving(false);
+    }
+  }, [scenarioName, pieces, result]);
+
+  const openLoadModal = useCallback(async () => {
+    setShowLoadModal(true);
+    setLoadingScenarios(true);
+    try {
+      const list = await ProductionScenarioRepository.list();
+      setSavedScenarios(list);
+    } catch (err) {
+      console.error('Erro ao carregar cenários:', err);
+    } finally {
+      setLoadingScenarios(false);
+    }
+  }, []);
+
+  const handleLoadScenario = useCallback(async (scenario: ProductionScenarioRecord) => {
+    try {
+      const loaded = await ProductionScenarioRepository.get(scenario.id!);
+      const loadedPieces = loaded.pieces.map((p) => ({
+        ...p,
+        quantidade: (p as any).quantidade ?? 1,
+      })) as PieceRow[];
+      setPieces(loadedPieces);
+      setResult(loaded.result);
+      setShowLoadModal(false);
+    } catch (err) {
+      console.error('Erro ao carregar cenário:', err);
+    }
+  }, []);
+
+  const handleDeleteScenario = useCallback(async (id: string) => {
+    try {
+      await ProductionScenarioRepository.delete(id);
+      setSavedScenarios((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error('Erro ao excluir cenário:', err);
+    }
+  }, []);
 
   const totalQtd = pieces.reduce((acc, p) => acc + Math.max(1, Number(p.quantidade || 1)), 0);
 
@@ -279,6 +340,27 @@ export default function SimuladorProducaoPage() {
                   className="flex-1 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
                 >
                   Limpar
+                </button>
+              </div>
+            )}
+
+            {pieces.length > 0 && (
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => { setShowSaveModal(true); setScenarioName(''); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
+                >
+                  <Save size={14} />
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  onClick={openLoadModal}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
+                >
+                  <FolderOpen size={14} />
+                  Carregar
                 </button>
               </div>
             )}
@@ -467,6 +549,17 @@ export default function SimuladorProducaoPage() {
                 />
               </div>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => exportarRelatorioProducao('simulação-produção', pieces, result)}
+                  className="flex items-center gap-2 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold px-4 py-2"
+                >
+                  <FileText size={14} />
+                  RELATÓRIO PDF
+                </button>
+              </div>
+
               <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-[#E2AC00] font-bold text-xs tracking-wider flex items-center gap-2">
@@ -543,6 +636,100 @@ export default function SimuladorProducaoPage() {
           )}
         </div>
       </div>
+
+      {/*** MODAL SALVAR ***/}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowSaveModal(false)}>
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[#E2AC00] font-bold text-sm flex items-center gap-2">
+                <Save size={16} />
+                SALVAR CENÁRIO
+              </h3>
+              <button onClick={() => setShowSaveModal(false)} className="text-[#6B7280] hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <label className="block text-[10px] uppercase tracking-wider text-[#6B7280] mb-1">Nome do cenário</label>
+            <input
+              value={scenarioName}
+              onChange={(e) => setScenarioName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
+              placeholder="Ex: Guarda-roupa casal 2p"
+              className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00] mb-4"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(false)}
+                className="flex-1 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveScenario}
+                disabled={!scenarioName.trim() || saving}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
+              >
+                {saving ? 'Salvando...' : <><Check size={14} /> Salvar</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/*** MODAL CARREGAR ***/}
+      {showLoadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowLoadModal(false)}>
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5 w-full max-w-lg mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[#E2AC00] font-bold text-sm flex items-center gap-2">
+                <FolderOpen size={16} />
+                CARREGAR CENÁRIO
+              </h3>
+              <button onClick={() => setShowLoadModal(false)} className="text-[#6B7280] hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 min-h-0">
+              {loadingScenarios ? (
+                <div className="text-center text-[#6B7280] text-sm py-8">Carregando...</div>
+              ) : savedScenarios.length === 0 ? (
+                <div className="text-center text-[#6B7280] text-sm py-8">Nenhum cenário salvo ainda.</div>
+              ) : savedScenarios.map((scenario) => (
+                <div key={scenario.id} className="flex items-center justify-between rounded-lg border border-[#1F2937] bg-[#0D1117] p-3 hover:border-[#E2AC00]/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-semibold text-sm truncate">{scenario.nome}</div>
+                    <div className="text-[10px] text-[#6B7280] mt-0.5">
+                      {scenario.pieces.length} peça(s) · {scenario.created_at ? new Date(scenario.created_at).toLocaleDateString('pt-BR') : '-'}
+                      {scenario.result ? ' · com simulação' : ''}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteScenario(scenario.id!)}
+                      className="rounded-lg bg-[#1F2937] hover:bg-red-500/20 text-[#6B7280] hover:text-red-400 p-2 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleLoadScenario(scenario)}
+                      className="rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
+                    >
+                      Carregar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }

@@ -416,6 +416,14 @@ export function simulateProductionScenario(
   };
 }
 
+export function formatMinutes(minutes: number) {
+  if (!Number.isFinite(minutes)) return '0m';
+  if (minutes < 60) return `${minutes.toFixed(1)} min`;
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
+  return `${hours}h ${String(mins).padStart(2, '0')}m`;
+}
+
 export function formatEdgePattern(fio?: ProductionPieceInput['fio_de_fita']) {
   const parts = [
     fio?.topo ? 'T' : '',

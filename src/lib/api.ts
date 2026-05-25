@@ -390,5 +390,12 @@ export const api = {
     getStats: () => apiCall<any>('after-sales?stats=true'),
     create: (data: any) => apiCall<any>('after-sales', 'POST', data),
     update: (data: any) => apiCall<any>('after-sales', 'PATCH', data),
+  },
+  simulations: {
+    list: (tipo?: string) => apiCall<any[]>(`simulations${tipo ? `?tipo=${tipo}` : ''}`),
+    get: (id: string) => apiCall<any>(`simulations?id=${id}`),
+    create: (data: any) => apiCall<any>('simulations', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`simulations?id=${id}`, 'PUT', data),
+    delete: (id: string) => apiCall<any>(`simulations?id=${id}`, 'DELETE'),
   }
 };
