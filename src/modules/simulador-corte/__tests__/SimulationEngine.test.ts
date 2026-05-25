@@ -559,6 +559,101 @@ describe('Clamp Editing Integration', () => {
   });
 });
 
+describe('Multi-passada interpolation accuracy', () => {
+  const CHAPA_GROSSA: LayoutSimulacao = {
+    chapa: {
+      sku: 'MDF-30MM',
+      largura: 2000,
+      altura: 1000,
+      espessura: 28,
+    },
+    pecas: [
+      {
+        id: 'peca_1',
+        nome: 'TESTE INTERPOLACAO',
+        comprimento: 500,
+        largura: 300,
+        espessura: 28,
+        x: 50,
+        y: 50,
+        rotacionada: false,
+      },
+    ],
+    area_aproveitada_mm2: 500 * 300,
+    area_total_mm2: 2000 * 1000,
+    aproveitamento_percentual: 15,
+    espacos_vazios: [],
+  };
+
+  it('deve ter PLUNGE tempoEstimado igual ao segmento 3D em todas as passadas', () => {
+    // Chapa grossa (28mm) com stepdown 9.5mm -> 3 passadas forçadas
+    const program = gerarSimulationProgram(CHAPA_GROSSA);
+
+    // Filtra todos os comandos PLUNGE
+    const plunges = program.commands.filter(c => c.tipo === 'PLUNGE');
+    expect(plunges.length).toBeGreaterThanOrEqual(3);
+
+    for (const plunge of plunges) {
+      const s = plunge.segments[0];
+      const dx = s.to.x - s.from.x;
+      const dy = s.to.y - s.from.y;
+      const dz = s.to.z - s.from.z;
+      const dist3D = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const expectedDur = dist3D / (s.velocidade / 60);
+      // Tolerância de 1ms para erros de arredondamento
+      expect(Math.abs(plunge.tempoEstimado - expectedDur)).toBeLessThan(0.001);
+    }
+  });
+
+  it('deve posicionar fresa no final exato do PLUNGE para todas as passadas', () => {
+    const program = gerarSimulationProgram(CHAPA_GROSSA);
+
+    let accTempo = 0;
+    const plungesEncontrados: { accTempo: number; cmd: typeof program.commands[0] }[] = [];
+    for (const cmd of program.commands) {
+      if (cmd.tipo === 'PLUNGE') {
+        plungesEncontrados.push({ accTempo, cmd });
+      }
+      accTempo += cmd.tempoEstimado || 0;
+    }
+    expect(plungesEncontrados.length).toBeGreaterThanOrEqual(3);
+
+    for (const { accTempo, cmd } of plungesEncontrados) {
+      const target = cmd.segments[0].to;
+      const state = obterEstadoNoInstante(program, accTempo + (cmd.tempoEstimado || 0));
+      expect(state.x).toBeCloseTo(target.x, 1);
+      expect(state.y).toBeCloseTo(target.y, 1);
+      expect(state.z).toBeCloseTo(target.z, 1);
+    }
+  });
+
+  it('nao deve haver salto de posicao entre PLUNGE e LEAD_IN em passadas subsequentes', () => {
+    const program = gerarSimulationProgram(CHAPA_GROSSA);
+
+    for (let i = 0; i < program.commands.length - 1; i++) {
+      const cmd = program.commands[i];
+      const next = program.commands[i + 1];
+      if (cmd.tipo === 'PLUNGE' && next.tipo === 'LEAD_IN') {
+        const toPlunge = cmd.segments[cmd.segments.length - 1].to;
+        const fromLeadIn = next.segments[0].from;
+
+        // O final do PLUNGE deve ser exatamente o início do LEAD_IN
+        expect(toPlunge.x).toBe(fromLeadIn.x);
+        expect(toPlunge.y).toBe(fromLeadIn.y);
+        expect(toPlunge.z).toBe(fromLeadIn.z);
+
+        // No exato instante do tempoEstimado do PLUNGE, a fresa está no target
+        let accTempo = 0;
+        for (let j = 0; j < i; j++) accTempo += program.commands[j].tempoEstimado || 0;
+        const state = obterEstadoNoInstante(program, accTempo + (cmd.tempoEstimado || 0));
+        expect(state.x).toBeCloseTo(toPlunge.x, 1);
+        expect(state.y).toBeCloseTo(toPlunge.y, 1);
+        expect(state.z).toBeCloseTo(toPlunge.z, 1);
+      }
+    }
+  });
+});
+
 describe('Risk Zone Detection', () => {
   it('deve detectar e marcar pontos de colisão com posição específica', () => {
     const config: CncConfig = {

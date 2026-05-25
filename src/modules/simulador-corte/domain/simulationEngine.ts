@@ -242,7 +242,7 @@ export function gerarSimulationProgram(
           velocidade: feedMergulho,
           toolId: activeTool.id,
         }],
-        tempoEstimado: Math.abs(zCorte - currentPos.z) / (feedMergulho / 60),
+        tempoEstimado: Math.hypot(startX - currentPos.x, startY - currentPos.y, zCorte - currentPos.z) / (feedMergulho / 60),
       };
       commands.push(plungeCmd);
       currentPos = { x: startX, y: startY, z: zCorte };
