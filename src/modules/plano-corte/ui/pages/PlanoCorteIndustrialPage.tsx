@@ -13,12 +13,14 @@ import {
   Printer, 
   Cpu, 
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  FileSpreadsheet
 } from 'lucide-react';
 
 import { api } from '@/lib/api';
 import { HistoricoModal } from '../components/HistoricoModal';
 import { ExportacaoModal } from '../components/ExportacaoModal';
+import { ImportacaoModal } from '../components/ImportacaoModal';
 
 // Novos Componentes
 import { BuscaSKU } from '../components/BuscaSKU';
@@ -86,6 +88,7 @@ export default function PlanoCorteIndustrialPage() {
   const [resultados, setResultados] = useState<Record<string, ResultadoOtimizacaoPorChapa>>({});
   const [loading, setLoading] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
   const [showDuplicateScrapsModal, setShowDuplicateScrapsModal] = useState(false);
   const [duplicateScrapsPayload, setDuplicateScrapsPayload] = useState<any>(null);
@@ -186,6 +189,45 @@ export default function PlanoCorteIndustrialPage() {
       })
     }));
   }, []);
+
+  const handleImportPecas = useCallback((pecasImportadas: any[]) => {
+    if (!chapaAtivaId) {
+      showToast('Selecione um material antes de importar peças.', 'error');
+      return;
+    }
+
+    const novasPecas: Peca[] = pecasImportadas.map((csv: any, i: number) => ({
+      id: `csv_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 4)}`,
+      nome: csv.nome || `Peça ${i + 1}`,
+      largura: csv.largura_mm,
+      altura: csv.altura_mm,
+      quantidade: csv.quantidade || 1,
+      rotacionavel: csv.rotacionavel ?? true,
+      material: csv.material || undefined,
+      identificador: csv.identificador || undefined,
+      observacoes: csv.observacoes || undefined,
+      fio_de_fita: csv.fio_de_fita,
+      sku: csv.sku || undefined,
+    }));
+
+    setProjeto(prev => ({
+      ...prev,
+      chapas: prev.chapas.map(c =>
+        c.id === chapaAtivaId
+          ? { ...c, pecas: [...c.pecas, ...novasPecas] }
+          : c
+      )
+    }));
+
+    if (resultados[chapaAtivaId]) {
+      setResultados(prev => {
+        const { [chapaAtivaId]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+
+    showToast(`${novasPecas.length} peças importadas via CSV!`, 'success');
+  }, [chapaAtivaId, resultados]);
 
   // --- LÓGICA DE OTIMIZAÇÃO ---
   const handleOtimizarChapa = useCallback(async (chapaId: string) => {
@@ -467,6 +509,15 @@ export default function PlanoCorteIndustrialPage() {
           </Button>
           
           <Button 
+            variant="outline"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 h-11"
+          >
+            <FileSpreadsheet size={14} />
+            Importar CSV
+          </Button>
+
+          <Button 
             variant={executionMode ? "primary" : "secondary"}
             onClick={() => setExecutionMode(!executionMode)} 
             className="flex items-center gap-2 h-11"
@@ -643,6 +694,12 @@ export default function PlanoCorteIndustrialPage() {
           activeSuperficie={resultadoAtivo.layouts[0]} 
           activeChapaIdx={0}
           onClose={() => setShowExportModal(false)} 
+        />
+      )}
+      {showImportModal && (
+        <ImportacaoModal
+          onImportar={handleImportPecas}
+          onFechar={() => setShowImportModal(false)}
         />
       )}
       {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlan} />}

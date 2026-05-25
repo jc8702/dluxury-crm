@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { FileSpreadsheet, Ruler, Upload, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
-import { parseCSV } from '../../infrastructure/parsers/CSVParser';
+import { FileSpreadsheet, Ruler, Upload, AlertTriangle, Loader2, CheckCircle2, FileText } from 'lucide-react';
+import { parseCSV, parsePlanoCorteCSV } from '../../infrastructure/parsers/CSVParser';
 import { parseSketchUpDAE } from '../../infrastructure/parsers/SketchUpParser';
 import { Modal, Button } from '../../../../design-system/components';
 
@@ -12,7 +12,7 @@ interface ImportacaoModalProps {
 }
 
 export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) {
-  const [tipo, setTipo] = useState<'csv' | 'sketchup'>('csv');
+  const [tipo, setTipo] = useState<'csv' | 'planocorte' | 'sketchup'>('planocorte');
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -36,6 +36,8 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
 
       if (tipo === 'csv') {
         pecas = await parseCSV(arquivo);
+      } else if (tipo === 'planocorte') {
+        pecas = await parsePlanoCorteCSV(arquivo);
       } else {
         pecas = await parseSketchUpDAE(arquivo);
       }
@@ -64,7 +66,18 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
         {/* TIPO DE IMPORTAÇÃO */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo de Arquivo</label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setTipo('planocorte')}
+              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
+                tipo === 'planocorte' 
+                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
+                  : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
+              }`}
+            >
+              <FileText size={16} />
+              Plano Corte
+            </button>
             <button
               onClick={() => setTipo('csv')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
@@ -74,7 +87,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
               }`}
             >
               <FileSpreadsheet size={16} />
-              CSV / Excel
+              CSV Simples
             </button>
             <button
               onClick={() => setTipo('sketchup')}
@@ -90,13 +103,23 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
           </div>
         </div>
 
+        {/* DESCRIÇÃO DO FORMATO */}
+        {tipo === 'planocorte' && (
+          <div className="p-3 rounded-xl bg-foreground/5 border border-border/40">
+            <p className="text-[9px] font-bold text-muted-foreground leading-relaxed">
+              Formato: planilha com colunas Designação, Quantidade, Comprimento, Largura, Espessura. 
+              Suporta também Nome do Material, Identificação, e Bordas para fio de fita.
+            </p>
+          </div>
+        )}
+
         {/* UPLOAD ARQUIVO */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Selecionar Arquivo</label>
           <div className="relative">
             <input
               type="file"
-              accept={tipo === 'csv' ? '.csv,.txt' : '.dae'}
+              accept={tipo === 'sketchup' ? '.dae' : '.csv,.txt'}
               onChange={handleArquivo}
               className="hidden"
               id="file-upload"
