@@ -100,6 +100,7 @@ function normalizarHeader(h: string): string {
 
 const MAPA_HEADER: Record<string, keyof PecaCSV | 'comprimento_borda_1' | 'comprimento_borda_2' | 'largura_borda_1' | 'largura_borda_2' | 'frente' | 'verso'> = {
   'no': 'sku',
+  'n': 'sku',
   'designacao': 'nome',
   'quantidade': 'quantidade',
   'comprimento': 'largura_mm',
@@ -117,7 +118,8 @@ const MAPA_HEADER: Record<string, keyof PecaCSV | 'comprimento_borda_1' | 'compr
 };
 
 export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
-  const texto = await arquivo.text();
+  let texto = await arquivo.text();
+  texto = texto.replace(/^\uFEFF/, '');
   const linhasBrutas = texto.split(/\r?\n/);
   const linhas = linhasBrutas.map(l => l.trim()).filter(l => l.length > 0);
 
