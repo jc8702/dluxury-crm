@@ -268,75 +268,96 @@ const EngineeringPage: React.FC = () => {
 
             <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
               {(formData.regras_calculo || []).map((comp: any) => (
-                <div key={comp.id} className="p-4 bg-muted/20 border border-border/50 rounded-xl flex flex-col gap-3">
-                  <div className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-3 items-end">
-                    <Input
-                      placeholder="Nome da Peça"
-                      value={comp.componente_nome}
-                      onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })}
-                    />
-                    <div>
-                      <SearchableSelect
-                        items={skus.map((s: any) => ({ id: s.id, label: s.nome || s.sku, sku: s.sku }))}
-                        value={comp.sku_id}
-                        placeholder="Selecione Material"
-                        onChange={(id) => updateComponent(comp.id, { sku_id: id })}
+                <div key={comp.id} className="p-5 bg-muted/20 border border-border/50 rounded-xl flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Nome da Peça *</label>
+                      <Input
+                        placeholder="Ex: LATERAL ESQUERDA"
+                        value={comp.componente_nome}
+                        onChange={e => updateComponent(comp.id, { componente_nome: e.target.value.toUpperCase() })}
                       />
                     </div>
-                    <Input
-                      type="number"
-                      placeholder="Qtd"
-                      value={comp.quantidade}
-                      onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="R$ unit."
-                      label="Valor Unit."
-                      value={comp.valor_unitario}
-                      onChange={e => updateComponent(comp.id, { valor_unitario: Number(e.target.value) })}
-                    />
-                    <select
-                      className="flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={comp.sentido_veio || 'longitudinal'}
-                      onChange={e => updateComponent(comp.id, { sentido_veio: e.target.value })}
-                      title="Sentido do Veio"
-                    >
-                      <option value="longitudinal">Longitudinal</option>
-                      <option value="transversal">Transversal</option>
-                      <option value="sem_sentido">Sem Sentido</option>
-                    </select>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 mt-6"
                       onClick={() => removeComponent(comp.id)}
+                      title="Remover peça"
                     >
-                      <X size={18} />
+                      <X size={20} />
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Material (SKU)</label>
+                      <SearchableSelect
+                        items={skus.map((s: any) => ({ id: s.id, label: s.nome || s.sku, sku: s.sku }))}
+                        value={comp.sku_id}
+                        placeholder="Buscar material..."
+                        onChange={(id) => updateComponent(comp.id, { sku_id: id })}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Quantidade</label>
+                      <Input
+                        type="number"
+                        placeholder="Qtd"
+                        min={0}
+                        value={comp.quantidade}
+                        onChange={e => updateComponent(comp.id, { quantidade: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Valor Unitário (R$)</label>
+                      <Input
+                        type="number"
+                        placeholder="0,00"
+                        min={0}
+                        value={comp.valor_unitario}
+                        onChange={e => updateComponent(comp.id, { valor_unitario: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Sentido do Veio</label>
+                      <select
+                        className="flex h-10 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        value={comp.sentido_veio || 'longitudinal'}
+                        onChange={e => updateComponent(comp.id, { sentido_veio: e.target.value })}
+                      >
+                        <option value="longitudinal">Longitudinal</option>
+                        <option value="transversal">Transversal</option>
+                        <option value="sem_sentido">Sem Sentido</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-border/40">
                     <Input
                       label="Fórmula Largura (L)"
+                      helperText="Ex: L, L-20, L*0.5"
                       value={comp.formula_largura}
                       onChange={e => updateComponent(comp.id, { formula_largura: e.target.value })}
                     />
                     <Input
                       label="Fórmula Altura (A)"
+                      helperText="Ex: A, A-30, A*0.8"
                       value={comp.formula_altura}
                       onChange={e => updateComponent(comp.id, { formula_altura: e.target.value })}
                     />
                     <Input
                       label="Fator Perda"
+                      helperText="Ex: 1.10 = 10%"
                       value={comp.formula_perda}
                       onChange={e => updateComponent(comp.id, { formula_perda: e.target.value })}
                     />
                     <Input
                       type="number"
-                      label="Desc. Fita (mm)"
-                      required
+                      label="Desconto Fita (mm)"
+                      helperText="Subtraído do comprimento"
+                      min={0}
                       value={comp.desconto_fita_mm || 0}
                       onChange={e => updateComponent(comp.id, { desconto_fita_mm: Number(e.target.value) })}
                     />

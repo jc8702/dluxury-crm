@@ -34,30 +34,81 @@ const SearchableSelect: React.FC<{
 
   return (
     <div ref={ref} style={{ position: 'relative', width: '100%', ...style }}>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="flex gap-1">
         <input
-          className="input"
+          className="input flex-1"
           placeholder={placeholder}
           value={open ? query : (selected ? `${selected.label} ${selected.sku ? `(${selected.sku})` : ''}` : '')}
           onFocus={() => { setOpen(true); setQuery(''); }}
           onChange={e => { setOpen(true); setQuery(e.target.value); }}
-          style={{ width: '100%' }}
+          style={{ width: '100%', minHeight: 40, fontSize: '0.8rem' }}
         />
-        <button onClick={() => { setOpen(s => !s); setQuery(''); }} className="btn" style={{ padding: '0.5rem' }}>{open ? '▴' : '▾'}</button>
+        <button
+          type="button"
+          onClick={() => { setOpen(s => !s); setQuery(''); }}
+          className="btn"
+          style={{ padding: '0.4rem 0.6rem', minHeight: 40, fontSize: '0.75rem' }}
+        >
+          {open ? '▲' : '▼'}
+        </button>
       </div>
 
       {open && (
-        <div style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 6px)', background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: 8, maxHeight: 260, overflowY: 'auto', zIndex: 2000, boxShadow: 'var(--shadow-md)' }}>
+        <div
+          className="custom-scrollbar"
+          style={{
+            position: 'absolute',
+            left: 0, right: 0, top: 'calc(100% + 4px)',
+            background: '#111827',
+            border: '1px solid #374151',
+            borderRadius: 10,
+            maxHeight: 320,
+            overflowY: 'auto',
+            zIndex: 2100,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            minWidth: 320,
+          }}
+        >
+          <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.65rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #1F2937', background: '#0D1117' }}>
+            {filtered.length} material(is) encontrado(s)
+          </div>
           {filtered.length === 0 ? (
-            <div style={{ padding: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Nenhum item encontrado</div>
+            <div style={{ padding: '1rem', color: '#6B7280', fontSize: '0.8rem', textAlign: 'center' }}>
+              Nenhum material encontrado
+            </div>
           ) : (
             filtered.map(it => (
-              <div key={it.id} onClick={() => { onChange(it.id); setOpen(false); }} style={{ padding: '0.65rem 0.85rem', borderBottom: '1px solid hsl(var(--border))', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ fontWeight: 700 }}>{it.label}</div>
-                  {it.sku && <div style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>{it.sku}</div>}
+              <div
+                key={it.id}
+                onClick={() => { onChange(it.id); setOpen(false); }}
+                style={{
+                  padding: '0.75rem 0.85rem',
+                  borderBottom: '1px solid #1F2937',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'background 0.15s',
+                  background: it.id === value ? '#1E293B' : 'transparent',
+                }}
+                onMouseEnter={e => { if (it.id !== value) (e.currentTarget as HTMLElement).style.background = '#1F2937'; }}
+                onMouseLeave={e => { if (it.id !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#F9FAFB', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {it.label}
+                  </div>
+                  {it.sku && (
+                    <div style={{ fontSize: '0.7rem', color: '#E2AC00', fontWeight: 600 }}>
+                      SKU: {it.sku}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{it._meta || ''}</div>
+                {it.id === value && (
+                  <span style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 700, marginLeft: 8, whiteSpace: 'nowrap' }}>
+                    ✓ SELECIONADO
+                  </span>
+                )}
               </div>
             ))
           )}
