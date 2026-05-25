@@ -125,7 +125,13 @@ export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
     throw new Error('CSV vazio ou sem dados');
   }
 
-  const cabecalhos = linhas[0].split(',').map(c => c.trim());
+  // Auto-detectar separador: ; tem prioridade se aparecer no header
+  const primeiroCabecalho = linhas[0];
+  const countPontoVirgula = (primeiroCabecalho.match(/;/g) || []).length;
+  const countVirgula = (primeiroCabecalho.match(/,/g) || []).length;
+  const separador = countPontoVirgula >= countVirgula ? ';' : ',';
+
+  const cabecalhos = splitCSVLine(linhas[0], separador).map(c => c.trim());
 
   const colunas = cabecalhos.map(h => {
     const normalizado = normalizarHeader(h);
@@ -135,39 +141,53 @@ export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
   const dadosLinhas = linhas.slice(1);
   const pecas: PecaCSV[] = [];
 
+  function parseDim(val: string): number | null {
+    const limpo = val
+      .replace(/^"+|"+$/g, '')
+      .replace(/\s*mm\s*$/i, '')
+      .replace(',', '.')
+      .trim();
+    if (!limpo || limpo === '') return null;
+    const n = parseFloat(limpo);
+    return isNaN(n) ? null : n;
+  }
+
   for (let i = 0; i < dadosLinhas.length; i++) {
-    const valores = splitCSVLine(dadosLinhas[i]);
+    const valores = splitCSVLine(dadosLinhas[i], separador);
 
     const linha: Record<string, string> = {};
     colunas.forEach((campo, idx) => {
       if (campo && idx < valores.length) {
-        linha[campo] = valores[idx].trim();
+        linha[campo] = valores[idx].replace(/^"+|"+$/g, '').trim();
       }
     });
 
     const nome = linha['nome'] || '';
-    const largura = parseFloat(linha['largura_mm']?.replace(',', '.'));
-    const altura = parseFloat(linha['altura_mm']?.replace(',', '.'));
-    const quantidade = parseInt(linha['quantidade']) || 1;
+    const largura = parseDim(linha['largura_mm'] ?? '');
+    const altura = parseDim(linha['altura_mm'] ?? '');
 
-    if (!largura || !altura || isNaN(largura) || isNaN(altura)) {
+    if (largura === null || altura === null || largura <= 0 || altura <= 0) {
       console.warn(`Linha ${i + 2}: dimensões inválidas, ignorada`);
       continue;
     }
 
-    const fio_de_fita: PecaCSV['fio_de_fita'] = {};
-    const borda1C = parseFloat(linha['comprimento_borda_1']?.replace(',', '.'));
-    const borda2C = parseFloat(linha['comprimento_borda_2']?.replace(',', '.'));
-    const borda1L = parseFloat(linha['largura_borda_1']?.replace(',', '.'));
-    const borda2L = parseFloat(linha['largura_borda_2']?.replace(',', '.'));
-    const frente = linha['frente']?.toLowerCase();
-    const verso = linha['verso']?.toLowerCase();
+    const quantidade = parseInt(linha['quantidade']) || 1;
 
-    if (borda1C > 0 || borda2C > 0 || borda1L > 0 || borda2L > 0 || frente || verso) {
-      fio_de_fita.esquerda = borda1C > 0;
-      fio_de_fita.direita = borda2C > 0;
-      fio_de_fita.topo = borda1L > 0;
-      fio_de_fita.baixo = borda2L > 0;
+    const fio_de_fita: PecaCSV['fio_de_fita'] = {};
+    const borda1C = parseDim(linha['comprimento_borda_1'] ?? '');
+    const borda2C = parseDim(linha['comprimento_borda_2'] ?? '');
+    const borda1L = parseDim(linha['largura_borda_1'] ?? '');
+    const borda2L = parseDim(linha['largura_borda_2'] ?? '');
+    const frente = (linha['frente'] || '').toLowerCase();
+    const verso = (linha['verso'] || '').toLowerCase();
+
+    if ((borda1C !== null && borda1C > 0) || (borda2C !== null && borda2C > 0) ||
+        (borda1L !== null && borda1L > 0) || (borda2L !== null && borda2L > 0) ||
+        frente || verso) {
+      fio_de_fita.esquerda = borda1C !== null && borda1C > 0;
+      fio_de_fita.direita = borda2C !== null && borda2C > 0;
+      fio_de_fita.topo = borda1L !== null && borda1L > 0;
+      fio_de_fita.baixo = borda2L !== null && borda2L > 0;
 
       if (frente === 'sim' || frente === '1' || frente === 'true') {
         fio_de_fita.topo = true;
@@ -177,7 +197,7 @@ export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
       }
     }
 
-    const espessura = parseFloat(linha['espessura_mm']?.replace(',', '.'));
+    const espessura = parseDim(linha['espessura_mm'] ?? '');
 
     pecas.push({
       sku: linha['sku'] || undefined,
@@ -186,7 +206,7 @@ export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
       altura_mm: altura,
       quantidade,
       rotacionavel: true,
-      espessura_mm: isNaN(espessura) ? undefined : espessura,
+      espessura_mm: espessura ?? undefined,
       material: linha['material'] || undefined,
       identificador: linha['identificador'] || undefined,
       observacoes: linha['observacoes'] || undefined,
@@ -201,7 +221,7 @@ export async function parsePlanoCorteCSV(arquivo: File): Promise<PecaCSV[]> {
   return pecas;
 }
 
-function splitCSVLine(linha: string): string[] {
+function splitCSVLine(linha: string, separador: string = ','): string[] {
   const valores: string[] = [];
   let atual = '';
   let entreAspas = false;
@@ -210,7 +230,7 @@ function splitCSVLine(linha: string): string[] {
     const c = linha[i];
     if (c === '"') {
       entreAspas = !entreAspas;
-    } else if (c === ',' && !entreAspas) {
+    } else if (c === separador && !entreAspas) {
       valores.push(atual);
       atual = '';
     } else {
