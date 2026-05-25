@@ -83,7 +83,7 @@ function extrairPecasDoPlano(plano: PlanoCorteCarregado): PieceRow[] {
     });
   }
 
-  return pecas.length > 0 ? pecas : [criarLinhaVazia()];
+  return pecas;
 }
 
 function formatMinutes(minutes: number) {
@@ -115,7 +115,7 @@ export default function SimuladorProducaoPage() {
   const [plans, setPlans] = useState<PlanoCorteCarregado[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [pieces, setPieces] = useState<PieceRow[]>(EXEMPLO);
+  const [pieces, setPieces] = useState<PieceRow[]>([]);
   const [result, setResult] = useState<ProductionSimulationResult | null>(null);
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function SimuladorProducaoPage() {
   };
 
   const removePiece = (id: string) => {
-    setPieces((current) => current.length > 1 ? current.filter((piece) => piece.id !== id) : current);
+    setPieces((current) => current.filter((piece) => piece.id !== id));
     setResult(null);
   };
 
@@ -275,7 +275,7 @@ export default function SimuladorProducaoPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPieces([criarLinhaVazia()])}
+                  onClick={() => { setPieces([]); setResult(null); }}
                   className="flex-1 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
                 >
                   Limpar
@@ -301,7 +301,11 @@ export default function SimuladorProducaoPage() {
             </div>
 
             <div className="space-y-3 max-h-[540px] overflow-y-auto pr-1 custom-scrollbar">
-              {pieces.map((piece, index) => (
+              {pieces.length === 0 ? (
+                <div className="text-center text-[#6B7280] text-sm py-8">
+                  Nenhuma peça adicionada. Use <span className="text-[#E2AC00] font-semibold">Adicionar</span> acima ou carregue um plano de corte.
+                </div>
+              ) : pieces.map((piece, index) => (
                 <div key={piece.id} className="rounded-xl border border-[#1F2937] bg-[#0D1117] p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-semibold">Peça {index + 1}</span>
