@@ -232,10 +232,7 @@ export default function SimuladorCortePage() {
   const [chapaEspessura, setChapaEspessura] = useState(18);
   const [chapaSku, setChapaSku] = useState('MDF 18MM 2750X1830');
   const [chapaPredef, setChapaPredef] = useState(0);
-  const [pecasInput, setPecasInput] = useState<PecaInput[]>([
-    { id: gerarId(), nome: 'PAINEL 1', comprimento: 600, largura: 400, espessura: 18, quantidade: 2 },
-    { id: gerarId(), nome: 'PORTA 1', comprimento: 1800, largura: 500, espessura: 18, quantidade: 1 },
-  ]);
+  const [pecasInput, setPecasInput] = useState<PecaInput[]>([]);
 
   const [resultadoRapido, setResultadoRapido] = useState<LayoutSimulacao[]>([]);
 
@@ -996,6 +993,8 @@ export default function SimuladorCortePage() {
                     tempoAtual={tempoAtual}
                     posicaoAtual={posicaoAtual}
                     onJumpToIssue={handleJumpToIssue}
+                    issuesWithRecs={issuesWithRecs}
+                    onApplyRecommendation={handleApplyRecommendation}
                   />
 
                   <PainelPecasRapido
@@ -1220,6 +1219,8 @@ export default function SimuladorCortePage() {
                   tempoAtual={tempoAtual}
                   posicaoAtual={posicaoAtual}
                   onJumpToIssue={handleJumpToIssue}
+                  issuesWithRecs={issuesWithRecs}
+                  onApplyRecommendation={handleApplyRecommendation}
                 />
 
                 <PainelPecasRapido

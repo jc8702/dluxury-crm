@@ -1,6 +1,7 @@
 import React from 'react';
-import { Gauge, Activity, AlertTriangle, Cpu, Crosshair, HardDrive, Trash2 } from 'lucide-react';
+import { Gauge, Activity, AlertTriangle, Cpu, Crosshair, HardDrive, Trash2, CheckCircle, Eye } from 'lucide-react';
 import type { SimulationProgram, SimulationMetrics, SimulationIssue } from '../../domain/types';
+import type { IssueWithRecommendation } from '../../domain/types';
 
 interface MetricsPanelProps {
   program: SimulationProgram;
@@ -8,6 +9,8 @@ interface MetricsPanelProps {
   tempoAtual: number;
   posicaoAtual: { x: number; y: number; z: number; spindleOn: boolean; rpm: number; tipoMovimento: string };
   onJumpToIssue: (tempo: number, posicao: { x: number; y: number; z: number }) => void;
+  issuesWithRecs?: IssueWithRecommendation[];
+  onApplyRecommendation?: (iwr: IssueWithRecommendation) => void;
 }
 
 export default function MetricsPanel({
@@ -16,6 +19,8 @@ export default function MetricsPanel({
   tempoAtual,
   posicaoAtual,
   onJumpToIssue,
+  issuesWithRecs,
+  onApplyRecommendation,
 }: MetricsPanelProps) {
   // Formata tempo (segundos) em MM:SS ou HH:MM:SS
   const formatarTempo = (seg: number) => {
@@ -129,13 +134,10 @@ export default function MetricsPanel({
           <div className="flex-1 overflow-y-auto max-h-[220px] custom-scrollbar border border-[#1F2937] rounded-lg bg-[#0D1117]/30 divide-y divide-[#1F2937] pr-1">
             {program.issues.map((issue) => {
               const isError = issue.severidade === 'error';
+              const matchingIwr = issuesWithRecs?.find((iwr) => iwr.issue.id === issue.id && iwr.bestRecommendation && iwr.bestRecommendation.action !== 'impossible');
               return (
                 <div
-                  className="w-full text-left p-2 hover:bg-[#1F2937]/50 transition-all flex flex-col gap-1 group cursor-pointer"
-                  onClick={() => onJumpToIssue(issue.tempo, issue.posicao)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onJumpToIssue(issue.tempo, issue.posicao); } }}
+                  className="w-full text-left p-2 hover:bg-[#1F2937]/50 transition-all flex flex-col gap-1 group"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="p-0.5 rounded bg-black/40">
@@ -154,9 +156,26 @@ export default function MetricsPanel({
                   <p className="text-[#6B7280] text-[9px] leading-normal truncate">
                     {issue.descricao}
                   </p>
-                  <span className="text-[#E2AC00] text-[9px] font-semibold mt-0.5 flex items-center gap-0.5 transition-colors">
-                    <Crosshair size={10} /> Corrigir / Jump
-                  </span>
+                  <div className="flex gap-1.5 mt-1">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onJumpToIssue(issue.tempo, issue.posicao); }}
+                      className="flex items-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-[8px] font-bold py-1 px-2 rounded transition-all"
+                      title="PULAR PARA O ERRO NO CÓDIGO/CENA 3D"
+                    >
+                      <Crosshair size={10} /> JUMP
+                    </button>
+                    {matchingIwr && onApplyRecommendation && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onApplyRecommendation(matchingIwr); }}
+                        className="flex items-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-[8px] font-bold py-1 px-2 rounded transition-all"
+                        title="CORRIGIR E FAZER O ERRO DESAPARECER"
+                      >
+                        <CheckCircle size={10} /> CORRIGIR
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
