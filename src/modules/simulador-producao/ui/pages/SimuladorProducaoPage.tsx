@@ -256,8 +256,8 @@ export default function SimuladorProducaoPage() {
           </div>
         </div>
         <p className="text-sm text-[#9CA3AF] max-w-4xl">
-          O cenário compara fluxo contínuo contra lote separado para responder a pergunta prática:
-          por onde começar o corte manual, como alimentar a coladeira e qual sequência reduz mais fila, setup e espera.
+          O CENÁRIO COMPARA FLUXO CONTÍNUO CONTRA LOTE SEPARADO PARA RESPONDER A PERGUNTA PRÁTICA:
+          POR ONDE COMEÇAR O CORTE MANUAL, COMO ALIMENTAR A COLADEIRA E QUAL SEQUÊNCIA REDUZ MAIS FILA, SETUP E ESPERA.
         </p>
       </div>
 
@@ -269,7 +269,7 @@ export default function SimuladorProducaoPage() {
                 <Sparkles size={14} />
                 CENÁRIO
               </h2>
-              <span className="text-[10px] uppercase text-[#6B7280] tracking-wider">{totalQtd} peças no lote</span>
+              <span className="text-[10px] uppercase text-[#6B7280] tracking-wider">{totalQtd} PEÇAS NO LOTE</span>
             </div>
 
             <div className="flex gap-2 mb-3">
@@ -293,20 +293,20 @@ export default function SimuladorProducaoPage() {
                     : 'bg-[#1F2937] text-[#9CA3AF] hover:text-white'
                 }`}
               >
-                Plano de corte
+                PLANO DE CORTE
               </button>
             </div>
 
             {sourceMode === 'plano' && (
               <div className="space-y-2">
-                <label className="block text-[10px] uppercase tracking-wider text-[#6B7280]">Plano carregado</label>
+                <label className="block text-[10px] uppercase tracking-wider text-[#6B7280]">PLANO CARREGADO</label>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
                   className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
                 >
-                  {loadingPlans && <option>Carregando planos...</option>}
-                  {plans.length === 0 && !loadingPlans && <option value="">Nenhum plano disponível</option>}
+                  {loadingPlans && <option>CARREGANDO PLANOS...</option>}
+                  {plans.length === 0 && !loadingPlans && <option value="">NENHUM PLANO DISPONÍVEL</option>}
                   {plans.map((plan) => (
                     <option key={plan.id} value={plan.id}>
                       {plan.nome}
@@ -320,7 +320,7 @@ export default function SimuladorProducaoPage() {
                   className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
                 >
                   <Upload size={14} />
-                  Importar peças do plano
+                  IMPORTAR PEÇAS DO PLANO
                 </button>
               </div>
             )}
@@ -339,7 +339,7 @@ export default function SimuladorProducaoPage() {
                   onClick={() => { setPieces([]); setResult(null); }}
                   className="flex-1 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
                 >
-                  Limpar
+                  LIMPAR
                 </button>
               </div>
             )}
@@ -348,11 +348,11 @@ export default function SimuladorProducaoPage() {
               <div className="flex gap-2 mt-3">
                 <button
                   type="button"
-                  onClick={() => { setShowSaveModal(true); setScenarioName(''); }}
+                  onClick={() => { setShowSaveModal(true); setScenarioName('SIMULADOR DE PRODUÇÃO - '); }}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
                 >
                   <Save size={14} />
-                  Salvar
+                  SALVAR
                 </button>
                 <button
                   type="button"
@@ -360,7 +360,7 @@ export default function SimuladorProducaoPage() {
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
                 >
                   <FolderOpen size={14} />
-                  Carregar
+                  CARREGAR
                 </button>
               </div>
             )}
@@ -378,25 +378,25 @@ export default function SimuladorProducaoPage() {
                 className="flex items-center gap-1 text-[11px] text-[#E2AC00] hover:text-white transition-colors"
               >
                 <Plus size={12} />
-                Adicionar
+                ADICIONAR
               </button>
             </div>
 
             <div className="space-y-3 max-h-[540px] overflow-y-auto pr-1 custom-scrollbar">
               {pieces.length === 0 ? (
                 <div className="text-center text-[#6B7280] text-sm py-8">
-                  Nenhuma peça adicionada. Use <span className="text-[#E2AC00] font-semibold">Adicionar</span> acima ou carregue um plano de corte.
+                  NENHUMA PEÇA ADICIONADA. USE <span className="text-[#E2AC00] font-semibold">ADICIONAR</span> ACIMA OU CARREGUE UM PLANO DE CORTE.
                 </div>
               ) : pieces.map((piece, index) => (
                 <div key={piece.id} className="rounded-xl border border-[#1F2937] bg-[#0D1117] p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-semibold">Peça {index + 1}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B7280] font-semibold">PEÇA {index + 1}</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => exportarEtiquetaProducao(piece, index, pieces.length)}
                         className="text-[#E2AC00] hover:text-white transition-colors"
-                        title="Exportar etiqueta QR"
+                        title="EXPORTAR ETIQUETA QR"
                       >
                         <Tag size={14} />
                       </button>
@@ -404,7 +404,7 @@ export default function SimuladorProducaoPage() {
                         type="button"
                         onClick={() => removePiece(piece.id)}
                         className="text-[#6B7280] hover:text-red-400 transition-colors"
-                        title="Remover peça"
+                        title="REMOVER PEÇA"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -485,24 +485,24 @@ export default function SimuladorProducaoPage() {
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
-              label="Estratégia"
-              value={result ? (result.recommended.id === 'fluxo_continuo' ? 'Fluxo contínuo' : 'Lote separado') : 'Aguardando'}
-              hint={result ? 'Comparação automática entre as duas formas de trabalhar' : 'Execute a simulação para comparar cenários'}
+              label="ESTRATÉGIA"
+              value={result ? (result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO') : 'AGUARDANDO'}
+              hint={result ? 'COMPARAÇÃO AUTOMÁTICA ENTRE AS DUAS FORMAS DE TRABALHAR' : 'EXECUTE A SIMULAÇÃO PARA COMPARAR CENÁRIOS'}
             />
             <MetricCard
-              label="Gargalo"
-              value={result ? (result.bottleneck === 'coladeira' ? 'Coladeira' : 'Esquadrejadeira') : '-'}
-              hint={result ? `Buffer sugerido: ${result.bufferRecommendation} peça(s)` : 'A máquina mais lenta dita o ritmo'}
+              label="GARGALO"
+              value={result ? (result.bottleneck === 'coladeira' ? 'COLADEIRA' : 'ESQUADREJADEIRA') : '-'}
+              hint={result ? `BUFFER SUGERIDO: ${result.bufferRecommendation} PEÇA(S)` : 'A MÁQUINA MAIS LENTA DITA O RITMO'}
             />
             <MetricCard
-              label="Tempo total"
+              label="TEMPO TOTAL"
               value={result ? formatMinutes(result.recommended.makespanMinutes) : '-'}
-              hint={result ? `Corte ${formatMinutes(result.recommended.cutMinutes)} | Fita ${formatMinutes(result.recommended.bandMinutes)}` : 'Inclui setup e troca de padrão'}
+              hint={result ? `CORTE ${formatMinutes(result.recommended.cutMinutes)} | FITA ${formatMinutes(result.recommended.bandMinutes)}` : 'INCLUI SETUP E TROCA DE PADRÃO'}
             />
             <MetricCard
-              label="Peças"
+              label="PEÇAS"
               value={result ? `${result.totalPieces}` : `${totalQtd}`}
-              hint={result ? `${result.totalEdgeMeters.toFixed(2)} m de fita estimados` : 'Quantidade total no lote'}
+              hint={result ? `${result.totalEdgeMeters.toFixed(2)} M DE FITA ESTIMADOS` : 'QUANTIDADE TOTAL NO LOTE'}
             />
           </div>
 
@@ -516,11 +516,11 @@ export default function SimuladorProducaoPage() {
                       RECOMENDAÇÃO
                     </h2>
                     <p className="text-white text-lg font-bold mt-1">
-                      {result.recommended.id === 'fluxo_continuo' ? 'Comece em fluxo contínuo' : 'Comece por lote separado'}
+                      {result.recommended.id === 'fluxo_continuo' ? 'COMECE EM FLUXO CONTÍNUO' : 'COMECE POR LOTE SEPARADO'}
                     </p>
                   </div>
                   <div className="rounded-lg bg-[#0D1117] border border-[#1F2937] px-3 py-2 text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-[#6B7280]">Melhor cenário</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[#6B7280]">MELHOR CENÁRIO</div>
                     <div className="text-white font-bold">
                       {formatMinutes(result.recommended.makespanMinutes)}
                     </div>
@@ -538,12 +538,12 @@ export default function SimuladorProducaoPage() {
 
               <div className="grid gap-4 xl:grid-cols-2">
                 <StrategyCard
-                  title="Fluxo contínuo"
+                  title="FLUXO CONTÍNUO"
                   result={result.flow}
                   accent="text-[#10B981]"
                 />
                 <StrategyCard
-                  title="Lote separado"
+                  title="LOTE SEPARADO"
                   result={result.batch}
                   accent="text-[#E2AC00]"
                 />
@@ -567,7 +567,7 @@ export default function SimuladorProducaoPage() {
                     ORDEM RECOMENDADA
                   </h2>
                   <span className="text-[10px] uppercase tracking-wider text-[#6B7280]">
-                    primeiras peças para alimentar a linha
+                    PRIMEIRAS PEÇAS PARA ALIMENTAR A LINHA
                   </span>
                 </div>
 
@@ -576,10 +576,10 @@ export default function SimuladorProducaoPage() {
                     <thead className="text-[10px] uppercase tracking-wider text-[#6B7280] border-b border-[#1F2937]">
                       <tr>
                         <th className="py-2 pr-3">#</th>
-                        <th className="py-2 pr-3">Peça</th>
-                        <th className="py-2 pr-3">Formato</th>
-                        <th className="py-2 pr-3">Corte</th>
-                        <th className="py-2 pr-3">Fita</th>
+                        <th className="py-2 pr-3">PEÇA</th>
+                        <th className="py-2 pr-3">FORMATO</th>
+                        <th className="py-2 pr-3">CORTE</th>
+                        <th className="py-2 pr-3">FITA</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -607,10 +607,10 @@ export default function SimuladorProducaoPage() {
           ) : (
             <div className="bg-[#111827] border border-dashed border-[#374151] rounded-xl p-8 text-center">
               <CircleDot className="mx-auto text-[#E2AC00]" size={32} />
-              <h2 className="text-white font-bold text-lg mt-3">Pronto para simular</h2>
+              <h2 className="text-white font-bold text-lg mt-3">PRONTO PARA SIMULAR</h2>
               <p className="text-[#9CA3AF] text-sm mt-2 max-w-2xl mx-auto">
-                Ajuste as peças, a quantidade de fita por borda e clique em simular. O módulo vai comparar
-                fluxo contínuo e lote separado para mostrar qual caminho tende a reduzir o tempo total.
+                AJUSTE AS PEÇAS, A QUANTIDADE DE FITA POR BORDA E CLIQUE EM SIMULAR. O MÓDULO VAI COMPARAR
+                FLUXO CONTÍNUO E LOTE SEPARADO PARA MOSTRAR QUAL CAMINHO TENDE A REDUZIR O TEMPO TOTAL.
               </p>
             </div>
           )}
@@ -650,12 +650,12 @@ export default function SimuladorProducaoPage() {
                 <X size={16} />
               </button>
             </div>
-            <label className="block text-[10px] uppercase tracking-wider text-[#6B7280] mb-1">Nome do cenário</label>
+            <label className="block text-[10px] uppercase tracking-wider text-[#6B7280] mb-1">NOME DO CENÁRIO</label>
             <input
               value={scenarioName}
               onChange={(e) => setScenarioName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
-              placeholder="Ex: Guarda-roupa casal 2p"
+              placeholder="EX: GUARDA-ROUPA CASAL 2P"
               className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00] mb-4"
               autoFocus
             />
@@ -665,7 +665,7 @@ export default function SimuladorProducaoPage() {
                 onClick={() => setShowSaveModal(false)}
                 className="flex-1 rounded-lg bg-[#1F2937] hover:bg-[#374151] text-white text-sm py-2 font-medium"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 type="button"
@@ -673,7 +673,7 @@ export default function SimuladorProducaoPage() {
                 disabled={!scenarioName.trim() || saving}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
               >
-                {saving ? 'Salvando...' : <><Check size={14} /> Salvar</>}
+                {saving ? 'SALVANDO...' : <><Check size={14} /> SALVAR</>}
               </button>
             </div>
           </div>
@@ -695,16 +695,16 @@ export default function SimuladorProducaoPage() {
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 min-h-0">
               {loadingScenarios ? (
-                <div className="text-center text-[#6B7280] text-sm py-8">Carregando...</div>
+                <div className="text-center text-[#6B7280] text-sm py-8">CARREGANDO...</div>
               ) : savedScenarios.length === 0 ? (
-                <div className="text-center text-[#6B7280] text-sm py-8">Nenhum cenário salvo ainda.</div>
+                <div className="text-center text-[#6B7280] text-sm py-8">NENHUM CENÁRIO SALVO AINDA.</div>
               ) : savedScenarios.map((scenario) => (
                 <div key={scenario.id} className="flex items-center justify-between rounded-lg border border-[#1F2937] bg-[#0D1117] p-3 hover:border-[#E2AC00]/50 transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-semibold text-sm truncate">{scenario.nome}</div>
                     <div className="text-[10px] text-[#6B7280] mt-0.5">
-                      {scenario.pieces.length} peça(s) · {scenario.created_at ? new Date(scenario.created_at).toLocaleDateString('pt-BR') : '-'}
-                      {scenario.result ? ' · com simulação' : ''}
+                      {scenario.pieces.length} PEÇA(S) · {scenario.created_at ? new Date(scenario.created_at).toLocaleDateString('pt-BR') : '-'}
+                      {scenario.result ? ' · COM SIMULAÇÃO' : ''}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-3 shrink-0">
@@ -712,16 +712,16 @@ export default function SimuladorProducaoPage() {
                       type="button"
                       onClick={() => handleDeleteScenario(scenario.id!)}
                       className="rounded-lg bg-[#1F2937] hover:bg-red-500/20 text-[#6B7280] hover:text-red-400 p-2 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleLoadScenario(scenario)}
-                      className="rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
-                    >
-                      Carregar
+                      title="EXCLUIR"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLoadScenario(scenario)}
+                        className="rounded-lg bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs px-3 py-2"
+                      >
+                        CARREGAR
                     </button>
                   </div>
                 </div>
@@ -767,18 +767,18 @@ function StrategyCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <InfoChip label="Makespan" value={formatMinutes(result.makespanMinutes)} />
-        <InfoChip label="Corte" value={formatMinutes(result.cutMinutes)} />
-        <InfoChip label="Fita" value={formatMinutes(result.bandMinutes)} />
-        <InfoChip label="Espera" value={formatMinutes(result.waitingMinutes)} />
-        <InfoChip label="Setup saw" value={`${result.setupChanges.saw}`} />
-        <InfoChip label="Setup cola" value={`${result.setupChanges.bander}`} />
+        <InfoChip label="MAKESPAN" value={formatMinutes(result.makespanMinutes)} />
+        <InfoChip label="CORTE" value={formatMinutes(result.cutMinutes)} />
+        <InfoChip label="FITA" value={formatMinutes(result.bandMinutes)} />
+        <InfoChip label="ESPERA" value={formatMinutes(result.waitingMinutes)} />
+        <InfoChip label="SETUP SAW" value={`${result.setupChanges.saw}`} />
+        <InfoChip label="SETUP COLA" value={`${result.setupChanges.bander}`} />
       </div>
 
       <div className="mt-4">
         <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#6B7280] mb-2">
-          <span>Sequência</span>
-          <span>{result.wipPeak} peça(s) no buffer</span>
+          <span>SEQUÊNCIA</span>
+          <span>{result.wipPeak} PEÇA(S) NO BUFFER</span>
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
           {result.cutOrder.slice(0, 10).map((job, index) => (

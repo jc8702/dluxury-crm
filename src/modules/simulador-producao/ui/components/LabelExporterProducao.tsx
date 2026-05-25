@@ -26,7 +26,7 @@ function drawPieceLabelContent(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
   doc.setTextColor(156, 163, 175);
-  doc.text(`Peça ${index + 1} de ${totalPieces}`, 4, 15);
+  doc.text(`PEÇA ${index + 1} DE ${totalPieces}`, 4, 15);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
@@ -42,7 +42,7 @@ function drawPieceLabelContent(
   doc.setTextColor(255, 255, 255);
   doc.text(formatEdgePattern(piece.fio_de_fita), 4, 34);
   if ((piece.quantidade ?? 1) > 1) {
-    doc.text(`Qtd: ${piece.quantidade}x`, 4, 39);
+    doc.text(`QTD: ${piece.quantidade}X`, 4, 39);
   }
 
   const rectX = 50;
@@ -72,11 +72,11 @@ function drawPieceLabelContent(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(5);
   doc.setTextColor(156, 163, 175);
-  doc.text('— aresta c/ fita', rectX, rectY + rectH + 5);
+  doc.text('— ARESTA C/ FITA', rectX, rectY + rectH + 5);
   doc.setFillColor(226, 172, 0);
   doc.rect(rectX + 1, rectY + rectH + 3.5, 4, 1, 'F');
 
-  doc.text('— sem fita', rectX + 30, rectY + rectH + 5);
+  doc.text('— SEM FITA', rectX + 30, rectY + rectH + 5);
   doc.setFillColor(75, 85, 99);
   doc.rect(rectX + 31, rectY + rectH + 3.5, 4, 1, 'F');
 

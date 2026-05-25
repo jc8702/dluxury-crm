@@ -69,18 +69,18 @@ export async function exportarRelatorioProducao(
 
   doc.setFontSize(9);
   doc.setTextColor(156, 163, 175);
-  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, pageW / 2, 84, { align: 'center' });
+  doc.text(`GERADO EM ${new Date().toLocaleDateString('pt-BR')} ÀS ${new Date().toLocaleTimeString('pt-BR')}`, pageW / 2, 84, { align: 'center' });
 
   doc.setDrawColor(55, 65, 81);
   doc.line(40, 92, 170, 92);
 
   const summaryData = [
-    { label: 'Estratégia', value: result.recommended.id === 'fluxo_continuo' ? 'Fluxo contínuo' : 'Lote separado' },
-    { label: 'Gargalo', value: result.bottleneck === 'coladeira' ? 'Coladeira de fita' : 'Esquadrejadeira' },
-    { label: 'Tempo total', value: formatMinutes(result.recommended.makespanMinutes) },
-    { label: 'Peças no lote', value: `${result.totalPieces}` },
-    { label: 'Metros de fita', value: `${result.totalEdgeMeters.toFixed(2)} m` },
-    { label: 'Buffer sugerido', value: `${result.bufferRecommendation} peça(s)` },
+    { label: 'ESTRATÉGIA', value: result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO' },
+    { label: 'GARGALO', value: result.bottleneck === 'coladeira' ? 'COLADEIRA DE FITA' : 'ESQUADREJADEIRA' },
+    { label: 'TEMPO TOTAL', value: formatMinutes(result.recommended.makespanMinutes) },
+    { label: 'PEÇAS NO LOTE', value: `${result.totalPieces}` },
+    { label: 'METROS DE FITA', value: `${result.totalEdgeMeters.toFixed(2)} M` },
+    { label: 'BUFFER SUGERIDO', value: `${result.bufferRecommendation} PEÇA(S)` },
   ];
 
   summaryData.forEach((item, i) => {
@@ -136,9 +136,9 @@ export async function exportarRelatorioProducao(
 
   doc.setFontSize(6);
   doc.setTextColor(156, 163, 175);
-  doc.text(`${pieces.length} tipos de peça · ${result.totalPieces} unidades no total`, 15, 22);
+  doc.text(`${pieces.length} TIPOS DE PEÇA · ${result.totalPieces} UNIDADES NO TOTAL`, 15, 22);
 
-  const pcHeaders = ['#', 'Peça', 'Dimensão (mm)', 'Qtd', 'Fita de borda', 'Corte', 'Fita'];
+  const pcHeaders = ['#', 'PEÇA', 'DIMENSÃO (MM)', 'QTD', 'FITA DE BORDA', 'CORTE', 'FITA'];
   const pcColWidths = [6, 40, 24, 10, 30, 16, 16];
   const pcRows = pieces.map((p, i) => [
     `${i + 1}`,
@@ -165,8 +165,8 @@ export async function exportarRelatorioProducao(
   doc.text('COMPARAÇÃO: FLUXO CONTÍNUO vs LOTE SEPARADO', 15, 16);
 
   const strategies = [
-    { title: 'Fluxo contínuo', data: result.flow, accent: [16, 185, 129] },
-    { title: 'Lote separado', data: result.batch, accent: [226, 172, 0] },
+    { title: 'FLUXO CONTÍNUO', data: result.flow, accent: [16, 185, 129] },
+    { title: 'LOTE SEPARADO', data: result.batch, accent: [226, 172, 0] },
   ];
 
   strategies.forEach((s, si) => {
@@ -185,13 +185,13 @@ export async function exportarRelatorioProducao(
     doc.text(s.title, bx + 6, by + 8);
 
     const metrics = [
-      ['Makespan', formatMinutes(s.data.makespanMinutes)],
-      ['Corte', formatMinutes(s.data.cutMinutes)],
-      ['Fita', formatMinutes(s.data.bandMinutes)],
-      ['Espera', formatMinutes(s.data.waitingMinutes)],
-      ['Setup serra', `${s.data.setupChanges.saw}x`],
-      ['Setup cola', `${s.data.setupChanges.bander}x`],
-      ['Pico buffer', `${s.data.wipPeak} peça(s)`],
+      ['MAKESPAN', formatMinutes(s.data.makespanMinutes)],
+      ['CORTE', formatMinutes(s.data.cutMinutes)],
+      ['FITA', formatMinutes(s.data.bandMinutes)],
+      ['ESPERA', formatMinutes(s.data.waitingMinutes)],
+      ['SETUP SERRA', `${s.data.setupChanges.saw}X`],
+      ['SETUP COLA', `${s.data.setupChanges.bander}X`],
+      ['PICO BUFFER', `${s.data.wipPeak} PEÇA(S)`],
     ];
 
     metrics.forEach((m, mi) => {
@@ -217,8 +217,8 @@ export async function exportarRelatorioProducao(
   doc.setFontSize(7);
   doc.setTextColor(209, 213, 219);
   doc.text(result.recommended.id === 'fluxo_continuo'
-    ? 'O fluxo contínuo entrega menor tempo total porque sobrepõe corte e fita, reduzindo fila e espera.'
-    : 'O lote separado é melhor neste cenário porque concentra setups de fita de borda e evita trocas frequentes de padrão.',
+    ? 'O FLUXO CONTÍNUO ENTREGA MENOR TEMPO TOTAL PORQUE SOBREPÕE CORTE E FITA, REDUZINDO FILA E ESPERA.'
+    : 'O LOTE SEPARADO É MELHOR NESTE CENÁRIO PORQUE CONCENTRA SETUPS DE FITA DE BORDA E EVITA TROCAS FREQUENTES DE PADRÃO.',
     [15, 55], 154, { maxWidth: 180 });
 
   // ---- PÁGINA 4: Ordem recomendada passo a passo ----
@@ -235,9 +235,9 @@ export async function exportarRelatorioProducao(
 
   doc.setFontSize(6);
   doc.setTextColor(156, 163, 175);
-  doc.text(`Estratégia: ${result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO'} · Total: ${formatMinutes(result.recommended.makespanMinutes)}`, 15, 22);
+  doc.text(`ESTRATÉGIA: ${result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO'} · TOTAL: ${formatMinutes(result.recommended.makespanMinutes)}`, 15, 22);
 
-  const orderHeaders = ['#', 'Peça', 'Dimensão', 'Corte', 'Fita', 'Setup', 'Fita borda'];
+  const orderHeaders = ['#', 'PEÇA', 'DIMENSÃO', 'CORTE', 'FITA', 'SETUP', 'FITA BORDA'];
   const orderColWidths = [6, 42, 22, 14, 14, 14, 22];
   const orderRows = result.recommended.cutOrder.map((job, i) => [
     `${i + 1}`,
