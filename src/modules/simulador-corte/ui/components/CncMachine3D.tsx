@@ -139,7 +139,7 @@ export default function CncMachine3D({
 
           {/* Cabeçote Z Deslizante (Suporte físico do Spindle que move para cima/baixo seguindo toolY) */}
           {/* A viga do gantry está em Y = 0.55. O spindle vertical translada em relação a essa viga. */}
-          <group position={[0, toolY - 0.2, 0.08]}>
+          <group position={[0, toolY - 0.13, 0]}>
             {/* Placa frontal de montagem */}
             <mesh position={[0, 0, 0.1]}>
               <boxGeometry args={[0.18, 0.28, 0.03]} />
@@ -153,7 +153,7 @@ export default function CncMachine3D({
             </mesh>
 
             {/* SPINDLE CNC REALISTA COM BROCA/FRESA */}
-            <group position={[0, -0.15, 0.18]}>
+            <group position={[0, -0.15, 0]}>
               {/* Luz indicadora de operação (Ponto de luz na ponta da ferramenta) */}
               {spindleOn && (
                 <pointLight position={[0, -0.22, 0]} intensity={1.8} distance={1.5} color="#00FFFF" />
