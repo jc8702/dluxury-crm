@@ -18,6 +18,22 @@ export async function handleAuth(req: any, res: any): Promise<void> {
         if (typeof email !== 'string' || typeof password !== 'string') return res.status(400).json({ success: false, error: 'Formato inválido' });
         const normalizedEmail = email.trim().toLowerCase();
         if (normalizedEmail.length > 254) return res.status(400).json({ success: false, error: 'Email muito longo' });
+        // Se a requisição veio de um domínio específico, restringe o login a usuários desse tenant
+        const tenantFromDomain = req.tenantFromDomain;
+        if (tenantFromDomain) {
+          const users = await sql`
+            SELECT id, name, email, role, password_hash, tenant_id FROM users 
+            WHERE email = ${normalizedEmail} AND tenant_id = ${tenantFromDomain.id}::uuid
+          `;
+          if (users.length === 0) return res.status(401).json({ success: false, error: 'Usuário não encontrado neste domínio' });
+          const user = users[0];
+          const valid = await bcrypt.compare(password, user.password_hash);
+          if (!valid) return res.status(401).json({ success: false, error: 'Senha incorreta' });
+          const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name, tenantId: user.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
+          return res.status(200).json({ success: true, data: { token, tenant: tenantFromDomain, user: { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenant_id } } });
+        }
+
+        // Fallback: login sem domínio específico (domínio principal ou dev)
         const users = await sql`SELECT id, name, email, role, password_hash, tenant_id FROM users WHERE email = ${normalizedEmail}`;
         if (users.length === 0) return res.status(401).json({ success: false, error: 'Usuário não encontrado' });
         const user = users[0];
@@ -60,9 +76,18 @@ export async function handleUsers(req: any, res: any): Promise<void> {
     }
     if (req.method === 'PATCH') {
       const { id } = req.query;
-      const { name, email, role } = req.body;
+      const { name, email, role, password } = req.body;
       const tenantId = requestingUser.tenantId || '00000000-0000-0000-0000-000000000000';
-      const result = await sql`UPDATE users SET name = COALESCE(${name}, name), email = COALESCE(${email}, email), role = COALESCE(${role}, role) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING id, name, email, role`;
+      // Se nenhum id for passado, atualiza o próprio usuário logado (self-update de perfil)
+      const targetId = id || requestingUser.id;
+      if (!targetId) return res.status(400).json({ success: false, error: 'ID do usuário não identificado' });
+      // Se vier nova senha, gera hash e atualiza
+      if (password) {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+        await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${targetId}::uuid AND tenant_id = ${tenantId}::uuid`;
+      }
+      const result = await sql`UPDATE users SET name = COALESCE(${name}, name), email = COALESCE(${email}, email), role = COALESCE(${role}, role) WHERE id = ${targetId}::uuid AND tenant_id = ${tenantId}::uuid RETURNING id, name, email, role`;
       if (result.length === 0) return res.status(404).json({ success: false, error: 'Usuário não encontrado no seu tenant' });
       return res.status(200).json({ success: true, data: result[0] });
     }

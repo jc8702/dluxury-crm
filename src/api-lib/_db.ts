@@ -76,6 +76,41 @@ export const validateAuth = (req: any) => {
 };
 
 /**
+ * Resolve o tenant a partir do domínio da requisição (Host header).
+ * 1. Verifica dominio_personalizado (match exato)
+ * 2. Verifica subdominio (ex: artemadeira.dominioapp.com)
+ * Retorna o tenant ou null se não encontrado.
+ */
+export async function resolveTenantByDomain(host: string): Promise<{ id: string; nome: string; subdominio: string | null } | null> {
+  if (!host) return null;
+  const hostname = host.split(':')[0].toLowerCase().trim();
+
+  // 1. Match exato por dominio_personalizado
+  const byDomain = await sql`
+    SELECT id, nome, subdominio FROM tenants 
+    WHERE LOWER(dominio_personalizado) = ${hostname} 
+    LIMIT 1
+  `;
+  if (byDomain.length > 0) return byDomain[0];
+
+  // 2. Match por subdominio (extrai o prefixo do domínio principal)
+  const appDomain = process.env.APP_DOMAIN || 'dluxury-crm.vercel.app';
+  if (hostname.endsWith('.' + appDomain)) {
+    const subdomain = hostname.slice(0, -(appDomain.length + 1));
+    if (subdomain) {
+      const bySub = await sql`
+        SELECT id, nome, subdominio FROM tenants 
+        WHERE LOWER(subdominio) = ${subdomain} 
+        LIMIT 1
+      `;
+      if (bySub.length > 0) return bySub[0];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Registra uma ação no audit_log
  */
 export async function auditLog(entity_type: string, entity_id: string, action: string, user_id: string | null, data_before: any = null, data_after: any = null) {

@@ -39,6 +39,11 @@ export async function apiCall<T>(
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     console.error(`[API ERROR] ${method} ${url}:`, json);
+    if (res.status === 402) {
+      window.dispatchEvent(new CustomEvent('billing-blocked', { 
+        detail: { error: json.error || 'Sua assinatura está suspensa por falta de pagamento.' } 
+      }));
+    }
     throw new Error(json.error || json.message || `HTTP ${res.status}`);
   }
 
@@ -65,6 +70,14 @@ export const api = {
     login: (credentials: any) => apiCall<any>('auth?action=login', 'POST', credentials),
     register: (data: any) => apiCall<any>('auth?action=register', 'POST', data),
     me: () => apiCall<any>('auth?action=me'),
+  },
+  signup: {
+    register: (data: any) => apiCall<any>('signup', 'POST', data),
+    checkSubdomain: (s: string) => apiCall<any>(`signup/check-subdomain?s=${s}`),
+  },
+  checkout: {
+    get: () => apiCall<any>('checkout'),
+    pay: () => apiCall<any>('checkout', 'POST'),
   },
   clients: {
     list: () => apiCall<any[]>('clients'),

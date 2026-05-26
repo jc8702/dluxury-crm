@@ -107,12 +107,25 @@ export default async function handler(req: any, res: any) {
   // console.log(`[ROUTER] Request: ${req.method} ${cleanUrl} from ${clientIP}`);
 
   try {
+    // Resolver tenant a partir do domínio (Host header)
+    const { resolveTenantByDomain } = await import('../src/api-lib/_db.js');
+    const hostHeader = (req.headers && req.headers['host']) || '';
+    req.tenantFromDomain = await resolveTenantByDomain(hostHeader);
+
     // Verificar status de faturamento (Bloqueio 402 se inadimplente)
     const { verifyBillingStatus } = await import('../src/api-lib/billing-middleware.js');
     const allowedByBilling = await verifyBillingStatus(req, res);
     if (!allowedByBilling) return;
 
     // Roteamento Dinâmico (Lazy Loading)
+    if (cleanUrl.startsWith('/api/signup')) {
+      const { handleSignup } = await import('../src/api-lib/tenant-provisioning.js');
+      return await handleSignup(req, res);
+    }
+    if (cleanUrl.startsWith('/api/checkout')) {
+      const { handleCheckout } = await import('../src/api-lib/checkout.js');
+      return await handleCheckout(req, res);
+    }
     if (cleanUrl.startsWith('/api/auth')) {
       const { handleAuth } = await import('../src/api-lib/auth.js');
       return await handleAuth(req, res);
@@ -359,6 +372,27 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/webhooks/asaas')) {
       const { default: handler } = await import('./webhooks/asaas-webhook.js');
       return await handler(req, res);
+    }
+
+    if (cleanUrl.startsWith('/api/resolve-dominio')) {
+      const host = req.query.host || req.headers['host'] || '';
+      const tenant = await resolveTenantByDomain(host);
+      return res.status(200).json({ success: true, tenant: tenant ? { nome: tenant.nome, subdominio: tenant.subdominio } : null });
+    }
+
+    // Endpoint para configurar domínio personalizado (admin)
+    if (cleanUrl.startsWith('/api/dominio') && req.method === 'POST') {
+      const { sql } = await import('../src/api-lib/_db.js');
+      const auth = validateAuth(req);
+      if (!auth.authorized || auth.user?.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Apenas admin pode configurar domínio' });
+      }
+      const { tenantId, dominio } = req.body;
+      if (!tenantId || !dominio) {
+        return res.status(400).json({ success: false, error: 'tenantId e dominio são obrigatórios' });
+      }
+      await sql`UPDATE tenants SET dominio_personalizado = ${dominio} WHERE id = ${tenantId}::uuid`;
+      return res.status(200).json({ success: true, message: 'Domínio atualizado' });
     }
 
     if (cleanUrl.startsWith('/api/ping')) {

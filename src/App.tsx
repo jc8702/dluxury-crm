@@ -5,6 +5,9 @@ import { ToastProvider } from './context/ToastContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
@@ -40,6 +43,8 @@ const PlanoCorteDemoPage = lazy(() => import('./pages/PlanoCorteDemo'));
 const RetalhosPage = lazy(() => import('./pages/RetalhosPage'));
 const SimuladorCortePage = lazy(() => import('./modules/simulador-corte/ui/pages/SimuladorCortePage'));
 const SimuladorProducaoPage = lazy(() => import('./modules/simulador-producao/ui/pages/SimuladorProducaoPage'));
+const TermosUsoPage = lazy(() => import('./pages/TermosUsoPage'));
+const PoliticaPrivacidadePage = lazy(() => import('./pages/PoliticaPrivacidadePage'));
 
 // Layout e Componentes
 const Layout = lazy(() => import('./components/layout/Layout'));
@@ -141,13 +146,17 @@ export default function App() {
             <Suspense fallback={<LoadingScreen />}>
               <Routes>
                   {/* Rotas Públicas */}
+                  <Route path="/" element={<Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>} />
+                  <Route path="signup" element={<Suspense fallback={<LoadingScreen />}><SignupPage /></Suspense>} />
+                  <Route path="checkout" element={<Suspense fallback={<LoadingScreen />}><CheckoutPage /></Suspense>} />
                   <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
                   <Route path="aprovar/:token" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
+                  <Route path="termos" element={<Suspense fallback={<LoadingScreen />}><TermosUsoPage /></Suspense>} />
+                  <Route path="privacidade" element={<Suspense fallback={<LoadingScreen />}><PoliticaPrivacidadePage /></Suspense>} />
                   
                   {/* Rotas Autenticadas */}
                   <Route element={<AuthGuard />}>
-                    <Route path="/" element={<Layout />}>
-                    <Route index element={<Navigate to="/painel" replace />} />
+                    <Route element={<Layout />}>
                     <Route path="painel" element={<DashboardPage />} />
                     <Route path="clientes" element={<ClientsPage />} />
                     <Route path="orcamentos" element={<OrcamentoForm />} />

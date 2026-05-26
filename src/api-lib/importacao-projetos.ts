@@ -1,6 +1,7 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
 import { ilike, or } from 'drizzle-orm';
+import { validateAuth } from './_db.js';
 
 /**
  * SERVIÇO DE IMPORTAÇÃO DE PROJETOS - BACKEND (Vercel Serverless)
@@ -12,7 +13,7 @@ export class ImportadorProjeto {
     /**
      * Mapeia os itens detectados (JSON) para os SKUs reais do banco de dados
      */
-    static async mapearParaSKUs(itens: any[]) {
+    static async mapearParaSKUs(itens: any[], tenantId: string) {
         const result = [];
         for (const item of itens) {
             // Limpeza para busca: remove termos genéricos para aumentar chance de match
@@ -52,6 +53,10 @@ export async function handleImportarProjeto(req: any, res: any) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
 
     try {
+        const { authorized, error, user } = validateAuth(req);
+        if (!authorized) return res.status(401).json({ success: false, error });
+        const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
         const { jsonData } = req.body;
         
         if (!jsonData || !Array.isArray(jsonData)) {
@@ -61,7 +66,7 @@ export async function handleImportarProjeto(req: any, res: any) {
         /* console.log(`[API IMPORTADOR] Processando ${jsonData.length} itens do tipo ${type}`); */
 
         // O mapeamento para SKUs é a única responsabilidade pesada que ficou no backend
-        const result = await ImportadorProjeto.mapearParaSKUs(jsonData);
+        const result = await ImportadorProjeto.mapearParaSKUs(jsonData, tenantId);
 
         return res.status(200).json({ 
             success: true, 

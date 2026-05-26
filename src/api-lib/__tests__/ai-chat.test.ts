@@ -3,7 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mocks do Banco de dados e dependências
 vi.mock('../_db.js', () => ({
   sql: vi.fn().mockResolvedValue([]),
-  validateAuth: () => ({ authorized: true }),
+  validateAuth: (req?: any) => {
+    const userId = req?.body?.context?.usuario_id || `usr-${Math.random()}`;
+    return { authorized: true, user: { tenantId: 'tenant-default', id: userId, email: 'test@example.com' } };
+  },
+  resolveTenantByDomain: vi.fn().mockResolvedValue({ id: 'tenant-default', nome: 'D\'Luxury', subdominio: 'dluxury' }),
 }));
 
 vi.mock('../financeiro.js', () => ({

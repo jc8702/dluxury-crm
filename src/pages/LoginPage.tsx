@@ -8,15 +8,26 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tenantInfo, setTenantInfo] = useState<{ nome: string; subdominio: string | null } | null>(null);
 
   useEffect(() => {
     if (hasAuthToken()) {
       api.auth.me().then(res => setUser(res.user)).catch(() => {});
       return;
     }
-    const isDev = (import.meta as any).env?.DEV;
-    if (isDev) {
-      api.auth.login({ email: 'admin@dluxury.com', password: 'admin123' })
+    // Tentar resolver tenant pelo domínio atual
+    const domain = window.location.hostname;
+    if (domain !== 'localhost' && domain !== '127.0.0.1') {
+      fetch(`/api/resolve-dominio?host=${domain}`)
+        .then(r => r.json())
+        .then(data => { if (data?.tenant) setTenantInfo(data.tenant); })
+        .catch(() => {});
+    }
+    const autoLogin = import.meta.env.VITE_AUTO_LOGIN === 'true';
+    const autoLoginEmail = import.meta.env.VITE_AUTO_LOGIN_EMAIL;
+    const autoLoginPassword = import.meta.env.VITE_AUTO_LOGIN_PASSWORD;
+    if (autoLogin && autoLoginEmail && autoLoginPassword) {
+      api.auth.login({ email: autoLoginEmail, password: autoLoginPassword })
         .then(res => {
           if (res.token) setAuthToken(res.token);
           if (res.user) setUser(res.user);
@@ -55,7 +66,7 @@ const LoginPage: React.FC = () => {
             D'LUXURY
           </h1>
           <p style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-            AMBIENTES — CRM
+            {tenantInfo ? tenantInfo.nome : 'AMBIENTES — CRM'}
           </p>
         </div>
 

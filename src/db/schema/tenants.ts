@@ -4,8 +4,9 @@ export const tenants = pgTable('tenants', {
   id: uuid('id').defaultRandom().primaryKey(),
   nome: varchar('nome', { length: 255 }).notNull(),
   subdominio: varchar('subdominio', { length: 100 }).unique(),
+  dominioPersonalizado: varchar('dominio_personalizado', { length: 255 }).unique(),
   planoTier: varchar('plano_tier', { length: 50 }).default('basic').notNull(),
-  status: varchar('status', { length: 20 }).default('ativo').notNull(), // 'ativo', 'suspenso', 'inadimplente'
+  status: varchar('status', { length: 20 }).default('ativo').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

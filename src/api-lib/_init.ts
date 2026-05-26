@@ -1,5 +1,7 @@
 import { sql } from './_db.js';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+
 
 export async function runInitDB() {
   const safeSql = async (query: any) => {
@@ -20,11 +22,13 @@ export async function runInitDB() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nome VARCHAR(255) NOT NULL,
       subdominio VARCHAR(100) UNIQUE,
+      dominio_personalizado VARCHAR(255) UNIQUE,
       plano_tier VARCHAR(50) DEFAULT 'basic' NOT NULL,
       status VARCHAR(20) DEFAULT 'ativo' NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
     )
   `);
+  await safeSql(sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS dominio_personalizado VARCHAR(255) UNIQUE`);
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS tenant_configs (
@@ -76,6 +80,11 @@ export async function runInitDB() {
       razao_social TEXT, nome TEXT, cnpj TEXT, cpf TEXT, nome_fantasia TEXT, porte TEXT, data_abertura TEXT, cnae_principal TEXT, cnae_secundario TEXT, natureza_juridica TEXT, logradouro TEXT, endereco TEXT, numero TEXT, complemento TEXT, cep TEXT, bairro TEXT, municipio TEXT, cidade TEXT, uf TEXT, email TEXT, telefone TEXT, situacao_cadastral TEXT, data_situacao_cadastral TEXT, motivo_situacao TEXT, codigo_erp TEXT, historico TEXT, observacoes TEXT, frequencia_compra TEXT, tipo_imovel TEXT, comodos_interesse TEXT, origem TEXT, status TEXT DEFAULT 'ativo', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Unique indexes tenant-scoped (global UNIQUE constraints removidas para isolar tenants)
+  await safeSql(sql`DROP INDEX IF EXISTS clients_cnpj_idx`);
+  await safeSql(sql`DROP INDEX IF EXISTS clients_cpf_idx`);
+  await safeSql(sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cnpj_idx ON clients (tenant_id, cnpj) WHERE cnpj IS NOT NULL`);
+  await safeSql(sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cpf_idx ON clients (tenant_id, cpf) WHERE cpf IS NOT NULL`);
 
   // 2. Projects Table
   await safeSql(sql`
@@ -196,17 +205,14 @@ export async function runInitDB() {
   try {
     const uc = await sql`SELECT count(*) as count FROM users`;
     if (uc.length && parseInt(uc[0].count, 10) === 0) {
+      const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || crypto.randomUUID();
       const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash('admin123', salt);
+      const hash = await bcrypt.hash(defaultPassword, salt);
       await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin')`;
-    } else {
-      // Reset admin password on every init in dev
-      const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash('admin123', salt);
-      await sql`UPDATE users SET password_hash = ${hash} WHERE email = 'admin@dluxury.com'`;
+      console.log(`[SEED] Admin padrao criado com email 'admin@dluxury.com' e senha: ${defaultPassword}`);
     }
-  } catch {
-    // Ignore error
+  } catch (err: any) {
+    console.error('Erro no Seed do Admin:', err.message);
   }
 
   // 10. ERP Simulations Table
@@ -672,7 +678,7 @@ export async function runInitDB() {
     await sql`
       INSERT INTO tenants (id, nome, subdominio, plano_tier, status)
       VALUES (${defaultTenantId}, 'MARCENARIA DEFAULT', 'default', 'pro', 'ativo')
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE SET subdominio = 'default'
     `;
     
     // 2. Criar a config padrão do tenant se não existir

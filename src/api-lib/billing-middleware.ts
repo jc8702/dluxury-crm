@@ -11,9 +11,11 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
   const url = req.url || '';
   const cleanUrl = url.split('?')[0];
 
-  // Ignorar rotas de infraestrutura, auth e webhooks
+  // Ignorar rotas de infraestrutura, auth, signup, checkout e webhooks
   if (
     cleanUrl.startsWith('/api/auth') ||
+    cleanUrl.startsWith('/api/signup') ||
+    cleanUrl.startsWith('/api/checkout') ||
     cleanUrl.startsWith('/api/init-db') ||
     cleanUrl.startsWith('/api/ping') ||
     cleanUrl.startsWith('/api/webhooks')

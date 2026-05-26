@@ -1,6 +1,7 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
-import { ilike, or, sql } from 'drizzle-orm';
+import { ilike, or, eq, and, sql } from 'drizzle-orm';
+import { validateAuth } from './_db.js';
 
 /**
  * Endpoint para buscar SKUs no banco baseado nos dados do CSV/PDF ou busca manual
@@ -9,6 +10,10 @@ export async function handleMatchSKUs(req: any, res: any) {
     if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
     try {
+        const { authorized, error, user } = validateAuth(req);
+        if (!authorized) return res.status(401).json({ success: false, error });
+        const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
         // --- AÇÃO DE BUSCA (Autocomplete) ---
         if (req.method === 'GET') {
             const { q } = req.query;
@@ -19,16 +24,18 @@ export async function handleMatchSKUs(req: any, res: any) {
             // Busca em ambas as tabelas (Industrial e Comercial)
             const resultsIndustrial = await db.select()
                 .from(skuComponente)
-                .where(or(
-                    ilike(skuComponente.codigo, query),
-                    ilike(skuComponente.nome, query)
+                .where(and(
+                    or(
+                        ilike(skuComponente.codigo, query),
+                        ilike(skuComponente.nome, query)
+                    )
                 ))
                 .limit(20);
 
             const resultsComercial = await db.execute(sql`
                 SELECT id, sku as codigo, nome, preco_custo as "precoUnitario", 'COMERCIAL' as tipo 
                 FROM materiais 
-                WHERE sku ILIKE ${query} OR nome ILIKE ${query} 
+                WHERE (sku ILIKE ${query} OR nome ILIKE ${query}) AND tenant_id = ${tenantId}::uuid
                 LIMIT 20
             `);
 
@@ -59,7 +66,7 @@ export async function handleMatchSKUs(req: any, res: any) {
                 const results = await db.select().from(skuComponente).where(ilike(skuComponente.codigo, skuLimpo)).limit(1);
                 if (results.length > 0) match = results[0];
                 else {
-                    const resMateriais = await db.execute(sql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE sku ILIKE ${skuLimpo} LIMIT 1`);
+                    const resMateriais = await db.execute(sql`SELECT id, sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais WHERE sku ILIKE ${skuLimpo} AND tenant_id = ${tenantId}::uuid LIMIT 1`);
                     if (resMateriais.rows.length > 0) match = resMateriais.rows[0];
                 }
             }

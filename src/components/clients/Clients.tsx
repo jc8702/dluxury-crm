@@ -82,7 +82,7 @@ const Clients: React.FC = () => {
         historico: formData.observacoes, // backward compat
         status: formData.status,
         situacao_cadastral: formData.status === 'ativo' ? 'ATIVA' : 'INATIVA',
-        cnpj: formData.cpf || '', // backward compat (field required in DB)
+
       };
 
       if (editingClient) {

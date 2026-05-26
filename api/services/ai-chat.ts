@@ -339,10 +339,9 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
 // ----------------------------------------------------
 
 // 1. Consultar Orçamentos
-async function consultar_orcamentos(input: { status?: string; limite?: number }) {
+async function consultar_orcamentos(input: { status?: string; limite?: number }, tenantId: string) {
   const status = input.status || 'APROVADO';
   const limit = input.limite || 10;
-  /* console.log(`[AI_TOOL] consultar_orcamentos chamado: status=${status}, limite=${limit}`) */;
 
   try {
     const rows = await sql`
@@ -356,7 +355,7 @@ async function consultar_orcamentos(input: { status?: string; limite?: number })
         c.nome as cliente_nome
       FROM orcamentos_pro o
       LEFT JOIN clients c ON c.id = o.cliente_id
-      WHERE o.status = ${status.toUpperCase()}
+      WHERE o.status = ${status.toUpperCase()} AND o.tenant_id = ${tenantId}::uuid
       ORDER BY o.created_at DESC
       LIMIT ${limit}
     `;
@@ -441,18 +440,17 @@ async function calcular_margem(input: { custo: number; venda: number }) {
 }
 
 // 3. Buscar Materiais (com Fallback Seguro)
-async function buscar_materiais(input: { termo: string; limite?: number }) {
+async function buscar_materiais(input: { termo: string; limite?: number }, tenantId: string) {
   const termoLimpo = input.termo || '';
   const termo = `%${termoLimpo}%`;
   const limit = input.limite || 10;
-  /* console.log(`[AI_TOOL] buscar_materiais chamado: termo="${termoLimpo}", limite=${limit}`) */;
 
   try {
     // Consulta primária na tabela legada materiais
     const result = await sql`
       SELECT id, codigo, nome, preco_custo as preco, estoque_atual as estoque
       FROM materiais
-      WHERE (nome ILIKE ${termo} OR codigo ILIKE ${termo}) AND ativo = true
+      WHERE (nome ILIKE ${termo} OR codigo ILIKE ${termo}) AND ativo = true AND tenant_id = ${tenantId}::uuid
       LIMIT ${limit}
     `;
 
@@ -538,16 +536,16 @@ async function ragConhecimentoTecnico(input: { query: string }, apiKey: string) 
   }
 }
 
-export async function executarFerramenta(toolName: string, toolInput: any): Promise<any> {
+export async function executarFerramenta(toolName: string, toolInput: any, tenantId: string): Promise<any> {
   /* console.log(`[AI_TOOL] Executando ferramenta ${toolName}...`) */;
   try {
     switch (toolName) {
       case 'consultar_orcamentos':
-        return await consultar_orcamentos(toolInput);
+        return await consultar_orcamentos(toolInput, tenantId);
       case 'calcular_margem':
         return await calcular_margem(toolInput);
       case 'buscar_materiais':
-        return await buscar_materiais(toolInput);
+        return await buscar_materiais(toolInput, tenantId);
       case 'ragConhecimentoTecnico':
         return await ragConhecimentoTecnico(toolInput, GEMINI_API_KEY);
       default:
@@ -733,7 +731,7 @@ export async function processarChat(payload: {
         /* console.log(`[AI_TOOL] Executando chamada para a tool: ${toolName}`) */;
         
         // Executamos a ferramenta correspondente
-        const result = await executarFerramenta(toolName, toolArgs);
+        const result = await executarFerramenta(toolName, toolArgs, tenantId);
 
         if (!primaryToolResult && (result.table_data || result.chart_data)) {
           primaryToolResult = result;

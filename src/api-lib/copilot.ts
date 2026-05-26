@@ -9,23 +9,11 @@ const google = createGoogleGenerativeAI({
   apiKey: aiApiKey,
 });
 
-// Modelos Gemini GRÁTIS (free tier)
 const modelFlash = google('gemini-2.0-flash');
 const modelPro = google('gemini-2.0-flash');
 
-async function _listAvailableModels(key: string) {
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    const data = await res.json();
-    if (data.models) return data.models.map((m: any) => m.name.replace('models/', '')).join(', ');
-    return 'Nenhum (Chave inválida ou sem permissão)';
-  } catch {
-    return 'Erro ao consultar Google AI';
-  }
-}
-
-async function generateBOM(payload: any) {
-  const materiais = await sql`SELECT id, nome, categoria_id, preco_custo, unidade_uso FROM materiais WHERE ativo = true`;
+async function generateBOM(payload: any, tenantId: string) {
+  const materiais = await sql`SELECT id, nome, categoria_id, preco_custo, unidade_uso FROM materiais WHERE ativo = true AND tenant_id = ${tenantId}::uuid`;
   try {
     const { object } = await generateObject({
       model: modelPro,
@@ -49,8 +37,8 @@ async function generateBOM(payload: any) {
   }
 }
 
-async function auditSKU(payload: any) {
-  const existentes = await sql`SELECT nome, descricao, categoria_id FROM materiais WHERE ativo = true`;
+async function auditSKU(payload: any, tenantId: string) {
+  const existentes = await sql`SELECT nome, descricao, categoria_id FROM materiais WHERE ativo = true AND tenant_id = ${tenantId}::uuid`;
   try {
     const { object } = await generateObject({
       model: modelPro,
@@ -69,11 +57,11 @@ async function auditSKU(payload: any) {
   }
 }
 
-async function purchaseSuggestion() {
+async function purchaseSuggestion(tenantId: string) {
   const estoque = await sql`
     SELECT m.nome, m.estoque_atual, m.estoque_minimo, m.unidade_compra,
            (SELECT COUNT(*) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida' AND created_at > NOW() - INTERVAL '30 days') as consumo_30d
-    FROM materiais m WHERE m.ativo = true AND m.estoque_atual <= m.estoque_minimo * 1.5
+    FROM materiais m WHERE m.ativo = true AND m.estoque_atual <= m.estoque_minimo * 1.5 AND m.tenant_id = ${tenantId}::uuid
   `;
   try {
     const { object } = await generateObject({
@@ -92,11 +80,11 @@ async function purchaseSuggestion() {
   } catch { return { pedidos_sugeridos: [] }; }
 }
 
-async function detectAnomalies() {
+async function detectAnomalies(tenantId: string) {
   const dados = await sql`
     SELECT m.nome, m.preco_custo, 
            (SELECT AVG(quantidade) FROM movimentacoes_estoque WHERE material_id = m.id AND tipo = 'saida') as media_saida
-    FROM materiais m WHERE m.ativo = true
+    FROM materiais m WHERE m.ativo = true AND m.tenant_id = ${tenantId}::uuid
   `;
   try {
     const { object } = await generateObject({
@@ -152,11 +140,11 @@ async function generateProposalPDF(payload: any) {
   } catch { return { markdown: 'Erro ao gerar PDF', generated_at: new Date().toISOString() }; }
 }
 
-async function forecastDemand(_payload: any) {
+async function forecastDemand(_payload: any, tenantId: string) {
   const historico = await sql`
     SELECT DATE_TRUNC('month', created_at) as mes, SUM(valor_total) as receita
     FROM titulos_receber 
-    WHERE created_at > NOW() - INTERVAL '12 months' AND status = 'recebido'
+    WHERE created_at > NOW() - INTERVAL '12 months' AND status = 'recebido' AND tenant_id = ${tenantId}::uuid
     GROUP BY DATE_TRUNC('month', created_at)
     ORDER BY mes
   `;
@@ -175,17 +163,13 @@ async function forecastDemand(_payload: any) {
   } catch { return { previsao_proximo_mes: 0, tendencia: 'estavel', sazonalidade: [], recomendacoes: [] }; }
 }
 
-// ===============================
-// INTENT ROUTER ARCHITECTURE (ARIA 2.0 - CONSULTIVE COPILOT)
-// ===============================
-
 type IntentType = 
-  | "SUGGEST_CREATE_SKU"   // Novo: Sugerir em vez de criar direto
-  | "CONFIRM_ACTION"       // Novo: Interpretar "sim", "pode fazer"
+  | "SUGGEST_CREATE_SKU"
+  | "CONFIRM_ACTION"
   | "SEARCH_SKU"
   | "GET_LAST_SKU"
-  | "SUGGEST_BOM"          // Novo: Gerar lista de materiais sugerida
-  | "ANALYZE_STOCK"        // Novo: Análise de reposição
+  | "SUGGEST_BOM"
+  | "ANALYZE_STOCK"
   | "LIST_BY_FAMILIA"
   | "UNKNOWN";
 
@@ -202,9 +186,6 @@ interface Intent {
   entities: Entities;
 }
 
-/**
- * Lógica central de extração bruta do LLM com suporte a Histórico
- */
 async function getRawLLMIntent(message: string, history: any[] = []): Promise<string> {
   const context = history.map(h => `${h.role === 'user' ? 'USUÁRIO' : 'COPILOTO'}: ${h.content}`).join('\n');
   
@@ -233,9 +214,6 @@ async function getRawLLMIntent(message: string, history: any[] = []): Promise<st
   return text;
 }
 
-/**
- * Endpoint Handler: Retorna apenas o texto bruto do LLM para o parser robusto.
- */
 export async function handleAIParser(req: any, res: any) {
   try {
     const { message } = req.body;
@@ -247,9 +225,6 @@ export async function handleAIParser(req: any, res: any) {
   }
 }
 
-/**
- * Função Sanatizadora para evitar quebra de contrato
- */
 function sanitizeIntent(raw: any): Intent {
   if (!raw || typeof raw !== "object") {
     return { type: "UNKNOWN", entities: {} };
@@ -260,25 +235,16 @@ function sanitizeIntent(raw: any): Intent {
   };
 }
 
-/**
- * Parser Robusto: Extrai JSON de texto sujo usando Regex
- */
 async function parseIntent(message: string, history: any[] = []): Promise<Intent> {
   try {
-    // Chamada direta para evitar problemas de fetch em ambiente serverless
     const text = await getRawLLMIntent(message, history);
-    /* console.log("RAW LLM RESPONSE:", text); */
-
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-
     if (!jsonMatch) {
       console.error("JSON não encontrado na resposta bruta:", text);
       return { type: "UNKNOWN", entities: {} };
     }
-
     const parsed = JSON.parse(jsonMatch[0]);
     return sanitizeIntent(parsed);
-
   } catch (error) {
     console.error("Erro fatal no parseIntent:", error);
     return { type: "UNKNOWN", entities: {} };
@@ -286,11 +252,11 @@ async function parseIntent(message: string, history: any[] = []): Promise<Intent
 }
 
 const SKUService = {
-  async checkDuplicity(descricao: string) {
-    const r = await sql`SELECT sku, nome FROM materiais WHERE nome ILIKE ${'%' + descricao + '%'} LIMIT 1`;
+  async checkDuplicity(descricao: string, tenantId: string) {
+    const r = await sql`SELECT sku, nome FROM materiais WHERE nome ILIKE ${'%' + descricao + '%'} AND tenant_id = ${tenantId}::uuid LIMIT 1`;
     return r.length > 0 ? r[0] : null;
   },
-  async create(data: Entities) {
+  async create(data: Entities, tenantId: string) {
     let categoryId = 'OUT';
     const famLow = (data.familia || '').toLowerCase();
     if (famLow.includes('chapa') || famLow.includes('mdf') || famLow.includes('mdp')) categoryId = 'CHP';
@@ -299,7 +265,7 @@ const SKUService = {
     else if (famLow.includes('parafuso') || famLow.includes('bucha') || famLow.includes('fix')) categoryId = 'FIX';
     else categoryId = (data.familia || 'GEN').substring(0, 3).toUpperCase();
 
-    const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE categoria_id = ${categoryId} ORDER BY sku DESC LIMIT 1`;
+    const lastSkuQuery = await sql`SELECT sku FROM materiais WHERE categoria_id = ${categoryId} AND tenant_id = ${tenantId}::uuid ORDER BY sku DESC LIMIT 1`;
     let proximoSku = `${categoryId}-0001`;
     if (lastSkuQuery.length > 0 && lastSkuQuery[0].sku) {
        const match = lastSkuQuery[0].sku.match(/\d+/);
@@ -311,37 +277,37 @@ const SKUService = {
         sku, nome, descricao, unidade_uso, unidade_compra, 
         preco_custo, margem_lucro, preco_venda, categoria_id, ativo,
         subcategoria, fator_conversao, estoque_minimo, estoque_atual,
-        cfop, ncm, marca
+        cfop, ncm, marca, tenant_id
       ) 
       VALUES (
         ${proximoSku}, ${data.descricao}, ${data.descricao}, ${data.unidade}, ${data.unidade}, 
         0, 50, 0, ${categoryId}, true,
         'GERAL', 1, 0, 0,
-        '', '', 'D-Luxury'
+        '', '', 'D-Luxury', ${tenantId}::uuid
       )
     `;
     return { skuId: proximoSku, descricao: data.descricao, unidade: data.unidade };
   },
-  async getLast() {
-    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais ORDER BY id DESC LIMIT 1`;
+  async getLast(tenantId: string) {
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE tenant_id = ${tenantId}::uuid ORDER BY id DESC LIMIT 1`;
     return r.length > 0 ? r[0] : null;
   },
-  async search(filtro: Entities) {
+  async search(filtro: Entities, tenantId: string) {
     const searchString = '%' + (filtro.descricao || filtro.familia || '') + '%';
-    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE nome ILIKE ${searchString} LIMIT 5`;
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE nome ILIKE ${searchString} AND tenant_id = ${tenantId}::uuid LIMIT 5`;
     return r;
   },
-  async listByFamilia(familia: string) {
+  async listByFamilia(familia: string, tenantId: string) {
     const famStr = familia.substring(0, 3).toUpperCase();
-    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE categoria_id = ${famStr} LIMIT 5`;
+    const r = await sql`SELECT sku as "skuId", nome as descricao FROM materiais WHERE categoria_id = ${famStr} AND tenant_id = ${tenantId}::uuid LIMIT 5`;
     return r;
   }
 };
 
-async function handleSuggestCreateSKU(entities: Entities) {
+async function handleSuggestCreateSKU(entities: Entities, tenantId: string) {
   if (!entities.descricao) return { message: "Qual item você deseja cadastrar?" };
   
-  const similar = await SKUService.checkDuplicity(entities.descricao);
+  const similar = await SKUService.checkDuplicity(entities.descricao, tenantId);
   const suggestion = {
     familia: entities.familia || entities.descricao.split(' ')[0] || 'GERAL',
     descricao: entities.descricao,
@@ -362,8 +328,7 @@ async function handleSuggestCreateSKU(entities: Entities) {
   return { message };
 }
 
-async function handleConfirmAction(history: any[]) {
-  // Pega a última mensagem do assistente para saber o que está sendo confirmado
+async function handleConfirmAction(history: any[], tenantId: string) {
   const lastAiMessage = [...history].reverse().find(m => m.role === 'assistant');
   if (!lastAiMessage) return { message: "O que você deseja confirmar? Não identifiquei uma sugestão pendente." };
 
@@ -377,21 +342,19 @@ async function handleConfirmAction(history: any[]) {
     const familia = lines.find((l: string) => l.includes("Família:"))?.split('** ')[1] || '';
     const unidade = lines.find((l: string) => l.includes("Unidade:"))?.split('** ')[1] || 'UN';
 
-    const sku = await SKUService.create({ descricao, familia, unidade });
+    const sku = await SKUService.create({ descricao, familia, unidade }, tenantId);
     return { message: `✅ Perfeito! Item cadastrado com sucesso.\n\n**SKU:** ${sku.skuId}\n**Descrição:** ${sku.descricao}\n\n[EVENT_EMIT_SKU_CRIADO]` };
   }
 
   if (isBOM) {
-    // Busca a mensagem do usuário que originou o projeto
     const userProjectMsg = [...history].reverse().find((m, i, arr) => m.role === 'user' && i > arr.indexOf(lastAiMessage));
     const msg = userProjectMsg?.content || "";
     
     const op = await gerarOrdemProducao(msg);
 
-    // Persiste no banco de dados (MES)
     await sql`
-      INSERT INTO ordens_producao (op_id, produto, pecas, metadata)
-      VALUES (${op.opId}, ${op.produto}, ${op.pecas.length}, ${JSON.stringify(op)})
+      INSERT INTO ordens_producao (op_id, produto, pecas, metadata, tenant_id)
+      VALUES (${op.opId}, ${op.produto}, ${op.pecas.length}, ${JSON.stringify(op)}, ${tenantId}::uuid)
     `;
 
     let opReport = `✅ **Ordem de Produção Gerada: ${op.opId}**\n\n`;
@@ -399,8 +362,6 @@ async function handleConfirmAction(history: any[]) {
     opReport += `**Status:** 🏭 PENDENTE (AGUARDANDO CORTE)\n\n`;
     
     opReport += `#### 📋 Resumo de Materiais Consolidados:\n`;
-    // Materiais agora vêm do objeto OP atualizado
-    // Como simplificamos na OP, vamos iterar sobre as peças para mostrar o resumo
     const materiaisUnicos = [...new Set(op.pecas.map((p: any) => p.material))];
     materiaisUnicos.forEach(mat => {
        const qtd = op.pecas.filter((p: any) => p.material === mat).length;
@@ -460,8 +421,8 @@ async function handleSuggestBOM(entities: Entities, originalMessage: string) {
   return { message: report };
 }
 
-async function handleAnalyzeStock() {
-  const criticos = await sql`SELECT sku, nome, estoque_atual, estoque_minimo FROM materiais WHERE estoque_atual <= estoque_minimo AND ativo = true LIMIT 5`;
+async function handleAnalyzeStock(tenantId: string) {
+  const criticos = await sql`SELECT sku, nome, estoque_atual, estoque_minimo FROM materiais WHERE estoque_atual <= estoque_minimo AND ativo = true AND tenant_id = ${tenantId}::uuid LIMIT 5`;
   
   if (criticos.length === 0) return { message: "✅ Estoque saudável! Nenhum item crítico identificado no momento." };
 
@@ -474,54 +435,50 @@ async function handleAnalyzeStock() {
   return { message: report };
 }
 
-async function _handleGetLast() {
-  const sku = await SKUService.getLast();
+async function handleGetLast(tenantId: string) {
+  const sku = await SKUService.getLast(tenantId);
   if (!sku) return { message: "Nenhum item encontrado no banco de dados." };
   return { message: `Último item cadastrado:\n\nSKU: ${sku.skuId}\nDescrição: ${sku.descricao}` };
 }
 
-async function handleSearch(entities: Entities) {
-  const r = await SKUService.search(entities);
+async function handleSearch(entities: Entities, tenantId: string) {
+  const r = await SKUService.search(entities, tenantId);
   if (!r || !r.length) return { message: "Nenhum item encontrado." };
   return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
 }
 
-async function _handleListByFamilia(entities: Entities) {
+async function handleListByFamilia(entities: Entities, tenantId: string) {
   if (!entities.familia) return { message: "Qual família deseja listar?" };
-  const r = await SKUService.listByFamilia(entities.familia);
+  const r = await SKUService.listByFamilia(entities.familia, tenantId);
   if (!r || !r.length) return { message: "Nenhum item encontrado." };
   return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join("\n") };
 }
 
-async function processUserMessage(message: string, history: any[] = []) {
+async function processUserMessage(message: string, history: any[] = [], tenantId: string) {
   try {
-    // 1. Identificar a INTENÇÃO do usuário usando o LLM
     const intent = await parseIntent(message, history);
-    /* console.log("INTENT IDENTIFICADA:", intent.type); */
 
-    // 2. Despachar para o Handler Específico
     switch (intent.type) {
       case "SUGGEST_BOM":
         return await handleSuggestBOM(intent.entities, message);
 
       case "CONFIRM_ACTION":
-        return await handleConfirmAction(history);
+        return await handleConfirmAction(history, tenantId);
 
       case "SUGGEST_CREATE_SKU":
-        return await handleSuggestCreateSKU(intent.entities);
+        return await handleSuggestCreateSKU(intent.entities, tenantId);
 
       case "ANALYZE_STOCK":
-        return await handleAnalyzeStock();
+        return await handleAnalyzeStock(tenantId);
 
       case "SEARCH_SKU":
-        return await handleSearch(intent.entities);
+        return await handleSearch(intent.entities, tenantId);
 
       default: {
-        // Fallback: Chat Genérico com Dados do Contexto
-        const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days'`;
-        const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true ORDER BY estoque_atual ASC LIMIT 5`;
-        const clientes = await sql`SELECT nome FROM clientes ORDER BY nome LIMIT 5`;
-        const ops = await sql`SELECT op_id, produto, status FROM ordens_producao ORDER BY created_at DESC LIMIT 5`;
+        const vendas = await sql`SELECT SUM(valor_total) as total FROM titulos_receber WHERE status = 'recebido' AND created_at > NOW() - INTERVAL '30 days' AND tenant_id = ${tenantId}::uuid`;
+        const estoque = await sql`SELECT nome, estoque_atual FROM materiais WHERE ativo = true AND tenant_id = ${tenantId}::uuid ORDER BY estoque_atual ASC LIMIT 5`;
+        const clientes = await sql`SELECT nome FROM clientes WHERE tenant_id = ${tenantId}::uuid ORDER BY nome LIMIT 5`;
+        const ops = await sql`SELECT op_id, produto, status FROM ordens_producao WHERE tenant_id = ${tenantId}::uuid ORDER BY created_at DESC LIMIT 5`;
         
         const dados = {
           vendasMes: vendas[0]?.total || 0,
@@ -548,35 +505,35 @@ async function processUserMessage(message: string, history: any[] = []) {
   }
 }
 
-async function generateChatResponse(payload: any) {
-  const response = await processUserMessage(payload.message, payload.history || []);
+async function generateChatResponse(payload: any, tenantId: string) {
+  const response = await processUserMessage(payload.message, payload.history || [], tenantId);
   return { content: response.message };
 }
 
-
 export async function handleAICopilot(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     if (req.method !== 'POST') return res.status(405).end();
     
     const { skill, payload } = req.body;
     let result;
     switch (skill) {
       case 'chat': 
-        result = await generateChatResponse(payload);
+        result = await generateChatResponse(payload, tenantId);
         return res.status(200).json({ success: true, data: result });
       case 'generate-bom': 
-        result = await generateBOM(payload);
+        result = await generateBOM(payload, tenantId);
         return res.status(200).json({ success: true, data: result });
       case 'audit-sku': 
-        result = await auditSKU(payload);
+        result = await auditSKU(payload, tenantId);
         return res.status(200).json({ success: true, data: result });
       case 'purchase-suggestion': 
-        result = await purchaseSuggestion();
+        result = await purchaseSuggestion(tenantId);
         return res.status(200).json({ success: true, data: result });
       case 'detect-anomalies': 
-        result = await detectAnomalies();
+        result = await detectAnomalies(tenantId);
         return res.status(200).json({ success: true, data: result });
       case 'analyze-proposal': 
         result = await analyzeProposal(payload);
@@ -588,7 +545,7 @@ export async function handleAICopilot(req: any, res: any) {
         result = await generateProposalPDF(payload);
         return res.status(200).json({ success: true, data: result });
       case 'forecast-demand': 
-        result = await forecastDemand(payload);
+        result = await forecastDemand(payload, tenantId);
         return res.status(200).json({ success: true, data: result });
       default: 
         return res.status(400).json({ success: false, error: 'Skill de IA não reconhecida' });

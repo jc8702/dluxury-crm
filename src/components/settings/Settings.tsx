@@ -13,6 +13,21 @@ const Settings: React.FC = () => {
   } = useAppContext();
 
   const [profileData, setProfileData] = useState({ email: user?.email || '', password: '' });
+  const [subData, setSubData] = useState<{
+    status: string;
+    plano: string;
+    valor: number;
+    diaVencimento?: number;
+    currentPeriodEnd?: string;
+    diasRestantes?: number;
+    invoiceUrl?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    api.checkout.get()
+      .then(setSubData)
+      .catch(() => {});
+  }, []);
   const [profileMsg, setProfileMsg] = useState('');
 
   // Gestão de Usuários
@@ -218,6 +233,76 @@ const Settings: React.FC = () => {
       <TechnicalPricingSection />
       
       <NotificationSettingsSection />
+
+      {/* Assinatura e Faturamento */}
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-primary flex items-center gap-2 text-xl font-bold">
+            💳 Assinatura e Plano SaaS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
+              <span className="text-xs text-muted-foreground block mb-1">PLANO CONTRATADO</span>
+              <span className="font-bold text-lg text-foreground uppercase">{subData?.plano || 'PRO'}</span>
+              <Badge variant="warning" className="ml-2 capitalize">
+                {subData?.status === 'trial' ? 'Período de Teste' : subData?.status === 'active' ? 'Ativo' : 'Pendente'}
+              </Badge>
+            </div>
+            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
+              <span className="text-xs text-muted-foreground block mb-1">VALOR DA ASSINATURA</span>
+              <span className="font-bold text-lg text-foreground">
+                R$ {(subData?.valor || 197.00).toFixed(2).replace('.', ',')}
+              </span>
+              <span className="text-xs text-muted-foreground"> /mês</span>
+            </div>
+            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
+              <span className="text-xs text-muted-foreground block mb-1">STATUS DE COBRANÇA</span>
+              <span className="font-bold text-sm text-foreground block">
+                {subData?.status === 'trial' 
+                  ? `Avaliação activa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
+                  : subData?.currentPeriodEnd 
+                    ? `Próximo vencimento: ${new Date(subData.currentPeriodEnd).toLocaleDateString('pt-BR')}`
+                    : 'Aguardando configuração'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-2">
+            {subData?.invoiceUrl ? (
+              <a 
+                href={subData.invoiceUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+                className="flex-1"
+              >
+                <Button variant="primary" className="w-full">
+                  GERENCIAR PAGAMENTOS & FATURAS (ASAAS)
+                </Button>
+              </a>
+            ) : (
+              <Button 
+                onClick={() => window.location.hash = '#/checkout'} 
+                variant="primary" 
+                className="flex-1"
+              >
+                CONFIGURAR FORMA DE PAGAMENTO
+              </Button>
+            )}
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => alert('Para alterar seu plano ou solicitar o cancelamento da assinatura, por favor envie um e-mail para comercial@dluxury-crm.vercel.app')}
+              className="flex-1"
+            >
+              Alterar Plano / Cancelar Assinatura
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Modal de Membro de Equipe */}
       {showUserModal && (
