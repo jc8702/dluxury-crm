@@ -14,6 +14,61 @@ export async function runInitDB() {
 
   /* console.log('--- Iniciando Sincronização de Banco de Dados ---'); */
 
+  // 0. Tenants e Configurações
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS tenants (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome VARCHAR(255) NOT NULL,
+      subdominio VARCHAR(100) UNIQUE,
+      plano_tier VARCHAR(50) DEFAULT 'basic' NOT NULL,
+      status VARCHAR(20) DEFAULT 'ativo' NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS tenant_configs (
+      tenant_id UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+      espessura_padrao_mdf INTEGER DEFAULT 15 NOT NULL,
+      largura_maxima_sem_travessa INTEGER DEFAULT 800 NOT NULL,
+      folga_gaveta_telescopica NUMERIC(4,2) DEFAULT 13.00 NOT NULL,
+      markup_padrao NUMERIC(5,2) DEFAULT 1.50 NOT NULL,
+      gemini_api_key_custom TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE NOT NULL,
+      asaas_customer_id VARCHAR(255),
+      asaas_subscription_id VARCHAR(255),
+      status VARCHAR(50) DEFAULT 'active' NOT NULL,
+      plano VARCHAR(50) DEFAULT 'free' NOT NULL,
+      valor DECIMAL(12,2) DEFAULT 0.00 NOT NULL,
+      dia_vencimento INTEGER,
+      current_period_end TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS usage_logs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE NOT NULL,
+      usuario_id UUID NOT NULL,
+      modelo VARCHAR(100) NOT NULL,
+      prompt_tokens INTEGER DEFAULT 0 NOT NULL,
+      completion_tokens INTEGER DEFAULT 0 NOT NULL,
+      total_tokens INTEGER DEFAULT 0 NOT NULL,
+      custo_estimado DECIMAL(15,8) DEFAULT 0.00000000 NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )
+  `);
+
   // 1. Clients Table
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS clients (
@@ -586,6 +641,53 @@ export async function runInitDB() {
     await runHardeningMigration();
   } catch {
     // Ignore se falhar
+  }
+
+  // Migração de tenant_id em lote para suporte retroativo
+  const tabelasComTenant = [
+    'clients', 'projects', 'billings', 'kanban_items', 'monthly_goals',
+    'orcamentos', 'itens_orcamento', 'orcamento_ambientes', 'orcamento_moveis',
+    'orcamento_pecas', 'orcamento_ferragens', 'orcamento_custos_extras',
+    'ordens_producao', 'erp_product_bom', 'chamados_garantia', 'notificacoes',
+    'eventos', 'planos_de_corte', 'erp_chapas', 'erp_skus_engenharia',
+    'retalhos_estoque', 'materiais', 'movimentacoes_estoque', 'fornecedores',
+    'users',
+    'classes_financeiras', 'contas_internas', 'titulos_receber', 'titulos_pagar',
+    'formas_pagamento', 'condicoes_pagamento', 'contas_recorrentes',
+    'fechamentos_financeiros', 'baixas', 'movimentacoes_tesouraria', 'counters',
+    'erp_categories', 'erp_simulations',
+    'pedidos_compra', 'pedido_compra_itens', 'recebimentos_compra',
+    'subscriptions', 'usage_logs'
+  ];
+
+  for (const tabela of tabelasComTenant) {
+    await safeSql(sql(`ALTER TABLE ${tabela} ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE` as any));
+  }
+
+  // Criar Tenant Default e migrar dados nulos
+  try {
+    const defaultTenantId = '00000000-0000-0000-0000-000000000000';
+    
+    // 1. Criar o tenant default se não existir
+    await sql`
+      INSERT INTO tenants (id, nome, subdominio, plano_tier, status)
+      VALUES (${defaultTenantId}, 'MARCENARIA DEFAULT', 'default', 'pro', 'ativo')
+      ON CONFLICT (id) DO NOTHING
+    `;
+    
+    // 2. Criar a config padrão do tenant se não existir
+    await sql`
+      INSERT INTO tenant_configs (tenant_id, espessura_padrao_mdf, largura_maxima_sem_travessa, folga_gaveta_telescopica, markup_padrao)
+      VALUES (${defaultTenantId}, 15, 800, 13.00, 1.50)
+      ON CONFLICT (tenant_id) DO NOTHING
+    `;
+    
+    // 3. Atualizar registros nulos para o tenant default
+    for (const tabela of tabelasComTenant) {
+      await safeSql(sql(`UPDATE ${tabela} SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL` as any));
+    }
+  } catch (err: any) {
+    console.error('Erro na migração de dados do Tenant:', err.message);
   }
 
   /* console.log('--- Sincronização Concluída ---'); */

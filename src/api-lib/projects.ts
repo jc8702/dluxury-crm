@@ -4,14 +4,16 @@ import { writeOffStockForProject } from './_inventory.js';
 
 export async function handleProjects(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
     // Infraestrutura: garantir existência da tabela e colunas
     try {
       await sql`
         CREATE TABLE IF NOT EXISTS projects (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          tenant_id UUID,
           client_id TEXT,
           client_name TEXT,
           cliente_nome TEXT,
@@ -36,6 +38,7 @@ export async function handleProjects(req: any, res: any) {
         )
       `;
       // Garantir colunas novas em tabelas existentes
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tag TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
@@ -47,17 +50,17 @@ export async function handleProjects(req: any, res: any) {
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS observations TEXT`.catch(() => {});
 
       // Migração de emergência: Se projects estiver vazio ou com poucos dados, tenta puxar do kanban_items (tabela antiga)
-      const countResult = await sql`SELECT count(*) FROM projects`;
-      const projectsCount = parseInt(countResult[0].count);
+      const countResult = await sql`SELECT count(*) FROM projects WHERE tenant_id = ${tenantId}`;
+      const projectsCount = countResult && countResult[0] ? parseInt(countResult[0].count) : 0;
       
-      const kanbanItemsCountResult = await sql`SELECT count(*) FROM kanban_items WHERE type = 'project' OR type IS NULL`;
-      const kanbanItemsCount = parseInt(kanbanItemsCountResult[0].count);
+      const kanbanItemsCountResult = await sql`SELECT count(*) FROM kanban_items WHERE (type = 'project' OR type IS NULL) AND tenant_id = ${tenantId}`;
+      const kanbanItemsCount = kanbanItemsCountResult && kanbanItemsCountResult[0] ? parseInt(kanbanItemsCountResult[0].count) : 0;
 
       if (projectsCount < kanbanItemsCount) {
         try {
           // Migrar itens que ainda não estão no projects (usando titulo/ambiente como chave de unicidade simples para evitar duplicatas em massa)
           await sql`
-            INSERT INTO projects (client_id, client_name, cliente_nome, ambiente, title, status, observations, created_at, updated_at)
+            INSERT INTO projects (client_id, client_name, cliente_nome, ambiente, title, status, observations, created_at, updated_at, tenant_id)
             SELECT 
               c.id::text as client_id,
               COALESCE(ki.subtitle, ki.contact_name, 'Cliente Sem Nome') as client_name, 
@@ -67,14 +70,16 @@ export async function handleProjects(req: any, res: any) {
               ki.status, 
               ki.observations, 
               COALESCE(ki.updated_at, NOW()), 
-              NOW()
+              NOW(),
+              ${tenantId}::uuid
             FROM kanban_items ki
-            LEFT JOIN clients c ON TRIM(UPPER(c.nome)) = TRIM(UPPER(COALESCE(ki.subtitle, ki.contact_name)))
-            WHERE (ki.type = 'project' OR ki.type IS NULL)
+            LEFT JOIN clients c ON TRIM(UPPER(c.nome)) = TRIM(UPPER(COALESCE(ki.subtitle, ki.contact_name))) AND c.tenant_id = ${tenantId}
+            WHERE (ki.type = 'project' OR ki.type IS NULL) AND ki.tenant_id = ${tenantId}
             AND NOT EXISTS (
               SELECT 1 FROM projects p 
               WHERE TRIM(UPPER(p.ambiente)) = TRIM(UPPER(ki.title)) 
               AND (TRIM(UPPER(p.client_name)) = TRIM(UPPER(ki.subtitle)) OR TRIM(UPPER(p.client_name)) = TRIM(UPPER(ki.contact_name)))
+              AND p.tenant_id = ${tenantId}
             )
             ON CONFLICT DO NOTHING
           `;
@@ -97,8 +102,8 @@ export async function handleProjects(req: any, res: any) {
                  COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
                  c.nome as client_name
           FROM projects p
-          LEFT JOIN clients c ON p.client_id = c.id::text
-          WHERE p.deleted_at IS NULL 
+          LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
+          WHERE p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           AND (p.tag ILIKE ${'%' + q + '%'} OR p.ambiente ILIKE ${'%' + q + '%'} OR c.nome ILIKE ${'%' + q + '%'})
           ORDER BY p.updated_at DESC
           LIMIT 10
@@ -112,9 +117,10 @@ export async function handleProjects(req: any, res: any) {
           LEFT JOIN (
             SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
             FROM orcamentos
+            WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
-          WHERE p.client_id = ${client_id} AND p.deleted_at IS NULL
+          WHERE p.client_id = ${client_id} AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else if (status) {
@@ -126,9 +132,10 @@ export async function handleProjects(req: any, res: any) {
           LEFT JOIN (
             SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
             FROM orcamentos
+            WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
-          WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.deleted_at IS NULL
+          WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else {
@@ -142,13 +149,14 @@ export async function handleProjects(req: any, res: any) {
             COALESCE(p.title, p.ambiente) as title,
             o.valor_final as valor_orcamento_atual
           FROM projects p
-          LEFT JOIN clients c ON p.client_id = c.id::text
+          LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
           LEFT JOIN (
             SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
             FROM orcamentos
+            WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
-          WHERE p.deleted_at IS NULL
+          WHERE p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.updated_at DESC
         `;
       }
@@ -164,7 +172,8 @@ export async function handleProjects(req: any, res: any) {
         INSERT INTO projects (
           client_id, client_name, ambiente, descricao, 
           valor_estimado, valor_final, prazo_entrega, status, 
-          etapa_producao, responsavel, observacoes, visita_id, tag
+          etapa_producao, responsavel, observacoes, visita_id, tag,
+          tenant_id
         ) VALUES (
           ${f.client_id || f.clientId}, 
           ${f.client_name || f.clientName || f.cliente_nome}, 
@@ -178,7 +187,8 @@ export async function handleProjects(req: any, res: any) {
           ${f.responsavel}, 
           ${f.observacoes || f.observations}, 
           ${f.visita_id || f.visitaId}, 
-          ${tag}
+          ${tag},
+          ${tenantId}::uuid
         ) RETURNING *`;
       
       await auditLog('projects', result[0].id, 'CREATE', user?.id, null, result[0]);
@@ -190,7 +200,7 @@ export async function handleProjects(req: any, res: any) {
       const { id } = req.query;
       const f = req.body;
       
-      const before = await sql`SELECT * FROM projects WHERE id = ${id}`;
+      const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
 
       const r = await sql`
@@ -210,13 +220,13 @@ export async function handleProjects(req: any, res: any) {
           orcamento_id = COALESCE(${f.orcamento_id || f.orcamentoId}, orcamento_id), 
           tag = COALESCE(${f.tag}, tag), 
           updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ${id} RETURNING *`;
+        WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
 
       await auditLog('projects', id, 'UPDATE', user?.id, before[0], r[0]);
 
       if (r.length && f.status === 'concluido') {
-        const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id}`;
-        for (const itm of itms) await writeOffStockForProject(itm.id);
+        const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} AND tenant_id = ${tenantId}`;
+        for (const itm of itms) await writeOffStockForProject(itm.id, tenantId);
       }
       return res.status(200).json({ success: true, data: r[0] });
     }
@@ -224,15 +234,15 @@ export async function handleProjects(req: any, res: any) {
       const { user } = validateAuth(req);
       const { id } = req.query;
       
-      const before = await sql`SELECT * FROM projects WHERE id = ${id}`;
+      const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
 
       // Soft Delete: Marcar como deletado e registrar auditoria
-      await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
       
       // Limpar ordens de produção vinculadas (Hard delete ou Soft delete conforme política)
       // Aqui usamos Soft Delete também nas OPs se houver a coluna
-      await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE projeto_id = ${id} OR metadata->>'projeto_id' = ${id}`;
+      await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE (projeto_id = ${id} OR metadata->>'projeto_id' = ${id}) AND tenant_id = ${tenantId}`;
       
       await auditLog('projects', id, 'DELETE', user?.id, before[0], { deleted_at: new Date().toISOString() });
       
@@ -246,14 +256,47 @@ export async function handleProjects(req: any, res: any) {
 
 export async function handleReports(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     const { type, projectId } = req.query || {};
     let result;
-    if (type === 'fin-rentabilidade') result = await sql`SELECT id, projeto_id, custo_material_total, custo_mao_obra_total, custo_total, receita_total, margem_percentual, created_at FROM bi_custos_projeto ORDER BY custo_material_total DESC`;
-    if (type === 'ind-romaneio') result = await sql`SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku as sku_code, cr.quantidade_com_perda, s.unidade_uso as unidade_medida FROM erp_project_items pi JOIN erp_consumption_results cr ON cr.project_item_id = pi.id JOIN materiais s ON s.id = cr.sku_id WHERE pi.project_id = ${projectId} ORDER BY pi.label, cr.componente_nome`;
-    if (type === 'com-necessidade') result = await sql`SELECT s.sku as sku_code, s.nome, s.estoque_atual, s.estoque_minimo FROM materiais s WHERE s.estoque_atual <= s.estoque_minimo ORDER BY (s.estoque_minimo - s.estoque_atual) DESC`;
-    if (type === 'ind-desvios') result = await sql`SELECT id, projeto_id, op_id, tipo_desvio, descricao, data_ocorrencia, created_at FROM bi_desvio_producao`;
+    if (type === 'fin-rentabilidade') {
+      result = await sql`
+        SELECT b.id, b.projeto_id, b.custo_material_total, b.custo_mao_obra_total, b.custo_total, b.receita_total, b.margem_percentual, b.created_at 
+        FROM bi_custos_projeto b
+        JOIN projects p ON b.projeto_id = p.id::text
+        WHERE p.tenant_id = ${tenantId}
+        ORDER BY b.custo_material_total DESC
+      `;
+    }
+    if (type === 'ind-romaneio') {
+      result = await sql`
+        SELECT pi.label as ambiente, cr.componente_nome, s.nome as sku_nome, s.sku as sku_code, cr.quantidade_com_perda, s.unidade_uso as unidade_medida 
+        FROM erp_project_items pi 
+        JOIN erp_consumption_results cr ON cr.project_item_id = pi.id 
+        JOIN materiais s ON s.id = cr.sku_id AND s.tenant_id = ${tenantId}
+        JOIN projects p ON pi.project_id = p.id::text AND p.tenant_id = ${tenantId}
+        WHERE pi.project_id = ${projectId} 
+        ORDER BY pi.label, cr.componente_nome
+      `;
+    }
+    if (type === 'com-necessidade') {
+      result = await sql`
+        SELECT s.sku as sku_code, s.nome, s.estoque_atual, s.estoque_minimo 
+        FROM materiais s 
+        WHERE s.estoque_atual <= s.estoque_minimo AND s.tenant_id = ${tenantId}
+        ORDER BY (s.estoque_minimo - s.estoque_atual) DESC
+      `;
+    }
+    if (type === 'ind-desvios') {
+      result = await sql`
+        SELECT d.id, d.projeto_id, d.op_id, d.tipo_desvio, d.descricao, d.data_ocorrencia, d.created_at 
+        FROM bi_desvio_producao d
+        JOIN projects p ON d.projeto_id = p.id::text
+        WHERE p.tenant_id = ${tenantId}
+      `;
+    }
     if (!result) return res.status(400).json({ success: false, error: 'Tipo inválido' });
     return res.status(200).json({ success: true, data: result });
   } catch (err: any) {
@@ -263,11 +306,13 @@ export async function handleReports(req: any, res: any) {
 
 export async function handleEngineering(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     
     // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
     await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS nome TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
@@ -315,8 +360,8 @@ export async function handleEngineering(req: any, res: any) {
             horas_mo_padrao, valor_hora_padrao, valor_total,
             regras_calculo, created_at, updated_at
           FROM erp_product_bom
-          WHERE nome ILIKE ${'%' + term + '%'}
-          OR codigo_modelo ILIKE ${'%' + term + '%'}
+          WHERE tenant_id = ${tenantId}
+          AND (nome ILIKE ${'%' + term + '%'} OR codigo_modelo ILIKE ${'%' + term + '%'})
           ORDER BY created_at DESC
           LIMIT 20
         `;
@@ -327,6 +372,7 @@ export async function handleEngineering(req: any, res: any) {
             horas_mo_padrao, valor_hora_padrao, valor_total,
             regras_calculo, created_at, updated_at
           FROM erp_product_bom
+          WHERE tenant_id = ${tenantId}
           ORDER BY created_at DESC
         `;
       }
@@ -349,7 +395,7 @@ export async function handleEngineering(req: any, res: any) {
       if (!codigo_modelo) {
         const [last] = await sql`
           SELECT codigo_modelo FROM erp_product_bom
-          WHERE codigo_modelo ~ '^MOD-[0-9]+$'
+          WHERE codigo_modelo ~ '^MOD-[0-9]+$' AND tenant_id = ${tenantId}
           ORDER BY codigo_modelo DESC
           LIMIT 1
         `;
@@ -371,13 +417,14 @@ export async function handleEngineering(req: any, res: any) {
           nome, codigo_modelo, descricao, 
           largura_padrao, altura_padrao, profundidade_padrao, 
           horas_mo_padrao, valor_hora_padrao, valor_total,
-          regras_calculo
+          regras_calculo, tenant_id
         ) 
         VALUES (
           ${nome}, ${codigo_modelo}, ${descricao},
           ${Number(largura_padrao) || 0}, ${Number(altura_padrao) || 0}, ${Number(profundidade_padrao) || 0},
           ${Number(horas_mo_padrao) || 0}, ${Number(valor_hora_padrao) || 0}, ${Number(valor_total) || 0},
-          ${JSON.stringify(regras_calculo || [])}::jsonb
+          ${JSON.stringify(regras_calculo || [])}::jsonb,
+          ${tenantId}::uuid
         ) 
         ON CONFLICT (codigo_modelo) 
         DO UPDATE SET 
@@ -421,7 +468,7 @@ export async function handleEngineering(req: any, res: any) {
           valor_total = COALESCE(${Number(valor_total) || 0}, valor_total),
           regras_calculo = COALESCE(${f.regras_calculo ? JSON.stringify(f.regras_calculo) : null}::jsonb, regras_calculo),
           updated_at = NOW()
-        WHERE id = ${id}
+        WHERE id = ${id} AND tenant_id = ${tenantId}
         RETURNING *
       `;
       return res.status(200).json({ success: true, data: result });
@@ -429,7 +476,7 @@ export async function handleEngineering(req: any, res: any) {
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
-      await sql`DELETE FROM erp_product_bom WHERE id = ${id}`;
+      await sql`DELETE FROM erp_product_bom WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     
@@ -442,19 +489,20 @@ export async function handleEngineering(req: any, res: any) {
 
 export async function handleSKUs(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     if (req.method === 'GET') {
-      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo FROM materiais ORDER BY nome ASC`;
+      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
       const f = req.body;
-      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0) RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo`;
+      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0, ${tenantId}::uuid) RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo`;
       return res.status(201).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {
-      await sql`UPDATE materiais SET ativo = false WHERE id = ${req.query.id}`;
+      await sql`UPDATE materiais SET ativo = false WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -465,10 +513,12 @@ export async function handleSKUs(req: any, res: any) {
 
 export async function handleSimulations(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
     // Migração: garantir colunas adicionais para cenários de produção
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS nome TEXT NOT NULL DEFAULT 'Simulação'`.catch(() => {});
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'generico'`.catch(() => {});
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE`.catch(() => {});
@@ -485,23 +535,23 @@ export async function handleSimulations(req: any, res: any) {
 
     if (method === 'GET') {
       if (recordId) {
-        const [row] = await sql`SELECT * FROM erp_simulations WHERE id = ${recordId}`;
+        const [row] = await sql`SELECT * FROM erp_simulations WHERE id = ${recordId} AND tenant_id = ${tenantId}`;
         if (!row) return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
         return res.status(200).json({ success: true, data: row });
       }
       if (tipo) {
-        const rows = await sql`SELECT * FROM erp_simulations WHERE tipo = ${tipo} ORDER BY created_at DESC`;
+        const rows = await sql`SELECT * FROM erp_simulations WHERE tipo = ${tipo} AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
         return res.status(200).json({ success: true, data: rows });
       }
-      const rows = await sql`SELECT * FROM erp_simulations ORDER BY created_at DESC`;
+      const rows = await sql`SELECT * FROM erp_simulations WHERE tenant_id = ${tenantId} ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: rows });
     }
 
     if (method === 'POST') {
       const { nome, tipo: tipoBody, dados_simulacao, dados_input, cliente_id, cliente_nome } = req.body;
       const [row] = await sql`
-        INSERT INTO erp_simulations (nome, tipo, dados_simulacao, dados_input, cliente_id, cliente_nome)
-        VALUES (${nome || 'Simulação'}, ${tipoBody || 'generico'}, ${JSON.stringify(dados_simulacao || {})}, ${JSON.stringify(dados_input || {})}, ${cliente_id || null}, ${cliente_nome || null})
+        INSERT INTO erp_simulations (nome, tipo, dados_simulacao, dados_input, cliente_id, cliente_nome, tenant_id)
+        VALUES (${nome || 'Simulação'}, ${tipoBody || 'generico'}, ${JSON.stringify(dados_simulacao || {})}, ${JSON.stringify(dados_input || {})}, ${cliente_id || null}, ${cliente_nome || null}, ${tenantId}::uuid)
         RETURNING *
       `;
       return res.status(201).json({ success: true, data: row });
@@ -516,7 +566,7 @@ export async function handleSimulations(req: any, res: any) {
           dados_simulacao = CASE WHEN ${!!dados_simulacao} THEN ${JSON.stringify(dados_simulacao)}::jsonb ELSE dados_simulacao END,
           dados_input = CASE WHEN ${!!dados_input} THEN ${JSON.stringify(dados_input)}::jsonb ELSE dados_input END,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${recordId}
+        WHERE id = ${recordId} AND tenant_id = ${tenantId}
         RETURNING *
       `;
       if (!row) return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
@@ -525,7 +575,7 @@ export async function handleSimulations(req: any, res: any) {
 
     if (method === 'DELETE') {
       if (!recordId) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
-      await sql`DELETE FROM erp_simulations WHERE id = ${recordId}`;
+      await sql`DELETE FROM erp_simulations WHERE id = ${recordId} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
 
@@ -535,3 +585,4 @@ export async function handleSimulations(req: any, res: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
+

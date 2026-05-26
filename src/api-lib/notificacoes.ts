@@ -5,22 +5,23 @@ export async function handleNotificacoes(req: any, res: any) {
     const { method } = req;
     const { id } = req.query;
 
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
     if (method === 'GET') {
       if (req.url.includes('contar')) {
         // Gera notificações antes de contar (centralizado no server)
-        await gerarNotificacoesAutomaticas().catch(console.error);
-        const count = await sql`SELECT count(*) FROM notificacoes WHERE lida = false`;
+        await gerarNotificacoesAutomaticas(tenantId).catch(console.error);
+        const count = await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true, data: parseInt(count[0].count) });
       }
       // Listar todas ou apenas não lidas
       const limit = req.query.limit || 50;
       const unreadOnly = req.query.unread === 'true';
       const query = unreadOnly 
-        ? sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE lida = false ORDER BY created_at DESC LIMIT ${limit}`
-        : sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes ORDER BY created_at DESC LIMIT ${limit}`;
+        ? sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId} ORDER BY created_at DESC LIMIT ${limit}`
+        : sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE tenant_id = ${tenantId} ORDER BY created_at DESC LIMIT ${limit}`;
       
       const result = await query;
       return res.status(200).json({ success: true, data: result });
@@ -28,15 +29,15 @@ export async function handleNotificacoes(req: any, res: any) {
 
     if (method === 'PUT' || method === 'PATCH') {
       if (req.url.includes('marcar-todas')) {
-        await sql`UPDATE notificacoes SET lida = true, data_leitura = NOW() WHERE lida = false`;
+        await sql`UPDATE notificacoes SET lida = true, data_leitura = NOW() WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true });
       }
-      await sql`UPDATE notificacoes SET lida = true, data_leitura = NOW() WHERE id = ${id}`;
+      await sql`UPDATE notificacoes SET lida = true, data_leitura = NOW() WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
 
     if (method === 'POST' && req.url.includes('gerar')) {
-      const stats = await gerarNotificacoesAutomaticas();
+      const stats = await gerarNotificacoesAutomaticas(tenantId);
       return res.status(200).json({ success: true, stats });
     }
 
@@ -46,7 +47,7 @@ export async function handleNotificacoes(req: any, res: any) {
   }
 }
 
-export async function gerarNotificacoesAutomaticas() {
+export async function gerarNotificacoesAutomaticas(tenantId: string) {
   let criadas = 0;
 
   // 1. Materiais com estoque crítico
@@ -54,17 +55,17 @@ export async function gerarNotificacoesAutomaticas() {
     const materiais = await sql`
       SELECT id, nome, sku, estoque_atual, estoque_minimo 
       FROM materiais 
-      WHERE estoque_atual <= estoque_minimo AND ativo = true
+      WHERE estoque_atual <= estoque_minimo AND ativo = true AND tenant_id = ${tenantId}
     `;
     for (const m of materiais) {
       const exists = await sql`
         SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'estoque_critico' AND referencia_id = ${m.id}
+        WHERE lida = false AND tipo = 'estoque_critico' AND referencia_id = ${m.id} AND tenant_id = ${tenantId}
       `;
       if (!exists.length) {
         await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-          VALUES ('estoque_critico', 'Estoque crítico: ' || ${m.sku}, ${`${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`}, ${m.estoque_atual <= 0 ? 'critica' : 'alta'}, 'material', ${m.id}, '/estoque')
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+          VALUES ('estoque_critico', 'Estoque crítico: ' || ${m.sku}, ${`${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`}, ${m.estoque_atual <= 0 ? 'critica' : 'alta'}, 'material', ${m.id}, '/estoque', ${tenantId})
         `;
         criadas++;
       }
@@ -78,17 +79,18 @@ export async function gerarNotificacoesAutomaticas() {
       FROM projects
       WHERE status NOT IN ('concluded', 'concluido', 'cancelado')
       AND prazo_entrega IS NOT NULL
+      AND tenant_id = ${tenantId}
       AND (prazo_entrega::date - CURRENT_DATE) BETWEEN 0 AND 3
     `;
     for (const p of projetos) {
       const exists = await sql`
         SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'prazo_projeto' AND referencia_id = ${p.id}
+        WHERE lida = false AND tipo = 'prazo_projeto' AND referencia_id = ${p.id} AND tenant_id = ${tenantId}
       `;
       if (!exists.length) {
         await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-          VALUES ('prazo_projeto', 'Entrega Próxima: ' || ${p.ambiente}, 'Entrega prevista para os próximos dias.', 'alta', 'projeto', ${p.id}, '/projetos')
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+          VALUES ('prazo_projeto', 'Entrega Próxima: ' || ${p.ambiente}, 'Entrega prevista para os próximos dias.', 'alta', 'projeto', ${p.id}, '/projetos', ${tenantId})
         `;
         criadas++;
       }
@@ -100,19 +102,19 @@ export async function gerarNotificacoesAutomaticas() {
     const orcamentos = await sql`
       SELECT o.id, o.numero, c.nome as cliente
       FROM orcamentos o
-      JOIN clients c ON o.cliente_id::text = c.id::text
-      WHERE o.status = 'enviado'
+      JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+      WHERE o.status = 'enviado' AND o.tenant_id = ${tenantId}
       AND o.updated_at < NOW() - INTERVAL '7 days'
     `;
     for (const o of orcamentos) {
       const exists = await sql`
         SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id}
+        WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id} AND tenant_id = ${tenantId}
       `;
       if (!exists.length) {
         await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'orcamento', ${o.id}, '/orcamentos')
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'orcamento', ${o.id}, '/orcamentos', ${tenantId})
         `;
         criadas++;
       }
@@ -124,18 +126,18 @@ export async function gerarNotificacoesAutomaticas() {
     const garantias = await sql`
       SELECT id, numero, titulo
       FROM chamados_garantia
-      WHERE status IN ('aberto', 'agendado')
+      WHERE status IN ('aberto', 'agendado') AND tenant_id = ${tenantId}
       AND created_at < NOW() - INTERVAL '3 days'
     `;
     for (const g of garantias) {
       const exists = await sql`
         SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'garantia_pendente' AND referencia_id = ${g.id}
+        WHERE lida = false AND tipo = 'garantia_pendente' AND referencia_id = ${g.id} AND tenant_id = ${tenantId}
       `;
       if (!exists.length) {
         await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-          VALUES ('garantia_pendente', 'Garantia Pendente: ' || ${g.numero}, ${`Chamado "${g.titulo}" aguarda atendimento há 3 dias.`}, 'alta', 'chamado', ${g.id}, '/pos-venda')
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+          VALUES ('garantia_pendente', 'Garantia Pendente: ' || ${g.numero}, ${`Chamado "${g.titulo}" aguarda atendimento há 3 dias.`}, 'alta', 'chamado', ${g.id}, '/pos-venda', ${tenantId})
         `;
         criadas++;
       }
@@ -147,18 +149,18 @@ export async function gerarNotificacoesAutomaticas() {
     const cobrancas = await sql`
       SELECT id, nf, pedido, valor, due_date, cliente
       FROM billings
-      WHERE status NOT IN ('PAGO', 'pago', 'concluido')
+      WHERE status NOT IN ('PAGO', 'pago', 'concluido') AND tenant_id = ${tenantId}
       AND due_date < CURRENT_DATE
     `;
     for (const c of cobrancas) {
       const exists = await sql`
         SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'cobranca_vencida' AND referencia_id = ${c.id}
+        WHERE lida = false AND tipo = 'cobranca_vencida' AND referencia_id = ${c.id} AND tenant_id = ${tenantId}
       `;
       if (!exists.length) {
         await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino)
-          VALUES ('cobranca_vencida', 'Pagamento Vencido: ' || ${c.nf || c.pedido || 'N/A'}, ${`O pagamento de ${c.cliente || 'cliente'} no valor de R$ ${c.valor} venceu em ${new Date(c.due_date).toLocaleDateString()}.`}, 'critica', 'financeiro', ${c.id}, '/financeiro')
+          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+          VALUES ('cobranca_vencida', 'Pagamento Vencido: ' || ${c.nf || c.pedido || 'N/A'}, ${`O pagamento de ${c.cliente || 'cliente'} no valor de R$ ${c.valor} venceu em ${new Date(c.due_date).toLocaleDateString()}.`}, 'critica', 'financeiro', ${c.id}, '/financeiro', ${tenantId})
         `;
         criadas++;
       }

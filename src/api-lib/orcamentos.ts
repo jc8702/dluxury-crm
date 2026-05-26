@@ -5,15 +5,16 @@ import { reserveStockForProject } from './_inventory.js';
 
 export async function handleOrcamentos(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     const { id } = req.query;
 
     if (req.method === 'GET') {
       if (id) {
-        const orc = (await sql`SELECT id, cliente_id, projeto_id, visita_id, numero, status, valor_base, taxa_mensal, condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos, created_at, updated_at FROM orcamentos WHERE id = ${id} AND deleted_at IS NULL`)[0];
+        const orc = (await sql`SELECT id, cliente_id, projeto_id, visita_id, numero, status, valor_base, taxa_mensal, condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, adicional_urgencia_pct, observacoes, materiais_consumidos, created_at, updated_at FROM orcamentos WHERE id = ${id} AND tenant_id = ${tenantId} AND deleted_at IS NULL`)[0];
         if (!orc) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
-        const itms = await sql`SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE orcamento_id = ${id} ORDER BY id ASC`;
+        const itms = await sql`SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE orcamento_id = ${id} AND tenant_id = ${tenantId} ORDER BY id ASC`;
         return res.status(200).json({ success: true, data: { ...orc, itens: itms } });
       }
       const result = await sql`
@@ -25,9 +26,9 @@ export async function handleOrcamentos(req: any, res: any) {
           c.nome as cliente_nome,
           p.title as projeto_nome
         FROM orcamentos o 
-        LEFT JOIN clients c ON o.cliente_id::text = c.id::text 
-        LEFT JOIN projects p ON o.projeto_id::text = p.id::text
-        WHERE o.deleted_at IS NULL
+        LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = ${tenantId}
+        LEFT JOIN projects p ON o.projeto_id::text = p.id::text AND p.tenant_id = ${tenantId}
+        WHERE o.deleted_at IS NULL AND o.tenant_id = ${tenantId}
         ORDER BY o.created_at DESC
       `;
       return res.status(200).json({ success: true, data: result });
@@ -43,11 +44,11 @@ export async function handleOrcamentos(req: any, res: any) {
       const ano = now.getFullYear();
       const dataStr = `${dia}${mes}${ano}`;
 
-      const client = (await sql`SELECT nome FROM clients WHERE id = ${f.cliente_id}`)[0];
+      const client = (await sql`SELECT nome FROM clients WHERE id = ${f.cliente_id} AND tenant_id = ${tenantId}`)[0];
       const clientSuffix = (client?.nome || 'AVULSO').split(' ')[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
 
       const prefix = `PRO-${dataStr}-REV`;
-      const relatives = await sql`SELECT numero FROM orcamentos WHERE numero LIKE ${prefix + '%'}`;
+      const relatives = await sql`SELECT numero FROM orcamentos WHERE numero LIKE ${prefix + '%'} AND tenant_id = ${tenantId}`;
       const revNum = relatives.length.toString().padStart(2, '0');
       
       const num = `PRO-${dataStr}-REV${revNum}-${clientSuffix}`;
@@ -56,7 +57,7 @@ export async function handleOrcamentos(req: any, res: any) {
         INSERT INTO orcamentos (
           cliente_id, projeto_id, visita_id, numero, status, valor_base, taxa_mensal, 
           condicao_pagamento_id, valor_final, prazo_entrega_dias, prazo_tipo, 
-          adicional_urgencia_pct, observacoes, materiais_consumidos
+          adicional_urgencia_pct, observacoes, materiais_consumidos, tenant_id
         ) VALUES (
           ${f.cliente_id}, 
           ${f.projeto_id || null},
@@ -71,13 +72,14 @@ export async function handleOrcamentos(req: any, res: any) {
           ${f.prazo_tipo || 'uteis'}, 
           ${Number(f.adicional_urgencia_pct) || 0}, 
           ${f.observacoes || ''}, 
-          ${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : '[]'}::jsonb
+          ${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : '[]'}::jsonb,
+          ${tenantId}::uuid
         ) RETURNING *`;
       const orcId = orc[0].id;
       
       if (Array.isArray(f.itens)) {
         for (const itm of f.itens) {
-          await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total) VALUES (${orcId}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total})`;
+          await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, tenant_id) VALUES (${orcId}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total}, ${tenantId}::uuid)`;
         }
       }
 
@@ -89,30 +91,30 @@ export async function handleOrcamentos(req: any, res: any) {
     if (req.method === 'PATCH') {
       const { user } = validateAuth(req);
       const f = req.body;
-      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id}`;
+      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
 
-      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), projeto_id = COALESCE(${f.projeto_id}, projeto_id), visita_id = COALESCE(${f.visita_id}, visita_id), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), updated_at = NOW() WHERE id = ${id} RETURNING *`;
+      const orc = await sql`UPDATE orcamentos SET status = COALESCE(${f.status}, status), valor_base = COALESCE(${f.valor_base}, valor_base), taxa_mensal = COALESCE(${f.taxa_mensal}, taxa_mensal), condicao_pagamento_id = COALESCE(${f.condicao_pagamento_id}, condicao_pagamento_id), valor_final = COALESCE(${f.valor_final}, valor_final), prazo_entrega_dias = COALESCE(${f.prazo_entrega_dias}, prazo_entrega_dias), prazo_tipo = COALESCE(${f.prazo_tipo}, prazo_tipo), adicional_urgencia_pct = COALESCE(${f.adicional_urgencia_pct}, adicional_urgencia_pct), observacoes = COALESCE(${f.observacoes}, observacoes), projeto_id = COALESCE(${f.projeto_id}, projeto_id), visita_id = COALESCE(${f.visita_id}, visita_id), materiais_consumidos = COALESCE(${f.materiais_consumidos ? JSON.stringify(f.materiais_consumidos) : null}::jsonb, materiais_consumidos), updated_at = NOW() WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
       
       if (Array.isArray(f.itens)) {
-        await sql`DELETE FROM itens_orcamento WHERE orcamento_id = ${id}`;
+        await sql`DELETE FROM itens_orcamento WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}`;
         for (const itm of f.itens) {
-          await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total) VALUES (${id}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total})`;
+          await sql`INSERT INTO itens_orcamento (orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, tenant_id) VALUES (${id}, ${itm.descricao}, ${itm.ambiente}, ${itm.largura_cm}, ${itm.altura_cm}, ${itm.profundidade_cm}, ${itm.material}, ${itm.acabamento}, ${itm.quantidade || 1}, ${itm.valor_unitario}, ${itm.valor_total}, ${tenantId}::uuid)`;
         }
       }
 
       await auditLog('orcamentos', id, 'UPDATE', user?.id, before[0], orc[0]);
       if (f.status === 'aprovado') {
-        const itms = await sql`SELECT id, orcamento_id, descricao, erp_product_id, erp_parametros FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL`;
+        const itms = await sql`SELECT id, orcamento_id, descricao, erp_product_id, erp_parametros FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL AND tenant_id = ${tenantId}`;
         for (const itm of itms) {
-          const bom = await sql`SELECT id, nome, codigo_modelo, regras_calculo FROM erp_product_bom WHERE product_id = ${itm.erp_product_id}`;
+          const bom = await sql`SELECT id, nome, codigo_modelo, regras_calculo FROM erp_product_bom WHERE product_id = ${itm.erp_product_id} AND tenant_id = ${tenantId}`;
           if (bom.length) {
             const results = await calculateBOM(itm.erp_parametros, bom as any);
-            const pItem = await sql`INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status) VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'aprovado') RETURNING id`;
+            const pItem = await sql`INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status, tenant_id) VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'aprovado', ${tenantId}::uuid) RETURNING id`;
             for (const r of results) {
-              await sql`INSERT INTO erp_consumption_results (project_item_id, sku_id, quantidade_liquida, quantidade_com_perda) VALUES (${pItem[0].id}, ${r.sku_id}, ${r.quantidade_liquida}, ${r.quantidade_com_perda})`;
+              await sql`INSERT INTO erp_consumption_results (project_item_id, sku_id, quantidade_liquida, quantidade_com_perda, tenant_id) VALUES (${pItem[0].id}, ${r.sku_id}, ${r.quantidade_liquida}, ${r.quantidade_com_perda}, ${tenantId}::uuid)`;
             }
-            await reserveStockForProject(pItem[0].id);
+            await reserveStockForProject(pItem[0].id, tenantId);
           }
         }
 
@@ -120,9 +122,9 @@ export async function handleOrcamentos(req: any, res: any) {
         const currentOrc = orc[0];
         if (currentOrc.condicao_pagamento_id) {
           // Evitar duplicidade: verificar se já existem títulos para este orçamento
-          const existing = await sql`SELECT id FROM titulos_receber WHERE orcamento_id = ${id}`;
+          const existing = await sql`SELECT id FROM titulos_receber WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}`;
           if (existing.length === 0) {
-            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id}`)[0];
+            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id} AND tenant_id = ${tenantId}`)[0];
             if (cond) {
               const totalParcelas = cond.n_parcelas || 1; // Note: schema in migration used 'parcelas', in handleCondicoesPagamento 'n_parcelas'
               const valorTotal = Number(currentOrc.valor_final) || 0;
@@ -139,14 +141,14 @@ export async function handleOrcamentos(req: any, res: any) {
                     valor_original, valor_liquido, valor_aberto,
                     data_emissao, data_vencimento, data_competencia,
                     classe_financeira_id, forma_recebimento_id,
-                    status, parcela, total_parcelas
+                    status, parcela, total_parcelas, tenant_id
                   ) VALUES (
                     ${`REC-AUTO-${currentOrc.numero}-${i}`}, ${currentOrc.cliente_id}, ${currentOrc.projeto_id || null}, ${id},
                     ${valorParcela}, ${valorParcela}, ${valorParcela},
                     ${dataEmissao}, ${vencimento}, ${dataEmissao},
-                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.1' LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras LIMIT 1`)[0].id}, 
-                    ${(await sql`SELECT id FROM formas_pagamento LIMIT 1`)[0].id},
-                    'aberto', ${i}, ${totalParcelas}
+                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.1' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id}, 
+                    ${(await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id},
+                    'aberto', ${i}, ${totalParcelas}, ${tenantId}::uuid
                   )`;
               }
             }
@@ -158,14 +160,14 @@ export async function handleOrcamentos(req: any, res: any) {
 
     if (req.method === 'DELETE') {
       const { user } = validateAuth(req);
-      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id}`;
+      const before = await sql`SELECT * FROM orcamentos WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
 
       // Soft Delete
-      await sql`UPDATE orcamentos SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+      await sql`UPDATE orcamentos SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
       
       // Soft Delete em títulos financeiros vinculados
-      await sql`UPDATE titulos_receber SET status = 'cancelado', deleted_at = CURRENT_TIMESTAMP WHERE orcamento_id = ${id}`;
+      await sql`UPDATE titulos_receber SET status = 'cancelado', deleted_at = CURRENT_TIMESTAMP WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}`;
       
       await auditLog('orcamentos', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
 
@@ -179,36 +181,37 @@ export async function handleOrcamentos(req: any, res: any) {
 
 export async function handleOrcamentoTecnico(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     const { type, id, orcamento_id, ambiente_id, movel_id } = req.query;
 
     if (req.method === 'GET') {
       if (type === 'config') {
-        const result = (await sql`SELECT id, fator_perda_padrao, markup_padrao, aliquota_imposto, mo_producao_pct_padrao, mo_instalacao_pct_padrao, margem_minima_alerta, espessura_chapa_padrao, recuo_fundo_padrao, created_at, updated_at FROM configuracoes_precificacao LIMIT 1`)[0] || {};
+        const result = (await sql`SELECT id, fator_perda_padrao, markup_padrao, aliquota_imposto, mo_producao_pct_padrao, mo_instalacao_pct_padrao, margem_minima_alerta, espessura_chapa_padrao, recuo_fundo_padrao, created_at, updated_at FROM configuracoes_precificacao WHERE tenant_id = ${tenantId} LIMIT 1`)[0] || {};
         return res.status(200).json({ success: true, data: result });
       }
       if (orcamento_id && type === 'tree') {
-        const ambs = await sql`SELECT id, orcamento_id, nome, ordem, created_at, updated_at FROM orcamento_ambientes WHERE orcamento_id = ${orcamento_id} ORDER BY ordem ASC`;
+        const ambs = await sql`SELECT id, orcamento_id, nome, ordem, created_at, updated_at FROM orcamento_ambientes WHERE orcamento_id = ${orcamento_id} AND tenant_id = ${tenantId} ORDER BY ordem ASC`;
         for (const amb of ambs) {
-          amb.moveis = await sql`SELECT id, ambiente_id, nome, tipo_movel, largura_total_cm, altura_total_cm, profundidade_total_cm, observacoes, ordem, erp_product_id, erp_parametros, created_at, updated_at FROM orcamento_moveis WHERE ambiente_id = ${amb.id} ORDER BY ordem ASC`;
+          amb.moveis = await sql`SELECT id, ambiente_id, nome, tipo_movel, largura_total_cm, altura_total_cm, profundidade_total_cm, observacoes, ordem, erp_product_id, erp_parametros, created_at, updated_at FROM orcamento_moveis WHERE ambiente_id = ${amb.id} AND tenant_id = ${tenantId} ORDER BY ordem ASC`;
           for (const mov of amb.moveis) {
-            mov.pecas = await sql`SELECT id, movel_id, material_id, sku, descricao_peca, largura_cm, altura_cm, espessura_mm, quantidade, m2_unitario, m2_total, fator_perda_pct, m2_com_perda, preco_custo_m2, custo_total_peca, metros_fita_borda, fita_material_id, sentido_veio, desconto_fita_mm, created_at, updated_at FROM orcamento_pecas WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
-            mov.ferragens = await sql`SELECT id, movel_id, material_id, sku, descricao, quantidade, unidade, preco_custo_unitario, custo_total, created_at, updated_at FROM orcamento_ferragens WHERE movel_id = ${mov.id} ORDER BY created_at ASC`;
+            mov.pecas = await sql`SELECT id, movel_id, material_id, sku, descricao_peca, largura_cm, altura_cm, espessura_mm, quantidade, m2_unitario, m2_total, fator_perda_pct, m2_com_perda, preco_custo_m2, custo_total_peca, metros_fita_borda, fita_material_id, sentido_veio, desconto_fita_mm, created_at, updated_at FROM orcamento_pecas WHERE movel_id = ${mov.id} AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
+            mov.ferragens = await sql`SELECT id, movel_id, material_id, sku, descricao, quantidade, unidade, preco_custo_unitario, custo_total, created_at, updated_at FROM orcamento_ferragens WHERE movel_id = ${mov.id} AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
           }
         }
-        const extras = await sql`SELECT id, orcamento_id, descricao, tipo, forma_calculo, percentual_ou_valor, m2_total_referencia, valor_calculado, created_at, updated_at FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} ORDER BY created_at ASC`;
+        const extras = await sql`SELECT id, orcamento_id, descricao, tipo, forma_calculo, percentual_ou_valor, m2_total_referencia, valor_calculado, created_at, updated_at FROM orcamento_custos_extras WHERE orcamento_id = ${orcamento_id} AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
         return res.status(200).json({ success: true, data: { ambientes: ambs, extras } });
       }
     }
     if (req.method === 'POST') {
       const f = req.body;
       let result;
-      if (type === 'ambiente') result = await sql`INSERT INTO orcamento_ambientes (orcamento_id, nome, ordem) VALUES (${orcamento_id}, ${f.nome}, ${f.ordem || 0}) RETURNING *`;
-      if (type === 'movel') result = await sql`INSERT INTO orcamento_moveis (ambiente_id, nome, tipo_movel, largura_total_cm, altura_total_cm, profundidade_total_cm, observacoes, ordem) VALUES (${ambiente_id}, ${f.nome}, ${f.tipo_movel}, ${f.largura_total_cm}, ${f.altura_total_cm}, ${f.profundidade_total_cm}, ${f.observacoes}, ${f.ordem || 0}) RETURNING *`;
-      if (type === 'peca') result = await sql`INSERT INTO orcamento_pecas (movel_id, material_id, sku, descricao_peca, largura_cm, altura_cm, espessura_mm, quantidade, m2_unitario, m2_total, fator_perda_pct, m2_com_perda, preco_custo_m2, custo_total_peca, metros_fita_borda, fita_material_id, sentido_veio) VALUES (${movel_id}, ${f.material_id}, ${f.sku}, ${f.descricao_peca}, ${f.largura_cm}, ${f.altura_cm}, ${f.espessura_mm || 15}, ${f.quantidade}, ${f.m2_unitario}, ${f.m2_total}, ${f.fator_perda_pct}, ${f.m2_com_perda}, ${f.preco_custo_m2}, ${f.custo_total_peca}, ${f.metros_fita_borda}, ${f.fita_material_id || null}, ${f.sentido_veio || 'longitudinal'}) RETURNING *`;
-      if (type === 'ferragem') result = await sql`INSERT INTO orcamento_ferragens (movel_id, material_id, sku, descricao, quantidade, unidade, preco_custo_unitario, custo_total) VALUES (${movel_id}, ${f.material_id}, ${f.sku}, ${f.descricao}, ${f.quantidade}, ${f.unidade}, ${f.preco_custo_unitario}, ${f.custo_total}) RETURNING *`;
-      if (type === 'extra') result = await sql`INSERT INTO orcamento_custos_extras (orcamento_id, descricao, tipo, forma_calculo, percentual_ou_valor, m2_total_referencia, valor_calculado) VALUES (${orcamento_id}, ${f.descricao}, ${f.tipo}, ${f.forma_calculo}, ${f.percentual_ou_valor}, ${f.m2_total_referencia}, ${f.valor_calculado}) RETURNING *`;
+      if (type === 'ambiente') result = await sql`INSERT INTO orcamento_ambientes (orcamento_id, nome, ordem, tenant_id) VALUES (${orcamento_id}, ${f.nome}, ${f.ordem || 0}, ${tenantId}::uuid) RETURNING *`;
+      if (type === 'movel') result = await sql`INSERT INTO orcamento_moveis (ambiente_id, nome, tipo_movel, largura_total_cm, altura_total_cm, profundidade_total_cm, observacoes, ordem, tenant_id) VALUES (${ambiente_id}, ${f.nome}, ${f.tipo_movel}, ${f.largura_total_cm}, ${f.altura_total_cm}, ${f.profundidade_total_cm}, ${f.observacoes}, ${f.ordem || 0}, ${tenantId}::uuid) RETURNING *`;
+      if (type === 'peca') result = await sql`INSERT INTO orcamento_pecas (movel_id, material_id, sku, descricao_peca, largura_cm, altura_cm, espessura_mm, quantidade, m2_unitario, m2_total, fator_perda_pct, m2_com_perda, preco_custo_m2, custo_total_peca, metros_fita_borda, fita_material_id, sentido_veio, tenant_id) VALUES (${movel_id}, ${f.material_id}, ${f.sku}, ${f.descricao_peca}, ${f.largura_cm}, ${f.altura_cm}, ${f.espessura_mm || 15}, ${f.quantidade}, ${f.m2_unitario}, ${f.m2_total}, ${f.fator_perda_pct}, ${f.m2_com_perda}, ${f.preco_custo_m2}, ${f.custo_total_peca}, ${f.metros_fita_borda}, ${f.fita_material_id || null}, ${f.sentido_veio || 'longitudinal'}, ${tenantId}::uuid) RETURNING *`;
+      if (type === 'ferragem') result = await sql`INSERT INTO orcamento_ferragens (movel_id, material_id, sku, descricao, quantidade, unidade, preco_custo_unitario, custo_total, tenant_id) VALUES (${movel_id}, ${f.material_id}, ${f.sku}, ${f.descricao}, ${f.quantidade}, ${f.unidade}, ${f.preco_custo_unitario}, ${f.custo_total}, ${tenantId}::uuid) RETURNING *`;
+      if (type === 'extra') result = await sql`INSERT INTO orcamento_custos_extras (orcamento_id, descricao, tipo, forma_calculo, percentual_ou_valor, m2_total_referencia, valor_calculado, tenant_id) VALUES (${orcamento_id}, ${f.descricao}, ${f.tipo}, ${f.forma_calculo}, ${f.percentual_ou_valor}, ${f.m2_total_referencia}, ${f.valor_calculado}, ${tenantId}::uuid) RETURNING *`;
       return res.status(201).json({ success: true, data: result ? result[0] : null });
     }
     if (req.method === 'PATCH') {
@@ -225,21 +228,22 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
           espessura_chapa_padrao = COALESCE(${f.espessura_chapa_padrao}, espessura_chapa_padrao),
           recuo_fundo_padrao = COALESCE(${f.recuo_fundo_padrao}, recuo_fundo_padrao),
           updated_at = NOW() 
+        WHERE tenant_id = ${tenantId}
         RETURNING *`;
       }
-      if (type === 'ambiente' && id) result = await sql`UPDATE orcamento_ambientes SET nome = COALESCE(${f.nome}, nome), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} RETURNING *`;
-      if (type === 'movel' && id) result = await sql`UPDATE orcamento_moveis SET nome = COALESCE(${f.nome}, nome), tipo_movel = COALESCE(${f.tipo_movel}, tipo_movel), largura_total_cm = COALESCE(${f.largura_total_cm}, largura_total_cm), altura_total_cm = COALESCE(${f.altura_total_cm}, altura_total_cm), profundidade_total_cm = COALESCE(${f.profundidade_total_cm}, profundidade_total_cm), erp_product_id = COALESCE(${f.erp_product_id}, erp_product_id), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} RETURNING *`;
-      if (type === 'peca' && id) result = await sql`UPDATE orcamento_pecas SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), descricao_peca = COALESCE(${f.descricao_peca}, descricao_peca), largura_cm = COALESCE(${f.largura_cm}, largura_cm), altura_cm = COALESCE(${f.altura_cm}, altura_cm), espessura_mm = COALESCE(${f.espessura_mm}, espessura_mm), quantidade = COALESCE(${f.quantidade}, quantidade), m2_unitario = COALESCE(${f.m2_unitario}, m2_unitario), m2_total = COALESCE(${f.m2_total}, m2_total), fator_perda_pct = COALESCE(${f.fator_perda_pct}, fator_perda_pct), m2_com_perda = COALESCE(${f.m2_com_perda}, m2_com_perda), preco_custo_m2 = COALESCE(${f.preco_custo_m2}, preco_custo_m2), custo_total_peca = COALESCE(${f.custo_total_peca}, custo_total_peca), sentido_veio = COALESCE(${f.sentido_veio}, sentido_veio), desconto_fita_mm = COALESCE(${f.desconto_fita_mm}, desconto_fita_mm) WHERE id = ${id} RETURNING *`;
-      if (type === 'ferragem' && id) result = await sql`UPDATE orcamento_ferragens SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), quantidade = COALESCE(${f.quantidade}, quantidade), preco_custo_unitario = COALESCE(${f.preco_custo_unitario}, preco_custo_unitario), custo_total = COALESCE(${f.custo_total}, custo_total) WHERE id = ${id} RETURNING *`;
+      if (type === 'ambiente' && id) result = await sql`UPDATE orcamento_ambientes SET nome = COALESCE(${f.nome}, nome), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
+      if (type === 'movel' && id) result = await sql`UPDATE orcamento_moveis SET nome = COALESCE(${f.nome}, nome), tipo_movel = COALESCE(${f.tipo_movel}, tipo_movel), largura_total_cm = COALESCE(${f.largura_total_cm}, largura_total_cm), altura_total_cm = COALESCE(${f.altura_total_cm}, altura_total_cm), profundidade_total_cm = COALESCE(${f.profundidade_total_cm}, profundidade_total_cm), erp_product_id = COALESCE(${f.erp_product_id}, erp_product_id), ordem = COALESCE(${f.ordem}, ordem) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
+      if (type === 'peca' && id) result = await sql`UPDATE orcamento_pecas SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), descricao_peca = COALESCE(${f.descricao_peca}, descricao_peca), largura_cm = COALESCE(${f.largura_cm}, largura_cm), altura_cm = COALESCE(${f.altura_cm}, altura_cm), espessura_mm = COALESCE(${f.espessura_mm}, espessura_mm), quantidade = COALESCE(${f.quantidade}, quantidade), m2_unitario = COALESCE(${f.m2_unitario}, m2_unitario), m2_total = COALESCE(${f.m2_total}, m2_total), fator_perda_pct = COALESCE(${f.fator_perda_pct}, fator_perda_pct), m2_com_perda = COALESCE(${f.m2_com_perda}, m2_com_perda), preco_custo_m2 = COALESCE(${f.preco_custo_m2}, preco_custo_m2), custo_total_peca = COALESCE(${f.custo_total_peca}, custo_total_peca), sentido_veio = COALESCE(${f.sentido_veio}, sentido_veio), desconto_fita_mm = COALESCE(${f.desconto_fita_mm}, desconto_fita_mm) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
+      if (type === 'ferragem' && id) result = await sql`UPDATE orcamento_ferragens SET material_id = COALESCE(${f.material_id}, material_id), sku = COALESCE(${f.sku}, sku), quantidade = COALESCE(${f.quantidade}, quantidade), preco_custo_unitario = COALESCE(${f.preco_custo_unitario}, preco_custo_unitario), custo_total = COALESCE(${f.custo_total}, custo_total) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
       
       return res.status(200).json({ success: true, data: result ? result[0] : null });
     }
     if (req.method === 'DELETE') {
-      if (type === 'ambiente') await sql`DELETE FROM orcamento_ambientes WHERE id = ${id}`;
-      if (type === 'movel') await sql`DELETE FROM orcamento_moveis WHERE id = ${id}`;
-      if (type === 'peca') await sql`DELETE FROM orcamento_pecas WHERE id = ${id}`;
-      if (type === 'ferragem') await sql`DELETE FROM orcamento_ferragens WHERE id = ${id}`;
-      if (type === 'extra') await sql`DELETE FROM orcamento_custos_extras WHERE id = ${id}`;
+      if (type === 'ambiente') await sql`DELETE FROM orcamento_ambientes WHERE id = ${id} AND tenant_id = ${tenantId}`;
+      if (type === 'movel') await sql`DELETE FROM orcamento_moveis WHERE id = ${id} AND tenant_id = ${tenantId}`;
+      if (type === 'peca') await sql`DELETE FROM orcamento_pecas WHERE id = ${id} AND tenant_id = ${tenantId}`;
+      if (type === 'ferragem') await sql`DELETE FROM orcamento_ferragens WHERE id = ${id} AND tenant_id = ${tenantId}`;
+      if (type === 'extra') await sql`DELETE FROM orcamento_custos_extras WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -250,22 +254,23 @@ export async function handleOrcamentoTecnico(req: any, res: any) {
 
 export async function handleCondicoesPagamento(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     if (req.method === 'GET') {
-      const result = await sql`SELECT id, nome, n_parcelas, ativo, created_at, updated_at FROM condicoes_pagamento WHERE ativo = true ORDER BY n_parcelas ASC`;
+      const result = await sql`SELECT id, nome, n_parcelas, ativo, created_at, updated_at FROM condicoes_pagamento WHERE ativo = true AND tenant_id = ${tenantId} ORDER BY n_parcelas ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
-      const r = await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas) VALUES (${req.body.nome}, ${req.body.n_parcelas}) RETURNING *`;
+      const r = await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas, tenant_id) VALUES (${req.body.nome}, ${req.body.n_parcelas}, ${tenantId}::uuid) RETURNING *`;
       return res.status(201).json({ success: true, data: r[0] });
     }
     if (req.method === 'PATCH') {
-      const r = await sql`UPDATE condicoes_pagamento SET nome = COALESCE(${req.body.nome}, nome), n_parcelas = COALESCE(${req.body.n_parcelas}, n_parcelas), ativo = COALESCE(${req.body.ativo}, ativo) WHERE id = ${req.query.id} RETURNING *`;
+      const r = await sql`UPDATE condicoes_pagamento SET nome = COALESCE(${req.body.nome}, nome), n_parcelas = COALESCE(${req.body.n_parcelas}, n_parcelas), ativo = COALESCE(${req.body.ativo}, ativo) WHERE id = ${req.query.id} AND tenant_id = ${tenantId} RETURNING *`;
       return res.status(200).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {
-      await sql`DELETE FROM condicoes_pagamento WHERE id = ${req.query.id}`;
+      await sql`DELETE FROM condicoes_pagamento WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();

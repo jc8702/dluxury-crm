@@ -1,7 +1,11 @@
-import { sql } from './_db.js';
+import { sql, validateAuth } from './_db.js';
 
 export async function handleAfterSales(req: any, res: any) {
   try {
+    const { authorized, error, user } = validateAuth(req);
+    if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
     const url = new URL(req.url, `http://${req.headers.host}`);
     const query = Object.fromEntries(url.searchParams.entries());
 
@@ -10,9 +14,9 @@ export async function handleAfterSales(req: any, res: any) {
         const stats = await sql`
           SELECT 
             COUNT(*) as total_abertos,
-            (SELECT COUNT(*) FROM chamados_garantia WHERE status = 'resolvido') as total_resolvidos,
-            (SELECT AVG(EXTRACT(EPOCH FROM (data_resolucao - data_abertura))/86400) FROM chamados_garantia WHERE data_resolucao IS NOT NULL) as tempo_medio
-          FROM chamados_garantia WHERE status != 'resolvido'
+            (SELECT COUNT(*) FROM chamados_garantia WHERE status = 'resolvido' AND tenant_id = ${tenantId}) as total_resolvidos,
+            (SELECT AVG(EXTRACT(EPOCH FROM (data_resolucao - data_abertura))/86400) FROM chamados_garantia WHERE data_resolucao IS NOT NULL AND tenant_id = ${tenantId}) as tempo_medio
+          FROM chamados_garantia WHERE status != 'resolvido' AND tenant_id = ${tenantId}
         `;
         return res.status(200).json({ success: true, data: stats[0] });
       }
@@ -20,8 +24,9 @@ export async function handleAfterSales(req: any, res: any) {
       const chamados = await sql`
         SELECT c.*, cl.nome as cliente_nome, p.ambiente as projeto_ambiente
         FROM chamados_garantia c
-        JOIN clients cl ON c.cliente_id = CAST(cl.id AS TEXT)
-        LEFT JOIN projects p ON c.projeto_id = CAST(p.id AS TEXT)
+        JOIN clients cl ON c.cliente_id = CAST(cl.id AS TEXT) AND cl.tenant_id = ${tenantId}
+        LEFT JOIN projects p ON c.projeto_id = CAST(p.id AS TEXT) AND p.tenant_id = ${tenantId}
+        WHERE c.tenant_id = ${tenantId}
         ORDER BY c.data_abertura DESC
       `;
       return res.status(200).json({ success: true, data: chamados });
@@ -32,22 +37,22 @@ export async function handleAfterSales(req: any, res: any) {
       
       // Gerar número automático GAR-2025-001
       const year = new Date().getFullYear();
-      const [{ count }] = await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM created_at) = ${year}`;
+      const [{ count }] = await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM created_at) = ${year} AND tenant_id = ${tenantId}`;
       const numero = `GAR-${year}-${(Number(count) + 1).toString().padStart(3, '0')}`;
 
       // Verificar garantia (1 ano após entrega do projeto) - Simulação simplificada
       const dentro_garantia = true; 
 
       const [chamado] = await sql`
-        INSERT INTO chamados_garantia (cliente_id, projeto_id, numero, titulo, descricao, tipo, prioridade, dentro_garantia, data_agendamento)
-        VALUES (${cliente_id}, ${projeto_id}, ${numero}, ${titulo}, ${descricao}, ${tipo}, ${prioridade}, ${dentro_garantia}, ${data_agendamento})
+        INSERT INTO chamados_garantia (cliente_id, projeto_id, numero, titulo, descricao, tipo, prioridade, dentro_garantia, data_agendamento, tenant_id)
+        VALUES (${cliente_id}, ${projeto_id}, ${numero}, ${titulo}, ${descricao}, ${tipo}, ${prioridade}, ${dentro_garantia}, ${data_agendamento}, ${tenantId})
         RETURNING *
       `;
 
       // Integrar com Visitas se houver agendamento
       if (data_agendamento) {
         await sql`
-          INSERT INTO kanban_items (title, subtitle, label, status, type, visit_date, visit_time, visit_type, observations)
+          INSERT INTO kanban_items (title, subtitle, label, status, type, visit_date, visit_time, visit_type, observations, tenant_id)
           VALUES (
             ${titulo}, 
             ${'Visita de Assistência Técnica'}, 
@@ -57,7 +62,8 @@ export async function handleAfterSales(req: any, res: any) {
             ${data_agendamento.split('T')[0]}, 
             ${data_agendamento.split('T')[1]?.substring(0, 5) || '09:00'},
             'Garantia/Pós-venda',
-            ${`Chamado: ${numero}\nDesc: ${descricao}`}
+            ${`Chamado: ${numero}\nDesc: ${descricao}`},
+            ${tenantId}
           )
         `;
       }
@@ -78,7 +84,7 @@ export async function handleAfterSales(req: any, res: any) {
           custo_atendimento = ${custo_atendimento},
           data_resolucao = COALESCE(${data_resolucao}, data_resolucao),
           updated_at = NOW()
-        WHERE id = ${id}
+        WHERE id = ${id} AND tenant_id = ${tenantId}
         RETURNING *
       `;
       return res.status(200).json({ success: true, data: resultado });

@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAfterSales } from '../after_sales.js';
 
-vi.mock('../_db.js', () => ({ sql: vi.fn() }));
+vi.mock('../_db.js', () => ({ 
+  sql: vi.fn(), 
+  validateAuth: vi.fn().mockReturnValue({ authorized: true, user: { id: 'u1', name: 'Test', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null }) 
+}));
 
-const { sql } = await import('../_db.js');
+const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
   let sc = 200, jd: any = null;

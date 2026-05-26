@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, timestamp, decimal, jsonb, integer, text, boolean, index } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants.js';
 import { relations } from 'drizzle-orm';
 import { clientes } from './crm.js';
 import { planosDeCorte } from './planos-de-corte.js';
@@ -7,6 +8,7 @@ import { planosDeCorte } from './planos-de-corte.js';
 
 export const skuEngenharia = pgTable('sku_engenharia', {
     id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
     codigo: varchar('codigo', { length: 20 }).unique().notNull(),
     nome: varchar('nome', { length: 200 }).notNull(),
     categoria: varchar('categoria', { length: 50 }),
@@ -17,6 +19,7 @@ export const skuEngenharia = pgTable('sku_engenharia', {
 
 export const skuMontagem = pgTable('sku_montagem', {
     id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
     codigo: varchar('codigo', { length: 20 }).unique().notNull(),
     nome: varchar('nome', { length: 200 }).notNull(),
     unidadeMedida: varchar('unidade_medida', { length: 10 }).default('UN'),
@@ -27,6 +30,7 @@ export const skuMontagem = pgTable('sku_montagem', {
 
 export const skuComponente = pgTable('sku_componente', {
     id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
     codigo: varchar('codigo', { length: 20 }).unique().notNull(),
     nome: varchar('nome', { length: 200 }).notNull(),
     tipo: varchar('tipo', { length: 50 }), // Chapa, Ferragem, Acabamento
@@ -61,6 +65,7 @@ export const bomMontagemComponente = pgTable('bom_montagem_componente', {
 
 export const orcamentos = pgTable('orcamentos_pro', {
     id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
     numeroOrcamento: varchar('numero_orcamento', { length: 30 }).unique().notNull(),
     clienteId: integer('cliente_id').references(() => clientes.id),
     projetoId: uuid('projeto_id').references(() => planosDeCorte.id),

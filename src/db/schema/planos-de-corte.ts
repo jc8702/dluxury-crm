@@ -1,8 +1,10 @@
 import { pgTable, uuid, varchar, integer, jsonb, text, timestamp, numeric, boolean } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants.js';
 
 // 1. Tabela Principal de Planos de Corte
 export const planosDeCorte = pgTable('planos_de_corte', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   nome: varchar('nome', { length: 255 }).notNull(),
   sku_engenharia: varchar('sku_engenharia', { length: 100 }),
   kerf_mm: integer('kerf_mm').default(3),
@@ -21,6 +23,7 @@ export const planosDeCorte = pgTable('planos_de_corte', {
 // 2. Tabela de Chapas (Estoque Industrial)
 export const erpChapas = pgTable('erp_chapas', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   sku: varchar('sku', { length: 100 }).unique().notNull(),
   nome: varchar('nome', { length: 255 }).notNull(),
   largura_mm: integer('largura_mm').notNull(),
@@ -34,6 +37,7 @@ export const erpChapas = pgTable('erp_chapas', {
 // 3. Tabela de SKUs de Engenharia (Mock Base para Funcionalidade 4)
 export const erpSkusEngenharia = pgTable('erp_skus_engenharia', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   sku: varchar('sku', { length: 100 }).unique().notNull(),
   nome: varchar('nome', { length: 255 }).notNull(),
   componentes: jsonb('componentes').notNull(), // Lista de peças e materiais
@@ -45,6 +49,7 @@ export const erpSkusEngenharia = pgTable('erp_skus_engenharia', {
 // 4. Tabela de Retalhos (Sobras Reutilizáveis)
 export const retalhosEstoque = pgTable('retalhos_estoque', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   sku: varchar('sku', { length: 20 }).unique(),
   largura_mm: integer('largura_mm').notNull(),
   altura_mm: integer('altura_mm').notNull(),
@@ -73,6 +78,7 @@ export const retalhosEstoque = pgTable('retalhos_estoque', {
 // 5. Tabela de Movimentações de Estoque Industrial
 export const movimentacoesEstoque = pgTable('erp_movimentacoes_industrial', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   tipo: varchar('tipo', { length: 30 }).notNull(), // 'entrada', 'saida', 'uso_plano', 'perda'
   item_tipo: varchar('item_tipo', { length: 20 }).notNull(), // 'chapa', 'retalho'
   chapa_id: uuid('chapa_id'),

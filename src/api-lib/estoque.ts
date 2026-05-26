@@ -3,8 +3,9 @@ import { sql, validateAuth, extractAndVerifyToken } from './_db.js';
 
 export async function handleEstoque(req: any, res: any) {
   try {
-    const { authorized, error } = validateAuth(req);
+    const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     const { method } = req;
     const { id, type } = req.query;
 
@@ -12,12 +13,14 @@ export async function handleEstoque(req: any, res: any) {
       if (method === 'GET') {
         const { material_id, limit: ql } = req.query;
         const lim = Number(ql) || 100;
-        const result = material_id ? await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id WHERE mov.material_id = ${material_id} ORDER BY mov.created_at DESC LIMIT ${lim}` : await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id ORDER BY mov.created_at DESC LIMIT ${lim}`;
+        const result = material_id 
+          ? await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id WHERE mov.material_id = ${material_id} AND mov.tenant_id = ${tenantId} AND (m.tenant_id IS NULL OR m.tenant_id = ${tenantId}) ORDER BY mov.created_at DESC LIMIT ${lim}` 
+          : await sql`SELECT mov.*, m.nome as material_nome FROM movimentacoes_estoque mov LEFT JOIN materiais m ON mov.material_id = m.id WHERE mov.tenant_id = ${tenantId} AND (m.tenant_id IS NULL OR m.tenant_id = ${tenantId}) ORDER BY mov.created_at DESC LIMIT ${lim}`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
         const { material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, nota_fiscal } = req.body;
-        const mRes = await sql`SELECT estoque_atual, fator_conversao, preco_custo, nome FROM materiais WHERE id = ${material_id}`;
+        const mRes = await sql`SELECT estoque_atual, fator_conversao, preco_custo, nome FROM materiais WHERE id = ${material_id} AND tenant_id = ${tenantId}`;
         if (!mRes.length) throw new Error('Material não encontrado');
         const mat = mRes[0];
         let estD = Number(mat.estoque_atual);
@@ -26,77 +29,76 @@ export async function handleEstoque(req: any, res: any) {
         else if (tipo === 'ajuste') estD = Number(quantidade);
         if (estD < 0 && tipo === 'saida') throw new Error('Estoque insuficiente');
         
-        const { user } = extractAndVerifyToken(req);
-        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, nota_fiscal) VALUES (${material_id}, ${tipo}, ${quantidade}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'SISTEMA'}, ${nota_fiscal || null}) RETURNING *`;
-        await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, updated_at = CURRENT_TIMESTAMP WHERE id = ${material_id}`;
+        const mov = await sql`INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, nota_fiscal, tenant_id) VALUES (${material_id}, ${tipo}, ${quantidade}, ${motivo}, ${projeto_id || null}, ${orcamento_id || null}, ${preco_unitario || mat.preco_custo}, ${Number(quantidade) * (preco_unitario || Number(mat.preco_custo))}, ${mat.estoque_atual}, ${estD}, ${user?.name || 'SISTEMA'}, ${nota_fiscal || null}, ${tenantId}) RETURNING *`;
+        await sql`UPDATE materiais SET estoque_atual = ${estD}, preco_custo = ${tipo === 'entrada' ? (preco_unitario || mat.preco_custo) : mat.preco_custo}, updated_at = CURRENT_TIMESTAMP WHERE id = ${material_id} AND tenant_id = ${tenantId}`;
         return res.status(201).json({ success: true, data: mov[0] });
       }
     }
 
     if (type === 'fornecedores') {
       if (method === 'GET') {
-        const result = id ? (await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE id = ${id}`)[0] : await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE ativo = true ORDER BY nome ASC`;
+        const result = id 
+          ? (await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE id = ${id} AND tenant_id = ${tenantId}`)[0] 
+          : await sql`SELECT id, nome, cnpj, contato, telefone, email, cidade, estado, observacoes, ativo, created_at, updated_at FROM fornecedores WHERE ativo = true AND tenant_id = ${tenantId} ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
         const f = req.body;
-        const r = await sql`INSERT INTO fornecedores (nome, cnpj, contato, telefone, email, cidade, estado, observacoes) VALUES (${f.nome}, ${f.cnpj}, ${f.contato}, ${f.telefone}, ${f.email}, ${f.cidade}, ${f.estado}, ${f.observacoes}) RETURNING *`;
+        const r = await sql`INSERT INTO fornecedores (nome, cnpj, contato, telefone, email, cidade, estado, observacoes, tenant_id) VALUES (${f.nome}, ${f.cnpj}, ${f.contato}, ${f.telefone}, ${f.email}, ${f.cidade}, ${f.estado}, ${f.observacoes}, ${tenantId}) RETURNING *`;
         return res.status(201).json({ success: true, data: r[0] });
       }
       if (method === 'PATCH') {
         const f = req.body;
-        const r = await sql`UPDATE fornecedores SET nome = ${f.nome}, cnpj = ${f.cnpj}, contato = ${f.contato}, telefone = ${f.telefone}, email = ${f.email}, cidade = ${f.cidade}, estado = ${f.estado}, observacoes = ${f.observacoes}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
+        const r = await sql`UPDATE fornecedores SET nome = ${f.nome}, cnpj = ${f.cnpj}, contato = ${f.contato}, telefone = ${f.telefone}, email = ${f.email}, cidade = ${f.cidade}, estado = ${f.estado}, observacoes = ${f.observacoes}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
         return res.status(200).json({ success: true, data: r[0] });
       }
       if (method === 'DELETE') {
-        const { user } = extractAndVerifyToken(req);
         if (!user) return res.status(401).json({ success: false, error: 'Não autorizado' });
-        await sql`UPDATE fornecedores SET ativo = false WHERE id = ${id}`;
+        await sql`UPDATE fornecedores SET ativo = false WHERE id = ${id} AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true });
       }
     }
 
     if (type === 'categories') {
       if (method === 'GET') {
-        const result = await sql`SELECT id, nome, ativo, created_at FROM erp_categories ORDER BY nome ASC`;
+        const result = await sql`SELECT id, nome, ativo, created_at FROM erp_categories WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
         return res.status(200).json({ success: true, data: result });
       }
       if (method === 'POST') {
-        const r = await sql`INSERT INTO erp_categories (id, nome, ativo) VALUES (${req.body.slug?.toUpperCase() || req.body.nome.substring(0,3).toUpperCase()}, ${req.body.nome}, true) RETURNING *`;
+        const r = await sql`INSERT INTO erp_categories (id, nome, ativo, tenant_id) VALUES (${req.body.slug?.toUpperCase() || req.body.nome.substring(0,3).toUpperCase()}, ${req.body.nome}, true, ${tenantId}) RETURNING *`;
         return res.status(201).json({ success: true, data: r[0] });
       }
     }
 
     if (method === 'GET') {
       if (id) {
-        const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id}`;
-        const movs = await sql`SELECT id, material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at, nota_fiscal FROM movimentacoes_estoque WHERE material_id = ${id} ORDER BY created_at DESC LIMIT 50`;
+        const mat = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.id = ${id} AND m.tenant_id = ${tenantId} AND (c.tenant_id IS NULL OR c.tenant_id = ${tenantId})`;
+        const movs = await sql`SELECT id, material_id, tipo, quantidade, motivo, projeto_id, orcamento_id, preco_unitario, valor_total, estoque_antes, estoque_depois, created_by, created_at, nota_fiscal FROM movimentacoes_estoque WHERE material_id = ${id} AND tenant_id = ${tenantId} ORDER BY created_at DESC LIMIT 50`;
         return res.status(200).json({ success: true, data: { ...mat[0], movements: movs } });
       }
       const { q } = req.query;
       if (q) {
-        const mats = await sql`SELECT m.id, m.sku, m.nome, c.nome as categoria_nome, m.preco_custo FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true AND (m.sku ILIKE ${'%' + q + '%'} OR m.nome ILIKE ${'%' + q + '%'}) LIMIT 10`;
-        const mods = await sql`SELECT id, codigo_modelo as sku, nome, 'Módulo de Engenharia' as categoria_nome, 0 as preco_custo, largura_padrao, altura_padrao, profundidade_padrao, horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao FROM erp_product_bom WHERE codigo_modelo ILIKE ${'%' + q + '%'} OR nome ILIKE ${'%' + q + '%'} LIMIT 10`;
+        const mats = await sql`SELECT m.id, m.sku, m.nome, c.nome as categoria_nome, m.preco_custo FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true AND m.tenant_id = ${tenantId} AND (c.tenant_id IS NULL OR c.tenant_id = ${tenantId}) AND (m.sku ILIKE ${'%' + q + '%'} OR m.nome ILIKE ${'%' + q + '%'}) LIMIT 10`;
+        const mods = await sql`SELECT id, codigo_modelo as sku, nome, 'Módulo de Engenharia' as categoria_nome, 0 as preco_custo, largura_padrao, altura_padrao, profundidade_padrao, horas_mo_padrao, valor_hora_padrao, preco_material_m3_padrao FROM erp_product_bom WHERE (codigo_modelo ILIKE ${'%' + q + '%'} OR nome ILIKE ${'%' + q + '%'}) AND tenant_id = ${tenantId} LIMIT 10`;
         return res.status(200).json({ success: true, data: [...mats, ...mods] });
       }
-      const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true ORDER BY m.nome ASC`;
+      const result = await sql`SELECT m.*, c.nome as categoria_nome FROM materiais m LEFT JOIN erp_categories c ON m.categoria_id = c.id WHERE m.ativo = true AND m.tenant_id = ${tenantId} AND (c.tenant_id IS NULL OR c.tenant_id = ${tenantId}) ORDER BY m.nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
 
     if (method === 'POST' || method === 'PATCH') {
       const f = req.body;
       if (method === 'POST') {
-        const r = await sql`INSERT INTO materiais (sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes, cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro, icms, icms_st, ipi, pis, cofins, origem, marca) VALUES (${f.sku}, ${f.nome}, ${f.descricao}, ${f.categoria_id}, ${f.subcategoria}, ${f.unidade_compra}, ${f.unidade_uso}, ${f.fator_conversao}, ${f.estoque_minimo}, ${f.preco_custo}, ${f.fornecedor_principal}, ${f.observacoes}, ${f.cfop}, ${f.ncm}, ${f.largura_mm}, ${f.altura_mm}, ${f.preco_venda}, ${f.margem_lucro}, ${f.icms}, ${f.icms_st}, ${f.ipi}, ${f.pis}, ${f.cofins}, ${f.origem}, ${f.marca}) RETURNING *`;
+        const r = await sql`INSERT INTO materiais (sku, nome, descricao, categoria_id, subcategoria, unidade_compra, unidade_uso, fator_conversao, estoque_minimo, preco_custo, fornecedor_principal, observacoes, cfop, ncm, largura_mm, altura_mm, preco_venda, margem_lucro, icms, icms_st, ipi, pis, cofins, origem, marca, tenant_id) VALUES (${f.sku}, ${f.nome}, ${f.descricao}, ${f.categoria_id}, ${f.subcategoria}, ${f.unidade_compra}, ${f.unidade_uso}, ${f.fator_conversao}, ${f.estoque_minimo}, ${f.preco_custo}, ${f.fornecedor_principal}, ${f.observacoes}, ${f.cfop}, ${f.ncm}, ${f.largura_mm}, ${f.altura_mm}, ${f.preco_venda}, ${f.margem_lucro}, ${f.icms}, ${f.icms_st}, ${f.ipi}, ${f.pis}, ${f.cofins}, ${f.origem}, ${f.marca}, ${tenantId}) RETURNING *`;
         return res.status(201).json({ success: true, data: r[0] });
       }
-      const r = await sql`UPDATE materiais SET sku = ${f.sku}, nome = ${f.nome}, descricao = ${f.descricao}, categoria_id = ${f.categoria_id}, subcategoria = ${f.subcategoria}, unidade_compra = ${f.unidade_compra}, unidade_uso = ${f.unidade_uso}, fator_conversao = ${f.fator_conversao}, estoque_minimo = ${f.estoque_minimo}, preco_custo = ${f.preco_custo}, fornecedor_principal = ${f.fornecedor_principal}, observacoes = ${f.observacoes}, cfop = ${f.cfop}, ncm = ${f.ncm}, largura_mm = ${f.largura_mm}, altura_mm = ${f.altura_mm}, preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro}, icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi}, pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem}, marca = ${f.marca}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
+      const r = await sql`UPDATE materiais SET sku = ${f.sku}, nome = ${f.nome}, descricao = ${f.descricao}, categoria_id = ${f.categoria_id}, subcategoria = ${f.subcategoria}, unidade_compra = ${f.unidade_compra}, unidade_uso = ${f.unidade_uso}, fator_conversao = ${f.fator_conversao}, estoque_minimo = ${f.estoque_minimo}, preco_custo = ${f.preco_custo}, fornecedor_principal = ${f.fornecedor_principal}, observacoes = ${f.observacoes}, cfop = ${f.cfop}, ncm = ${f.ncm}, largura_mm = ${f.largura_mm}, altura_mm = ${f.altura_mm}, preco_venda = ${f.preco_venda}, margem_lucro = ${f.margem_lucro}, icms = ${f.icms}, icms_st = ${f.icms_st}, ipi = ${f.ipi}, pis = ${f.pis}, cofins = ${f.cofins}, origem = ${f.origem}, marca = ${f.marca}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
       return res.status(200).json({ success: true, data: r[0] });
     }
 
     if (method === 'DELETE') {
-      const { user } = extractAndVerifyToken(req);
       if (user?.role !== 'admin') return res.status(403).json({ success: false, error: 'Acesso negado' });
-      await sql`UPDATE materiais SET ativo = false WHERE id = ${id}`;
+      await sql`UPDATE materiais SET ativo = false WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();

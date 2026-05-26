@@ -18,6 +18,12 @@ export async function handleProduction(req: any, res: any) {
     id = url.split('/production/')[1].split('?')[0];
   }
 
+  const auth = validateAuth(req);
+  if (!auth.authorized) {
+    return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
+  }
+  const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
   try {
     // Garantia de migração (v6 hotfix)
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
@@ -29,12 +35,12 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
     await sql`UPDATE ordens_producao SET status = 'AGUARDANDO' WHERE status = 'PENDENTE'`.catch(() => {});
 
-    if (method === 'GET' && (!id || id === 'list')) return await listOPs(res);
-    if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res);
-    if (method === 'POST') return await createOP(req, res);
-    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res);
-    if (method === 'PATCH') return await updateOPStatus(req, res);
-    if (method === 'DELETE') return await deleteOP(req, res);
+    if (method === 'GET' && (!id || id === 'list')) return await listOPs(res, tenantId);
+    if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res, tenantId);
+    if (method === 'POST') return await createOP(req, res, tenantId);
+    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res, tenantId);
+    if (method === 'PATCH') return await updateOPStatus(req, res, tenantId);
+    if (method === 'DELETE') return await deleteOP(req, res, tenantId);
     
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
@@ -48,8 +54,8 @@ export async function handleProduction(req: any, res: any) {
 /**
  * Sincroniza as previsões de entrega de toda a fila ativa
  */
-async function syncQueueForecasting() {
-  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' ORDER BY created_at ASC`;
+async function syncQueueForecasting(tenantId: string) {
+  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
   if (allOps.length === 0) return;
 
   const previstos = calcularPrevisaoEntrega(allOps as any);
@@ -60,20 +66,20 @@ async function syncQueueForecasting() {
       SET data_prevista_entrega = ${new Date(op.data_prevista_entrega as number)},
           tempo_previsto_corte = ${op.tempo_previsto_corte},
           tempo_previsto_montagem = ${op.tempo_previsto_montagem}
-      WHERE op_id = ${op.op_id}
+      WHERE op_id = ${op.op_id} AND tenant_id = ${tenantId}
     `;
   }
 }
 
-async function listOPs(res: any) {
-  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL ORDER BY created_at DESC`;
+async function listOPs(res: any, tenantId: string) {
+  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
   
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
   const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
   if (precisaSincronizar) {
     /* console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
-    await syncQueueForecasting();
-    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao ORDER BY created_at DESC`;
+    await syncQueueForecasting(tenantId);
+    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
     return res.status(200).json({ success: true, data: opsAtualizadas });
   }
 
@@ -83,7 +89,7 @@ async function listOPs(res: any) {
 /**
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
-async function createOP(req: any, res: any) {
+async function createOP(req: any, res: any, tenantId: string) {
   const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id } = req.body;
 
   /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, orcamento_id }); */
@@ -105,8 +111,8 @@ async function createOP(req: any, res: any) {
     const initialStatus = req.body.status || 'PENDENTE';
 
     const [novaOP] = await sql`
-      INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id)
-      VALUES (${op_id.trim().toUpperCase()}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null})
+      INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id, tenant_id)
+      VALUES (${op_id.trim().toUpperCase()}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null}, ${tenantId})
       RETURNING *
     `;
 
@@ -116,7 +122,7 @@ async function createOP(req: any, res: any) {
     /* console.log('[CREATE_OP] Created:', novaOP); */
 
     // Atualizar fila
-    await syncQueueForecasting();
+    await syncQueueForecasting(tenantId);
 
     return res.status(201).json({ success: true, data: novaOP });
   } catch (err: any) {
@@ -128,11 +134,11 @@ async function createOP(req: any, res: any) {
 /**
  * Atualiza detalhes da OP (checklist, produto, pecas)
  */
-async function updateOPDetails(req: any, res: any) {
+async function updateOPDetails(req: any, res: any, tenantId: string) {
   const { op_id, produto, pecas, checklist, metadata } = req.body;
 
   // Merge update: update fields that are provided. Keep existing otherwise.
-  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
+  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   const newProduto = produto !== undefined ? produto : existing.produto;
@@ -147,7 +153,7 @@ async function updateOPDetails(req: any, res: any) {
         checklist = ${newChecklist},
         metadata = ${newMetadata},
         updated_at = CURRENT_TIMESTAMP
-    WHERE op_id = ${op_id}
+    WHERE op_id = ${op_id} AND tenant_id = ${tenantId}
     RETURNING *
   `;
 
@@ -155,7 +161,7 @@ async function updateOPDetails(req: any, res: any) {
   await auditLog('ordens_producao', atualizada.id, 'UPDATE_DETAILS', user?.id, existing, atualizada);
 
   // If changed peças, recalcula previsões
-  await syncQueueForecasting();
+  await syncQueueForecasting(tenantId);
 
   try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch {
     // Ignore window reference error on server-side
@@ -167,19 +173,19 @@ async function updateOPDetails(req: any, res: any) {
 /**
  * Exclui uma OP e remove o card do kanban se existir
  */
-  async function deleteOP(req: any, res: any) {
+async function deleteOP(req: any, res: any, tenantId: string) {
   const { user } = validateAuth(req);
   const { op_id } = req.query || req.body || {};
   if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
 
-  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
+  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   // Soft Delete
-  await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id}`;
+  await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
 
   // Soft Delete em itens de kanban relacionados
-  await sql`UPDATE kanban_items SET status = 'DELETADO', updated_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'} `.catch(() => {});
+  await sql`UPDATE kanban_items SET status = 'DELETADO', updated_at = CURRENT_TIMESTAMP WHERE (op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'}) AND tenant_id = ${tenantId}`.catch(() => {});
 
   await auditLog('ordens_producao', existing.id, 'DELETE', user?.id, existing, { deleted_at: new Date() });
 
@@ -189,11 +195,11 @@ async function updateOPDetails(req: any, res: any) {
 /**
  * Atualiza o status da OP e gerencia os tempos de produção
  */
-async function updateOPStatus(req: any, res: any) {
+async function updateOPStatus(req: any, res: any, tenantId: string) {
   const { op_id, status } = req.body;
 
   // Busca estado atual
-  const [op] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id}`;
+  const [op] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!op) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   let data_inicio = op.data_inicio;
@@ -213,9 +219,9 @@ async function updateOPStatus(req: any, res: any) {
       for (const p of pecas) {
         if (p && p.operator_checked === false) { piecesComplete = false; break; }
       }
-  } catch {
-    // Ignore window reference error on server-side
-  }
+    } catch {
+      // Ignore window reference error on server-side
+    }
 
     // If attempting to advance to next productive stage (not allowing revert to AGUARDANDO), block if incomplete
     const fluxo: string[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];
@@ -252,12 +258,12 @@ async function updateOPStatus(req: any, res: any) {
         data_inicio = ${data_inicio}, 
         data_fim = ${data_fim}, 
         updated_at = CURRENT_TIMESTAMP
-    WHERE op_id = ${op_id}
+    WHERE op_id = ${op_id} AND tenant_id = ${tenantId}
     RETURNING *
   `;
 
   // Recalcular fila se mudou status (pode afetar gargalos e datas)
-  await syncQueueForecasting();
+  await syncQueueForecasting(tenantId);
 
   return res.status(200).json({ success: true, data: atualizada });
 }
@@ -265,13 +271,13 @@ async function updateOPStatus(req: any, res: any) {
 /**
  * Calcula métricas de produtividade (MES)
  */
-async function getProductionMetrics(res: any) {
+async function getProductionMetrics(res: any, tenantId: string) {
   // Puxar apenas OPs cujos projetos ainda existem (se tiverem projeto_id)
   const allOps = await sql`
     SELECT op.* 
     FROM ordens_producao op
-    LEFT JOIN projects p ON op.projeto_id = p.id::text
-    WHERE op.deleted_at IS NULL 
+    LEFT JOIN projects p ON op.projeto_id = p.id::text AND p.tenant_id = ${tenantId}
+    WHERE op.deleted_at IS NULL AND op.tenant_id = ${tenantId}
     AND (op.projeto_id IS NULL OR (p.id IS NOT NULL AND p.deleted_at IS NULL))
   `;
   const agora = Date.now();

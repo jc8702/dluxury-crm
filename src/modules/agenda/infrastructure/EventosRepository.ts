@@ -3,7 +3,7 @@ import { Evento, EventoSchema } from "../domain/Evento.js";
 import { normalizeObjetivo } from "../domain/normalizeObjetivo.js";
 
 export class EventosRepository {
-  async list(filters: { inicio?: Date, fim?: Date, tipo?: string, responsavel_id?: string } = {}) {
+  async list(tenantId: string, filters: { inicio?: Date, fim?: Date, tipo?: string, responsavel_id?: string } = {}) {
     let query = sql`
       SELECT e.*, 
              c.nome as cliente_nome,
@@ -11,10 +11,10 @@ export class EventosRepository {
              p.ambiente as projeto_nome,
              u.name as responsavel_nome
       FROM eventos e
-      LEFT JOIN clients c ON e.cliente_id::TEXT = c.id::TEXT
-      LEFT JOIN projects p ON e.projeto_id::TEXT = p.id::TEXT
-      LEFT JOIN users u ON e.responsavel_id::TEXT = u.id::TEXT
-      WHERE 1=1
+      LEFT JOIN clients c ON e.cliente_id::TEXT = c.id::TEXT AND c.tenant_id = ${tenantId}
+      LEFT JOIN projects p ON e.projeto_id::TEXT = p.id::TEXT AND p.tenant_id = ${tenantId}
+      LEFT JOIN users u ON e.responsavel_id::TEXT = u.id::TEXT AND u.tenant_id = ${tenantId}
+      WHERE e.tenant_id = ${tenantId}
     `;
 
     if (filters.inicio) {
@@ -35,12 +35,12 @@ export class EventosRepository {
     return await query;
   }
 
-  async getById(id: string) {
-    const results = await sql`SELECT * FROM eventos WHERE id::TEXT = ${id}::TEXT`;
+  async getById(id: string, tenantId: string) {
+    const results = await sql`SELECT * FROM eventos WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}`;
     return results[0] || null;
   }
 
-  async create(data: Evento) {
+  async create(data: Evento, tenantId: string) {
     const validated = EventoSchema.parse(data);
     
     // NORMALIZAÇÃO FORÇADA - ponto único de entrada
@@ -51,11 +51,11 @@ export class EventosRepository {
       INSERT INTO eventos (
         tipo, titulo, descricao, data_inicio, data_fim, dia_inteiro,
         cliente_id, projeto_id, visita_id, orcamento_id, endereco, objetivo, status_visita,
-        responsavel_id, criado_por, cor, lembrete_minutos
+        responsavel_id, criado_por, cor, lembrete_minutos, tenant_id
       ) VALUES (
         ${validated.tipo}, ${validated.titulo}, ${validated.descricao}, ${validated.data_inicio}, ${validated.data_fim}, ${validated.dia_inteiro},
         ${validated.cliente_id}::TEXT, ${validated.projeto_id}::TEXT, ${validated.visita_id}::TEXT, ${validated.orcamento_id}::TEXT, ${validated.endereco}, ${objetivoNormalizado}, ${validated.status_visita},
-        ${validated.responsavel_id}::TEXT, ${validated.criado_por}::TEXT, ${validated.cor}, ${validated.lembrete_minutos}
+        ${validated.responsavel_id}::TEXT, ${validated.criado_por}::TEXT, ${validated.cor}, ${validated.lembrete_minutos}, ${tenantId}
       )
       RETURNING *
     `;
@@ -63,8 +63,8 @@ export class EventosRepository {
     return results[0];
   }
 
-  async update(id: string, data: Partial<Evento>) {
-    const current = await this.getById(id);
+  async update(id: string, data: Partial<Evento>, tenantId: string) {
+    const current = await this.getById(id, tenantId);
     if (!current) throw new Error("Evento não encontrado");
 
     const merged = { ...current, ...data };
@@ -93,38 +93,38 @@ export class EventosRepository {
         cor = ${validated.cor},
         lembrete_minutos = ${validated.lembrete_minutos},
         updated_at = NOW()
-      WHERE id::TEXT = ${id}::TEXT
+      WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}
       RETURNING *
     `;
 
     return results[0];
   }
 
-  async delete(id: string) {
-    await sql`DELETE FROM eventos WHERE id::TEXT = ${id}::TEXT`;
+  async delete(id: string, tenantId: string) {
+    await sql`DELETE FROM eventos WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}`;
     return true;
   }
 
-  async updateStatus(id: string, status: string, resultado?: string) {
+  async updateStatus(id: string, status: string, tenantId: string, resultado?: string) {
     const results = await sql`
       UPDATE eventos SET
         status_visita = ${status},
         resultado_visita = ${resultado || null},
         updated_at = NOW()
-      WHERE id::TEXT = ${id}::TEXT
+      WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}
       RETURNING *
     `;
     return results[0];
   }
 
-  async getHistorico(eventoId: string) {
+  async getHistorico(eventoId: string, tenantId: string) {
     return await sql`
       SELECT h.*, u.name as alterado_por_nome
       FROM eventos_historico h
-      LEFT JOIN users u ON h.alterado_por::TEXT = u.id::TEXT
-      WHERE h.evento_id::TEXT = ${eventoId}::TEXT
+      LEFT JOIN users u ON h.alterado_por::TEXT = u.id::TEXT AND u.tenant_id = ${tenantId}
+      INNER JOIN eventos e ON h.evento_id::TEXT = e.id::TEXT
+      WHERE h.evento_id::TEXT = ${eventoId}::TEXT AND e.tenant_id = ${tenantId}
       ORDER BY h.alterado_em DESC
     `;
   }
 }
-

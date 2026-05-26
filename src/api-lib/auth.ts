@@ -18,21 +18,22 @@ export async function handleAuth(req: any, res: any): Promise<void> {
         if (typeof email !== 'string' || typeof password !== 'string') return res.status(400).json({ success: false, error: 'Formato inválido' });
         const normalizedEmail = email.trim().toLowerCase();
         if (normalizedEmail.length > 254) return res.status(400).json({ success: false, error: 'Email muito longo' });
-        const users = await sql`SELECT id, name, email, role, password_hash FROM users WHERE email = ${normalizedEmail}`;
+        const users = await sql`SELECT id, name, email, role, password_hash, tenant_id FROM users WHERE email = ${normalizedEmail}`;
         if (users.length === 0) return res.status(401).json({ success: false, error: 'Usuário não encontrado' });
         const user = users[0];
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ success: false, error: 'Senha incorreta' });
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-        return res.status(200).json({ success: true, data: { token, user: { id: user.id, name: user.name, email: user.email, role: user.role } } });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name, tenantId: user.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
+        return res.status(200).json({ success: true, data: { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenant_id } } });
       }
       if (action === 'register') {
         const { user: requestingUser, error } = extractAndVerifyToken(req);
         if (error || requestingUser?.role !== 'admin') return res.status(403).json({ success: false, error: 'Acesso negado' });
         const { name, email, password, role } = req.body;
+        const tenantId = requestingUser.tenantId || '00000000-0000-0000-0000-000000000000';
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
-        const result = await sql`INSERT INTO users (name, email, password_hash, role) VALUES (${name}, ${email}, ${hash}, ${role}) RETURNING id, name, email, role`;
+        const result = await sql`INSERT INTO users (name, email, password_hash, role, tenant_id) VALUES (${name}, ${email}, ${hash}, ${role}, ${tenantId}) RETURNING id, name, email, role, tenant_id`;
         return res.status(201).json({ success: true, data: result[0] });
       }
     }
@@ -53,18 +54,22 @@ export async function handleUsers(req: any, res: any): Promise<void> {
     if (error || requestingUser?.role !== 'admin') return res.status(403).json({ success: false, error: 'Acesso negado' });
     
     if (req.method === 'GET') {
-      const result = await sql`SELECT id, name, email, role, created_at FROM users ORDER BY name ASC`;
+      const tenantId = requestingUser.tenantId || '00000000-0000-0000-0000-000000000000';
+      const result = await sql`SELECT id, name, email, role, created_at, tenant_id FROM users WHERE tenant_id = ${tenantId} ORDER BY name ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'PATCH') {
       const { id } = req.query;
       const { name, email, role } = req.body;
-      const result = await sql`UPDATE users SET name = COALESCE(${name}, name), email = COALESCE(${email}, email), role = COALESCE(${role}, role) WHERE id = ${id} RETURNING id, name, email, role`;
+      const tenantId = requestingUser.tenantId || '00000000-0000-0000-0000-000000000000';
+      const result = await sql`UPDATE users SET name = COALESCE(${name}, name), email = COALESCE(${email}, email), role = COALESCE(${role}, role) WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING id, name, email, role`;
+      if (result.length === 0) return res.status(404).json({ success: false, error: 'Usuário não encontrado no seu tenant' });
       return res.status(200).json({ success: true, data: result[0] });
     }
     if (req.method === 'DELETE') {
       const { id } = req.query;
-      await sql`DELETE FROM users WHERE id = ${id}`;
+      const tenantId = requestingUser.tenantId || '00000000-0000-0000-0000-000000000000';
+      await sql`DELETE FROM users WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();

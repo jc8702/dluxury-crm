@@ -3,6 +3,89 @@ import { db } from '../../src/api-lib/drizzle-db.js';
 import { sql } from '../../src/api-lib/_db.js';
 import { skuComponente } from '../../src/db/schema/index.js';
 import { sql as dsql } from 'drizzle-orm';
+import crypto from 'crypto';
+
+const aiInstancesCache = new Map<string, GoogleGenAI>();
+
+function decryptKey(cipherText: string): string {
+  try {
+    const rawKey = process.env.APP_ENCRYPTION_KEY || GEMINI_API_KEY || 'default-fallback-key-32-chars-long!';
+    const key = crypto.createHash('sha256').update(rawKey).digest();
+    const parts = cipherText.split(':');
+    if (parts.length !== 3) return '';
+    const [ivHex, authTagHex, encryptedText] = parts;
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (err: any) {
+    console.warn('[BYOK] Falha ao descriptografar chave do tenant:', err.message || err);
+    return '';
+  }
+}
+
+async function obterInstanciaAI(tenantId?: string): Promise<GoogleGenAI> {
+  if (tenantId && tenantId !== '00000000-0000-0000-0000-000000000000') {
+    if (aiInstancesCache.has(tenantId)) {
+      return aiInstancesCache.get(tenantId)!;
+    }
+    try {
+      const tenantRes = await sql`SELECT gemini_api_key_custom FROM tenants WHERE id = ${tenantId}::uuid`;
+      const encryptedKey = tenantRes[0]?.gemini_api_key_custom;
+      if (encryptedKey) {
+        const decryptedKey = decryptKey(encryptedKey);
+        if (decryptedKey && decryptedKey.trim()) {
+          const customAi = new GoogleGenAI({ apiKey: decryptedKey.trim() });
+          aiInstancesCache.set(tenantId, customAi);
+          return customAi;
+        }
+      }
+    } catch (e) {
+      console.warn('[BYOK] Erro ao carregar chave customizada do banco, usando global:', e);
+    }
+  }
+  return ai;
+}
+
+function calcularCustoEstimado(model: string, promptTokens: number, completionTokens: number): number {
+  const isPro = model.includes('pro');
+  if (isPro) {
+    return (promptTokens * 1.25 + completionTokens * 5.00) / 1_000_000;
+  } else {
+    return (promptTokens * 0.075 + completionTokens * 0.30) / 1_000_000;
+  }
+}
+
+async function registrarLogUso(params: {
+  tenantId: string;
+  usuarioId: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+}) {
+  if (!params.tenantId || params.tenantId === '00000000-0000-0000-0000-000000000000') return;
+  const custo = calcularCustoEstimado(params.model, params.promptTokens, params.completionTokens);
+  try {
+    await sql`
+      INSERT INTO usage_logs (
+        tenant_id, usuario_id, modelo, prompt_tokens, completion_tokens, total_tokens, custo_estimado
+      ) VALUES (
+        ${params.tenantId}::uuid, 
+        ${params.usuarioId}::uuid, 
+        ${params.model}, 
+        ${params.promptTokens}, 
+        ${params.completionTokens}, 
+        ${params.promptTokens + params.completionTokens}, 
+        ${custo}
+      )
+    `;
+  } catch (err) {
+    console.error('[AI_CHAT] Erro ao registrar log de uso de tokens:', err);
+  }
+}
 
 // Configurações
 const MODEL_PRO = 'gemini-2.5-pro';
@@ -128,14 +211,18 @@ async function chamarGemini(params: {
   responseSchema?: any;
   temperature?: number;
   maxOutputTokens?: number;
+  tenantId?: string;
+  usuarioId?: string;
 }) {
   const modelsToTry = [MODEL_PRO, MODEL_FLASH];
   let lastError: any = null;
 
+  const aiClient = await obterInstanciaAI(params.tenantId);
+
   for (const model of modelsToTry) {
     try {
       /* console.log(`[AI_CHAT] Tentando chamada no modelo ${model}...`) */;
-      const response = await ai.models.generateContent({
+      const response = await aiClient.models.generateContent({
         model,
         contents: params.contents,
         config: {
@@ -147,6 +234,18 @@ async function chamarGemini(params: {
         }
       });
       /* console.log(`[AI_CHAT] Sucesso na execução com ${model}`) */;
+      
+      const usage = response.usageMetadata;
+      if (usage && params.tenantId && params.usuarioId) {
+        await registrarLogUso({
+          tenantId: params.tenantId,
+          usuarioId: params.usuarioId,
+          model,
+          promptTokens: usage.promptTokenCount || 0,
+          completionTokens: usage.candidatesTokenCount || 0,
+        });
+      }
+
       return response;
     } catch (err: any) {
       console.error(`[AI_ERROR] Erro na execução com ${model}:`, err.message || err);
@@ -167,7 +266,7 @@ async function chamarGemini(params: {
 }
 
 // Roteador semântico de agentes
-export async function rotearAgente(userMessage: string, historySummary?: string): Promise<{ agente_escolhido: string; confianca: number; razao: string }> {
+export async function rotearAgente(userMessage: string, historySummary?: string, tenantId?: string, usuarioId?: string): Promise<{ agente_escolhido: string; confianca: number; razao: string }> {
   /* console.log(`[AI_ROUTER] Roteando mensagem: "${userMessage.slice(0, 60)}..."`) */;
   
   const prompt = `Analise a mensagem do usuário e decida qual é o agente especialista apropriado do D'LUXURY ERP.
@@ -213,7 +312,9 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
           }
         },
         required: ['agente_escolhido', 'confianca', 'razao']
-      }
+      },
+      tenantId,
+      usuarioId
     });
 
     const parsed = limparEParsearJSON(response.text);
@@ -473,6 +574,8 @@ export async function processarChat(payload: {
   conversation_history?: { role: 'user' | 'assistant'; content: string }[];
   context?: Record<string, any>;
   memory_summary?: string;
+  tenantId?: string;
+  usuarioId?: string;
 }): Promise<any> {
   /* console.log('[AI_CHAT] Iniciando processamento do chat...') */;
   
@@ -482,6 +585,8 @@ export async function processarChat(payload: {
   const context = payload.context || {};
   const memorySummary = payload.memory_summary || '';
   const today = context.data_atual ? new Date(context.data_atual) : new Date();
+  const tenantId = payload.tenantId;
+  const usuarioId = payload.usuarioId;
 
   // Histórico resumido para os prompts
   const historySummary = history.map(h => `${h.role === 'user' ? 'USUÁRIO' : 'DLUX'}: ${h.content}`).join('\n');
@@ -495,7 +600,7 @@ export async function processarChat(payload: {
     chosenAgent = agentMode;
     /* console.log(`[AI_CHAT] Modo manual: usando agente "${chosenAgent}"`) */;
   } else {
-    const route = await rotearAgente(userMessage, historySummary);
+    const route = await rotearAgente(userMessage, historySummary, tenantId, usuarioId);
     chosenAgent = route.agente_escolhido;
     _routeConfidence = route.confianca;
     _routeReason = route.razao;
@@ -602,6 +707,8 @@ export async function processarChat(payload: {
       responseMimeType: undefined,
       responseSchema: undefined,
       temperature: TEMPERATURE,
+      tenantId,
+      usuarioId
     });
 
     const candidate = geminiResponse.candidates?.[0];
@@ -710,7 +817,9 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
           }
         },
         required: ['response', 'confidence', 'sources']
-      }
+      },
+      tenantId,
+      usuarioId
     });
 
     const parsedFinal = limparEParsearJSON(jsonResponse.text);

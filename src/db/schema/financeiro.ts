@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, numeric, timestamp, boolean, integer, text } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants.js';
 
 // ──────────────────────────────────────────
 // CLASSES FINANCEIRAS
@@ -6,6 +7,7 @@ import { pgTable, uuid, varchar, numeric, timestamp, boolean, integer, text } fr
 
 export const classesFinanceiras = pgTable('classes_financeiras', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   codigo: varchar('codigo', { length: 50 }).notNull().unique(),
   nome: varchar('nome', { length: 255 }).notNull(),
   tipo: varchar('tipo', { length: 20 }).notNull(), // 'sintetica' | 'analitica'
@@ -24,6 +26,7 @@ export const classesFinanceiras = pgTable('classes_financeiras', {
 
 export const contasInternas = pgTable('contas_internas', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   nome: varchar('nome', { length: 255 }).notNull(),
   tipo: varchar('tipo', { length: 50 }).notNull(),
   banco_codigo: varchar('banco_codigo', { length: 10 }),
@@ -42,6 +45,7 @@ export const contasInternas = pgTable('contas_internas', {
 
 export const titulosReceber = pgTable('titulos_receber', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   numero_titulo: varchar('numero_titulo', { length: 50 }).notNull().unique(),
   cliente_id: uuid('cliente_id').notNull(),
   projeto_id: uuid('projeto_id'),
@@ -86,6 +90,7 @@ export const titulosReceber = pgTable('titulos_receber', {
 
 export const titulosPagar = pgTable('titulos_pagar', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   numero_titulo: varchar('numero_titulo', { length: 50 }).notNull().unique(),
   fornecedor_id: uuid('fornecedor_id').notNull(),
   nota_fiscal: varchar('nota_fiscal', { length: 100 }),
@@ -131,6 +136,7 @@ export const titulosPagar = pgTable('titulos_pagar', {
 
 export const movimentacoesTesouraria = pgTable('movimentacoes_tesouraria', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   tipo: varchar('tipo', { length: 30 }).notNull(),
   conta_origem_id: uuid('conta_origem_id').references(() => contasInternas.id),
   conta_destino_id: uuid('conta_destino_id').references(() => contasInternas.id),
@@ -149,6 +155,7 @@ export const movimentacoesTesouraria = pgTable('movimentacoes_tesouraria', {
 
 export const baixas = pgTable('baixas', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   tipo: varchar('tipo', { length: 20 }).notNull(), // 'recebimento' | 'pagamento'
   titulo_id: uuid('titulo_id').notNull(),
   valor_baixa: numeric('valor_baixa', { precision: 15, scale: 2 }).notNull(),
@@ -169,6 +176,7 @@ export const baixas = pgTable('baixas', {
 
 export const formasPagamento = pgTable('formas_pagamento', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   nome: varchar('nome', { length: 100 }).notNull(),
   tipo: varchar('tipo', { length: 30 }).notNull(), // 'dinheiro', 'pix', 'boleto', 'cartao_credito', etc
   taxa_percentual: numeric('taxa_percentual', { precision: 5, scale: 2 }).default('0'),
@@ -182,6 +190,7 @@ export const formasPagamento = pgTable('formas_pagamento', {
 
 export const condicoesPagamento = pgTable('condicoes_pagamento', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   nome: varchar('nome', { length: 150 }).notNull(),
   descricao: text('descricao'),
   parcelas: integer('parcelas').notNull().default(1),
@@ -197,6 +206,7 @@ export const condicoesPagamento = pgTable('condicoes_pagamento', {
 
 export const contasRecorrentes = pgTable('contas_recorrentes', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   descricao: varchar('descricao', { length: 255 }).notNull(),
   tipo: varchar('tipo', { length: 20 }).notNull(), // 'receita' | 'despesa'
   valor: numeric('valor', { precision: 15, scale: 2 }).notNull(),
@@ -212,6 +222,7 @@ export const contasRecorrentes = pgTable('contas_recorrentes', {
 // Contadores para numeração de documentos e sequências por entidade
 export const counters = pgTable('counters', {
   id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   entidade: varchar('entidade', { length: 100 }).notNull(),
   chave: varchar('chave', { length: 100 }),
   seq: integer('seq').default(0),

@@ -12,17 +12,19 @@ export async function handleAgenda(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
 
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
     // Roteamento baseado em recurso/ação
     if (method === 'GET') {
       // Listagem para o Kanban
       if (action === 'kanban') {
-        const data = await agendaService.getKanbanVisitas();
+        const data = await agendaService.getKanbanVisitas(tenantId);
         return res.status(200).json({ success: true, data });
       }
 
       // Detalhes de um evento específico
       if (id) {
-        const data = await agendaService.getDetalhesEvento(id);
+        const data = await agendaService.getDetalhesEvento(id, tenantId);
         if (!data) return res.status(404).json({ success: false, error: 'Evento não encontrado' });
         return res.status(200).json({ success: true, data });
       }
@@ -30,7 +32,7 @@ export async function handleAgenda(req: any, res: any) {
       // Listagem para o Calendário (filtros de data)
       const inicio = q.inicio ? new Date(q.inicio) : undefined;
       const fim = q.fim ? new Date(q.fim) : undefined;
-      const data = await agendaService.getCalendario(inicio as any, fim as any);
+      const data = await agendaService.getCalendario(inicio as any, fim as any, tenantId);
       return res.status(200).json({ success: true, data });
     }
 
@@ -39,7 +41,7 @@ export async function handleAgenda(req: any, res: any) {
       const data = await agendaService.agendarEvento({
         ...body,
         criado_por: user?.id || 'system'
-      });
+      }, tenantId);
       return res.status(201).json({ success: true, data });
     }
 
@@ -49,25 +51,25 @@ export async function handleAgenda(req: any, res: any) {
       // Ação específica de movimentação no Kanban
       if (action === 'mover') {
         const { status_visita } = body;
-        const data = await agendaService.moverVisita(id, status_visita);
+        const data = await agendaService.moverVisita(id, status_visita, tenantId);
         return res.status(200).json({ success: true, data });
       }
 
       // Ação de realizar visita (com resultado)
       if (action === 'realizar') {
         const { resultado_visita } = body;
-        const data = await agendaService.realizarVisita(id, resultado_visita);
+        const data = await agendaService.realizarVisita(id, resultado_visita, tenantId);
         return res.status(200).json({ success: true, data });
       }
 
       // Atualização genérica
-      const data = await agendaService.atualizarEvento(id, body);
+      const data = await agendaService.atualizarEvento(id, body, tenantId);
       return res.status(200).json({ success: true, data });
     }
 
     if (method === 'DELETE') {
       if (!id) return res.status(400).json({ success: false, error: 'ID não informado' });
-      await agendaService.removerEvento(id);
+      await agendaService.removerEvento(id, tenantId);
       return res.status(200).json({ success: true });
     }
 

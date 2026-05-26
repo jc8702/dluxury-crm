@@ -8,49 +8,49 @@ export class AgendaService {
     this.repository = new EventosRepository();
   }
 
-  async getCalendario(inicio: Date, fim: Date) {
-    return await this.repository.list({ inicio, fim });
+  async getCalendario(inicio: Date, fim: Date, tenantId: string) {
+    return await this.repository.list(tenantId, { inicio, fim });
   }
 
-  async getKanbanVisitas() {
-    const eventos = await this.repository.list({ tipo: 'visita' });
+  async getKanbanVisitas(tenantId: string) {
+    const eventos = await this.repository.list(tenantId, { tipo: 'visita' });
     return EventoDomain.formatForKanban(eventos as any);
   }
 
-  async agendarEvento(data: Evento) {
+  async agendarEvento(data: Evento, tenantId: string) {
     // Lógica extra: verificar conflitos de agenda? 
     // Por enquanto, apenas cria.
-    return await this.repository.create(data);
+    return await this.repository.create(data, tenantId);
   }
 
-  async atualizarEvento(id: string, data: Partial<Evento>) {
-    return await this.repository.update(id, data);
+  async atualizarEvento(id: string, data: Partial<Evento>, tenantId: string) {
+    return await this.repository.update(id, data, tenantId);
   }
 
-  async moverVisita(id: string, novoStatus: string) {
-    const evento = await this.repository.getById(id);
+  async moverVisita(id: string, novoStatus: string, tenantId: string) {
+    const evento = await this.repository.getById(id, tenantId);
     if (!evento) throw new Error("Evento não encontrado");
     
     if (!EventoDomain.canMoveTo(evento as any, novoStatus)) {
       throw new Error(`Transição de status inválida para ${novoStatus}`);
     }
 
-    return await this.repository.updateStatus(id, novoStatus);
+    return await this.repository.updateStatus(id, novoStatus, tenantId);
   }
 
-  async realizarVisita(id: string, resultado: string) {
-    return await this.repository.updateStatus(id, STATUS_VISITA.REALIZADO, resultado);
+  async realizarVisita(id: string, resultado: string, tenantId: string) {
+    return await this.repository.updateStatus(id, STATUS_VISITA.REALIZADO, tenantId, resultado);
   }
 
-  async removerEvento(id: string) {
-    return await this.repository.delete(id);
+  async removerEvento(id: string, tenantId: string) {
+    return await this.repository.delete(id, tenantId);
   }
 
-  async getDetalhesEvento(id: string) {
-    const evento = await this.repository.getById(id);
+  async getDetalhesEvento(id: string, tenantId: string) {
+    const evento = await this.repository.getById(id, tenantId);
     if (!evento) return null;
 
-    const historico = await this.repository.getHistorico(id);
+    const historico = await this.repository.getHistorico(id, tenantId);
     return { ...evento, historico };
   }
 }

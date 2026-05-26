@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleRetalhos } from '../retalhos.js';
 
+vi.mock('../_db.js', () => {
+  return { 
+    sql: vi.fn(() => Promise.resolve([])), 
+    validateAuth: vi.fn().mockReturnValue({ authorized: true, user: { id: 'u1', name: 'Test', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null }) 
+  };
+});
+
 vi.mock('../drizzle-db.js', () => {
   const mock = {
     select: vi.fn().mockReturnThis(),

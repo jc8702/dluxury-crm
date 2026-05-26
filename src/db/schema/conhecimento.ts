@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, text, timestamp, customType } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants.js';
 
 // Mapeamento customizado de vetor de dimensão 768 para pgvector do Neon
 const vector768 = customType<{ data: number[] }>({
@@ -16,6 +17,7 @@ const vector768 = customType<{ data: number[] }>({
 
 export const conhecimentoMarcenaria = pgTable('conhecimento_marcenaria', {
   id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   titulo: varchar('titulo', { length: 255 }).notNull(),
   conteudo: text('conteudo').notNull(),
   categoria: varchar('categoria', { length: 100 }).notNull(),

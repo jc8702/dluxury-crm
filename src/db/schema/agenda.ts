@@ -1,5 +1,6 @@
 
 import { pgTable, uuid, varchar, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
+import { tenants } from "./tenants.js";
 import { sql } from "drizzle-orm";
 // Referências externas são tratadas via colunas raw para evitar dependências circulares ou quebra de build
 
@@ -9,6 +10,7 @@ export const statusVisitaEnum = ["agendado", "realizado", "follow_up", "cancelad
 
 export const eventos = pgTable("eventos", {
   id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: 'cascade' }),
   
   // Tipo e Classificação
   tipo: varchar("tipo", { length: 30 }).notNull(), // visita, reuniao, compromisso, deadline, outro
@@ -47,6 +49,7 @@ export const eventos = pgTable("eventos", {
 
 export const eventosHistorico = pgTable("eventos_historico", {
   id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: 'cascade' }),
   eventoId: uuid("evento_id").notNull(), // Referencia eventos(id)
   campoAlterado: varchar("campo_alterado", { length: 50 }).notNull(),
   valorAnterior: text("valor_anterior"),
@@ -60,6 +63,7 @@ export const eventosHistorico = pgTable("eventos_historico", {
 
 export const tiposEventoConfig = pgTable("tipos_evento_config", {
   tipo: varchar("tipo", { length: 30 }).primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: 'cascade' }),
   corPadrao: varchar("cor_padrao", { length: 7 }).notNull(),
   icone: varchar("icone", { length: 50 }),
 });

@@ -48,15 +48,15 @@ describe('Módulo de Orçamentos PRO', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Retorna um ID aleatório por padrão para que os testes não compartilhem a mesma quota de rate limit
-    vi.mocked(validateAuth).mockImplementation(async () => {
-      return { user: { id: `test-user-${Math.random()}` } };
+    vi.mocked(validateAuth).mockImplementation(() => {
+      return { authorized: true, tenantId: '00000000-0000-0000-0000-000000000000', user: { id: `test-user-${Math.random()}` } };
     });
   });
 
   describe('Validação de Rate Limiting', () => {
     it('deve bloquear requisições após o limite de 100 requisições por janela', async () => {
       const rateLimitUser = `rate-limit-user-${Date.now()}`;
-      vi.mocked(validateAuth).mockResolvedValue({ user: { id: rateLimitUser } });
+      vi.mocked(validateAuth).mockReturnValue({ authorized: true, tenantId: '00000000-0000-0000-0000-000000000000', user: { id: rateLimitUser } });
 
       const req = {
         method: 'GET',

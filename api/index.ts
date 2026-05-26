@@ -86,10 +86,15 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Rate limiting
+  // Obter informacoes de autenticacao para chave de rate limit isolada por tenant/usuario
+  const { validateAuth } = await import('../src/api-lib/_db.js');
+  const auth = validateAuth(req);
   const clientIP = getClientIP(req);
+  const rateKey = auth.authorized && auth.user ? `${auth.user.tenantId || '00000000-0000-0000-0000-000000000000'}:${auth.user.id}` : clientIP;
+
+  // Rate limiting
   const cleanUrl = (req.url || '').split('?')[0];
-  const rateResult = checkRateLimit(clientIP, cleanUrl);
+  const rateResult = checkRateLimit(rateKey, cleanUrl);
   if (!rateResult.allowed) {
     res.setHeader('Retry-After', String(rateResult.retryAfter || 60));
     return res.status(429).json({ 
@@ -102,6 +107,11 @@ export default async function handler(req: any, res: any) {
   // console.log(`[ROUTER] Request: ${req.method} ${cleanUrl} from ${clientIP}`);
 
   try {
+    // Verificar status de faturamento (Bloqueio 402 se inadimplente)
+    const { verifyBillingStatus } = await import('../src/api-lib/billing-middleware.js');
+    const allowedByBilling = await verifyBillingStatus(req, res);
+    if (!allowedByBilling) return;
+
     // Roteamento Dinâmico (Lazy Loading)
     if (cleanUrl.startsWith('/api/auth')) {
       const { handleAuth } = await import('../src/api-lib/auth.js');
@@ -179,12 +189,17 @@ export default async function handler(req: any, res: any) {
           }, 45000);
         });
 
+        const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
+        const usuarioId = auth.user?.id || '00000000-0000-0000-0000-000000000000';
+
         const chatPromise = processarChat({
           message: message.trim(),
           agentMode,
           conversation_history: conversation_history.slice(-10),
           context: enrichedContext,
-          memory_summary
+          memory_summary,
+          tenantId,
+          usuarioId
         });
 
         const result = await Promise.race([chatPromise, timeoutPromise]) as any;
@@ -339,6 +354,11 @@ export default async function handler(req: any, res: any) {
       const { runInitDB } = await import('../src/api-lib/_init.js');
       const result = await runInitDB();
       return res.status(200).json(result);
+    }
+
+    if (cleanUrl.startsWith('/api/webhooks/asaas')) {
+      const { default: handler } = await import('./webhooks/asaas-webhook.js');
+      return await handler(req, res);
     }
 
     if (cleanUrl.startsWith('/api/ping')) {

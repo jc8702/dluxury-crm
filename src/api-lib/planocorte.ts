@@ -4,11 +4,11 @@ import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 
-async function proximoSkuRetalho(): Promise<string> {
+async function proximoSkuRetalho(tenantId: string): Promise<string> {
   const result = await rawSql`
     SELECT COALESCE(MAX(CAST(SUBSTRING(sku, 5) AS INTEGER)), 0) + 1 AS prox
     FROM retalhos_estoque
-    WHERE sku ~ '^RET-[0-9]+$'
+    WHERE sku ~ '^RET-[0-9]+$' AND tenant_id = ${tenantId}
   `;
   const prox = result[0]?.prox || 1;
   return `RET-${String(prox).padStart(4, '0')}`;
@@ -20,6 +20,10 @@ async function proximoSkuRetalho(): Promise<string> {
 
 // --- 1. Handler Principal (CRUD de Planos) ---
 export async function handlePlanoCorte(req: any, res: any) {
+  const { authorized, error, user } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ success: false, error });
+  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
   const method = req.method;
   const { id } = req.query || {};
 
@@ -27,11 +31,11 @@ export async function handlePlanoCorte(req: any, res: any) {
     switch (method) {
       case 'GET':
         if (id) {
-          const [plano] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), isNull(planosDeCorte.deleted_at)));
+          const [plano] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId), isNull(planosDeCorte.deleted_at)));
           if (!plano) return res.status(404).json({ success: false, error: 'PLANO NÃO ENCONTRADO' });
           return res.status(200).json({ success: true, data: plano });
         } else {
-          const planos = await db.select().from(planosDeCorte).where(isNull(planosDeCorte.deleted_at));
+          const planos = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.tenantId, tenantId), isNull(planosDeCorte.deleted_at)));
           return res.status(200).json({ success: true, data: planos });
         }
 
@@ -40,7 +44,6 @@ export async function handlePlanoCorte(req: any, res: any) {
         const { action } = req.query || {};
         
         if (action === 'criar_plano') {
-          const { user } = validateAuth(req);
           const [novo] = await db.insert(planosDeCorte).values({
             nome: req.body.nome,
             kerf_mm: req.body.kerf_mm || 3,
@@ -50,6 +53,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             projeto_id: req.body.projeto_id || null,
             orcamento_id: req.body.orcamento_id || null,
             ordem_producao_id: req.body.ordem_producao_id || null,
+            tenantId: tenantId,
           }).returning();
           
           await auditLog('planos_de_corte', novo.id, 'CREATE', user?.id, null, novo);
@@ -63,7 +67,7 @@ export async function handlePlanoCorte(req: any, res: any) {
 
           const duplicados = [];
           for (const r of retalhos_gerados) {
-             const result = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${plano_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} LIMIT 1`;
+             const result = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${plano_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
              if (result && result.length > 0) {
                 duplicados.push(r);
              }
@@ -72,7 +76,6 @@ export async function handlePlanoCorte(req: any, res: any) {
           return res.status(200).json({ success: true, duplicados });
 
         } else if (action === 'aprovar_producao') {
-          const { user } = validateAuth(req);
           const { materiais_consumidos, retalhos_gerados, ignorar_retalhos_duplicados } = req.body;
           
           // 1. Processar Materiais Consumidos
@@ -86,7 +89,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                   data_utilizacao: new Date(),
                   updated_at: new Date()
                 })
-                .where(eq(retalhosEstoque.id, item.id_retalho));
+                .where(and(eq(retalhosEstoque.id, item.id_retalho), eq(retalhosEstoque.tenantId, tenantId)));
 
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'uso_plano',
@@ -95,17 +98,18 @@ export async function handlePlanoCorte(req: any, res: any) {
                 plano_corte_id: item.plano_id,
                 quantidade: 1,
                 motivo: 'CONSUMO EM PRODUÇÃO',
-                usuario_id: user?.id
+                usuario_id: user?.id,
+                tenantId: tenantId
               });
 
               // Sincronizar saída com Módulo Estoque Principal (materiais / movimentacoes_estoque)
-              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = (SELECT sku FROM retalhos_estoque WHERE id = ${item.id_retalho})`;
+              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = (SELECT sku FROM retalhos_estoque WHERE id = ${item.id_retalho} AND tenant_id = ${tenantId}) AND tenant_id = ${tenantId}`;
               if (matRes.length > 0) {
                 const matId = matRes[0].id;
-                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
+                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId} AND tenant_id = ${tenantId}`;
                 await rawSql`
-                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${matId}, 'saida', 'material', 1, 'CONSUMO DE RETALHO EM PRODUÇÃO', ${user?.id || null})
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id, tenant_id)
+                  VALUES (${matId}, 'saida', 'material', 1, 'CONSUMO DE RETALHO EM PRODUÇÃO', ${user?.id || null}, ${tenantId})
                 `;
               }
             } else {
@@ -113,10 +117,10 @@ export async function handlePlanoCorte(req: any, res: any) {
               await db.execute(sql`
                 UPDATE erp_chapas 
                 SET estoque = COALESCE(estoque, 0) - ${item.qtd || 1} 
-                WHERE sku = ${item.sku}
+                WHERE sku = ${item.sku} AND tenant_id = ${tenantId}
               `);
 
-              const chapaRecord = await db.select({ id: erpChapas.id }).from(erpChapas).where(eq(erpChapas.sku, item.sku)).limit(1);
+              const chapaRecord = await db.select({ id: erpChapas.id }).from(erpChapas).where(and(eq(erpChapas.sku, item.sku), eq(erpChapas.tenantId, tenantId))).limit(1);
 
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'uso_plano',
@@ -125,18 +129,19 @@ export async function handlePlanoCorte(req: any, res: any) {
                 plano_corte_id: item.plano_id,
                 quantidade: item.qtd || 1,
                 motivo: `CONSUMO SKU: ${item.sku}`,
-                usuario_id: user?.id
+                usuario_id: user?.id,
+                tenantId: tenantId
               });
 
               // Sincronizar saída de Chapa Inteira com Módulo Estoque Principal (materiais / movimentacoes_estoque)
-              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = ${item.sku}`;
+              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = ${item.sku} AND tenant_id = ${tenantId}`;
               if (matRes.length > 0) {
                 const matId = matRes[0].id;
                 const qtdConsumida = Number(item.qtd || 1);
-                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - ${qtdConsumida}, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId}`;
+                await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - ${qtdConsumida}, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId} AND tenant_id = ${tenantId}`;
                 await rawSql`
-                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${matId}, 'saida', 'material', ${qtdConsumida}, 'CONSUMO DE CHAPA EM PRODUÇÃO (PLANO DE CORTE)', ${user?.id || null})
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id, tenant_id)
+                  VALUES (${matId}, 'saida', 'material', ${qtdConsumida}, 'CONSUMO DE CHAPA EM PRODUÇÃO (PLANO DE CORTE)', ${user?.id || null}, ${tenantId})
                 `;
               }
             }
@@ -149,7 +154,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             for (const r of retalhos_gerados) {
                if (ignorar_retalhos_duplicados && r.plano_corte_id) {
                   // Verificar se já existe retalho idêntico no banco para este plano
-                  const existeNoBanco = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${r.plano_corte_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} LIMIT 1`;
+                  const existeNoBanco = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${r.plano_corte_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
                   if (existeNoBanco && existeNoBanco.length > 0) {
                      continue; // Pula este retalho pois já foi gerado anteriormente e o usuário pediu para ignorar duplicados
                   }
@@ -169,7 +174,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             }
 
             for (const r of retalhosAgrupados) {
-              const retalhoSku = await proximoSkuRetalho();
+              const retalhoSku = await proximoSkuRetalho(tenantId);
               const [novoRetalho] = await db.insert(retalhosEstoque).values({
                 sku: retalhoSku,
                 largura_mm: r.largura_mm,
@@ -182,7 +187,8 @@ export async function handlePlanoCorte(req: any, res: any) {
                 usuario_criou: user?.id || 'sistema',
                 disponivel: true,
                 descartado: false,
-                metadata: { automatico: true }
+                metadata: { automatico: true },
+                tenantId: tenantId
               }).returning();
 
               await db.insert(movimentacoesEstoque).values({
@@ -192,7 +198,8 @@ export async function handlePlanoCorte(req: any, res: any) {
                 plano_corte_id: r.plano_corte_id,
                 quantidade: r.quantidade,
                 motivo: 'GERAÇÃO AUTOMÁTICA DE SOBRA',
-                usuario_id: user?.id
+                usuario_id: user?.id,
+                tenantId: tenantId
               });
 
               // Sincronizar entrada com Módulo Estoque Principal (materiais / movimentacoes_estoque)
@@ -205,7 +212,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               let categoria_id = null;
               let subcategoria = null;
 
-              const resOrigem = await rawSql`SELECT preco_custo, largura_mm, altura_mm, marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria FROM materiais WHERE sku = ${r.sku_chapa}`;
+              const resOrigem = await rawSql`SELECT preco_custo, largura_mm, altura_mm, marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria FROM materiais WHERE sku = ${r.sku_chapa} AND tenant_id = ${tenantId}`;
               const chapaInfo = Array.isArray(resOrigem) ? resOrigem[0] : null;
               
               if (chapaInfo) {
@@ -233,19 +240,19 @@ export async function handlePlanoCorte(req: any, res: any) {
                 INSERT INTO materiais (
                   sku, nome, descricao, unidade_compra, unidade_uso, fator_conversao, 
                   estoque_atual, ativo, largura_mm, altura_mm, preco_custo,
-                  marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria
+                  marca, fornecedor_principal, ncm, cfop, categoria_id, subcategoria, tenant_id
                 )
                 VALUES (
                   ${retalhoSku}, ${nomeRetalho}, 'SOBRA DE PLANO DE CORTE AUTOMATICA', 'UN', 'UN', 1, 
                   ${r.quantidade}, true, ${r.largura_mm}, ${r.altura_mm}, ${preco_calculado},
-                  ${marca}, ${fornecedor}, ${ncm}, ${cfop}, ${categoria_id}, ${subcategoria}
+                  ${marca}, ${fornecedor}, ${ncm}, ${cfop}, ${categoria_id}, ${subcategoria}, ${tenantId}
                 )
                 RETURNING id
               `;
               if (novoMat.length > 0) {
                 await rawSql`
-                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id)
-                  VALUES (${novoMat[0].id}, 'entrada', 'material', ${r.quantidade}, 'GERAÇÃO AUTOMÁTICA DE SOBRA DE CORTE', ${user?.id || null})
+                  INSERT INTO movimentacoes_estoque (material_id, tipo, item_tipo, quantidade, motivo, usuario_id, tenant_id)
+                  VALUES (${novoMat[0].id}, 'entrada', 'material', ${r.quantidade}, 'GERAÇÃO AUTOMÁTICA DE SOBRA DE CORTE', ${user?.id || null}, ${tenantId})
                 `;
               }
             }
@@ -255,7 +262,7 @@ export async function handlePlanoCorte(req: any, res: any) {
           const op_id = `OP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
           
           await rawSql`
-            INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at)
+            INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at, tenant_id)
             VALUES (
               gen_random_uuid(), 
               ${op_id}, 
@@ -265,7 +272,8 @@ export async function handlePlanoCorte(req: any, res: any) {
               ${req.body.orcamento_id || null}, 
               ${req.body.visita_id || null},
               NOW(),
-              NOW()
+              NOW(),
+              ${tenantId}
             )
           `;
 
@@ -275,9 +283,8 @@ export async function handlePlanoCorte(req: any, res: any) {
             data: { op_id }
           });
         } else {
-          const { user } = validateAuth(req);
           const { plano_id, materiais, resultado } = req.body;
-          const [before] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, plano_id));
+          const [before] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, plano_id), eq(planosDeCorte.tenantId, tenantId)));
           
           const [atualizado] = await db.update(planosDeCorte)
             .set({ 
@@ -285,7 +292,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               resultado, 
               updated_at: new Date() 
             })
-            .where(eq(planosDeCorte.id, plano_id))
+            .where(and(eq(planosDeCorte.id, plano_id), eq(planosDeCorte.tenantId, tenantId)))
             .returning();
 
           await auditLog('planos_de_corte', plano_id, 'SAVE_RESULT', user?.id, before, atualizado);
@@ -297,17 +304,16 @@ export async function handlePlanoCorte(req: any, res: any) {
       case 'PUT': {
         const [upd] = await db.update(planosDeCorte)
           .set({ ...req.body, updated_at: new Date() })
-          .where(eq(planosDeCorte.id, id))
+          .where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)))
           .returning();
         return res.status(200).json({ success: true, data: upd });
       }
 
       case 'DELETE': {
-        const { user } = validateAuth(req);
-        const [existing] = await db.select().from(planosDeCorte).where(eq(planosDeCorte.id, id));
+        const [existing] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)));
         if (!existing) return res.status(404).json({ success: false, error: 'PLANO NÃO ENCONTRADO' });
 
-        await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(eq(planosDeCorte.id, id));
+        await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)));
         
         await auditLog('planos_de_corte', id, 'DELETE', user?.id, existing, { status: 'deleted' });
         
@@ -325,6 +331,10 @@ export async function handlePlanoCorte(req: any, res: any) {
 
 // --- 2. Handler de Chapas (Estoque) ---
 export async function handleChapas(req: any, res: any) {
+  const { authorized, error, user } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ success: false, error });
+  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
   const { q } = req.query || {};
   try {
     const termText = String(q || '').trim();
@@ -337,7 +347,7 @@ export async function handleChapas(req: any, res: any) {
         SELECT m.id, m.sku, m.nome, m.largura_mm, m.altura_mm, m.preco_custo
         FROM materiais m
         LEFT JOIN erp_categories c ON m.categoria_id = c.id
-        WHERE m.ativo = true 
+        WHERE m.ativo = true AND m.tenant_id = ${tenantId}
           AND (m.sku ILIKE 'CHP-%' OR m.categoria_id = 'CHP' OR c.nome ILIKE '%chapa%')
           AND (m.sku ILIKE ${term} OR m.nome ILIKE ${term})
       `;
@@ -346,7 +356,7 @@ export async function handleChapas(req: any, res: any) {
         SELECT m.id, m.sku, m.nome, m.largura_mm, m.altura_mm, m.preco_custo
         FROM materiais m
         LEFT JOIN erp_categories c ON m.categoria_id = c.id
-        WHERE m.ativo = true 
+        WHERE m.ativo = true AND m.tenant_id = ${tenantId}
           AND (m.sku ILIKE 'CHP-%' OR m.categoria_id = 'CHP' OR c.nome ILIKE '%chapa%')
       `;
     }
@@ -376,14 +386,17 @@ export async function handleChapas(req: any, res: any) {
       const term = `%${termText}%`;
       queryErp = await db.select()
         .from(erpChapas)
-        .where(or(
-          ilike(erpChapas.sku, term), 
-          ilike(erpChapas.nome, term),
-          sql`LOWER(${erpChapas.nome}) LIKE LOWER(${term})`,
-          sql`LOWER(${erpChapas.sku}) = LOWER(${termText})`
+        .where(and(
+          eq(erpChapas.tenantId, tenantId),
+          or(
+            ilike(erpChapas.sku, term), 
+            ilike(erpChapas.nome, term),
+            sql`LOWER(${erpChapas.nome}) LIKE LOWER(${term})`,
+            sql`LOWER(${erpChapas.sku}) = LOWER(${termText})`
+          )
         ));
     } else {
-      queryErp = await db.select().from(erpChapas);
+      queryErp = await db.select().from(erpChapas).where(eq(erpChapas.tenantId, tenantId));
     }
 
     const erpMapped = queryErp.map((e: any) => ({
@@ -418,6 +431,10 @@ export async function handleChapas(req: any, res: any) {
 
 // --- 3. Handler de Engenharia (Integrado com Orçamentos Pro) ---
 export async function handleEngenhariaSKUs(req: any, res: any) {
+  const { authorized, error, user } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ success: false, error });
+  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
   const { q } = req.query || {};
   try {
     const termText = String(q || '').trim();
@@ -425,10 +442,13 @@ export async function handleEngenhariaSKUs(req: any, res: any) {
       const term = `%${termText}%`;
       const results = await db.select()
         .from(skuEngenharia)
-        .where(or(ilike(skuEngenharia.codigo, term), ilike(skuEngenharia.nome, term)));
+        .where(and(
+          eq(skuEngenharia.tenantId, tenantId),
+          or(ilike(skuEngenharia.codigo, term), ilike(skuEngenharia.nome, term))
+        ));
       return res.status(200).json({ success: true, data: results });
     }
-    const all = await db.select().from(skuEngenharia).limit(50);
+    const all = await db.select().from(skuEngenharia).where(eq(skuEngenharia.tenantId, tenantId)).limit(50);
     return res.status(200).json({ success: true, data: all });
   } catch (err: any) {
     console.error('ERRO_ENGENHARIA_SKUS:', err);
@@ -441,6 +461,8 @@ export async function handleEngenhariaSKUs(req: any, res: any) {
  */
 export async function handleImportarDesenho(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).end();
+  const { authorized, error } = validateAuth(req);
+  if (!authorized) return res.status(401).json({ success: false, error });
   
   try {
     const { fileBase64 } = req.body;
@@ -620,8 +642,6 @@ export async function handleImportarDesenho(req: any, res: any) {
         }
         return p;
       });
-    
-    /* console.log(`[IMPORT] Sucesso: ${pecasValidas.length} peças extraídas.`); */
     
     return res.status(200).json({ 
       success: true, 

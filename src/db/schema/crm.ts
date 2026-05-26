@@ -1,7 +1,9 @@
-import { pgTable, varchar, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, text, timestamp, integer, uuid } from 'drizzle-orm/pg-core';
+import { tenants } from './tenants.js';
 
 export const clientes = pgTable('clients', {
   id: integer('id').primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   nome: varchar('nome', { length: 255 }).notNull(),
   cpf: varchar('cpf', { length: 20 }),
   cnpj: varchar('cnpj', { length: 20 }),
