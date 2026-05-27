@@ -61,7 +61,19 @@ export const extractAndVerifyToken = (req: any) => {
     return { user: null, error: 'Sessão expirada ou inválida' };
   }
 };
-
+export const validateAuth = (req: any) => {
+  const { user, error } = extractAndVerifyToken(req);
+  if (error) {
+    return { authorized: false, user: null, error };
+  }
+  if (!user) {
+    return { authorized: false, user: null, error: 'Token inválido' };
+  }
+  return { 
+    authorized: true, 
+    user, 
+    error: null 
+  };
 };
 
 /**
