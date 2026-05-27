@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleOrcamentosPro, explodirBOM, recalcularOrcamento } from '../orcamentos_pro.js';
 import { db } from '../drizzle-db.js';
 import { validateAuth } from '../_db.js';
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 // Mock do banco de dados e auxiliares
 vi.mock('../drizzle-db.js', () => {
@@ -237,8 +238,8 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve falhar se o orçamento não for encontrado', async () => {
-      // Configurar transação mock para executar o callback e retornar findFirst nulo
       const mockTx = {
+        execute: vi.fn().mockResolvedValue({ rows: [{ fator_perda_padrao: 0, mo_producao_pct_padrao: 0, mo_instalacao_pct_padrao: 0, aliquota_imposto: 0 }] }),
         query: {
           orcamentos: {
             findFirst: vi.fn().mockResolvedValue(null)
@@ -253,5 +254,185 @@ describe('Módulo de Orçamentos PRO', () => {
         'Orçamento 3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2 não encontrado'
       );
     });
+
+    it('deve recalcular valores considerando taxas operacionais de configuracoes_precificacao', async () => {
+      const mockTx = {
+        execute: vi.fn().mockResolvedValue({
+          rows: [
+            {
+              fator_perda_padrao: 10,       // 10%
+              mo_producao_pct_padrao: 20,   // 20%
+              mo_instalacao_pct_padrao: 5,   // 5%
+              aliquota_imposto: 15          // 15%
+            }
+          ]
+        }),
+        query: {
+          orcamentos: {
+            findFirst: vi.fn().mockResolvedValue({
+              id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+              margemLucroPercentual: '30',
+              taxaFinanceiraPercentual: '2',
+              descontoPercentual: '5',
+              itens: [
+                {
+                  id: 'item-1',
+                  quantidade: '2',
+                  custoUnitarioCalculado: '100.00',
+                  possuiOverride: false,
+                  listaExplodida: []
+                }
+              ]
+            })
+          }
+        },
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis()
+      };
+
+      vi.mocked(db.transaction).mockImplementation(async (callback) => {
+        return callback(mockTx as any);
+      });
+
+      const result = await recalcularOrcamento('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2');
+      expect(result.itensAtualizados).toBe(1);
+      // Custo base: 100
+      // Custo ajustado: 100 * 1.10 (perda) * 1.20 (fabrica) * 1.05 (instalacao) = 138.60
+      // Preço base: 138.60 * 1.30 (margem) = 180.18
+      // Preço c/ taxa: 180.18 * 1.02 (taxa financ) = 183.7836
+      // Preço final c/ imposto: 183.7836 * 1.15 (imposto) = 211.35114 -> arredondado para 211.35
+      // Venda Total (2 itens c/ desconto 5%): (211.35114 * 2) * 0.95 = 401.567 -> 401.57
+      expect(result.custoTotal).toBeCloseTo(277.20, 1); // 138.60 * 2
+      expect(result.vendaTotal).toBeCloseTo(401.57, 1);
+    });
+  });
+
+  describe('Aprovação Integrada de Orçamentos', () => {
+    const dialect = new PgDialect();
+    
+    // Helper para extrair SQL do objeto SQL do Drizzle sem quebrar com mocks de transação
+    function obterStringSql(query: any): string {
+      if (typeof query === 'string') return query;
+      if (!query) return '';
+      try {
+        // sqlToQuery gera a query Postgres parametrizada { sql: string, params: any[] }
+        return dialect.sqlToQuery(query).sql;
+      } catch (e) {
+        // Fallback robusto caso não seja um objeto SQL compilável
+        if (query.sql) return query.sql;
+        if (Array.isArray(query.queryChunks)) {
+          return query.queryChunks.map((chunk: any) => {
+            if (typeof chunk === 'string') return chunk;
+            if (chunk && typeof chunk === 'object') {
+              if (chunk.queryChunks) return obterStringSql(chunk);
+              if (Array.isArray(chunk.value)) return chunk.value.join('');
+              if (chunk.name) return chunk.name;
+            }
+            return '';
+          }).join('');
+        }
+        return String(query);
+      }
+    }
+
+    it('deve realizar fluxo completo de aprovação integrada ao mudar status para APROVADO', async () => {
+      const mockTx = {
+        execute: vi.fn().mockImplementation(async (query: any) => {
+          // Mock dos retornos de select
+          const rawSql = obterStringSql(query);
+
+          if (rawSql.includes('FROM condicoes_pagamento')) {
+            return { rows: [{ parcelas: 3 }] };
+          }
+          if (rawSql.includes('FROM classes_financeiras')) {
+            return { rows: [{ id: 'class-123' }] };
+          }
+          if (rawSql.includes('FROM formas_pagamento')) {
+            return { rows: [{ id: 'forma-123' }] };
+          }
+          if (rawSql.includes('FROM materiais')) {
+            return { rows: [{ id: 'mat-123', estoque_atual: 10, preco_custo: 50.0 }] };
+          }
+          return { rows: [] };
+        }),
+        query: {
+          orcamentos: {
+            findFirst: vi.fn().mockResolvedValue({
+              id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+              numeroOrcamento: 'PRO-2026-0001',
+              status: 'RASCUNHO',
+              clienteId: 'client-123',
+              condicaoPagamentoId: 'cond-123',
+              valorTotalVenda: '300.00',
+              itens: []
+            })
+          },
+          orcamentoItens: {
+            findMany: vi.fn().mockResolvedValue([
+              {
+                id: 'item-1',
+                skuEngenhariaId: 'sku-eng-123',
+                nomeCustomizado: 'Painel Tv',
+                quantidade: '1',
+                listaExplodida: [
+                  {
+                    skuComponenteId: 'comp-123',
+                    quantidadeCalculada: '2',
+                    custoUnitario: '25.00',
+                    componente: { codigo: 'CHP-MDF-15', nome: 'MDF 15MM' }
+                  }
+                ]
+              }
+            ])
+          }
+        },
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis()
+      };
+
+      vi.mocked(db.transaction).mockImplementation(async (callback) => {
+        return callback(mockTx as any);
+      });
+
+      // Mock do findFirst da checagem externa de exists
+      vi.mocked(db.query.orcamentos.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        numeroOrcamento: 'PRO-2026-0001',
+        status: 'RASCUNHO',
+        clienteId: 'client-123',
+        condicaoPagamentoId: 'cond-123',
+        valorTotalVenda: '300.00'
+      });
+
+      const req = {
+        method: 'PUT',
+        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        body: { status: 'APROVADO', condicaoPagamentoId: 'cond-123' }
+      };
+
+      let responseStatus = 200;
+      const res = {
+        status: (code: number) => { responseStatus = code; return res; },
+        json: () => res
+      };
+
+      await handleOrcamentosPro(req, res);
+      
+      expect(responseStatus).toBe(200);
+      
+      // Validar se executou o update do status do orçamento
+      expect(mockTx.update).toHaveBeenCalled();
+      
+      // Validar se executou os inserts via SQL bruto (titulos_receber, ordens_producao, movimentacoes_estoque)
+      const executeCalls = mockTx.execute.mock.calls;
+      const sqlQueries = executeCalls.map(c => obterStringSql(c[0]));
+      
+      expect(sqlQueries.some(q => q.includes('INSERT INTO titulos_receber'))).toBe(true);
+      expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_producao'))).toBe(true);
+      expect(sqlQueries.some(q => q.includes('INSERT INTO movimentacoes_estoque'))).toBe(true);
+    });
   });
 });
+

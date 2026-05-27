@@ -183,6 +183,21 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
   logger.info(`🔄 [RECALCULO] Iniciando para orçamento: ${orcId}`);
 
   return await db.transaction(async (tx) => {
+    // Buscar configurações de precificação do tenant para taxas industriais/tributárias
+    const configPrec = await tx.execute(dsql`
+      SELECT 
+        fator_perda_padrao, markup_padrao, aliquota_imposto, 
+        mo_producao_pct_padrao, mo_instalacao_pct_padrao 
+      FROM configuracoes_precificacao 
+      WHERE tenant_id = ${tenantId}::uuid 
+      LIMIT 1
+    `);
+    const conf = configPrec.rows[0] as any || {};
+    const fatorPerda = Number(conf.fator_perda_padrao || 0) / 100;
+    const moProducao = Number(conf.mo_producao_pct_padrao || 0) / 100;
+    const moInstalacao = Number(conf.mo_instalacao_pct_padrao || 0) / 100;
+    const aliquotaImposto = Number(conf.aliquota_imposto || 0) / 100;
+
     // 1. Buscar orçamento e itens em UMA query com join
     const orc = await tx.query.orcamentos.findFirst({
       where: and(eq(orcamentos.id, orcId), eq(orcamentos.tenantId, tenantId)),
@@ -232,25 +247,28 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
         custoUnitario = Number(item.custoUnitarioCalculado || item.custoBaseEstoque || 0);
       }
 
+      // Aplicar fator de perda padrão, mão de obra de fabricação e de instalação
+      const custoAjustado = custoUnitario * (1 + fatorPerda) * (1 + moProducao) * (1 + moInstalacao);
+
       // Calcular preço de venda
       let precoVenda = 0;
       let margemReal = margemGlobal;
 
       if (item.possuiOverride && item.precoVendaSobrescrito) {
-        // Override manual: preço fixo, margem recalculada
+        // Override manual: preço fixo, margem real líquida recalculada (descontando imposto do preço final)
         precoVenda = Number(item.precoVendaSobrescrito);
-        margemReal = precoVenda > 0 ? ((precoVenda - custoUnitario) / precoVenda) * 100 : 0;
+        const precoSemImposto = precoVenda / (1 + aliquotaImposto);
+        margemReal = custoAjustado > 0 ? ((precoSemImposto / custoAjustado) - 1) * 100 : 0;
       } else {
-        // Cálculo padrão: Markup (não margem!)
-        // MARKUP = custo * (1 + percentual/100)
-        // Margem seria: custo / (1 - percentual/100), mas você usa markup
-        const baseVenda = custoUnitario * (1 + (margemGlobal / 100));
-        precoVenda = baseVenda * (1 + (taxaFinanceira / 100));
+        // Cálculo padrão: markup comercial + taxa financeira + imposto sobre o preço de venda
+        const baseVenda = custoAjustado * (1 + (margemGlobal / 100));
+        const precoSemImposto = baseVenda * (1 + (taxaFinanceira / 100));
+        precoVenda = precoSemImposto * (1 + aliquotaImposto);
         margemReal = margemGlobal;
       }
 
       // Acumular totais
-      custoTotalAcumulado += custoUnitario * qtdItem;
+      custoTotalAcumulado += custoAjustado * qtdItem;
       vendaTotalAcumulada += precoVenda * qtdItem;
 
       // Adicionar à fila de updates
@@ -1241,7 +1259,161 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     }
 
                     // Update Header se não tiver nenhuma action
-                    await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                    if (req.body.status === 'APROVADO') {
+                        if (exists && exists.status !== 'APROVADO') {
+                            await db.transaction(async (tx) => {
+                                // 1. Atualizar status e cabeçalho do orçamento
+                                const finalBody = { ...req.body, updatedAt: new Date() };
+                                await tx.update(orcamentos)
+                                    .set(finalBody)
+                                    .where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                                
+                                // 2. FASE 1: Gerar Títulos a Receber (Financeiro)
+                                const condId = req.body.condicaoPagamentoId || exists.condicaoPagamentoId;
+                                let totalParcelas = 1;
+                                
+                                if (condId) {
+                                    const cond = await tx.execute(dsql`
+                                        SELECT parcelas FROM condicoes_pagamento 
+                                        WHERE id = ${condId}::uuid AND tenant_id = ${tenantId}::uuid 
+                                        LIMIT 1
+                                    `);
+                                    if (cond.rows.length > 0) {
+                                        totalParcelas = Number((cond.rows[0] as any).parcelas || 1);
+                                    }
+                                }
+
+                                const valorTotal = Number(exists.valorTotalVenda) || 0;
+                                const valorParcela = valorTotal / totalParcelas;
+                                const dataEmissao = new Date();
+                                
+                                // Buscar classe financeira e forma de recebimento padrão do tenant
+                                const classResult = await tx.execute(dsql`
+                                    SELECT id FROM classes_financeiras 
+                                    WHERE tenant_id = ${tenantId}::uuid 
+                                    ORDER BY codigo ASC LIMIT 1
+                                `);
+                                const defaultClassId = classResult.rows[0]?.id || null;
+
+                                const formaResult = await tx.execute(dsql`
+                                    SELECT id FROM formas_pagamento 
+                                    WHERE tenant_id = ${tenantId}::uuid 
+                                    LIMIT 1
+                                `);
+                                const defaultFormaId = formaResult.rows[0]?.id || null;
+
+                                if (defaultClassId && defaultFormaId && exists.clienteId) {
+                                    for (let i = 1; i <= totalParcelas; i++) {
+                                        const vencimento = new Date();
+                                        vencimento.setMonth(vencimento.getMonth() + (i - 1));
+                                        const numeroTitulo = `REC-PRO-${exists.numeroOrcamento}-${i}`;
+                                        
+                                        await tx.execute(dsql`
+                                            INSERT INTO titulos_receber (
+                                                numero_titulo, cliente_id, orcamento_id,
+                                                valor_original, valor_liquido, valor_aberto,
+                                                data_emissao, data_vencimento, data_competencia,
+                                                classe_financeira_id, forma_recebimento_id,
+                                                status, parcela, total_parcelas, tenant_id
+                                            ) VALUES (
+                                                ${numeroTitulo}, 
+                                                ${exists.clienteId}::text, 
+                                                ${id}::uuid,
+                                                ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)},
+                                                ${dataEmissao}, ${vencimento}, ${dataEmissao},
+                                                ${defaultClassId}::uuid, ${defaultFormaId}::uuid,
+                                                'aberto', ${i}, ${totalParcelas}, ${tenantId}::uuid
+                                            )
+                                            ON CONFLICT (numero_titulo) DO NOTHING
+                                        `);
+                                    }
+                                }
+
+                                // 3. FASE 2: Gerar PCP (Ordens de Produção)
+                                const itens = await tx.query.orcamentoItens.findMany({
+                                    where: eq(orcamentoItens.orcamentoId, id),
+                                    with: {
+                                        listaExplodida: {
+                                            with: {
+                                                componente: true
+                                            }
+                                        }
+                                    }
+                                });
+
+                                for (const item of itens) {
+                                    if (item.skuEngenhariaId) {
+                                        const opId = `OP-${exists.numeroOrcamento}-${Math.floor(1000 + Math.random() * 9000)}`;
+                                        
+                                        // Mapear peças explodidas da BOM
+                                        const pecas = item.listaExplodida.map((l: any) => ({
+                                            sku: l.componente?.codigo || l.skuComponenteId,
+                                            nome: l.componente?.nome || 'Insumo',
+                                            quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
+                                            custoUnitario: l.custoUnitario
+                                        }));
+
+                                        await tx.execute(dsql`
+                                            INSERT INTO ordens_producao (
+                                                op_id, produto, pecas, status, orcamento_id, tenant_id
+                                            ) VALUES (
+                                                ${opId}, 
+                                                ${item.nomeCustomizado || 'Módulo de Engenharia'}, 
+                                                ${JSON.stringify(pecas)}::jsonb, 
+                                                'AGUARDANDO', 
+                                                ${id}, 
+                                                ${tenantId}::uuid
+                                            )
+                                        `);
+
+                                        // 4. FASE 3: Reservar Estoque (Comercial)
+                                        for (const peca of pecas) {
+                                            if (peca.sku) {
+                                                // Buscar o material correspondente no estoque comercial
+                                                const matResult = await tx.execute(dsql`
+                                                    SELECT id, estoque_atual, preco_custo::numeric as preco_custo 
+                                                    FROM materiais 
+                                                    WHERE LOWER(sku) = LOWER(${peca.sku}) AND tenant_id = ${tenantId}::uuid 
+                                                    LIMIT 1
+                                                `);
+                                                
+                                                if (matResult.rows.length > 0) {
+                                                    const mat = matResult.rows[0] as any;
+                                                    const qtd = Number(peca.quantidade);
+                                                    const custo = Number(peca.custoUnitario || mat.preco_custo || 0);
+                                                    
+                                                    await tx.execute(dsql`
+                                                        INSERT INTO movimentacoes_estoque (
+                                                            material_id, tipo, quantidade, motivo, orcamento_id,
+                                                            preco_unitario, valor_total, estoque_antes, estoque_depois,
+                                                            created_by, tenant_id
+                                                        ) VALUES (
+                                                            ${mat.id},
+                                                            'saida_reserva',
+                                                            ${qtd},
+                                                            ${`Reserva automática OP ${opId} - Orçamento ${exists.numeroOrcamento}`},
+                                                            ${id}::uuid,
+                                                            ${custo},
+                                                            ${qtd * custo},
+                                                            ${mat.estoque_atual || 0},
+                                                            ${mat.estoque_atual || 0},
+                                                            'SISTEMA',
+                                                            ${tenantId}::uuid
+                                                        )
+                                                    `);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                        }
+                    } else {
+                        await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                    }
+                    
                     await recalcularOrcamento(id, tenantId);
                     return res.status(200).json({ success: true });
                 }, 'UPDATE_ORCAMENTO');
