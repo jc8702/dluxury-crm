@@ -28,7 +28,9 @@ const sqlInstance = (strings: any, ...values: any[]) => {
     return _neonInstance(strings as any, ...values);
   }
   // Se for chamado como função (legado ou raw string)
-  return _neonInstance(strings);
+  const templateArray = [strings] as any;
+  templateArray.raw = [strings];
+  return _neonInstance(templateArray);
 };
 
 // Atribuição de propriedades dinâmicas
