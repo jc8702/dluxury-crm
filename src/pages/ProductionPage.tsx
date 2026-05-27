@@ -1,2 +1,6 @@
-import Production from '../components/production/Production'; const ProductionPage = () => <Production />; export default ProductionPage;
+import React from 'react';
+import Producao from './Producao.tsx';
 
+const ProductionPage = () => <Producao />;
+
+export default ProductionPage;

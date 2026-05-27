@@ -1,0 +1,266 @@
+import { sql, validateAuth } from './_db.js';
+
+export async function handleCalendario(req: any, res: any) {
+  try {
+    const { authorized, error, user } = validateAuth(req);
+    if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const method = req.method;
+    const url = req.url || '';
+
+    if (method === 'GET' && url.includes('/eventos')) {
+      const { mes, ano, filtro_tipo } = req.query;
+
+      if (!mes || !ano) {
+        return res.status(400).json({ success: false, error: 'Mês e ano são obrigatórios' });
+      }
+
+      const mesNum = parseInt(mes);
+      const anoNum = parseInt(ano);
+
+      // 1. Buscar eventos manuais
+      let queryStr = `
+        SELECT 
+          ec.id::text,
+          ec.titulo,
+          ec.descricao,
+          ec.data_evento::text as data_evento,
+          ec.hora_evento,
+          ec.tipo_evento,
+          ec.cor_categoria,
+          ec.concluido,
+          ec.orcamento_id,
+          ec.operacao_prod_id
+        FROM eventos_calendario ec
+        WHERE ec.tenant_id = $1::uuid
+          AND EXTRACT(MONTH FROM ec.data_evento) = $2
+          AND EXTRACT(YEAR FROM ec.data_evento) = $3
+      `;
+
+      const params: any[] = [tenantId, mesNum, anoNum];
+      
+      if (filtro_tipo) {
+        queryStr += ` AND ec.tipo_evento = $4`;
+        params.push(filtro_tipo);
+      }
+
+      const dbEventos = await sql(queryStr as any, ...params);
+
+      const eventosList = dbEventos.map((e: any) => ({
+        id: `manual-${e.id}`,
+        titulo: e.titulo,
+        descricao: e.descricao || '',
+        data_evento: e.data_evento,
+        hora_evento: e.hora_evento || undefined,
+        tipo_evento: e.tipo_evento,
+        cor_categoria: e.cor_categoria,
+        concluido: !!e.concluido,
+        orcamento_id: e.orcamento_id,
+        operacao_prod_id: e.operacao_prod_id
+      }));
+
+      // 2. Adicionar prazos de entrega de OPs se não houver filtro ou se for filtro = 'prazo_entrega'
+      if (!filtro_tipo || filtro_tipo === 'prazo_entrega') {
+        const ops = await sql`
+          SELECT 
+            op.id::text,
+            op.numero_op,
+            op.data_prazo::text as data_prazo,
+            op.status,
+            c.nome as cliente_nome
+          FROM ordens_prod op
+          JOIN orcamentos_pro o ON op.orcamento_id = o.id
+          LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+          WHERE op.tenant_id = ${tenantId}::uuid
+            AND op.data_prazo IS NOT NULL
+            AND EXTRACT(MONTH FROM op.data_prazo) = ${mesNum}
+            AND EXTRACT(YEAR FROM op.data_prazo) = ${anoNum}
+        `;
+
+        ops.forEach((op: any) => {
+          eventosList.push({
+            id: `op-${op.id}`,
+            titulo: `Prazo OP: ${op.numero_op} (${op.cliente_nome || 'Cliente avulso'})`,
+            descricao: `Ordem de produção com status: ${op.status}`,
+            data_evento: op.data_prazo,
+            tipo_evento: 'prazo_entrega',
+            cor_categoria: '#DC2626', // Vermelho
+            concluido: op.status === 'concluído',
+            operacao_prod_id: op.id
+          });
+        });
+      }
+
+      // 3. Adicionar prazos de orçamentos se não houver filtro ou se for filtro = 'orcamento'
+      if (!filtro_tipo || filtro_tipo === 'orcamento') {
+        const budgets = await sql`
+          SELECT 
+            o.id::text,
+            o.numero_orcamento,
+            o.data_orcamento,
+            o.prazo_entrega_dias,
+            c.nome as cliente_nome
+          FROM orcamentos_pro o
+          LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+          WHERE o.tenant_id = ${tenantId}::uuid
+            AND LOWER(o.status) = 'aprovado'
+            AND o.data_orcamento IS NOT NULL
+        `;
+
+        budgets.forEach((b: any) => {
+          const dateObj = new Date(b.data_orcamento);
+          if (b.prazo_entrega_dias) {
+            dateObj.setDate(dateObj.getDate() + parseInt(b.prazo_entrega_dias));
+          }
+          
+          const eventMonth = dateObj.getMonth() + 1;
+          const eventYear = dateObj.getFullYear();
+
+          if (eventMonth === mesNum && eventYear === anoNum) {
+            const formattedDate = dateObj.toISOString().split('T')[0];
+            eventosList.push({
+              id: `orcamento-${b.id}`,
+              titulo: `Entrega Proposta: ${b.numero_orcamento} (${b.cliente_nome || 'Cliente avulso'})`,
+              descricao: `Prazo contratual calculado de entrega do pedido`,
+              data_evento: formattedDate,
+              tipo_evento: 'orcamento',
+              cor_categoria: '#3B82F6', // Azul
+              concluido: false,
+              orcamento_id: b.id
+            });
+          }
+        });
+      }
+
+      return res.status(200).json({ success: true, eventos: eventosList });
+    }
+
+    if (method === 'POST' && url.includes('/criar-evento')) {
+      const { titulo, descricao, data_evento, hora_evento, tipo_evento, orcamento_id, operacao_prod_id, notificacao_dias_antes, cor_categoria } = req.body;
+
+      if (!titulo || !data_evento || !tipo_evento) {
+        return res.status(400).json({ success: false, error: 'Título, data e tipo são obrigatórios' });
+      }
+
+      const [evento] = await sql`
+        INSERT INTO eventos_calendario (
+          usuario_id, tipo_evento, titulo, descricao, data_evento, hora_evento, 
+          orcamento_id, operacao_prod_id, cor_categoria, notificacao_dias_antes, tenant_id
+        ) VALUES (
+          ${user.id}::uuid, ${tipo_evento}, ${titulo}, ${descricao || null}, ${data_evento}, ${hora_evento || null}, 
+          ${orcamento_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${cor_categoria || '#3B82F6'}, ${notificacao_dias_antes || 0}, ${tenantId}::uuid
+        ) RETURNING *
+      `;
+
+      if (notificacao_dias_antes && parseInt(notificacao_dias_antes) > 0) {
+        await sql`
+          INSERT INTO notificacoes_calendario (evento_calendario_id, tipo_notificacao, mensagem, tenant_id)
+          VALUES (${evento.id}, 'push', ${`Lembrete: O evento "${titulo}" está próximo. (${data_evento})`}, ${tenantId}::uuid)
+        `;
+      }
+
+      return res.status(201).json({ success: true, evento });
+    }
+
+    if (method === 'POST' && url.includes('/gerar-automatico')) {
+      const { orcamento_id } = req.body;
+
+      if (!orcamento_id) {
+        return res.status(400).json({ success: false, error: 'ID do orçamento é obrigatório' });
+      }
+
+      const [orcamento] = await sql`
+        SELECT o.*, c.nome as cliente_nome
+        FROM orcamentos_pro o
+        LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+        WHERE o.id = ${orcamento_id}::uuid AND o.tenant_id = ${tenantId}::uuid
+      `;
+
+      if (!orcamento) {
+        return res.status(404).json({ success: false, error: 'Orçamento não encontrado no tenant' });
+      }
+
+      const usuarios = await sql`
+        SELECT id FROM users 
+        WHERE tenant_id = ${tenantId}::uuid
+      `;
+
+      const dataEvento = new Date(orcamento.data_orcamento || new Date());
+      if (orcamento.prazo_entrega_dias) {
+        dataEvento.setDate(dataEvento.getDate() + parseInt(orcamento.prazo_entrega_dias));
+      }
+
+      const formattedDate = dataEvento.toISOString().split('T')[0];
+
+      for (const u of usuarios) {
+        await sql`
+          INSERT INTO eventos_calendario (
+            usuario_id, tipo_evento, titulo, descricao, data_evento, orcamento_id, cor_categoria, notificacao_dias_antes, tenant_id
+          ) VALUES (
+            ${u.id}::uuid, 'orcamento', ${`Entrega Pedido: ${orcamento.numero_orcamento}`}, 
+            ${`Prazo contratual de entrega para o cliente ${orcamento.cliente_nome || ''}`}, 
+            ${formattedDate}, ${orcamento_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid
+          )
+        `;
+      }
+
+      return res.status(200).json({ success: true, eventos_criados: usuarios.length });
+    }
+
+    if (method === 'GET' && url.includes('/verificar-lembretes')) {
+      const eventosProximos = await sql`
+        SELECT ec.*, u.email as usuario_email, u.name as usuario_nome
+        FROM eventos_calendario ec
+        JOIN users u ON ec.usuario_id = u.id
+        WHERE ec.notificacao_enviada = FALSE
+          AND ec.notificacao_dias_antes > 0
+          AND ec.data_evento <= CURRENT_DATE + ec.notificacao_dias_antes
+          AND ec.tenant_id = ${tenantId}::uuid
+      `;
+
+      for (const ev of eventosProximos) {
+        const msg = `Lembrete: O evento "${ev.titulo}" vence em ${ev.notificacao_dias_antes} dias (${ev.data_evento})`;
+        
+        await sql`
+          INSERT INTO notificacoes_calendario (evento_calendario_id, tipo_notificacao, mensagem, tenant_id)
+          VALUES (${ev.id}, 'email', ${msg}, ${tenantId}::uuid)
+        `;
+
+        await sql`
+          UPDATE eventos_calendario
+          SET notificacao_enviada = TRUE
+          WHERE id = ${ev.id} AND tenant_id = ${tenantId}::uuid
+        `;
+      }
+
+      return res.status(200).json({ success: true, notificacoes_disparadas: eventosProximos.length });
+    }
+
+    if (method === 'PATCH' && req.query.id) {
+      const { concluido, cor_categoria } = req.body;
+      const [updated] = await sql`
+        UPDATE eventos_calendario
+        SET concluido = COALESCE(${concluido}, concluido),
+            cor_categoria = COALESCE(${cor_categoria}, cor_categoria),
+            updated_at = NOW()
+        WHERE id = ${parseInt(req.query.id)} AND tenant_id = ${tenantId}::uuid
+        RETURNING *
+      `;
+      if (!updated) return res.status(404).json({ success: false, error: 'Evento não encontrado' });
+      return res.status(200).json({ success: true, data: updated });
+    }
+
+    if (method === 'DELETE' && req.query.id) {
+      await sql`
+        DELETE FROM eventos_calendario
+        WHERE id = ${parseInt(req.query.id)} AND tenant_id = ${tenantId}::uuid
+      `;
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  } catch (err: any) {
+    console.error('[CALENDARIO_ERROR]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}

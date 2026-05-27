@@ -628,6 +628,84 @@ export async function runInitDB() {
     )
   `);
 
+  // 23. Ordens de Produção (Fase 1 Kanban)
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS ordens_prod (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      orcamento_id UUID NOT NULL,
+      numero_op VARCHAR(50) UNIQUE NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'planejamento',
+      prioridade INTEGER DEFAULT 5,
+      data_inicio DATE,
+      data_prazo DATE,
+      data_conclusao DATE,
+      observacoes TEXT,
+      responsavel_id UUID,
+      environment VARCHAR(100),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS etapas_prod_kanban (
+      id SERIAL PRIMARY KEY,
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE CASCADE,
+      etapa_numero INTEGER NOT NULL,
+      etapa_nome VARCHAR(100) NOT NULL,
+      status_kanban VARCHAR(50) NOT NULL DEFAULT 'a_fazer',
+      ordem_display INTEGER DEFAULT 0,
+      data_inicio DATE,
+      data_conclusao DATE,
+      responsavel_id UUID,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS movimento_kanban (
+      id SERIAL PRIMARY KEY,
+      etapa_kanban_id INTEGER REFERENCES etapas_prod_kanban(id) ON DELETE CASCADE,
+      status_anterior VARCHAR(50),
+      status_novo VARCHAR(50),
+      usuario_id UUID,
+      timestamp_movimento TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      nota TEXT
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS eventos_calendario (
+      id SERIAL PRIMARY KEY,
+      usuario_id UUID NOT NULL,
+      tipo_evento VARCHAR(50) NOT NULL,
+      titulo VARCHAR(255) NOT NULL,
+      descricao TEXT,
+      data_evento DATE NOT NULL,
+      hora_evento TIME,
+      orcamento_id UUID,
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE SET NULL,
+      cor_categoria VARCHAR(20) DEFAULT '#3B82F6',
+      concluido BOOLEAN DEFAULT FALSE,
+      notificacao_dias_antes INTEGER DEFAULT 0,
+      notificacao_enviada BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS notificacoes_calendario (
+      id SERIAL PRIMARY KEY,
+      evento_calendario_id INTEGER REFERENCES eventos_calendario(id) ON DELETE CASCADE,
+      tipo_notificacao VARCHAR(50),
+      mensagem TEXT,
+      enviado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      lido BOOLEAN DEFAULT FALSE
+    )
+  `);
+
   // Seed default Chapas if empty
   try {
     const cc = await sql`SELECT count(*) as count FROM erp_chapas`;
@@ -663,8 +741,10 @@ export async function runInitDB() {
     'fechamentos_financeiros', 'baixas', 'movimentacoes_tesouraria', 'counters',
     'erp_categories', 'erp_simulations',
     'pedidos_compra', 'pedido_compra_itens', 'recebimentos_compra',
-    'subscriptions', 'usage_logs'
+    'subscriptions', 'usage_logs',
+    'ordens_prod', 'etapas_prod_kanban', 'movimento_kanban', 'eventos_calendario', 'notificacoes_calendario'
   ];
+
 
   for (const tabela of tabelasComTenant) {
     await safeSql(sql(`ALTER TABLE ${tabela} ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE` as any));

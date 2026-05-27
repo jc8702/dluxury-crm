@@ -1406,6 +1406,81 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                         }
                                     }
                                 }
+
+                                // 5. FASE 1: Gerar Kanban de Produção (ordens_prod e etapas_prod_kanban)
+                                const numeroOp = `OP-${exists.numeroOrcamento || exists.id.substring(0,8)}-${Math.floor(1000 + Math.random() * 9000)}`;
+                                const dataPrazo = exists.dataOrcamento ? new Date(exists.dataOrcamento) : new Date();
+                                const prazoDias = parseInt(String(exists.prazoEntregaDias || '30'), 10);
+                                dataPrazo.setDate(dataPrazo.getDate() + prazoDias);
+
+                                const opResult = await tx.execute(dsql`
+                                    INSERT INTO ordens_prod (
+                                        id, tenant_id, orcamento_id, numero_op, status, prioridade, data_prazo, observacoes
+                                    ) VALUES (
+                                        gen_random_uuid(),
+                                        ${tenantId}::uuid,
+                                        ${id}::uuid,
+                                        ${numeroOp},
+                                        'planejamento',
+                                        5,
+                                        ${dataPrazo.toISOString().split('T')[0]},
+                                        null
+                                    )
+                                    RETURNING id
+                                `);
+
+                                const newOpId = opResult.rows[0]?.id;
+
+                                if (newOpId) {
+                                    const etapasPadrao = [
+                                        { numero: 1, nome: 'MEDIÇÃO' },
+                                        { numero: 2, nome: 'PROJETO' },
+                                        { numero: 3, nome: 'PRODUÇÃO' },
+                                        { numero: 4, nome: 'MONTAGEM' },
+                                        { numero: 5, nome: 'ENTREGA' }
+                                    ];
+
+                                    for (const et of etapasPadrao) {
+                                        await tx.execute(dsql`
+                                            INSERT INTO etapas_prod_kanban (
+                                                tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display
+                                            ) VALUES (
+                                                ${tenantId}::uuid,
+                                                ${newOpId}::uuid,
+                                                ${et.numero},
+                                                ${et.nome},
+                                                'a_fazer',
+                                                ${et.numero}
+                                            )
+                                        `);
+                                    }
+
+                                    // Criar eventos automáticos de calendário para prazos da OP
+                                    const usuarios = await tx.execute(dsql`
+                                        SELECT id FROM users 
+                                        WHERE tenant_id = ${tenantId}::uuid
+                                    `);
+
+                                    for (const u of usuarios.rows) {
+                                        const userId = (u as any).id;
+                                        await tx.execute(dsql`
+                                            INSERT INTO eventos_calendario (
+                                                tenant_id, usuario_id, tipo_evento, titulo, descricao, data_evento, operacao_prod_id, cor_categoria, concluido, notificacao_dias_antes
+                                            ) VALUES (
+                                                ${tenantId}::uuid,
+                                                ${userId}::uuid,
+                                                'prazo_entrega',
+                                                ${`Prazo de Entrega OP: ${numeroOp}`},
+                                                ${`Ordem de Produção gerada a partir do Orçamento ${exists.numeroOrcamento}`},
+                                                ${dataPrazo.toISOString().split('T')[0]},
+                                                ${newOpId}::uuid,
+                                                '#DC2626',
+                                                FALSE,
+                                                3
+                                            )
+                                        `);
+                                    }
+                                }
                             });
                         } else {
                             await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));

@@ -274,9 +274,17 @@ export default async function handler(req: any, res: any) {
       const { handleGoals } = await import('../src/api-lib/crm.js');
       return await handleGoals(req, res);
     }
+    if (cleanUrl.startsWith('/api/kanban/move-card') || cleanUrl.startsWith('/api/kanban/board') || cleanUrl.startsWith('/api/kanban/card-details') || cleanUrl.startsWith('/api/kanban/card-history')) {
+      const { handleKanbanProducao } = await import('../src/api-lib/kanban-producao.js');
+      return await handleKanbanProducao(req, res);
+    }
     if (cleanUrl.startsWith('/api/kanban')) {
       const { handleKanban } = await import('../src/api-lib/crm.js');
       return await handleKanban(req, res);
+    }
+    if (cleanUrl.startsWith('/api/calendario')) {
+      const { handleCalendario } = await import('../src/api-lib/calendario.js');
+      return await handleCalendario(req, res);
     }
     if (cleanUrl.startsWith('/api/engineering')) {
       const { handleEngineering } = await import('../src/api-lib/projects.js');
