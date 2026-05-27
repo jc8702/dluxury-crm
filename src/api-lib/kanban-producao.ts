@@ -23,6 +23,7 @@ export async function handleKanbanProducao(req: any, res: any) {
           o.id as orcamento_id,
           o.numero_orcamento,
           c.nome as cliente_nome,
+          c.telefone as cliente_telefone,
           op.prioridade,
           op.environment,
           ep.data_inicio,
@@ -136,6 +137,12 @@ export async function handleKanbanProducao(req: any, res: any) {
           SET status = 'concluído', data_conclusao = CURRENT_DATE, updated_at = NOW()
           WHERE id = ${etapa.operacao_prod_id} AND tenant_id = ${tenantId}::uuid
         `;
+        try {
+          const { autoCreateCustosReaisOP } = await import('./rentabilidade.js');
+          await autoCreateCustosReaisOP(etapa.operacao_prod_id, tenantId);
+        } catch (err) {
+          console.error('[AUTO_CREATE_CUSTOS_REAIS_OP_ERROR]', err);
+        }
       } else {
         // Se começou pelo menos uma e não terminou todas
         await sql`
@@ -166,17 +173,43 @@ export async function handleKanbanProducao(req: any, res: any) {
         return res.status(404).json({ success: false, error: 'Etapa de produção não encontrada' });
       }
 
-      let etapa = existing;
       if (responsavel_id !== undefined) {
-        const [updated] = await sql`
+        await sql`
           UPDATE etapas_prod_kanban 
           SET responsavel_id = ${responsavel_id ? responsavel_id : null}::uuid,
               updated_at = NOW()
           WHERE id = ${etapa_kanban_id} AND tenant_id = ${tenantId}::uuid
-          RETURNING *
         `;
-        if (updated) etapa = updated;
       }
+
+      const [completeCard] = await sql`
+        SELECT 
+          ep.id,
+          ep.status_kanban,
+          ep.etapa_nome,
+          ep.etapa_numero,
+          op.id as operacao_prod_id,
+          op.numero_op,
+          o.id as orcamento_id,
+          o.numero_orcamento,
+          c.nome as cliente_nome,
+          c.telefone as cliente_telefone,
+          op.prioridade,
+          op.environment,
+          ep.data_inicio,
+          ep.data_conclusao,
+          ep.responsavel_id,
+          u.name as responsavel_nome,
+          ep.created_at,
+          ep.updated_at
+        FROM etapas_prod_kanban ep
+        JOIN ordens_prod op ON ep.operacao_prod_id = op.id
+        JOIN orcamentos_pro o ON op.orcamento_id = o.id
+        LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+        LEFT JOIN users u ON ep.responsavel_id = u.id
+        WHERE ep.id = ${etapa_kanban_id} AND ep.tenant_id = ${tenantId}::uuid
+      `;
+      const etapa = completeCard || existing;
 
       if (nota) {
         await sql`

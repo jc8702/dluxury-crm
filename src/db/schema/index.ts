@@ -7,5 +7,7 @@ export * from './conhecimento.js';
 export * from './tenants.js';
 export * from './billing.js';
 export * from './producao.js';
-
-
+export * from './rentabilidade.js';
+export * from './whatsapp.js';
+export * from './estoque-granular.js';
+export * from './contrato-digital.js';

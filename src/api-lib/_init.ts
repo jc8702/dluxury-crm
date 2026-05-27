@@ -697,6 +697,7 @@ export async function runInitDB() {
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS notificacoes_calendario (
+
       id SERIAL PRIMARY KEY,
       evento_calendario_id INTEGER REFERENCES eventos_calendario(id) ON DELETE CASCADE,
       tipo_notificacao VARCHAR(50),
@@ -706,7 +707,301 @@ export async function runInitDB() {
     )
   `);
 
+  // 24. Custos Reais de Produção (Fase 2)
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS custos_reais_op (
+      id SERIAL PRIMARY KEY,
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE CASCADE NOT NULL,
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE NOT NULL,
+      custo_material_estimado DECIMAL(10, 2),
+      custo_mao_obra_estimada DECIMAL(10, 2),
+      tempo_horas_estimado DECIMAL(10, 2),
+      custo_material_real DECIMAL(10, 2),
+      custo_mao_obra_real DECIMAL(10, 2),
+      tempo_horas_real DECIMAL(10, 2),
+      custo_retrabalho DECIMAL(10, 2) DEFAULT 0,
+      custo_desperdicio_material DECIMAL(10, 2) DEFAULT 0,
+      custo_total_estimado DECIMAL(10, 2),
+      custo_total_real DECIMAL(10, 2),
+      variacao_custo DECIMAL(10, 2),
+      variacao_percentual DECIMAL(5, 2),
+      valor_venda DECIMAL(10, 2),
+      margem_estimada DECIMAL(10, 2),
+      margem_real DECIMAL(10, 2),
+      margem_percentual_real DECIMAL(5, 2),
+      descricao_desvios TEXT,
+      responsavel_analise UUID,
+      data_conclusao_op DATE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 25. Rentabilidade por Cliente
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS rentabilidade_cliente (
+      id SERIAL PRIMARY KEY,
+      cliente_id INT NOT NULL,
+      total_orcamentos INT DEFAULT 0,
+      total_pedidos INT DEFAULT 0,
+      total_vendido DECIMAL(12, 2) DEFAULT 0,
+      total_custos_reais DECIMAL(12, 2) DEFAULT 0,
+      margem_total DECIMAL(12, 2) DEFAULT 0,
+      margem_media_percentual DECIMAL(5, 2) DEFAULT 0,
+      ticket_medio DECIMAL(10, 2) DEFAULT 0,
+      operacoes_lucrativas INT DEFAULT 0,
+      operacoes_prejuizadas INT DEFAULT 0,
+      score_rentabilidade INT DEFAULT 0,
+      ultimo_pedido_data DATE,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 26. Tendências de Preço
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS tendencias_preco (
+      id SERIAL PRIMARY KEY,
+      tipo_produto VARCHAR(100),
+      data_analise DATE,
+      preco_medio_mes DECIMAL(10, 2),
+      preco_minimo DECIMAL(10, 2),
+      preco_maximo DECIMAL(10, 2),
+      margem_media_mes DECIMAL(5, 2),
+      volume_vendas INT,
+      variacao_preco_mes DECIMAL(5, 2),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 27. Conversas WhatsApp
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS conversas_whatsapp (
+      id SERIAL PRIMARY KEY,
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE CASCADE,
+      numero_telefone VARCHAR(20) NOT NULL,
+      contato_nome VARCHAR(255),
+      ultima_mensagem TEXT,
+      timestamp_ultima_msg TIMESTAMP WITH TIME ZONE,
+      mensagens_nao_lidas INT DEFAULT 0,
+      status_conversa VARCHAR(50) DEFAULT 'ativa',
+      tags VARCHAR(500),
+      data_criacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 28. Mensagens WhatsApp
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS mensagens_whatsapp (
+      id SERIAL PRIMARY KEY,
+      conversa_whatsapp_id INT REFERENCES conversas_whatsapp(id) ON DELETE CASCADE NOT NULL,
+      usuario_id UUID,
+      tipo_msg VARCHAR(50) NOT NULL,
+      conteudo_msg TEXT NOT NULL,
+      arquivo_url VARCHAR(500),
+      timestamp_msg TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      lido BOOLEAN DEFAULT FALSE,
+      whatsapp_msg_id VARCHAR(100) UNIQUE,
+      status_entrega VARCHAR(50)
+    )
+  `);
+
+  // 29. Modelos de Mensagens
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS modelos_msg_whatsapp (
+      id SERIAL PRIMARY KEY,
+      titulo VARCHAR(100) NOT NULL,
+      conteudo_template TEXT NOT NULL,
+      tipo_acionador VARCHAR(50),
+      ativo BOOLEAN DEFAULT TRUE,
+      criado_por UUID,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 30. Tabelas da Fase 3: Estoque Granular + Contratos
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS estoque_materiais_detalhado (
+      id SERIAL PRIMARY KEY,
+      sku_codigo VARCHAR(50) UNIQUE NOT NULL,
+      descricao VARCHAR(255) NOT NULL,
+      unidade_medida VARCHAR(20) DEFAULT 'un',
+      quantidade_disponivel INTEGER DEFAULT 0,
+      quantidade_em_transito INTEGER DEFAULT 0,
+      quantidade_provisionado INTEGER DEFAULT 0,
+      quantidade_defeituoso INTEGER DEFAULT 0,
+      quantidade_vencido INTEGER DEFAULT 0,
+      quantidade_minima INTEGER DEFAULT 10,
+      quantidade_maxima INTEGER DEFAULT 500,
+      lead_time_dias INTEGER DEFAULT 7,
+      preco_custo_unitario DECIMAL(10, 2),
+      valor_total_estoque DECIMAL(12, 2),
+      fornecedor_id INTEGER,
+      data_ultima_compra TIMESTAMP WITH TIME ZONE,
+      data_proxima_reposicao TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS movimento_estoque_granular (
+      id SERIAL PRIMARY KEY,
+      sku_codigo VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE SET NULL,
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE SET NULL,
+      tipo_movimento VARCHAR(50) NOT NULL,
+      quantidade_movimento INTEGER NOT NULL,
+      status_anterior VARCHAR(50),
+      status_novo VARCHAR(50),
+      saldo_anterior INTEGER,
+      saldo_novo INTEGER,
+      motivo_descricao TEXT,
+      usuario_id UUID,
+      timestamp_movimento TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS alertas_estoque (
+      id SERIAL PRIMARY KEY,
+      sku_codigo VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
+      tipo_alerta VARCHAR(50),
+      quantidade_atual INTEGER,
+      limite_alerta INTEGER,
+      severidade VARCHAR(20),
+      ativo BOOLEAN DEFAULT TRUE,
+      data_alerta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      data_resolucao TIMESTAMP WITH TIME ZONE,
+      usuario_notificado_id UUID
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS planejamento_reposicao (
+      id SERIAL PRIMARY KEY,
+      sku_codigo VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
+      quantidade_necessaria INTEGER,
+      data_necessario_ate TIMESTAMP WITH TIME ZONE,
+      operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE SET NULL,
+      status_planejamento VARCHAR(50),
+      ordem_compra_id INTEGER,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS ordens_compra_granular (
+      id SERIAL PRIMARY KEY,
+      numero_oc VARCHAR(50) UNIQUE NOT NULL,
+      fornecedor_id INTEGER,
+      data_emissao TIMESTAMP WITH TIME ZONE,
+      data_entrega_prevista TIMESTAMP WITH TIME ZONE,
+      data_entrega_real TIMESTAMP WITH TIME ZONE,
+      status_oc VARCHAR(50),
+      valor_total DECIMAL(12, 2),
+      observacoes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS itens_oc_granular (
+      id SERIAL PRIMARY KEY,
+      ordem_compra_id INTEGER REFERENCES ordens_compra_granular(id) ON DELETE CASCADE NOT NULL,
+      sku_codigo VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
+      quantidade_solicitada INTEGER,
+      quantidade_recebida INTEGER DEFAULT 0,
+      preco_unitario DECIMAL(10, 2),
+      subtotal DECIMAL(12, 2)
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS contrato_digital (
+      id SERIAL PRIMARY KEY,
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE UNIQUE,
+      numero_contrato VARCHAR(50) UNIQUE,
+      data_criacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      data_documento TIMESTAMP WITH TIME ZONE,
+      empresa_nome VARCHAR(255),
+      empresa_cnpj VARCHAR(20),
+      cliente_nome VARCHAR(255),
+      cliente_cpf_cnpj VARCHAR(20),
+      html_contrato TEXT,
+      arquivo_pdf_url VARCHAR(500),
+      status_assinatura VARCHAR(50) DEFAULT 'pendente',
+      data_solicitacao_assinatura TIMESTAMP WITH TIME ZONE,
+      id_assinatura_externa VARCHAR(100),
+      url_assinatura VARCHAR(500),
+      data_assinatura_empresa TIMESTAMP WITH TIME ZONE,
+      data_assinatura_cliente TIMESTAMP WITH TIME ZONE,
+      certificado_validade TIMESTAMP WITH TIME ZONE,
+      documento_assinado_url VARCHAR(500),
+      hash_documento VARCHAR(256),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS historico_assinatura_digital (
+      id SERIAL PRIMARY KEY,
+      contrato_id INTEGER REFERENCES contrato_digital(id) ON DELETE CASCADE NOT NULL,
+      acao VARCHAR(100) NOT NULL,
+      timestamp_acao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      usuario_id UUID,
+      detalhes TEXT
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS mapeamento_sku (
+      id SERIAL PRIMARY KEY,
+      sku_promob VARCHAR(100) NOT NULL,
+      sku_interno VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
+      nome_promob VARCHAR(255),
+      nome_interno VARCHAR(255),
+      confianca_match INTEGER DEFAULT 100,
+      tipo_match VARCHAR(50),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      validado_por UUID,
+      data_validation TIMESTAMP WITH TIME ZONE
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS historico_sku_matching (
+      id SERIAL PRIMARY KEY,
+      orcamento_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      sku_procurado VARCHAR(100) NOT NULL,
+      skus_sugeridos VARCHAR(500),
+      sku_selecionado VARCHAR(50),
+      timestamp_matching TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      usuario_id UUID
+    )
+  `);
+
+  // Seed default Estoque Detalhado se vazio
+  try {
+    const ec = await sql`SELECT count(*) as count FROM estoque_materiais_detalhado`;
+    if (ec.length && parseInt(ec[0].count, 10) === 0) {
+      const defaultTenantId = '00000000-0000-0000-0000-000000000000';
+      await sql`INSERT INTO estoque_materiais_detalhado (tenant_id, sku_codigo, descricao, unidade_medida, quantidade_disponivel, quantidade_em_transito, quantidade_provisionado, quantidade_defeituoso, quantidade_vencido, quantidade_minima, quantidade_maxima, preco_custo_unitario, valor_total_estoque) VALUES 
+        (${defaultTenantId}, 'MDF-BRA-15', 'MDF BRANCO 15MM', 'un', 45, 10, 5, 2, 0, 10, 100, 150.00, 9300.00),
+        (${defaultTenantId}, 'MDF-BRA-18', 'MDF BRANCO 18MM', 'un', 8, 20, 0, 0, 0, 15, 100, 180.00, 5040.00),
+        (${defaultTenantId}, 'COR-TELE-45', 'CORREDIÇA TELESCÓPICA 45CM', 'par', 120, 0, 30, 5, 0, 50, 500, 25.00, 3875.00),
+        (${defaultTenantId}, 'DOB-RETA-35', 'DOBRADIÇA RETA 35MM', 'un', 250, 100, 80, 10, 0, 100, 1000, 4.50, 1980.00),
+        (${defaultTenantId}, 'PAR-40X16', 'PARAFUSO 4.0 X 16MM', 'cx', 3, 5, 1, 0, 0, 5, 50, 45.00, 405.00)`;
+    }
+  } catch (err: any) {
+    console.error('Erro no Seed de Estoque Granular:', err.message);
+  }
+
   // Seed default Chapas if empty
+
   try {
     const cc = await sql`SELECT count(*) as count FROM erp_chapas`;
     if (cc.length && parseInt(cc[0].count, 10) === 0) {
@@ -742,7 +1037,9 @@ export async function runInitDB() {
     'erp_categories', 'erp_simulations',
     'pedidos_compra', 'pedido_compra_itens', 'recebimentos_compra',
     'subscriptions', 'usage_logs',
-    'ordens_prod', 'etapas_prod_kanban', 'movimento_kanban', 'eventos_calendario', 'notificacoes_calendario'
+    'ordens_prod', 'etapas_prod_kanban', 'movimento_kanban', 'eventos_calendario', 'notificacoes_calendario',
+    'custos_reais_op', 'rentabilidade_cliente', 'tendencias_preco', 'conversas_whatsapp', 'mensagens_whatsapp', 'modelos_msg_whatsapp',
+    'estoque_materiais_detalhado', 'movimento_estoque_granular', 'alertas_estoque', 'planejamento_reposicao', 'ordens_compra_granular', 'itens_oc_granular', 'contrato_digital', 'historico_assinatura_digital', 'mapeamento_sku', 'historico_sku_matching'
   ];
 
 

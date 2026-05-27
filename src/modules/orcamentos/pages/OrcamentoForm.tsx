@@ -10,6 +10,7 @@ import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { api } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
 import { ItemCard } from '../components/ItemCard';
+import ContratoDigitalModal from '@/components/contrato/ContratoDigitalModal';
 
 export default function OrcamentoForm() {
     const { error: toastError, success: toastSuccess } = useToast();
@@ -20,11 +21,12 @@ export default function OrcamentoForm() {
     const { 
         orcamento, loading, inicializar, setHeader, addItem, 
         importItems, updateItem, removerItem,
-        applyGlobalMargin, deletarOrcamento, error 
+        applyGlobalMargin, deletarOrcamento, error, carregar 
     } = useOrcamento(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+    const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -400,6 +402,13 @@ export default function OrcamentoForm() {
                         <Upload className="w-4 h-4 mr-2" /> Importar Projeto
                     </Button>
                     <Button 
+                        variant="outline"
+                        className="border-zinc-800 hover:bg-zinc-900"
+                        onClick={() => setIsContractModalOpen(true)}
+                    >
+                        <FileText className="w-4 h-4 mr-2" /> Contrato & Assinatura
+                    </Button>
+                    <Button 
                         className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 shadow-lg shadow-orange-900/20"
                         onClick={() => setIsSendModalOpen(true)}
                     >
@@ -581,6 +590,17 @@ export default function OrcamentoForm() {
                     await handleUpdateHeader(localComercial);
                 }}
             />
+
+            {isContractModalOpen && orcamentoId && (
+                <ContratoDigitalModal
+                    orcamentoId={orcamentoId}
+                    numeroOrcamento={orcamento?.numeroOrcamento || ''}
+                    onClose={() => setIsContractModalOpen(false)}
+                    onStatusChanged={() => {
+                        carregar();
+                    }}
+                />
+            )}
         </div>
     );
 }

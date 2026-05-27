@@ -57,6 +57,7 @@ export default function FinancePage() {
     { to: '/financeiro/dre', icon: PieChartIcon, title: 'DRE', color: 'text-violet-400', bg: 'bg-violet-400/10' },
     { to: '/financeiro/aging', icon: AlertCircle, title: 'Aging', color: 'text-amber-400', bg: 'bg-amber-400/10' },
     { to: '/financeiro/fluxo-caixa', icon: TrendingUp, title: 'Fluxo Caixa', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { to: '/financeiro/rentabilidade', icon: Activity, title: 'Rentabilidade', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
   ];
 
   return (

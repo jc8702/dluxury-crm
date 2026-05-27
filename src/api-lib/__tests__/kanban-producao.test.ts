@@ -116,8 +116,11 @@ describe('handleKanbanProducao', () => {
         qStr = (query.strings as string[]).join('?');
       }
 
-      if (qStr.includes('SELECT * FROM etapas_prod_kanban') || qStr.includes('SELECT * FROM etapas_prod_kanban')) {
+      if (qStr.includes('SELECT * FROM etapas_prod_kanban')) {
         return [{ id: 10, responsavel_id: null, status_kanban: 'a_fazer' }];
+      }
+      if (qStr.includes('SELECT') && qStr.includes('etapas_prod_kanban')) {
+        return [{ id: 10, responsavel_id: 'resp-uuid', status_kanban: 'a_fazer' }];
       }
       if (qStr.includes('UPDATE etapas_prod_kanban')) {
         return [{ id: 10, responsavel_id: 'resp-uuid', status_kanban: 'a_fazer' }];

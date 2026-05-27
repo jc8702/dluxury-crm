@@ -16,8 +16,9 @@ import {
   List
 } from 'lucide-react';
 import { Button, Card, CardContent, Input, Badge } from '../../design-system/components';
+import EstoqueGranular from '../estoque/EstoqueGranular';
 
-type MainTab = 'materials' | 'history';
+type MainTab = 'materials' | 'history' | 'granular';
 
 const Inventory: React.FC = () => {
   const { error: toastError } = useToast();
@@ -123,6 +124,13 @@ const Inventory: React.FC = () => {
             >
               <History size={16} /> Movimentações
             </Button>
+            <Button 
+              onClick={() => setActiveTab('granular')}
+              variant={activeTab === 'granular' ? 'primary' : 'ghost'}
+              className="text-sm font-semibold flex items-center gap-2"
+            >
+              <Package size={16} /> Estoque Granular (Real-Time)
+            </Button>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 flex-1 justify-end max-w-3xl">
@@ -159,7 +167,9 @@ const Inventory: React.FC = () => {
         </CardContent>
       </Card>
 
-      {activeTab === 'materials' ? (
+      {activeTab === 'granular' ? (
+        <EstoqueGranular />
+      ) : activeTab === 'materials' ? (
         <>
           <div className="flex justify-end mb-2">
             <div className="flex bg-muted/40 p-1 rounded-xl border border-border">

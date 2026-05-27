@@ -3,17 +3,22 @@ import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/design-system/components';
+import SKUMatchingUI from '../../../components/orcamentos/SKUMatchingUI';
+import { estoqueGranularService } from '../../../services/estoqueGranularService';
 
 interface ImportarCSVProps {
   isOpen: boolean;
   onClose: () => void;
   onAddItems: (items: any[]) => Promise<any>;
+  orcamentoId: string;
 }
 
-type ImportStatus = 'idle' | 'parsing' | 'review' | 'saving' | 'success' | 'error';
+type ImportStatus = 'idle' | 'parsing' | 'matching_validation' | 'review' | 'saving' | 'success' | 'error';
 
-export function ImportarCSV({ isOpen, onClose, onAddItems }: ImportarCSVProps) {
+export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: ImportarCSVProps) {
   const [items, setItems] = useState<any[]>([]);
+  const [itemsOriginais, setItemsOriginais] = useState<any[]>([]);
+  const [matchingResultados, setMatchingResultados] = useState<any[]>([]);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -55,37 +60,31 @@ export function ImportarCSV({ isOpen, onClose, onAddItems }: ImportarCSVProps) {
           });
 
         const filtered = mappedData.filter(i => i.quantidade > 0 && i.nome !== 'Item sem nome');
+        setItemsOriginais(filtered);
         
         if (filtered.length > 0) {
           try {
-            const matchResponse = await fetch('/api/match-skus', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ itens: filtered })
-            });
-            const matchResult = await matchResponse.json();
+            const matchResult = await estoqueGranularService.matchSKUsEmLote(orcamentoId, filtered.map(f => ({
+              sku_promob: f.sku_informado || f.nome,
+              descricao: f.nome,
+              quantidade: f.quantidade
+            })));
             
-            if (matchResult.success) {
-              // Transformar o formato do match-skus para o esperado pelo importar-itens
-              const enriched = matchResult.data.map((it: any) => ({
-                ...it,
-                match_sugerido: it.produto_id ? {
-                  sku_componente_id: it.produto_id,
-                  nome: it.sku_encontrado,
-                  custoUnitario: it.custoUnitario
-                } : null
-              }));
-              setItems(enriched);
+            if (matchResult.success && matchResult.resultados) {
+              setMatchingResultados(matchResult.resultados);
+              setStatus('matching_validation');
             } else {
               setItems(filtered);
+              setStatus('review');
             }
           } catch (err) {
-            console.warn("⚠️ [ImportarCSV] Erro ao buscar SKUs, prosseguindo sem match:", err);
+            console.warn("⚠️ [ImportarCSV] Erro ao buscar SKUs:", err);
             setItems(filtered);
+            setStatus('review');
           }
+        } else {
+          setStatus('review');
         }
-
-        setStatus('review');
       },
       error: (err) => {
         console.error('❌ [ImportarCSV] Erro no parse:', err);
@@ -140,6 +139,46 @@ export function ImportarCSV({ isOpen, onClose, onAddItems }: ImportarCSVProps) {
   };
 
   if (!isOpen) return null;
+
+  if (status === 'matching_validation') {
+    return (
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
+        <SKUMatchingUI 
+          resultados={matchingResultados}
+          onConfirmar={async (itensValidados) => {
+            setStatus('saving');
+            try {
+              const itemsFinais = itemsOriginais.map(fit => {
+                const validado = itensValidados.find(v => v.sku_promob === fit.sku_informado || v.sku_promob === fit.nome);
+                return {
+                  ...fit,
+                  sku_id: validado?.sku_interno || null
+                };
+              });
+
+              const success = await onAddItems(itemsFinais);
+              if (success) {
+                setStatus('success');
+                setTimeout(() => {
+                  onClose();
+                  setStatus('idle');
+                  setItems([]);
+                }, 1500);
+              } else {
+                throw new Error('Falha na inserção dos itens no orçamento');
+              }
+            } catch (e: any) {
+              setError(e.message || 'Erro ao processar importação');
+              setStatus('error');
+            }
+          }}
+          onCancelar={() => {
+            setStatus('idle');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-6">

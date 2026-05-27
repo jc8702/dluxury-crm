@@ -10,6 +10,7 @@ export interface KanbanCardType {
   orcamento_id: string;
   numero_orcamento: string;
   cliente_nome: string;
+  cliente_telefone: string | null;
   prioridade: number;
   environment: string;
   data_inicio: string | null;

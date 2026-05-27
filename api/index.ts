@@ -143,6 +143,18 @@ export default async function handler(req: any, res: any) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
     }
+    if (cleanUrl.startsWith('/api/estoque/items') || cleanUrl.startsWith('/api/estoque/alertas') || cleanUrl.startsWith('/api/estoque/registrar-movimento') || cleanUrl.startsWith('/api/estoque/finalizar-op')) {
+      const { handleEstoqueGranular } = await import('../src/api-lib/estoque-granular.js');
+      return await handleEstoqueGranular(req, res);
+    }
+    if (cleanUrl.startsWith('/api/orcamentos/sku-matching')) {
+      const { handleEstoqueGranular } = await import('../src/api-lib/estoque-granular.js');
+      return await handleEstoqueGranular(req, res);
+    }
+    if (cleanUrl.startsWith('/api/contratos')) {
+      const { handleContratoDigital } = await import('../src/api-lib/contrato-digital.js');
+      return await handleContratoDigital(req, res);
+    }
     if (cleanUrl.startsWith('/api/estoque')) {
       const { handleEstoque } = await import('../src/api-lib/estoque.js');
       return await handleEstoque(req, res);
@@ -285,6 +297,14 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/calendario')) {
       const { handleCalendario } = await import('../src/api-lib/calendario.js');
       return await handleCalendario(req, res);
+    }
+    if (cleanUrl.startsWith('/api/rentabilidade')) {
+      const { handleRentabilidade } = await import('../src/api-lib/rentabilidade.js');
+      return await handleRentabilidade(req, res);
+    }
+    if (cleanUrl.startsWith('/api/whatsapp')) {
+      const { handleWhatsApp } = await import('../src/api-lib/whatsapp.js');
+      return await handleWhatsApp(req, res);
     }
     if (cleanUrl.startsWith('/api/engineering')) {
       const { handleEngineering } = await import('../src/api-lib/projects.js');
