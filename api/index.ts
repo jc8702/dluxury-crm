@@ -117,6 +117,11 @@ export default async function handler(req: any, res: any) {
     const allowedByBilling = await verifyBillingStatus(req, res);
     if (!allowedByBilling) return;
 
+    // Verificar Feature Gates (Bloqueio 403 se funcionalidade ausente no plano)
+    const { verifyFeatureGate } = await import('../src/api-lib/feature-gate-middleware.js');
+    const allowedByFeatureGate = await verifyFeatureGate(req, res);
+    if (!allowedByFeatureGate) return;
+
     // Roteamento Dinâmico (Lazy Loading)
     if (cleanUrl.startsWith('/api/signup')) {
       const { handleSignup } = await import('../src/api-lib/tenant-provisioning.js');

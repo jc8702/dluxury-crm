@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks do Banco de dados e dependências
 vi.mock('../_db.js', () => ({
-  sql: vi.fn().mockResolvedValue([]),
+  sql: vi.fn().mockImplementation(async (strings: any, ...values: any[]) => {
+    const query = Array.isArray(strings) ? strings.join('') : String(strings);
+    if (query.includes('plano_tier') || query.includes('tenants')) {
+      return [{ plano_tier: 'enterprise' }];
+    }
+    return [];
+  }),
   validateAuth: (req?: any) => {
     const userId = req?.body?.context?.usuario_id || `usr-${Math.random()}`;
     return { authorized: true, user: { tenantId: 'tenant-default', id: userId, email: 'test@example.com' } };

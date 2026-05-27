@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { NotificacoesBadge } from './NotificacoesBadge';
+import { hasFeature } from '../../lib/features';
 
 import {
   LayoutDashboard, Users, FileText, ClipboardList, 
@@ -18,33 +19,37 @@ const Sidebar: React.FC = () => {
   const currentPath = location.pathname.replace('/', '') || 'painel';
 
   const menuItems = [
-    { id: 'dashboard', path: 'painel', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL' },
-    { id: 'clients', path: 'clientes', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL' },
-    { id: 'estimates', path: 'orcamentos', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL' },
-    { id: 'projects', path: 'projetos', label: 'Projetos', icon: <ClipboardList size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL' },
-    { id: 'visits', path: 'visitas', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL' },
+    { id: 'dashboard', path: 'painel', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'clients', path: 'clientes', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'estimates', path: 'orcamentos', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'orcamentos' },
+    { id: 'projects', path: 'projetos', label: 'Projetos', icon: <ClipboardList size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'visits', path: 'visitas', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
     
-    { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
-    { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
-    { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Produção', icon: <Clock3 size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
-    { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO' },
-    { id: 'engineering', path: 'engenharia', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'], group: 'PRODUÇÃO' },
+    { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO', feature: 'plano_corte' },
+    { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO', feature: 'plano_corte' },
+    { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Produção', icon: <Clock3 size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO', feature: 'plano_corte' },
+    { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={20} />, roles: ['admin', 'marceneiro'], group: 'PRODUÇÃO', feature: 'simulador_cnc' },
+    { id: 'engineering', path: 'engenharia', label: 'Engenharia', icon: <Settings2 size={20} />, roles: ['admin'], group: 'PRODUÇÃO', feature: 'plano_corte' },
 
-    { id: 'calendar', path: 'calendario', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'OPERACIONAL' },
-    { id: 'after_sales', path: 'pos-venda', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'], group: 'OPERACIONAL' },
-    { id: 'purchasing', path: 'compras', label: 'Compras', icon: <ShoppingCart size={20} />, roles: ['admin'], group: 'OPERACIONAL' },
-    { id: 'inventory', path: 'estoque', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'], group: 'OPERACIONAL' },
-    { id: 'suppliers', path: 'fornecedores', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'], group: 'OPERACIONAL' },
+    { id: 'calendar', path: 'calendario', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'OPERACIONAL', feature: 'crm' },
+    { id: 'after_sales', path: 'pos-venda', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'], group: 'OPERACIONAL', feature: 'crm' },
+    { id: 'purchasing', path: 'compras', label: 'Compras', icon: <ShoppingCart size={20} />, roles: ['admin'], group: 'OPERACIONAL', feature: 'estoque' },
+    { id: 'inventory', path: 'estoque', label: 'Estoque', icon: <Package size={20} />, roles: ['admin', 'marceneiro'], group: 'OPERACIONAL', feature: 'estoque' },
+    { id: 'suppliers', path: 'fornecedores', label: 'Fornecedores', icon: <Truck size={20} />, roles: ['admin'], group: 'OPERACIONAL', feature: 'estoque' },
 
-    { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'], group: 'FINANCEIRO' },
+    { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'], group: 'FINANCEIRO', feature: 'financeiro' },
 
-    { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'SISTEMA' },
-    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'], group: 'SISTEMA' },
-    { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'], group: 'SISTEMA' },
-    { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'], group: 'SISTEMA' },
+    { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
   ];
 
-  const visibleMenuItems = menuItems.filter(item => user && item.roles.includes(user.role));
+  const visibleMenuItems = menuItems.filter(item => 
+    user && 
+    item.roles.includes(user.role) && 
+    hasFeature((user as any).planoTier || 'basic', item.feature)
+  );
   
   const groups = ['COMERCIAL', 'PRODUÇÃO', 'OPERACIONAL', 'FINANCEIRO', 'SISTEMA'];
 

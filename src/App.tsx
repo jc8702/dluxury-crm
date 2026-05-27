@@ -127,11 +127,61 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+import { hasFeature } from './lib/features';
+
 function AuthGuard() {
   const { user, authLoading } = useAppContext();
 
   if (authLoading) return <LoadingScreen />;
   if (!user) return <LoginPage />;
+  return <Outlet />;
+}
+
+function FeatureGuard({ feature }: { feature: string }) {
+  const { user, authLoading } = useAppContext();
+
+  if (authLoading) return <LoadingScreen />;
+  if (!user) return <LoginPage />;
+  
+  const hasAccess = hasFeature((user as any).planoTier || 'basic', feature);
+  if (!hasAccess) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        backgroundColor: '#0D1117',
+        color: '#E2AC00',
+        gap: '16px',
+        padding: '32px',
+        fontFamily: 'sans-serif',
+        textAlign: 'center'
+      }}>
+        <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '0.05em' }}>RECURSO EXCLUSIVO</h2>
+        <p style={{ color: '#9CA3AF', maxWidth: '450px', fontSize: '14px', lineHeight: '1.6' }}>
+          Esta funcionalidade pertence a um plano comercial superior. Faça o upgrade da sua assinatura nas configurações do sistema para liberar o acesso.
+        </p>
+        <button 
+          onClick={() => window.location.hash = '#/configuracoes'} 
+          style={{ 
+            background: '#E2AC00', 
+            color: '#000', 
+            border: 'none', 
+            padding: '12px 24px', 
+            borderRadius: '8px', 
+            cursor: 'pointer', 
+            fontWeight: '900',
+            letterSpacing: '0.05em'
+          }}
+        >
+          GERENCIAR ASSINATURA
+        </button>
+      </div>
+    );
+  }
+  
   return <Outlet />;
 }
 
@@ -157,42 +207,59 @@ export default function App() {
                   {/* Rotas Autenticadas */}
                   <Route element={<AuthGuard />}>
                     <Route element={<Layout />}>
-                    <Route path="painel" element={<DashboardPage />} />
-                    <Route path="clientes" element={<ClientsPage />} />
-                    <Route path="orcamentos" element={<OrcamentoForm />} />
-                    <Route path="projetos" element={<ProjectsPage />} />
-                    <Route path="producao" element={<ProductionPage />} />
-                     <Route path="plano-de-corte" element={<CuttingPlanPage />} />
-                     <Route path="plano-de-corte-demo" element={<PlanoCorteDemoPage />} />
-                     <Route path="simulador-corte" element={<SimuladorCortePage />} />
-                     <Route path="simulador-producao" element={<SimuladorProducaoPage />} />
-                     <Route path="retalhos" element={<RetalhosPage />} />
-                     <Route path="visitas" element={<VisitsPage />} />
-                    <Route path="calendario" element={<CalendarioPage />} />
-                    <Route path="pos-venda" element={<PosVendaPage />} />
-                    <Route path="estoque" element={<InventoryPage />} />
-                    <Route path="fornecedores" element={<SuppliersPage />} />
-                    <Route path="engenharia" element={<EngineeringPage />} />
-                    <Route path="pecas" element={<SKUsPage />} />
-                    <Route path="relatorios" element={<ReportsPage />} />
-                    <Route path="financeiro" element={<FinancePage />} />
-                    <Route path="financeiro/classes" element={<FinanceClassesPage />} />
-                    <Route path="financeiro/contas" element={<FinanceContasPage />} />
-                    <Route path="financeiro/formas" element={<FinanceFormasPage />} />
-                    <Route path="financeiro/condicoes" element={<FinanceCondicoesPage />} />
-                    <Route path="financeiro/titulos-receber" element={<FinanceTitulosReceberPage />} />
-                    <Route path="financeiro/titulos-receber/wizard" element={<FinanceTitulosReceberWizard />} />
-                    <Route path="financeiro/titulos-pagar" element={<FinanceTitulosPagarPage />} />
-                    <Route path="financeiro/titulos-pagar/wizard" element={<FinanceTitulosPagarWizard />} />
-                    <Route path="financeiro/dre" element={<FinanceDREPage />} />
-                    <Route path="financeiro/aging" element={<FinanceAgingPage />} />
-                    <Route path="financeiro/fluxo-caixa" element={<FinanceFluxoCaixaPage />} />
-                    <Route path="financeiro/recorrentes" element={<FinanceRecorrentesPage />} />
-                    <Route path="financeiro/conciliacao" element={<FinanceConciliacaoPage />} />
-                    <Route path="configuracoes" element={<SettingsPage />} />
-                    <Route path="notificacoes" element={<NotificacoesPage />} />
-                    <Route path="compras" element={<ComprasPage />} />
-                  </Route>
+                      {/* Rotas Comuns do Plano Basic (e superiores) */}
+                      <Route path="painel" element={<DashboardPage />} />
+                      <Route path="clientes" element={<ClientsPage />} />
+                      <Route path="orcamentos" element={<OrcamentoForm />} />
+                      <Route path="projetos" element={<ProjectsPage />} />
+                      <Route path="visitas" element={<VisitsPage />} />
+                      <Route path="calendario" element={<CalendarioPage />} />
+                      <Route path="pos-venda" element={<PosVendaPage />} />
+                      <Route path="pecas" element={<SKUsPage />} />
+                      <Route path="relatorios" element={<ReportsPage />} />
+                      <Route path="configuracoes" element={<SettingsPage />} />
+                      <Route path="notificacoes" element={<NotificacoesPage />} />
+
+                      {/* Rotas de Produção / Plano de Corte (Pro e Enterprise) */}
+                      <Route element={<FeatureGuard feature="plano_corte" />}>
+                        <Route path="producao" element={<ProductionPage />} />
+                        <Route path="plano-de-corte" element={<CuttingPlanPage />} />
+                        <Route path="plano-de-corte-demo" element={<PlanoCorteDemoPage />} />
+                        <Route path="simulador-producao" element={<SimuladorProducaoPage />} />
+                        <Route path="retalhos" element={<RetalhosPage />} />
+                        <Route path="engenharia" element={<EngineeringPage />} />
+                      </Route>
+
+                      {/* Rotas de Estoque e Compras (Pro e Enterprise) */}
+                      <Route element={<FeatureGuard feature="estoque" />}>
+                        <Route path="estoque" element={<InventoryPage />} />
+                        <Route path="fornecedores" element={<SuppliersPage />} />
+                        <Route path="compras" element={<ComprasPage />} />
+                      </Route>
+
+                      {/* Rotas de Financeiro (Pro e Enterprise) */}
+                      <Route element={<FeatureGuard feature="financeiro" />}>
+                        <Route path="financeiro" element={<FinancePage />} />
+                        <Route path="financeiro/classes" element={<FinanceClassesPage />} />
+                        <Route path="financeiro/contas" element={<FinanceContasPage />} />
+                        <Route path="financeiro/formas" element={<FinanceFormasPage />} />
+                        <Route path="financeiro/condicoes" element={<FinanceCondicoesPage />} />
+                        <Route path="financeiro/titulos-receber" element={<FinanceTitulosReceberPage />} />
+                        <Route path="financeiro/titulos-receber/wizard" element={<FinanceTitulosReceberWizard />} />
+                        <Route path="financeiro/titulos-pagar" element={<FinanceTitulosPagarPage />} />
+                        <Route path="financeiro/titulos-pagar/wizard" element={<FinanceTitulosPagarWizard />} />
+                        <Route path="financeiro/dre" element={<FinanceDREPage />} />
+                        <Route path="financeiro/aging" element={<FinanceAgingPage />} />
+                        <Route path="financeiro/fluxo-caixa" element={<FinanceFluxoCaixaPage />} />
+                        <Route path="financeiro/recorrentes" element={<FinanceRecorrentesPage />} />
+                        <Route path="financeiro/conciliacao" element={<FinanceConciliacaoPage />} />
+                      </Route>
+
+                      {/* Rotas de Simulador CNC 3D (Enterprise) */}
+                      <Route element={<FeatureGuard feature="simulador_cnc" />}>
+                        <Route path="simulador-corte" element={<SimuladorCortePage />} />
+                      </Route>
+                    </Route>
                   </Route>
 
                   <Route path="*" element={<Navigate to="/" replace />} />
