@@ -205,21 +205,41 @@
     color: transparent;
   }
   .glass {
-    background: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.6);
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   }
   .glass-elevated {
-    background: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid hsl(var(--border) / 0.8);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: hsl(var(--surface) / 0.85);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   }
 }
 
 @layer components {
+  /* Dense Table Style (ERP/Calcme vibe) */
+  .table-dense th, .table-dense td {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .table-dense th {
+    background: hsl(var(--surface-elevated) / 0.5);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+  }
+  .table-dense tbody tr {
+    transition: background-color 0.2s;
+  }
+  .table-dense tbody tr:hover {
+    background-color: hsl(var(--surface-hover) / 0.8);
+  }
   .menu-item {
     @apply relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
     color: hsl(var(--sidebar-foreground));

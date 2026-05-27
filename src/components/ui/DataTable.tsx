@@ -11,41 +11,37 @@ interface DataTableProps<T> {
 
 const DataTable = <T,>({ headers, data, renderRow, emptyMessage = 'Nenhum registro encontrado.', loading = false }: DataTableProps<T>) => {
   return (
-    <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid hsl(var(--border))' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }} role="table" aria-label="Tabela de dados">
+    <div className="w-full overflow-x-auto rounded-lg border border-border glass bg-surface/50">
+      <table className="w-full border-collapse table-dense" role="table" aria-label="Tabela de dados">
         <thead>
-          <tr style={{ background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))', textAlign: 'left', color: 'hsl(var(--muted-foreground))' }}>
+          <tr className="border-b border-border text-left text-muted-foreground bg-surface-elevated/30">
             {headers.map((h, idx) => (
-              <th key={idx} style={{ padding: '1rem', fontWeight: '600' }}>{h}</th>
+              <th key={idx} className="px-4 whitespace-nowrap">{h}</th>
             ))}
           </tr>
         </thead>
-        <tbody style={{ background: 'hsl(var(--surface))' }} aria-live="polite" aria-busy={loading}>
+        <tbody aria-live="polite" aria-busy={loading}>
           {loading ? (
             <TableSkeleton rows={4} cols={headers.length} />
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={headers.length} style={{ padding: '2rem' }}>
-                <div className="empty-state" style={{ border: 'none', background: 'transparent' }}>
+              <td colSpan={headers.length} className="p-8">
+                <div className="empty-state border-none bg-transparent">
                   {emptyMessage}
                 </div>
               </td>
             </tr>
           ) : (
             data.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid hsl(var(--border))', transition: 'background 0.2s' }} className="table-row-hover">
+              <tr key={idx} className="border-b border-border/60 transition-colors hover:bg-surface-hover/80 group">
                 {renderRow(item)}
               </tr>
             ))
           )}
         </tbody>
       </table>
-      <style>{`
-        .table-row-hover:hover { background: hsl(var(--surface-hover)); }
-      `}</style>
     </div>
   );
 };
 
 export default DataTable;
-
