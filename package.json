@@ -51,6 +51,7 @@
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.5.0",
     "three": "^0.184.0",
+    "ws": "^8.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -67,6 +68,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.1.5",
     "autoprefixer": "^10.5.0",

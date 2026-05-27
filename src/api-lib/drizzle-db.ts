@@ -1,6 +1,9 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from 'ws';
 import * as schema from '../db/schema/index.js';
+
+neonConfig.webSocketConstructor = ws;
 
 const databaseUrl = (
   (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') || 
@@ -12,6 +15,6 @@ if (!databaseUrl && typeof window === 'undefined') {
   console.warn('DATABASE_URL ausente no ambiente de servidor.');
 }
 
-// Inicializa apenas se houver URL. No frontend (browser), databaseUrl será vazia
-// mas o Repositório irá redirecionar para a API, então não há problema em 'db' ser null.
-export const db = databaseUrl ? drizzle(neon(databaseUrl), { schema }) : null as any;
+// Inicializa apenas se houver URL.
+const pool = databaseUrl ? new Pool({ connectionString: databaseUrl }) : null;
+export const db = pool ? drizzle(pool, { schema }) : null as any;
