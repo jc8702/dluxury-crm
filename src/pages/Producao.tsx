@@ -1,5 +1,5 @@
 import React from 'react';
-import KanbanBoard from '../components/Kanban/KanbanBoard.tsx';
+import KanbanBoard from '../components/kanban/KanbanBoard.tsx';
 
 export default function Producao() {
   return (
