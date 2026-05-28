@@ -45,6 +45,7 @@ const Sidebar: React.FC = () => {
         { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={16} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
         { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Prod.', icon: <Clock3 size={16} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
         { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={16} />, roles: ['admin', 'marceneiro'], feature: 'simulador_cnc' },
+        { id: 'skus', path: 'pecas', label: 'Catálogo de SKUs', icon: <DraftingCompass size={16} />, roles: ['admin'], feature: 'plano_corte' },
         { id: 'engineering_settings', path: 'engenharia', label: 'Setup Engenharia', icon: <Settings2 size={16} />, roles: ['admin'], feature: 'plano_corte' },
       ]
     },
@@ -69,7 +70,6 @@ const Sidebar: React.FC = () => {
     { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={18} />, roles: ['admin'], group: 'FINANCEIRO', feature: 'financeiro' },
 
     { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={18} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'SISTEMA', feature: 'crm' },
-    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
     { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
     { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
   ];

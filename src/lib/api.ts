@@ -165,6 +165,8 @@ export const api = {
   skus: {
     list: () => apiCall<any[]>('skus'),
     create: (data: any) => apiCall<any>('skus', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`skus?id=${id}`, 'PATCH', data),
+    getNextCode: (prefix: string) => apiCall<any>(`skus?action=next-code&prefix=${prefix}`),
   },
   production: {
     list: () => apiCall<any[]>('production'),

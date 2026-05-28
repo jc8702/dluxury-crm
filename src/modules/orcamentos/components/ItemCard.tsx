@@ -36,7 +36,6 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         precoVendaUnitario: Number(item.precoVendaUnitario) || 0,
         precoVendaSobrescrito: item.precoVendaSobrescrito ? Number(item.precoVendaSobrescrito) : null,
         margemLucro: Number(item.margemLucro) || 0,
-            metadata: item.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] },
         observacoes: item.observacoes || '',
         metadata: item.metadata || {
             chapa: null,

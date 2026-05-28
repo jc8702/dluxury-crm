@@ -217,7 +217,6 @@ export default function App() {
                       <Route path="visitas" element={<VisitsPage />} />
                       <Route path="calendario" element={<CalendarioPage />} />
                       <Route path="pos-venda" element={<PosVendaPage />} />
-                      <Route path="pecas" element={<SKUsPage />} />
                       <Route path="relatorios" element={<ReportsPage />} />
                       <Route path="configuracoes" element={<SettingsPage />} />
                       <Route path="notificacoes" element={<NotificacoesPage />} />
@@ -230,6 +229,7 @@ export default function App() {
                         <Route path="simulador-producao" element={<SimuladorProducaoPage />} />
                         <Route path="retalhos" element={<RetalhosPage />} />
                         <Route path="engenharia" element={<EngineeringPage />} />
+                        <Route path="pecas" element={<SKUsPage />} />
                       </Route>
 
                       {/* Rotas de Estoque e Compras (Pro e Enterprise) */}

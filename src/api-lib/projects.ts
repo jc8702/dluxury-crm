@@ -492,15 +492,56 @@ export async function handleSKUs(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    
     if (req.method === 'GET') {
-      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
+      if (req.query.action === 'next-code') {
+        const prefix = req.query.prefix || 'SKU';
+        // Buscando o último código daquela categoria
+        const [last] = await sql`
+          SELECT sku FROM materiais
+          WHERE sku LIKE ${prefix + '-%'} AND tenant_id = ${tenantId}
+          ORDER BY sku DESC
+          LIMIT 1
+        `;
+        let nextNum = 1;
+        if (last && last.sku) {
+          const numPart = last.sku.split('-')[1];
+          if (numPart && !isNaN(Number(numPart))) {
+            nextNum = Number(numPart) + 1;
+          }
+        }
+        const nextCode = `${prefix}-${String(nextNum).padStart(4, '0')}`;
+        return res.status(200).json({ success: true, data: { nextCode } });
+      }
+
+      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
+    
     if (req.method === 'POST') {
       const f = req.body;
-      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0, ${tenantId}::uuid) RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo`;
+      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0, ${f.fabricante || null}, ${f.fornecedor_principal || null}, ${f.lead_time_dias || null}, ${f.categoria_taxonomia || null}, ${tenantId}::uuid) RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
       return res.status(201).json({ success: true, data: r[0] });
     }
+
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      const f = req.body;
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ success: false, error: 'ID do SKU não fornecido' });
+      const r = await sql`UPDATE materiais SET 
+        nome = COALESCE(${f.nome}, nome),
+        preco_custo = COALESCE(${f.preco_base}, preco_custo),
+        unidade_uso = COALESCE(${f.unidade_medida}, unidade_uso),
+        unidade_compra = COALESCE(${f.unidade_medida}, unidade_compra),
+        fabricante = COALESCE(${f.fabricante}, fabricante),
+        fornecedor_principal = COALESCE(${f.fornecedor_principal}, fornecedor_principal),
+        lead_time_dias = COALESCE(${f.lead_time_dias}, lead_time_dias),
+        categoria_taxonomia = COALESCE(${f.categoria_taxonomia}, categoria_taxonomia)
+        WHERE id = ${id} AND tenant_id = ${tenantId} 
+        RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
+      return res.status(200).json({ success: true, data: r[0] });
+    }
+
     if (req.method === 'DELETE') {
       await sql`UPDATE materiais SET ativo = false WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
