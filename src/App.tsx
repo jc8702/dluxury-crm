@@ -199,6 +199,7 @@ export default function App() {
               <Routes>
                   {/* Rotas Públicas */}
                   <Route path="/" element={<Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>} />
+                  <Route path="login" element={<Navigate to="/painel" replace />} />
                   <Route path="signup" element={<Suspense fallback={<LoadingScreen />}><SignupPage /></Suspense>} />
                   <Route path="checkout" element={<Suspense fallback={<LoadingScreen />}><CheckoutPage /></Suspense>} />
                   <Route path="scan/:numero" element={<Suspense fallback={<LoadingScreen />}><AprovacaoPage token="" /></Suspense>} />
