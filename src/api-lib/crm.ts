@@ -91,11 +91,15 @@ export async function handleClients(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
+    console.error('[Clients POST] Erro fatal:', err);
+    const errMsg = err?.message || String(err);
+    const isUnique = errMsg.toLowerCase().includes('unique constraint') || errMsg.toLowerCase().includes('duplicate key');
+    
     return res.status(500).json({ 
       success: false, 
-      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+      error: isUnique 
         ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
-        : err.message 
+        : errMsg 
     });
   }
 }
@@ -145,11 +149,15 @@ export async function handleKanban(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
+    console.error('[Kanban] Erro fatal:', err);
+    const errMsg = err?.message || String(err);
+    const isUnique = errMsg.toLowerCase().includes('unique constraint') || errMsg.toLowerCase().includes('duplicate key');
+    
     return res.status(500).json({ 
       success: false, 
-      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+      error: isUnique 
         ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
-        : err.message 
+        : errMsg 
     });
   }
 }
@@ -171,11 +179,15 @@ export async function handleGoals(req: any, res: any) {
     }
     return res.status(405).end();
   } catch (err: any) {
+    console.error('[Goals] Erro fatal:', err);
+    const errMsg = err?.message || String(err);
+    const isUnique = errMsg.toLowerCase().includes('unique constraint') || errMsg.toLowerCase().includes('duplicate key');
+    
     return res.status(500).json({ 
       success: false, 
-      error: err.message.toLowerCase().includes('unique constraint') || err.message.toLowerCase().includes('duplicate key')
+      error: isUnique 
         ? 'Já existe um registro cadastrado com este identificador (CPF/CNPJ/Código).'
-        : err.message 
+        : errMsg 
     });
   }
 }

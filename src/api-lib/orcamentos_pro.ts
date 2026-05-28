@@ -737,19 +737,19 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 });
 
             } catch (err: any) {
-                logger.error("❌ Erro ao criar orçamento:", err.message);
+                logger.error("❌ Erro ao criar orçamento:", err?.message || err);
                 
                 // Erros de validação retornam 400
-                if (err instanceof ValidationError || err.name === 'ValidationError' || err.message.includes('inválido') || err.message.includes('obrigatório') || err.message.includes('positiva')) {
+                if (err instanceof ValidationError || err.name === 'ValidationError' || err?.message?.includes('inválido') || err?.message?.includes('obrigatório') || err?.message?.includes('positiva')) {
                     return res.status(400).json({ 
                         success: false, 
-                        error: err.message 
+                        error: err?.message || 'Erro de validação' 
                     });
                 }
 
                 return res.status(500).json({ 
                     success: false, 
-                    error: `Erro na criação: ${err.message}` 
+                    error: `Erro na criação: ${err?.message || 'Erro desconhecido'}` 
                 });
             }
         }
@@ -1039,13 +1039,13 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         } catch (err: any) {
                             logger.error("❌ Erro crítico na importação:", err);
                             
-                            if (err instanceof ValidationError || err.name === 'ValidationError' || err.message.includes('inválido') || err.message.includes('máximo') || err.message.includes('obrigatório') || err.message.includes('deve ser') || err.message.includes('quantidade')) {
-                                return res.status(400).json({ success: false, error: err.message });
+                            if (err instanceof ValidationError || err.name === 'ValidationError' || err?.message?.includes('inválido') || err?.message?.includes('máximo') || err?.message?.includes('obrigatório') || err?.message?.includes('deve ser') || err?.message?.includes('quantidade')) {
+                                return res.status(400).json({ success: false, error: err?.message || 'Erro de validação' });
                             }
 
                             return res.status(500).json({ 
                                 success: false, 
-                                error: `Erro crítico: ${err.message}` 
+                                error: `Erro crítico: ${err?.message || 'Erro desconhecido'}` 
                             });
                         }
                     }
