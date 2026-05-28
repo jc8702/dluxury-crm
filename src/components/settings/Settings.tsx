@@ -191,7 +191,10 @@ const Settings: React.FC = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Versão: 2.0.0-auth<br/>
                 Ambiente: Produção (Neon PostgreSQL)<br/>
-                Módulo Acesso Multi-usuário: Ativo
+                Módulo Acesso Multi-usuário: Ativo<br/>
+                {user?.subdominio && (
+                  <>Link de Acesso: <span className="font-semibold text-primary">https://{user.subdominio}.fattoos.com</span></>
+                )}
               </p>
             </CardContent>
           </Card>

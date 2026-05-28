@@ -69,12 +69,14 @@ export async function handleAuth(req: any, res: any): Promise<void> {
       if (error) return res.status(401).json({ success: false, error });
       
       // Buscar plano_tier do banco de dados para garantir valor atualizado
-      const tenantRes = await sql`SELECT plano_tier FROM tenants WHERE id = ${user.tenantId}::uuid LIMIT 1`;
+      const tenantRes = await sql`SELECT plano_tier, subdominio FROM tenants WHERE id = ${user.tenantId}::uuid LIMIT 1`;
       const planoTier = tenantRes[0]?.plano_tier || 'basic';
+      const subdominio = tenantRes[0]?.subdominio || '';
       
       const enrichedUser = {
         ...user,
-        planoTier
+        planoTier,
+        subdominio
       };
       
       return res.status(200).json({ success: true, data: { user: enrichedUser } });

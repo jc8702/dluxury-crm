@@ -150,6 +150,8 @@ export type User = {
   email: string;
   role: Role;
   tenantId?: string;
+  planoTier?: PlanTier;
+  subdominio?: string;
 };
 
 export type CategoriaMaterial = {

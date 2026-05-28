@@ -149,7 +149,9 @@ export async function provisionarTenant(params: {
         email: emailNormalized,
         role: 'admin',
         name: nomeAdmin.trim().toUpperCase(),
-        tenantId
+        tenantId,
+        planoTier: plano,
+        subdominio: subNormalized
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -164,7 +166,9 @@ export async function provisionarTenant(params: {
         name: nomeAdmin.trim().toUpperCase(),
         email: emailNormalized,
         role: 'admin',
-        tenantId
+        tenantId,
+        planoTier: plano,
+        subdominio: subNormalized
       }
     };
   } catch (err: any) {
