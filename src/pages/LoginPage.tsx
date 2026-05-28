@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { api, setAuthToken, hasAuthToken } from '../lib/api';
+import ThemeToggle from '../components/ui/ThemeToggle';
 
 const LoginPage: React.FC = () => {
   const { setUser } = useAppContext();
@@ -52,88 +53,58 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', background: '#0F1713', // Ébano
-      fontFamily: 'Outfit, Inter, sans-serif',
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: '#F9F8F6', // Off-White
-        padding: '3.5rem 3rem', borderRadius: '24px',
-        width: '420px', border: '1px solid rgba(28,46,36,0.06)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.35)'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '16px',
-            background: 'linear-gradient(135deg, #8B5A2B, #D4AF37)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 1.25rem', color: '#white', fontWeight: 900,
-            fontSize: '1.5rem', boxShadow: '0 8px 16px rgba(139,90,43,0.25)'
-          }}>
+    <div className="flex items-center justify-center min-h-screen bg-background font-sans p-4 relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
+      <div className="bg-card p-[3.5rem_3rem] rounded-3xl w-[420px] border border-border/30 shadow-lg">
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-5 text-primary-foreground font-black text-2xl shadow-primary">
             F
           </div>
-          <h1 style={{ color: '#1C2E24', fontSize: '1.6rem', fontWeight: 900, margin: 0, letterSpacing: '1px' }}>
+          <h1 className="text-foreground text-[1.6rem] font-black m-0 tracking-wider">
             FATTO OS
           </h1>
-          <p style={{ color: '#8B5A2B', fontSize: '0.75rem', fontWeight: 700, marginTop: '0.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+          <p className="text-primary text-xs font-bold mt-1.5 uppercase tracking-[2px]">
             {tenantInfo ? tenantInfo.nome : 'DESIGN & TECH'}
           </p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleLogin} className="flex flex-col gap-5">
           <div>
-            <label style={{ fontSize: '0.75rem', color: '#1C2E24', fontWeight: 700, display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label className="text-xs text-foreground font-bold block mb-1.5 uppercase tracking-wide">
               E-mail corporativo
             </label>
             <input
               type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              style={{
-                width: '100%', padding: '0.85rem 1rem', borderRadius: '12px',
-                background: '#white', border: '1px solid rgba(28,46,36,0.12)',
-                color: '#1C2E24', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box',
-                transition: 'all 0.2s ease', fontFamily: 'Inter, sans-serif'
-              }}
+              className="w-full py-3.5 px-4 rounded-xl bg-background border border-border/30 text-foreground outline-none text-sm transition-all duration-200 focus:border-primary focus:ring-1 focus:ring-primary/30"
             />
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: '#1C2E24', fontWeight: 700, display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label className="text-xs text-foreground font-bold block mb-1.5 uppercase tracking-wide">
               Senha de acesso
             </label>
             <input
               type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="******"
-              style={{
-                width: '100%', padding: '0.85rem 1rem', borderRadius: '12px',
-                background: '#white', border: '1px solid rgba(28,46,36,0.12)',
-                color: '#1C2E24', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box',
-                transition: 'all 0.2s ease', fontFamily: 'Inter, sans-serif'
-              }}
+              className="w-full py-3.5 px-4 rounded-xl bg-background border border-border/30 text-foreground outline-none text-sm transition-all duration-200 focus:border-primary focus:ring-1 focus:ring-primary/30"
             />
           </div>
 
           {error && (
-            <div style={{
-              color: '#C62828', fontSize: '0.8rem', padding: '0.75rem',
-              background: 'rgba(198,40,40,0.06)', border: '1px solid rgba(198,40,40,0.15)', borderRadius: '10px',
-              fontWeight: 500, lineHeight: '1.4'
-            }}>
+            <div className="text-destructive text-sm p-3 bg-destructive/5 border border-destructive/15 rounded-lg font-medium leading-snug">
               {error}
             </div>
           )}
 
           <button type="submit" disabled={loading}
-            style={{
-              width: '100%', padding: '1rem', borderRadius: '12px', marginTop: '0.5rem',
-              background: loading ? '#A1887F' : '#8B5A2B',
-              color: 'white', fontWeight: 700, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '0.95rem', letterSpacing: '1px', textTransform: 'uppercase',
-              boxShadow: '0 4px 12px rgba(139,90,43,0.25)', transition: 'all 0.2s ease'
-            }}>
+            className="w-full py-4 rounded-xl mt-2 bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-primary transition-all duration-200 hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {loading ? 'Acessando...' : 'Entrar no Sistema'}
           </button>
         </form>

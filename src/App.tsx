@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -53,28 +54,10 @@ const Layout = lazy(() => import('./components/layout/Layout'));
 // Tela de loading segura
 function LoadingScreen() {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      backgroundColor: '#FAFAFA',
-      flexDirection: 'column',
-      gap: '16px'
-    }}>
-      <div style={{
-        width: '36px',
-        height: '36px',
-        border: '3px solid #D7CCC8',
-        borderTop: '3px solid #4A6B5E',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
-      <span style={{ color: '#3E2723', fontSize: '13px', fontWeight: '600', letterSpacing: '0.08em', fontFamily: "'DM Sans', sans-serif" }}>
-        D'LUXURY
+    <div className="flex items-center justify-center h-screen bg-background flex-col gap-4">
+      <div className="w-9 h-9 border-3 border-border border-t-primary rounded-full animate-spin" />
+      <span className="text-foreground text-[13px] font-semibold tracking-widest font-display">
+        FATTO OS
       </span>
     </div>
   );
@@ -101,24 +84,12 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          backgroundColor: '#FAFAFA',
-          color: '#3E2723',
-          gap: '16px',
-          padding: '32px',
-          fontFamily: "'DM Sans', sans-serif",
-          textAlign: 'center'
-        }}>
-          <h2 style={{ margin: 0, fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Algo deu errado</h2>
-          <p style={{ color: '#3E2723', opacity: 0.6, maxWidth: '400px', fontSize: '14px', lineHeight: '1.6' }}>
+        <div className="flex flex-col items-center justify-center h-screen bg-background text-foreground gap-4 p-8 font-display text-center">
+          <h2 className="m-0 font-bold text-xl tracking-tight">Algo deu errado</h2>
+          <p className="text-muted-foreground max-w-[400px] text-sm leading-relaxed">
             {this.state.error?.message ?? 'Ocorreu um erro inesperado na interface.'}
           </p>
-          <button onClick={() => window.location.reload()} style={{ background: '#4A6B5E', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
+          <button onClick={() => window.location.reload()} className="btn btn-primary text-sm">
             Recarregar
           </button>
         </div>
@@ -193,10 +164,11 @@ export default function App() {
   return (
     <ToastProvider>
       <AppProvider>
-        <ErrorBoundary>
-          <HashRouter>
-            <Suspense fallback={<LoadingScreen />}>
-              <Routes>
+        <ThemeProvider>
+          <ErrorBoundary>
+            <HashRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
                   {/* Rotas Públicas */}
                   <Route path="/" element={<Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>} />
                   <Route path="login" element={<Navigate to="/painel" replace />} />
@@ -268,9 +240,10 @@ export default function App() {
 
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-            </Suspense>
-          </HashRouter>
-        </ErrorBoundary>
+              </Suspense>
+            </HashRouter>
+          </ErrorBoundary>
+        </ThemeProvider>
       </AppProvider>
     </ToastProvider>
   );

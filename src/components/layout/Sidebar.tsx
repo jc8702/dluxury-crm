@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { NotificacoesBadge } from './NotificacoesBadge';
 import { hasFeature } from '../../lib/features';
+import ThemeToggle from '../ui/ThemeToggle';
 
 import {
   LayoutDashboard, Users, FileText, ClipboardList, 
@@ -100,20 +101,20 @@ const Sidebar: React.FC = () => {
         <div key={item.id} className="flex flex-col">
           <button
             onClick={() => toggleMenu(item.id)}
-            className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200 focus:outline-none ${isExpanded ? 'bg-white/5 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+            className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200 focus:outline-none ${isExpanded ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}
             title={item.label}
           >
             <div className="flex items-center gap-3">
-              <span className={`shrink-0 ${isExpanded ? 'text-[#D4AF37]' : 'text-slate-400'}`}>{item.icon}</span>
+              <span className={`shrink-0 ${isExpanded ? 'text-sidebar-primary' : 'text-sidebar-foreground'}`}>{item.icon}</span>
               <span className="sidebar-label flex-1 truncate text-left text-sm font-medium">{item.label}</span>
             </div>
-            <span className="sidebar-label text-slate-400">
+            <span className="sidebar-label text-sidebar-foreground">
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
           </button>
           
           <div className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-            <div className="pl-4 pr-1 flex flex-col gap-1 border-l border-white/10 ml-5 my-1">
+            <div className="pl-4 pr-1 flex flex-col gap-1 border-l border-sidebar-border ml-5 my-1">
               {visibleSubItems.map((subItem: any) => {
                 const isSubActive = currentPath === subItem.path;
                 return (
@@ -125,11 +126,11 @@ const Sidebar: React.FC = () => {
                             window.history.pushState({}, '', window.location.pathname + window.location.hash);
                         }
                     }}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-150 ${isSubActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-150 ${isSubActive ? 'bg-primary text-primary-foreground font-bold' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}
                     aria-current={isSubActive ? 'page' : undefined}
                     title={subItem.label}
                   >
-                    <span className={`shrink-0 ${isSubActive ? 'text-white' : 'text-slate-400'}`}>{subItem.icon}</span>
+                    <span className={`shrink-0 ${isSubActive ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}>{subItem.icon}</span>
                     <span className="sidebar-label flex-1 truncate">{subItem.label}</span>
                   </Link>
                 );
@@ -149,11 +150,11 @@ const Sidebar: React.FC = () => {
                 window.history.pushState({}, '', window.location.pathname + window.location.hash);
             }
         }}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-[#8B5A2B] text-white font-bold shadow-[0_4px_12px_rgba(139,90,43,0.2)]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-primary text-primary-foreground font-bold shadow-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}
         aria-current={isActive ? 'page' : undefined}
         title={item.label}
       >
-        <span className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`}>{item.icon}</span>
+        <span className={`shrink-0 ${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}>{item.icon}</span>
         <span className="sidebar-label flex-1 truncate text-sm font-medium">{item.label}</span>
         {item.id === 'notifications' && <NotificacoesBadge />}
       </Link>
@@ -161,16 +162,16 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-60 h-screen bg-[#1C2E24] text-slate-100 border-r border-white/5 px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex select-none">
+    <aside className="w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex select-none">
       
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#8B5A2B] to-[#D4AF37] flex items-center justify-center font-bold text-white text-base shadow-[0_4px_12px_rgba(139,90,43,0.3)]">
+        <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground text-base shadow-primary">
           F
         </div>
         <div className="flex flex-col sidebar-label">
-          <span className="text-sm font-black text-white leading-tight tracking-wider font-display">FATTO OS</span>
-          <span className="text-[0.55rem] font-bold text-[#D4AF37] tracking-[0.2em] leading-tight">DESIGN & TECH</span>
+          <span className="text-sm font-black text-sidebar-accent-foreground leading-tight tracking-wider font-display">FATTO OS</span>
+          <span className="text-[0.55rem] font-bold text-sidebar-primary tracking-[0.2em] leading-tight">DESIGN & TECH</span>
         </div>
       </div>
 
@@ -182,7 +183,7 @@ const Sidebar: React.FC = () => {
           
           return (
             <div key={group} className="flex flex-col gap-1.5">
-              <span className="text-[0.6rem] font-bold text-[#D4AF37] mb-1 px-3 tracking-[0.2em] uppercase sidebar-label font-display opacity-80">
+              <span className="text-[0.6rem] font-bold text-sidebar-primary mb-1 px-3 tracking-[0.2em] uppercase sidebar-label font-display opacity-80">
                 {group}
               </span>
               {groupItems.map(item => renderMenuItem(item))}
@@ -192,19 +193,26 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* User footer */}
-      <div className="mt-4 pt-4 border-t border-white/5">
+      <div className="mt-4 pt-4 border-t border-sidebar-border">
          <div className="flex items-center gap-2.5 mb-3 px-3">
-            <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-xs shrink-0 font-display">
+            <div className="w-8 h-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center font-bold text-xs shrink-0 font-display">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="sidebar-label flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-white">{user?.name}</p>
-              <p className="text-[0.7rem] text-[#D4AF37] capitalize font-medium">{user?.role}</p>
+              <p className="text-sm font-semibold truncate text-sidebar-accent-foreground">{user?.name}</p>
+              <p className="text-[0.7rem] text-sidebar-primary capitalize font-medium">{user?.role}</p>
             </div>
          </div>
+
+         {/* Theme Toggle */}
+         <div className="flex items-center justify-between px-3 mb-3 sidebar-label">
+           <span className="text-xs text-sidebar-foreground font-medium">Tema</span>
+           <ThemeToggle />
+         </div>
+
          <button 
            onClick={logout}
-           className="w-full flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#8B5A2B]/20 text-slate-300 hover:text-white rounded-xl text-sm font-semibold border border-white/5 hover:border-[#8B5A2B]/30 transition-all duration-150 sidebar-label"
+           className="w-full flex items-center justify-center gap-2 p-2.5 bg-sidebar-accent hover:bg-primary/20 text-sidebar-foreground hover:text-sidebar-accent-foreground rounded-xl text-sm font-semibold border border-sidebar-border hover:border-primary/30 transition-all duration-150 sidebar-label"
            aria-label="Sair do sistema"
          >
            <LogOut size={15} />

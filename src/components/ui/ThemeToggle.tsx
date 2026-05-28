@@ -1,26 +1,32 @@
-import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import React from 'react';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem("theme") as "dark" | "light") || "dark";
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.classList.toggle("light", theme === "light");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+export default function ThemeToggle({ className = '' }: { className?: string }) {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      aria-label="Toggle theme"
-      className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-card border border-border text-foreground shadow-lg hover:border-primary hover:text-primary hover:shadow-primary transition-all duration-300 flex items-center justify-center hover:rotate-180"
+      onClick={toggleTheme}
+      className={`relative flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-300 group
+        ${isDark
+          ? 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-amber-500/30 text-amber-400'
+          : 'bg-black/5 border-black/10 hover:bg-black/10 hover:border-primary/30 text-primary'
+        } ${className}`}
+      aria-label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+      title={isDark ? 'Modo Claro' : 'Modo Escuro'}
     >
-      {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      <Sun
+        className={`absolute w-4 h-4 transition-all duration-300 ${
+          isDark ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
+        }`}
+      />
+      <Moon
+        className={`absolute w-4 h-4 transition-all duration-300 ${
+          isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
+        }`}
+      />
     </button>
   );
 }

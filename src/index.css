@@ -70,85 +70,94 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   D'LUXURY CRM — Warm Craft Design System
-   Espresso Brown × Off-white × Moss Green × Rosy Beige
-   Inspired by: Natural materials, woodcraft, premium SaaS
+   FATTO OS — Dual Theme Design System
+   Light Mode: Fatto OS Premium (Off-White, Louro Freijó, Verde Laca, Dourado)
+   Dark Mode:  D'Luxury Classic (Slate 950, Amber 500/600)
    ═══════════════════════════════════════════════════════════════ */
 
 /*
-   Color Palette (Hex → HSL):
-   - Espresso Brown  #3E2723  →  12 27% 19%
-   - Off-white       #FAFAFA  →   0  0% 98%
-   - Moss Green      #4A6B5E  → 155 19% 35%
-   - Rosy Beige      #D7CCC8  →  16 18% 81%
-   - Warm White      #FFFFFF  →   0  0% 100%
-   - Light Beige     #F5F0ED  →  20 24% 95%
-   - Dark Espresso   #2C1B18  →  10 31% 13%
+   LIGHT MODE — Fatto OS Premium:
+   - Off-White      #F9F8F6  →  40 15% 97%
+   - Louro Freijó   #8B5A2B  →  24 55% 36%
+   - Verde Laca     #1C2E24  → 153 25% 15%
+   - Dourado Latão  #D4AF37  →  45 67% 52%
+   - Ébano          #0F1713  → 150 22% 7%
+
+   DARK MODE — D'Luxury Classic:
+   - Slate 950      #020617  → 222 47% 4%
+   - Slate 900      #0F172A  → 222 47% 11%
+   - Slate 50       #F8FAFC  → 210 40% 98%
+   - Slate 400      #94A3B8  → 215 16% 57%
+   - Amber 500      #F59E0B  →  38 92% 50%
+   - Amber 600      #D97706  →  32 95% 44%
 */
 
 :root,
 .light,
 [data-theme="light"] {
   /* ─── Surfaces ─── */
-  --background: 20 15% 97%;
-  --foreground: 12 27% 19%;
+  --background: 40 15% 97%;
+  --foreground: 153 25% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 12 27% 19%;
+  --card-foreground: 153 25% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 12 27% 19%;
+  --popover-foreground: 153 25% 15%;
 
-  /* ─── Brand: Moss Green as primary action ─── */
-  --primary: 155 19% 35%;
+  /* ─── Brand: Louro Freijó como ação primária ─── */
+  --primary: 24 55% 36%;
   --primary-foreground: 0 0% 100%;
-  --primary-glow: 155 22% 42%;
-  --primary-hover: 155 22% 30%;
+  --primary-glow: 24 55% 42%;
+  --primary-hover: 24 55% 30%;
 
-  /* ─── Neutrals: Beige tones ─── */
-  --secondary: 16 18% 93%;
-  --secondary-foreground: 12 27% 19%;
-  --muted: 20 12% 94%;
-  --muted-foreground: 12 12% 46%;
-  --accent: 16 18% 93%;
-  --accent-foreground: 12 27% 19%;
+  /* ─── Neutrals ─── */
+  --secondary: 40 10% 93%;
+  --secondary-foreground: 153 25% 15%;
+  --muted: 40 10% 94%;
+  --muted-foreground: 153 12% 46%;
+  --accent: 45 67% 52%;
+  --accent-foreground: 150 22% 7%;
 
   /* ─── Semantic ─── */
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --success: 155 19% 35%;
+  --success: 155 45% 38%;
   --warning: 38 92% 50%;
   --info: 210 80% 52%;
 
   /* ─── Borders & Inputs ─── */
-  --border: 16 18% 85%;
-  --input: 16 18% 87%;
-  --ring: 155 19% 35%;
+  --border: 40 10% 85%;
+  --input: 40 10% 87%;
+  --ring: 24 55% 36%;
   --radius: 0.625rem;
 
   /* ─── Layered surfaces ─── */
   --surface: 0 0% 100%;
   --surface-elevated: 0 0% 100%;
-  --surface-hover: 20 15% 96%;
+  --surface-hover: 40 10% 95%;
 
-  /* ─── Sidebar ─── */
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 12 12% 40%;
-  --sidebar-primary: 155 19% 35%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 16 18% 93%;
-  --sidebar-accent-foreground: 12 27% 19%;
-  --sidebar-border: 16 18% 88%;
-  --sidebar-ring: 155 19% 35%;
+  /* ─── Sidebar (Verde Laca Musgo fundo) ─── */
+  --sidebar-background: 153 25% 15%;
+  --sidebar-foreground: 40 15% 80%;
+  --sidebar-primary: 45 67% 52%;
+  --sidebar-primary-foreground: 150 22% 7%;
+  --sidebar-accent: 153 20% 20%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 153 20% 20%;
+  --sidebar-ring: 45 67% 52%;
 
   /* ─── Decorative ─── */
-  --gradient-primary: linear-gradient(135deg, hsl(155 19% 35%), hsl(155 25% 28%));
-  --gradient-surface: linear-gradient(180deg, hsl(20 15% 97%), hsl(20 12% 94%));
+  --gradient-primary: linear-gradient(135deg, hsl(24 55% 36%), hsl(45 67% 52%));
+  --gradient-surface: linear-gradient(180deg, hsl(40 15% 97%), hsl(40 10% 94%));
   --gradient-glow: none;
 
   /* ─── Shadows (soft, warm-tinted) ─── */
-  --shadow-sm: 0 1px 3px 0 rgb(62 39 35 / 0.04), 0 1px 2px -1px rgb(62 39 35 / 0.04);
-  --shadow-md: 0 4px 6px -1px rgb(62 39 35 / 0.06), 0 2px 4px -2px rgb(62 39 35 / 0.04);
-  --shadow-lg: 0 10px 25px -3px rgb(62 39 35 / 0.08), 0 4px 6px -4px rgb(62 39 35 / 0.04);
-  /* Cores do Fatto OS */
+  --shadow-sm: 0 1px 3px 0 rgb(15 23 19 / 0.04), 0 1px 2px -1px rgb(15 23 19 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 19 / 0.06), 0 2px 4px -2px rgb(15 23 19 / 0.04);
+  --shadow-lg: 0 10px 25px -3px rgb(15 23 19 / 0.08), 0 4px 6px -4px rgb(15 23 19 / 0.04);
+  --shadow-primary: 0 4px 14px 0 rgb(139 90 43 / 0.2);
+  --shadow-glow: 0 0 0 3px rgb(139 90 43 / 0.12);
+
+  /* ─── Fatto OS brand tokens ─── */
   --fatto-primary: #8B5A2B;
   --fatto-secondary: #1C2E24;
   --fatto-accent: #D4AF37;
@@ -158,52 +167,69 @@
 
 .dark,
 [data-theme="dark"] {
-  --background: 10 20% 7%;
-  --foreground: 20 15% 92%;
-  --card: 10 18% 10%;
-  --card-foreground: 20 15% 92%;
-  --popover: 10 18% 10%;
-  --popover-foreground: 20 15% 92%;
-  --primary: 155 25% 50%;
-  --primary-foreground: 10 20% 7%;
-  --primary-glow: 155 30% 55%;
-  --primary-hover: 155 25% 45%;
-  --secondary: 10 14% 14%;
-  --secondary-foreground: 20 15% 92%;
-  --muted: 10 12% 14%;
-  --muted-foreground: 16 10% 55%;
-  --accent: 10 14% 14%;
-  --accent-foreground: 20 15% 92%;
+  /* ─── Surfaces (Slate) ─── */
+  --background: 222 47% 4%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 7%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 7%;
+  --popover-foreground: 210 40% 98%;
+
+  /* ─── Brand: Amber como ação primária ─── */
+  --primary: 38 92% 50%;
+  --primary-foreground: 222 47% 4%;
+  --primary-glow: 38 92% 55%;
+  --primary-hover: 32 95% 44%;
+
+  /* ─── Neutrals (Slate tones) ─── */
+  --secondary: 217 33% 10%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 12%;
+  --muted-foreground: 215 16% 57%;
+  --accent: 32 95% 44%;
+  --accent-foreground: 210 40% 98%;
+
+  /* ─── Semantic ─── */
   --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 98%;
-  --success: 155 25% 50%;
+  --success: 142 76% 36%;
   --warning: 38 92% 50%;
   --info: 210 80% 60%;
-  --border: 10 12% 18%;
-  --input: 10 12% 18%;
-  --ring: 155 25% 50%;
+
+  /* ─── Borders & Inputs ─── */
+  --border: 217 33% 15%;
+  --input: 217 33% 15%;
+  --ring: 38 92% 50%;
   --radius: 0.625rem;
-  --surface: 10 18% 10%;
-  --surface-elevated: 10 16% 13%;
-  --surface-hover: 10 14% 15%;
-  --sidebar-background: 10 20% 5%;
-  --sidebar-foreground: 16 10% 60%;
-  --sidebar-primary: 155 25% 50%;
-  --sidebar-primary-foreground: 10 20% 7%;
-  --sidebar-accent: 10 14% 14%;
-  --sidebar-accent-foreground: 20 15% 92%;
-  --sidebar-border: 10 12% 15%;
-  --sidebar-ring: 155 25% 50%;
-  --gradient-primary: linear-gradient(135deg, hsl(155 25% 50%), hsl(155 30% 40%));
-  --gradient-surface: linear-gradient(180deg, hsl(10 20% 7%), hsl(10 18% 5%));
+
+  /* ─── Layered surfaces ─── */
+  --surface: 222 47% 7%;
+  --surface-elevated: 217 33% 10%;
+  --surface-hover: 217 33% 12%;
+
+  /* ─── Sidebar (Slate 950) ─── */
+  --sidebar-background: 222 47% 4%;
+  --sidebar-foreground: 215 16% 57%;
+  --sidebar-primary: 38 92% 50%;
+  --sidebar-primary-foreground: 222 47% 4%;
+  --sidebar-accent: 217 33% 10%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 12%;
+  --sidebar-ring: 38 92% 50%;
+
+  /* ─── Decorative ─── */
+  --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%), hsl(32 95% 44%));
+  --gradient-surface: linear-gradient(180deg, hsl(222 47% 4%), hsl(222 47% 3%));
   --gradient-glow: none;
+
+  /* ─── Shadows (deep, cool) ─── */
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-primary: 0 4px 14px 0 rgb(74 107 94 / 0.3);
-  --shadow-glow: 0 0 0 3px rgb(74 107 94 / 0.15);
+  --shadow-primary: 0 4px 14px 0 rgb(245 158 11 / 0.2);
+  --shadow-glow: 0 0 0 3px rgb(245 158 11 / 0.12);
 
-  /* Cores do Fatto OS no dark (mesmas pois são corporativas institucionais) */
+  /* ─── Fatto OS brand tokens (mesmas - identidade institucional) ─── */
   --fatto-primary: #8B5A2B;
   --fatto-secondary: #1C2E24;
   --fatto-accent: #D4AF37;
