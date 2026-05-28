@@ -17,6 +17,19 @@ const SKUPage: React.FC = () => {
     unidade_medida: 'UN', 
     atributos: {} 
   });
+  
+  const [calcModoChapa, setCalcModoChapa] = useState(false);
+  const [chapaPrecoInteira, setChapaPrecoInteira] = useState(0);
+  const [chapaComprimento, setChapaComprimento] = useState(2.75);
+  const [chapaLargura, setChapaLargura] = useState(1.85);
+
+  useEffect(() => {
+    if (calcModoChapa && chapaComprimento > 0 && chapaLargura > 0) {
+       const area = chapaComprimento * chapaLargura;
+       const precoM2 = chapaPrecoInteira / area;
+       setFormData(prev => ({ ...prev, preco_base: precoM2 || 0 }));
+    }
+  }, [calcModoChapa, chapaPrecoInteira, chapaComprimento, chapaLargura]);
 
   useEffect(() => {
     fetchSKUs();
@@ -167,13 +180,61 @@ const SKUPage: React.FC = () => {
               required
               type="number"
               step="0.01"
-              label="Preço Base de Custo (R$) *"
-              className="pl-10" 
+              label={calcModoChapa ? "Preço Base Final Calculado por M² (R$) *" : "Preço Base de Custo (R$) *"}
+              className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`} 
               placeholder="0.00"
               value={formData.preco_base || ''}
               onChange={e => setFormData({...formData, preco_base: Number(e.target.value)})}
+              disabled={calcModoChapa}
             />
           </div>
+
+          {formData.unidade_medida === 'M2' && (
+            <div className="mt-2 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl space-y-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded border-zinc-700 bg-zinc-950 text-orange-500 focus:ring-orange-500 focus:ring-offset-zinc-900"
+                  checked={calcModoChapa}
+                  onChange={(e) => setCalcModoChapa(e.target.checked)}
+                />
+                <span className="text-sm font-semibold text-zinc-300">Calcular preço base a partir do valor da Chapa Inteira</span>
+              </label>
+
+              {calcModoChapa && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-zinc-800/50">
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    label="Valor Chapa Inteira (R$)"
+                    placeholder="Ex: 230.00"
+                    value={chapaPrecoInteira || ''}
+                    onChange={e => setChapaPrecoInteira(Number(e.target.value))}
+                  />
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    label="Comprimento (Metros)"
+                    placeholder="Ex: 2.75"
+                    value={chapaComprimento || ''}
+                    onChange={e => setChapaComprimento(Number(e.target.value))}
+                  />
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    label="Largura (Metros)"
+                    placeholder="Ex: 1.85"
+                    value={chapaLargura || ''}
+                    onChange={e => setChapaLargura(Number(e.target.value))}
+                  />
+                  <div className="col-span-1 md:col-span-3 text-xs text-zinc-500 flex justify-between bg-black/20 p-2 rounded-lg">
+                    <span>Área da Chapa: <strong>{(chapaComprimento * chapaLargura).toFixed(4)} m²</strong></span>
+                    <span>Custo do M²: <strong>R$ {((chapaPrecoInteira) / (chapaComprimento * chapaLargura)).toFixed(4)}</strong></span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-4 mt-4">
             <Button type="submit" className="flex-1" disabled={saving}>
