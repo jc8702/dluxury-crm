@@ -89,24 +89,24 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const recalculateTotalMaterialCost = (draftState) => {
       let cost = 0;
       const { largura, altura, metadata } = draftState;
-      const l = Number(largura) || 0; // cm
-      const a = Number(altura) || 0; // cm
+      const l = Number(largura) || 0; // mm
+      const a = Number(altura) || 0; // mm
       
       // Chapa (preço por m2)
       if (metadata.chapa?.precoUnitario) {
-          const areaM2 = (l * a) / 10000;
+          const areaM2 = (l * a) / 1000000;
           cost += areaM2 * Number(metadata.chapa.precoUnitario);
       }
       
       // Fita (preço por m linear)
       if (metadata.fitaBorda?.sku?.precoUnitario) {
           const lados = metadata.fitaBorda.lados;
-          let perimetroCm = 0;
-          if (lados.topo) perimetroCm += l;
-          if (lados.base) perimetroCm += l;
-          if (lados.esquerda) perimetroCm += a;
-          if (lados.direita) perimetroCm += a;
-          cost += (perimetroCm / 100) * Number(metadata.fitaBorda.sku.precoUnitario);
+          let perimetroMm = 0;
+          if (lados.topo) perimetroMm += l;
+          if (lados.base) perimetroMm += l;
+          if (lados.esquerda) perimetroMm += a;
+          if (lados.direita) perimetroMm += a;
+          cost += (perimetroMm / 1000) * Number(metadata.fitaBorda.sku.precoUnitario);
       }
       
       // Ferragens
@@ -358,11 +358,11 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 </div>
                 <div className="bg-zinc-900/30 p-3 rounded-xl border border-zinc-900">
                     <label className="text-[9px] font-black text-zinc-600 uppercase block mb-1">Largura</label>
-                    <span className="text-zinc-400 font-mono text-sm">{item.largura || '-'} <span className="text-[10px]">cm</span></span>
+                    <span className="text-zinc-400 font-mono text-sm">{item.largura || '-'} <span className="text-[10px]">mm</span></span>
                 </div>
                 <div className="bg-zinc-900/30 p-3 rounded-xl border border-zinc-900">
                     <label className="text-[9px] font-black text-zinc-600 uppercase block mb-1">Altura</label>
-                    <span className="text-zinc-400 font-mono text-sm">{item.altura || '-'} <span className="text-[10px]">cm</span></span>
+                    <span className="text-zinc-400 font-mono text-sm">{item.altura || '-'} <span className="text-[10px]">mm</span></span>
                 </div>
                 <div className="bg-zinc-900/30 p-3 rounded-xl border border-zinc-900">
                     <label className="text-[9px] font-black text-zinc-600 uppercase block mb-1">Espessura</label>
