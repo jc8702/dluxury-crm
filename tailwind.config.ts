@@ -61,6 +61,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        fatto: {
+          primary: '#8B5A2B', // Louro Freijó
+          secondary: '#1C2E24', // Verde Laca Musgo
+          accent: '#D4AF37', // Dourado Latão Escovado
+          dark: '#0F1713', // Ébano
+          light: '#F9F8F6', // Off-White
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

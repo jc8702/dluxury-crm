@@ -35,6 +35,13 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
+  /* Cores do Fatto OS */
+  --color-fatto-primary: var(--fatto-primary);
+  --color-fatto-secondary: var(--fatto-secondary);
+  --color-fatto-accent: var(--fatto-accent);
+  --color-fatto-dark: var(--fatto-dark);
+  --color-fatto-light: var(--fatto-light);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -141,8 +148,12 @@
   --shadow-sm: 0 1px 3px 0 rgb(62 39 35 / 0.04), 0 1px 2px -1px rgb(62 39 35 / 0.04);
   --shadow-md: 0 4px 6px -1px rgb(62 39 35 / 0.06), 0 2px 4px -2px rgb(62 39 35 / 0.04);
   --shadow-lg: 0 10px 25px -3px rgb(62 39 35 / 0.08), 0 4px 6px -4px rgb(62 39 35 / 0.04);
-  --shadow-primary: 0 4px 14px 0 rgb(74 107 94 / 0.2);
-  --shadow-glow: 0 0 0 3px rgb(74 107 94 / 0.1);
+  /* Cores do Fatto OS */
+  --fatto-primary: #8B5A2B;
+  --fatto-secondary: #1C2E24;
+  --fatto-accent: #D4AF37;
+  --fatto-dark: #0F1713;
+  --fatto-light: #F9F8F6;
 }
 
 .dark,
@@ -191,6 +202,13 @@
   --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --shadow-primary: 0 4px 14px 0 rgb(74 107 94 / 0.3);
   --shadow-glow: 0 0 0 3px rgb(74 107 94 / 0.15);
+
+  /* Cores do Fatto OS no dark (mesmas pois são corporativas institucionais) */
+  --fatto-primary: #8B5A2B;
+  --fatto-secondary: #1C2E24;
+  --fatto-accent: #D4AF37;
+  --fatto-dark: #0F1713;
+  --fatto-light: #F9F8F6;
 }
 
 /* ═══════════════════════════════════════════════════════════════
