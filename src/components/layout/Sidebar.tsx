@@ -27,52 +27,51 @@ const Sidebar: React.FC = () => {
   };
 
   const menuItems = [
-    { id: 'dashboard', path: 'painel', label: 'Painel Geral', icon: <LayoutDashboard size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
-    { id: 'clients', path: 'clientes', label: 'Clientes', icon: <Users size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
-    { id: 'estimates', path: 'orcamentos', label: 'Orçamentos', icon: <FileText size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'orcamentos' },
-    { id: 'visits', path: 'visitas', label: 'Visitas', icon: <Calendar size={20} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'dashboard', path: 'painel', label: 'Painel Geral', icon: <LayoutDashboard size={18} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'clients', path: 'clientes', label: 'Clientes', icon: <Users size={18} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
+    { id: 'estimates', path: 'orcamentos', label: 'Orçamentos', icon: <FileText size={18} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'orcamentos' },
+    { id: 'visits', path: 'visitas', label: 'Visitas', icon: <Calendar size={18} />, roles: ['admin', 'vendedor'], group: 'COMERCIAL', feature: 'crm' },
     
-    // Engenharia & Produção (Agrupados)
     { 
       id: 'engineering', 
       label: 'Engenharia & Fábrica', 
-      icon: <Settings2 size={20} />, 
+      icon: <Settings2 size={18} />, 
       roles: ['admin', 'marceneiro'], 
       group: 'OPERAÇÕES', 
       feature: 'plano_corte',
       subItems: [
-        { id: 'projects', path: 'projetos', label: 'Projetos', icon: <ClipboardList size={18} />, roles: ['admin', 'vendedor'], feature: 'crm' },
-        { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={18} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
-        { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={18} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
-        { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Prod.', icon: <Clock3 size={18} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
-        { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={18} />, roles: ['admin', 'marceneiro'], feature: 'simulador_cnc' },
-        { id: 'engineering_settings', path: 'engenharia', label: 'Setup Engenharia', icon: <Settings2 size={18} />, roles: ['admin'], feature: 'plano_corte' },
+        { id: 'projects', path: 'projetos', label: 'Projetos', icon: <ClipboardList size={16} />, roles: ['admin', 'vendedor'], feature: 'crm' },
+        { id: 'production', path: 'producao', label: 'Produção', icon: <Hammer size={16} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
+        { id: 'cutting_plan', path: 'plano-de-corte', label: 'Plano de Corte', icon: <Scissors size={16} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
+        { id: 'simulador_producao', path: 'simulador-producao', label: 'Simulador Prod.', icon: <Clock3 size={16} />, roles: ['admin', 'marceneiro'], feature: 'plano_corte' },
+        { id: 'simulador_corte', path: 'simulador-corte', label: 'Simulador 3D', icon: <Cuboid size={16} />, roles: ['admin', 'marceneiro'], feature: 'simulador_cnc' },
+        { id: 'engineering_settings', path: 'engenharia', label: 'Setup Engenharia', icon: <Settings2 size={16} />, roles: ['admin'], feature: 'plano_corte' },
       ]
     },
 
-    { id: 'calendar', path: 'calendario', label: 'Calendário', icon: <CalendarDays size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'OPERAÇÕES', feature: 'crm' },
-    { id: 'after_sales', path: 'pos-venda', label: 'Pós-venda', icon: <HeartHandshake size={20} />, roles: ['admin', 'vendedor'], group: 'OPERAÇÕES', feature: 'crm' },
+    { id: 'calendar', path: 'calendario', label: 'Calendário', icon: <CalendarDays size={18} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'OPERAÇÕES', feature: 'crm' },
+    { id: 'after_sales', path: 'pos-venda', label: 'Pós-venda', icon: <HeartHandshake size={18} />, roles: ['admin', 'vendedor'], group: 'OPERAÇÕES', feature: 'crm' },
     
     { 
       id: 'supply_chain', 
       label: 'Suprimentos', 
-      icon: <Package size={20} />, 
+      icon: <Package size={18} />, 
       roles: ['admin', 'marceneiro'], 
       group: 'OPERAÇÕES', 
       feature: 'estoque',
       subItems: [
-        { id: 'purchasing', path: 'compras', label: 'Compras', icon: <ShoppingCart size={18} />, roles: ['admin'], feature: 'estoque' },
-        { id: 'inventory', path: 'estoque', label: 'Estoque Local', icon: <Package size={18} />, roles: ['admin', 'marceneiro'], feature: 'estoque' },
-        { id: 'suppliers', path: 'fornecedores', label: 'Fornecedores', icon: <Truck size={18} />, roles: ['admin'], feature: 'estoque' },
+        { id: 'purchasing', path: 'compras', label: 'Compras', icon: <ShoppingCart size={16} />, roles: ['admin'], feature: 'estoque' },
+        { id: 'inventory', path: 'estoque', label: 'Estoque Local', icon: <Package size={16} />, roles: ['admin', 'marceneiro'], feature: 'estoque' },
+        { id: 'suppliers', path: 'fornecedores', label: 'Fornecedores', icon: <Truck size={16} />, roles: ['admin'], feature: 'estoque' },
       ]
     },
 
-    { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={20} />, roles: ['admin'], group: 'FINANCEIRO', feature: 'financeiro' },
+    { id: 'finance', path: 'financeiro', label: 'Financeiro', icon: <DollarSign size={18} />, roles: ['admin'], group: 'FINANCEIRO', feature: 'financeiro' },
 
-    { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={20} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'SISTEMA', feature: 'crm' },
-    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
-    { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
-    { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'notifications', path: 'notificacoes', label: 'Notificações', icon: <Bell size={18} />, roles: ['admin', 'vendedor', 'marceneiro'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'skus', path: 'pecas', label: 'Peças / SKUs', icon: <DraftingCompass size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'reports', path: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
+    { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
   ];
 
   const visibleMenuItems = menuItems.filter(item => 
@@ -88,13 +87,12 @@ const Sidebar: React.FC = () => {
     const isExpanded = openMenus[item.id];
     const hasSubItems = item.subItems && item.subItems.length > 0;
 
-    // Filter sub items based on role/features
     let visibleSubItems = [];
     if (hasSubItems) {
       visibleSubItems = item.subItems.filter((sub: any) => 
         user && sub.roles.includes(user.role) && hasFeature((user as any).planoTier || 'basic', sub.feature)
       );
-      if (visibleSubItems.length === 0) return null; // hide parent if all subitems are hidden
+      if (visibleSubItems.length === 0) return null;
     }
 
     if (hasSubItems) {
@@ -106,16 +104,16 @@ const Sidebar: React.FC = () => {
             title={item.label}
           >
             <div className="flex items-center gap-3">
-              <span className="shrink-0">{item.icon}</span>
+              <span className="shrink-0 text-muted-foreground">{item.icon}</span>
               <span className="sidebar-label flex-1 truncate text-left">{item.label}</span>
             </div>
-            <span className="sidebar-label text-muted-foreground opacity-60">
-              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            <span className="sidebar-label text-muted-foreground/50">
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
           </button>
           
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-            <div className="pl-6 pr-2 flex flex-col gap-1 border-l border-sidebar-border/50 ml-5 my-1">
+          <div className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded ? 'max-h-96 opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
+            <div className="pl-5 pr-1 flex flex-col gap-0.5 border-l border-border/40 ml-5 my-1">
               {visibleSubItems.map((subItem: any) => {
                 const isSubActive = currentPath === subItem.path;
                 return (
@@ -127,11 +125,11 @@ const Sidebar: React.FC = () => {
                             window.history.pushState({}, '', window.location.pathname + window.location.hash);
                         }
                     }}
-                    className={`menu-item text-[0.8rem] py-2 ${isSubActive ? 'active' : ''}`}
+                    className={`menu-item text-[0.8rem] py-1.5 ${isSubActive ? 'active' : ''}`}
                     aria-current={isSubActive ? 'page' : undefined}
                     title={subItem.label}
                   >
-                    <span className="shrink-0 scale-90 opacity-70">{subItem.icon}</span>
+                    <span className="shrink-0 text-muted-foreground/60">{subItem.icon}</span>
                     <span className="sidebar-label flex-1 truncate">{subItem.label}</span>
                   </Link>
                 );
@@ -155,7 +153,7 @@ const Sidebar: React.FC = () => {
         aria-current={isActive ? 'page' : undefined}
         title={item.label}
       >
-        <span className="shrink-0">{item.icon}</span>
+        <span className={`shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>{item.icon}</span>
         <span className="sidebar-label flex-1 truncate">{item.label}</span>
         {item.id === 'notifications' && <NotificacoesBadge />}
       </Link>
@@ -163,45 +161,51 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-64 h-screen bg-sidebar/95 backdrop-blur-md text-sidebar-foreground border-r border-sidebar-border p-4 flex flex-col sticky top-0 transition-all duration-300 z-50 overflow-y-auto hidden lg:flex shadow-2xl">
+    <aside className="w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex">
+      
+      {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-2 shrink-0">
-        <img src="/logo.png" alt="D'Luxury" className="w-12 h-12 object-contain shrink-0 drop-shadow-md" />
+        <img src="/logo.png" alt="D'Luxury" className="w-10 h-10 object-contain shrink-0" />
         <div className="flex flex-col sidebar-label">
-          <span className="text-base font-extrabold text-primary leading-tight tracking-tight">D'LUXURY</span>
-          <span className="text-[0.65rem] font-medium text-muted-foreground tracking-widest leading-tight">ERP PREMIUM</span>
+          <span className="text-sm font-bold text-foreground leading-tight tracking-tight font-display">D'LUXURY</span>
+          <span className="text-[0.6rem] font-medium text-muted-foreground tracking-[0.15em] leading-tight">AMBIENTES</span>
         </div>
       </div>
 
-      <nav className="flex-1 flex flex-col gap-6 custom-scrollbar pr-1">
+      {/* Navigation */}
+      <nav className="flex-1 flex flex-col gap-5 custom-scrollbar pr-1">
         {groups.map(group => {
           const groupItems = visibleMenuItems.filter(item => item.group === group);
           if (groupItems.length === 0) return null;
           
           return (
-            <div key={group} className="flex flex-col gap-1">
-              <span className="text-[0.65rem] font-bold text-muted-foreground/80 mb-2 px-3 tracking-[0.2em] uppercase sidebar-label">{group}</span>
+            <div key={group} className="flex flex-col gap-0.5">
+              <span className="text-[0.6rem] font-semibold text-muted-foreground/60 mb-1.5 px-3 tracking-[0.18em] uppercase sidebar-label font-display">
+                {group}
+              </span>
               {groupItems.map(item => renderMenuItem(item))}
             </div>
           );
         })}
       </nav>
 
-      <div className="mt-6 pt-4 border-t border-sidebar-border/60">
-         <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+      {/* User footer */}
+      <div className="mt-4 pt-3 border-t border-sidebar-border/60">
+         <div className="flex items-center gap-2.5 mb-3 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs shrink-0 font-display">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="sidebar-label flex-1 min-w-0">
               <p className="text-sm font-semibold truncate text-foreground">{user?.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+              <p className="text-[0.7rem] text-muted-foreground capitalize">{user?.role}</p>
             </div>
          </div>
          <button 
            onClick={logout}
-           className="w-full flex items-center justify-center gap-2 p-2 bg-sidebar-accent/50 hover:bg-destructive/10 text-muted-foreground hover:text-destructive border border-sidebar-border hover:border-destructive/30 rounded-lg text-sm font-medium transition-all duration-200 sidebar-label"
+           className="w-full flex items-center justify-center gap-2 p-2 bg-secondary hover:bg-destructive/8 text-muted-foreground hover:text-destructive border border-border hover:border-destructive/20 rounded-md text-sm font-medium transition-colors duration-150 sidebar-label"
            aria-label="Sair do sistema"
          >
-           <LogOut size={16} />
+           <LogOut size={15} />
            <span>Sair</span>
          </button>
       </div>
@@ -209,7 +213,7 @@ const Sidebar: React.FC = () => {
       <style>{`
         @media (max-width: 1024px) {
           .sidebar-label { display: none; }
-          aside { width: 80px !important; }
+          aside { width: 64px !important; padding-left: 0.5rem; padding-right: 0.5rem; }
         }
       `}</style>
     </aside>

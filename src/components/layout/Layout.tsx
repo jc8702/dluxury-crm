@@ -23,7 +23,6 @@ export default function Layout() {
       .then((data: any) => {
         if (data) {
           setSubData(data);
-          // Se o próprio endpoint disser que está suspenso/inativo (bloqueio preventivo)
           if (data.status === 'suspended' || data.status === 'inactive') {
             setBillingBlocked(true);
             setBlockedError('Sua assinatura está suspensa ou inativa por falta de pagamento.');
@@ -53,7 +52,7 @@ export default function Layout() {
   const showOverdueWarning = subData?.status === 'overdue';
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div className="flex w-screen h-screen overflow-hidden bg-background">
       
       {/* Overlay de Bloqueio se inadimplente */}
       {billingBlocked && (
@@ -65,48 +64,52 @@ export default function Layout() {
 
       <Sidebar />
       
-      <main className="flex-1 h-screen overflow-y-auto bg-background bg-gradient-surface relative flex flex-col">
+      {/* Main Content Area — off-white background with padded card */}
+      <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
         
-        {/* Banner de Aviso de Trial Ativo */}
+        {/* Banner: Trial */}
         {showTrialBanner && (
-          <div className="bg-warning/10 border-b border-warning/30 text-foreground px-4 md:px-8 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between font-sans gap-3">
+          <div className="bg-warning/8 border-b border-warning/20 text-foreground px-4 md:px-8 py-2.5 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle size={16} className="text-warning shrink-0" />
-              <span>
-                Período de teste grátis ativo (Plano <strong className="font-semibold">{subData?.plano?.toUpperCase()}</strong>). Restam <strong className="font-semibold">{subData?.diasRestantes} dias</strong> de avaliação.
+              <span className="font-body">
+                Período de teste ativo — Plano <strong className="font-semibold">{subData?.plano?.toUpperCase()}</strong>. Restam <strong className="font-semibold">{subData?.diasRestantes} dias</strong>.
               </span>
             </div>
             <button 
               onClick={() => navigate('/checkout')}
-              className="bg-warning text-warning-foreground border-none px-4 py-1.5 rounded-md font-bold text-xs cursor-pointer flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all w-full sm:w-auto"
+              className="btn btn-primary text-xs px-4 py-1.5 w-full sm:w-auto"
             >
-              <CreditCard size={14} />
+              <CreditCard size={14} className="mr-1.5" />
               ATIVAR ASSINATURA
             </button>
           </div>
         )}
 
-        {/* Banner de Aviso de Faturamento Atrasado (Tolerância de 5 dias) */}
+        {/* Banner: Overdue */}
         {showOverdueWarning && (
-          <div className="bg-destructive/10 border-b border-destructive/30 text-foreground px-4 md:px-8 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between font-sans gap-3">
+          <div className="bg-destructive/8 border-b border-destructive/20 text-foreground px-4 md:px-8 py-2.5 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle size={16} className="text-destructive shrink-0" />
-              <span>
-                Atenção: Consta um pagamento em aberto. Regularize seu faturamento para evitar a suspensão automática da escrita no ERP.
+              <span className="font-body">
+                Pagamento em aberto. Regularize para evitar suspensão.
               </span>
             </div>
             <button 
               onClick={() => navigate('/checkout')}
-              className="bg-destructive text-destructive-foreground border-none px-4 py-1.5 rounded-md font-bold text-xs cursor-pointer flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all w-full sm:w-auto"
+              className="btn btn-danger text-xs px-4 py-1.5 w-full sm:w-auto"
             >
-              <CreditCard size={14} />
+              <CreditCard size={14} className="mr-1.5" />
               REGULARIZAR
             </button>
           </div>
         )}
 
-        <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col">
-          <Outlet />
+        {/* Main content card wrapper — white card on off-white background */}
+        <div className="flex-1 w-full max-w-[1440px] mx-auto p-3 sm:p-5 md:p-6 lg:p-8">
+          <div className="bg-card rounded-2xl border border-border/50 shadow-md min-h-full p-4 sm:p-6 md:p-8">
+            <Outlet />
+          </div>
         </div>
       </main>
       <DluxChat />

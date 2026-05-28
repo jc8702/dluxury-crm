@@ -11,10 +11,10 @@ interface DataTableProps<T> {
 
 const DataTable = <T,>({ headers, data, renderRow, emptyMessage = 'Nenhum registro encontrado.', loading = false }: DataTableProps<T>) => {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border glass bg-surface/50">
+    <div className="w-full overflow-x-auto rounded-xl border border-border/50">
       <table className="w-full border-collapse table-dense" role="table" aria-label="Tabela de dados">
         <thead>
-          <tr className="border-b border-border text-left text-muted-foreground bg-surface-elevated/30">
+          <tr className="text-left">
             {headers.map((h, idx) => (
               <th key={idx} className="px-4 whitespace-nowrap">{h}</th>
             ))}
@@ -33,7 +33,7 @@ const DataTable = <T,>({ headers, data, renderRow, emptyMessage = 'Nenhum regist
             </tr>
           ) : (
             data.map((item, idx) => (
-              <tr key={idx} className="border-b border-border/60 transition-colors hover:bg-surface-hover/80 group">
+              <tr key={idx} className="transition-colors hover:bg-surface-hover group">
                 {renderRow(item)}
               </tr>
             ))

@@ -58,23 +58,23 @@ function LoadingScreen() {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',
-      backgroundColor: '#0D1117',
+      backgroundColor: '#FAFAFA',
       flexDirection: 'column',
       gap: '16px'
     }}>
       <div style={{
-        width: '40px',
-        height: '40px',
-        border: '3px solid #1F2937',
-        borderTop: '3px solid #E2AC00',
+        width: '36px',
+        height: '36px',
+        border: '3px solid #D7CCC8',
+        borderTop: '3px solid #4A6B5E',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite'
       }} />
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
-      <span style={{ color: '#6B7280', fontSize: '14px', fontWeight: '500', letterSpacing: '0.05em' }}>
-        CARREGANDO D'LUXURY...
+      <span style={{ color: '#3E2723', fontSize: '13px', fontWeight: '600', letterSpacing: '0.08em', fontFamily: "'DM Sans', sans-serif" }}>
+        D'LUXURY
       </span>
     </div>
   );
@@ -107,19 +107,19 @@ class ErrorBoundary extends React.Component<
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          backgroundColor: '#0D1117',
-          color: '#E2AC00',
+          backgroundColor: '#FAFAFA',
+          color: '#3E2723',
           gap: '16px',
           padding: '32px',
-          fontFamily: 'sans-serif',
+          fontFamily: "'DM Sans', sans-serif",
           textAlign: 'center'
         }}>
-          <h2 style={{ margin: 0, fontWeight: '800' }}>ALGO DEU ERRADO</h2>
-          <p style={{ color: '#9CA3AF', maxWidth: '400px', fontSize: '14px' }}>
+          <h2 style={{ margin: 0, fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Algo deu errado</h2>
+          <p style={{ color: '#3E2723', opacity: 0.6, maxWidth: '400px', fontSize: '14px', lineHeight: '1.6' }}>
             {this.state.error?.message ?? 'Ocorreu um erro inesperado na interface.'}
           </p>
-          <button onClick={() => window.location.reload()} style={{ background: '#E2AC00', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: '900' }}>
-            RECARREGAR
+          <button onClick={() => window.location.reload()} style={{ background: '#4A6B5E', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
+            Recarregar
           </button>
         </div>
       );
@@ -153,31 +153,32 @@ function FeatureGuard({ feature }: { feature: string }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        backgroundColor: '#0D1117',
-        color: '#E2AC00',
+        backgroundColor: '#FAFAFA',
+        color: '#3E2723',
         gap: '16px',
         padding: '32px',
-        fontFamily: 'sans-serif',
+        fontFamily: "'DM Sans', sans-serif",
         textAlign: 'center'
       }}>
-        <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '0.05em' }}>RECURSO EXCLUSIVO</h2>
-        <p style={{ color: '#9CA3AF', maxWidth: '450px', fontSize: '14px', lineHeight: '1.6' }}>
-          Esta funcionalidade pertence a um plano comercial superior. Faça o upgrade da sua assinatura nas configurações do sistema para liberar o acesso.
+        <h2 style={{ margin: 0, fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Recurso exclusivo</h2>
+        <p style={{ color: '#3E2723', opacity: 0.6, maxWidth: '450px', fontSize: '14px', lineHeight: '1.6' }}>
+          Esta funcionalidade pertence a um plano superior. Faça o upgrade para liberar o acesso.
         </p>
         <button 
           onClick={() => window.location.hash = '#/configuracoes'} 
           style={{ 
-            background: '#E2AC00', 
-            color: '#000', 
+            background: '#4A6B5E', 
+            color: '#fff', 
             border: 'none', 
-            padding: '12px 24px', 
+            padding: '10px 24px', 
             borderRadius: '8px', 
             cursor: 'pointer', 
-            fontWeight: '900',
-            letterSpacing: '0.05em'
+            fontWeight: '600',
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '14px'
           }}
         >
-          GERENCIAR ASSINATURA
+          Gerenciar Assinatura
         </button>
       </div>
     );
