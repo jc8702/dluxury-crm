@@ -36,7 +36,13 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         precoVendaUnitario: Number(item.precoVendaUnitario) || 0,
         precoVendaSobrescrito: item.precoVendaSobrescrito ? Number(item.precoVendaSobrescrito) : null,
         margemLucro: Number(item.margemLucro) || 0,
-        observacoes: item.observacoes || ''
+            metadata: item.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] },
+        observacoes: item.observacoes || '',
+        metadata: item.metadata || {
+            chapa: null,
+            fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } },
+            ferragens: []
+        }
     },
     // Dados que vieram do banco (Persistidos)
     persisted: { ...item },
@@ -56,7 +62,8 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
             skuDescricao: item.skuDescricao || (item.skuEngenharia?.nome) || (item.skuComponente?.nome) || '',
             custoUnitarioCalculado: Number(item.custoUnitarioCalculado) || 0,
             precoVendaUnitario: Number(item.precoVendaUnitario) || 0,
-            margemLucro: Number(item.margemLucro) || 0
+            margemLucro: Number(item.margemLucro) || 0,
+            metadata: item.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] }
         },
         hasChanges: false
     }));
@@ -78,7 +85,42 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, state.draft]);
 
+  
+  const recalculateTotalMaterialCost = (draftState) => {
+      let cost = 0;
+      const { largura, altura, metadata } = draftState;
+      const l = Number(largura) || 0; // cm
+      const a = Number(altura) || 0; // cm
+      
+      // Chapa (preço por m2)
+      if (metadata.chapa?.precoUnitario) {
+          const areaM2 = (l * a) / 10000;
+          cost += areaM2 * Number(metadata.chapa.precoUnitario);
+      }
+      
+      // Fita (preço por m linear)
+      if (metadata.fitaBorda?.sku?.precoUnitario) {
+          const lados = metadata.fitaBorda.lados;
+          let perimetroCm = 0;
+          if (lados.topo) perimetroCm += l;
+          if (lados.base) perimetroCm += l;
+          if (lados.esquerda) perimetroCm += a;
+          if (lados.direita) perimetroCm += a;
+          cost += (perimetroCm / 100) * Number(metadata.fitaBorda.sku.precoUnitario);
+      }
+      
+      // Ferragens
+      if (metadata.ferragens?.length > 0) {
+          metadata.ferragens.forEach(f => {
+              cost += (Number(f.quantidade) || 1) * Number(f.sku?.precoUnitario || 0);
+          });
+      }
+      
+      return cost;
+  };
+
   // 🧮 CÁLCULO FINANCEIRO (Markup Simples)
+
   const recalculatePrices = (type: 'cost' | 'price' | 'margin', value: number, currentDraft?: any) => {
     const draft = { ...(currentDraft || state.draft) };
     const cost = type === 'cost' ? value : draft.custoUnitarioCalculado;
@@ -123,7 +165,8 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         quantidade: state.draft.quantidade.toString(),
         custoUnitarioCalculado: state.draft.custoUnitarioCalculado.toFixed(2),
         precoVendaUnitario: state.draft.precoVendaUnitario.toFixed(2),
-        precoVendaSobrescrito: state.draft.precoVendaSobrescrito?.toFixed(2) || null
+        precoVendaSobrescrito: state.draft.precoVendaSobrescrito?.toFixed(2) || null,
+        metadata: state.draft.metadata
     };
 
     try {
@@ -146,6 +189,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
             skuId: prev.persisted.skuComponenteId || prev.persisted.skuEngenhariaId || '',
             skuCodigo: prev.persisted.skuCodigo || (prev.persisted.skuEngenharia?.codigo) || '',
             skuDescricao: prev.persisted.skuDescricao || (prev.persisted.skuEngenharia?.nome) || (prev.persisted.skuComponente?.nome) || '',
+            metadata: prev.persisted.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] },
             custoUnitarioCalculado: Number(prev.persisted.custoUnitarioCalculado) || 0,
             precoVendaUnitario: Number(prev.persisted.precoVendaUnitario) || 0
         },
@@ -392,12 +436,125 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         </div>
       </div>
 
+      
+      {!isEditing && item.metadata && (item.metadata.chapa || item.metadata.fitaBorda?.sku || item.metadata.ferragens?.length > 0) && (
+        <div className="mt-4 pt-4 border-t border-zinc-900/50 flex flex-col gap-2">
+            <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-1"><Package className="w-3 h-3" /> Composição Dinâmica Ativa</span>
+            <div className="flex flex-wrap gap-2">
+                {item.metadata.chapa && <span className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">Chapa: <b className="text-white">{item.metadata.chapa.codigo}</b></span>}
+                {item.metadata.fitaBorda?.sku && <span className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">Fita: <b className="text-white">{item.metadata.fitaBorda.sku.codigo}</b> ({Object.entries(item.metadata.fitaBorda.lados).filter(([_,v])=>v).map(([k])=>k[0].toUpperCase()).join(',')})</span>}
+                {item.metadata.ferragens?.map((f, i) => (
+                    <span key={i} className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">{f.quantidade}x <b className="text-white">{f.sku.codigo}</b></span>
+                ))}
+            </div>
+        </div>
+      )}
+
       {item.observacoes && !isEditing && (
         <div className="mt-4 pt-4 border-t border-zinc-900/50 flex gap-2">
             <div className="w-1 h-full bg-orange-500/50 rounded-full" />
             <p className="text-[10px] text-zinc-500 italic leading-relaxed">
                 {item.observacoes}
             </p>
+        </div>
+      )}
+
+      
+      {isEditing && (
+        <div className="mt-4 pt-4 border-t border-zinc-800/50 space-y-4">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2"><Package className="w-3 h-3 text-orange-500" /> Composição Avançada de Materiais</h4>
+            
+            <div className="bg-black/30 rounded-xl p-4 border border-zinc-800 space-y-4">
+                {/* CHAPA */}
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest flex justify-between">
+                        <span>Chapa / Material Base (Preço por m²)</span>
+                        {state.draft.metadata?.chapa && <span className="text-orange-500 font-mono">R$ {Number(state.draft.metadata.chapa.precoUnitario).toFixed(2)} / m²</span>}
+                    </label>
+                    <SKUAutocomplete 
+                        placeholder="Buscar chapa de MDF..."
+                        defaultValue={state.draft.metadata?.chapa?.codigo || ''}
+                        onSelect={(sku) => {
+                            const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, chapa: sku } };
+                            const cost = recalculateTotalMaterialCost(newDraft);
+                            setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                        }}
+                    />
+                </div>
+
+                {/* FITA DE BORDA */}
+                <div className="space-y-2 border-t border-zinc-800/50 pt-4">
+                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest flex justify-between">
+                        <span>Fita de Borda (Preço por ML)</span>
+                        {state.draft.metadata?.fitaBorda?.sku && <span className="text-orange-500 font-mono">R$ {Number(state.draft.metadata.fitaBorda.sku.precoUnitario).toFixed(2)} / ML</span>}
+                    </label>
+                    <SKUAutocomplete 
+                        placeholder="Buscar fita de borda..."
+                        defaultValue={state.draft.metadata?.fitaBorda?.sku?.codigo || ''}
+                        onSelect={(sku) => {
+                            const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, fitaBorda: { ...state.draft.metadata?.fitaBorda, sku } } };
+                            const cost = recalculateTotalMaterialCost(newDraft);
+                            setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                        }}
+                    />
+                    <div className="flex gap-4 mt-2">
+                        {['topo', 'base', 'esquerda', 'direita'].map(lado => (
+                            <label key={lado} className="flex items-center gap-1.5 cursor-pointer group">
+                                <input type="checkbox" className="w-3 h-3 accent-orange-500" 
+                                    checked={!!state.draft.metadata?.fitaBorda?.lados?.[lado]}
+                                    onChange={(e) => {
+                                        const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, fitaBorda: { ...state.draft.metadata?.fitaBorda, lados: { ...state.draft.metadata?.fitaBorda?.lados, [lado]: e.target.checked } } } };
+                                        const cost = recalculateTotalMaterialCost(newDraft);
+                                        setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                                    }}
+                                />
+                                <span className="text-[10px] uppercase font-bold text-zinc-500 group-hover:text-zinc-300">{lado}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                {/* FERRAGENS E ACESSÓRIOS */}
+                <div className="space-y-2 border-t border-zinc-800/50 pt-4">
+                    <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest flex justify-between">
+                        <span>Ferragens e Acessórios</span>
+                    </label>
+                    {state.draft.metadata?.ferragens?.map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 mb-2 bg-zinc-900 p-2 rounded-lg border border-zinc-800">
+                            <span className="flex-1 text-xs text-white truncate font-bold">{f.sku?.nome || f.sku?.codigo} <span className="text-zinc-500 font-mono ml-2">R$ {Number(f.sku?.precoUnitario).toFixed(2)} un</span></span>
+                            <input type="number" min="1" className="w-16 bg-black border border-zinc-700 rounded px-2 py-1 text-xs text-white font-mono text-center outline-none focus:border-orange-500" value={f.quantidade} 
+                                onChange={(e) => {
+                                    const newF = [...state.draft.metadata.ferragens];
+                                    newF[i].quantidade = Number(e.target.value);
+                                    const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, ferragens: newF } };
+                                    const cost = recalculateTotalMaterialCost(newDraft);
+                                    setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                                }}
+                            />
+                            <button onClick={() => {
+                                const newF = state.draft.metadata.ferragens.filter((_, idx) => idx !== i);
+                                const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, ferragens: newF } };
+                                const cost = recalculateTotalMaterialCost(newDraft);
+                                setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                            }} className="w-7 h-7 flex items-center justify-center bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                    ))}
+                    
+                    <div className="flex gap-2">
+                        <div className="flex-1">
+                            <SKUAutocomplete 
+                                placeholder="Buscar corrediça, dobradiça..."
+                                onSelect={(sku) => {
+                                    const newF = [...(state.draft.metadata?.ferragens || []), { sku, quantidade: 1 }];
+                                    const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, ferragens: newF } };
+                                    const cost = recalculateTotalMaterialCost(newDraft);
+                                    setState(prev => ({ ...prev, draft: cost > 0 ? recalculatePrices('cost', cost, newDraft) : newDraft, hasChanges: true }));
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
       )}
 
