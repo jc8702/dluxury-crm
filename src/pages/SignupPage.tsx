@@ -117,19 +117,28 @@ const SignupPage: React.FC = () => {
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh',
-      background: '#0D1117',
-      color: '#F0F6FC',
-      fontFamily: 'Inter, sans-serif',
-      padding: '2rem 1rem',
+      background: '#0F1713', // Ébano
+      color: '#F9F8F6', // Off-White
+      fontFamily: 'Outfit, Inter, sans-serif',
+      padding: '3rem 1.5rem',
       boxSizing: 'border-box'
     }}>
       {/* Header / Brand */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 id="signup-title" style={{ color: '#E2AC00', fontSize: '2.2rem', fontWeight: 800, margin: 0, letterSpacing: '2px' }}>
-          D'LUXURY CRM
+      <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '18px',
+          background: 'linear-gradient(135deg, #8B5A2B, #D4AF37)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 1.5rem', color: 'white', fontWeight: 900,
+          fontSize: '1.8rem', boxShadow: '0 8px 20px rgba(139,90,43,0.3)'
+        }}>
+          F
+        </div>
+        <h1 id="signup-title" style={{ color: 'white', fontSize: '2.4rem', fontWeight: 900, margin: 0, letterSpacing: '1px' }}>
+          FATTO OS
         </h1>
-        <p style={{ color: '#8B949E', fontSize: '1rem', marginTop: '0.5rem' }}>
-          Crie sua conta SaaS e profissionalize a gestão da sua marcenaria de alto padrão.
+        <p style={{ color: '#D4AF37', fontSize: '0.85rem', fontWeight: 700, marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '3px' }}>
+          Plataforma de Gestão Moveleira Premium
         </p>
       </div>
 
@@ -137,7 +146,7 @@ const SignupPage: React.FC = () => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
+        gap: '3rem',
         maxWidth: '1200px',
         width: '100%',
         margin: '0 auto',
@@ -147,14 +156,14 @@ const SignupPage: React.FC = () => {
         
         {/* Formulário de Cadastro */}
         <section style={{
-          background: 'rgba(22, 27, 34, 0.8)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(240, 246, 252, 0.1)',
-          borderRadius: '16px',
+          background: '#F9F8F6', // Off-White
+          border: '1px solid rgba(28, 46, 36, 0.06)',
+          borderRadius: '24px',
           padding: '2.5rem',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+          color: '#1C2E24', // Laca Musgo
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)'
         }}>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.5rem', color: '#E2AC00' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.5rem', color: '#1C2E24', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Informações da Conta
           </h2>
 
@@ -162,7 +171,7 @@ const SignupPage: React.FC = () => {
             
             {/* Nome da Marcenaria */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Nome da Marcenaria / Empresa
               </label>
               <input
@@ -176,7 +185,7 @@ const SignupPage: React.FC = () => {
 
             {/* Subdomínio com Validação */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Subdomínio de Acesso
               </label>
               <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
@@ -190,24 +199,24 @@ const SignupPage: React.FC = () => {
                 <span style={{
                   position: 'absolute',
                   right: '12px',
-                  color: '#58A6FF',
+                  color: '#8B5A2B',
                   fontSize: '0.85rem',
-                  fontWeight: 600
+                  fontWeight: 700
                 }}>
-                  .dluxury-crm
+                  .fatto-os
                 </span>
               </div>
-              <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {subdomainStatus === 'checking' && <span style={{ color: '#8B949E' }}>Verificando disponibilidade...</span>}
-                {subdomainStatus === 'available' && <span style={{ color: '#3FB950', fontWeight: 600 }}>✓ Subdomínio disponível</span>}
-                {subdomainStatus === 'unavailable' && <span style={{ color: '#F85149', fontWeight: 600 }}>✗ Subdomínio em uso ou inválido</span>}
-                {subdomainStatus === 'idle' && <span style={{ color: '#8B949E' }}>Exemplo: suamarcenaria.dluxury-crm.vercel.app</span>}
+                {subdomainStatus === 'available' && <span style={{ color: '#2E7D32', fontWeight: 700 }}>✓ Subdomínio disponível</span>}
+                {subdomainStatus === 'unavailable' && <span style={{ color: '#C62828', fontWeight: 700 }}>✗ Subdomínio em uso ou inválido</span>}
+                {subdomainStatus === 'idle' && <span style={{ color: '#704822', fontWeight: 500 }}>Exemplo: suamarcenaria.fatto-os.vercel.app</span>}
               </div>
             </div>
 
             {/* Nome Completo Admin */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Nome Completo do Administrador
               </label>
               <input
@@ -221,7 +230,7 @@ const SignupPage: React.FC = () => {
 
             {/* E-mail */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 E-mail Corporativo
               </label>
               <input
@@ -235,7 +244,7 @@ const SignupPage: React.FC = () => {
 
             {/* Senha */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Senha de Acesso (Mín. 8 caracteres)
               </label>
               <input
@@ -249,7 +258,7 @@ const SignupPage: React.FC = () => {
 
             {/* Confirmar Senha */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#8B949E', display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+              <label style={{ fontSize: '0.75rem', color: '#1C2E24', display: 'block', marginBottom: '0.4rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Confirmar Senha
               </label>
               <input
@@ -270,19 +279,20 @@ const SignupPage: React.FC = () => {
                 onChange={e => setAceitouTermos(e.target.checked)}
                 style={{ marginTop: '0.2rem', cursor: 'pointer' }}
               />
-              <label htmlFor="checkbox-termos" style={{ fontSize: '0.8rem', color: '#8B949E', lineHeight: '1.4', cursor: 'pointer' }}>
-                Eu concordo com os <a href="/termos" target="_blank" rel="noopener noreferrer" style={{ color: '#58A6FF', textDecoration: 'none' }}>Termos de Uso</a> e com a <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: '#58A6FF', textDecoration: 'none' }}>Política de Privacidade</a> de acordo com as normas da LGPD.
+              <label htmlFor="checkbox-termos" style={{ fontSize: '0.75rem', color: '#555', lineHeight: '1.4', cursor: 'pointer', fontWeight: 500 }}>
+                Eu concordo com os <a href="/termos" target="_blank" rel="noopener noreferrer" style={{ color: '#8B5A2B', textDecoration: 'none', fontWeight: 700 }}>Termos de Uso</a> e com a <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: '#8B5A2B', textDecoration: 'none', fontWeight: 700 }}>Política de Privacidade</a> de acordo com as normas da LGPD.
               </label>
             </div>
 
             {error && (
               <div style={{
-                color: '#F85149',
-                fontSize: '0.85rem',
+                color: '#C62828',
+                fontSize: '0.8rem',
                 padding: '0.75rem',
-                background: 'rgba(248, 81, 73, 0.1)',
-                border: '1px solid rgba(248, 81, 73, 0.2)',
-                borderRadius: '8px'
+                background: 'rgba(198, 40, 40, 0.05)',
+                border: '1px solid rgba(198, 40, 40, 0.15)',
+                borderRadius: '10px',
+                fontWeight: 500
               }}>
                 {error}
               </div>
@@ -296,23 +306,25 @@ const SignupPage: React.FC = () => {
               style={{
                 width: '100%',
                 padding: '1rem',
-                borderRadius: '8px',
-                background: loading || subdomainStatus !== 'available' ? '#30363D' : 'linear-gradient(135deg, #E2AC00, #b49050)',
-                color: loading || subdomainStatus !== 'available' ? '#8B949E' : '#0D1117',
+                borderRadius: '12px',
+                background: loading || subdomainStatus !== 'available' ? '#A1887F' : '#8B5A2B',
+                color: 'white',
                 fontWeight: 700,
                 border: 'none',
                 cursor: loading || subdomainStatus !== 'available' ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
+                fontSize: '0.95rem',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 4px 12px rgba(226, 172, 0, 0.15)'
+                boxShadow: '0 4px 12px rgba(139, 90, 43, 0.25)'
               }}
             >
-              {loading ? 'PROVISIONANDO CONTA...' : 'INICIAR TESTE GRÁTIS DE 14 DIAS'}
+              {loading ? 'Provisionando Conta...' : 'Iniciar Teste de 14 Dias'}
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-              <span style={{ color: '#8B949E' }}>Já possui uma conta? </span>
-              <Link to="/login" style={{ color: '#58A6FF', textDecoration: 'none', fontWeight: 600 }}>Entrar</Link>
+            <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: 500 }}>
+              <span style={{ color: '#555' }}>Já possui uma conta? </span>
+              <Link to="/login" style={{ color: '#8B5A2B', textDecoration: 'none', fontWeight: 700 }}>Entrar</Link>
             </div>
 
           </form>
@@ -320,10 +332,10 @@ const SignupPage: React.FC = () => {
 
         {/* Seleção de Planos */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E2AC00', marginBottom: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D4AF37', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Selecione seu Plano Comercial
           </h2>
-          <p style={{ color: '#8B949E', fontSize: '0.9rem', margin: 0 }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0, lineHeight: 1.6 }}>
             Qualquer plano selecionado inicia em modo **Trial gratuito de 14 dias**, dando acesso total a todos os módulos do ERP (equivalente ao plano Pro) durante o período de testes.
           </p>
 
@@ -336,23 +348,23 @@ const SignupPage: React.FC = () => {
               onClick={() => setPlano('basic')}
               style={{
                 ...planCardStyle,
-                border: plano === 'basic' ? '2px solid #E2AC00' : '1px solid rgba(240, 246, 252, 0.1)',
-                background: plano === 'basic' ? 'rgba(226, 172, 0, 0.05)' : 'rgba(22, 27, 34, 0.6)'
+                border: plano === 'basic' ? '2px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.08)',
+                background: plano === 'basic' ? 'rgba(212, 175, 55, 0.06)' : 'rgba(28, 46, 36, 0.4)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>BASIC</h3>
-                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#E2AC00' }}>R$ 97<span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#8B949E' }}>/mês</span></span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>BASIC</h3>
+                <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#D4AF37' }}>R$ 97<span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>/mês</span></span>
               </div>
-              <p style={{ fontSize: '0.85rem', color: '#8B949E', margin: '0.5rem 0 1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: '0.5rem 0 1rem' }}>
                 Ideal para marceneiros autônomos organizando orçamentos e clientes.
               </p>
               <ul style={{ ...planListStyle }}>
                 <li>✓ Módulos CRM + Orçamentos Básicos</li>
                 <li>✓ Cadastro de Clientes e Visitas</li>
                 <li>✓ Até 2 usuários simultâneos</li>
-                <li style={{ color: '#8B949E', textDecoration: 'line-through' }}>✗ Módulo Financeiro e DRE</li>
-                <li style={{ color: '#8B949E', textDecoration: 'line-through' }}>✗ Assistente IA (Dlux)</li>
+                <li style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>✗ Módulo Financeiro e DRE</li>
+                <li style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>✗ Assistente IA (Dlux)</li>
               </ul>
             </div>
 
@@ -362,8 +374,8 @@ const SignupPage: React.FC = () => {
               onClick={() => setPlano('pro')}
               style={{
                 ...planCardStyle,
-                border: plano === 'pro' ? '2px solid #E2AC00' : '1px solid rgba(226, 172, 0, 0.3)',
-                background: plano === 'pro' ? 'rgba(226, 172, 0, 0.08)' : 'rgba(22, 27, 34, 0.8)',
+                border: plano === 'pro' ? '2px solid #D4AF37' : '1px solid rgba(212, 175, 55, 0.3)',
+                background: plano === 'pro' ? 'rgba(212, 175, 55, 0.09)' : 'rgba(28, 46, 36, 0.6)',
                 position: 'relative'
               }}
             >
@@ -371,21 +383,22 @@ const SignupPage: React.FC = () => {
                 position: 'absolute',
                 top: '-12px',
                 right: '24px',
-                background: '#E2AC00',
-                color: '#0D1117',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                padding: '0.25rem 0.75rem',
+                background: '#D4AF37',
+                color: '#0F1713',
+                fontSize: '0.7rem',
+                fontWeight: 900,
+                padding: '0.3rem 0.85rem',
                 borderRadius: '20px',
-                letterSpacing: '0.5px'
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
               }}>
                 RECOMENDADO / POPULAR
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#E2AC00' }}>PRO</h3>
-                <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#E2AC00' }}>R$ 197<span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#8B949E' }}>/mês</span></span>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#D4AF37' }}>PRO</h3>
+                <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#D4AF37' }}>R$ 197<span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>/mês</span></span>
               </div>
-              <p style={{ fontSize: '0.85rem', color: '#8B949E', margin: '0.5rem 0 1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: '0.5rem 0 1rem' }}>
                 Gestão completa, controle financeiro integrado e IA inteligente de marcenaria.
               </p>
               <ul style={{ ...planListStyle }}>
@@ -403,15 +416,15 @@ const SignupPage: React.FC = () => {
               onClick={() => setPlano('enterprise')}
               style={{
                 ...planCardStyle,
-                border: plano === 'enterprise' ? '2px solid #E2AC00' : '1px solid rgba(240, 246, 252, 0.1)',
-                background: plano === 'enterprise' ? 'rgba(226, 172, 0, 0.05)' : 'rgba(22, 27, 34, 0.6)'
+                border: plano === 'enterprise' ? '2px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.08)',
+                background: plano === 'enterprise' ? 'rgba(212, 175, 55, 0.06)' : 'rgba(28, 46, 36, 0.4)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>ENTERPRISE</h3>
-                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#E2AC00' }}>R$ 397<span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#8B949E' }}>/mês</span></span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>ENTERPRISE</h3>
+                <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#D4AF37' }}>R$ 397<span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>/mês</span></span>
               </div>
-              <p style={{ fontSize: '0.85rem', color: '#8B949E', margin: '0.5rem 0 1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: '0.5rem 0 1rem' }}>
                 Operação industrial em larga escala, controle CNC e suporte corporativo.
               </p>
               <ul style={{ ...planListStyle }}>
@@ -433,20 +446,21 @@ const SignupPage: React.FC = () => {
 // Estilos Reutilizáveis
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '0.8rem 1rem',
-  borderRadius: '8px',
-  background: '#0D1117',
-  border: '1px solid rgba(240, 246, 252, 0.15)',
-  color: 'white',
+  padding: '0.85rem 1rem',
+  borderRadius: '12px',
+  background: 'white',
+  border: '1px solid rgba(28, 46, 36, 0.12)',
+  color: '#1C2E24',
   outline: 'none',
   fontSize: '0.95rem',
   boxSizing: 'border-box',
-  transition: 'border-color 0.2s ease'
+  transition: 'border-color 0.2s ease',
+  fontFamily: 'Inter, sans-serif'
 };
 
 const planCardStyle: React.CSSProperties = {
   padding: '1.5rem',
-  borderRadius: '12px',
+  borderRadius: '16px',
   cursor: 'pointer',
   transition: 'all 0.25s ease',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'

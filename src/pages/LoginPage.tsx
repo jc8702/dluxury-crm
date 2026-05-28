@@ -54,58 +54,73 @@ const LoginPage: React.FC = () => {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', background: '#0D1117',
-      fontFamily: 'Inter, sans-serif'
+      minHeight: '100vh', background: '#0F1713', // Ébano
+      fontFamily: 'Outfit, Inter, sans-serif',
+      padding: '1rem'
     }}>
       <div style={{
-        background: '#1a1a2e', padding: '3rem', borderRadius: '16px',
-        width: '400px', border: '1px solid rgba(255,255,255,0.1)'
+        background: '#F9F8F6', // Off-White
+        padding: '3.5rem 3rem', borderRadius: '24px',
+        width: '420px', border: '1px solid rgba(28,46,36,0.06)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.35)'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: '#E2AC00', fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>
-            D'LUXURY
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '16px',
+            background: 'linear-gradient(135deg, #8B5A2B, #D4AF37)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 1.25rem', color: '#white', fontWeight: 900,
+            fontSize: '1.5rem', boxShadow: '0 8px 16px rgba(139,90,43,0.25)'
+          }}>
+            F
+          </div>
+          <h1 style={{ color: '#1C2E24', fontSize: '1.6rem', fontWeight: 900, margin: 0, letterSpacing: '1px' }}>
+            FATTO OS
           </h1>
-          <p style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-            {tenantInfo ? tenantInfo.nome : 'AMBIENTES — CRM'}
+          <p style={{ color: '#8B5A2B', fontSize: '0.75rem', fontWeight: 700, marginTop: '0.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+            {tenantInfo ? tenantInfo.nome : 'DESIGN & TECH'}
           </p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'block', marginBottom: '0.3rem' }}>
-              E-mail
+            <label style={{ fontSize: '0.75rem', color: '#1C2E24', fontWeight: 700, display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              E-mail corporativo
             </label>
             <input
               type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="seu@email.com"
               style={{
-                width: '100%', padding: '0.75rem', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                color: 'white', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box'
+                width: '100%', padding: '0.85rem 1rem', borderRadius: '12px',
+                background: '#white', border: '1px solid rgba(28,46,36,0.12)',
+                color: '#1C2E24', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box',
+                transition: 'all 0.2s ease', fontFamily: 'Inter, sans-serif'
               }}
             />
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'block', marginBottom: '0.3rem' }}>
-              Senha
+            <label style={{ fontSize: '0.75rem', color: '#1C2E24', fontWeight: 700, display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Senha de acesso
             </label>
             <input
               type="password" required value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="******"
               style={{
-                width: '100%', padding: '0.75rem', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                color: 'white', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box'
+                width: '100%', padding: '0.85rem 1rem', borderRadius: '12px',
+                background: '#white', border: '1px solid rgba(28,46,36,0.12)',
+                color: '#1C2E24', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box',
+                transition: 'all 0.2s ease', fontFamily: 'Inter, sans-serif'
               }}
             />
           </div>
 
           {error && (
             <div style={{
-              color: '#ef4444', fontSize: '0.8rem', padding: '0.5rem',
-              background: 'rgba(239,68,68,0.1)', borderRadius: '6px'
+              color: '#C62828', fontSize: '0.8rem', padding: '0.75rem',
+              background: 'rgba(198,40,40,0.06)', border: '1px solid rgba(198,40,40,0.15)', borderRadius: '10px',
+              fontWeight: 500, lineHeight: '1.4'
             }}>
               {error}
             </div>
@@ -113,12 +128,13 @@ const LoginPage: React.FC = () => {
 
           <button type="submit" disabled={loading}
             style={{
-              width: '100%', padding: '0.85rem', borderRadius: '8px', marginTop: '0.5rem',
-              background: loading ? '#666' : 'linear-gradient(135deg, #E2AC00, #b49050)',
-              color: '#1a1a2e', fontWeight: 700, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '1rem'
+              width: '100%', padding: '1rem', borderRadius: '12px', marginTop: '0.5rem',
+              background: loading ? '#A1887F' : '#8B5A2B',
+              color: 'white', fontWeight: 700, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '0.95rem', letterSpacing: '1px', textTransform: 'uppercase',
+              boxShadow: '0 4px 12px rgba(139,90,43,0.25)', transition: 'all 0.2s ease'
             }}>
-            {loading ? 'ENTRANDO...' : 'ENTRAR'}
+            {loading ? 'Acessando...' : 'Entrar no Sistema'}
           </button>
         </form>
       </div>

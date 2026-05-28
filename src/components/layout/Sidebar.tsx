@@ -100,20 +100,20 @@ const Sidebar: React.FC = () => {
         <div key={item.id} className="flex flex-col">
           <button
             onClick={() => toggleMenu(item.id)}
-            className="menu-item flex items-center justify-between w-full focus:outline-none"
+            className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200 focus:outline-none ${isExpanded ? 'bg-white/5 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
             title={item.label}
           >
             <div className="flex items-center gap-3">
-              <span className="shrink-0 text-muted-foreground">{item.icon}</span>
-              <span className="sidebar-label flex-1 truncate text-left">{item.label}</span>
+              <span className={`shrink-0 ${isExpanded ? 'text-[#D4AF37]' : 'text-slate-400'}`}>{item.icon}</span>
+              <span className="sidebar-label flex-1 truncate text-left text-sm font-medium">{item.label}</span>
             </div>
-            <span className="sidebar-label text-muted-foreground/50">
+            <span className="sidebar-label text-slate-400">
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
           </button>
           
-          <div className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded ? 'max-h-96 opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
-            <div className="pl-5 pr-1 flex flex-col gap-0.5 border-l border-border/40 ml-5 my-1">
+          <div className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+            <div className="pl-4 pr-1 flex flex-col gap-1 border-l border-white/10 ml-5 my-1">
               {visibleSubItems.map((subItem: any) => {
                 const isSubActive = currentPath === subItem.path;
                 return (
@@ -125,11 +125,11 @@ const Sidebar: React.FC = () => {
                             window.history.pushState({}, '', window.location.pathname + window.location.hash);
                         }
                     }}
-                    className={`menu-item text-[0.8rem] py-1.5 ${isSubActive ? 'active' : ''}`}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all duration-150 ${isSubActive ? 'bg-[#8B5A2B] text-white font-bold' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                     aria-current={isSubActive ? 'page' : undefined}
                     title={subItem.label}
                   >
-                    <span className="shrink-0 text-muted-foreground/60">{subItem.icon}</span>
+                    <span className={`shrink-0 ${isSubActive ? 'text-white' : 'text-slate-400'}`}>{subItem.icon}</span>
                     <span className="sidebar-label flex-1 truncate">{subItem.label}</span>
                   </Link>
                 );
@@ -149,38 +149,40 @@ const Sidebar: React.FC = () => {
                 window.history.pushState({}, '', window.location.pathname + window.location.hash);
             }
         }}
-        className={`menu-item ${isActive ? 'active' : ''}`}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-[#8B5A2B] text-white font-bold shadow-[0_4px_12px_rgba(139,90,43,0.2)]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
         aria-current={isActive ? 'page' : undefined}
         title={item.label}
       >
-        <span className={`shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>{item.icon}</span>
-        <span className="sidebar-label flex-1 truncate">{item.label}</span>
+        <span className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`}>{item.icon}</span>
+        <span className="sidebar-label flex-1 truncate text-sm font-medium">{item.label}</span>
         {item.id === 'notifications' && <NotificacoesBadge />}
       </Link>
     );
   };
 
   return (
-    <aside className="w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex">
+    <aside className="w-60 h-screen bg-[#1C2E24] text-slate-100 border-r border-white/5 px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex select-none">
       
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-8 px-2 shrink-0">
-        <img src="/logo.png" alt="D'Luxury" className="w-10 h-10 object-contain shrink-0" />
+      <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#8B5A2B] to-[#D4AF37] flex items-center justify-center font-bold text-white text-base shadow-[0_4px_12px_rgba(139,90,43,0.3)]">
+          F
+        </div>
         <div className="flex flex-col sidebar-label">
-          <span className="text-sm font-bold text-foreground leading-tight tracking-tight font-display">D'LUXURY</span>
-          <span className="text-[0.6rem] font-medium text-muted-foreground tracking-[0.15em] leading-tight">AMBIENTES</span>
+          <span className="text-sm font-black text-white leading-tight tracking-wider font-display">FATTO OS</span>
+          <span className="text-[0.55rem] font-bold text-[#D4AF37] tracking-[0.2em] leading-tight">DESIGN & TECH</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 flex flex-col gap-5 custom-scrollbar pr-1">
+      <nav className="flex-1 flex flex-col gap-6 custom-scrollbar pr-1">
         {groups.map(group => {
           const groupItems = visibleMenuItems.filter(item => item.group === group);
           if (groupItems.length === 0) return null;
           
           return (
-            <div key={group} className="flex flex-col gap-0.5">
-              <span className="text-[0.6rem] font-semibold text-muted-foreground/60 mb-1.5 px-3 tracking-[0.18em] uppercase sidebar-label font-display">
+            <div key={group} className="flex flex-col gap-1.5">
+              <span className="text-[0.6rem] font-bold text-[#D4AF37] mb-1 px-3 tracking-[0.2em] uppercase sidebar-label font-display opacity-80">
                 {group}
               </span>
               {groupItems.map(item => renderMenuItem(item))}
@@ -190,19 +192,19 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* User footer */}
-      <div className="mt-4 pt-3 border-t border-sidebar-border/60">
-         <div className="flex items-center gap-2.5 mb-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs shrink-0 font-display">
+      <div className="mt-4 pt-4 border-t border-white/5">
+         <div className="flex items-center gap-2.5 mb-3 px-3">
+            <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-xs shrink-0 font-display">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="sidebar-label flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-foreground">{user?.name}</p>
-              <p className="text-[0.7rem] text-muted-foreground capitalize">{user?.role}</p>
+              <p className="text-sm font-semibold truncate text-white">{user?.name}</p>
+              <p className="text-[0.7rem] text-[#D4AF37] capitalize font-medium">{user?.role}</p>
             </div>
          </div>
          <button 
            onClick={logout}
-           className="w-full flex items-center justify-center gap-2 p-2 bg-secondary hover:bg-destructive/8 text-muted-foreground hover:text-destructive border border-border hover:border-destructive/20 rounded-md text-sm font-medium transition-colors duration-150 sidebar-label"
+           className="w-full flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#8B5A2B]/20 text-slate-300 hover:text-white rounded-xl text-sm font-semibold border border-white/5 hover:border-[#8B5A2B]/30 transition-all duration-150 sidebar-label"
            aria-label="Sair do sistema"
          >
            <LogOut size={15} />
