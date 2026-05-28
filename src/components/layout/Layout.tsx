@@ -65,54 +65,22 @@ export default function Layout() {
 
       <Sidebar />
       
-      <main style={{
-        flex: 1,
-        height: '100vh',
-        overflowY: 'auto',
-        background: 'var(--background-gradient)',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <main className="flex-1 h-screen overflow-y-auto bg-background bg-gradient-surface relative flex flex-col">
         
         {/* Banner de Aviso de Trial Ativo */}
         {showTrialBanner && (
-          <div style={{
-            background: 'rgba(226, 172, 0, 0.12)',
-            borderBottom: '1px solid rgba(226, 172, 0, 0.3)',
-            color: '#F0F6FC',
-            padding: '0.65rem 2rem',
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Inter, sans-serif',
-            boxSizing: 'border-box'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={16} style={{ color: '#E2AC00' }} />
+          <div className="bg-warning/10 border-b border-warning/30 text-foreground px-4 md:px-8 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between font-sans gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-warning shrink-0" />
               <span>
-                Período de teste grátis ativo (Plano <strong>{subData?.plano?.toUpperCase()}</strong>). Restam <strong>{subData?.diasRestantes} dias</strong> de avaliação.
+                Período de teste grátis ativo (Plano <strong className="font-semibold">{subData?.plano?.toUpperCase()}</strong>). Restam <strong className="font-semibold">{subData?.diasRestantes} dias</strong> de avaliação.
               </span>
             </div>
             <button 
               onClick={() => navigate('/checkout')}
-              style={{
-                background: '#E2AC00',
-                border: 'none',
-                color: '#0D1117',
-                padding: '0.35rem 1rem',
-                borderRadius: '6px',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                boxShadow: '0 2px 6px rgba(226, 172, 0, 0.2)'
-              }}
+              className="bg-warning text-warning-foreground border-none px-4 py-1.5 rounded-md font-bold text-xs cursor-pointer flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all w-full sm:w-auto"
             >
-              <CreditCard size={12} />
+              <CreditCard size={14} />
               ATIVAR ASSINATURA
             </button>
           </div>
@@ -120,54 +88,24 @@ export default function Layout() {
 
         {/* Banner de Aviso de Faturamento Atrasado (Tolerância de 5 dias) */}
         {showOverdueWarning && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.12)',
-            borderBottom: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#F0F6FC',
-            padding: '0.65rem 2rem',
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Inter, sans-serif',
-            boxSizing: 'border-box'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={16} style={{ color: '#EF4444' }} />
+          <div className="bg-destructive/10 border-b border-destructive/30 text-foreground px-4 md:px-8 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between font-sans gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-destructive shrink-0" />
               <span>
                 Atenção: Consta um pagamento em aberto. Regularize seu faturamento para evitar a suspensão automática da escrita no ERP.
               </span>
             </div>
             <button 
               onClick={() => navigate('/checkout')}
-              style={{
-                background: '#EF4444',
-                border: 'none',
-                color: '#F0F6FC',
-                padding: '0.35rem 1rem',
-                borderRadius: '6px',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.2)'
-              }}
+              className="bg-destructive text-destructive-foreground border-none px-4 py-1.5 rounded-md font-bold text-xs cursor-pointer flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all w-full sm:w-auto"
             >
-              <CreditCard size={12} />
+              <CreditCard size={14} />
               REGULARIZAR
             </button>
           </div>
         )}
 
-        <div style={{ 
-          maxWidth: '1400px', 
-          width: '100%',
-          margin: '0 auto', 
-          padding: '2rem 2.5rem',
-          flex: 1
-        }}>
+        <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col">
           <Outlet />
         </div>
       </main>
