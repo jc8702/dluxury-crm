@@ -150,12 +150,12 @@ export async function handleContratoDigital(req: any, res: any) {
 
       // 1. Buscar orçamento
       const [orc] = await sql`
-        SELECT * FROM orcamentos_pro 
+        SELECT * FROM orcamentos 
         WHERE id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       if (!orc) {
-        return res.status(404).json({ success: false, error: 'Orçamento PRO não encontrado' });
+        return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
       }
 
       // 2. Buscar cliente associado
@@ -170,7 +170,7 @@ export async function handleContratoDigital(req: any, res: any) {
 
       // 3. Buscar itens do orçamento
       const itens = await sql`
-        SELECT * FROM orcamento_itens 
+        SELECT * FROM itens_orcamento 
         WHERE orcamento_id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
@@ -178,7 +178,7 @@ export async function handleContratoDigital(req: any, res: any) {
       const htmlContrato = gerarHTMLContrato(orc, cliente, itens);
 
       // 5. Simular PDF e Envelope DocuSign
-      const numeroContrato = `CONT-${orc.numero_orcamento || orc.id.substring(0, 8).toUpperCase()}`;
+      const numeroContrato = `CONT-${orc.numero || orc.id.substring(0, 8).toUpperCase()}`;
       const envelopeId = 'docusign_env_' + Math.random().toString(36).substring(2, 15);
       const urlAssinaturaSimulada = `/assinar/${envelopeId}`;
 
@@ -285,21 +285,21 @@ export async function handleContratoDigital(req: any, res: any) {
 
         // 4. Buscar o orçamento para acionar o fluxo completo de aprovação
         const [orc] = await sql`
-          SELECT * FROM orcamentos_pro 
+          SELECT * FROM orcamentos 
           WHERE id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
         `;
 
-        if (orc && orc.status !== 'APROVADO') {
+        if (orc && orc.status !== 'fechada') {
           // 4.1 Atualizar status do orçamento na tabela física
           await sql`
-            UPDATE orcamentos_pro
-            SET status = 'APROVADO',
+            UPDATE orcamentos
+            SET status = 'fechada',
                 updated_at = NOW()
             WHERE id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
           `;
 
           // 4.2 Gerar OP no Kanban de Produção (Fase 1)
-          const numeroOp = `OP-${orc.numero_orcamento || orc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const numeroOp = `OP-${orc.numero || orc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
           const dataPrazo = new Date();
           dataPrazo.setDate(dataPrazo.getDate() + Number(orc.prazoEntregaDias || 45));
 
@@ -328,7 +328,7 @@ export async function handleContratoDigital(req: any, res: any) {
 
           // 4.3 Provisionar materiais consumidos no estoque detalhado (Fase 3)
           const itensOrcamento = await sql`
-            SELECT * FROM orcamento_itens 
+            SELECT * FROM itens_orcamento 
             WHERE orcamento_id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
           `;
 

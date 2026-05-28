@@ -104,13 +104,13 @@ export async function handleOrcamentos(req: any, res: any) {
       }
 
       await auditLog('orcamentos', id, 'UPDATE', user?.id, before[0], orc[0]);
-      if (f.status === 'aprovado') {
+      if (f.status === 'fechada' || f.status === 'aprovado') {
         const itms = await sql`SELECT id, orcamento_id, descricao, erp_product_id, erp_parametros FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL AND tenant_id = ${tenantId}`;
         for (const itm of itms) {
           const bom = await sql`SELECT id, nome, codigo_modelo, regras_calculo FROM erp_product_bom WHERE product_id = ${itm.erp_product_id} AND tenant_id = ${tenantId}`;
           if (bom.length) {
             const results = await calculateBOM(itm.erp_parametros, bom as any);
-            const pItem = await sql`INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status, tenant_id) VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'aprovado', ${tenantId}::uuid) RETURNING id`;
+            const pItem = await sql`INSERT INTO erp_project_items (project_id, product_id, label, parametros_definidos, status, tenant_id) VALUES (${orc[0].projeto_id || id}, ${itm.erp_product_id}, ${itm.descricao}, ${itm.erp_parametros}, 'fechada', ${tenantId}::uuid) RETURNING id`;
             for (const r of results) {
               await sql`INSERT INTO erp_consumption_results (project_item_id, sku_id, quantidade_liquida, quantidade_com_perda, tenant_id) VALUES (${pItem[0].id}, ${r.sku_id}, ${r.quantidade_liquida}, ${r.quantidade_com_perda}, ${tenantId}::uuid)`;
             }

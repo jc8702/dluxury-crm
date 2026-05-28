@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/design-system/components';
 import { 
     FileText, Upload, Plus, Trash2, 
-    Layers, CheckCircle2, FileDown, Search, ArrowLeft
+    Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save
 } from 'lucide-react';
 import { useOrcamento } from '../hooks/useOrcamento';
 import { ImportarProjeto } from '../components/ImportarProjeto';
@@ -387,14 +387,27 @@ export default function OrcamentoForm() {
                         <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
                             Orçamento <span className="text-orange-500">{orcamento?.numeroOrcamento || '...'}</span>
                         </h1>
-                        <p className="text-zinc-500 text-sm mt-1">Status: <span className="text-orange-500 font-bold uppercase">{orcamento?.status || 'CARREGANDO'}</span></p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className="text-zinc-500 text-sm">Status:</p>
+                            <select 
+                                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs font-bold uppercase text-orange-500 focus:outline-none"
+                                value={orcamento?.status || 'rascunho'}
+                                onChange={(e) => handleUpdateHeader({ status: e.target.value })}
+                            >
+                                <option value="rascunho">Rascunho</option>
+                                <option value="negociacao">Negociação</option>
+                                <option value="enviado">Enviado</option>
+                                <option value="fechada">Fechado</option>
+                                <option value="perdida">Perdida</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-4">
                     <Button 
                         variant="outline" 
                         className="border-zinc-800 hover:bg-zinc-900" 
-                        onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orcamentoId}`, '_blank')}
+                        onClick={() => window.print()}
                     >
                         <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
                     </Button>
@@ -407,6 +420,16 @@ export default function OrcamentoForm() {
                         onClick={() => setIsContractModalOpen(true)}
                     >
                         <FileText className="w-4 h-4 mr-2" /> Contrato & Assinatura
+                    </Button>
+                    <Button 
+                        variant="outline"
+                        className="border-zinc-800 hover:bg-zinc-900"
+                        onClick={async () => {
+                            await handleUpdateHeader({ status: 'rascunho' });
+                            toastSuccess('Proposta salva como rascunho com sucesso!');
+                        }}
+                    >
+                        <Save className="w-4 h-4 mr-2" /> Salvar Proposta
                     </Button>
                     <Button 
                         className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 shadow-lg shadow-orange-900/20"

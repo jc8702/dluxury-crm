@@ -31,7 +31,7 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
         setLoading(true);
         try {
             if (method === 'whatsapp') {
-                const text = `Olá! Segue o seu orçamento da D'Luxury: ${orcamento.numeroOrcamento}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nVisualizar: ${window.location.origin}/orcamentos/view?id=${orcamento.id}`;
+                const text = `Olá! Segue o seu orçamento da D'Luxury: ${orcamento.numeroOrcamento}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nVisualizar: ${window.location.origin}/#/scan/${orcamento.numeroOrcamento || orcamento.numero}`;
                 const phone = orcamento.cliente?.telefone || '';
                 window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
             } else {
@@ -40,7 +40,7 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
             }
             
             // Marcar como enviado no banco
-            await api.orcamentosPro.update(orcamento.id, { status: 'ENVIADO' });
+            await api.orcamentos.update(orcamento.id, { status: 'enviado' });
             
             onClose();
             toastSuccess('Orçamento processado com sucesso!');
