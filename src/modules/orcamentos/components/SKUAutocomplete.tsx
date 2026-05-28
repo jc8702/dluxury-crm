@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Package, Loader2 } from 'lucide-react';
+import { apiCall } from '../../../lib/api';
 
 interface SKU {
     id: string;
@@ -41,11 +42,8 @@ export function SKUAutocomplete({ onSelect, defaultValue = '', placeholder = 'Bu
         }
         setLoading(true);
         try {
-            const res = await fetch(`/api/match-skus?q=${encodeURIComponent(q)}`);
-            const data = await res.json();
-            if (data.success) {
-                setResults(data.data);
-            }
+            const data = await apiCall<SKU[]>(`/api/match-skus?q=${encodeURIComponent(q)}`);
+            setResults(data || []);
         } catch (error) {
             console.error('Erro ao buscar SKUs:', error);
         } finally {
