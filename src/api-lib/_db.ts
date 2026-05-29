@@ -24,19 +24,26 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   }
 
   // Se for chamado como tagged template
-  if (Array.isArray(strings)) {
+  if (Array.isArray(strings) && (strings as any).raw) {
     return _neonInstance(strings as any, ...values);
   }
+
   // Se for chamado como função (legado ou raw string)
-  const templateArray = [strings] as any;
-  templateArray.raw = [strings];
-  return _neonInstance(templateArray);
+  let params = values;
+  if (values.length === 1 && Array.isArray(values[0])) {
+    params = values[0];
+  }
+  return _neonInstance(strings, params);
 };
 
 // Atribuição de propriedades dinâmicas
 (sqlInstance as any).query = (strings: any, ...values: any[]) => {
   if (!_neonInstance) _neonInstance = neon(dbUrl);
-  return _neonInstance.query(strings, ...values);
+  let params = values;
+  if (values.length === 1 && Array.isArray(values[0])) {
+    params = values[0];
+  }
+  return _neonInstance(strings, params);
 };
 
 // Atribuição de propriedades dinâmicas

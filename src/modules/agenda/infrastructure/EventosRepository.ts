@@ -4,35 +4,46 @@ import { normalizeObjetivo } from "../domain/normalizeObjetivo.js";
 
 export class EventosRepository {
   async list(tenantId: string, filters: { inicio?: Date, fim?: Date, tipo?: string, responsavel_id?: string } = {}) {
-    let query = sql`
+    let queryStr = `
       SELECT e.*, 
              c.nome as cliente_nome,
              c.telefone as cliente_telefone,
              p.ambiente as projeto_nome,
              u.name as responsavel_nome
       FROM eventos e
-      LEFT JOIN clients c ON e.cliente_id::TEXT = c.id::TEXT AND c.tenant_id = ${tenantId}
-      LEFT JOIN projects p ON e.projeto_id::TEXT = p.id::TEXT AND p.tenant_id = ${tenantId}
-      LEFT JOIN users u ON e.responsavel_id::TEXT = u.id::TEXT AND u.tenant_id = ${tenantId}
-      WHERE e.tenant_id = ${tenantId}
+      LEFT JOIN clients c ON e.cliente_id::TEXT = c.id::TEXT AND c.tenant_id = $1::uuid
+      LEFT JOIN projects p ON e.projeto_id::TEXT = p.id::TEXT AND p.tenant_id = $1::uuid
+      LEFT JOIN users u ON e.responsavel_id::TEXT = u.id::TEXT AND u.tenant_id = $1::uuid
+      WHERE e.tenant_id = $1::uuid
     `;
 
+    const params: any[] = [tenantId];
+    let paramCount = 1;
+
     if (filters.inicio) {
-      query = sql`${query} AND e.data_inicio >= ${filters.inicio}`;
+      paramCount++;
+      queryStr += ` AND e.data_inicio >= $${paramCount}`;
+      params.push(filters.inicio);
     }
     if (filters.fim) {
-      query = sql`${query} AND e.data_inicio <= ${filters.fim}`;
+      paramCount++;
+      queryStr += ` AND e.data_inicio <= $${paramCount}`;
+      params.push(filters.fim);
     }
     if (filters.tipo) {
-      query = sql`${query} AND e.tipo = ${filters.tipo}`;
+      paramCount++;
+      queryStr += ` AND e.tipo = $${paramCount}`;
+      params.push(filters.tipo);
     }
     if (filters.responsavel_id) {
-      query = sql`${query} AND e.responsavel_id = ${filters.responsavel_id}`;
+      paramCount++;
+      queryStr += ` AND e.responsavel_id = $${paramCount}`;
+      params.push(filters.responsavel_id);
     }
 
-    query = sql`${query} ORDER BY e.data_inicio ASC`;
+    queryStr += ` ORDER BY e.data_inicio ASC`;
     
-    return await query;
+    return await sql(queryStr as any, ...params);
   }
 
   async getById(id: string, tenantId: string) {

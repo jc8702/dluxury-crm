@@ -443,7 +443,7 @@ export default function PlanoCorteIndustrialPage() {
 
   // --- RENDER ---
   return (
-    <div className="h-screen flex flex-col bg-[#0A0A0A] text-white overflow-hidden font-sans">
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden font-sans">
       
       {/* GLOBAL LOADING OVERLAY */}
       {loading && (
@@ -460,7 +460,7 @@ export default function PlanoCorteIndustrialPage() {
       )}
 
       {/* HEADER */}
-      <header className="h-16 px-8 flex items-center justify-between border-b border-[#222] bg-[#111] z-30">
+      <header className="h-16 px-8 flex items-center justify-between border-b border-border bg-card z-30">
         <div className="flex items-center gap-6">
           <div className="w-12 h-12 rounded-2xl bg-[#FFA500]/10 flex items-center justify-center border border-[#FFA500]/20 shadow-[0_0_20px_rgba(255,165,0,0.1)]">
             <Scissors size={24} className="text-[#FFA500]" />
@@ -574,9 +574,9 @@ export default function PlanoCorteIndustrialPage() {
       <main className="flex-1 grid grid-cols-[400px_1fr_350px] overflow-hidden">
         
         {/* SIDEBAR ESQUERDA - BUSCA E ABAS */}
-        <aside className="bg-[#111] border-r border-[#222] flex flex-col overflow-hidden p-6 gap-6">
+        <aside className="bg-card border-r border-border flex flex-col overflow-hidden p-6 gap-6">
           <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em]">Seleção de Material</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Seleção de Material</span>
             <BuscaSKU 
               onAdicionarChapa={handleAdicionarChapa} 
               chapasSelecionadas={projeto.chapas} 
@@ -584,7 +584,7 @@ export default function PlanoCorteIndustrialPage() {
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em] mb-4">Projeto por Chapas</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4">Projeto por Chapas</span>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2 max-h-[450px]">
               <AbasProjetoChapaS 
                 chapas={projeto.chapas}
@@ -604,7 +604,7 @@ export default function PlanoCorteIndustrialPage() {
         </aside>
 
         {/* ÁREA CENTRAL - CANVAS */}
-        <section className="relative flex flex-col overflow-hidden p-8 bg-[#0a0a0a]">
+        <section className="relative flex flex-col overflow-hidden p-8 bg-background">
            <CanvasComAbas 
             chapaAtiva={chapaAtiva}
             resultado={resultadoAtivo}
@@ -612,7 +612,7 @@ export default function PlanoCorteIndustrialPage() {
         </section>
 
         {/* SIDEBAR DIREITA - PEÇAS E RESULTADOS */}
-        <aside className="bg-[#111] border-l border-[#222] flex flex-col p-6 gap-6 overflow-hidden">
+        <aside className="bg-card border-l border-border flex flex-col p-6 gap-6 overflow-hidden">
           {chapaAtiva ? (
             <>
               <div className="flex-1 overflow-hidden flex flex-col">
@@ -704,10 +704,10 @@ export default function PlanoCorteIndustrialPage() {
       )}
       {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlan} />}
       {showDuplicateScrapsModal && duplicateScrapsPayload && (
-         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#111] border border-border/40 rounded-3xl max-w-lg w-full p-8 shadow-2xl relative overflow-hidden">
+         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-foreground">
+            <div className="bg-card border border-border rounded-3xl max-w-lg w-full p-8 shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-orange-500" />
-               <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-2">
+               <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-4 flex items-center gap-2">
                   <Scissors className="text-yellow-500" size={24} />
                   Atenção: Sobras Duplicadas
                </h3>
@@ -715,19 +715,19 @@ export default function PlanoCorteIndustrialPage() {
                   Notamos que você já gerou sobras deste mesmo plano de corte com dimensões idênticas anteriormente. 
                   Como você editou e tentou aprovar novamente, isso pode duplicar os retalhos no estoque.
                </p>
-               <div className="bg-foreground/5 rounded-xl p-4 mb-8 max-h-[150px] overflow-y-auto custom-scrollbar">
+               <div className="bg-muted p-4 mb-8 max-h-[150px] overflow-y-auto custom-scrollbar rounded-xl border border-border">
                   {duplicateScrapsPayload.duplicados.map((dup: any, i: number) => (
                      <div key={i} className="text-xs text-muted-foreground flex justify-between py-1 border-b border-border/10 last:border-0">
                         <span>{dup.largura_mm}x{dup.altura_mm} mm (Esp. {dup.espessura_mm}mm)</span>
-                        <span className="font-bold text-white">Qtd: {dup.quantidade}</span>
+                        <span className="font-bold text-foreground">Qtd: {dup.quantidade}</span>
                      </div>
                   ))}
                </div>
                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setShowDuplicateScrapsModal(false)}>Cancelar</Button>
+                  <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => setShowDuplicateScrapsModal(false)}>Cancelar</Button>
                   <Button 
                      variant="secondary"
-                     className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20"
+                     className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20"
                      onClick={() => executeAprovarProducao(duplicateScrapsPayload.materiais_consumidos, duplicateScrapsPayload.retalhos_gerados, duplicateScrapsPayload.extras, true)}
                   >
                      Ignorar Sobras Duplicadas

@@ -265,19 +265,19 @@ const SKUPage: React.FC = () => {
           </div>
 
           {formData.unidade_medida === 'M2' && !formData.id && (
-            <div className="mt-2 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl space-y-4">
+            <div className="mt-2 p-4 bg-muted/10 border border-border rounded-xl space-y-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  className="rounded border-zinc-700 bg-zinc-950 text-orange-500 focus:ring-orange-500 focus:ring-offset-zinc-900"
+                  className="rounded border-border bg-background text-orange-500 focus:ring-orange-500 focus:ring-offset-background"
                   checked={calcModoChapa}
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />
-                <span className="text-sm font-semibold text-zinc-300">Calcular preço base a partir do valor da Chapa Inteira</span>
+                <span className="text-sm font-semibold text-foreground">Calcular preço base a partir do valor da Chapa Inteira</span>
               </label>
 
               {calcModoChapa && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-zinc-800/50">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border/50">
                   <Input 
                     type="number"
                     step="0.01"
@@ -302,7 +302,7 @@ const SKUPage: React.FC = () => {
                     value={chapaLargura || ''}
                     onChange={e => setChapaLargura(Number(e.target.value))}
                   />
-                  <div className="col-span-1 md:col-span-3 text-xs text-zinc-500 flex justify-between bg-black/20 p-2 rounded-lg">
+                  <div className="col-span-1 md:col-span-3 text-xs text-muted-foreground flex justify-between bg-muted p-2 rounded-lg">
                     <span>Área da Chapa: <strong>{(chapaComprimento * chapaLargura).toFixed(4)} m²</strong></span>
                     <span>Custo do M²: <strong>R$ {((chapaPrecoInteira) / (chapaComprimento * chapaLargura)).toFixed(4)}</strong></span>
                   </div>

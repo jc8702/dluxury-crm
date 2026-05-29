@@ -419,11 +419,26 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
 
   if (req.method === 'GET') {
     const { cliente_id, status, data_inicio, data_fim } = req.query;
-    let query = sql`SELECT id, numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_receber WHERE deletado = false AND tenant_id = ${tenantId}`;
-    if (cliente_id) query = sql`${query} AND (cliente_id = ${cliente_id} OR cliente_id::text = ${cliente_id})`;
-    if (status) query = sql`${query} AND status = ${status}`;
-    if (data_inicio && data_fim) query = sql`${query} AND data_vencimento BETWEEN ${data_inicio} AND ${data_fim}`;
-    const result = await query;
+    let queryStr = `SELECT id, numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_receber WHERE deletado = false AND tenant_id = $1`;
+    const params: any[] = [tenantId];
+    let paramCount = 1;
+
+    if (cliente_id) {
+      paramCount++;
+      queryStr += ` AND (cliente_id = $${paramCount} OR cliente_id::text = $${paramCount})`;
+      params.push(cliente_id);
+    }
+    if (status) {
+      paramCount++;
+      queryStr += ` AND status = $${paramCount}`;
+      params.push(status);
+    }
+    if (data_inicio && data_fim) {
+      queryStr += ` AND data_vencimento BETWEEN $${paramCount + 1} AND $${paramCount + 2}`;
+      params.push(data_inicio, data_fim);
+      paramCount += 2;
+    }
+    const result = await sql(queryStr as any, ...params);
     return res.status(200).json({ success: true, data: result });
   }
 
@@ -591,11 +606,26 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
 
   if (req.method === 'GET') {
     const { fornecedor_id, status, data_inicio, data_fim } = req.query;
-    let query = sql`SELECT id, numero_titulo, fornecedor_id, pedido_compra_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_pagar WHERE deletado = false AND tenant_id = ${tenantId}`;
-    if (fornecedor_id) query = sql`${query} AND (fornecedor_id = ${fornecedor_id} OR fornecedor_id::text = ${fornecedor_id})`;
-    if (status) query = sql`${query} AND status = ${status}`;
-    if (data_inicio && data_fim) query = sql`${query} AND data_vencimento BETWEEN ${data_inicio} AND ${data_fim}`;
-    const result = await query;
+    let queryStr = `SELECT id, numero_titulo, fornecedor_id, pedido_compra_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, conta_bancaria_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_pagar WHERE deletado = false AND tenant_id = $1`;
+    const params: any[] = [tenantId];
+    let paramCount = 1;
+
+    if (fornecedor_id) {
+      paramCount++;
+      queryStr += ` AND (fornecedor_id = $${paramCount} OR fornecedor_id::text = $${paramCount})`;
+      params.push(fornecedor_id);
+    }
+    if (status) {
+      paramCount++;
+      queryStr += ` AND status = $${paramCount}`;
+      params.push(status);
+    }
+    if (data_inicio && data_fim) {
+      queryStr += ` AND data_vencimento BETWEEN $${paramCount + 1} AND $${paramCount + 2}`;
+      params.push(data_inicio, data_fim);
+      paramCount += 2;
+    }
+    const result = await sql(queryStr as any, ...params);
     return res.status(200).json({ success: true, data: result });
   }
 

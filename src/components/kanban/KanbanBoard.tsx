@@ -1,232 +1,267 @@
-import React, { useEffect, useState } from 'react';
-import { kanbanService } from '../../services/kanbanService.js';
-import type { KanbanBoardData, KanbanCardType } from '../../services/kanbanService.js';
-import KanbanColumn from './KanbanColumn.tsx';
-import KanbanFilters from './KanbanFilters.tsx';
-import KanbanCardDetail from './KanbanCardDetail.tsx';
-import { Activity, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+
+export interface KanbanItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  label?: string;
+  status: string;
+  color?: string;
+  dateTime?: string;
+  visitFormat?: string;
+  description?: string;
+  badges?: string[];
+  phone?: string;
+  city?: string;
+  tag?: string;
+}
 
 interface KanbanBoardProps {
-  title?: string;
-  items?: any;
-  columns?: any;
-  onMove?: any;
-  onEdit?: any;
-  onDelete?: any;
+  items: KanbanItem[];
+  columns: { id: string; title: string }[];
+  onMove: (id: string, newStatus: string) => void;
+  onEdit?: (item: KanbanItem) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function KanbanBoard({ title = 'Controle de Produção PCP' }: KanbanBoardProps) {
-  const [boardData, setBoardData] = useState<KanbanBoardData>({
-    a_fazer: [],
-    em_progresso: [],
-    bloqueado: [],
-    concluido: [],
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filtros, setFiltros] = useState({
-    filtro_responsavel: '',
-    filtro_prioridade: '' as number | '',
-    filtro_ambiente: '',
-    busca: '',
-  });
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdit, onDelete }) => {
+  const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  // Cartão selecionado para abrir modal de detalhes
-  const [selectedCard, setSelectedCard] = useState<KanbanCardType | null>(null);
-
-  const carregarBoard = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await kanbanService.getBoard(filtros);
-      setBoardData(data || { a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] });
-    } catch (err: any) {
-      console.error('Erro ao carregar Kanban Board:', err);
-      setError(err.message || 'Erro ao carregar o painel Kanban de produção.');
-    } finally {
-      setLoading(false);
-    }
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
   };
 
-  useEffect(() => {
-    carregarBoard();
-  }, [filtros]);
-
-  const handleFilterChange = (novosFiltros: typeof filtros) => {
-    setFiltros(novosFiltros);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
   };
 
-  const handleCardDrop = async (
-    cardId: number,
-    novoStatus: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido',
-    statusAnterior: string
-  ) => {
-    // 1. OTIMISTIC UPDATE: Mover localmente na UI imediatamente
-    let cardMovido: KanbanCardType | null = null;
-    const oldBoard = { ...boardData };
-    const newBoard = { ...boardData };
-
-    // Achar o card no status anterior
-    const colAnterior = statusAnterior as keyof KanbanBoardData;
-    const idx = newBoard[colAnterior]?.findIndex((c) => c.id === cardId);
-    
-    if (idx !== undefined && idx !== -1 && newBoard[colAnterior]) {
-      const list = [...newBoard[colAnterior]];
-      const [removed] = list.splice(idx, 1);
-      newBoard[colAnterior] = list;
-      
-      cardMovido = { ...removed, status_kanban: novoStatus, updated_at: new Date().toISOString() };
-      
-      const colNova = novoStatus as keyof KanbanBoardData;
-      if (newBoard[colNova]) {
-        newBoard[colNova] = [...newBoard[colNova], cardMovido];
-      }
+  const handleDrop = (e: React.DragEvent, status: string) => {
+    e.preventDefault();
+    if (draggedId) {
+      onMove(draggedId, status);
     }
-
-    setBoardData(newBoard);
-
-    // 2. Chamar API no backend
-    try {
-      await kanbanService.moveCard(cardId, novoStatus, statusAnterior);
-      // Se moveu com sucesso, opcionalmente recarregamos o board ou mantemos a UI otimista
-      // Vamos recarregar para pegar dados calculados de datas no banco (ex: data_inicio/conclusao)
-      carregarBoard();
-    } catch (err: any) {
-      console.error('Falha ao mover etapa no banco de dados:', err);
-      alert(`Falha ao salvar a movimentação: ${err.message || 'Erro interno'}`);
-      // Reverter se der erro
-      setBoardData(oldBoard);
-    }
+    setDraggedId(null);
   };
-
-  const handleCardUpdate = (updatedCard: KanbanCardType) => {
-    // Substituir o card atualizado no estado local do board
-    const newBoard = { ...boardData };
-    const col = updatedCard.status_kanban as keyof KanbanBoardData;
-    
-    if (newBoard[col]) {
-      newBoard[col] = newBoard[col].map((c) => (c.id === updatedCard.id ? updatedCard : c));
-    }
-    
-    setBoardData(newBoard);
-    if (selectedCard?.id === updatedCard.id) {
-      setSelectedCard(updatedCard);
-    }
-  };
-
-  const totalCards = 
-    boardData.a_fazer.length + 
-    boardData.em_progresso.length + 
-    boardData.bloqueado.length + 
-    boardData.concluido.length;
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Quickstats */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl border border-border bg-card/65 backdrop-blur-md shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20">
-            <Activity className="w-6 h-6 animate-pulse" />
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: '1.25rem', paddingBottom: '2rem' }}>
+      {columns.map(col => (
+        <div 
+          key={col.id} 
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, col.id)}
+          style={{ 
+            background: 'rgba(30, 41, 59, 0.5)', 
+            borderRadius: 'var(--radius-lg)', 
+            padding: '1.25rem',
+            minHeight: '400px',
+            border: '2px dashed transparent',
+            transition: 'border-color 0.2s ease'
+          }}
+          onDragEnter={(e) => { e.currentTarget.style.borderColor = 'hsl(var(--primary))'; }}
+          onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {col.title}
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                ({items.filter(i => i.status === col.id).length})
+              </span>
+            </h4>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'hsl(var(--primary))' }}></div>
           </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-1.5">
-              {title}
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Gerenciamento visual e transacional de ordens de produção e tarefas de marcenaria.
-            </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {items.filter(i => i.status === col.id).map(item => (
+              <div 
+                key={item.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item.id)}
+                onClick={() => onEdit && onEdit(item)}
+                className="card hover-scale"
+                style={{ 
+                  cursor: 'pointer', 
+                  padding: '1rem', 
+                  background: 'hsl(var(--surface))',
+                  border: '1px solid hsl(var(--border))',
+                  userSelect: 'none',
+                  opacity: draggedId === item.id ? 0.4 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'relative' }}>
+                  {item.tag && (
+                    <div style={{ 
+                      fontSize: '0.65rem', 
+                      background: 'linear-gradient(135deg, #E2AC00, #B49050)', 
+                      color: '#000', 
+                      padding: '2px 8px', 
+                      borderRadius: '12px', 
+                      width: 'fit-content', 
+                      fontWeight: '900',
+                      marginBottom: '0.5rem',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      {item.tag}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.875rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}>{item.title}</p>
+                    </div>
+                  </div>
+                  {item.subtitle && <p style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))' }}>{item.subtitle}</p>}
+                  
+                  {(item.phone || item.city) && (
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
+                      {item.phone && <span>📞 {item.phone}</span>}
+                      {item.city && <span>📍 {item.city}</span>}
+                    </div>
+                  )}
+
+                  {item.dateTime && (
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      📅 {new Date(item.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </div>
+                  )}
+
+                  {/* Detalhes específicos de Visita */}
+                  {(item as any).visitDate && (
+                    <div style={{ fontSize: '0.7rem', color: '#d4af37', marginTop: '0.4rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      🗓️ {new Date((item as any).visitDate).toLocaleDateString('pt-BR')} {(item as any).visitTime && ` às ${(item as any).visitTime}`}
+                    </div>
+                  )}
+
+                  {(item as any).visitType && (
+                    <div style={{ fontSize: '0.65rem', color: 'hsl(var(--primary))', fontWeight: 'bold', marginTop: '0.2rem' }}>
+                      { (item as any).visitType }
+                    </div>
+                  )}
+
+                  {item.visitFormat && (
+                    <div style={{ 
+                      fontSize: '0.6rem', 
+                      background: item.visitFormat === 'Presencial' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(52, 115, 255, 0.1)',
+                      color: item.visitFormat === 'Presencial' ? '#10b981' : 'hsl(var(--primary))',
+                      padding: '1px 6px',
+                      borderRadius: '10px',
+                      width: 'fit-content',
+                      marginTop: '0.25rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {item.visitFormat}
+                    </div>
+                  )}
+
+                  {item.badges && item.badges.length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {item.badges.map((b, idx) => (
+                        <span key={idx} style={{ background: 'hsl(var(--primary))', color: '#000', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Valor do Item (Projeto) */}
+                  {(item as any).value > 0 && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 'bold', 
+                      color: '#d4af37',
+                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                      paddingTop: '0.5rem'
+                    }}>
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((item as any).value)}
+                    </div>
+                  )}
+
+                  {item.label && <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '0.5rem' }}>{item.label}</div>}
+
+                  {/* Rodapé de Ações do Card */}
+                  {(onEdit || onDelete) && (
+                    <div style={{ 
+                      marginTop: '0.75rem', 
+                      paddingTop: '0.5rem', 
+                      borderTop: '1px solid hsl(var(--border))', 
+                      display: 'flex', 
+                      justifyContent: 'flex-end', 
+                      gap: '0.75rem' 
+                    }}>
+                      {onEdit && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(item);
+                          }}
+                          style={{ 
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'hsl(var(--primary))', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            opacity: 0.8,
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.8';
+                          }}
+                        >
+                          Editar
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Tem certeza que deseja excluir este item?')) {
+                              onDelete(item.id);
+                            }
+                          }}
+                          style={{ 
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            opacity: 0.8,
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.opacity = '0.8';
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Estatísticas Rápidas */}
-        <div className="flex flex-wrap gap-2 sm:gap-3 text-xs">
-          <div className="px-3 py-2 rounded-xl bg-muted border border-border flex items-center gap-2">
-            <span className="font-semibold text-muted-foreground">Total OP/Etapas:</span>
-            <span className="font-bold text-foreground bg-background px-2 py-0.5 rounded border border-border">
-              {totalCards}
-            </span>
-          </div>
-          <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
-            <span className="font-semibold text-amber-500">Em Progresso:</span>
-            <span className="font-bold text-amber-500 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
-              {boardData.em_progresso.length}
-            </span>
-          </div>
-          <div className="px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-2">
-            <span className="font-semibold text-destructive">Bloqueados:</span>
-            <span className="font-bold text-destructive bg-destructive/20 px-2 py-0.5 rounded border border-destructive/30">
-              {boardData.bloqueado.length}
-            </span>
-          </div>
-          <button
-            onClick={carregarBoard}
-            disabled={loading}
-            className="p-2 border border-border bg-background hover:bg-muted text-foreground rounded-xl transition-all"
-            title="Recarregar Quadro"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <KanbanFilters onFilterChange={handleFilterChange} />
-
-      {/* Error Message */}
-      {error && (
-        <div className="p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex items-center gap-2 shadow-sm">
-          <ShieldAlert className="w-5 h-5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Grid do Kanban Board */}
-      {loading && totalCards === 0 ? (
-        <div className="text-center py-20 text-muted-foreground text-sm font-medium animate-pulse">
-          Carregando informações da produção...
-        </div>
-      ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin select-none">
-          <KanbanColumn
-            titulo="A Fazer"
-            status="a_fazer"
-            cards={boardData.a_fazer}
-            onCardDrop={handleCardDrop}
-            onCardClick={setSelectedCard}
-          />
-          <KanbanColumn
-            titulo="Em Progresso"
-            status="em_progresso"
-            cards={boardData.em_progresso}
-            onCardDrop={handleCardDrop}
-            onCardClick={setSelectedCard}
-          />
-          <KanbanColumn
-            titulo="Bloqueado"
-            status="bloqueado"
-            cards={boardData.bloqueado}
-            onCardDrop={handleCardDrop}
-            onCardClick={setSelectedCard}
-          />
-          <KanbanColumn
-            titulo="Concluído"
-            status="concluido"
-            cards={boardData.concluido}
-            onCardDrop={handleCardDrop}
-            onCardClick={setSelectedCard}
-          />
-        </div>
-      )}
-
-      {/* Modal de Detalhes do Card */}
-      {selectedCard && (
-        <KanbanCardDetail
-          card={selectedCard}
-          onClose={() => setSelectedCard(null)}
-          onUpdate={handleCardUpdate}
-        />
-      )}
+      ))}
     </div>
   );
-}
+};
+
+export default KanbanBoard;
+
