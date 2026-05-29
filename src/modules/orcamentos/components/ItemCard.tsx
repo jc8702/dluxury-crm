@@ -57,6 +57,9 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         draft: {
             ...prev.draft,
             nomeCustomizado: item.nomeCustomizado || '',
+            largura: item.largura || '',
+            altura: item.altura || '',
+            espessura: item.espessura || '',
             skuCodigo: item.skuCodigo || (item.skuEngenharia?.codigo) || (item.skuComponente?.codigo) || '',
             skuDescricao: item.skuDescricao || (item.skuEngenharia?.nome) || (item.skuComponente?.nome) || '',
             custoUnitarioCalculado: Number(item.custoUnitarioCalculado) || 0,
@@ -84,12 +87,19 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, state.draft]);
 
+  const parseBrazilianNumber = (val: any) => {
+    if (val === undefined || val === null) return 0;
+    if (typeof val === 'number') return val;
+    // Remove tudo exceto dígitos, vírgula, ponto e sinal de menos
+    const cleanStr = String(val).replace(/[^\d,.-]/g, '').replace(',', '.');
+    return parseFloat(cleanStr) || 0;
+  };
   
-  const recalculateTotalMaterialCost = (draftState) => {
+  const recalculateTotalMaterialCost = (draftState: any) => {
       let cost = 0;
       const { largura, altura, metadata } = draftState;
-      const l = Number(largura) || 0; // mm
-      const a = Number(altura) || 0; // mm
+      const l = parseBrazilianNumber(largura); // mm
+      const a = parseBrazilianNumber(altura); // mm
       
       // Chapa (preço por m2)
       if (metadata.chapa?.precoUnitario) {
