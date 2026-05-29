@@ -637,7 +637,7 @@ export async function handleSimulations(req: any, res: any) {
 
 async function triggerOpCreationForProject(projectId: string, tenantId: string, projectData: any) {
   try {
-    const existingOp = await sql`SELECT id FROM ordens_prod WHERE projeto_id = ${projectId} AND tenant_id = ${tenantId}`;
+    const existingOp = await sql`SELECT id FROM ordens_producao WHERE projeto_id = ${projectId} AND tenant_id = ${tenantId}`;
     if (existingOp.length === 0) {
       const rawTag = projectData.tag || `PRJ-${projectId.substring(0, 6).toUpperCase()}`;
       const numeroOp = `OP-PRJ-${rawTag.replace('PRJ-', '')}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -647,43 +647,35 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
         orcId = projectData.orcamento_id;
       }
 
+      const produtoNome = projectData.ambiente || `Projeto ${rawTag}`;
+
       const [newOp] = await sql`
-        INSERT INTO ordens_prod (id, tenant_id, projeto_id, orcamento_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
+        INSERT INTO ordens_producao (
+          op_id, 
+          tenant_id, 
+          projeto_id, 
+          orcamento_id, 
+          produto, 
+          status, 
+          metadata
+        )
         VALUES (
-          gen_random_uuid(), 
-          ${tenantId}, 
-          ${projectId}, 
-          ${orcId}, 
           ${numeroOp}, 
-          'planejamento', 
-          5, 
-          CURRENT_DATE + INTERVAL '45 days', 
-          NOW(), 
-          NOW()
+          ${tenantId}::uuid, 
+          ${projectId}::uuid, 
+          ${orcId}, 
+          ${produtoNome}, 
+          'AGUARDANDO', 
+          ${JSON.stringify({ origem: 'kanban_projetos' })}
         )
         RETURNING id
       `;
 
       if (newOp?.id) {
-        const etapasPadrao = [
-          { numero: 1, nome: 'MEDIÇÃO' },
-          { numero: 2, nome: 'PROJETO' },
-          { numero: 3, nome: 'PRODUÇÃO' },
-          { numero: 4, nome: 'MONTAGEM' },
-          { numero: 5, nome: 'ENTREGA' }
-        ];
-
-        for (const et of etapasPadrao) {
-          await sql`
-            INSERT INTO etapas_prod_kanban (tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display, created_at, updated_at)
-            VALUES (${tenantId}, ${newOp.id}, ${et.numero}, ${et.nome}, 'a_fazer', ${et.numero}, NOW(), NOW())
-          `;
-        }
+        // Notificação opcional
       }
     }
-  } catch (err: any) {
-    console.error('[ERRO TRIGGER_OP_CREATION]', err.message);
+  } catch (err) {
+    console.error('Error creating OP for project:', err);
   }
 }
-
-
