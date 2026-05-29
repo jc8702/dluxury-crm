@@ -104,6 +104,7 @@ const VisitKanban: React.FC = () => {
           </div>
         )}
         <KanbanBoard 
+          title="Gestão de Visitas"
           items={visits} 
           columns={columns} 
           onMove={handleMove} 

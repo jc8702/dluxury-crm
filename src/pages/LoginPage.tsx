@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { api, setAuthToken, hasAuthToken } from '../lib/api';
-import ThemeToggle from '../components/ui/ThemeToggle';
 
 const LoginPage: React.FC = () => {
   const { setUser } = useAppContext();
@@ -54,11 +53,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background font-sans p-4 relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-
       <div className="bg-card p-[3.5rem_3rem] rounded-3xl w-[420px] border border-border/30 shadow-lg">
         <div className="text-center mb-10">
           <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-5 text-primary-foreground font-black text-2xl shadow-primary">

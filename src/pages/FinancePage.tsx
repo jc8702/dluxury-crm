@@ -61,7 +61,7 @@ export default function FinancePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-10 font-sans selection:bg-amber-500/30">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-amber-500/30">
       <div className="max-w-[1600px] mx-auto animate-in fade-in duration-700">
         
         {/* Header Section */}
@@ -74,13 +74,13 @@ export default function FinancePage() {
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
               Central <span className="text-amber-500">Financeira</span>
             </h1>
-            <p className="text-slate-400 mt-3 max-w-xl text-sm font-medium leading-relaxed">
+            <p className="text-muted-foreground mt-3 max-w-xl text-sm font-medium leading-relaxed">
               Gestão executiva de solvência, fluxo de caixa projetado e inteligência analítica de dados industriais.
             </p>
           </div>
           
           <div className="flex items-center gap-3">
-            <Link to="/financeiro/contas" className="px-5 py-2.5 rounded-lg text-xs font-bold bg-muted/40 border border-border hover:bg-muted/70 hover:border-border/80 transition-all flex items-center gap-2">
+            <Link to="/financeiro/contas" className="px-5 py-2.5 rounded-lg text-xs font-bold bg-muted border border-border hover:bg-muted/70 hover:border-border transition-all flex items-center gap-2">
               <Wallet size={16} className="text-amber-500" /> CONTAS BANCÁRIAS
             </Link>
             <Link to="/financeiro/fluxo-caixa" className="px-5 py-2.5 rounded-lg text-xs font-bold bg-amber-500 text-black hover:bg-amber-400 transition-all shadow-[0_0_25px_rgba(245,158,11,0.2)] flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function FinancePage() {
               <div className={`p-3 rounded-xl ${item.bg} ${item.color} transition-transform group-hover:scale-110`}>
                 <item.icon size={22} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 group-hover:text-white">{item.title}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-foreground group-hover:text-primary-foreground">{item.title}</span>
             </Link>
           ))}
         </nav>
@@ -108,11 +108,11 @@ export default function FinancePage() {
         {loading ? (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[1,2,3,4].map(n => <div key={n} className="h-32 bg-muted/40 rounded-2xl animate-pulse" />)}
+              {[1,2,3,4].map(n => <div key={n} className="h-32 bg-muted rounded-2xl animate-pulse" />)}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 h-[400px] bg-muted/40 rounded-2xl animate-pulse" />
-              <div className="h-[400px] bg-muted/40 rounded-2xl animate-pulse" />
+              <div className="md:col-span-2 h-[400px] bg-muted rounded-2xl animate-pulse" />
+              <div className="h-[400px] bg-muted rounded-2xl animate-pulse" />
             </div>
           </div>
         ) : stats && (
@@ -146,8 +146,8 @@ export default function FinancePage() {
               
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Capital de Giro Disponível</h3>
-                  <p className="text-sm font-medium text-slate-400">Poder de solvência imediata do negócio</p>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Capital de Giro Disponível</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Poder de solvência imediata do negócio</p>
                 </div>
                 <div className={`p-2 rounded-lg ${(stats.capital_de_giro || 0) >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                   <Activity size={20} />
@@ -158,12 +158,12 @@ export default function FinancePage() {
                 <div className={`text-4xl font-black tracking-tighter ${(stats.capital_de_giro || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {fmt(stats.capital_de_giro || 0)}
                 </div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-muted px-2 py-1 rounded">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded">
                   Status: {(stats.capital_de_giro || 0) >= 0 ? 'Saudável' : 'Crítico'}
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-4 text-[10px] font-bold text-slate-400 border-t border-border pt-4">
+              <div className="mt-4 flex items-center gap-4 text-[10px] font-bold text-muted-foreground border-t border-border pt-4">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-500/50" /> {fmt(stats.a_receber_30d)} Recebíveis
                 </div>
@@ -179,12 +179,12 @@ export default function FinancePage() {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h3 className="text-lg font-black tracking-tighter uppercase italic">Evolução do Giro</h3>
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Histórico analítico semestral</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Histórico analítico semestral</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-amber-500 rounded-sm" />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">Giro Nominal</span>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Giro Nominal</span>
                     </div>
                   </div>
                 </div>
@@ -240,15 +240,15 @@ export default function FinancePage() {
                   </div>
                   <div className="space-y-3">
                     {(stats.proximos_vencimentos || []).length === 0 ? (
-                      <div className="py-6 text-center text-slate-500 text-xs font-medium">Nenhum vencimento próximo</div>
+                      <div className="py-6 text-center text-muted-foreground text-xs font-medium">Nenhum vencimento próximo</div>
                     ) : (
                       stats.proximos_vencimentos.map((v, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-muted/20 border border-border hover:bg-muted/50 transition-colors group">
+                        <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-muted border border-border hover:bg-muted/50 transition-colors group">
                           <div className="flex items-center gap-3">
                             <div className={`w-1.5 h-1.5 rounded-full ${v.tipo === 'pagar' ? 'bg-rose-500' : 'bg-emerald-500'}`} />
                             <div>
-                              <div className="text-[11px] font-bold text-slate-200">{v.numero_titulo}</div>
-                              <div className="text-[10px] text-slate-500 font-medium uppercase">{new Date(v.data_vencimento).toLocaleDateString('pt-BR')}</div>
+                              <div className="text-[11px] font-bold text-foreground">{v.numero_titulo}</div>
+                              <div className="text-[10px] text-muted-foreground font-medium uppercase">{new Date(v.data_vencimento).toLocaleDateString('pt-BR')}</div>
                             </div>
                           </div>
                           <div className={`text-[12px] font-black font-mono ${v.tipo === 'pagar' ? 'text-rose-400' : 'text-emerald-400'}`}>
@@ -271,7 +271,7 @@ export default function FinancePage() {
                         <div className="flex items-center gap-3">
                           <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center text-[10px] font-black text-rose-500">{i+1}</div>
                           <div>
-                            <div className="text-[11px] font-bold text-slate-200">{cli.cliente_nome}</div>
+                            <div className="text-[11px] font-bold text-foreground">{cli.cliente_nome}</div>
                             <div className="text-[10px] text-rose-400/60 font-medium uppercase tracking-tighter">{cli.dias_atraso} dias de atraso</div>
                           </div>
                         </div>
@@ -329,7 +329,7 @@ export default function FinancePage() {
                 <div className="space-y-4">
                   {(stats.contas || []).map((c, i) => (
                     <div key={i} className="flex flex-col gap-1">
-                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                         <span>{c.nome}</span>
                         <span className={c.saldo_atual >= 0 ? 'text-emerald-500' : 'text-rose-500'}>{fmt(c.saldo_atual)}</span>
                       </div>
@@ -367,17 +367,17 @@ export default function FinancePage() {
 
 function KPIItem({ label, value, icon: Icon, color, borderColor, desc, colSpan }: any) {
   return (
-    <div className={`col-span-12 ${colSpan} glass p-6 rounded-2xl border-border border-l-4 ${borderColor} group hover:bg-muted/40 transition-all`}>
+    <div className={`col-span-12 ${colSpan} glass p-6 rounded-2xl border-border border-l-4 ${borderColor} group hover:bg-muted transition-all`}>
       <div className="flex justify-between items-start mb-4">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 leading-tight">{label}</span>
-        <div className={`p-2 rounded-lg bg-slate-900 ${color} group-hover:scale-110 transition-transform`}>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground leading-tight">{label}</span>
+        <div className={`p-2 rounded-lg bg-surface ${color} group-hover:scale-110 transition-transform`}>
           <Icon size={18} />
         </div>
       </div>
       <div className={`text-3xl font-black tracking-tighter ${color} mb-2 font-mono`}>
         {fmt(value)}
       </div>
-      <p className="text-[11px] font-medium text-slate-500 leading-relaxed italic">{desc}</p>
+      <p className="text-[11px] font-medium text-muted-foreground leading-relaxed italic">{desc}</p>
     </div>
   );
 }

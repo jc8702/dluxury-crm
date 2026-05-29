@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { api, setAuthToken } from '../lib/api';
 import { Link, useNavigate } from 'react-router-dom';
-import ThemeToggle from '../components/ui/ThemeToggle';
 
 const SignupPage: React.FC = () => {
   const { setUser } = useAppContext();
@@ -117,11 +116,6 @@ const SignupPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans p-12 box-border relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-
       {/* Header / Brand */}
       <div className="text-center mb-14">
         <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-primary">

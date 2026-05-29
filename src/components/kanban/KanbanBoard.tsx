@@ -6,7 +6,16 @@ import KanbanFilters from './KanbanFilters.tsx';
 import KanbanCardDetail from './KanbanCardDetail.tsx';
 import { Activity, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react';
 
-export default function KanbanBoard() {
+interface KanbanBoardProps {
+  title?: string;
+  items?: any;
+  columns?: any;
+  onMove?: any;
+  onEdit?: any;
+  onDelete?: any;
+}
+
+export default function KanbanBoard({ title = 'Controle de Produção PCP' }: KanbanBoardProps) {
   const [boardData, setBoardData] = useState<KanbanBoardData>({
     a_fazer: [],
     em_progresso: [],
@@ -121,7 +130,7 @@ export default function KanbanBoard() {
           </div>
           <div>
             <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-1.5">
-              Controle de Produção PCP
+              {title}
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
             </h2>
             <p className="text-xs text-muted-foreground">

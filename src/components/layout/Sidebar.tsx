@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { NotificacoesBadge } from './NotificacoesBadge';
 import { hasFeature } from '../../lib/features';
-import ThemeToggle from '../ui/ThemeToggle';
 
 import {
   LayoutDashboard, Users, FileText, ClipboardList, 
@@ -202,12 +201,6 @@ const Sidebar: React.FC = () => {
               <p className="text-sm font-semibold truncate text-sidebar-accent-foreground">{user?.name}</p>
               <p className="text-[0.7rem] text-sidebar-primary capitalize font-medium">{user?.role}</p>
             </div>
-         </div>
-
-         {/* Theme Toggle */}
-         <div className="flex items-center justify-between px-3 mb-3 sidebar-label">
-           <span className="text-xs text-sidebar-foreground font-medium">Tema</span>
-           <ThemeToggle />
          </div>
 
          <button 

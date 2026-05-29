@@ -78,12 +78,12 @@ const Dashboard: React.FC = () => {
     <div className="animate-fade-in flex flex-col gap-8">
       <header className="flex justify-between items-start">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#1C2E24] font-display">Painel Geral</h2>
-          <p className="text-sm text-slate-500 font-medium">Visão executiva — Fatto OS (Móveis Planejados)</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground font-display">Painel Geral</h2>
+          <p className="text-sm text-muted-foreground font-medium">Visão executiva — Fatto OS (Móveis Planejados)</p>
         </div>
         <div className="flex gap-3 items-center">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[140px] border-[#1C2E24]/10 rounded-xl focus:ring-[#8B5A2B]">
+            <SelectTrigger className="w-[140px] border-foreground/10 rounded-xl focus:ring-[#8B5A2B]">
               <SelectValue placeholder="Período..." />
             </SelectTrigger>
             <SelectContent>
@@ -94,37 +94,37 @@ const Dashboard: React.FC = () => {
       </header>
 
       {/* KPIs principais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-        <Card className="border-l-4 border-l-[#8B5A2B] bg-[#F9F8F6] shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <Card className="border-l-4 border-l-primary bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 tracking-wider mb-1 uppercase">Total Clientes</p>
-            <h3 className="text-3xl font-black text-[#8B5A2B] font-display">{clients.length}</h3>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Total Clientes</p>
+            <h3 className="text-3xl font-black text-primary font-display">{clients.length}</h3>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-blue-500 bg-[#F9F8F6] shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
+        <Card className="border-l-4 border-l-blue-500 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 tracking-wider mb-1 uppercase">Projetos Ativos</p>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Projetos Ativos</p>
             <h3 className="text-3xl font-black text-blue-600 font-display">
               {projects.filter(p => !['concluido'].includes(p.status)).length}
             </h3>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-[#D4AF37] bg-[#F9F8F6] shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
+        <Card className="border-l-4 border-l-accent bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 tracking-wider mb-1 uppercase">Em Produção</p>
-            <h3 className="text-3xl font-black text-[#D4AF37] font-display">{inProduction}</h3>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Em Produção</p>
+            <h3 className="text-3xl font-black text-accent font-display">{inProduction}</h3>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-emerald-600 bg-[#F9F8F6] shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
+        <Card className="border-l-4 border-l-emerald-600 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 tracking-wider mb-1 uppercase">Concluídos</p>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Concluídos</p>
             <h3 className="text-3xl font-black text-emerald-700 font-display">{concluidos}</h3>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-[#1C2E24] bg-[#F9F8F6] shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
+        <Card className="border-l-4 border-l-foreground bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 tracking-wider mb-1 uppercase">Ticket Médio</p>
-            <h3 className="text-xl font-black text-[#1C2E24] font-display mt-1">{formatCurrency(ticketMedio)}</h3>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Ticket Médio</p>
+            <h3 className="text-xl font-black text-foreground font-display mt-1">{formatCurrency(ticketMedio)}</h3>
           </CardContent>
         </Card>
       </div>
@@ -132,30 +132,30 @@ const Dashboard: React.FC = () => {
       {/* Meta + Pipeline por etapa */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Meta mensal */}
-        <Card className="flex flex-col items-center justify-center p-6 text-center bg-[#F9F8F6] border-none shadow-sm rounded-2xl">
+        <Card className="flex flex-col items-center justify-center p-6 text-center bg-card border-none shadow-sm rounded-2xl">
           <CardContent className="flex flex-col items-center gap-4 w-full p-0">
-            <h3 className="text-sm font-bold text-slate-500 tracking-wider uppercase">Meta do Período</h3>
+            <h3 className="text-sm font-bold text-muted-foreground tracking-wider uppercase">Meta do Período</h3>
             <div className="w-[140px] h-[140px] rounded-full flex items-center justify-center" style={{
               background: `conic-gradient(#D4AF37 ${percentualMeta * 3.6}deg, rgba(28,46,36,0.06) 0deg)`,
             }}>
-              <div className="w-[110px] h-[110px] rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
-                <span className="text-2xl font-black text-[#1C2E24] font-display">{percentualMeta}%</span>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">atingido</span>
+              <div className="w-[110px] h-[110px] rounded-full bg-card flex flex-col items-center justify-center shadow-inner">
+                <span className="text-2xl font-black text-foreground font-display">{percentualMeta}%</span>
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">atingido</span>
               </div>
             </div>
-            <p className="text-sm font-semibold text-[#1C2E24]">
-              {formatCurrency(totalPeriodo)} <span className="text-slate-400 font-normal">/ {formatCurrency(currentMeta)}</span>
+            <p className="text-sm font-semibold text-foreground">
+              {formatCurrency(totalPeriodo)} <span className="text-muted-foreground font-normal">/ {formatCurrency(currentMeta)}</span>
             </p>
-            <Button variant="outline" size="sm" onClick={() => { setEditGoal(true); setGoalValue(currentMeta.toString()); }} className="rounded-xl border-[#8B5A2B] text-[#8B5A2B] hover:bg-[#8B5A2B]/5 font-bold px-5">
+            <Button variant="outline" size="sm" onClick={() => { setEditGoal(true); setGoalValue(currentMeta.toString()); }} className="rounded-xl border-primary text-primary hover:bg-primary/5 font-bold px-5">
               Editar Meta
             </Button>
           </CardContent>
         </Card>
 
         {/* Pipeline resumo */}
-        <Card className="p-6 bg-[#F9F8F6] border-none shadow-sm rounded-2xl">
+        <Card className="p-6 bg-card border-none shadow-sm rounded-2xl">
           <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-[#1C2E24] tracking-wider uppercase font-display">Evolução Financeira</CardTitle>
+            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Evolução Financeira</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex flex-col gap-4">
@@ -170,7 +170,7 @@ const Dashboard: React.FC = () => {
 
                 return (
                   <div key={p.id} className="grid grid-cols-[60px_1fr] gap-4 items-center">
-                    <span className="text-xs font-bold text-slate-500">{p.label}</span>
+                    <span className="text-xs font-bold text-muted-foreground">{p.label}</span>
                     <div className="flex flex-col gap-1">
                       {/* Barra de Entrada */}
                       <div className="flex items-center h-3.5">
@@ -181,10 +181,10 @@ const Dashboard: React.FC = () => {
                       </div>
                       {/* Barra de Saída */}
                       <div className="flex items-center h-3.5">
-                        <div className="bg-[#8B5A2B] rounded-r-full h-full transition-all duration-500 shadow-[0_2px_4px_rgba(139,90,43,0.1)]" style={{ 
+                        <div className="bg-primary rounded-r-full h-full transition-all duration-500 shadow-[0_2px_4px_rgba(139,90,43,0.1)]" style={{ 
                           width: `${Math.min(percSaida, 100)}%`
                         }} />
-                        {saidas > 0 && <span className="text-[10px] text-[#8B5A2B] ml-2 font-bold">{formatCurrency(saidas)}</span>}
+                        {saidas > 0 && <span className="text-[10px] text-primary ml-2 font-bold">{formatCurrency(saidas)}</span>}
                       </div>
                     </div>
                   </div>
@@ -194,11 +194,11 @@ const Dashboard: React.FC = () => {
             <div className="mt-6 flex gap-6 justify-center">
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 bg-emerald-600 rounded-lg shadow-sm" />
-                <span className="text-xs font-semibold text-slate-500">Entradas</span>
+                <span className="text-xs font-semibold text-muted-foreground">Entradas</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 bg-[#8B5A2B] rounded-lg shadow-sm" />
-                <span className="text-xs font-semibold text-slate-500">Saídas (Insumos / Produção)</span>
+                <div className="w-3.5 h-3.5 bg-primary rounded-lg shadow-sm" />
+                <span className="text-xs font-semibold text-muted-foreground">Saídas (Insumos / Produção)</span>
               </div>
             </div>
           </CardContent>
@@ -207,13 +207,13 @@ const Dashboard: React.FC = () => {
 
       {/* Origem de leads + Projetos recentes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 p-6 bg-[#F9F8F6] border-none shadow-sm rounded-2xl">
+        <Card className="lg:col-span-1 p-6 bg-card border-none shadow-sm rounded-2xl">
           <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-[#1C2E24] tracking-wider uppercase font-display">Origem dos Leads</CardTitle>
+            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Origem dos Leads</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {origemCounts.length === 0 ? (
-              <div className="text-slate-400 text-center py-8 font-medium">Nenhum cliente cadastrado.</div>
+              <div className="text-muted-foreground text-center py-8 font-medium">Nenhum cliente cadastrado.</div>
             ) : (
               <div className="flex flex-col gap-4">
                 {origemCounts.map(o => {
@@ -221,15 +221,15 @@ const Dashboard: React.FC = () => {
                   const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
                   return (
                     <div key={o.key} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-600 w-[120px] truncate">{info.label}</span>
-                      <div className="flex-1 bg-slate-200/60 rounded-full h-4 overflow-hidden shadow-inner">
+                      <span className="text-xs font-bold text-muted-foreground w-[120px] truncate">{info.label}</span>
+                      <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden shadow-inner">
                         <div className="rounded-full transition-all duration-500 h-full shadow-sm" style={{
                           width: `${pct}%`,
                           backgroundColor: o.key === 'indicacao' ? '#1C2E24' : o.key === 'outro' ? '#8B5A2B' : info.color,
                           minWidth: pct > 0 ? '16px' : '0'
                         }} />
                       </div>
-                      <span className="text-xs font-black w-10 text-right text-slate-700">{o.count}</span>
+                      <span className="text-xs font-black w-10 text-right text-muted-foreground">{o.count}</span>
                     </div>
                   );
                 })}
@@ -238,26 +238,26 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 p-6 bg-[#F9F8F6] border-none shadow-sm rounded-2xl">
+        <Card className="lg:col-span-2 p-6 bg-card border-none shadow-sm rounded-2xl">
           <CardHeader className="p-0 mb-4">
-            <CardTitle className="text-base font-black text-[#1C2E24] tracking-wider uppercase font-display">Projetos Recentes</CardTitle>
+            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Projetos Recentes</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {recentProjects.length === 0 ? (
-              <div className="text-slate-400 text-center py-8 font-medium">Nenhum projeto cadastrado.</div>
+              <div className="text-muted-foreground text-center py-8 font-medium">Nenhum projeto cadastrado.</div>
             ) : (
               <DataTable
                 headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
                 data={recentProjects}
                 renderRow={(p: Project) => (
                   <>
-                    <td className="p-4 font-bold text-sm text-[#1C2E24] font-display">{p.ambiente}</td>
-                    <td className="p-4 text-sm text-slate-600 font-semibold">{p.clientName || '-'}</td>
-                    <td className="p-4 font-black text-sm text-[#8B5A2B]">
+                    <td className="p-4 font-bold text-sm text-foreground font-display">{p.ambiente}</td>
+                    <td className="p-4 text-sm text-muted-foreground font-semibold">{p.clientName || '-'}</td>
+                    <td className="p-4 font-black text-sm text-primary">
                       {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
                     </td>
                     <td className="p-4">
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-[#8B5A2B]/10 text-[#8B5A2B] border border-[#8B5A2B]/20 uppercase tracking-wider">
+                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
                         {statusLabels[p.status] || p.status}
                       </span>
                     </td>
@@ -270,13 +270,13 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* 💡 Dlux Copilot - Insights Rápidos */}
-      <Card className="bg-gradient-to-br from-[#1C2E24]/5 to-[#8B5A2B]/5 border border-[#8B5A2B]/15 rounded-2xl p-6">
+      <Card className="bg-gradient-to-br from-[#1C2E24]/5 to-[#8B5A2B]/5 border border-primary/15 rounded-2xl p-6">
         <CardContent className="flex flex-col gap-4 p-0">
           <div className="flex items-center gap-2">
             <span className="text-xl">💡</span>
-            <h3 className="text-lg font-bold text-[#1C2E24] font-display">Dlux Copilot — Consultoria Técnica & Insights</h3>
+            <h3 className="text-lg font-bold text-foreground font-display">Dlux Copilot — Consultoria Técnica & Insights</h3>
           </div>
-          <p className="text-sm text-slate-500 font-medium">
+          <p className="text-sm text-muted-foreground font-medium">
             Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a nossa IA especialista.
           </p>
           <div className="flex flex-wrap gap-2.5 mt-2">
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
                   });
                   window.dispatchEvent(event);
                 }}
-                className="bg-white hover:bg-[#8B5A2B]/10 hover:text-[#8B5A2B] text-slate-600 border border-slate-200 transition-all flex items-center gap-1.5 rounded-xl font-semibold shadow-sm text-xs"
+                className="bg-card hover:bg-primary/10 hover:text-primary text-muted-foreground border border-border transition-all flex items-center gap-1.5 rounded-xl font-semibold shadow-sm text-xs"
               >
                 <span>✨</span>
                 {item.label}
@@ -313,10 +313,10 @@ const Dashboard: React.FC = () => {
       {/* Modal editar meta */}
       <Modal isOpen={editGoal} onClose={() => setEditGoal(false)} title="Definir Meta Mensal" size="sm">
         <div className="flex flex-col gap-4">
-          <label className="text-sm font-semibold text-slate-500">Valor da meta para {selectedPeriod}:</label>
-          <Input type="number" className="text-lg font-bold border-slate-200 rounded-xl"
+          <label className="text-sm font-semibold text-muted-foreground">Valor da meta para {selectedPeriod}:</label>
+          <Input type="number" className="text-lg font-bold border-border rounded-xl"
             value={goalValue} onChange={e => setGoalValue(e.target.value)} />
-          <Button onClick={() => { setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0); setEditGoal(false); }} className="w-full bg-[#8B5A2B] hover:bg-[#704822] text-white font-bold rounded-xl py-3 shadow-[0_4px_12px_rgba(139,90,43,0.25)]">
+          <Button onClick={() => { setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0); setEditGoal(false); }} className="w-full bg-primary hover:bg-[#704822] text-primary-foreground font-bold rounded-xl py-3 shadow-[0_4px_12px_rgba(139,90,43,0.25)]">
             Salvar Meta
           </Button>
         </div>

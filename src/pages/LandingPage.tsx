@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import ThemeToggle from '../components/ui/ThemeToggle';
 import { 
   Shield, DollarSign, Hammer, Cpu, Users, 
   Layers, Ruler, Pin, FileText, CheckCircle, 
@@ -63,7 +62,6 @@ const LandingPage: React.FC = () => {
           <a href="#faq" className="text-sm font-semibold text-muted-foreground hover:text-accent transition-colors">FAQ</a>
           
           <div className="flex items-center gap-3 ml-4">
-            <ThemeToggle />
             <button 
               onClick={() => navigate('/login')}
               className="px-5 py-2 text-sm font-bold rounded-lg border border-border/30 hover:border-accent/50 hover:bg-accent/5 transition-all duration-300"

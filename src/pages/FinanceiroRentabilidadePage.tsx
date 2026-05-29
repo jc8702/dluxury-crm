@@ -107,32 +107,32 @@ export default function FinanceiroRentabilidadePage() {
   const prejuizados = projetos.filter(p => p.status === 'prejuizo').slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-6 md:p-10 font-sans selection:bg-amber-500/30">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-amber-500/30">
       <div className="max-w-[1600px] mx-auto animate-in fade-in duration-700 space-y-8">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-slate-800">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Link to="/financeiro" className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+              <Link to="/financeiro" className="text-muted-foreground hover:text-primary-foreground transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
                 <ArrowLeft size={14} /> Voltar ao Financeiro
               </Link>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none mt-2">
               Rentabilidade & <span className="text-amber-500">Margem Real</span>
             </h1>
-            <p className="text-slate-400 mt-2 text-sm max-w-2xl leading-relaxed">
+            <p className="text-muted-foreground mt-2 text-sm max-w-2xl leading-relaxed">
               Análise comparativa real vs. orçado das OPs concluídas para identificar perdas invisíveis, desvios operacionais e calibrar o pricing.
             </p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Período</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Período</label>
               <select
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
-                className="bg-slate-900 border border-slate-800 rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 font-bold"
+                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 font-bold"
               >
                 <option value="mes">Último Mês</option>
                 <option value="trimestre">Último Trimestre</option>
@@ -140,13 +140,13 @@ export default function FinanceiroRentabilidadePage() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Filtro Cliente</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Filtro Cliente</label>
               <input
                 type="text"
                 placeholder="Filtrar por nome..."
                 value={buscaCliente}
                 onChange={(e) => setBuscaCliente(e.target.value)}
-                className="bg-slate-900 border border-slate-800 rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 w-44 font-semibold text-slate-100 placeholder:text-slate-500"
+                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 w-44 font-semibold text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function FinanceiroRentabilidadePage() {
         {loading && !kpis ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-20">
             {[1, 2, 3, 4].map(n => (
-              <div key={n} className="h-32 bg-slate-900/50 border border-slate-800 rounded-2xl animate-pulse" />
+              <div key={n} className="h-32 bg-surface/50 border border-border rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : (
@@ -206,10 +206,10 @@ export default function FinanceiroRentabilidadePage() {
                 <AlertTriangle className="text-amber-500 w-6 h-6 shrink-0 mt-0.5" />
                 <div className="space-y-2 flex-1">
                   <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider">Desvios de Margem Detectados</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-slate-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-foreground">
                     {alertas.slice(0, 4).map((alerta, i) => (
                       <div key={i} className="flex justify-between items-center py-1 border-b border-slate-900">
-                        <span className="font-semibold text-slate-100">{alerta.numero_op} - {alerta.cliente}</span>
+                        <span className="font-semibold text-foreground">{alerta.numero_op} - {alerta.cliente}</span>
                         <span className="font-bold text-rose-500">+{alerta.variacao_percentual.toFixed(1)}% de desvio</span>
                       </div>
                     ))}
@@ -221,11 +221,11 @@ export default function FinanceiroRentabilidadePage() {
             {/* Row 2: Charts and Clients */}
             <div className="grid grid-cols-12 gap-6">
               {/* Line Chart */}
-              <div className="col-span-12 lg:col-span-8 glass p-6 md:p-8 rounded-2xl border border-slate-800/80 min-h-[400px]">
+              <div className="col-span-12 lg:col-span-8 glass p-6 md:p-8 rounded-2xl border border-border min-h-[400px]">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h3 className="text-lg font-bold uppercase tracking-tight italic">Evolução de Margem</h3>
-                    <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Margem Estimada vs. Margem Real</p>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Margem Estimada vs. Margem Real</p>
                   </div>
                 </div>
                 <div className="h-[300px]">
@@ -244,11 +244,11 @@ export default function FinanceiroRentabilidadePage() {
               </div>
 
               {/* Pie Chart: Clientes Rentabilidade */}
-              <div className="col-span-12 lg:col-span-4 glass p-6 md:p-8 rounded-2xl border border-slate-800/80 flex flex-col">
+              <div className="col-span-12 lg:col-span-4 glass p-6 md:p-8 rounded-2xl border border-border flex flex-col">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-center mb-6 italic">Top Clientes por Margem</h3>
                 <div className="h-[220px] flex justify-center">
                   {clientes.length === 0 ? (
-                    <div className="flex items-center text-xs text-slate-500">Sem dados históricos</div>
+                    <div className="flex items-center text-xs text-muted-foreground">Sem dados históricos</div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -277,28 +277,28 @@ export default function FinanceiroRentabilidadePage() {
             {/* Row 3: Lucrativos vs Prejuízo */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Lucrativos */}
-              <div className="glass p-6 rounded-2xl border border-slate-800/80">
-                <div className="flex items-center gap-2 mb-6 border-b border-slate-800 pb-3">
+              <div className="glass p-6 rounded-2xl border border-border">
+                <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
                   <CheckCircle className="text-emerald-500 w-5 h-5" />
                   <h3 className="text-sm font-bold uppercase tracking-widest italic">Top 5 Mais Lucrativos</h3>
                 </div>
                 <div className="space-y-4">
                   {lucrativos.length === 0 ? (
-                    <div className="text-xs text-slate-500 py-6 text-center">Nenhum projeto altamente lucrativo</div>
+                    <div className="text-xs text-muted-foreground py-6 text-center">Nenhum projeto altamente lucrativo</div>
                   ) : lucrativos.map((p, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-slate-900/30 border border-slate-900 hover:border-slate-800/50 hover:bg-slate-900/60 transition-all group">
+                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-slate-900 hover:border-border hover:bg-surface/60 transition-all group">
                       <div>
-                        <div className="text-[11px] font-bold text-slate-100 flex items-center gap-1.5">
+                        <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
                           {p.numero_op}
-                          <button onClick={() => abrirEdicao(p)} className="p-1 text-slate-500 hover:text-amber-500 rounded transition-all cursor-pointer">
+                          <button onClick={() => abrirEdicao(p)} className="p-1 text-muted-foreground hover:text-amber-500 rounded transition-all cursor-pointer">
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <div className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">{p.cliente}</div>
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.cliente}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-black text-emerald-400">{p.margem_percentual.toFixed(1)}%</div>
-                        <div className="text-[9px] text-slate-500 font-mono mt-0.5">{fmt(p.margem_real)}</div>
+                        <div className="text-[9px] text-muted-foreground font-mono mt-0.5">{fmt(p.margem_real)}</div>
                       </div>
                     </div>
                   ))}
@@ -306,28 +306,28 @@ export default function FinanceiroRentabilidadePage() {
               </div>
 
               {/* Prejuízos */}
-              <div className="glass p-6 rounded-2xl border border-slate-800/80">
-                <div className="flex items-center gap-2 mb-6 border-b border-slate-800 pb-3">
+              <div className="glass p-6 rounded-2xl border border-border">
+                <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
                   <AlertTriangle className="text-rose-500 w-5 h-5" />
                   <h3 className="text-sm font-bold uppercase tracking-widest italic text-rose-500">Margem Negativa / Alerta</h3>
                 </div>
                 <div className="space-y-4">
                   {prejuizados.length === 0 ? (
-                    <div className="text-xs text-slate-500 py-6 text-center">Nenhum projeto operando no vermelho</div>
+                    <div className="text-xs text-muted-foreground py-6 text-center">Nenhum projeto operando no vermelho</div>
                   ) : prejuizados.map((p, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-slate-900/30 border border-slate-900 hover:border-slate-800/50 hover:bg-slate-900/60 transition-all group">
+                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-slate-900 hover:border-border hover:bg-surface/60 transition-all group">
                       <div>
-                        <div className="text-[11px] font-bold text-slate-100 flex items-center gap-1.5">
+                        <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
                           {p.numero_op}
-                          <button onClick={() => abrirEdicao(p)} className="p-1 text-slate-500 hover:text-amber-500 rounded transition-all cursor-pointer">
+                          <button onClick={() => abrirEdicao(p)} className="p-1 text-muted-foreground hover:text-amber-500 rounded transition-all cursor-pointer">
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <div className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">{p.cliente}</div>
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.cliente}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-black text-rose-500">{p.margem_percentual.toFixed(1)}%</div>
-                        <div className="text-[9px] text-slate-500 font-mono mt-0.5">{fmt(p.margem_real)}</div>
+                        <div className="text-[9px] text-muted-foreground font-mono mt-0.5">{fmt(p.margem_real)}</div>
                       </div>
                     </div>
                   ))}
@@ -336,14 +336,14 @@ export default function FinanceiroRentabilidadePage() {
             </div>
 
             {/* Clientes Table */}
-            <div className="glass p-6 md:p-8 rounded-2xl border border-slate-800/80">
+            <div className="glass p-6 md:p-8 rounded-2xl border border-border">
               <h3 className="text-sm font-bold uppercase tracking-widest mb-6 italic flex items-center gap-2">
                 <Users className="text-amber-500 w-4.5 h-4.5" /> Métricas de Margem por Cliente
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                    <tr className="border-b border-border text-muted-foreground font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">Cliente</th>
                       <th className="py-3 px-4 text-center">Pedidos</th>
                       <th className="py-3 px-4 text-right">Vendas Totais</th>
@@ -356,15 +356,15 @@ export default function FinanceiroRentabilidadePage() {
                   <tbody>
                     {clientes.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">Nenhum cliente com pedidos concluídos</td>
+                        <td colSpan={7} className="py-8 text-center text-muted-foreground font-medium">Nenhum cliente com pedidos concluídos</td>
                       </tr>
                     ) : clientes.map((cli, i) => (
-                      <tr key={i} className="border-b border-slate-900 hover:bg-slate-900/20 transition-colors">
-                        <td className="py-3.5 px-4 font-semibold text-slate-100">{cli.cliente}</td>
-                        <td className="py-3.5 px-4 text-center font-bold text-slate-300">{cli.total_pedidos}</td>
-                        <td className="py-3.5 px-4 text-right text-slate-300 font-mono">{fmt(cli.total_vendido)}</td>
-                        <td className="py-3.5 px-4 text-right text-slate-300 font-mono">{fmt(cli.total_custos_reais)}</td>
-                        <td className="py-3.5 px-4 text-right text-slate-300 font-mono">{fmt(cli.margem_total)}</td>
+                      <tr key={i} className="border-b border-slate-900 hover:bg-surface/20 transition-colors">
+                        <td className="py-3.5 px-4 font-semibold text-foreground">{cli.cliente}</td>
+                        <td className="py-3.5 px-4 text-center font-bold text-foreground">{cli.total_pedidos}</td>
+                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.total_vendido)}</td>
+                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.total_custos_reais)}</td>
+                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.margem_total)}</td>
                         <td className={`py-3.5 px-4 text-right font-bold ${cli.margem_media_percentual >= 30 ? 'text-emerald-400' : cli.margem_media_percentual > 0 ? 'text-amber-400' : 'text-rose-500'}`}>
                           {cli.margem_media_percentual.toFixed(1)}%
                         </td>
@@ -389,94 +389,94 @@ export default function FinanceiroRentabilidadePage() {
 
       {/* Modal para Editar Custos Reais (UAU!) */}
       {editingProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-surface/50">
               <div>
                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Ajuste de Rentabilidade</span>
-                <h3 className="text-lg font-black text-slate-100 uppercase">{editingProject.numero_op} - {editingProject.cliente}</h3>
+                <h3 className="text-lg font-black text-foreground uppercase">{editingProject.numero_op} - {editingProject.cliente}</h3>
               </div>
-              <button onClick={() => setEditingProject(null)} className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer">
+              <button onClick={() => setEditingProject(null)} className="p-2 text-muted-foreground hover:text-primary-foreground rounded-lg hover:bg-muted cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={salvarCustos} className="p-6 space-y-4 text-xs font-semibold text-slate-300">
+            <form onSubmit={salvarCustos} className="p-6 space-y-4 text-xs font-semibold text-foreground">
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1.5 text-slate-400">Custo Material Real (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">Custo Material Real (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costMat}
                     onChange={(e) => setCostMat(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-slate-400">Custo Mão de Obra Real (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">Custo Mão de Obra Real (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costMao}
                     onChange={(e) => setCostMao(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block mb-1.5 text-slate-400">Retrabalho (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">Retrabalho (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costRetrabalho}
                     onChange={(e) => setCostRetrabalho(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-slate-400">Desperdício Material (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">Desperdício Material (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costDesperdicio}
                     onChange={(e) => setCostDesperdicio(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-slate-400">Tempo Real (Horas)</label>
+                  <label className="block mb-1.5 text-muted-foreground">Tempo Real (Horas)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={tempoHoras}
                     onChange={(e) => setTempoHoras(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block mb-1.5 text-slate-400">Descrição de Desvios / Motivo do Ajuste</label>
+                <label className="block mb-1.5 text-muted-foreground">Descrição de Desvios / Motivo do Ajuste</label>
                 <textarea
                   rows={3}
                   placeholder="Ex: Retrabalho de montagem por erro de medição na cozinha, desperdício de 1 chapa de MDF 18mm..."
                   value={desviosDesc}
                   onChange={(e) => setDesviosDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-amber-500 text-xs font-semibold placeholder:text-slate-600 resize-none"
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 text-xs font-semibold placeholder:text-muted-foreground resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setEditingProject(null)}
-                  className="px-4 py-2.5 border border-slate-800 hover:bg-slate-850 rounded-lg transition-all text-slate-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2.5 border border-border hover:bg-slate-850 rounded-lg transition-all text-muted-foreground hover:text-primary-foreground cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -515,17 +515,17 @@ function KPICard({ title, value, pct, icon: Icon, color, borderColor, inverse = 
   return (
     <div className={`glass p-6 rounded-2xl border ${borderColor} flex flex-col justify-between hover:border-slate-700/80 transition-all`}>
       <div className="flex justify-between items-start">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</span>
-        <div className={`p-2 bg-slate-900 rounded-lg ${color}`}>
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{title}</span>
+        <div className={`p-2 bg-surface rounded-lg ${color}`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-black font-mono tracking-tight text-slate-100">{value}</span>
+        <span className="text-2xl font-black font-mono tracking-tight text-foreground">{value}</span>
       </div>
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2 pt-2 border-t border-slate-900 flex items-center gap-1">
+      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-slate-900 flex items-center gap-1">
         {pct === 0 ? (
-          <span className="text-slate-500">-</span>
+          <span className="text-muted-foreground">-</span>
         ) : positiveChange ? (
           <span className="text-emerald-400">↑ {isAbs ? '' : '+'}{pct.toFixed(1)}%</span>
         ) : (

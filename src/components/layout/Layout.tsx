@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import TopNavbar from './TopNavbar';
 import DluxChat from '../ai/DluxChat';
 import { api } from '../../lib/api';
 import BillingBlockedOverlay from '../BillingBlockedOverlay';
@@ -67,6 +68,8 @@ export default function Layout() {
       {/* Main Content Area — off-white background with padded card */}
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
         
+        <TopNavbar />
+
         {/* Banner: Trial */}
         {showTrialBanner && (
           <div className="bg-warning/8 border-b border-warning/20 text-foreground px-4 md:px-8 py-2.5 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
