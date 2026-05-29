@@ -12,12 +12,13 @@ interface SKU {
 
 interface SKUAutocompleteProps {
     onSelect: (sku: SKU) => void;
+    onChange?: (value: string) => void;
     defaultValue?: string;
     placeholder?: string;
     className?: string;
 }
 
-export function SKUAutocomplete({ onSelect, defaultValue = '', placeholder = 'Buscar SKU ou descrição...', className = '' }: SKUAutocompleteProps) {
+export function SKUAutocomplete({ onSelect, onChange, defaultValue = '', placeholder = 'Buscar SKU ou descrição...', className = '' }: SKUAutocompleteProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState(defaultValue);
     const [results, setResults] = useState<SKU[]>([]);
@@ -55,6 +56,7 @@ export function SKUAutocomplete({ onSelect, defaultValue = '', placeholder = 'Bu
         const val = e.target.value;
         setQuery(val);
         setOpen(true);
+        if (onChange) onChange(val);
 
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
@@ -94,6 +96,7 @@ export function SKUAutocomplete({ onSelect, defaultValue = '', placeholder = 'Bu
                                         onSelect(sku);
                                         setQuery(sku.codigo);
                                         setOpen(false);
+                                        if (onChange) onChange(sku.codigo);
                                     }}
                                     className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-800 transition-colors text-left border-b border-gray-800 last:border-0"
                                 >

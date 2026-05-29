@@ -330,11 +330,20 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                         </div>
                         <div className="space-y-1">
                             <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Material / Acabamento</label>
-                            <input 
-                                type="text"
-                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:border-orange-500 outline-none"
-                                value={state.draft.material}
-                                onChange={(e) => setState(prev => ({ ...prev, draft: { ...prev.draft, material: e.target.value }, hasChanges: true }))}
+                            <SKUAutocomplete 
+                                placeholder="Buscar material ou digite..."
+                                defaultValue={state.draft.material}
+                                onChange={(value) => setState(prev => ({ ...prev, draft: { ...prev.draft, material: value }, hasChanges: true }))}
+                                onSelect={(sku) => {
+                                    setState(prev => ({ 
+                                        ...prev, 
+                                        draft: { 
+                                            ...prev.draft, 
+                                            material: sku.nome
+                                        }, 
+                                        hasChanges: true 
+                                    }));
+                                }}
                             />
                         </div>
                     </div>
