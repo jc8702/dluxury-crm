@@ -96,45 +96,45 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-6 max-w-xl w-full relative">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div className="bg-card border border-border rounded-xl p-6 max-w-xl w-full relative">
         {/* Fechar */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-4 text-zinc-500 hover:text-white transition"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition cursor-pointer"
         >
           <X size={20} />
         </button>
 
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-6">
-          <div className="bg-blue-500/10 text-blue-400 p-2 rounded-lg">
+          <div className="bg-blue-500/10 text-blue-500 dark:text-blue-400 p-2 rounded-lg">
             <Signature size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Assinatura Digital de Contrato</h2>
-            <p className="text-zinc-500 text-xs">Orçamento Ref: <strong>{numeroOrcamento}</strong></p>
+            <h2 className="text-lg font-bold text-foreground">Assinatura Digital de Contrato</h2>
+            <p className="text-muted-foreground text-xs">Orçamento Ref: <strong className="text-foreground">{numeroOrcamento}</strong></p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-5">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 text-sm p-3 rounded-lg mb-5">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-12 text-zinc-500">
-            <RefreshCw className="animate-spin mx-auto mb-2 text-zinc-400" size={24} />
+          <div className="text-center py-12 text-muted-foreground">
+            <RefreshCw className="animate-spin mx-auto mb-2 text-muted-foreground/80" size={24} />
             <span>Consultando status do documento...</span>
           </div>
         ) : !contrato ? (
           /* Estado 1: Contrato Não Gerado */
           <div className="text-center py-8 space-y-4">
-            <FileText size={48} className="text-zinc-600 mx-auto" />
+            <FileText size={48} className="text-muted-foreground mx-auto" />
             <div>
-              <h3 className="text-white font-bold mb-1">Nenhum contrato ativo para este orçamento</h3>
-              <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+              <h3 className="text-foreground font-bold mb-1">Nenhum contrato ativo para este orçamento</h3>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 Você pode gerar o contrato de prestação de serviços com os itens e valores preenchidos automaticamente.
               </p>
             </div>
@@ -142,7 +142,7 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
             <button
               onClick={handleGerarContrato}
               disabled={generating}
-              className="px-6 py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto"
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer"
             >
               {generating ? (
                 <>
@@ -163,8 +163,8 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
             {/* Box de Status do Contrato */}
             <div className={`p-4 rounded-xl border flex items-center justify-between ${
               contrato.statusAssinatura === 'assinado'
-                ? 'bg-green-950/20 border-green-500/20 text-green-400'
-                : 'bg-yellow-950/10 border-yellow-500/20 text-yellow-400'
+                ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
+                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400'
             }`}>
               <div className="flex items-center gap-3">
                 {contrato.statusAssinatura === 'assinado' ? (
@@ -173,45 +173,45 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
                   <Clock size={24} className="animate-pulse" />
                 )}
                 <div>
-                  <span className="text-xs uppercase font-semibold block text-zinc-500">Status da Assinatura</span>
-                  <strong className="text-white text-sm">
+                  <span className="text-xs uppercase font-semibold block text-muted-foreground">Status da Assinatura</span>
+                  <strong className="text-foreground text-sm">
                     {contrato.statusAssinatura === 'assinado' ? 'Totalmente Assinado' : 'Aguardando Assinatura'}
                   </strong>
                 </div>
               </div>
 
-              <span className="text-xs font-mono text-zinc-500">
+              <span className="text-xs font-mono text-muted-foreground">
                 {contrato.numeroContrato}
               </span>
             </div>
 
             {/* Informações de Envio e Assinatura */}
-            <div className="bg-zinc-900/50 border border-zinc-850 p-4 rounded-xl space-y-3 text-sm text-zinc-300">
+            <div className="bg-muted/50 border border-border p-4 rounded-xl space-y-3 text-sm text-foreground">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Cliente Signatário:</span>
-                <span className="font-semibold text-white">{contrato.clienteNome}</span>
+                <span className="text-muted-foreground">Cliente Signatário:</span>
+                <span className="font-semibold text-foreground">{contrato.clienteNome}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Documento do Cliente:</span>
-                <span className="font-mono text-zinc-300">{contrato.clienteCpfCnpj || 'Não cadastrado'}</span>
+                <span className="text-muted-foreground">Documento do Cliente:</span>
+                <span className="font-mono text-muted-foreground">{contrato.clienteCpfCnpj || 'Não cadastrado'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Data de Envio:</span>
-                <span className="text-zinc-300">{new Date(contrato.dataSolicitacaoAssinatura).toLocaleString('pt-BR')}</span>
+                <span className="text-muted-foreground">Data de Envio:</span>
+                <span className="text-muted-foreground">{new Date(contrato.dataSolicitacaoAssinatura).toLocaleString('pt-BR')}</span>
               </div>
 
               {contrato.statusAssinatura === 'assinado' && (
-                <div className="border-t border-zinc-800/80 pt-3 mt-2 space-y-3">
-                  <div className="flex justify-between text-green-400">
+                <div className="border-t border-border pt-3 mt-2 space-y-3">
+                  <div className="flex justify-between text-green-600 dark:text-green-400">
                     <span className="flex items-center gap-1"><ShieldCheck size={16} /> Validade Jurídica:</span>
                     <span className="font-semibold">ICP-Brasil / MP 2200-2</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500">Hash de Integridade:</span>
-                    <span className="font-mono text-zinc-400 select-all">{contrato.hashDocumento?.substring(0,24)}...</span>
+                    <span className="text-muted-foreground">Hash de Integridade:</span>
+                    <span className="font-mono text-muted-foreground select-all">{contrato.hashDocumento?.substring(0,24)}...</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500">Validade do Certificado:</span>
+                    <span className="text-muted-foreground">Validade do Certificado:</span>
                     <span>{contrato.certificadoValidade ? new Date(contrato.certificadoValidade).toLocaleDateString('pt-BR') : '-'}</span>
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
                     href={contrato.urlAssinatura}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 py-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-white font-semibold rounded-lg text-center flex items-center justify-center gap-1.5 transition text-sm"
+                    className="flex-1 py-2.5 bg-muted hover:bg-muted/80 border border-border text-foreground font-semibold rounded-lg text-center flex items-center justify-center gap-1.5 transition text-sm cursor-pointer"
                   >
                     Abrir Link DocuSign
                     <ExternalLink size={16} />
@@ -235,12 +235,12 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
                   <button
                     onClick={handleSimularAssinatura}
                     disabled={simulating}
-                    className="flex-1 py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 font-bold rounded-lg transition disabled:opacity-50 text-sm"
+                    className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 text-sm cursor-pointer"
                   >
                     {simulating ? 'Processando...' : 'Simular Assinatura'}
                   </button>
                 </div>
-                <p className="text-[10px] text-zinc-500 text-center">
+                <p className="text-[10px] text-muted-foreground text-center">
                   * A simulação dispara o webhook de aprovação, gerando a OP e atualizando o orçamento.
                 </p>
               </div>
@@ -255,7 +255,7 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
                   e.preventDefault();
                   alert('Download do PDF assinado iniciado (Simulação).');
                 }}
-                className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-white font-semibold rounded-lg text-center flex items-center justify-center gap-1.5 transition text-sm"
+                className="w-full py-2.5 bg-muted hover:bg-muted/80 border border-border text-foreground font-semibold rounded-lg text-center flex items-center justify-center gap-1.5 transition text-sm cursor-pointer"
               >
                 Visualizar PDF Assinado
                 <ExternalLink size={16} />
@@ -265,18 +265,18 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
             {/* Histórico do Contrato */}
             {historico.length > 0 && (
               <div>
-                <h3 className="font-bold text-white text-xs mb-2 flex items-center gap-1.5 text-zinc-400">
-                  <History size={14} />
+                <h3 className="font-bold text-foreground text-xs mb-2 flex items-center gap-1.5">
+                  <History size={14} className="text-muted-foreground" />
                   LOGS DE AUDITORIA DO CONTRATO
                 </h3>
-                <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-xs">
+                <div className="bg-muted/50 border border-border rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-xs">
                   {historico.map(log => (
-                    <div key={log.id} className="flex justify-between items-start text-zinc-400 pb-1 border-b border-zinc-900 last:border-0">
+                    <div key={log.id} className="flex justify-between items-start text-muted-foreground pb-1 border-b border-border last:border-0">
                       <div>
-                        <strong className="text-zinc-300">{formatarAcaoHistorico(log.acao)}</strong>
-                        <span className="block text-[10px] text-zinc-500">{log.detalhes}</span>
+                        <strong className="text-foreground">{formatarAcaoHistorico(log.acao)}</strong>
+                        <span className="block text-[10px] text-muted-foreground/80">{log.detalhes}</span>
                       </div>
-                      <span className="text-[10px] text-zinc-500">{new Date(log.timestampAcao).toLocaleString('pt-BR')}</span>
+                      <span className="text-[10px] text-muted-foreground">{new Date(log.timestampAcao).toLocaleString('pt-BR')}</span>
                     </div>
                   ))}
                 </div>

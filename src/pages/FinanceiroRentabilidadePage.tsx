@@ -476,7 +476,7 @@ export default function FinanceiroRentabilidadePage() {
                 <button
                   type="button"
                   onClick={() => setEditingProject(null)}
-                  className="px-4 py-2.5 border border-border hover:bg-slate-850 rounded-lg transition-all text-muted-foreground hover:text-primary-foreground cursor-pointer"
+                  className="px-4 py-2.5 border border-border hover:bg-muted rounded-lg transition-all text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Cancelar
                 </button>
