@@ -1555,43 +1555,30 @@ async function handleCondicoesPagamento(req: any, res: any, tenantId: string, id
 
 export async function garantirSeedsFinanceiros(tenantId: string) {
   try {
-    // 1. Classes Financeiras
-    const totalClasses = await sql`SELECT count(*) as count FROM classes_financeiras WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
-    if (totalClasses.length && parseInt(totalClasses[0].count, 10) === 0) {
-      const classesPadrao = [
-        { codigo: '1.0', nome: 'RECEITAS', tipo: 'receita', natureza: 'credora', permite: false },
-        { codigo: '1.1', nome: 'RECEITAS OPERACIONAIS', tipo: 'receita', natureza: 'credora', permite: false },
-        { codigo: '1.1.01', nome: 'Venda de Produtos', tipo: 'receita', natureza: 'credora', permite: true },
-        { codigo: '1.1.02', nome: 'Venda de Serviços', tipo: 'receita', natureza: 'credora', permite: true },
-        { codigo: '1.1.03', nome: 'Projetos de Design', tipo: 'receita', natureza: 'credora', permite: true },
-        { codigo: '1.2', nome: 'RECEITAS FINANCEIRAS', tipo: 'receita', natureza: 'credora', permite: false },
-        { codigo: '1.2.01', nome: 'Rendimentos de Aplicação', tipo: 'receita', natureza: 'credora', permite: true },
-        { codigo: '1.2.02', nome: 'Juros Recebidos', tipo: 'receita', natureza: 'credora', permite: true },
-        { codigo: '2.0', nome: 'DESPESAS', tipo: 'despesa', natureza: 'devedora', permite: false },
-        { codigo: '2.1', nome: 'DESPESAS COM PESSOAL', tipo: 'despesa', natureza: 'devedora', permite: false },
-        { codigo: '2.1.01', nome: 'Salários e Pró-labore', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.1.02', nome: 'Encargos Sociais', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.1.03', nome: 'Benefícios (VA/VR)', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.2', nome: 'DESPESAS ADMINISTRATIVAS', tipo: 'despesa', natureza: 'devedora', permite: false },
-        { codigo: '2.2.01', nome: 'Aluguel e Condomínio', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.2.02', nome: 'Energia e Água', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.2.03', nome: 'Internet e Telefone', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.2.04', nome: 'Material de Escritório', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.3', nome: 'IMPOSTOS E TAXAS', tipo: 'despesa', natureza: 'devedora', permite: false },
-        { codigo: '2.3.01', nome: 'Simples Nacional / DAS', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.3.02', nome: 'Taxas Bancárias', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.4', nome: 'CUSTOS DE PRODUÇÃO', tipo: 'despesa', natureza: 'devedora', permite: false },
-        { codigo: '2.4.01', nome: 'Matéria-prima', tipo: 'despesa', natureza: 'devedora', permite: true },
-        { codigo: '2.4.02', nome: 'Fretes e Logística', tipo: 'despesa', natureza: 'devedora', permite: true }
-      ];
-
-      for (const c of classesPadrao) {
-        await sql`
-          INSERT INTO classes_financeiras (codigo, nome, tipo, natureza, ativa, permite_lancamento, tenant_id)
-          VALUES (${c.codigo}, ${c.nome}, ${c.tipo}, ${c.natureza}, true, ${c.permite}, ${tenantId}::uuid)
-        `;
-      }
-    }
+    // 1. Classes Financeiras (UPSERT)
+    await sql`
+      INSERT INTO classes_financeiras (codigo, nome, tipo, natureza, permite_lancamento, tenant_id)
+      VALUES 
+        ('1.0', 'RECEITAS', 'receita', 'credora', false, ${tenantId}::uuid),
+        ('2.0', 'DESPESAS', 'despesa', 'devedora', false, ${tenantId}::uuid),
+        ('1.1.01', 'VENDA DE PRODUTOS', 'receita', 'credora', true, ${tenantId}::uuid),
+        ('1.1.02', 'VENDA DE SERVICOS', 'receita', 'credora', true, ${tenantId}::uuid),
+        ('1.1.03', 'PROJETOS DE DESIGN', 'receita', 'credora', true, ${tenantId}::uuid),
+        ('1.2.01', 'RENDIMENTOS DE APLICACAO', 'receita', 'credora', true, ${tenantId}::uuid),
+        ('1.2.02', 'JUROS RECEBIDOS', 'receita', 'credora', true, ${tenantId}::uuid),
+        ('2.1.01', 'SALARIOS E PRO-LABORE', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.1.02', 'ENCARGOS SOCIAIS', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.1.03', 'BENEFICIOS (VA/VR)', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.2.01', 'ALUGUEL E CONDOMINIO', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.2.02', 'ENERGIA E AGUA', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.2.03', 'INTERNET E TELEFONE', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.2.04', 'MATERIAL DE ESCRITORIO', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.3.01', 'SIMPLES NACIONAL / DAS', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.3.02', 'TAXAS BANCARIAS', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.4.01', 'MATERIA-PRIMA', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('2.4.02', 'FRETES E LOGISTICA', 'despesa', 'devedora', true, ${tenantId}::uuid)
+      ON CONFLICT (codigo, tenant_id) DO NOTHING
+    `;
 
     // 2. Contas Internas
     const totalContas = await sql`SELECT count(*) as count FROM contas_internas WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;

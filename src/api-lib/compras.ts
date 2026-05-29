@@ -111,6 +111,11 @@ export async function handleCompras(req: any, res: any) {
             const defForma = (await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
             const defConta = (await sql`SELECT id FROM contas_internas WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
 
+            if (!defClasse || !defForma || !defConta) {
+              console.error(`[COMPRAS] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defClasse}, Forma: ${defForma}, Conta: ${defConta}`);
+              throw new Error('Não foi possível gerar os Títulos a Pagar. Verifique se o Plano de Contas, Contas Bancárias e Formas de Pagamento estão cadastrados.');
+            }
+
             for (let i = 1; i <= totalParcelas; i++) {
               const vencimento = new Date();
               vencimento.setMonth(vencimento.getMonth() + (i - 1));

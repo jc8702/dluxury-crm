@@ -211,6 +211,14 @@ export async function handleOrcamentos(req: any, res: any) {
               const valorParcela = valorTotal / totalParcelas;
               const dataEmissao = new Date();
               
+              const defClasse = (await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.01' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
+              const defForma = (await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
+
+              if (!defClasse || !defForma) {
+                console.error(`[ORCAMENTOS] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defClasse}, Forma: ${defForma}`);
+                throw new Error('Não foi possível gerar os Títulos a Receber. Verifique se o Plano de Contas e as Formas de Pagamento estão cadastrados.');
+              }
+              
               for (let i = 1; i <= totalParcelas; i++) {
                 const vencimento = new Date();
                 vencimento.setMonth(vencimento.getMonth() + (i - 1));
@@ -226,8 +234,7 @@ export async function handleOrcamentos(req: any, res: any) {
                     ${`REC-AUTO-${currentOrc.numero}-${i}`}, ${currentOrc.cliente_id}, ${currentOrc.projeto_id || null}, ${id},
                     ${valorParcela}, ${valorParcela}, ${valorParcela},
                     ${dataEmissao}, ${vencimento}, ${dataEmissao},
-                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.01' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id}, 
-                    ${(await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id},
+                    ${defClasse}, ${defForma},
                     'aberto', ${i}, ${totalParcelas}, ${tenantId}::uuid
                   )`;
               }

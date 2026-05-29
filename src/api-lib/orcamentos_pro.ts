@@ -1294,6 +1294,8 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 const dataEmissao = new Date();
                                 
                                 // Buscar classe financeira e forma de recebimento padrão do tenant
+                                await garantirSeedsFinanceiros(tenantId);
+                                
                                 const classResult = await tx.execute(dsql`
                                     SELECT id FROM classes_financeiras 
                                     WHERE tenant_id = ${tenantId}::uuid 
@@ -1308,7 +1310,12 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 `);
                                 const defaultFormaId = formaResult.rows[0]?.id || null;
 
-                                if (defaultClassId && defaultFormaId && exists.clienteId) {
+                                if (!defaultClassId || !defaultFormaId) {
+                                    console.error(`[ORCAMENTOS_PRO] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defaultClassId}, Forma: ${defaultFormaId}`);
+                                    throw new Error('Não foi possível gerar os Títulos a Receber. Verifique se o Plano de Contas e as Formas de Pagamento estão cadastrados no módulo Financeiro.');
+                                }
+
+                                if (exists.clienteId) {
                                     for (let i = 1; i <= totalParcelas; i++) {
                                         const vencimento = new Date();
                                         vencimento.setMonth(vencimento.getMonth() + (i - 1));
