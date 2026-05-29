@@ -41,6 +41,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-fade-in: fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -291,10 +294,6 @@
     border: 1px solid hsl(var(--border) / 0.7);
     box-shadow: var(--shadow-md);
   }
-
-  /* Font family utilities */
-  .font-display { font-family: 'DM Sans', system-ui, sans-serif; }
-  .font-body { font-family: 'Source Sans 3', system-ui, sans-serif; }
 
   /* Typography headings */
   .h1 { @apply text-4xl md:text-5xl font-display font-bold tracking-tight; }
