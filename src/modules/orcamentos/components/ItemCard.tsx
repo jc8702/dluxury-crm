@@ -99,7 +99,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
       
       // Fita (preço por m linear)
       if (metadata.fitaBorda?.sku?.precoUnitario) {
-          const lados = metadata.fitaBorda.lados;
+          const lados = metadata.fitaBorda.lados || {};
           let perimetroMm = 0;
           if (lados.topo) perimetroMm += l;
           if (lados.base) perimetroMm += l;
@@ -441,7 +441,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
             <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-1"><Package className="w-3 h-3" /> Composição Dinâmica Ativa</span>
             <div className="flex flex-wrap gap-2">
                 {item.metadata.chapa && <span className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">Chapa: <b className="text-white">{item.metadata.chapa.codigo}</b></span>}
-                {item.metadata.fitaBorda?.sku && <span className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">Fita: <b className="text-white">{item.metadata.fitaBorda.sku.codigo}</b> ({Object.entries(item.metadata.fitaBorda.lados).filter(([_,v])=>v).map(([k])=>k[0].toUpperCase()).join(',')})</span>}
+                {item.metadata.fitaBorda?.sku && <span className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">Fita: <b className="text-white">{item.metadata.fitaBorda.sku.codigo}</b> ({Object.entries(item.metadata.fitaBorda.lados || {}).filter(([_,v])=>v).map(([k])=>k[0].toUpperCase()).join(',')})</span>}
                 {item.metadata.ferragens?.map((f, i) => (
                     <span key={i} className="bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 px-2 py-1 rounded">{f.quantidade}x <b className="text-white">{f.sku.codigo}</b></span>
                 ))}
