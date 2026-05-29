@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal, Card, CardContent, CardHeader, CardTitle, Input, Badge } from '../design-system/components';
-import { Plus, RefreshCw, Edit, DollarSign } from 'lucide-react';
+import { Plus, RefreshCw, Edit, DollarSign, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../design-system/components/Skeleton';
@@ -71,6 +71,13 @@ const FinanceiroFormasPage: React.FC = () => {
 
   return (
     <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginBottom: '1rem', padding: 0, height: 'auto', background: 'transparent' }}
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>

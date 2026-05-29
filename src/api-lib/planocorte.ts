@@ -4,6 +4,13 @@ import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 
+function safeUuid(val: any): string | null {
+  if (!val || typeof val !== 'string') return null;
+  const cleaned = val.trim();
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(cleaned) ? cleaned : null;
+}
+
 async function proximoSkuRetalho(tenantId: string): Promise<string> {
   const result = await rawSql`
     SELECT COALESCE(MAX(CAST(SUBSTRING(sku, 5) AS INTEGER)), 0) + 1 AS prox
@@ -49,10 +56,10 @@ export async function handlePlanoCorte(req: any, res: any) {
             kerf_mm: req.body.kerf_mm || 3,
             materiais: req.body.materiais || [],
             sku_engenharia: req.body.sku_engenharia,
-            visita_id: req.body.visita_id || null,
-            projeto_id: req.body.projeto_id || null,
-            orcamento_id: req.body.orcamento_id || null,
-            ordem_producao_id: req.body.ordem_producao_id || null,
+            visita_id: safeUuid(req.body.visita_id),
+            projeto_id: safeUuid(req.body.projeto_id),
+            orcamento_id: safeUuid(req.body.orcamento_id),
+            ordem_producao_id: safeUuid(req.body.ordem_producao_id),
             tenantId: tenantId,
           }).returning();
           
@@ -67,7 +74,7 @@ export async function handlePlanoCorte(req: any, res: any) {
 
           const duplicados = [];
           for (const r of retalhos_gerados) {
-             const result = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${plano_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
+             const result = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${safeUuid(plano_id)} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
              if (result && result.length > 0) {
                 duplicados.push(r);
              }
@@ -85,7 +92,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               await db.update(retalhosEstoque)
                 .set({ 
                   disponivel: false, 
-                  utilizado_em_id: item.plano_id, 
+                  utilizado_em_id: safeUuid(item.plano_id), 
                   data_utilizacao: new Date(),
                   updated_at: new Date()
                 })
@@ -94,8 +101,8 @@ export async function handlePlanoCorte(req: any, res: any) {
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'uso_plano',
                 item_tipo: 'retalho',
-                retalho_id: item.id_retalho,
-                plano_corte_id: item.plano_id,
+                retalho_id: safeUuid(item.id_retalho),
+                plano_corte_id: safeUuid(item.plano_id),
                 quantidade: 1,
                 motivo: 'CONSUMO EM PRODUÇÃO',
                 usuario_id: user?.id,
@@ -103,7 +110,7 @@ export async function handlePlanoCorte(req: any, res: any) {
               });
 
               // Sincronizar saída com Módulo Estoque Principal (materiais / movimentacoes_estoque)
-              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = (SELECT sku FROM retalhos_estoque WHERE id = ${item.id_retalho} AND tenant_id = ${tenantId}) AND tenant_id = ${tenantId}`;
+              const matRes = await rawSql`SELECT id, estoque_atual FROM materiais WHERE sku = (SELECT sku FROM retalhos_estoque WHERE id = ${safeUuid(item.id_retalho)} AND tenant_id = ${tenantId}) AND tenant_id = ${tenantId}`;
               if (matRes.length > 0) {
                 const matId = matRes[0].id;
                 await rawSql`UPDATE materiais SET estoque_atual = COALESCE(estoque_atual, 0) - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ${matId} AND tenant_id = ${tenantId}`;
@@ -125,8 +132,8 @@ export async function handlePlanoCorte(req: any, res: any) {
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'uso_plano',
                 item_tipo: 'chapa',
-                chapa_id: chapaRecord.length > 0 ? chapaRecord[0].id : null,
-                plano_corte_id: item.plano_id,
+                chapa_id: (chapaRecord.length > 0 && chapaRecord[0].id) ? safeUuid(chapaRecord[0].id) : null,
+                plano_corte_id: safeUuid(item.plano_id),
                 quantidade: item.qtd || 1,
                 motivo: `CONSUMO SKU: ${item.sku}`,
                 usuario_id: user?.id,
@@ -154,7 +161,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             for (const r of retalhos_gerados) {
                if (ignorar_retalhos_duplicados && r.plano_corte_id) {
                   // Verificar se já existe retalho idêntico no banco para este plano
-                  const existeNoBanco = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${r.plano_corte_id} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
+                  const existeNoBanco = await rawSql`SELECT id FROM retalhos_estoque WHERE plano_corte_origem_id = ${safeUuid(r.plano_corte_id)} AND largura_mm = ${r.largura_mm} AND altura_mm = ${r.altura_mm} AND tenant_id = ${tenantId} LIMIT 1`;
                   if (existeNoBanco && existeNoBanco.length > 0) {
                      continue; // Pula este retalho pois já foi gerado anteriormente e o usuário pediu para ignorar duplicados
                   }
@@ -182,7 +189,7 @@ export async function handlePlanoCorte(req: any, res: any) {
                 espessura_mm: r.espessura_mm,
                 sku_chapa: r.sku_chapa,
                 origem: 'sobra_plano_corte',
-                plano_corte_origem_id: r.plano_corte_id,
+                plano_corte_origem_id: safeUuid(r.plano_corte_id),
                 projeto_origem: r.projeto_origem || null,
                 usuario_criou: user?.id || 'sistema',
                 disponivel: true,
@@ -194,8 +201,8 @@ export async function handlePlanoCorte(req: any, res: any) {
               await db.insert(movimentacoesEstoque).values({
                 tipo: 'entrada',
                 item_tipo: 'retalho',
-                retalho_id: novoRetalho.id,
-                plano_corte_id: r.plano_corte_id,
+                retalho_id: novoRetalho.id || null,
+                plano_corte_id: safeUuid(r.plano_corte_id),
                 quantidade: r.quantidade,
                 motivo: 'GERAÇÃO AUTOMÁTICA DE SOBRA',
                 usuario_id: user?.id,
@@ -268,9 +275,9 @@ export async function handlePlanoCorte(req: any, res: any) {
               ${op_id}, 
               ${req.body.nome_projeto || 'PLANO DE CORTE'}, 
               'AGUARDANDO', 
-              ${req.body.projeto_id || null}, 
-              ${req.body.orcamento_id || null}, 
-              ${req.body.visita_id || null},
+              ${safeUuid(req.body.projeto_id)}, 
+              ${safeUuid(req.body.orcamento_id)}, 
+              ${safeUuid(req.body.visita_id)},
               NOW(),
               NOW(),
               ${tenantId}
@@ -284,7 +291,10 @@ export async function handlePlanoCorte(req: any, res: any) {
           });
         } else {
           const { plano_id, materiais, resultado } = req.body;
-          const [before] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, plano_id), eq(planosDeCorte.tenantId, tenantId)));
+          const validPlanoId = safeUuid(plano_id);
+          if (!validPlanoId) return res.status(400).json({ success: false, error: 'ID do plano inválido' });
+
+          const [before] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, validPlanoId), eq(planosDeCorte.tenantId, tenantId)));
           
           const [atualizado] = await db.update(planosDeCorte)
             .set({ 
@@ -292,30 +302,36 @@ export async function handlePlanoCorte(req: any, res: any) {
               resultado, 
               updated_at: new Date() 
             })
-            .where(and(eq(planosDeCorte.id, plano_id), eq(planosDeCorte.tenantId, tenantId)))
+            .where(and(eq(planosDeCorte.id, validPlanoId), eq(planosDeCorte.tenantId, tenantId)))
             .returning();
 
-          await auditLog('planos_de_corte', plano_id, 'SAVE_RESULT', user?.id, before, atualizado);
+          await auditLog('planos_de_corte', validPlanoId, 'SAVE_RESULT', user?.id, before, atualizado);
           
           return res.status(200).json({ success: true, data: atualizado });
         }
       }
 
       case 'PUT': {
+        const validId = safeUuid(id);
+        if (!validId) return res.status(400).json({ success: false, error: 'ID inválido' });
+
         const [upd] = await db.update(planosDeCorte)
           .set({ ...req.body, updated_at: new Date() })
-          .where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)))
+          .where(and(eq(planosDeCorte.id, validId), eq(planosDeCorte.tenantId, tenantId)))
           .returning();
         return res.status(200).json({ success: true, data: upd });
       }
 
       case 'DELETE': {
-        const [existing] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)));
+        const validId = safeUuid(id);
+        if (!validId) return res.status(400).json({ success: false, error: 'ID inválido' });
+
+        const [existing] = await db.select().from(planosDeCorte).where(and(eq(planosDeCorte.id, validId), eq(planosDeCorte.tenantId, tenantId)));
         if (!existing) return res.status(404).json({ success: false, error: 'PLANO NÃO ENCONTRADO' });
 
-        await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(and(eq(planosDeCorte.id, id), eq(planosDeCorte.tenantId, tenantId)));
+        await db.update(planosDeCorte).set({ deleted_at: new Date() }).where(and(eq(planosDeCorte.id, validId), eq(planosDeCorte.tenantId, tenantId)));
         
-        await auditLog('planos_de_corte', id, 'DELETE', user?.id, existing, { status: 'deleted' });
+        await auditLog('planos_de_corte', validId, 'DELETE', user?.id, existing, { status: 'deleted' });
         
         return res.status(200).json({ success: true });
       }

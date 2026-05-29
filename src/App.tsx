@@ -43,6 +43,7 @@ const ComprasPage = lazy(() => import('./pages/ComprasPage'));
 const AprovacaoPage = lazy(() => import('./pages/AprovacaoPage'));
 const PlanoCorteDemoPage = lazy(() => import('./pages/PlanoCorteDemo'));
 const RetalhosPage = lazy(() => import('./pages/RetalhosPage'));
+const SaaSAdminPage = lazy(() => import('./pages/SaaSAdminPage'));
 const SimuladorCortePage = lazy(() => import('./modules/simulador-corte/ui/pages/SimuladorCortePage'));
 const SimuladorProducaoPage = lazy(() => import('./modules/simulador-producao/ui/pages/SimuladorProducaoPage'));
 const TermosUsoPage = lazy(() => import('./pages/TermosUsoPage'));
@@ -106,6 +107,20 @@ function AuthGuard() {
 
   if (authLoading) return <LoadingScreen />;
   if (!user) return <LoginPage />;
+  return <Outlet />;
+}
+
+function SaaSAdminGuard() {
+  const { user, authLoading } = useAppContext();
+
+  if (authLoading) return <LoadingScreen />;
+  if (!user) return <LoginPage />;
+  
+  const isMasterAdmin = (user as any).email === 'admin@dluxury.com' || (user as any).tenantId === '00000000-0000-0000-0000-000000000000';
+  if (!isMasterAdmin) {
+    return <Navigate to="/painel" replace />;
+  }
+  
   return <Outlet />;
 }
 
@@ -234,6 +249,11 @@ export default function App() {
                       {/* Rotas de Simulador CNC 3D (Enterprise) */}
                       <Route element={<FeatureGuard feature="simulador_cnc" />}>
                         <Route path="simulador-corte" element={<SimuladorCortePage />} />
+                      </Route>
+
+                      {/* Rota do Administrador SaaS */}
+                      <Route element={<SaaSAdminGuard />}>
+                        <Route path="saas-admin" element={<SaaSAdminPage />} />
                       </Route>
                     </Route>
                   </Route>

@@ -218,13 +218,13 @@ const PosVendaPage: React.FC = () => {
         <form onSubmit={handleSave} className="flex flex-col gap-4">
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground/90">Cliente *</label>
-            <Select value={formData.cliente_id} onValueChange={val => setFormData({ ...formData, cliente_id: val })}>
+            <Select value={String(formData.cliente_id)} onValueChange={val => setFormData({ ...formData, cliente_id: val })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o cliente" />
               </SelectTrigger>
               <SelectContent>
                 {clientes.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

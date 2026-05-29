@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
 import { ItemCard } from '../components/ItemCard';
 import ContratoDigitalModal from '@/components/contrato/ContratoDigitalModal';
+import { exportBudgetToPDF } from '../services/export-pdf';
 
 export default function OrcamentoForm() {
     const { error: toastError, success: toastSuccess } = useToast();
@@ -407,7 +408,7 @@ export default function OrcamentoForm() {
                     <Button 
                         variant="outline" 
                         className="border-border hover:bg-muted text-foreground cursor-pointer" 
-                        onClick={() => window.print()}
+                        onClick={() => exportBudgetToPDF(orcamento)}
                     >
                         <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
                     </Button>

@@ -1,6 +1,7 @@
 import { sql } from './_db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { garantirSeedsFinanceiros } from './financeiro.js';
 
 
 export async function runInitDB() {
@@ -647,6 +648,9 @@ export async function runInitDB() {
     )
   `);
 
+  await safeSql(sql`ALTER TABLE ordens_prod ALTER COLUMN orcamento_id DROP NOT NULL`);
+  await safeSql(sql`ALTER TABLE ordens_prod ADD COLUMN IF NOT EXISTS projeto_id UUID`);
+
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS etapas_prod_kanban (
       id SERIAL PRIMARY KEY,
@@ -1039,7 +1043,7 @@ export async function runInitDB() {
     'subscriptions', 'usage_logs',
     'ordens_prod', 'etapas_prod_kanban', 'movimento_kanban', 'eventos_calendario', 'notificacoes_calendario',
     'custos_reais_op', 'rentabilidade_cliente', 'tendencias_preco', 'conversas_whatsapp', 'mensagens_whatsapp', 'modelos_msg_whatsapp',
-    'estoque_materiais_detalhado', 'movimento_estoque_granular', 'alertas_estoque', 'planejamento_reposicao', 'ordens_compra_granular', 'itens_oc_granular', 'contrato_digital', 'historico_assinatura_digital', 'mapeamento_sku', 'historico_sku_matching'
+    'estoque_materiais_detalhado', 'movimento_estoque_granular', 'alertas_estoque', 'planejamento_reposicao', 'ordens_compra_granular', 'itens_oc_granular', 'contrato_digital', 'historico_assinatura_digital', 'mapeamento_sku', 'historico_sku_matching', 'erp_movimentacoes_industrial'
   ];
 
 
@@ -1064,6 +1068,9 @@ export async function runInitDB() {
       VALUES (${defaultTenantId}, 15, 800, 13.00, 1.50)
       ON CONFLICT (tenant_id) DO NOTHING
     `;
+
+    // 2.5 Criar Plano de Contas padrão do tenant default se não existir
+    await garantirSeedsFinanceiros(defaultTenantId);
     
     // 3. Atualizar registros nulos para o tenant default
     for (const tabela of tabelasComTenant) {

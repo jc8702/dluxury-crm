@@ -13,6 +13,103 @@ export async function handleCheckout(req: any, res: any) {
       return res.status(400).json({ success: false, error: 'Tenant não identificado no token.' });
     }
 
+    const cleanUrl = (req.url || '').split('?')[0];
+
+    // GET /api/checkout/invoices -> Retorna histórico de faturas virtual / dinâmico
+    if (req.method === 'GET' && cleanUrl.endsWith('/invoices')) {
+      const subRes = await sql`
+        SELECT created_at, plano, valor, status, dia_vencimento
+        FROM subscriptions
+        WHERE tenant_id = ${tenantId}::uuid
+        LIMIT 1
+      `;
+
+      if (subRes.length === 0) {
+        return res.status(200).json({ success: true, data: [] });
+      }
+
+      const sub = subRes[0];
+      const invoices = [];
+      const startDate = sub.created_at ? new Date(sub.created_at) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const diaVenc = sub.dia_vencimento || 5;
+      const today = new Date();
+      
+      // Começar a gerar faturas a partir do primeiro mês de assinatura
+      let currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, diaVenc);
+      
+      while (currentDate <= today || (currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear())) {
+        const isCurrentMonth = currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
+        
+        let invoiceStatus = 'pago';
+        if (sub.status === 'overdue' && isCurrentMonth) {
+          invoiceStatus = 'pendente';
+        } else if (sub.status === 'suspended') {
+          invoiceStatus = 'cancelado';
+        }
+        
+        invoices.push({
+          id: `fat_${tenantId.substring(0, 4)}_${currentDate.getFullYear()}${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`,
+          competencia: `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`,
+          valor: parseFloat(sub.valor || '197.00'),
+          dataVencimento: currentDate.toISOString().split('T')[0],
+          status: invoiceStatus,
+          metodoPagamento: 'Boleto Bancário',
+          linkPdf: `https://sandbox.asaas.com/i/mock_invoice_${currentDate.getFullYear()}_${currentDate.getMonth() + 1}`
+        });
+        
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      
+      invoices.reverse();
+
+      return res.status(200).json({
+        success: true,
+        data: invoices
+      });
+    }
+
+    // POST /api/checkout/cancel -> Cancela a assinatura
+    if (req.method === 'POST' && cleanUrl.endsWith('/cancel')) {
+      await sql`
+        UPDATE subscriptions 
+        SET status = 'suspended', updated_at = NOW() 
+        WHERE tenant_id = ${tenantId}::uuid
+      `;
+      
+      await sql`
+        UPDATE tenants 
+        SET status = 'inativo' 
+        WHERE id = ${tenantId}::uuid
+      `;
+
+      return res.status(200).json({
+        success: true,
+        message: 'Assinatura cancelada com sucesso.'
+      });
+    }
+
+    // POST /api/checkout/gerar-boleto -> Simulação de emissão de boleto
+    if (req.method === 'POST' && cleanUrl.endsWith('/gerar-boleto')) {
+      const subRes = await sql`
+        SELECT valor, dia_vencimento
+        FROM subscriptions
+        WHERE tenant_id = ${tenantId}::uuid
+        LIMIT 1
+      `;
+
+      const sub = subRes[0] || { valor: 197.00 };
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          codigoBarras: "34191.79001 01043.513184 91020.150008 7 90000000019700",
+          linkPdf: "https://sandbox.asaas.com/i/mock_boleto_url",
+          vencimento: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          valor: parseFloat(sub.valor || '197.00')
+        }
+      });
+    }
+
     // GET /api/checkout -> Consultar dados de faturamento
     if (req.method === 'GET') {
       const subRes = await sql`
@@ -37,12 +134,10 @@ export async function handleCheckout(req: any, res: any) {
 
       const sub = subRes[0];
       
-      // Calcular dias restantes de trial/acesso
       const periodEnd = sub.current_period_end ? new Date(sub.current_period_end) : new Date();
       const diffTime = periodEnd.getTime() - Date.now();
       const diasRestantes = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-      // URL de checkout correspondente (gerar dinamicamente caso precise pagar)
       let invoiceUrl = null;
       if (sub.asaas_subscription_id) {
         invoiceUrl = `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
@@ -80,17 +175,14 @@ export async function handleCheckout(req: any, res: any) {
       const asaas = new AsaasService();
       let invoiceUrl = '';
 
-      // Se já possui assinatura ativa no Asaas, usamos a URL dela
       if (sub.asaas_subscription_id && !sub.asaas_subscription_id.startsWith('sub_mock_') && !sub.asaas_subscription_id.startsWith('sub_fail_')) {
         try {
-          // Consultar a assinatura na API real do Asaas para pegar a URL de faturamento atual
           const asaasSub = await asaas.consultarStatusAssinatura(sub.asaas_subscription_id);
           invoiceUrl = (asaasSub as any).invoiceUrl || `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
         } catch {
           invoiceUrl = `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
         }
       } else {
-        // Se a assinatura no banco for mock ou falha, re-criamos no Asaas
         try {
           const tenantRes = await sql`SELECT nome, email FROM tenants t JOIN users u ON u.tenant_id = t.id WHERE t.id = ${tenantId}::uuid AND u.role = 'admin' LIMIT 1`;
           const tenantNome = tenantRes[0]?.nome || 'Marcenaria CRM';
@@ -112,7 +204,6 @@ export async function handleCheckout(req: any, res: any) {
 
           invoiceUrl = createdSub.invoiceUrl;
 
-          // Atualizar o banco com os novos IDs reais
           await sql`
             UPDATE subscriptions SET 
               asaas_customer_id = ${customer.id},

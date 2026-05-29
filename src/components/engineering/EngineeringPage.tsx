@@ -5,7 +5,7 @@ import { CardSkeleton } from '../../design-system/components/Skeleton';
 import { api } from '../../lib/api';
 import { Button, Card, CardContent, Input, Modal } from '../../design-system/components';
 import DataTable from '../ui/DataTable';
-import SearchableSelect from '../ui/SearchableSelect';
+import { SKUAutocomplete } from '../../modules/orcamentos/components/SKUAutocomplete';
 
 const EngineeringPage: React.FC = () => {
   const { error: toastError } = useToast();
@@ -19,6 +19,85 @@ const EngineeringPage: React.FC = () => {
     horas_mo_padrao: 0, valor_hora_padrao: 150, valor_total: 0,
     regras_calculo: []
   });
+
+  const [skus, setSkus] = useState<any[]>([]);
+  useEffect(() => {
+    api.skus.list().then(setSkus).catch(console.error);
+  }, []);
+
+  const avaliarFormula = (formula: string, L: number, A: number, P: number): number => {
+    if (!formula) return 0;
+    try {
+      const expr = String(formula)
+        .toUpperCase()
+        .replace(/L/g, String(L))
+        .replace(/A/g, String(A))
+        .replace(/P/g, String(P));
+      if (/^[0-9.+\-*/()\s]+$/.test(expr)) {
+        // eslint-disable-next-line no-eval
+        return eval(expr) || 0;
+      }
+    } catch (err) {
+      console.error('Erro ao avaliar formula:', formula, err);
+    }
+    return 0;
+  };
+
+  const calcularCustoProporcionalPeca = (comp: any, L: number, A: number, P: number, skuSelected?: any): number => {
+    const larguraPeca = avaliarFormula(comp.formula_largura, L, A, P);
+    const alturaPeca = avaliarFormula(comp.formula_altura, L, A, P);
+    
+    if (larguraPeca <= 0 || alturaPeca <= 0) return 0;
+
+    const precoChapa = Number(skuSelected?.preco_base || skuSelected?.precoUnitario || 0);
+    const skuCodigo = String(skuSelected?.sku || skuSelected?.codigo || '').toUpperCase();
+    const nomeChapa = String(skuSelected?.nome || '').toUpperCase();
+
+    const isMDF = skuCodigo.includes('CHP-') || skuCodigo.includes('MDF-') || nomeChapa.includes('MDF') || nomeChapa.includes('CHAPA');
+
+    if (isMDF && precoChapa > 0) {
+      const larguraChapa = Number(skuSelected?.largura_mm || 2750);
+      const alturaChapa = Number(skuSelected?.altura_mm || 1830);
+      
+      const areaChapa = larguraChapa * alturaChapa;
+      const areaPeca = larguraPeca * alturaPeca;
+      const proporcao = areaPeca / areaChapa;
+      const perdaFator = Number(comp.formula_perda) || 1.10;
+      
+      return Number((precoChapa * proporcao * perdaFator).toFixed(2));
+    }
+    
+    return precoChapa;
+  };
+
+  const recalcularValorTotal = useCallback((regras: any[]) => {
+    return regras.reduce((sum: number, r: any) => {
+      return sum + (Number(r.valor_unitario) || 0) * (Number(r.quantidade) || 0);
+    }, 0);
+  }, []);
+
+  const handleDimensaoModuloChange = (campo: string, valor: number) => {
+    setFormData(prev => {
+      const novoFormData = { ...prev, [campo]: valor };
+      const L = Number(novoFormData.largura_padrao) || 0;
+      const A = Number(novoFormData.altura_padrao) || 0;
+      const P = Number(novoFormData.profundidade_padrao) || 0;
+
+      const novaLista = (novoFormData.regras_calculo || []).map((c: any) => {
+        const skuSelected = skus.find(s => s.id === c.sku_id);
+        return {
+          ...c,
+          valor_unitario: calcularCustoProporcionalPeca(c, L, A, P, skuSelected)
+        };
+      });
+
+      return {
+        ...novoFormData,
+        regras_calculo: novaLista,
+        valor_total: recalcularValorTotal(novaLista)
+      };
+    });
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -63,12 +142,6 @@ const EngineeringPage: React.FC = () => {
     }
   }, []);
 
-  const recalcularValorTotal = useCallback((regras: any[]) => {
-    return regras.reduce((sum: number, r: any) => {
-      return sum + (Number(r.valor_unitario) || 0) * (Number(r.quantidade) || 0);
-    }, 0);
-  }, []);
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -99,12 +172,11 @@ const EngineeringPage: React.FC = () => {
     });
   };
 
-  const [skus, setSkus] = useState<any[]>([]);
-  useEffect(() => {
-    api.skus.list().then(setSkus).catch(console.error);
-  }, []);
-
   const addComponent = () => {
+    const L = Number(formData.largura_padrao) || 0;
+    const A = Number(formData.altura_padrao) || 0;
+    const P = Number(formData.profundidade_padrao) || 0;
+
     const newComponent = {
       id: crypto.randomUUID(),
       componente_nome: 'NOVO COMPONENTE',
@@ -116,6 +188,10 @@ const EngineeringPage: React.FC = () => {
       sku_id: skus[0]?.id || '',
       tipo_regra: 'AREA'
     };
+    
+    const skuSelected = skus.find(s => s.id === newComponent.sku_id);
+    newComponent.valor_unitario = calcularCustoProporcionalPeca(newComponent, L, A, P, skuSelected);
+
     const novaLista = [...(formData.regras_calculo || []), newComponent];
     setFormData({
       ...formData,
@@ -134,9 +210,18 @@ const EngineeringPage: React.FC = () => {
   };
 
   const updateComponent = (id: string, updates: any) => {
-    const novaLista = formData.regras_calculo.map((c: any) =>
-      c.id === id ? { ...c, ...updates } : c
-    );
+    const L = Number(formData.largura_padrao) || 0;
+    const A = Number(formData.altura_padrao) || 0;
+    const P = Number(formData.profundidade_padrao) || 0;
+
+    const novaLista = formData.regras_calculo.map((c: any) => {
+      if (c.id !== id) return c;
+      const updated = { ...c, ...updates };
+      const skuSelected = skus.find(s => s.id === updated.sku_id);
+      updated.valor_unitario = calcularCustoProporcionalPeca(updated, L, A, P, skuSelected);
+      return updated;
+    });
+
     setFormData({
       ...formData,
       regras_calculo: novaLista,
@@ -247,15 +332,13 @@ const EngineeringPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 border border-border/50 rounded-xl">
-            <Input type="number" label="Largura (cm)" value={formData.largura_padrao} onChange={e => setFormData({...formData, largura_padrao: Number(e.target.value)})} />
-            <Input type="number" label="Altura (cm)" value={formData.altura_padrao} onChange={e => setFormData({...formData, altura_padrao: Number(e.target.value)})} />
-            <Input type="number" label="Profundidade (cm)" value={formData.profundidade_padrao} onChange={e => setFormData({...formData, profundidade_padrao: Number(e.target.value)})} />
+            <Input type="number" label="Largura (mm)" value={formData.largura_padrao} onChange={e => handleDimensaoModuloChange('largura_padrao', Number(e.target.value))} />
+            <Input type="number" label="Altura (mm)" value={formData.altura_padrao} onChange={e => handleDimensaoModuloChange('altura_padrao', Number(e.target.value))} />
+            <Input type="number" label="Profundidade (mm)" value={formData.profundidade_padrao} onChange={e => handleDimensaoModuloChange('profundidade_padrao', Number(e.target.value))} />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <Input type="number" label="Horas MO" value={formData.horas_mo_padrao} onChange={e => setFormData({...formData, horas_mo_padrao: Number(e.target.value)})} />
-            <Input type="number" label="Valor/Hora (R$)" value={formData.valor_hora_padrao} onChange={e => setFormData({...formData, valor_hora_padrao: Number(e.target.value)})} />
-            <Input type="number" label="Valor Total (R$)" value={formData.valor_total} onChange={e => setFormData({...formData, valor_total: Number(e.target.value)})} />
+          <div className="grid grid-cols-1 gap-4">
+            <Input type="number" label="Valor Total (R$)" value={formData.valor_total} onChange={e => setFormData({...formData, valor_total: Number(e.target.value)})} disabled={formData.regras_calculo?.length > 0} helperText={formData.regras_calculo?.length > 0 ? "Calculado proporcionalmente a partir das peças MDF" : "Defina o valor base do módulo"} />
           </div>
 
           <div className="mt-4 border-t border-border pt-4">
@@ -292,12 +375,11 @@ const EngineeringPage: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Material (SKU)</label>
-                      <SearchableSelect
-                        items={skus.map((s: any) => ({ id: s.id, label: s.nome || s.sku, sku: s.sku }))}
-                        value={comp.sku_id}
-                        placeholder="Buscar material..."
-                        onChange={(id) => updateComponent(comp.id, { sku_id: id })}
+                      <label className="mb-1.5 block text-xs font-medium text-foreground/80">Material (SKU) *</label>
+                      <SKUAutocomplete
+                        defaultValue={skus.find(s => s.id === comp.sku_id)?.sku || ''}
+                        onSelect={(sku) => updateComponent(comp.id, { sku_id: sku.id })}
+                        placeholder="Buscar SKU..."
                       />
                     </div>
                     <div>

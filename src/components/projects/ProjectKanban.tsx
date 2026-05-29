@@ -17,7 +17,8 @@ const ProjectKanban: React.FC = () => {
     responsavel: '',
     observacoes: '',
     status: 'lead' as ProjectStatus,
-    visitaId: 'none'
+    visitaId: 'none',
+    orcamentoId: 'none'
   });
 
   const visitas = events?.filter((e: any) => e.tipo === 'visita') || [];
@@ -56,7 +57,8 @@ const ProjectKanban: React.FC = () => {
       responsavel: formData.responsavel || undefined,
       observacoes: formData.observacoes,
       status: formData.status,
-      visitaId: formData.visitaId === 'none' ? undefined : (formData.visitaId || undefined)
+      visitaId: formData.visitaId === 'none' ? undefined : (formData.visitaId || undefined),
+      orcamentoId: formData.orcamentoId === 'none' ? undefined : (formData.orcamentoId || undefined)
     };
 
     if (editingItem) {
@@ -79,7 +81,8 @@ const ProjectKanban: React.FC = () => {
       responsavel: item.responsavel || '',
       observacoes: item.observacoes || item.observations || '',
       status: item.status,
-      visitaId: item.visitaId || 'none'
+      visitaId: item.visitaId || 'none',
+      orcamentoId: item.orcamentoId || item.orcamento_id || 'none'
     });
     setIsModalOpen(true);
   };
@@ -89,14 +92,15 @@ const ProjectKanban: React.FC = () => {
     setEditingItem(null);
     setFormData({
       clientId: '', ambiente: '', descricao: '', valorEstimado: '',
-      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: 'none'
+      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: 'none', orcamentoId: 'none'
     });
   };
 
   // Map projects to kanban items format
   const kanbanItems = projects.map(p => {
     const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
-    const badges = projOrcamentos.map(o => `📄 ${o.numero}`);
+    const vinculado = orcamentos.find(o => o.id?.toString() === p.orcamentoId?.toString() || o.id?.toString() === p.orcamento_id?.toString());
+    const badges = vinculado ? [`📄 ${vinculado.numero}`] : projOrcamentos.map(o => `📄 ${o.numero}`);
 
     return {
       id: p.id,
@@ -118,6 +122,8 @@ const ProjectKanban: React.FC = () => {
       observacoes: p.observacoes,
       description: p.descricao,
       observations: p.observacoes,
+      visitaId: p.visitaId || p.visita_id,
+      orcamentoId: p.orcamentoId || p.orcamento_id,
     };
   });
 
@@ -217,21 +223,46 @@ const ProjectKanban: React.FC = () => {
               value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular à Visita</label>
-            <Select value={formData.visitaId} onValueChange={val => setFormData({ ...formData, visitaId: val })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhuma visita vinculada" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhuma visita vinculada</SelectItem>
-                {visitas.map((v: any) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular à Visita</label>
+              <Select value={formData.visitaId} onValueChange={val => setFormData({ ...formData, visitaId: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhuma visita vinculada" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma visita vinculada</SelectItem>
+                  {visitas.map((v: any) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular ao Orçamento</label>
+              <Select 
+                value={formData.orcamentoId} 
+                onValueChange={val => setFormData({ ...formData, orcamentoId: val })}
+                disabled={!formData.clientId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={formData.clientId ? "Nenhum orçamento selecionado" : "Selecione o cliente primeiro"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum orçamento selecionado</SelectItem>
+                  {orcamentos
+                    .filter((o: any) => o.cliente_id?.toString() === formData.clientId?.toString())
+                    .map((o: any) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        Orçamento #{o.numero || o.id.substring(0,8).toUpperCase()} - R$ {parseFloat(o.valor_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex justify-between items-center">

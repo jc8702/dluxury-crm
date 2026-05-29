@@ -103,7 +103,10 @@ export default function CalendarioMes({ dataSelecionada, eventos, onEventoClick,
                         `}
                         title={evento.titulo}
                       >
-                        <span className="truncate">{evento.titulo}</span>
+                        <span className="truncate">
+                          {evento.titulo}
+                          {evento.cliente_nome && ` (${evento.cliente_nome})`}
+                        </span>
                         {evento.atrasado && !evento.concluido && (
                           <AlertCircle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
                         )}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Modal, Button, Input } from '../design-system/components';
 
-import { Plus, CheckCircle, Trash2, ArrowDownLeft, Calendar, ChevronDown, ChevronRight, Edit2, Printer, TrendingUp, MessageCircle } from 'lucide-react';
+import { Plus, CheckCircle, Trash2, ArrowDownLeft, Calendar, ChevronDown, ChevronRight, Edit2, Printer, TrendingUp, MessageCircle, ArrowLeft } from 'lucide-react';
 import { WhatsAppService } from '../modules/plano-corte/infrastructure/services/WhatsAppService';
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
@@ -130,6 +130,13 @@ export default function FinanceiroTitulosReceberPage() {
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-fade-in">
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>

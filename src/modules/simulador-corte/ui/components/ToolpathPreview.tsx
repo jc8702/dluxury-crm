@@ -22,13 +22,10 @@ export default function ToolpathPreview({
   escala,
 }: ToolpathPreviewProps) {
   
-  // Se o percurso estiver desabilitado, não renderiza nada
-  if (!mostrarCaminho) {
-    return null;
-  }
-
   // Mapeia e divide os segmentos do SimulationProgram para renderização
   const segmentosRender = useMemo(() => {
+    if (!mostrarCaminho) return [];
+
     const list: {
       from: [number, number, number];
       to: [number, number, number];

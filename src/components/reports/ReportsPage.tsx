@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from '../../context/ToastContext';
-import { Download, BarChart3, TrendingUp, AlertCircle, ShoppingCart, Loader2 } from 'lucide-react';
+import { 
+  Download, BarChart3, TrendingUp, AlertCircle, 
+  ShoppingCart, Loader2, FileText, LayoutDashboard,
+  Calendar, Layers, CheckCircle
+} from 'lucide-react';
 import { reportService } from '../../services/reportService';
 import { api } from '../../lib/api';
 import { useAppContext } from '../../context/AppContext';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '../../design-system/components';
+import { 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell 
+} from 'recharts';
+
+const COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#6366f1'];
 
 const ReportsPage: React.FC = () => {
   const { info: toastInfo } = useToast();
@@ -24,7 +34,7 @@ const ReportsPage: React.FC = () => {
     setLoading(true);
     try {
       const data = await api.reports.get(type, params.projectId);
-      setReportData(data);
+      setReportData(data || []);
       setActiveReport(type);
     } catch (err) {
       console.error('Erro ao carregar relatório:', err);
@@ -51,70 +61,140 @@ const ReportsPage: React.FC = () => {
     }
   };
 
+  // Renderiza gráfico reativo com base no tipo de relatório ativo
+  const renderChart = () => {
+    if (reportData.length === 0) return null;
+
+    if (activeReport === 'fin-rentabilidade') {
+      // Mapear dados para bar chart
+      const chartData = reportData.map(item => ({
+        name: (item.projeto || item.name || '').substring(0, 15),
+        'Valor Venda': Number(item.valor_venda || item.receita || 0),
+        'Custo Insumos': Number(item.custo_material || item.custo || 0),
+        'Margem Líquida': Number(item.margem_valor || item.lucro || 0),
+      }));
+
+      return (
+        <Card className="mb-6 border-border/50">
+          <CardHeader>
+            <CardTitle className="text-xs font-black tracking-widest uppercase italic text-primary">Análise de Rentabilidade por Projeto</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} axisLine={false} tickLine={false} tickFormatter={v => `R$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                <Bar dataKey="Valor Venda" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Custo Insumos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Margem Líquida" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (activeReport === 'com-necessidade') {
+      const chartData = reportData.slice(0, 8).map(item => ({
+        name: (item.material || item.sku || '').substring(0, 15),
+        'Qtd Necessária': Number(item.quantidade_necessaria || item.quantidade || 0),
+        'Qtd Estoque': Number(item.quantidade_estoque || item.estoque || 0)
+      }));
+
+      return (
+        <Card className="mb-6 border-border/50">
+          <CardHeader>
+            <CardTitle className="text-xs font-black tracking-widest uppercase italic text-primary">Necessidade de Matéria-Prima em Estoque</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                <Bar dataKey="Qtd Necessária" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Qtd Estoque" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <div className="page-container anim-fade-in" style={{ padding: '1rem' }}>
+    <div className="p-8 max-w-[1600px] mx-auto animate-fade-in pb-20">
       {/* Header */}
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-          <BarChart3 style={{ color: 'hsl(var(--primary))' }} /> CENTRAL DE RELATÓRIOS
-        </h1>
-        <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>Inteligência industrial e financeira em documentos acionáveis</p>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 border-b border-border pb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+              <BarChart3 className="text-primary w-6 h-6" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">Business Intelligence</span>
+          </div>
+          <h1 className="text-5xl font-black italic tracking-tighter">
+            CENTRAL DE <span className="text-primary underline decoration-primary/30 underline-offset-8">RELATÓRIOS</span>
+          </h1>
+          <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
+            Métricas de produção marcenaria, fluxo de caixa, custos integrados de peças e insumos para auditoria gerencial.
+          </p>
+        </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }} className="md:grid-cols-[280px_1fr]">
-        <style>{`
-          @media (min-width: 768px) {
-            .md\\:grid-cols-\\[280px_1fr\\] {
-              grid-template-columns: 280px 1fr;
-            }
-          }
-        `}</style>
-        
-        {/* Menu de Tipos */}
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.25rem 0' }}>Financeiro</p>
-            <ReportMenuItem 
-              icon={<TrendingUp size={18} />} 
-              label="Rentabilidade de Projetos" 
-              active={activeReport === 'fin-rentabilidade'}
-              onClick={() => loadReportData('fin-rentabilidade')}
-            />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        {/* Menu Lateral de Relatórios */}
+        <aside className="md:col-span-3 space-y-6">
+          <Card className="glass-elevated rounded-3xl border border-border">
+            <CardHeader>
+              <CardTitle className="text-xs font-black tracking-widest uppercase italic">Painéis Financeiros</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 p-4 pt-0">
+              <ReportMenuItem 
+                icon={<TrendingUp size={18} />} 
+                label="Rentabilidade de Projetos" 
+                active={activeReport === 'fin-rentabilidade'}
+                onClick={() => loadReportData('fin-rentabilidade')}
+              />
+            </CardContent>
+          </Card>
           
-          <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1rem' }}>
-            <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>Industrial / Oficina</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ padding: '0.75rem', background: 'hsl(var(--surface))', borderRadius: '12px', border: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                 <label style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontWeight: 700 }}>Selecionar Projeto:</label>
-                 <select 
-                   className="input-base" 
-                   style={{ 
-                     fontSize: '0.8rem', 
-                     width: '100%', 
-                     padding: '0.5rem',
-                     background: 'rgba(255, 255, 255, 0.05)',
-                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                     borderRadius: '8px',
-                     color: 'white',
-                     outline: 'none'
-                   }}
-                   value={selectedProjectId}
-                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                 >
-                   {projects.map(p => (
-                     <option key={p.id} value={p.id} style={{ background: '#1e293b' }}>{p.cliente_name} - {p.ambiente}</option>
-                   ))}
-                 </select>
-                 <Button 
-                   variant={activeReport === 'ind-romaneio' ? 'primary' : 'outline'}
-                   size="sm"
-                   onClick={() => loadReportData('ind-romaneio', { projectId: selectedProjectId })}
-                   style={{ width: '100%', fontSize: '0.75rem', padding: '0.4rem' }} 
-                 >
-                   Gerar Romaneio
-                 </Button>
-              </div>
+          <Card className="glass-elevated rounded-3xl border border-border">
+            <CardHeader>
+              <CardTitle className="text-xs font-black tracking-widest uppercase italic">Operacional & Produção</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 p-4 pt-0">
+              {projects.length > 0 && (
+                <div className="bg-muted/40 p-4 rounded-2xl border border-border flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Selecionar Projeto</label>
+                  <div className="relative">
+                    <select 
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-primary appearance-none"
+                      value={selectedProjectId}
+                      onChange={(e) => setSelectedProjectId(e.target.value)}
+                    >
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id} className="bg-neutral-900">{p.cliente_name || 'N/A'} - {p.ambiente}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button 
+                    variant={activeReport === 'ind-romaneio' ? 'primary' : 'outline'}
+                    size="sm"
+                    className="w-full h-10 font-bold uppercase tracking-wider text-xs italic"
+                    onClick={() => loadReportData('ind-romaneio', { projectId: selectedProjectId })}
+                  >
+                    Gerar Romaneio
+                  </Button>
+                </div>
+              )}
               
               <ReportMenuItem 
                 icon={<AlertCircle size={18} />} 
@@ -122,102 +202,128 @@ const ReportsPage: React.FC = () => {
                 active={activeReport === 'ind-desvios'}
                 onClick={() => loadReportData('ind-desvios')}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1rem' }}>
-            <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>Compras / Logística</p>
-            <ReportMenuItem 
-              icon={<ShoppingCart size={18} />} 
-              label="Necessidade de Compras" 
-              active={activeReport === 'com-necessidade'}
-              onClick={() => loadReportData('com-necessidade')}
-            />
-          </div>
+          <Card className="glass-elevated rounded-3xl border border-border">
+            <CardHeader>
+              <CardTitle className="text-xs font-black tracking-widest uppercase italic">Suprimentos & Compras</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 p-4 pt-0">
+              <ReportMenuItem 
+                icon={<ShoppingCart size={18} />} 
+                label="Necessidade de Compras" 
+                active={activeReport === 'com-necessidade'}
+                onClick={() => loadReportData('com-necessidade')}
+              />
+            </CardContent>
+          </Card>
         </aside>
 
-        {/* Visualização de Dados */}
-        <main style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Quadro Principal de BI */}
+        <main className="md:col-span-9">
           {!activeReport ? (
-            <Card style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '500px' }}>
-              <CardContent style={{ textAlign: 'center', padding: '3rem' }}>
-                <BarChart3 size={64} style={{ opacity: 0.15, marginBottom: '1.5rem', color: 'hsl(var(--primary))', margin: '0 auto 1.5rem' }} />
-                <p style={{ fontWeight: 600, color: 'hsl(var(--muted-foreground))' }}>Selecione um relatório ao lado para extração de inteligência.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '500px', overflow: 'hidden' }}>
-              <CardHeader style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid hsl(var(--border))', padding: '1.25rem 1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                 <div>
-                    <CardTitle style={{ fontSize: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {activeReport.split('-')[1].toUpperCase()}
-                    </CardTitle>
-                    <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>Processado em {new Date().toLocaleString()}</span>
-                 </div>
-                 
-                 <Button 
-                   variant="primary"
-                   onClick={handleExportPdf}
-                   disabled={loading || reportData.length === 0}
-                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
-                 >
-                    {loading ? <Loader2 className="anim-spin" size={16} /> : <Download size={16} />} EXPORTAR PDF
-                 </Button>
-              </CardHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="glass-elevated p-8 text-center rounded-[2.5rem] border border-dashed border-border col-span-2 py-20">
+                <LayoutDashboard className="w-16 h-16 text-primary/20 mx-auto mb-6" />
+                <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">QUETIONADOR DE BI DESATIVADO</h3>
+                <p className="text-muted-foreground max-w-md mx-auto text-xs uppercase tracking-wider font-medium leading-relaxed mb-6">
+                  Selecione um dos relatórios do menu ao lado para extrair inteligência, renderizar gráficos interativos e exportar documentos PDF oficiais.
+                </p>
+              </Card>
 
-              <CardContent style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
-                {loading ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '1rem' }}>
-                     <Loader2 className="anim-spin" size={32} style={{ color: 'hsl(var(--primary))' }} />
-                     <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>Executando queries no banco analítico...</p>
+              {[
+                { title: 'Rentabilidade', desc: 'Análise de margem por contrato, deduzindo chapas MDF, fita de borda e ferragens vinculadas.', icon: TrendingUp },
+                { title: 'Romaneio Técnico', desc: 'Lista detalhada de peças prontas para a expedição e entrega na obra com etiquetas.', icon: Layers },
+                { title: 'Desvios de Produção', desc: 'Identificação de retrabalhos de corte ou peças refeitas por falhas no processo.', icon: AlertCircle },
+                { title: 'Planejamento de Compras', desc: 'Previsão de faltas de insumos com base em orçamentos recém-fechados no funil.', icon: ShoppingCart }
+              ].map((box, i) => (
+                <div key={i} className="glass-elevated p-6 rounded-[2rem] border border-border/40 hover:border-primary/20 transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2.5 bg-primary/5 rounded-xl border border-primary/10 text-primary">
+                      <box.icon className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-white italic">{box.title}</h4>
                   </div>
-                ) : (
-                  <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid hsl(var(--border))' }} className="custom-scrollbar">
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ background: 'hsl(var(--surface))', borderBottom: '1px solid hsl(var(--border))', textAlign: 'left' }}>
-                          {(reportData.length > 0 ? Object.keys(reportData[0]) : []).map(k => (
-                            <th key={k} style={{ padding: '1rem', textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 800, color: 'hsl(var(--muted-foreground))' }}>
-                              {k.replace(/_/g, ' ')}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {reportData.length === 0 ? (
-                          <tr>
-                            <td colSpan={10} style={{ padding: 0 }}>
-                               <div style={{ padding: '3rem', textAlign: 'center', color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>
-                                 Nenhum dado encontrado para o filtro selecionado.
-                               </div>
-                            </td>
+                  <p className="text-xs text-muted-foreground font-medium leading-relaxed">{box.desc}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Gráficos em Tempo Real */}
+              {renderChart()}
+
+              {/* Tabela de Dados e Ações */}
+              <Card className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl">
+                <CardHeader className="flex flex-row justify-between items-center border-b border-border p-6 flex-wrap gap-4 bg-muted/10">
+                  <div>
+                    <CardTitle className="text-lg font-black tracking-tighter uppercase italic flex items-center gap-2">
+                      <FileText className="text-primary w-5 h-5" />
+                      {activeReport.split('-').pop()?.toUpperCase()}
+                    </CardTitle>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Compilado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</span>
+                  </div>
+                  
+                  <Button 
+                    variant="primary"
+                    onClick={handleExportPdf}
+                    disabled={loading || reportData.length === 0}
+                    className="h-11 px-6 font-black italic tracking-tight text-xs flex items-center gap-2 shadow-lg shadow-primary/10"
+                  >
+                    {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Download size={14} />} EXPORTAR PDF
+                  </Button>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-32 gap-4">
+                      <Loader2 className="animate-spin w-10 h-10 text-primary" />
+                      <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Consultando banco de dados...</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto scrollbar-thin">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-[#0A0A0A] border-b border-border sticky top-0 z-10">
+                            {(reportData.length > 0 ? Object.keys(reportData[0]) : []).map(k => (
+                              <th key={k} className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-muted-foreground italic">
+                                {k.replace(/_/g, ' ')}
+                              </th>
+                            ))}
                           </tr>
-                        ) : (
-                          reportData.map((row, i) => (
-                            <tr 
-                              key={i} 
-                              style={{ 
-                                borderBottom: '1px solid hsl(var(--border))', 
-                                background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent',
-                                transition: 'background 0.2s' 
-                              }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'hsl(var(--surface-hover))')}
-                              onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent')}
-                            >
-                              {Object.values(row).map((v: any, j) => (
-                                <td key={j} style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                                  {typeof v === 'number' && v > 1000 ? v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : v?.toString()}
-                                </td>
-                              ))}
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {reportData.length === 0 ? (
+                            <tr>
+                              <td colSpan={10} className="px-6 py-24 text-center">
+                                <AlertCircle className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                                <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground italic">Nenhum dado retornado para os filtros atuais</p>
+                              </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                          ) : (
+                            reportData.map((row, i) => (
+                              <tr 
+                                key={i} 
+                                className="hover:bg-muted/20 transition-colors"
+                              >
+                                {Object.values(row).map((v: any, j) => (
+                                  <td key={j} className="px-6 py-4 text-xs font-semibold text-muted-foreground font-mono">
+                                    {typeof v === 'number' && v > 1000 
+                                      ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) 
+                                      : v?.toString()}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
         </main>
       </div>
@@ -226,32 +332,18 @@ const ReportsPage: React.FC = () => {
 };
 
 const ReportMenuItem: React.FC<{ icon: any, label: string, onClick: () => void, active: boolean }> = ({ icon, label, onClick, active }) => (
-  <button 
+  <Button 
+    variant={active ? 'primary' : 'ghost'}
     onClick={onClick}
-    style={{
-      all: 'unset',
-      padding: '0.75rem 1rem',
-      borderRadius: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      cursor: 'pointer',
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      background: active ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
-      border: active ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
-      color: active ? 'hsl(var(--primary))' : 'var(--text)',
-      boxShadow: active ? '0 0 15px rgba(212, 175, 55, 0.05)' : 'none'
-    }}
-    onMouseEnter={e => {
-      if (!active) e.currentTarget.style.background = 'hsl(var(--surface-hover))';
-    }}
-    onMouseLeave={e => {
-      if (!active) e.currentTarget.style.background = 'transparent';
-    }}
+    className={`w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs border ${
+      active 
+        ? 'border-primary/20 bg-primary/10 text-primary shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
+        : 'border-transparent text-muted-foreground hover:bg-muted/10'
+    }`}
   >
-    <div style={{ color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }}>{icon}</div>
-    <span style={{ fontSize: '0.85rem', fontWeight: active ? '700' : '500' }}>{label}</span>
-  </button>
+    <div className={`mr-3 ${active ? 'text-primary' : 'text-muted-foreground'}`}>{icon}</div>
+    <span className="italic">{label}</span>
+  </Button>
 );
 
 export default ReportsPage;

@@ -1,20 +1,51 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { 
   CheckCircle2, AlertCircle, 
   XCircle, ShieldCheck, Clock, 
-  MapPin, Phone, Mail
+  MapPin, Phone, Mail, FileDown
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
+import { exportBudgetToPDF } from '../modules/orcamentos/services/export-pdf';
 
 interface AprovacaoPageProps {
   token: string;
 }
 
-const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
+const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
   const { error: toastError } = useToast();
+  const { token: urlToken, numero } = useParams();
+  const token = propToken || urlToken || numero || "";
+
   const [orcamento, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleDownloadPDF = () => {
+    if (!orcamento) return;
+    
+    const orcMapeado = {
+      numeroOrcamento: orcamento.numero,
+      valorTotalVenda: orcamento.valor_final,
+      cliente: {
+        nome: orcamento.cliente_nome,
+        cidade: '',
+        uf: '',
+        telefone: orcamento.cliente_telefone
+      },
+      validadeDias: orcamento.validade_dias || 15,
+      taxaFinanceiraPercentual: orcamento.taxa_mensal || 0,
+      itens: (orcamento.itens || []).map((item: any) => ({
+        nomeCustomizado: item.descricao,
+        unidadeMedida: 'UN',
+        precoVendaUnitario: item.valor_unitario,
+        quantidade: item.quantidade,
+        skuCodigo: ''
+      }))
+    };
+    
+    exportBudgetToPDF(orcMapeado);
+  };
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<'idle' | 'approving' | 'rejecting'>('idle');
   const [formName, setFormName] = useState('');
@@ -134,9 +165,17 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token }) => {
           {/* Top Info */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span style={{ background: '#E2AC0020', color: '#E2AC00', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>OrÃ§amento {orcamento.numero}</span>
+              <span style={{ background: '#E2AC0020', color: '#E2AC00', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>Orçamento {orcamento.numero}</span>
               <h1 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '1rem 0 0.5rem 0' }}>Proposta Comercial</h1>
-              <p style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={16} /> Emitido em {new Date(orcamento.criado_em).toLocaleDateString('pt-BR')}</p>
+              <p style={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem 0' }}><Clock size={16} /> Emitido em {new Date(orcamento.created_at || orcamento.criado_em).toLocaleDateString('pt-BR')}</p>
+              <button 
+                onClick={handleDownloadPDF} 
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', fontSize: '0.85rem', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                <FileDown size={16} />
+                Baixar PDF da Proposta
+              </button>
             </div>
             <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>{orcamento.cliente_nome}</p>

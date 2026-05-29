@@ -59,6 +59,61 @@ export async function handleCalendario(req: any, res: any) {
         operacao_prod_id: e.operacao_prod_id
       }));
 
+      // 1.5 Buscar compromissos/visitas da tabela `eventos`
+      let queryAgendaStr = `
+        SELECT 
+          e.id::text,
+          e.titulo,
+          e.descricao,
+          e.data_inicio::text as data_inicio,
+          e.tipo,
+          e.cor,
+          e.cliente_id,
+          c.nome as cliente_nome
+        FROM eventos e
+        LEFT JOIN clients c ON e.cliente_id::text = c.id::text AND c.tenant_id = e.tenant_id
+        WHERE e.tenant_id = $1::uuid
+          AND EXTRACT(MONTH FROM e.data_inicio) = $2
+          AND EXTRACT(YEAR FROM e.data_inicio) = $3
+      `;
+
+      const agendaParams: any[] = [tenantId, mesNum, anoNum];
+      const dbAgenda = await sql(queryAgendaStr as any, ...agendaParams);
+
+      dbAgenda.forEach((e: any) => {
+        const tipoEventoMapped = (e.tipo === 'visita' || e.tipo === 'reuniao') ? 'reuniao' : 'tarefa';
+        
+        if (filtro_tipo && filtro_tipo !== tipoEventoMapped) {
+          return;
+        }
+
+        let dateStr = '';
+        let timeStr = undefined;
+        if (e.data_inicio) {
+          const parts = e.data_inicio.split(' ');
+          dateStr = parts[0];
+          if (parts[1]) {
+            timeStr = parts[1].substring(0, 5);
+          } else if (e.data_inicio.includes('T')) {
+            const isoParts = e.data_inicio.split('T');
+            dateStr = isoParts[0];
+            timeStr = isoParts[1].substring(0, 5);
+          }
+        }
+
+        eventosList.push({
+          id: `agenda-${e.id}`,
+          titulo: e.titulo,
+          descricao: e.descricao || '',
+          data_evento: dateStr,
+          hora_evento: timeStr,
+          tipo_evento: tipoEventoMapped,
+          cor_categoria: e.cor || '#d4af37',
+          concluido: false,
+          cliente_nome: e.cliente_nome || undefined
+        });
+      });
+
       // 2. Adicionar prazos de entrega de OPs se não houver filtro ou se for filtro = 'prazo_entrega'
       if (!filtro_tipo || filtro_tipo === 'prazo_entrega') {
         const ops = await sql`

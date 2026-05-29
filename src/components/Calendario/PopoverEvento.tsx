@@ -145,6 +145,15 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
               </div>
             )}
 
+            {evento.cliente_nome && (
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-foreground/80">
+                  Cliente: {evento.cliente_nome}
+                </span>
+              </div>
+            )}
+
             {/* Descrição */}
             {evento.descricao && (
               <div className="p-3 rounded-xl border border-border bg-muted/20 text-foreground/90 leading-relaxed font-sans text-xs">

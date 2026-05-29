@@ -15,6 +15,7 @@ export interface EventoCalendarioType {
   operacao_prod_id?: string;
   dias_restantes?: number;
   atrasado?: boolean;
+  cliente_nome?: string;
 }
 
 export interface CriarEventoPayload {

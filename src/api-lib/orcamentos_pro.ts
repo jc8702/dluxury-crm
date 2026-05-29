@@ -431,12 +431,14 @@ record.count++;
   return true;
 }
 
+/** Reset rate limiter (para testes) */
+export function _resetRateLimit() {
+  rateLimitMap.clear();
+}
+
 export async function handleOrcamentosPro(req: any, res: any) {
-    // Temporarily bypassing auth for debugging
-    // const { authorized, error, user } = validateAuth(req);
-    // if (!authorized) return res.status(401).json({ success: false, error });
-    const authorized = true;
-    const user = { id: '00000000-0000-0000-0000-000000000000', tenantId: '00000000-0000-0000-0000-000000000000' };
+    const { authorized, error, user } = validateAuth(req);
+    if (!authorized) return res.status(401).json({ success: false, error });
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
     // Rate Limiting por usuário

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleOrcamentosPro, explodirBOM, recalcularOrcamento } from '../orcamentos_pro.js';
+import { handleOrcamentosPro, explodirBOM, recalcularOrcamento, _resetRateLimit } from '../orcamentos_pro.js';
 import { db } from '../drizzle-db.js';
 import { validateAuth } from '../_db.js';
 import { PgDialect } from 'drizzle-orm/pg-core';
@@ -48,6 +48,7 @@ vi.mock('../_db.js', () => ({
 describe('Módulo de Orçamentos PRO', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetRateLimit();
     // Retorna um ID aleatório por padrão para que os testes não compartilhem a mesma quota de rate limit
     vi.mocked(validateAuth).mockImplementation(() => {
       return { authorized: true, tenantId: '00000000-0000-0000-0000-000000000000', user: { id: `test-user-${Math.random()}` } };

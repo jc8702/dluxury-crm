@@ -11,13 +11,12 @@ export async function handleAprovacao(req: any, res: any) {
         SELECT o.id, o.cliente_id, o.projeto_id, o.numero, o.status, o.valor_base, o.taxa_mensal, o.condicao_pagamento_id, o.valor_final, o.prazo_entrega_dias, o.prazo_tipo, o.adicional_urgencia_pct, o.observacoes, o.materiais_consumidos, o.created_at, o.updated_at, o.token_aprovacao, o.url_aprovacao, o.aprovado_em, o.aprovado_ip, o.aprovado_nome, o.recusado_em, o.motivo_recusa, o.tenant_id, c.nome as cliente_nome, c.email as cliente_email, c.telefone as cliente_telefone
         FROM orcamentos o
         JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-        WHERE o.token_aprovacao = ${token}
-      `)[0];
+        WHERE o.token_aprovacao = ${token}      `)[0];
 
       if (!orc) return res.status(404).json({ success: false, error: 'Proposta não encontrada ou link expirado' });
 
       const itms = await sql`SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE orcamento_id = ${orc.id} AND tenant_id = ${orc.tenant_id} ORDER BY id ASC`;
-      const condicao = orc.condicao_pagamento_id ? (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${orc.condicao_pagamento_id} AND tenant_id = ${orc.tenant_id}`)[0] : null;
+      const condicao = orc.condicao_pagamento_id ? (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${orc.condicao_pagamento_id} AND tenant_id = ${orc.tenant_id}`)[0] : null;
 
       return res.status(200).json({ success: true, data: { ...orc, itens: itms, condicao } });
     }

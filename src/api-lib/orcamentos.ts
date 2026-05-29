@@ -1,6 +1,7 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { calculateBOM } from './_bomEngine.js';
 import { reserveStockForProject } from './_inventory.js';
+import { garantirSeedsFinanceiros } from './financeiro.js';
 
 
 export async function handleOrcamentos(req: any, res: any) {
@@ -104,7 +105,44 @@ export async function handleOrcamentos(req: any, res: any) {
       }
 
       await auditLog('orcamentos', id, 'UPDATE', user?.id, before[0], orc[0]);
+      
       if (f.status === 'fechada' || f.status === 'aprovado') {
+        // 1. Evitar duplicidade: verificar se já existe uma OP para este orçamento
+        const existingOp = await sql`SELECT id FROM ordens_prod WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}::uuid`;
+        let currentOpId: string | null = existingOp[0]?.id || null;
+
+        if (existingOp.length === 0) {
+          const currentOrc = orc[0];
+          const numeroOp = `OP-${currentOrc.numero || currentOrc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const dataPrazo = new Date();
+          dataPrazo.setDate(dataPrazo.getDate() + Number(currentOrc.prazo_entrega_dias || 45));
+
+          const [newOp] = await sql`
+            INSERT INTO ordens_prod (id, tenant_id, orcamento_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
+            VALUES (gen_random_uuid(), ${tenantId}::uuid, ${id}::uuid, ${numeroOp}, 'planejamento', 5, ${dataPrazo.toISOString().split('T')[0]}, NOW(), NOW())
+            RETURNING id
+          `;
+
+          if (newOp?.id) {
+            currentOpId = newOp.id;
+            const etapasPadrao = [
+              { numero: 1, nome: 'MEDIÇÃO' },
+              { numero: 2, nome: 'PROJETO' },
+              { numero: 3, nome: 'PRODUÇÃO' },
+              { numero: 4, nome: 'MONTAGEM' },
+              { numero: 5, nome: 'ENTREGA' }
+            ];
+
+            for (const et of etapasPadrao) {
+              await sql`
+                INSERT INTO etapas_prod_kanban (tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display, created_at, updated_at)
+                VALUES (${tenantId}::uuid, ${newOp.id}::uuid, ${et.numero}, ${et.nome}, 'a_fazer', ${et.numero}, NOW(), NOW())
+              `;
+            }
+          }
+        }
+
+        // 2. Reserva de estoque clássica (BOM)
         const itms = await sql`SELECT id, orcamento_id, descricao, erp_product_id, erp_parametros FROM itens_orcamento WHERE orcamento_id = ${id} AND erp_product_id IS NOT NULL AND tenant_id = ${tenantId}`;
         for (const itm of itms) {
           const bom = await sql`SELECT id, nome, codigo_modelo, regras_calculo FROM erp_product_bom WHERE product_id = ${itm.erp_product_id} AND tenant_id = ${tenantId}`;
@@ -118,15 +156,57 @@ export async function handleOrcamentos(req: any, res: any) {
           }
         }
 
+        // 3. Reserva de estoque granular de itens com SKU direto
+        const itensOrcamento = await sql`
+          SELECT * FROM itens_orcamento 
+          WHERE orcamento_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
+        `;
+
+        for (const item of itensOrcamento) {
+          const sku = item.material; // No comercial o SKU ou material pode estar na coluna 'material'
+          const qtd = Number(item.quantidade || 0);
+
+          if (sku && qtd > 0) {
+            const [estItem] = await sql`
+              SELECT quantidade_disponivel, quantidade_provisionado FROM estoque_materiais_detalhado
+              WHERE sku_codigo = ${sku} AND tenant_id = ${tenantId}::uuid
+            `;
+
+            if (estItem) {
+              const dispAtual = Number(estItem.quantidade_disponivel || 0);
+              const provAtual = Number(estItem.quantidade_provisionado || 0);
+
+              const novoDisp = Math.max(0, dispAtual - qtd);
+              const novoProv = provAtual + qtd;
+
+              await sql`
+                UPDATE estoque_materiais_detalhado
+                SET quantidade_disponivel = ${novoDisp},
+                    quantidade_provisionado = ${novoProv},
+                    updated_at = NOW()
+                WHERE sku_codigo = ${sku} AND tenant_id = ${tenantId}::uuid
+              `;
+
+              await sql`
+                INSERT INTO movimento_estoque_granular 
+                (tenant_id, sku_codigo, operacao_prod_id, tipo_movimento, quantidade_movimento, status_anterior, status_novo, saldo_anterior, saldo_novo, motivo_descricao, usuario_id)
+                VALUES 
+                (${tenantId}::uuid, ${sku}, ${currentOpId}::uuid, 'reserva_automatica', ${qtd}, 'disponivel', 'provisionado', ${dispAtual}, ${novoDisp}, 'Reserva automática - Fechamento de Orçamento manual', ${user.id}::uuid)
+              `;
+            }
+          }
+        }
+
         // Geração automática de títulos financeiros (Sincronização com Financeiro)
         const currentOrc = orc[0];
         if (currentOrc.condicao_pagamento_id) {
+          await garantirSeedsFinanceiros(tenantId);
           // Evitar duplicidade: verificar se já existem títulos para este orçamento
           const existing = await sql`SELECT id FROM titulos_receber WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}`;
           if (existing.length === 0) {
-            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id} AND tenant_id = ${tenantId}`)[0];
+            const cond = (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${currentOrc.condicao_pagamento_id} AND tenant_id = ${tenantId}`)[0];
             if (cond) {
-              const totalParcelas = cond.n_parcelas || 1; // Note: schema in migration used 'parcelas', in handleCondicoesPagamento 'n_parcelas'
+              const totalParcelas = cond.parcelas || 1;
               const valorTotal = Number(currentOrc.valor_final) || 0;
               const valorParcela = valorTotal / totalParcelas;
               const dataEmissao = new Date();
@@ -146,7 +226,7 @@ export async function handleOrcamentos(req: any, res: any) {
                     ${`REC-AUTO-${currentOrc.numero}-${i}`}, ${currentOrc.cliente_id}, ${currentOrc.projeto_id || null}, ${id},
                     ${valorParcela}, ${valorParcela}, ${valorParcela},
                     ${dataEmissao}, ${vencimento}, ${dataEmissao},
-                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.1' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id}, 
+                    ${(await sql`SELECT id FROM classes_financeiras WHERE codigo = '1.1.01' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id}, 
                     ${(await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0].id},
                     'aberto', ${i}, ${totalParcelas}, ${tenantId}::uuid
                   )`;
@@ -258,15 +338,15 @@ export async function handleCondicoesPagamento(req: any, res: any) {
     if (!authorized) return res.status(401).json({ success: false, error });
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
     if (req.method === 'GET') {
-      const result = await sql`SELECT id, nome, n_parcelas, ativo, created_at, updated_at FROM condicoes_pagamento WHERE ativo = true AND tenant_id = ${tenantId} ORDER BY n_parcelas ASC`;
+      const result = await sql`SELECT id, nome, parcelas, ativo, created_at, updated_at FROM condicoes_pagamento WHERE ativo = true AND tenant_id = ${tenantId} ORDER BY parcelas ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
-      const r = await sql`INSERT INTO condicoes_pagamento (nome, n_parcelas, tenant_id) VALUES (${req.body.nome}, ${req.body.n_parcelas}, ${tenantId}::uuid) RETURNING *`;
+      const r = await sql`INSERT INTO condicoes_pagamento (nome, parcelas, tenant_id) VALUES (${req.body.nome}, ${req.body.parcelas}, ${tenantId}::uuid) RETURNING *`;
       return res.status(201).json({ success: true, data: r[0] });
     }
     if (req.method === 'PATCH') {
-      const r = await sql`UPDATE condicoes_pagamento SET nome = COALESCE(${req.body.nome}, nome), n_parcelas = COALESCE(${req.body.n_parcelas}, n_parcelas), ativo = COALESCE(${req.body.ativo}, ativo) WHERE id = ${req.query.id} AND tenant_id = ${tenantId} RETURNING *`;
+      const r = await sql`UPDATE condicoes_pagamento SET nome = COALESCE(${req.body.nome}, nome), parcelas = COALESCE(${req.body.parcelas}, parcelas), ativo = COALESCE(${req.body.ativo}, ativo) WHERE id = ${req.query.id} AND tenant_id = ${tenantId} RETURNING *`;
       return res.status(200).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {

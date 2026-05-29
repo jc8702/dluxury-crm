@@ -84,6 +84,7 @@ export async function handleFinanceiro(req: any, res: any) {
 
     // Garantir infraestrutura do banco antes de processar
     await bootstrapFinanceiro();
+    await garantirSeedsFinanceiros(tenantId);
 
     const fullUrl = req.url || '';
     const url = fullUrl.split('?')[0]; // Limpa query params
@@ -146,7 +147,13 @@ export async function handleFinanceiro(req: any, res: any) {
 
 async function handleClasses(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY codigo ASC`;
+    let result = await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
+    
+    if (result.length === 0) {
+      await garantirSeedsFinanceiros(tenantId);
+      result = await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
+    }
+    
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -271,7 +278,11 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
       });
     }
 
-    const result = await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY nome ASC`;
+    let result = await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    if (result.length === 0) {
+      await sql`INSERT INTO contas_internas (nome, tipo, saldo_inicial, saldo_atual, ativa, tenant_id) VALUES ('CAIXA INTERNO', 'caixa', 0, 0, true, ${tenantId}::uuid)`;
+      result = await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    }
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -333,7 +344,11 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
 
 async function handleFormasPagamento(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY nome ASC`;
+    let result = await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    if (result.length === 0) {
+      await sql`INSERT INTO formas_pagamento (nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, tenant_id) VALUES ('BOLETO', 'boleto', 0, 0, true, ${tenantId}::uuid), ('DINHEIRO', 'dinheiro', 0, 0, true, ${tenantId}::uuid)`;
+      result = await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    }
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -1536,4 +1551,70 @@ async function handleCondicoesPagamento(req: any, res: any, tenantId: string, id
     return res.status(200).json({ success: true });
   }
   return res.status(405).end();
+}
+
+export async function garantirSeedsFinanceiros(tenantId: string) {
+  try {
+    // 1. Classes Financeiras
+    const totalClasses = await sql`SELECT count(*) as count FROM classes_financeiras WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
+    if (totalClasses.length && parseInt(totalClasses[0].count, 10) === 0) {
+      const classesPadrao = [
+        { codigo: '1.0', nome: 'RECEITAS', tipo: 'receita', natureza: 'credora', permite: false },
+        { codigo: '1.1', nome: 'RECEITAS OPERACIONAIS', tipo: 'receita', natureza: 'credora', permite: false },
+        { codigo: '1.1.01', nome: 'Venda de Produtos', tipo: 'receita', natureza: 'credora', permite: true },
+        { codigo: '1.1.02', nome: 'Venda de Serviços', tipo: 'receita', natureza: 'credora', permite: true },
+        { codigo: '1.1.03', nome: 'Projetos de Design', tipo: 'receita', natureza: 'credora', permite: true },
+        { codigo: '1.2', nome: 'RECEITAS FINANCEIRAS', tipo: 'receita', natureza: 'credora', permite: false },
+        { codigo: '1.2.01', nome: 'Rendimentos de Aplicação', tipo: 'receita', natureza: 'credora', permite: true },
+        { codigo: '1.2.02', nome: 'Juros Recebidos', tipo: 'receita', natureza: 'credora', permite: true },
+        { codigo: '2.0', nome: 'DESPESAS', tipo: 'despesa', natureza: 'devedora', permite: false },
+        { codigo: '2.1', nome: 'DESPESAS COM PESSOAL', tipo: 'despesa', natureza: 'devedora', permite: false },
+        { codigo: '2.1.01', nome: 'Salários e Pró-labore', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.1.02', nome: 'Encargos Sociais', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.1.03', nome: 'Benefícios (VA/VR)', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.2', nome: 'DESPESAS ADMINISTRATIVAS', tipo: 'despesa', natureza: 'devedora', permite: false },
+        { codigo: '2.2.01', nome: 'Aluguel e Condomínio', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.2.02', nome: 'Energia e Água', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.2.03', nome: 'Internet e Telefone', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.2.04', nome: 'Material de Escritório', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.3', nome: 'IMPOSTOS E TAXAS', tipo: 'despesa', natureza: 'devedora', permite: false },
+        { codigo: '2.3.01', nome: 'Simples Nacional / DAS', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.3.02', nome: 'Taxas Bancárias', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.4', nome: 'CUSTOS DE PRODUÇÃO', tipo: 'despesa', natureza: 'devedora', permite: false },
+        { codigo: '2.4.01', nome: 'Matéria-prima', tipo: 'despesa', natureza: 'devedora', permite: true },
+        { codigo: '2.4.02', nome: 'Fretes e Logística', tipo: 'despesa', natureza: 'devedora', permite: true }
+      ];
+
+      for (const c of classesPadrao) {
+        await sql`
+          INSERT INTO classes_financeiras (codigo, nome, tipo, natureza, ativa, permite_lancamento, tenant_id)
+          VALUES (${c.codigo}, ${c.nome}, ${c.tipo}, ${c.natureza}, true, ${c.permite}, ${tenantId}::uuid)
+        `;
+      }
+    }
+
+    // 2. Contas Internas
+    const totalContas = await sql`SELECT count(*) as count FROM contas_internas WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
+    if (totalContas.length && parseInt(totalContas[0].count, 10) === 0) {
+      await sql`
+        INSERT INTO contas_internas (nome, tipo, saldo_inicial, saldo_atual, ativa, tenant_id)
+        VALUES ('CAIXA INTERNO', 'caixa', 0.00, 0.00, true, ${tenantId}::uuid)
+      `;
+    }
+
+    // 3. Formas de Pagamento
+    const totalFormas = await sql`SELECT count(*) as count FROM formas_pagamento WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
+    if (totalFormas.length && parseInt(totalFormas[0].count, 10) === 0) {
+      await sql`
+        INSERT INTO formas_pagamento (nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, tenant_id)
+        VALUES 
+          ('BOLETO', 'boleto', 0.00, 0, true, ${tenantId}::uuid),
+          ('DINHEIRO', 'dinheiro', 0.00, 0, true, ${tenantId}::uuid),
+          ('CARTÃO DE CRÉDITO', 'cartao_credito', 0.00, 30, true, ${tenantId}::uuid),
+          ('PIX', 'pix', 0.00, 0, true, ${tenantId}::uuid)
+      `;
+    }
+  } catch (err: any) {
+    console.error('[ERRO GARANTIR SEEDS FINANCEIROS]', err.message);
+  }
 }

@@ -1,4 +1,5 @@
 import { sql, validateAuth } from './_db.js';
+import { garantirSeedsFinanceiros } from './financeiro.js';
 
 export async function handleCompras(req: any, res: any) {
   try {
@@ -41,12 +42,17 @@ export async function handleCompras(req: any, res: any) {
         const seq = (parseInt(count[0].count) + 1).toString().padStart(3, '0');
         const numero = `PC-${ano}-${seq}`;
 
-        const totalItens = (f.itens || []).reduce((acc: number, item: any) => acc + (item.quantidade_pedida * item.preco_unitario), 0);
+        const totalItens = (f.itens || []).reduce((acc: number, item: any) => acc + ((Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0)), 0);
         const valorTotal = totalItens + (Number(f.frete) || 0);
+
+        const fornecedorId = f.fornecedor_id && f.fornecedor_id !== '' ? Number(f.fornecedor_id) : null;
+        const dataPrevisao = f.data_previsao_entrega && f.data_previsao_entrega !== '' ? f.data_previsao_entrega : null;
+        const observacoes = f.observacoes || null;
+        const origem = f.origem || 'manual';
 
         const result = await sql`
           INSERT INTO pedidos_compra (numero, fornecedor_id, status, data_previsao_entrega, valor_total, frete, observacoes, origem, tenant_id)
-          VALUES (${numero}, ${f.fornecedor_id}, 'rascunho', ${f.data_previsao_entrega || null}, ${valorTotal}, ${f.frete || 0}, ${f.observacoes}, ${f.origem || 'manual'}, ${tenantId})
+          VALUES (${numero}, ${fornecedorId}, 'rascunho', ${dataPrevisao}, ${valorTotal}, ${Number(f.frete) || 0}, ${observacoes}, ${origem}, ${tenantId})
           RETURNING *
         `;
         const pedido = result[0];
@@ -54,9 +60,11 @@ export async function handleCompras(req: any, res: any) {
         // Inserir itens se existirem
         if (f.itens && f.itens.length > 0) {
           for (const item of f.itens) {
+            const matId = item.material_id && item.material_id !== '' ? Number(item.material_id) : null;
+            const subtotal = (Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0);
             await sql`
               INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal, tenant_id)
-              VALUES (${pedido.id}, ${item.material_id}, ${item.sku}, ${item.descricao}, ${item.quantidade_pedida}, ${item.unidade}, ${item.preco_unitario}, ${item.quantidade_pedida * item.preco_unitario}, ${tenantId})
+              VALUES (${pedido.id}, ${matId}, ${item.sku || null}, ${item.descricao || null}, ${Number(item.quantidade_pedida) || 0}, ${item.unidade || null}, ${Number(item.preco_unitario) || 0}, ${subtotal}, ${tenantId})
             `;
           }
         }
@@ -89,16 +97,17 @@ export async function handleCompras(req: any, res: any) {
 
         // Geração automática de títulos a pagar ao confirmar o pedido
         if (f.status === 'confirmado') {
+          await garantirSeedsFinanceiros(tenantId);
           const existing = await sql`SELECT id FROM titulos_pagar WHERE pedido_compra_id = ${id} AND tenant_id = ${tenantId}`;
           if (existing.length === 0) {
             // Tenta pegar condição de pagamento do pedido ou assume 1 parcela
-            const cond = (await sql`SELECT id, nome, n_parcelas FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null} AND tenant_id = ${tenantId}`)[0];
+            const cond = (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null} AND tenant_id = ${tenantId}`)[0];
             const totalParcelas = cond?.parcelas || 1;
             const valorParcela = Number(pedido.valor_total) / totalParcelas;
             const dataEmissao = new Date();
             
             // Busca valores padrão para evitar erro de FK
-            const defClasse = (await sql`SELECT id FROM classes_financeiras WHERE codigo = '2.1.1' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
+            const defClasse = (await sql`SELECT id FROM classes_financeiras WHERE codigo = '2.4.01' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
             const defForma = (await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
             const defConta = (await sql`SELECT id FROM contas_internas WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
 

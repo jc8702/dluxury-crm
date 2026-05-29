@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter } from 'lucide-react';
+import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../design-system/components/Skeleton';
 import { Button, Modal, Card, CardContent, CardHeader, CardTitle, Badge } from '../design-system/components';
@@ -89,6 +89,14 @@ export default function FinanceiroAgingPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
+
       <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

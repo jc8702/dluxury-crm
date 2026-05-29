@@ -74,6 +74,19 @@ const Sidebar: React.FC = () => {
     { id: 'settings', path: 'configuracoes', label: 'Configurações', icon: <Settings size={18} />, roles: ['admin'], group: 'SISTEMA', feature: 'crm' },
   ];
 
+  const isMasterAdmin = user && ((user as any).email === 'admin@dluxury.com' || (user as any).tenantId === '00000000-0000-0000-0000-000000000000');
+  if (isMasterAdmin) {
+    menuItems.push({
+      id: 'saas_admin',
+      path: 'saas-admin',
+      label: 'SaaS Admin',
+      icon: <Settings2 size={18} />,
+      roles: ['admin'],
+      group: 'SISTEMA',
+      feature: 'crm'
+    });
+  }
+
   const visibleMenuItems = menuItems.filter(item => 
     user && 
     item.roles.includes(user.role) && 

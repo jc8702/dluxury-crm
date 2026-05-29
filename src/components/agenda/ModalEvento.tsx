@@ -16,7 +16,8 @@ interface ModalEventoProps {
 const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, eventToEdit }) => {
   const { error: toastError } = useToast();
   useEscClose(isOpen ? onClose : () => {});
-  const { clients } = useAppContext();
+  const { clients: ctxClients } = useAppContext(); 
+  const [clientsList, setClientsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     tipo: 'compromisso',
@@ -77,6 +78,14 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
       });
     }
   }, [eventToEdit, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      api.clients.list()
+        .then(data => setClientsList(data || []))
+        .catch(err => console.error('Erro ao carregar clientes no ModalEvento:', err));
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,6 +194,19 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               />
             </div>
 
+            <div>
+              <label className="label-base">CLIENTE {formData.tipo === 'visita' ? '*' : '(OPCIONAL)'}</label>
+              <select
+                required={formData.tipo === 'visita'}
+                value={formData.cliente_id || ''}
+                onChange={e => setFormData({ ...formData, cliente_id: e.target.value ? Number(e.target.value) : null })}
+                className="input-base"
+              >
+                <option value="">SELECIONAR CLIENTE...</option>
+                {clientsList.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+            </div>
+
             <div className="grid-2">
               <div>
                 <label className="label-base">INÍCIO</label>
@@ -218,33 +240,19 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
 
             {formData.tipo === 'visita' && (
               <div className="section animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--primary-glow)' }}>
-                <div className="grid-2">
-                  <div>
-                    <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>CLIENTE *</label>
-                    <select
-                      required={formData.tipo === 'visita'}
-                      value={formData.cliente_id || ''}
-                      onChange={e => setFormData({ ...formData, cliente_id: Number(e.target.value) })}
-                      className="input-base"
-                    >
-                      <option value="">SELECIONAR CLIENTE...</option>
-                      {clients.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>OBJETIVO</label>
-                    <select
-                      value={formData.objetivo}
-                      onChange={e => setFormData({ ...formData, objetivo: e.target.value })}
-                      className="input-base"
-                    >
-                      <option value="medicao">MEDIÇÃO</option>
-                      <option value="apresentacao">APRESENTAÇÃO</option>
-                      <option value="instalacao">INSTALAÇÃO</option>
-                      <option value="pos_venda">PÓS-VENDA</option>
-                      <option value="outro">OUTRO</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>OBJETIVO</label>
+                  <select
+                    value={formData.objetivo}
+                    onChange={e => setFormData({ ...formData, objetivo: e.target.value })}
+                    className="input-base"
+                  >
+                    <option value="medicao">MEDIÇÃO</option>
+                    <option value="apresentacao">APRESENTAÇÃO</option>
+                    <option value="instalacao">INSTALAÇÃO</option>
+                    <option value="pos_venda">PÓS-VENDA</option>
+                    <option value="outro">OUTRO</option>
+                  </select>
                 </div>
                 <div>
                   <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>ENDEREÇO DA VISITA</label>

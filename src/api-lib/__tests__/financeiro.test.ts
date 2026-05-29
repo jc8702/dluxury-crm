@@ -234,7 +234,7 @@ describe('handleFechamentos', () => {
     const req = { method: 'POST', url: '/api/financeiro/fechamentos', query: {}, body: { mes: 5, ano: 2026, status: 'fechado' } };
     const res = mockRes();
     await handleFinanceiro(req, res);
-    expect(res._s()).toBe(201);
+    expect(res._s()).toBe(200);
   });
 });
 
@@ -335,16 +335,14 @@ describe('handleDiagnostic', () => {
   });
 
   it('deve rodar diagnóstico (GET test)', async () => {
-    vi.mocked(sql)
-      .mockResolvedValueOnce([{ now: '2026-05-22' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ column_name: 'id' }, { column_name: 'deletado' }])
-      .mockResolvedValueOnce([{ count: 5 }])
-      .mockResolvedValueOnce([]);
+    vi.mocked(sql).mockImplementation(async (...args: any[]) => {
+      const q = String(args[0]?.[0] || '').toLowerCase();
+      if (q.includes('now')) return [{ now: '2026-05-22' }];
+      if (q.includes('columns')) return [{ column_name: 'id' }, { column_name: 'deletado' }];
+      if (q.includes('count')) return [{ count: 5 }];
+      if (q.includes('condicoes')) return [{ parcelas: 3 }];
+      return [];
+    });
     const req = { method: 'GET', url: '/api/financeiro/test', query: {} };
     const res = mockRes();
     await handleFinanceiro(req, res);

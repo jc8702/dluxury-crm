@@ -606,7 +606,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: mapLegacyStatus(p.status || p.status_visita),
         observacoes: p.observacoes || p.observations || '',
         tag: p.tag || '',
-        ordem_producao_id: p.ordem_producao_id || null
+        ordem_producao_id: p.ordem_producao_id || null,
+        orcamentoId: p.orcamento_id || p.orcamentoId || '',
+        visitaId: p.visita_id || p.visitaId || ''
       })));
 
       // Removendo logs da carga principal pois System Health foi removido
@@ -724,7 +726,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       value: data.valorEstimado,
       observations: data.observacoes || data.descricao || '',
       description: data.descricao || '',
-      tag: data.tag
+      tag: data.tag,
+      client_id: data.clientId,
+      orcamento_id: data.orcamentoId === 'none' ? null : data.orcamentoId,
+      visita_id: data.visitaId === 'none' ? null : data.visitaId
     };
     const saved = await api.projects.create(payload);
     const mapped: Project = {
@@ -741,6 +746,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       responsavel: data.responsavel,
       observacoes: data.observacoes,
       tag: saved.tag,
+      orcamentoId: saved.orcamento_id || data.orcamentoId || '',
+      visitaId: saved.visita_id || data.visitaId || ''
     };
     setProjects((prev: Project[]) => [...prev, mapped]);
   };
@@ -753,6 +760,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.valorEstimado !== undefined) payload.value = data.valorEstimado;
     if (data.observacoes) payload.observations = data.observacoes;
     if (data.descricao) payload.description = data.descricao;
+    if (data.clientId !== undefined) payload.client_id = data.clientId;
+    if (data.orcamentoId !== undefined) payload.orcamento_id = data.orcamentoId === 'none' ? null : data.orcamentoId;
+    if (data.visitaId !== undefined) payload.visita_id = data.visitaId === 'none' ? null : data.visitaId;
 
     await api.projects.update(id, payload);
     setProjects((prev: Project[]) => prev.map((p: Project) =>

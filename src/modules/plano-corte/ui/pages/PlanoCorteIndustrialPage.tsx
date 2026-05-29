@@ -21,6 +21,7 @@ import { api } from '@/lib/api';
 import { HistoricoModal } from '../components/HistoricoModal';
 import { ExportacaoModal } from '../components/ExportacaoModal';
 import { ImportacaoModal } from '../components/ImportacaoModal';
+import { ImportarOrcamentoModal } from '../components/ImportarOrcamentoModal';
 
 // Novos Componentes
 import { BuscaSKU } from '../components/BuscaSKU';
@@ -89,6 +90,7 @@ export default function PlanoCorteIndustrialPage() {
   const [loading, setLoading] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showImportOrcamentoModal, setShowImportOrcamentoModal] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
   const [showDuplicateScrapsModal, setShowDuplicateScrapsModal] = useState(false);
   const [duplicateScrapsPayload, setDuplicateScrapsPayload] = useState<any>(null);
@@ -228,6 +230,39 @@ export default function PlanoCorteIndustrialPage() {
 
     showToast(`${novasPecas.length} peças importadas via CSV!`, 'success');
   }, [chapaAtivaId, resultados]);
+
+  const handleImportarDoOrcamento = useCallback((chapasImportadas: any[]) => {
+    setProjeto(prev => {
+      const novasChapas = [...prev.chapas];
+      
+      chapasImportadas.forEach(chapaImp => {
+        const existenteIdx = novasChapas.findIndex(c => c.sku_chapa.toUpperCase() === chapaImp.sku_chapa.toUpperCase());
+        if (existenteIdx !== -1) {
+          // Mesclar as peças na chapa existente
+          novasChapas[existenteIdx] = {
+            ...novasChapas[existenteIdx],
+            pecas: [...novasChapas[existenteIdx].pecas, ...chapaImp.pecas]
+          };
+        } else {
+          // Adicionar nova chapa
+          novasChapas.push(chapaImp);
+        }
+      });
+
+      // Definir a primeira chapa como ativa se tiver alguma
+      if (chapasImportadas.length > 0) {
+        setChapaAtivaId(chapasImportadas[0].id);
+      }
+
+      return {
+        ...prev,
+        chapas: novasChapas
+      };
+    });
+
+    const totalPecas = chapasImportadas.reduce((acc, c) => acc + c.pecas.length, 0);
+    showToast(`${totalPecas} peças importadas de ${chapasImportadas.length} materiais diferentes!`, 'success');
+  }, []);
 
   // --- LÓGICA DE OTIMIZAÇÃO ---
   const handleOtimizarChapa = useCallback(async (chapaId: string) => {
@@ -473,7 +508,7 @@ export default function PlanoCorteIndustrialPage() {
             <input 
               value={projeto.nome}
               onChange={e => setProjeto(prev => ({ ...prev, nome: e.target.value.toUpperCase() }))}
-              className="bg-transparent text-sm text-[#888] font-black uppercase outline-none focus:text-white transition-colors"
+              className="bg-transparent text-sm text-muted-foreground font-black uppercase outline-none focus:text-foreground transition-colors w-full"
             />
           </div>
         </div>
@@ -508,6 +543,15 @@ export default function PlanoCorteIndustrialPage() {
             Demo PDF
           </Button>
           
+          <Button 
+            variant="outline"
+            onClick={() => setShowImportOrcamentoModal(true)}
+            className="flex items-center gap-2 h-11"
+          >
+            <FileText size={14} />
+            Importar Orçamento
+          </Button>
+
           <Button 
             variant="outline"
             onClick={() => setShowImportModal(true)}
@@ -703,6 +747,12 @@ export default function PlanoCorteIndustrialPage() {
         />
       )}
       {showHistorico && <HistoricoModal onFechar={() => setShowHistorico(false)} onLoadPlan={handleLoadPlan} />}
+      {showImportOrcamentoModal && (
+        <ImportarOrcamentoModal 
+          onImportar={handleImportarDoOrcamento}
+          onFechar={() => setShowImportOrcamentoModal(false)}
+        />
+      )}
       {showDuplicateScrapsModal && duplicateScrapsPayload && (
          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-foreground">
             <div className="bg-card border border-border rounded-3xl max-w-lg w-full p-8 shadow-2xl relative overflow-hidden">

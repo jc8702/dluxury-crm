@@ -137,6 +137,7 @@ export default function MetricsPanel({
               const matchingIwr = issuesWithRecs?.find((iwr) => iwr.issue.id === issue.id && iwr.bestRecommendation && iwr.bestRecommendation.action !== 'impossible');
               return (
                 <div
+                  key={issue.id}
                   className="w-full text-left p-2 hover:bg-[#1F2937]/50 transition-all flex flex-col gap-1 group"
                 >
                   <div className="flex items-center gap-1.5">

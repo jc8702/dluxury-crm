@@ -23,10 +23,78 @@ const Settings: React.FC = () => {
     invoiceUrl?: string;
   } | null>(null);
 
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [boletoData, setBoletoData] = useState<{ codigoBarras: string; linkPdf: string; vencimento: string; valor: number } | null>(null);
+  const [showBoletoModal, setShowBoletoModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const fetchInvoices = async () => {
+    try {
+      setLoadingInvoices(true);
+      const res = await fetch('/api/checkout/invoices', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setInvoices(json.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  const handleGerarBoleto = async () => {
+    try {
+      const res = await fetch('/api/checkout/gerar-boleto', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setBoletoData(json.data);
+        setShowBoletoModal(true);
+        toastSuccess('Boleto gerado com sucesso!');
+      } else {
+        toastError(json.error || 'Erro ao gerar boleto.');
+      }
+    } catch (err) {
+      console.error(err);
+      toastError('Erro ao gerar boleto.');
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('ATENÇÃO: Deseja realmente cancelar sua assinatura? O acesso ao sistema será suspenso imediatamente.')) return;
+    try {
+      setCancelling(true);
+      const res = await fetch('/api/checkout/cancel', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        toastSuccess('Sua assinatura foi cancelada.');
+        api.checkout.get().then(setSubData).catch(() => {});
+        fetchInvoices();
+      } else {
+        toastError(json.error || 'Erro ao cancelar assinatura.');
+      }
+    } catch (err) {
+      console.error(err);
+      toastError('Erro ao solicitar cancelamento.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   useEffect(() => {
     api.checkout.get()
       .then(setSubData)
       .catch(() => {});
+    fetchInvoices();
   }, []);
   const [profileMsg, setProfileMsg] = useState('');
 
@@ -249,8 +317,8 @@ const Settings: React.FC = () => {
             <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
               <span className="text-xs text-muted-foreground block mb-1">PLANO CONTRATADO</span>
               <span className="font-bold text-lg text-foreground uppercase">{subData?.plano || 'PRO'}</span>
-              <Badge variant="warning" className="ml-2 capitalize">
-                {subData?.status === 'trial' ? 'Período de Teste' : subData?.status === 'active' ? 'Ativo' : 'Pendente'}
+              <Badge variant={subData?.status === 'trial' ? 'warning' : subData?.status === 'active' ? 'success' : 'danger'} className="ml-2 capitalize">
+                {subData?.status === 'trial' ? 'Período de Teste' : subData?.status === 'active' ? 'Ativo' : subData?.status === 'suspended' ? 'Cancelado' : 'Pendente'}
               </Badge>
             </div>
             <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
@@ -264,7 +332,7 @@ const Settings: React.FC = () => {
               <span className="text-xs text-muted-foreground block mb-1">STATUS DE COBRANÇA</span>
               <span className="font-bold text-sm text-foreground block">
                 {subData?.status === 'trial' 
-                  ? `Avaliação activa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
+                  ? `Avaliação ativa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
                   : subData?.currentPeriodEnd 
                     ? `Próximo vencimento: ${new Date(subData.currentPeriodEnd).toLocaleDateString('pt-BR')}`
                     : 'Aguardando configuração'}
@@ -272,36 +340,65 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-2">
-            {subData?.invoiceUrl ? (
-              <a 
-                href={subData.invoiceUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none' }}
-                className="flex-1"
-              >
-                <Button variant="primary" className="w-full">
-                  GERENCIAR PAGAMENTOS & FATURAS (ASAAS)
-                </Button>
-              </a>
+          {/* Histórico de Faturas Virtuais */}
+          <div className="mt-4 space-y-3">
+            <h4 className="font-bold text-sm text-foreground tracking-tight">Histórico de Mensalidades</h4>
+            {loadingInvoices ? (
+              <div className="text-xs text-muted-foreground">Carregando histórico...</div>
+            ) : invoices.length === 0 ? (
+              <div className="text-xs text-muted-foreground">Nenhuma fatura disponível ainda.</div>
             ) : (
-              <Button 
-                onClick={() => window.location.hash = '#/checkout'} 
-                variant="primary" 
-                className="flex-1"
-              >
-                CONFIGURAR FORMA DE PAGAMENTO
-              </Button>
+              <div className="border border-border/40 rounded-xl overflow-hidden text-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-border/40 text-muted-foreground font-semibold">
+                      <th className="px-4 py-2">Competência</th>
+                      <th className="px-4 py-2">Valor</th>
+                      <th className="px-4 py-2">Vencimento</th>
+                      <th className="px-4 py-2">Método</th>
+                      <th className="px-4 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/20 text-foreground">
+                    {invoices.map(invoice => (
+                      <tr key={invoice.id} className="hover:bg-white/5">
+                        <td className="px-4 py-2 font-mono">{invoice.competencia}</td>
+                        <td className="px-4 py-2 font-semibold">R$ {invoice.valor.toFixed(2).replace('.', ',')}</td>
+                        <td className="px-4 py-2">{new Date(invoice.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td className="px-4 py-2">{invoice.metodoPagamento}</td>
+                        <td className="px-4 py-2">
+                          <span className={`inline-block px-2 py-0.5 rounded font-semibold text-[10px] uppercase ${
+                            invoice.status === 'pago' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                          }`}>
+                            {invoice.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-4 border-t border-border/40 pt-4">
+            <Button 
+              onClick={handleGerarBoleto} 
+              variant="primary" 
+              className="flex-1 font-semibold"
+              disabled={subData?.status === 'suspended'}
+            >
+              Emitir Boleto do Mês
+            </Button>
             
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => alert('Para alterar seu plano ou solicitar o cancelamento da assinatura, por favor envie um e-mail para comercial@dluxury-crm.vercel.app')}
-              className="flex-1"
+              onClick={handleCancelSubscription}
+              className="flex-1 font-semibold text-rose-500 border-rose-500/30 hover:bg-rose-500/10"
+              disabled={subData?.status === 'suspended' || cancelling}
             >
-              Alterar Plano / Cancelar Assinatura
+              {cancelling ? 'Cancelando...' : 'Cancelar Assinatura'}
             </Button>
           </div>
         </CardContent>
@@ -369,6 +466,57 @@ const Settings: React.FC = () => {
           setData={setNewCond} 
           isEditing={!!editingCondId} 
         />
+      )}
+
+      {/* Modal de Exibição de Boleto */}
+      {showBoletoModal && boletoData && (
+        <Modal isOpen={showBoletoModal} onClose={() => setShowBoletoModal(false)} title="Boleto para Pagamento" size="md">
+          <div className="space-y-5 text-sm text-foreground">
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl space-y-1">
+              <div className="font-semibold">Boleto Bancário Emitido</div>
+              <div className="text-xs text-muted-foreground">Use o código abaixo ou baixe o PDF para pagar a mensalidade.</div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-xs text-muted-foreground block">Valor</span>
+                <span className="font-bold text-foreground">R$ {boletoData.valor.toFixed(2).replace('.', ',')}</span>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground block">Vencimento</span>
+                <span className="font-bold text-foreground">{new Date(boletoData.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Linha Digitável / Código de Barras</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={boletoData.codigoBarras}
+                  className="flex-1 bg-white/5 border border-border/40 rounded-lg px-3 py-2 text-xs font-mono select-all focus:outline-none"
+                />
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(boletoData.codigoBarras);
+                    toastSuccess('Linha digitável copiada!');
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border/40 flex items-center justify-end gap-3">
+              <a href={boletoData.linkPdf} target="_blank" rel="noopener noreferrer">
+                <Button variant="primary">Visualizar Boleto PDF</Button>
+              </a>
+              <Button variant="outline" onClick={() => setShowBoletoModal(false)}>Fechar</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

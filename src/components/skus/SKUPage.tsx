@@ -216,6 +216,7 @@ const SKUPage: React.FC = () => {
                 placeholder="Ex: CHP-0001"
                 value={formData.sku_code}
                 onChange={e => setFormData({...formData, sku_code: e.target.value})}
+                disabled={!formData.id}
               />
             </div>
           </div>

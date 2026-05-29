@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { Modal } from '../design-system/components/Modal';
 import { Button } from '../design-system/components/Button';
 import { Input } from '../design-system/components/Input';
-import { Plus, CheckCircle, Trash2, ArrowUpRight, Calendar, ChevronDown, ChevronRight, Edit2, Printer, FileText, CheckSquare, Layers } from 'lucide-react';
+import { Plus, CheckCircle, Trash2, ArrowUpRight, Calendar, ChevronDown, ChevronRight, Edit2, Printer, FileText, CheckSquare, Layers, ArrowLeft } from 'lucide-react';
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -184,6 +184,13 @@ export default function FinanceiroTitulosPagarPage() {
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen">
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
       {/* Header Corporativo */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>

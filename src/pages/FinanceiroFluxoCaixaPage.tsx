@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Calendar, Grid, List, ArrowRight, Info } from 'lucide-react';
+import { TrendingUp, Calendar, Grid, List, ArrowRight, Info, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 import { CardSkeleton } from '../design-system/components/Skeleton';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, AreaChart, Area } from 'recharts';
@@ -66,6 +66,13 @@ export default function FinanceiroFluxoCaixaPage() {
 
   return (
     <div className="page-container anim-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', padding: '1rem' }}>
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginBottom: '1rem', padding: 0, height: 'auto', background: 'transparent' }}
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
       {/* Header */}
       <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>

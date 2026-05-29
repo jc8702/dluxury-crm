@@ -193,6 +193,10 @@ export async function handleProjects(req: any, res: any) {
       
       await auditLog('projects', result[0].id, 'CREATE', user?.id, null, result[0]);
       
+      if (result[0].status === 'em_producao') {
+        await triggerOpCreationForProject(result[0].id, tenantId, result[0]);
+      }
+      
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
@@ -223,6 +227,10 @@ export async function handleProjects(req: any, res: any) {
         WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
 
       await auditLog('projects', id, 'UPDATE', user?.id, before[0], r[0]);
+
+      if (r.length && f.status === 'em_producao' && before[0].status !== 'em_producao') {
+        await triggerOpCreationForProject(id, tenantId, r[0]);
+      }
 
       if (r.length && f.status === 'concluido') {
         const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} AND tenant_id = ${tenantId}`;
@@ -514,7 +522,7 @@ export async function handleSKUs(req: any, res: any) {
         return res.status(200).json({ success: true, data: { nextCode } });
       }
 
-      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
+      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, largura_mm, altura_mm, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     
@@ -626,4 +634,56 @@ export async function handleSimulations(req: any, res: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
+
+async function triggerOpCreationForProject(projectId: string, tenantId: string, projectData: any) {
+  try {
+    const existingOp = await sql`SELECT id FROM ordens_prod WHERE projeto_id = ${projectId} AND tenant_id = ${tenantId}`;
+    if (existingOp.length === 0) {
+      const rawTag = projectData.tag || `PRJ-${projectId.substring(0, 6).toUpperCase()}`;
+      const numeroOp = `OP-PRJ-${rawTag.replace('PRJ-', '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      let orcId = null;
+      if (projectData.orcamento_id && projectData.orcamento_id !== 'none' && projectData.orcamento_id !== '') {
+        orcId = projectData.orcamento_id;
+      }
+
+      const [newOp] = await sql`
+        INSERT INTO ordens_prod (id, tenant_id, projeto_id, orcamento_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
+        VALUES (
+          gen_random_uuid(), 
+          ${tenantId}, 
+          ${projectId}, 
+          ${orcId}, 
+          ${numeroOp}, 
+          'planejamento', 
+          5, 
+          CURRENT_DATE + INTERVAL '45 days', 
+          NOW(), 
+          NOW()
+        )
+        RETURNING id
+      `;
+
+      if (newOp?.id) {
+        const etapasPadrao = [
+          { numero: 1, nome: 'MEDIÇÃO' },
+          { numero: 2, nome: 'PROJETO' },
+          { numero: 3, nome: 'PRODUÇÃO' },
+          { numero: 4, nome: 'MONTAGEM' },
+          { numero: 5, nome: 'ENTREGA' }
+        ];
+
+        for (const et of etapasPadrao) {
+          await sql`
+            INSERT INTO etapas_prod_kanban (tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display, created_at, updated_at)
+            VALUES (${tenantId}, ${newOp.id}, ${et.numero}, ${et.nome}, 'a_fazer', ${et.numero}, NOW(), NOW())
+          `;
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('[ERRO TRIGGER_OP_CREATION]', err.message);
+  }
+}
+
 

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { contratoDigitalService } from '../../services/contratoDigitalService';
 import type { ContratoDigital, HistoricoAssinatura } from '../../services/contratoDigitalService';
+import { api } from '../../lib/api';
 
 interface Props {
   orcamentoId: string;
@@ -21,7 +22,12 @@ interface Props {
   onStatusChanged?: (novoStatus: string) => void;
 }
 
-export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onClose, onStatusChanged }: Props) {
+export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, numeroOrcamento: propNumeroOrcamento, onClose, onStatusChanged }: Props) {
+  const [selectedOrcamentoId, setSelectedOrcamentoId] = useState(propOrcamentoId);
+  const [selectedNumeroOrcamento, setSelectedNumeroOrcamento] = useState(propNumeroOrcamento);
+  const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
+  const [selectedOrcamentoDet, setSelectedOrcamentoDet] = useState<any>(null);
+
   const [contrato, setContrato] = useState<ContratoDigital | null>(null);
   const [historico, setHistorico] = useState<HistoricoAssinatura[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,17 +36,35 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
   const [error, setError] = useState('');
 
   useEffect(() => {
-    carregarContrato();
-  }, [orcamentoId]);
+    if (selectedOrcamentoId) {
+      carregarContrato(selectedOrcamentoId);
+    }
+  }, [selectedOrcamentoId]);
 
-  const carregarContrato = async () => {
+  useEffect(() => {
+    api.orcamentos.list()
+      .then(list => {
+        setOrcamentosList(list || []);
+      })
+      .catch(err => {
+        console.error('Erro ao carregar lista de orçamentos:', err);
+      });
+  }, []);
+
+  const carregarContrato = async (id: string) => {
     setLoading(true);
     setError('');
+    setSelectedOrcamentoDet(null);
     try {
-      const res = await contratoDigitalService.getStatus(orcamentoId);
+      const res = await contratoDigitalService.getStatus(id);
       if (res.success) {
         setContrato(res.contrato);
         setHistorico(res.historico || []);
+        
+        if (!res.contrato) {
+          const orcDet = await api.orcamentos.get(id).catch(() => null);
+          setSelectedOrcamentoDet(orcDet);
+        }
       }
     } catch (e: any) {
       console.error(e);
@@ -50,13 +74,29 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
     }
   };
 
+  const handleOrcamentoChange = (id: string) => {
+    setSelectedOrcamentoId(id);
+    const selected = orcamentosList.find(o => o.id === id);
+    if (selected) {
+      setSelectedNumeroOrcamento(selected.numeroOrcamento || selected.numero || '');
+    }
+  };
+
   const handleGerarContrato = async () => {
+    if (!selectedOrcamentoId) return setError('Selecione um orçamento de referência.');
+
+    const orcVal = selectedOrcamentoDet || (await api.orcamentos.get(selectedOrcamentoId).catch(() => null));
+    if (!orcVal || !orcVal.clienteId) {
+      setError('O orçamento selecionado não possui cliente associado. Por favor, associe um cliente ao orçamento antes de gerar o contrato.');
+      return;
+    }
+
     setGenerating(true);
     setError('');
     try {
-      const res = await contratoDigitalService.gerarEEnviar(orcamentoId);
+      const res = await contratoDigitalService.gerarEEnviar(selectedOrcamentoId);
       if (res.success) {
-        await carregarContrato();
+        await carregarContrato(selectedOrcamentoId);
         if (onStatusChanged) onStatusChanged('enviado');
       }
     } catch (e: any) {
@@ -113,7 +153,7 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">Assinatura Digital de Contrato</h2>
-            <p className="text-muted-foreground text-xs">Orçamento Ref: <strong className="text-foreground">{numeroOrcamento}</strong></p>
+            <p className="text-muted-foreground text-xs">Orçamento Ref: <strong className="text-foreground">{selectedNumeroOrcamento}</strong></p>
           </div>
         </div>
 
@@ -130,28 +170,68 @@ export default function ContratoDigitalModal({ orcamentoId, numeroOrcamento, onC
           </div>
         ) : !contrato ? (
           /* Estado 1: Contrato Não Gerado */
-          <div className="text-center py-8 space-y-4">
-            <FileText size={48} className="text-muted-foreground mx-auto" />
-            <div>
+          <div className="text-center py-6 space-y-4">
+            <FileText size={44} className="text-muted-foreground mx-auto" />
+            
+            {/* Seletor de Orçamento */}
+            <div className="text-left max-w-sm mx-auto space-y-1.5">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Selecione o Orçamento de Referência</label>
+              <select
+                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all cursor-pointer font-bold"
+                value={selectedOrcamentoId}
+                onChange={(e) => handleOrcamentoChange(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {orcamentosList.map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.numeroOrcamento || o.numero} - {o.cliente?.nome || 'Sem Cliente'} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(o.valorTotalVenda)})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedOrcamentoDet && (
+              <div className="bg-muted/30 border border-border p-4 rounded-xl max-w-sm mx-auto text-left text-xs space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Cliente Signatário:</span>
+                  <span className="font-bold text-foreground">
+                    {selectedOrcamentoDet.cliente?.nome || <span className="text-red-500 font-bold">⚠️ Sem Cliente Vinculado</span>}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor Total do Contrato:</span>
+                  <span className="font-black text-primary">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedOrcamentoDet.valorTotalVenda)}
+                  </span>
+                </div>
+                {!selectedOrcamentoDet.clienteId && (
+                  <p className="text-red-500 text-[10px] mt-2 font-bold leading-normal">
+                    * Vincule um cliente a este orçamento comercial nas configurações comerciais antes de gerar o contrato digital.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2">
               <h3 className="text-foreground font-bold mb-1">Nenhum contrato ativo para este orçamento</h3>
-              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              <p className="text-muted-foreground text-xs max-w-sm mx-auto">
                 Você pode gerar o contrato de prestação de serviços com os itens e valores preenchidos automaticamente.
               </p>
             </div>
 
             <button
               onClick={handleGerarContrato}
-              disabled={generating}
-              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer"
+              disabled={generating || !selectedOrcamentoId || (selectedOrcamentoDet && !selectedOrcamentoDet.clienteId)}
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer text-xs"
             >
               {generating ? (
                 <>
-                  <RefreshCw className="animate-spin" size={18} />
+                  <RefreshCw className="animate-spin" size={16} />
                   Emitindo contrato...
                 </>
               ) : (
                 <>
-                  <Send size={18} />
+                  <Send size={16} />
                   Gerar e Enviar para Assinatura
                 </>
               )}

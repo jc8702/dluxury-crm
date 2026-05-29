@@ -72,13 +72,13 @@ describe('handleContratoDigital', () => {
         qStr = (query.strings as string[]).join('?');
       }
 
-      if (qStr.includes('FROM orcamentos_pro')) {
-        return [{ id: 'orc-1', numero_orcamento: 'ORC-2026-001', cliente_id: 5, valor_total_venda: '25000.00', prazo_entrega_dias: 45 }];
+      if (qStr.includes('FROM orcamentos')) {
+        return [{ id: 'orc-1', numero: 'ORC-2026-001', numero_orcamento: 'ORC-2026-001', cliente_id: 5, valor_total_venda: '25000.00', prazo_entrega_dias: 45 }];
       }
       if (qStr.includes('FROM clients')) {
         return [{ id: 5, nome: 'Cliente Teste CPF', cpf: '123.456.789-00' }];
       }
-      if (qStr.includes('FROM orcamento_itens')) {
+      if (qStr.includes('FROM itens_orcamento')) {
         return [{ id: 'item-1', sku_codigo: 'MDF-BRA-15', quantidade: '5' }];
       }
       if (qStr.includes('SELECT id FROM contrato_digital')) {
@@ -124,13 +124,13 @@ describe('handleContratoDigital', () => {
       if (qStr.includes('FROM contrato_digital')) {
         return [{ id: 1, orcamento_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente', id_assinatura_externa: 'env-1' }];
       }
-      if (qStr.includes('FROM orcamentos_pro')) {
-        return [{ id: 'orc-1', numero_orcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }];
+      if (qStr.includes('FROM orcamentos')) {
+        return [{ id: 'orc-1', numero: 'ORC-2026-001', numero_orcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }];
       }
       if (qStr.includes('INSERT INTO ordens_prod')) {
         return [{ id: 'new-op-uuid' }];
       }
-      if (qStr.includes('FROM orcamento_itens')) {
+      if (qStr.includes('FROM itens_orcamento')) {
         return [{ sku_codigo: 'MDF-BRA-15', quantidade: '5' }];
       }
       if (qStr.includes('FROM estoque_materiais_detalhado')) {
@@ -153,7 +153,7 @@ describe('handleContratoDigital', () => {
     
     // Validar atualizações do banco
     expect(sqlQueries.some(q => q.includes('UPDATE contrato_digital'))).toBe(true);
-    expect(sqlQueries.some(q => q.includes('UPDATE orcamentos_pro'))).toBe(true);
+    expect(sqlQueries.some(q => q.includes('UPDATE orcamentos'))).toBe(true);
     expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_prod'))).toBe(true);
     expect(sqlQueries.some(q => q.includes('INSERT INTO etapas_prod_kanban'))).toBe(true);
     expect(sqlQueries.some(q => q.includes('UPDATE estoque_materiais_detalhado'))).toBe(true);

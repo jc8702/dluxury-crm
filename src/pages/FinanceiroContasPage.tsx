@@ -9,7 +9,7 @@ import {
   FileText, Search, X, Repeat, AlertCircle, 
   Trash2, Lock, ArrowUpCircle, ArrowDownCircle,
   History, Wallet, Building2, TrendingUp,
-  ChevronRight, Calendar, Info
+  ChevronRight, Calendar, Info, ArrowLeft
 } from 'lucide-react';
 import type { 
   ContaInterna, 
@@ -258,6 +258,14 @@ const FinanceiroContasPage = () => {
   return (
     <div className="p-8 max-w-[1600px] mx-auto animate-fade-in pb-20">
       <ConfirmDialogElement />
+
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
 
       {/* Header Industrial */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-border pb-8">

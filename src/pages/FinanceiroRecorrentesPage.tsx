@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Repeat, Plus, Trash2, Edit2, Play } from 'lucide-react';
+import { Repeat, Plus, Trash2, Edit2, Play, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { TableSkeleton } from '../design-system/components/Skeleton';
@@ -129,6 +129,13 @@ export default function FinanceiroRecorrentesPage() {
 
   return (
     <div className="page-container anim-fade-in" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginBottom: '1rem', padding: 0, height: 'auto', background: 'transparent' }}
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

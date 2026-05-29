@@ -7,7 +7,7 @@ import globals from 'globals';
 export default tseslint.config(
   // Ignorar node_modules e build
   {
-    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/', 'scratch/', 'scripts/', 'dev-api-server.js', 'run-migrations.js']
+    ignores: ['node_modules/', 'dist/', 'build/', 'coverage/', 'scratch/', 'scripts/', 'dev-api-server.js', 'run-migrations.js', 'test-direct.js', 'sync-db.ts']
   },
 
   // Configuração base JS
@@ -45,8 +45,11 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react/no-unknown-property': ['error', { ignore: [
         'position', 'args', 'attach', 'count', 'array', 'itemSize',
-        'transparent', 'intensity', 'emissive', 'emissiveIntensity',
+        'transparent', 'opacity', 'emissive', 'emissiveIntensity',
         'roughness', 'metalness', 'depthWrite', 'renderOrder', 'linewidth',
+        'rotation', 'side', 'image', 'colorSpace', 'minFilter', 'magFilter',
+        'geometry', 'material', 'scale', 'castShadow', 'receiveShadow',
+        'intensity', 'distance'
       ] }],
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',

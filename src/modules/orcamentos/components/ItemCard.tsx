@@ -15,8 +15,9 @@ interface ItemCardProps {
  */
 export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const { error: toastError } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // 📝 ESTADO DO ITEM (Refatorado conforme item 6 do pedido)
   const [state, setState] = useState({
@@ -70,6 +71,36 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         hasChanges: false
     }));
   }, [item]);
+
+  // 💾 AUTO-SAVE DEBOUNCED (Fase 2)
+  useEffect(() => {
+    if (!state.hasChanges || !onUpdate) return;
+
+    setSaveStatus('saving');
+    const timer = setTimeout(async () => {
+      const payload = {
+        ...state.draft,
+        possuiOverride: state.draft.precoVendaSobrescrito !== null,
+        quantidade: state.draft.quantidade.toString(),
+        custoUnitarioCalculado: state.draft.custoUnitarioCalculado.toFixed(2),
+        precoVendaUnitario: state.draft.precoVendaUnitario.toFixed(2),
+        precoVendaSobrescrito: state.draft.precoVendaSobrescrito?.toFixed(2) || null,
+        metadata: state.draft.metadata
+      };
+
+      try {
+        await onUpdate(item.id, payload);
+        setState(prev => ({ ...prev, persisted: { ...item }, hasChanges: false }));
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (err) {
+        console.error("[Auto-Save] Erro ao salvar item:", err);
+        setSaveStatus('error');
+      }
+    }, 1000); // 1 segundo de debounce
+
+    return () => clearTimeout(timer);
+  }, [state.draft, state.hasChanges, onUpdate, item.id]);
 
   // 🎹 SUPORTE A TECLADO (ESC para fechar)
   useEffect(() => {
@@ -180,10 +211,13 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
 
     try {
         await onUpdate(item.id, payload);
-        setIsEditing(false);
+        setState(prev => ({ ...prev, persisted: { ...item }, hasChanges: false }));
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
         console.error("[ItemCard] ❌ Erro ao salvar item:", err);
         toastError("Erro ao salvar alterações.");
+        setSaveStatus('error');
     } finally {
         setIsSaving(false);
     }
@@ -241,9 +275,26 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 <Package className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
-                <h3 className="text-foreground font-black text-xl italic tracking-tight truncate leading-none uppercase">
-                    {tituloExibicao}
-                </h3>
+                <div className="flex items-center gap-3">
+                    <h3 className="text-foreground font-black text-xl italic tracking-tight truncate leading-none uppercase">
+                        {tituloExibicao}
+                    </h3>
+                    {saveStatus === 'saving' && (
+                        <span className="text-[9px] font-bold text-muted-foreground animate-pulse flex items-center gap-1.5 bg-muted border border-border px-2 py-0.5 rounded">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" /> SALVANDO...
+                        </span>
+                    )}
+                    {saveStatus === 'saved' && (
+                        <span className="text-[9px] font-bold text-green-500 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded">
+                            ✓ SALVO
+                        </span>
+                    )}
+                    {saveStatus === 'error' && (
+                        <span className="text-[9px] font-bold text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">
+                            ⚠️ ERRO AO SALVAR
+                        </span>
+                    )}
+                </div>
                 {subtituloExibicao && (
                     <div className="mt-2">
                         <span className="text-[10px] text-primary font-black uppercase tracking-widest bg-primary/5 px-2 py-1 rounded border border-primary/15">

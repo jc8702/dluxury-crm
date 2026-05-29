@@ -30,22 +30,23 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
     const handleSend = async () => {
         setLoading(true);
         try {
+            // Gerar token e URL de aprovação no backend (muda o status para 'enviado' e retorna a url)
+            const linkData = await api.aprovacao.gerarLink(orcamento.id);
+            const urlAprovacao = linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
+
             if (method === 'whatsapp') {
-                const text = `Olá! Segue o seu orçamento da D'Luxury: ${orcamento.numeroOrcamento}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nVisualizar: ${window.location.origin}/#/scan/${orcamento.numeroOrcamento || orcamento.numero}`;
+                const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
                 const phone = orcamento.cliente?.telefone || '';
                 window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
             } else {
                 // Simulação de envio de email
-                toastSuccess('E-mail em homologação', 'O orçamento foi marcado como enviado.');
+                toastSuccess('E-mail em homologação', `Link de aprovação gerado: ${urlAprovacao}`);
             }
-            
-            // Marcar como enviado no banco
-            await api.orcamentos.update(orcamento.id, { status: 'enviado' });
             
             onClose();
             toastSuccess('Orçamento processado com sucesso!');
-        } catch {
-            toastError('Erro ao enviar orçamento.');
+        } catch (err: any) {
+            toastError(err.message || 'Erro ao enviar orçamento.');
         } finally {
             setLoading(false);
         }

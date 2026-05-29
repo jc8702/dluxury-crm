@@ -288,6 +288,25 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
     setFormData({ ...formData, itens: newItens, valor_total: newTotal });
   };
 
+  const handleUpdateItemField = (index: number, field: 'quantidade_pedida' | 'preco_unitario', value: number) => {
+    const newItens = formData.itens.map((itm: any, i: number) => {
+      if (i === index) {
+        const updatedItem = { ...itm, [field]: value };
+        updatedItem.subtotal = updatedItem.quantidade_pedida * updatedItem.preco_unitario;
+        return updatedItem;
+      }
+      return itm;
+    });
+
+    const newTotal = newItens.reduce((acc: number, i: any) => acc + i.subtotal, 0) + (Number(formData.frete) || 0);
+
+    setFormData({
+      ...formData,
+      itens: newItens,
+      valor_total: newTotal
+    });
+  };
+
   const handleSave = async () => {
     try {
       if (pedido?.id) {
@@ -427,8 +446,28 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                               <div className="font-semibold text-foreground">{itm.descricao}</div>
                               <div className="text-xs text-muted-foreground mt-0.5">{itm.sku}</div>
                           </td>
-                          <td className="p-3 text-center text-foreground">{itm.quantidade_pedida} {itm.unidade}</td>
-                          <td className="p-3 text-right font-medium text-foreground">R$ {Number(itm.preco_unitario).toFixed(2)}</td>
+                          <td className="p-3 text-center text-foreground">
+                            <div className="flex items-center justify-center gap-1">
+                              <input 
+                                type="number" 
+                                value={itm.quantidade_pedida}
+                                onChange={e => handleUpdateItemField(idx, 'quantidade_pedida', Number(e.target.value))}
+                                className="w-16 bg-background border border-border rounded-lg p-1 text-center text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                              <span className="text-xs text-muted-foreground">{itm.unidade}</span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-xs text-muted-foreground">R$</span>
+                              <input 
+                                type="number" 
+                                value={itm.preco_unitario}
+                                onChange={e => handleUpdateItemField(idx, 'preco_unitario', Number(e.target.value))}
+                                className="w-20 bg-background border border-border rounded-lg p-1 text-right text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                            </div>
+                          </td>
                           <td className="p-3 text-right font-bold text-foreground">R$ {Number(itm.subtotal).toFixed(2)}</td>
                           <td className="p-3 text-center">
                               <Button 

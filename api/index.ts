@@ -127,6 +127,10 @@ export default async function handler(req: any, res: any) {
       const { handleSignup } = await import('../src/api-lib/tenant-provisioning.js');
       return await handleSignup(req, res);
     }
+    if (cleanUrl.startsWith('/api/saas-admin')) {
+      const { handleSaaSAdmin } = await import('../src/api-lib/saas-admin.js');
+      return await handleSaaSAdmin(req, res);
+    }
     if (cleanUrl.startsWith('/api/checkout')) {
       const { handleCheckout } = await import('../src/api-lib/checkout.js');
       return await handleCheckout(req, res);

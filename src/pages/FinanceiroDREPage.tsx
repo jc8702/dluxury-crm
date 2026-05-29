@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { PieChart, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { PieChart, ToggleLeft, ToggleRight, TrendingUp, TrendingDown, Minus, Calendar, ArrowLeft } from 'lucide-react';
 import { Button } from '../design-system/components';
 
 
@@ -114,7 +114,15 @@ export default function FinanceiroDREPage() {
   );
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto min-h-screen space-y-8">
+    <div className="p-8 max-w-[1600px] mx-auto min-h-screen space-y-8 animate-fade-in">
+      <Button 
+        variant="ghost" 
+        onClick={() => window.location.hash = '#/financeiro'} 
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+      >
+        <ArrowLeft size={16} /> Voltar ao Painel Financeiro
+      </Button>
+
       {/* Header Corporativo e Controles */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
         <div>

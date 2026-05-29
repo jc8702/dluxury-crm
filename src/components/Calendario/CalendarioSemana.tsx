@@ -101,6 +101,11 @@ export default function CalendarioSemana({ dataSelecionada, eventos, onEventoCli
                     >
                       {evento.titulo}
                     </div>
+                    {evento.cliente_nome && (
+                      <div className="text-[9px] text-primary/80 font-medium mt-0.5">
+                        Cliente: {evento.cliente_nome}
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between text-[9px] text-muted-foreground mt-1">
                       {evento.hora_evento ? (

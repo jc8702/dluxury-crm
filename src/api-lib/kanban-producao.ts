@@ -20,9 +20,9 @@ export async function handleKanbanProducao(req: any, res: any) {
           ep.etapa_numero,
           op.id as operacao_prod_id,
           op.numero_op,
-          o.id as orcamento_id,
-          o.numero_orcamento,
-          c.nome as cliente_nome,
+          op.orcamento_id,
+          o.numero as numero_orcamento,
+          COALESCE(c.nome, p.client_name, 'Cliente Sem Nome') as cliente_nome,
           c.telefone as cliente_telefone,
           op.prioridade,
           op.environment,
@@ -34,8 +34,9 @@ export async function handleKanbanProducao(req: any, res: any) {
           ep.updated_at
         FROM etapas_prod_kanban ep
         JOIN ordens_prod op ON ep.operacao_prod_id = op.id
-        JOIN orcamentos_pro o ON op.orcamento_id = o.id
-        LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+        LEFT JOIN orcamentos o ON op.orcamento_id::text = o.id::text AND o.tenant_id = ep.tenant_id
+        LEFT JOIN projects p ON op.projeto_id::text = p.id::text AND p.tenant_id = ep.tenant_id
+        LEFT JOIN clients c ON (o.cliente_id::text = c.id::text OR p.client_id::text = c.id::text) AND c.tenant_id = ep.tenant_id
         LEFT JOIN users u ON ep.responsavel_id = u.id
         WHERE ep.tenant_id = $1::uuid
       `;
@@ -63,7 +64,7 @@ export async function handleKanbanProducao(req: any, res: any) {
 
       if (busca) {
         paramCount++;
-        queryStr += ` AND (op.numero_op ILIKE $${paramCount} OR c.nome ILIKE $${paramCount})`;
+        queryStr += ` AND (op.numero_op ILIKE $${paramCount} OR c.nome ILIKE $${paramCount} OR p.client_name ILIKE $${paramCount})`;
         params.push(`%${busca}%`);
       }
 

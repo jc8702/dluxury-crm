@@ -3,12 +3,17 @@ import { sql } from 'drizzle-orm';
 
 async function main() {
     try {
-        const res = await db.execute(sql`SELECT count(*) FROM sku_componente`);
-        console.log('sku_componente:', res.rows[0]);
-        const res2 = await db.execute(sql`SELECT count(*) FROM materiais`);
-        console.log('materiais:', res2.rows[0]);
-        const res3 = await db.execute(sql`SELECT sku as codigo, nome, preco_custo as "precoUnitario" FROM materiais LIMIT 5`);
-        console.log('materiais amostra:', res3.rows);
+        console.log('Rodando alteração de tabela...');
+        await db.execute(sql`ALTER TABLE erp_movimentacoes_industrial ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`);
+        console.log('Populando dados do Tenant default...');
+        await db.execute(sql`UPDATE erp_movimentacoes_industrial SET tenant_id = '00000000-0000-0000-0000-000000000000' WHERE tenant_id IS NULL`);
+        console.log('Estrutura de colunas atualizada:');
+        const res = await db.execute(sql`
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'erp_movimentacoes_industrial'
+        `);
+        console.log(res.rows);
     } catch (err) {
         console.error(err);
     }
