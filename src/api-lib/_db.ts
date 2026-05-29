@@ -33,7 +33,7 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   if (values.length === 1 && Array.isArray(values[0])) {
     params = values[0];
   }
-  return _neonInstance(strings, params);
+  return _neonInstance.query(strings, params);
 };
 
 // Atribuição de propriedades dinâmicas
@@ -43,7 +43,7 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   if (values.length === 1 && Array.isArray(values[0])) {
     params = values[0];
   }
-  return _neonInstance(strings, params);
+  return _neonInstance.query(strings, params);
 };
 
 // Atribuição de propriedades dinâmicas

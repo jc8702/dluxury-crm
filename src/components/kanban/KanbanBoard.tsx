@@ -51,7 +51,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, col.id)}
           style={{ 
-            background: 'rgba(30, 41, 59, 0.5)', 
+            background: 'hsl(var(--muted) / 0.5)', 
             borderRadius: 'var(--radius-lg)', 
             padding: '1.25rem',
             minHeight: '400px',
@@ -62,7 +62,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
           onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'hsl(var(--foreground))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {col.title}
               <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
                 ({items.filter(i => i.status === col.id).length})

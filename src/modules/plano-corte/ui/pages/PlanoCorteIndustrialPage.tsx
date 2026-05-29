@@ -630,17 +630,17 @@ export default function PlanoCorteIndustrialPage() {
               </div>
 
               {resultadoAtivo && (
-                <div className="pt-6 border-t border-[#222] space-y-4">
-                  <span className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em]">Ações da Chapa</span>
+                <div className="pt-6 border-t border-border space-y-4">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Ações da Chapa</span>
                   
                   {resultadoAtivo.chapas_necessarias > 1 && (
-                    <div className="px-4 py-3 rounded-xl bg-[#FFA500]/10 border border-[#FFA500]/20 flex items-start gap-3">
-                      <AlertTriangle size={14} className="text-[#FFA500] mt-0.5 flex-shrink-0" />
+                    <div className="px-4 py-3 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-3">
+                      <AlertTriangle size={14} className="text-warning mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider">
+                        <p className="text-[9px] font-black text-warning uppercase tracking-wider">
                           {resultadoAtivo.chapas_necessarias} Chapas Necessárias
                         </p>
-                        <p className="text-[8px] text-[#888] mt-0.5 font-mono">
+                        <p className="text-[8px] text-muted-foreground mt-0.5 font-mono">
                           {resultadoAtivo.pecas_total_count || 0} peças distribuídas em {resultadoAtivo.layouts.length} layouts
                           {resultadoAtivo.pecas_rejeitadas && resultadoAtivo.pecas_rejeitadas.length > 0 
                             ? ` · ${resultadoAtivo.pecas_rejeitadas.length} não couberam` 
@@ -653,13 +653,13 @@ export default function PlanoCorteIndustrialPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button 
                       variant="outline"
-                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-[9px] font-black uppercase hover:bg-muted/50 transition-all text-foreground"
                     >
                       <Printer size={14} /> Mapa
                     </Button>
                     <Button 
                       variant="outline"
-                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-white/5 border border-[#333] text-[9px] font-black uppercase hover:bg-white/10 transition-all"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-[9px] font-black uppercase hover:bg-muted/50 transition-all text-foreground"
                     >
                       <FileText size={14} /> Etiquetas
                     </Button>
@@ -677,7 +677,7 @@ export default function PlanoCorteIndustrialPage() {
             </>
           ) : (
             <div className="h-full flex flex-col items-center justify-center opacity-20 text-center gap-4">
-              <div className="w-16 h-16 rounded-full border-2 border-dashed border-[#444] flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full border-2 border-dashed border-border flex items-center justify-center">
                 <Scissors size={24} />
               </div>
               <span className="text-xs font-black uppercase tracking-[0.2em]">Selecione uma chapa para gerenciar peças</span>

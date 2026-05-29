@@ -70,7 +70,7 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
   return (
     <div className="mb-8">
       <div className="relative mb-6">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#888]">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
           <Search size={18} />
         </div>
         <input
@@ -79,11 +79,11 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
           placeholder="BUSCAR MATERIAL POR SKU (EX: MDF-BRANCO-18)..."
           value={termoBusca}
           onChange={(e) => setTermoBusca(e.target.value.toUpperCase())}
-          className="w-full h-12 pl-12 pr-12 bg-[#1a1a1a] border-2 border-[#FFA500] rounded-xl text-white font-bold tracking-wider focus:outline-none focus:border-[#FF6B35] focus:ring-4 focus:ring-[#FF6B35]/10 transition-all placeholder:text-[#555] placeholder:font-normal"
+          className="w-full h-12 pl-12 pr-12 bg-background border border-border rounded-xl text-foreground font-bold tracking-wider focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/60 placeholder:font-normal"
         />
         {carregando && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <Loader2 size={18} className="animate-spin text-[#FFA500]" />
+            <Loader2 size={18} className="animate-spin text-primary" />
           </div>
         )}
       </div>
@@ -102,8 +102,8 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
             ))}
           </div>
         ) : termoBusca.trim().length >= 2 && !carregando ? (
-          <div className="bg-[#242424] border border-dashed border-[#444] rounded-xl p-8 text-center">
-            <p className="text-[#888] font-medium m-0">Nenhuma chapa encontrada para "{termoBusca}"</p>
+          <div className="bg-card border border-dashed border-border rounded-xl p-8 text-center">
+            <p className="text-muted-foreground font-medium m-0">Nenhuma chapa encontrada para "{termoBusca}"</p>
           </div>
         ) : null}
       </div>
