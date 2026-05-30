@@ -13,7 +13,12 @@ import {
   ChevronDown, ChevronRight
 } from 'lucide-react';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
   const { user, logout } = useAppContext();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -174,7 +179,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col sticky top-0 transition-all duration-200 z-50 overflow-y-auto hidden lg:flex select-none">
+    <aside className={`w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col fixed lg:sticky top-0 transition-transform duration-200 z-50 overflow-y-auto ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} select-none`}>
       
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
@@ -228,8 +233,9 @@ const Sidebar: React.FC = () => {
       
       <style>{`
         @media (max-width: 1024px) {
-          .sidebar-label { display: none; }
-          aside { width: 64px !important; padding-left: 0.5rem; padding-right: 0.5rem; }
+          /* Do not hide labels when expanded on mobile */
+          /* .sidebar-label { display: none; } */
+          /* aside { width: 64px !important; padding-left: 0.5rem; padding-right: 0.5rem; } */
         }
       `}</style>
     </aside>

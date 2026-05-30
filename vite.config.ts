@@ -26,11 +26,12 @@ export default defineConfig(({ mode }) => ({
           'charts': ['recharts'],
           'calendar': ['react-big-calendar'],
           'pdf': ['jspdf', 'jspdf-autotable', 'html2canvas'],
-          'date': ['date-fns']
+          'date': ['date-fns'],
+          'three': ['three']
         }
       }
     },
-    chunkSizeWarningLimit: 500
+    chunkSizeWarningLimit: 1500
   },
   server: {
     proxy: {

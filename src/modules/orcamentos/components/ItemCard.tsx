@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Pencil, Trash2, DollarSign, Loader2 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { SKUAutocomplete } from './SKUAutocomplete';
+import { Input } from '@/design-system/components';
 
 interface ItemCardProps {
   item: any;
@@ -15,6 +16,29 @@ interface ItemCardProps {
  * Estrutura refatorada para separar estados de rascunho, persistidos e calculados.
  */
 export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCardProps) {
+  
+  // Helper para garantir que os metadados sempre tenham a estrutura correta (inclusive parse de string se vier do banco)
+  const safeParseMetadata = (meta: any) => {
+    let parsed = meta;
+    if (typeof meta === 'string') {
+        try { parsed = JSON.parse(meta); } catch(e) { parsed = {}; }
+    }
+    if (!parsed) parsed = {};
+    return {
+        chapa: parsed.chapa || null,
+        fitaBorda: {
+            sku: parsed.fitaBorda?.sku || null,
+            lados: {
+                topo: !!parsed.fitaBorda?.lados?.topo,
+                base: !!parsed.fitaBorda?.lados?.base,
+                esquerda: !!parsed.fitaBorda?.lados?.esquerda,
+                direita: !!parsed.fitaBorda?.lados?.direita
+            }
+        },
+        ferragens: Array.isArray(parsed.ferragens) ? parsed.ferragens : []
+    };
+  };
+
   const { error: toastError } = useToast();
   const [isEditing, setIsEditing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,11 +65,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
         precoVendaSobrescrito: item.precoVendaSobrescrito ? Number(item.precoVendaSobrescrito) : null,
         margemLucro: Number(item.margemLucro) || 0,
         observacoes: item.observacoes || '',
-        metadata: item.metadata || {
-            chapa: null,
-            fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } },
-            ferragens: []
-        }
+        metadata: safeParseMetadata(item.metadata)
     },
     // Dados que vieram do banco (Persistidos)
     persisted: { ...item },
@@ -69,7 +89,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
             custoUnitarioCalculado: Number(item.custoUnitarioCalculado) || 0,
             precoVendaUnitario: Number(item.precoVendaUnitario) || 0,
             margemLucro: Number(item.margemLucro) || 0,
-            metadata: item.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] }
+            metadata: safeParseMetadata(item.metadata)
         },
         hasChanges: false
     }));
@@ -235,7 +255,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
             skuId: prev.persisted.skuComponenteId || prev.persisted.skuEngenhariaId || '',
             skuCodigo: prev.persisted.skuCodigo || (prev.persisted.skuEngenharia?.codigo) || '',
             skuDescricao: prev.persisted.skuDescricao || (prev.persisted.skuEngenharia?.nome) || (prev.persisted.skuComponente?.nome) || '',
-            metadata: prev.persisted.metadata || { chapa: null, fitaBorda: { sku: null, lados: { topo: false, base: false, esquerda: false, direita: false } }, ferragens: [] },
+            metadata: safeParseMetadata(prev.persisted.metadata),
             custoUnitarioCalculado: Number(prev.persisted.custoUnitarioCalculado) || 0,
             precoVendaUnitario: Number(prev.persisted.precoVendaUnitario) || 0
         },
@@ -398,9 +418,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Nome Customizado</label>
-                            <input 
+                            <Input 
                                 type="text"
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:border-primary outline-none"
+                                className="w-full text-sm font-bold h-10 px-3"
                                 value={state.draft.nomeCustomizado}
                                 onChange={(e) => setState(prev => ({ ...prev, draft: { ...prev.draft, nomeCustomizado: e.target.value }, hasChanges: true }))}
                             />
@@ -431,9 +451,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     <div className="bg-muted p-3 rounded-xl border border-border">
                         <label className="text-[9px] font-black text-muted-foreground uppercase block mb-1">Quantidade</label>
                         {isEditing ? (
-                            <input 
+                            <Input 
                                 type="number"
-                                className="w-full bg-transparent text-foreground font-bold outline-none"
+                                className="w-full h-8 text-foreground font-bold px-2 py-1"
                                 value={state.draft.quantidade}
                                 onChange={(e) => setState(prev => ({ ...prev, draft: { ...prev.draft, quantidade: parseFloat(e.target.value) || 0 }, hasChanges: true }))}
                             />
@@ -465,9 +485,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                             <span className="text-muted-foreground text-xs font-bold uppercase tracking-tighter">Custo Unitário</span>
                         </div>
                         {isEditing ? (
-                            <input 
+                            <Input 
                                 type="number"
-                                className="bg-background border border-border rounded px-2 py-1 text-right w-24 text-sm font-mono text-foreground focus:outline-none"
+                                className="w-24 h-8 text-right font-mono text-sm px-2 py-1"
                                 value={state.draft.custoUnitarioCalculado}
                                 onChange={(e) => recalculatePrices('cost', parseFloat(e.target.value) || 0)}
                             />
@@ -482,9 +502,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                             <span className="text-foreground text-xs font-bold uppercase tracking-tighter">Preço de Venda</span>
                         </div>
                         {isEditing ? (
-                            <input 
+                            <Input 
                                 type="number"
-                                className="bg-background border border-primary/50 rounded px-2 py-1 text-right w-24 text-sm font-mono text-primary font-black focus:outline-none"
+                                className="border-primary/50 text-right w-24 text-sm font-mono text-primary h-8 px-2 py-1 font-black"
                                 value={state.draft.precoVendaUnitario}
                                 onChange={(e) => recalculatePrices('price', parseFloat(e.target.value) || 0)}
                             />
@@ -496,9 +516,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     <div className="flex justify-between items-center pt-2 border-t border-border">
                         <span className="text-muted-foreground text-[10px] font-black uppercase">Margem Real (%)</span>
                         {isEditing ? (
-                            <input 
+                            <Input 
                                 type="number"
-                                className="bg-background border border-border rounded px-2 py-1 text-right w-20 text-[10px] font-black font-mono text-foreground focus:outline-none"
+                                className="text-right w-20 h-8 text-[10px] px-2 py-1 font-black font-mono bg-background border-border"
                                 value={state.draft.margemLucro}
                                 onChange={(e) => recalculatePrices('margin', parseFloat(e.target.value) || 0)}
                             />
@@ -607,8 +627,8 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     {state.draft.metadata?.ferragens?.map((f, i) => (
                         <div key={i} className="flex items-center gap-2 mb-2 bg-muted p-2 rounded-lg border border-border">
                             <span className="flex-1 text-xs text-foreground truncate font-bold">{f.sku?.nome || f.sku?.codigo} <span className="text-muted-foreground font-mono ml-2">R$ {Number(f.sku?.precoUnitario).toFixed(2)} un</span></span>
-                            <input type="number" min="1" className="w-16 bg-background border border-border rounded px-2 py-1 text-xs text-foreground font-mono text-center outline-none focus:border-primary" value={f.quantidade} 
-                                onChange={(e) => {
+                            <Input type="number" min="1" className="w-16 h-8 text-xs font-mono text-center px-2 py-1 bg-background border-border" value={f.quantidade} 
+                                onChange={(e: any) => {
                                     const newF = [...state.draft.metadata.ferragens];
                                     newF[i].quantidade = Number(e.target.value);
                                     const newDraft = { ...state.draft, metadata: { ...state.draft.metadata, ferragens: newF } };

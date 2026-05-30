@@ -1384,7 +1384,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                                 status, parcela, total_parcelas, tenant_id
                                             ) VALUES (
                                                 ${numeroTitulo}, 
-                                                ${exists.clienteId}::text, 
+                                                ${exists.clienteId}::uuid, 
                                                 ${id}::uuid,
                                                 ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)},
                                                 ${dataEmissao}, ${vencimento}, ${dataEmissao},
@@ -1420,19 +1420,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                             custoUnitario: l.custoUnitario
                                         }));
 
-                                        await tx.execute(dsql`
-                                            INSERT INTO ordens_producao (
-                                                op_id, produto, pecas, status, orcamento_id, tenant_id
-                                            ) VALUES (
-                                                ${opId}, 
-                                                ${item.nomeCustomizado || 'Módulo de Engenharia'}, 
-                                                ${JSON.stringify(pecas)}::jsonb, 
-                                                'AGUARDANDO', 
-                                                ${id}, 
-                                                ${tenantId}::uuid
-                                            )
-                                        `);
-
+                                        // Inserir registro na produção foi movido para ordens_prod abaixo
                                         // 4. FASE 3: Reservar Estoque (Comercial)
                                         for (const peca of pecas) {
                                             if (peca.sku) {

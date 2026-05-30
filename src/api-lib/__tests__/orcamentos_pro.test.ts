@@ -42,7 +42,11 @@ vi.mock('../drizzle-db.js', () => {
 vi.mock('../_db.js', () => ({
   auditLog: vi.fn().mockResolvedValue({}),
   validateAuth: vi.fn(),
-  sql: vi.fn(),
+  sql: Object.assign(vi.fn().mockResolvedValue([]), {
+    begin: vi.fn().mockImplementation(async (cb) => cb(Object.assign(vi.fn().mockResolvedValue([]), {
+      // Mock any transaction methods if needed
+    })))
+  }),
 }));
 
 describe('Módulo de Orçamentos PRO', () => {
@@ -431,7 +435,7 @@ describe('Módulo de Orçamentos PRO', () => {
       const sqlQueries = executeCalls.map(c => obterStringSql(c[0]));
       
       expect(sqlQueries.some(q => q.includes('INSERT INTO titulos_receber'))).toBe(true);
-      expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_producao'))).toBe(true);
+      expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_prod'))).toBe(true);
       expect(sqlQueries.some(q => q.includes('INSERT INTO movimentacoes_estoque'))).toBe(true);
     });
   });

@@ -5,10 +5,11 @@ import TopNavbar from './TopNavbar';
 import DluxChat from '../ai/DluxChat';
 import { api } from '../../lib/api';
 import BillingBlockedOverlay from '../BillingBlockedOverlay';
-import { AlertCircle, CreditCard } from 'lucide-react';
+import { AlertCircle, CreditCard, Menu } from 'lucide-react';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [billingBlocked, setBillingBlocked] = useState(false);
   const [blockedError, setBlockedError] = useState('');
   const [subData, setSubData] = useState<{
@@ -63,12 +64,20 @@ export default function Layout() {
         />
       )}
 
-      <Sidebar />
+      {/* Overlay for mobile sidebar */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" 
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      <Sidebar isMobileOpen={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
       
       {/* Main Content Area — off-white background with padded card */}
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
         
-        <TopNavbar />
+        <TopNavbar onMenuClick={() => setIsMobileSidebarOpen(true)} />
 
         {/* Banner: Trial */}
         {showTrialBanner && (

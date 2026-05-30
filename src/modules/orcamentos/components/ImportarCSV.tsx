@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/design-system/components';
-import SKUMatchingUI from '../../../components/orcamentos/SKUMatchingUI';
+import SKUMatchingUI from './SKUMatchingUI';
 import { estoqueGranularService } from '../../../services/estoqueGranularService';
 
 interface ImportarCSVProps {
@@ -43,7 +43,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
             };
 
             const nome = getVal(['Designação', 'designacao', 'nome', 'Description', 'Item', 'Component']) || 'Item sem nome';
-            
+
             // Tratar quantidade com suporte a vírgula decimal
             let qtdStr = getVal(['Quantidade', 'Qtd', 'quantidade', 'Quantity', 'Count']) || '0';
             if (typeof qtdStr === 'string') qtdStr = qtdStr.replace(',', '.');
@@ -61,7 +61,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
 
         const filtered = mappedData.filter(i => i.quantidade > 0 && i.nome !== 'Item sem nome');
         setItemsOriginais(filtered);
-        
+
         if (filtered.length > 0) {
           try {
             const matchResult = await estoqueGranularService.matchSKUsEmLote(orcamentoId, filtered.map(f => ({
@@ -69,7 +69,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
               descricao: f.nome,
               quantidade: f.quantidade
             })));
-            
+
             if (matchResult.success && matchResult.resultados) {
               setMatchingResultados(matchResult.resultados);
               setStatus('matching_validation');
@@ -96,7 +96,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
 
   const handleConfirmarImportacao = async () => {
     if (items.length === 0) return;
-    
+
     setStatus('saving');
     setError(null);
 
@@ -143,7 +143,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
   if (status === 'matching_validation') {
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
-        <SKUMatchingUI 
+        <SKUMatchingUI
           resultados={matchingResultados}
           onConfirmar={async (itensValidados) => {
             setStatus('saving');
@@ -183,7 +183,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
       <div className="bg-card border border-border rounded-[32px] w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        
+
         {/* Header */}
         <div className="p-8 border-b border-border flex justify-between items-center bg-muted/10">
           <div>
@@ -193,7 +193,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
             </h2>
             <p className="text-muted-foreground text-xs mt-1 uppercase tracking-widest font-bold">Injeção Industrial de Dados via CSV</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
             disabled={status === 'saving'}
@@ -212,7 +212,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                   <p className="text-sm font-bold">{error}</p>
                 </div>
               )}
-              
+
               <label className="group relative w-full max-w-xl h-64 border-2 border-dashed border-border rounded-[40px] flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-500">
                 <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
                 <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
@@ -314,7 +314,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
         {status === 'review' && (
           <div className="p-8 border-t border-border bg-muted/10 flex justify-end gap-4">
             <Button variant="ghost" className="px-8 font-bold text-muted-foreground hover:text-foreground" onClick={onClose}>Cancelar</Button>
-            <Button 
+            <Button
               className="bg-primary hover:bg-primary-hover text-primary-foreground font-black px-12 h-14 text-lg shadow-xl shadow-primary/20"
               onClick={handleConfirmarImportacao}
             >

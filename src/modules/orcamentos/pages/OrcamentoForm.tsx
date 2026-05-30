@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/design-system/components';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/design-system/components';
+import DataTable from '@/components/ui/DataTable';
 import { 
     FileText, Upload, Plus, Trash2, 
     Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save, Pencil
@@ -209,10 +210,10 @@ export default function OrcamentoForm() {
                     </CardTitle>
                     <div className="relative">
                         <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <input 
+                        <Input 
                             type="text"
                             placeholder="BUSCAR NÚMERO..."
-                            className="bg-background border border-border rounded-full pl-8 pr-4 py-1.5 text-[10px] font-bold text-foreground focus:border-primary outline-none w-48"
+                            className="rounded-full pl-8 pr-4 h-8 text-[10px] w-48 font-bold bg-background border-border"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -251,67 +252,57 @@ export default function OrcamentoForm() {
                         Nenhum orçamento encontrado.
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-border bg-muted/20">
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Número</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cliente</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Itens</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Venda</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {orcamentosRecentes.map((orc: any) => (
-                                    <tr key={orc.id} className="border-b border-border hover:bg-primary/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
-                                        <td className="px-6 py-4 font-black text-foreground italic group-hover:text-primary transition-colors">
-                                            {orc.numeroOrcamento}
-                                        </td>
-                                        <td className="px-6 py-4 text-muted-foreground text-sm">
-                                            {clients.find(c => c.id === orc.clienteId)?.nome || 'Cliente não definido'}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="bg-muted text-muted-foreground text-[10px] font-black px-2 py-1 rounded border border-border">
-                                                {orc.itens?.length || 0}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-foreground">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orc.valorTotalVenda)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${
-                                                orc.status === 'APROVADO' ? 'bg-green-500/20 text-green-500' : 
-                                                orc.status === 'RASCUNHO' ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'
-                                            }`}>
-                                                {orc.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="bg-muted border border-border hover:bg-muted/80 text-red-500 p-2 cursor-pointer"
-                                                onClick={(e) => handleDelete(orc.id, e)}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="bg-muted border border-border hover:bg-primary hover:text-primary-foreground cursor-pointer"
-                                                onClick={() => {
-                                                    window.location.href = `?id=${orc.id}#/orcamentos`;
-                                                }}
-                                            >
-                                                Editar
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="overflow-x-auto p-4">
+                        <DataTable
+                            headers={['Número', 'Cliente', 'Itens', 'Total Venda', 'Status', 'Ações']}
+                            data={orcamentosRecentes}
+                            renderRow={(orc: any) => (
+                                <>
+                                    <td className="px-6 py-4 font-black text-foreground italic group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                        {orc.numeroOrcamento}
+                                    </td>
+                                    <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                        {clients.find(c => c.id === orc.clienteId)?.nome || 'Cliente não definido'}
+                                    </td>
+                                    <td className="px-6 py-4 text-center cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                        <span className="bg-muted text-muted-foreground text-[10px] font-black px-2 py-1 rounded border border-border">
+                                            {orc.itens?.length || 0}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 font-bold text-foreground cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orc.valorTotalVenda)}
+                                    </td>
+                                    <td className="px-6 py-4 cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                        <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${
+                                            orc.status === 'APROVADO' ? 'bg-green-500/20 text-green-500' : 
+                                            orc.status === 'RASCUNHO' ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'
+                                        }`}>
+                                            {orc.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="bg-muted border border-border hover:bg-muted/80 text-red-500 p-2 cursor-pointer"
+                                            onClick={(e) => handleDelete(orc.id, e)}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="bg-muted border border-border hover:bg-primary hover:text-primary-foreground cursor-pointer"
+                                            onClick={() => {
+                                                window.location.href = `?id=${orc.id}#/orcamentos`;
+                                            }}
+                                        >
+                                            Editar
+                                        </Button>
+                                    </td>
+                                </>
+                            )}
+                        />
                     </div>
                 )}
             </CardContent>
@@ -392,17 +383,21 @@ export default function OrcamentoForm() {
                         </h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-muted-foreground text-sm">Status:</p>
-                            <select 
-                                className="bg-muted border border-border rounded px-2 py-1 text-xs font-bold uppercase text-primary focus:outline-none cursor-pointer"
+                            <Select 
                                 value={orcamento?.status || 'rascunho'}
-                                onChange={(e) => handleUpdateHeader({ status: e.target.value })}
+                                onValueChange={(val) => handleUpdateHeader({ status: val })}
                             >
-                                <option value="rascunho">Rascunho</option>
-                                <option value="negociacao">Negociação</option>
-                                <option value="enviado">Enviado</option>
-                                <option value="fechada">Fechado</option>
-                                <option value="perdida">Perdida</option>
-                            </select>
+                                <SelectTrigger className="bg-muted border-border h-8 text-xs font-bold uppercase text-primary w-[140px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="rascunho">Rascunho</SelectItem>
+                                    <SelectItem value="negociacao">Negociação</SelectItem>
+                                    <SelectItem value="enviado">Enviado</SelectItem>
+                                    <SelectItem value="fechada">Fechado</SelectItem>
+                                    <SelectItem value="perdida">Perdida</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </div>
@@ -456,19 +451,22 @@ export default function OrcamentoForm() {
                             <div className="grid grid-cols-4 gap-8">
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-muted-foreground">Cliente</label>
-                                    <select 
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all appearance-none font-bold cursor-pointer"
+                                    <Select 
                                         value={localComercial.clienteId}
-                                        onChange={(e) => {
-                                            setLocalComercial({ ...localComercial, clienteId: e.target.value });
-                                            handleUpdateHeader({ clienteId: e.target.value });
+                                        onValueChange={(val) => {
+                                            setLocalComercial({ ...localComercial, clienteId: val });
+                                            handleUpdateHeader({ clienteId: val });
                                         }}
                                     >
-                                        <option value="">Selecione um cliente...</option>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>{c.nome}</option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger className="w-full h-12 bg-background border-border text-foreground font-bold">
+                                            <SelectValue placeholder="Selecione um cliente..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {clients.map(c => (
+                                                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-muted-foreground">Margem de Lucro (%)</label>
@@ -556,10 +554,10 @@ export default function OrcamentoForm() {
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
                                 <Search className="w-4 h-4" />
                             </div>
-                            <input 
+                            <Input 
                                 type="text"
                                 placeholder="BUSCAR SKU DE ENGENHARIA..."
-                                className="bg-muted border border-border rounded-full pl-11 pr-4 py-2.5 text-xs w-96 focus:ring-2 focus:ring-primary/50 outline-none transition-all font-bold placeholder:text-muted-foreground/60 text-foreground"
+                                className="bg-muted border-border rounded-full pl-11 pr-4 h-11 text-xs w-96 font-bold"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />

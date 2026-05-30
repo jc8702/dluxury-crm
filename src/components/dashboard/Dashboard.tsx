@@ -1,6 +1,9 @@
 import React from 'react';
 import DataTable from '../ui/DataTable';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../design-system/components';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, AreaChart, Area } from 'recharts';
+import { PlusCircle, FileText, Wrench, Users, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import type { Project, ProjectStatus } from '../../context/AppContext';
 
@@ -152,57 +155,70 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Pipeline resumo */}
-        <Card className="p-6 bg-card border-none shadow-sm rounded-2xl">
+        {/* Pipeline resumo (Recharts) */}
+        <Card className="p-6 bg-card border-none shadow-sm rounded-2xl flex flex-col">
           <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Evolução Financeira</CardTitle>
+            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Evolução Financeira (Últimos 6 meses)</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col gap-4">
-              {periods.slice(0, 6).map(p => {
-                const monthBillings = billings.filter(b => b.data && b.data.startsWith(p.id));
-                const entradas = monthBillings.filter(b => b.tipo !== 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
-                const saidas = monthBillings.filter(b => b.tipo === 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
-                
-                const maxVal = Math.max(entradas, saidas, 1000); 
-                const percEntrada = (entradas / maxVal) * 100;
-                const percSaida = (saidas / maxVal) * 100;
-
-                return (
-                  <div key={p.id} className="grid grid-cols-[60px_1fr] gap-4 items-center">
-                    <span className="text-xs font-bold text-muted-foreground">{p.label}</span>
-                    <div className="flex flex-col gap-1">
-                      {/* Barra de Entrada */}
-                      <div className="flex items-center h-3.5">
-                        <div className="bg-emerald-600 rounded-r-full h-full transition-all duration-500 shadow-[0_2px_4px_rgba(16,185,129,0.1)]" style={{ 
-                          width: `${Math.min(percEntrada, 100)}%`
-                        }} />
-                        {entradas > 0 && <span className="text-[10px] text-emerald-700 ml-2 font-bold">{formatCurrency(entradas)}</span>}
-                      </div>
-                      {/* Barra de Saída */}
-                      <div className="flex items-center h-3.5">
-                        <div className="bg-primary rounded-r-full h-full transition-all duration-500 shadow-[0_2px_4px_rgba(139,90,43,0.1)]" style={{ 
-                          width: `${Math.min(percSaida, 100)}%`
-                        }} />
-                        {saidas > 0 && <span className="text-[10px] text-primary ml-2 font-bold">{formatCurrency(saidas)}</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-6 flex gap-6 justify-center">
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 bg-emerald-600 rounded-lg shadow-sm" />
-                <span className="text-xs font-semibold text-muted-foreground">Entradas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 bg-primary rounded-lg shadow-sm" />
-                <span className="text-xs font-semibold text-muted-foreground">Saídas (Insumos / Produção)</span>
-              </div>
+          <CardContent className="p-0 flex-1 flex flex-col">
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={periods.slice(0, 6).reverse().map(p => {
+                    const monthBillings = billings.filter(b => b.data && b.data.startsWith(p.id));
+                    const entradas = monthBillings.filter(b => b.tipo !== 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+                    const saidas = monthBillings.filter(b => b.tipo === 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+                    return { name: p.label, Entradas: entradas, Saídas: saidas };
+                  })}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} dy={10} />
+                  <YAxis tickFormatter={(val) => `R$${val/1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                  <Tooltip 
+                    cursor={{ fill: 'var(--surface-hover)', opacity: 0.5 }}
+                    contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow-md)' }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                  <Bar dataKey="Entradas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="Saídas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Ações Rápidas (Quick Actions) */}
+      <div>
+        <h3 className="text-lg font-black tracking-wider uppercase text-foreground mb-4 font-display">Ações Rápidas</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
+            <Link to="/clientes">
+              <UserPlus className="w-6 h-6 text-emerald-600" />
+              <span className="text-xs font-bold text-foreground">Novo Cliente</span>
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
+            <Link to="/orcamentos">
+              <FileText className="w-6 h-6 text-primary" />
+              <span className="text-xs font-bold text-foreground">Novo Orçamento</span>
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
+            <Link to="/plano-corte">
+              <Wrench className="w-6 h-6 text-blue-600" />
+              <span className="text-xs font-bold text-foreground">Plano de Corte</span>
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
+            <Link to="/financeiro/contas">
+              <PlusCircle className="w-6 h-6 text-accent" />
+              <span className="text-xs font-bold text-foreground">Nova Despesa</span>
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Origem de leads + Projetos recentes */}
