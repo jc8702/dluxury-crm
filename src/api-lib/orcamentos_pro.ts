@@ -5,6 +5,7 @@ import {
 } from '../db/schema/engenharia-orcamentos.js';
 import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
+import { garantirSeedsFinanceiros } from './financeiro.js';
 
 // Classe de erro customizada para validação
 export class ValidationError extends Error {
