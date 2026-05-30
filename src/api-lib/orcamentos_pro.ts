@@ -642,7 +642,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
                         with: {
                             itens: {
-                                orderBy: (itens, { asc }) => [asc(itens.createdAt)],
+                                orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
                                 with: {
                                     skuEngenharia: true,
                                     skuComponente: true,
@@ -677,7 +677,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
                             with: {
                                 itens: {
-                                    orderBy: (itens, { asc }) => [asc(itens.createdAt)],
+                                    orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
                                     with: {
                                         skuEngenharia: true,
                                         skuComponente: true,
@@ -707,13 +707,13 @@ export async function handleOrcamentosPro(req: any, res: any) {
             const limit = parseInt(url.searchParams.get('limit') || '10');
             const offset = (page - 1) * limit;
 
-            let query = db.select().from(orcamentos).where(eq(orcamentos.tenantId, tenantId)).orderBy(dsql`${orcamentos.createdAt} DESC`);
+            let query = db.select().from(orcamentos).where(eq(orcamentos.tenantId, tenantId)).orderBy(dsql`${orcamentos.updatedAt} DESC`);
             
             if (q) {
                 query = db.select()
                     .from(orcamentos)
                     .where(and(eq(orcamentos.tenantId, tenantId), ilike(orcamentos.numeroOrcamento, `%${q}%`)))
-                    .orderBy(dsql`${orcamentos.createdAt} DESC`) as any;
+                    .orderBy(dsql`${orcamentos.updatedAt} DESC`) as any;
             }
 
             const total = await db.select({ count: dsql`count(*)` }).from(orcamentos).where(eq(orcamentos.tenantId, tenantId));

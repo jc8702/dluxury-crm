@@ -527,30 +527,27 @@ export default function OrcamentoForm() {
                             </h2>
                             {orcamento?.itens && orcamento.itens.length > 0 && (
                                 <div className="flex gap-2">
-                                    {isEditingAll === true ? (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                setIsEditingAll(false);
-                                                toastSuccess('Alterações enviadas para gravação!');
-                                                // Forçar atualização do rodapé de recentes após salvar todos
-                                                setTimeout(() => fetchRecentes(), 1200);
-                                            }}
-                                            className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5 bg-primary/10 border-primary/20 hover:bg-primary/20"
-                                        >
-                                            <Save className="w-3.5 h-3.5 text-primary" /> Salvar Todos
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setIsEditingAll(true)}
-                                            className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5"
-                                        >
-                                            <Pencil className="w-3.5 h-3.5 text-primary" /> Editar Todos
-                                        </Button>
-                                    )}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsEditingAll(true)}
+                                        className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5"
+                                    >
+                                        <Pencil className="w-3.5 h-3.5 text-primary" /> Editar Todos
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setIsEditingAll(false);
+                                            toastSuccess('Alterações enviadas para gravação!');
+                                            // Forçar atualização do rodapé de recentes após salvar todos
+                                            setTimeout(() => fetchRecentes(), 1200);
+                                        }}
+                                        className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5 bg-primary/10 border-primary/20 hover:bg-primary/20"
+                                    >
+                                        <Save className="w-3.5 h-3.5 text-primary" /> Salvar Todos
+                                    </Button>
                                 </div>
                             )}
                         </div>
