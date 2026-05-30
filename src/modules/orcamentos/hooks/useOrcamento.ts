@@ -8,12 +8,23 @@ export function useOrcamento(orcamentoId?: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ HELPER PARA HEADERS
+  const getHeaders = () => {
+    const token = localStorage.getItem('dluxury_token') || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
   // ✅ FUNÇÃO DE CARREGAMENTO CENTRALIZADA (API PRO)
   const carregar = useCallback(async (id: string) => {
     /* console.log(`🔄 [useOrcamento] Carregando orçamento PRO ${id}...`) */;
     setLoading(true);
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${id}`); 
+      const response = await fetch(`/api/orcamentos-pro?id=${id}`, {
+        headers: getHeaders()
+      }); 
       
       if (response.status === 404) {
         throw new Error('Orçamento não encontrado neste módulo (Industrial/PRO).');
@@ -56,7 +67,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=import-items`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ items: normalizedItems })
       });
 
@@ -84,7 +95,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch('/api/orcamentos-pro', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ header: dados, itens: [] })
       });
       const result = await response.json();
@@ -104,7 +115,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(updates)
       });
       const result = await response.json();
@@ -122,7 +133,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=add-item`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ skuId, quantidade })
       });
       const result = await response.json();
@@ -140,7 +151,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-item`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ itemId, ...updates })
       });
       const result = await response.json();
@@ -158,7 +169,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=delete-item`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ itemId })
       });
       const result = await response.json();
@@ -176,7 +187,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-bom`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ bomId, quantidadeAjustada })
       });
       const result = await response.json();
@@ -194,7 +205,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-sku`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ itemId, skuId })
       });
       const result = await response.json();
@@ -213,7 +224,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=bulk-update-items`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ itemIds, updates })
       });
       const result = await response.json();
@@ -242,7 +253,7 @@ export function useOrcamento(orcamentoId?: string) {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=apply-global-margin`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ margem })
       });
       const result = await response.json();
@@ -263,7 +274,8 @@ export function useOrcamento(orcamentoId?: string) {
   const deletarOrcamento = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/orcamentos-pro?id=${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getHeaders()
       });
       const result = await response.json();
       if (result.success) return true;
