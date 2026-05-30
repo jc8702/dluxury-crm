@@ -22,18 +22,6 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
   const [prevIsEditingExternal, setPrevIsEditingExternal] = useState<boolean | undefined>(undefined);
 
-  useEffect(() => {
-    if (isEditingExternal !== prevIsEditingExternal) {
-      if (isEditingExternal === false && state.hasChanges) {
-        handleSave();
-      }
-      if (isEditingExternal !== undefined) {
-        setIsEditing(isEditingExternal);
-      }
-      setPrevIsEditingExternal(isEditingExternal);
-    }
-  }, [isEditingExternal, state.hasChanges, prevIsEditingExternal]);
-
   // 📝 ESTADO DO ITEM (Refatorado conforme item 6 do pedido)
   const [state, setState] = useState({
     // Dados sendo editados (Rascunho)
@@ -176,7 +164,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
   // 🧮 CÁLCULO FINANCEIRO (Markup Simples)
 
-  const recalculatePrices = (type: 'cost' | 'price' | 'margin', value: number, currentDraft?: any) => {
+  function recalculatePrices(type: 'cost' | 'price' | 'margin', value: number, currentDraft?: any) {
     const draft = { ...(currentDraft || state.draft) };
     const cost = type === 'cost' ? value : draft.custoUnitarioCalculado;
     let price = type === 'price' ? value : draft.precoVendaUnitario;
@@ -210,7 +198,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
     }));
   };
 
-  const handleSave = async () => {
+  async function handleSave() {
     if (!onUpdate) return;
     setIsSaving(true);
     const payload = {
@@ -238,7 +226,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
     }
   };
 
-  const handleCancel = () => {
+  function handleCancel() {
     setState(prev => ({
         ...prev,
         draft: {
@@ -254,7 +242,20 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
         hasChanges: false
     }));
     setIsEditing(false);
-  };
+  }
+
+  // Monitorar transição de isEditingExternal (declarado após handleSave e handleCancel para evitar TDZ)
+  useEffect(() => {
+    if (isEditingExternal !== prevIsEditingExternal) {
+      if (isEditingExternal === false && state.hasChanges) {
+        handleSave();
+      }
+      if (isEditingExternal !== undefined) {
+        setIsEditing(isEditingExternal);
+      }
+      setPrevIsEditingExternal(isEditingExternal);
+    }
+  }, [isEditingExternal, state.hasChanges, prevIsEditingExternal]);
 
   // Descrição Oficial (Herdada do SKU Mapeado)
   const currentSKU = (isEditing ? state.draft.skuCodigo : item.skuCodigo) || '';
