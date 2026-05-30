@@ -519,8 +519,8 @@ export default function OrcamentoForm() {
                     </Card>
                 </div>
 
-                {/* Coluna Central: Itens do Projeto */}
-                <div                    <div className="flex justify-between items-center px-2">
+                <div className="col-span-12 space-y-6">
+                    <div className="flex justify-between items-center px-2">
                         <div className="flex items-center gap-4">
                             <h2 className="text-xl font-black flex items-center gap-2 italic">
                                 <Layers className="w-5 h-5 text-orange-500" /> ITENS DO PROJETO
