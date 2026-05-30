@@ -11,3 +11,4 @@ export * from './rentabilidade.js';
 export * from './whatsapp.js';
 export * from './estoque-granular.js';
 export * from './contrato-digital.js';
+export * from './quotations.js';

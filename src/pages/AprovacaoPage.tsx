@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
-import { exportBudgetToPDF } from '../modules/orcamentos/services/export-pdf';
+import { exportBudgetToPDF } from '../modules/quotations/services/export-pdf';
 
 interface AprovacaoPageProps {
   token: string;

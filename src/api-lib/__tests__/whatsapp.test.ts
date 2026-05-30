@@ -60,7 +60,7 @@ describe('handleWhatsApp', () => {
       return [];
     });
 
-    const req = { method: 'GET', url: '/mensagens', query: { orcamento_id: 'o-uuid' }, body: {} };
+    const req = { method: 'GET', url: '/mensagens', query: { quotation_id: 'o-uuid' }, body: {} };
     const res = mockRes();
     await handleWhatsApp(req, res);
 
@@ -99,7 +99,7 @@ describe('handleWhatsApp', () => {
       url: '/enviar-mensagem',
       query: {},
       body: {
-        orcamento_id: 'o-uuid',
+        quotation_id: 'o-uuid',
         numero_telefone: '+5547999999999',
         conteudo_msg: 'Olá, seu projeto foi aprovado!',
         tags: ['orçamento', 'aprovado']
@@ -176,7 +176,7 @@ describe('handleWhatsApp', () => {
       body: {
         from_number: '+5547999999999',
         message_text: 'Tudo bem! Pode dar andamento.',
-        orcamento_id: 'o-uuid'
+        quotation_id: 'o-uuid'
       }
     };
     const res = mockRes();

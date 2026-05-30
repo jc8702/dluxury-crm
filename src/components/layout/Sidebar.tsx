@@ -210,14 +210,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
       </nav>
 
       {/* User footer */}
-      <div className="mt-4 pt-4 border-t border-sidebar-border">
-         <div className="flex items-center gap-2.5 mb-3 px-3">
+      <div className="mt-4 pt-4 border-t border-sidebar-border flex flex-col gap-2">
+         {user?.subdominio && (
+           <div className="px-3 mb-1">
+             <div className="text-[0.65rem] font-bold text-sidebar-primary tracking-wider uppercase mb-0.5">Seu Workspace</div>
+             <a 
+               href={`https://${user.subdominio}.fatto-os.vercel.app`} 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="text-xs text-sidebar-foreground hover:text-primary transition-colors flex items-center gap-1 bg-sidebar-accent/50 px-2 py-1.5 rounded-lg border border-sidebar-border"
+               title="Acessar URL exclusiva"
+             >
+               <span className="truncate">{user.subdominio}.fatto-os.vercel.app</span>
+             </a>
+           </div>
+         )}
+         
+         <div className="flex items-center gap-2.5 px-3">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center font-bold text-xs shrink-0 font-display">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div className="sidebar-label flex-1 min-w-0">
               <p className="text-sm font-semibold truncate text-sidebar-accent-foreground">{user?.name}</p>
-              <p className="text-[0.7rem] text-sidebar-primary capitalize font-medium">{user?.role}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[0.65rem] text-sidebar-primary capitalize font-medium">{user?.role}</span>
+                <span className="w-1 h-1 rounded-full bg-sidebar-border"></span>
+                <span className="text-[0.65rem] bg-accent/20 text-accent px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                  {user?.planoTier || 'BASIC'}
+                </span>
+              </div>
             </div>
          </div>
 

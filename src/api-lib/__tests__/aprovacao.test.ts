@@ -42,7 +42,7 @@ describe('handleAprovacao', () => {
   it('deve gerar link de aprovação (POST /gerar)', async () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
     vi.mocked(sql).mockResolvedValue([{ id: '1', token_aprovacao: 'new-token', status: 'enviado' }]);
-    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { orcamento_id: '1' }, headers: { origin: 'http://test.com' } };
+    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { quotation_id: '1' }, headers: { origin: 'http://test.com' } };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);

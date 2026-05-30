@@ -1,5 +1,5 @@
-const { exec } = require('child_process');
-const dotenv = require('dotenv');
+import { exec } from 'child_process';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -21,6 +21,7 @@ const command = `pg_dump "${databaseUrl}" -F c -f ${backupFile}`;
 exec(command, (error, stdout, stderr) => {
   if (error) {
     console.error(`❌ Erro ao realizar o backup: ${error.message}`);
+    // Not failing entirely, just warning, because pg_dump might not be installed on Windows
     return;
   }
   if (stderr) {

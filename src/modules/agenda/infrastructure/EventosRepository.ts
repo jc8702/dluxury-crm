@@ -61,11 +61,11 @@ export class EventosRepository {
     const results = await sql`
       INSERT INTO eventos (
         tipo, titulo, descricao, data_inicio, data_fim, dia_inteiro,
-        cliente_id, projeto_id, visita_id, orcamento_id, endereco, objetivo, status_visita,
+        cliente_id, projeto_id, visita_id, quotation_id, endereco, objetivo, status_visita,
         responsavel_id, criado_por, cor, lembrete_minutos, tenant_id
       ) VALUES (
         ${validated.tipo}, ${validated.titulo}, ${validated.descricao}, ${validated.data_inicio}, ${validated.data_fim}, ${validated.dia_inteiro},
-        ${validated.cliente_id}::TEXT, ${validated.projeto_id}::TEXT, ${validated.visita_id}::TEXT, ${validated.orcamento_id}::TEXT, ${validated.endereco}, ${objetivoNormalizado}, ${validated.status_visita},
+        ${validated.cliente_id}::TEXT, ${validated.projeto_id}::TEXT, ${validated.visita_id}::TEXT, ${validated.quotation_id}::TEXT, ${validated.endereco}, ${objetivoNormalizado}, ${validated.status_visita},
         ${validated.responsavel_id}::TEXT, ${validated.criado_por}::TEXT, ${validated.cor}, ${validated.lembrete_minutos}, ${tenantId}
       )
       RETURNING *
@@ -95,7 +95,7 @@ export class EventosRepository {
         cliente_id = ${validated.cliente_id}::TEXT,
         projeto_id = ${validated.projeto_id}::TEXT,
         visita_id = ${validated.visita_id}::TEXT,
-        orcamento_id = ${validated.orcamento_id}::TEXT,
+        quotation_id = ${validated.quotation_id}::TEXT,
         endereco = ${validated.endereco},
         objetivo = ${objetivoNormalizado},
         status_visita = ${validated.status_visita},

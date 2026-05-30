@@ -13,7 +13,7 @@ export interface KPIRentabilidade {
 
 export interface ProjetoRentabilidade {
   id: number;
-  orcamento_id: string;
+  quotation_id: string;
   numero_op: string;
   numero_orcamento: string;
   cliente: string;
@@ -33,7 +33,7 @@ export interface ProjetoRentabilidade {
 }
 
 export interface AlertaRentabilidade {
-  orcamento_id: string;
+  quotation_id: string;
   numero_op: string;
   cliente: string;
   variacao_percentual: number;

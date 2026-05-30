@@ -80,7 +80,7 @@ export async function handleRentabilidade(req: any, res: any) {
       let queryStr = `
         SELECT 
           cr.id,
-          cr.orcamento_id,
+          cr.quotation_id,
           op.numero_op,
           o.numero_orcamento,
           c.nome as cliente,
@@ -107,7 +107,7 @@ export async function handleRentabilidade(req: any, res: any) {
           END as status
         FROM custos_reais_op cr
         JOIN ordens_prod op ON cr.operacao_prod_id = op.id
-        JOIN orcamentos_pro o ON cr.orcamento_id = o.id
+        JOIN quotations o ON cr.quotation_id = o.id
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE cr.tenant_id = $1::uuid
       `;
@@ -127,7 +127,7 @@ export async function handleRentabilidade(req: any, res: any) {
         success: true,
         projetos: rows.map((r: any) => ({
           id: r.id,
-          orcamento_id: r.orcamento_id,
+          quotation_id: r.quotation_id,
           numero_op: r.numero_op,
           numero_orcamento: r.numero_orcamento,
           cliente: r.cliente || 'Cliente Avulso',
@@ -154,7 +154,7 @@ export async function handleRentabilidade(req: any, res: any) {
     if (method === 'GET' && url.includes('/alertas')) {
       const alertas = await sql`
         SELECT 
-          cr.orcamento_id,
+          cr.quotation_id,
           op.numero_op,
           c.nome as cliente,
           CASE 
@@ -166,7 +166,7 @@ export async function handleRentabilidade(req: any, res: any) {
           cr.descricao_desvios
         FROM custos_reais_op cr
         JOIN ordens_prod op ON cr.operacao_prod_id = op.id
-        JOIN orcamentos_pro o ON cr.orcamento_id = o.id
+        JOIN quotations o ON cr.quotation_id = o.id
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE cr.tenant_id = ${tenantId}::uuid
           AND (
@@ -180,7 +180,7 @@ export async function handleRentabilidade(req: any, res: any) {
       return res.status(200).json({
         success: true,
         alertas: alertas.map((r: any) => ({
-          orcamento_id: r.orcamento_id,
+          quotation_id: r.quotation_id,
           numero_op: r.numero_op,
           cliente: r.cliente || 'Cliente Avulso',
           variacao_percentual: parseFloat(r.variacao_percentual || 0),
@@ -198,7 +198,7 @@ export async function handleRentabilidade(req: any, res: any) {
         SELECT 
           c.nome as cliente,
           c.id as cliente_id,
-          COUNT(DISTINCT cr.orcamento_id) as total_pedidos,
+          COUNT(DISTINCT cr.quotation_id) as total_pedidos,
           COALESCE(SUM(cr.valor_venda), 0) as total_vendido,
           COALESCE(SUM(cr.custo_total_real), 0) as total_custos_reais,
           COALESCE(SUM(cr.margem_real), 0) as margem_total,
@@ -208,8 +208,8 @@ export async function handleRentabilidade(req: any, res: any) {
           GREATEST(1, LEAST(10, CAST(ROUND(COALESCE(AVG(cr.margem_percentual_real), 0) / 5) AS INT))) as score_rentabilidade,
           MAX(cr.data_conclusao_op) as ultimo_pedido_data
         FROM clients c
-        JOIN orcamentos_pro o ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-        JOIN custos_reais_op cr ON o.id = cr.orcamento_id
+        JOIN quotations o ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
+        JOIN custos_reais_op cr ON o.id = cr.quotation_id
         WHERE c.tenant_id = ${tenantId}::uuid
         GROUP BY c.nome, c.id
         ORDER BY margem_total DESC
@@ -343,7 +343,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
     const [op] = await sql`
       SELECT op.*, o.valor_total_custo, o.valor_total_venda, o.margem_lucro_percentual
       FROM ordens_prod op
-      JOIN orcamentos_pro o ON op.orcamento_id = o.id
+      JOIN quotations o ON op.quotation_id = o.id
       WHERE op.id = ${opId}::uuid AND op.tenant_id = ${tenantId}::uuid
     `;
 
@@ -381,14 +381,14 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
       // Inserir registro inicial
       await sql`
         INSERT INTO custos_reais_op (
-          tenant_id, operacao_prod_id, orcamento_id,
+          tenant_id, operacao_prod_id, quotation_id,
           custo_material_estimado, custo_mao_obra_estimada, tempo_horas_estimado,
           custo_material_real, custo_mao_obra_real, tempo_horas_real,
           custo_total_estimado, custo_total_real, variacao_custo, variacao_percentual,
           valor_venda, margem_estimada, margem_real, margem_percentual_real,
           data_conclusao_op
         ) VALUES (
-          ${tenantId}::uuid, ${opId}::uuid, ${op.orcamento_id}::uuid,
+          ${tenantId}::uuid, ${opId}::uuid, ${op.quotation_id}::uuid,
           ${matEstimado}, ${maoEstimado}, ${tempoEstimado},
           ${matEstimado}, ${maoEstimado}, ${tempoEstimado}, -- Inicialmente os custos reais são iguais aos estimados
           ${custoEstimado}, ${custoEstimado}, 0, 0,
@@ -402,7 +402,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
     // Atualizar Rentabilidade do Cliente de forma agregada
     // ────────────────────────────────────────────────────────────────────────────────
     const [clienteRes] = await sql`
-      SELECT cliente_id FROM orcamentos_pro WHERE id = ${op.orcamento_id}::uuid
+      SELECT cliente_id FROM quotations WHERE id = ${op.quotation_id}::uuid
     `;
     if (clienteRes && clienteRes.cliente_id) {
       const clienteId = parseInt(clienteRes.cliente_id);
@@ -410,7 +410,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
       // Calcular estatísticas agregadas do cliente
       const stats = await sql`
         SELECT 
-          COUNT(DISTINCT cr.orcamento_id) as total_pedidos,
+          COUNT(DISTINCT cr.quotation_id) as total_pedidos,
           SUM(cr.valor_venda) as total_vendido,
           SUM(cr.custo_total_real) as total_custos_reais,
           SUM(cr.margem_real) as margem_total,
@@ -419,7 +419,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
           SUM(CASE WHEN cr.margem_percentual_real < 0 THEN 1 ELSE 0 END) as operacoes_prejuizadas,
           MAX(cr.data_conclusao_op) as ultimo_pedido_data
         FROM custos_reais_op cr
-        JOIN orcamentos_pro o ON cr.orcamento_id = o.id
+        JOIN quotations o ON cr.quotation_id = o.id
         WHERE o.cliente_id::text = ${clienteId}::text AND cr.tenant_id = ${tenantId}::uuid
       `;
 
@@ -435,7 +435,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
 
         // Buscar total orçamentos (incluindo não aprovados)
         const [totalOrc] = await sql`
-          SELECT COUNT(*) as count FROM orcamentos_pro 
+          SELECT COUNT(*) as count FROM quotations 
           WHERE cliente_id::text = ${clienteId}::text AND tenant_id = ${tenantId}::uuid
         `;
 

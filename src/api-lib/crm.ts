@@ -117,7 +117,7 @@ export async function handleKanban(req: any, res: any) {
         FROM kanban_items k
         LEFT JOIN (
           SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-          FROM orcamentos_pro
+          FROM quotations
           WHERE tenant_id = ${tenantId}
           ORDER BY projeto_id, created_at DESC
         ) o ON k.id::text = o.projeto_id::text

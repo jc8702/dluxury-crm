@@ -90,7 +90,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
         quantidade,
         motivo,
         projeto_id: projetoId || null,
-        orcamento_id: orcamentoId || null,
+        quotation_id: orcamentoId || null,
         preco_unitario: tipo === 'entrada' ? precoUnitario : null,
         nota_fiscal: tipo === 'entrada' && notaFiscal.trim() !== '' ? notaFiscal.trim() : null
       });

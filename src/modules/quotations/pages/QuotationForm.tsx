@@ -5,7 +5,7 @@ import {
     FileText, Upload, Plus, Trash2, 
     Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save, Pencil
 } from 'lucide-react';
-import { useOrcamento } from '../hooks/useOrcamento';
+import { useQuotation } from '../hooks/useQuotation';
 import { ImportarProjeto } from '../components/ImportarProjeto';
 import { ModalEnviarCliente } from '../components/ModalEnviarCliente';
 import { api } from '@/lib/api';
@@ -14,7 +14,7 @@ import { ItemCard } from '../components/ItemCard';
 import ContratoDigitalModal from '@/components/contrato/ContratoDigitalModal';
 import { exportBudgetToPDF } from '../services/export-pdf';
 
-export default function OrcamentoForm() {
+export default function QuotationForm() {
     const { error: toastError, success: toastSuccess } = useToast();
     // Pegar ID da URL se existir (Simulando roteamento)
     const urlParams = new URLSearchParams(window.location.search);
@@ -24,7 +24,7 @@ export default function OrcamentoForm() {
         orcamento, loading, inicializar, setHeader, addItem, 
         importItems, updateItem, removerItem,
         applyGlobalMargin, deletarOrcamento, error, carregar 
-    } = useOrcamento(orcamentoId || undefined);
+    } = useQuotation(orcamentoId || undefined);
     
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function OrcamentoForm() {
         page: 1,
         total: 0,
         pages: 1,
-        limit: 10
+        limit: 5
     });
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -65,7 +65,12 @@ export default function OrcamentoForm() {
 
     const fetchRecentes = useCallback(async () => {
         try {
-            const res = await fetch(`/api/orcamentos-pro?page=${pagination.page}&limit=${pagination.limit}&q=${searchQuery}`);
+            const token = localStorage.getItem('dluxury_token') || '';
+            const res = await fetch(`/api/quotations?page=${pagination.page}&limit=${pagination.limit}&q=${searchQuery}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const result = await res.json();
             if (result.success) {
                 setOrcamentosRecentes(result.data);
@@ -206,7 +211,7 @@ export default function OrcamentoForm() {
             <CardHeader className="bg-muted/40 border-b border-border py-4 px-6 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-6">
                     <CardTitle className="text-xs uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-3 font-black">
-                        <FileText className="w-4 h-4 text-primary" /> Orçamentos Recentes
+                        <FileText className="w-4 h-4 text-primary" /> Últimos Orçamentos
                     </CardTitle>
                     <div className="relative">
                         <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -220,26 +225,18 @@ export default function OrcamentoForm() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            disabled={pagination.page === 1}
-                            onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                            className="bg-muted border border-border text-[10px] h-8 w-8 p-0 text-foreground hover:bg-muted/80"
-                        >
-                            {'<'}
-                        </Button>
-                        <span className="text-[10px] font-bold text-muted-foreground">PÁGINA {pagination.page} DE {pagination.pages}</span>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            disabled={pagination.page === pagination.pages}
-                            onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                            className="bg-muted border border-border text-[10px] h-8 w-8 p-0 text-foreground hover:bg-muted/80"
-                        >
-                            {'>'}
-                        </Button>
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(page => (
+                            <Button 
+                                key={page}
+                                variant={pagination.page === page ? "default" : "outline"} 
+                                size="sm" 
+                                onClick={() => setPagination(p => ({ ...p, page }))}
+                                className={`h-8 w-8 p-0 text-[10px] cursor-pointer ${pagination.page === page ? 'bg-primary text-primary-foreground font-black' : 'bg-muted border-border text-foreground hover:bg-muted/80'}`}
+                            >
+                                {page}
+                            </Button>
+                        ))}
                     </div>
                     <span className="text-[10px] font-bold text-muted-foreground bg-background px-3 py-1 rounded-full border border-border">
                         {pagination.total} TOTAL
@@ -254,25 +251,28 @@ export default function OrcamentoForm() {
                 ) : (
                     <div className="overflow-x-auto p-4">
                         <DataTable
-                            headers={['Número', 'Cliente', 'Itens', 'Total Venda', 'Status', 'Ações']}
+                            headers={['Número', 'Data de Criação', 'Data de Revisão', 'Qual Revisão', 'Usuário que Criou', 'Status', 'Ações']}
                             data={orcamentosRecentes}
                             renderRow={(orc: any) => (
                                 <>
-                                    <td className="px-6 py-4 font-black text-foreground italic group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                    <td className="px-6 py-4 font-black text-foreground italic group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
                                         {orc.numeroOrcamento}
                                     </td>
-                                    <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
-                                        {clients.find(c => c.id === orc.clienteId)?.nome || 'Cliente não definido'}
+                                    <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
+                                        {new Date(orc.createdAt || orc.dataOrcamento || Date.now()).toLocaleDateString('pt-BR')}
                                     </td>
-                                    <td className="px-6 py-4 text-center cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                    <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
+                                        {new Date(orc.updatedAt || Date.now()).toLocaleDateString('pt-BR')}
+                                    </td>
+                                    <td className="px-6 py-4 text-center cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
                                         <span className="bg-muted text-muted-foreground text-[10px] font-black px-2 py-1 rounded border border-border">
-                                            {orc.itens?.length || 0}
+                                            {orc.revisao || 'Rev 01'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-foreground cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orc.valorTotalVenda)}
+                                    <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
+                                        {orc.usuarioId ? 'Usuário do Sistema' : 'Sistema'}
                                     </td>
-                                    <td className="px-6 py-4 cursor-pointer" onClick={() => window.location.href = `?id=${orc.id}#/orcamentos`}>
+                                    <td className="px-6 py-4 cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
                                         <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${
                                             orc.status === 'APROVADO' ? 'bg-green-500/20 text-green-500' : 
                                             orc.status === 'RASCUNHO' ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'
@@ -326,7 +326,7 @@ export default function OrcamentoForm() {
                                 className="border-border hover:bg-muted h-14 px-8 text-lg font-bold text-foreground cursor-pointer"
                                 onClick={handleCreateDraft}
                             >
-                                <Plus className="w-5 h-5 mr-2" /> Novo Vazio
+                                <Plus className="w-5 h-5 mr-2" /> Novo Orçamento
                             </Button>
                             <Button 
                                 className="bg-primary hover:bg-primary-hover text-primary-foreground font-black h-14 px-10 text-lg shadow-xl cursor-pointer"
@@ -621,7 +621,7 @@ export default function OrcamentoForm() {
 
             {/* Barra de Ações Removida */}
 
-            {/* Lista de Orçamentos Recentes (Rodapé) */}
+            {/* Lista de Últimos Orçamentos (Rodapé) */}
             <div className="max-w-6xl mx-auto mt-20">
                 {renderListaRecentes()}
             </div>

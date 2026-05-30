@@ -5,7 +5,7 @@ import { CardSkeleton } from '../../design-system/components/Skeleton';
 import { api } from '../../lib/api';
 import { Button, Card, CardContent, Input, Modal } from '../../design-system/components';
 import DataTable from '../ui/DataTable';
-import { SKUAutocomplete } from '../../modules/orcamentos/components/SKUAutocomplete';
+import { SKUAutocomplete } from '../../modules/quotations/components/SKUAutocomplete';
 
 const EngineeringPage: React.FC = () => {
   const { error: toastError } = useToast();

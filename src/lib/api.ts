@@ -131,7 +131,7 @@ export const api = {
     getHistoricoPrecos: (materialId: string) => apiCall<any[]>(`compras?type=historico_precos&material_id=${materialId}`),
   },
   aprovacao: {
-    gerarLink: (orcamentoId: string) => apiCall<any>('aprovacao?action=gerar', 'POST', { orcamento_id: orcamentoId }),
+    gerarLink: (orcamentoId: string) => apiCall<any>('aprovacao?action=gerar', 'POST', { quotation_id: orcamentoId }),
     getPublico: (token: string) => apiCall<any>(`aprovacao?token=${token}`),
     aprovar: (token: string, data: { nome: string }) => apiCall<any>(`aprovacao?token=${token}&action=aprovar`, 'POST', data),
     recusar: (token: string, data: { motivo: string }) => apiCall<any>(`aprovacao?token=${token}&action=recusar`, 'POST', data),
@@ -207,7 +207,7 @@ export const api = {
     delete: (id: string) => apiCall<any>(`users?id=${id}`, 'DELETE'),
   },
   orcamentoTecnico: {
-    getTree: (orcamentoId: string) => apiCall<any>(`orcamento-tecnico?type=tree&orcamento_id=${orcamentoId}`),
+    getTree: (orcamentoId: string) => apiCall<any>(`orcamento-tecnico?type=tree&quotation_id=${orcamentoId}`),
     getConfig: () => apiCall<any>('orcamento-tecnico?type=config'),
     updateConfig: (data: any) => apiCall<any>('orcamento-tecnico?type=config', 'PATCH', data),
     addEntity: (type: string, parentIdKey: string, parentId: string, data: any) => apiCall<any>(`orcamento-tecnico?type=${type}&${parentIdKey}=${parentId}`, 'POST', data),
@@ -365,7 +365,10 @@ export const api = {
     forecastDemand: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
   },
   orcamentosPro: {
-    list: () => apiCall<any[]>('orcamentos-pro'),
+    list: (params?: any) => {
+      const qs = new URLSearchParams(params).toString();
+      return apiCall<any>(`orcamentos-pro${qs ? `?${qs}` : ''}`);
+    },
     create: (data: any) => apiCall<any>('orcamentos-pro', 'POST', data),
     get: (id: string) => apiCall<any>(`orcamentos-pro?id=${id}`),
     update: (id: string, data: any) => apiCall<any>(`orcamentos-pro?id=${id}`, 'PUT', data),

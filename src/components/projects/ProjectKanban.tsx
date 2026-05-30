@@ -82,7 +82,7 @@ const ProjectKanban: React.FC = () => {
       observacoes: item.observacoes || item.observations || '',
       status: item.status,
       visitaId: item.visitaId || 'none',
-      orcamentoId: item.orcamentoId || item.orcamento_id || 'none'
+      orcamentoId: item.orcamentoId || item.quotation_id || 'none'
     });
     setIsModalOpen(true);
   };
@@ -99,7 +99,7 @@ const ProjectKanban: React.FC = () => {
   // Map projects to kanban items format
   const kanbanItems = projects.map(p => {
     const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
-    const vinculado = orcamentos.find(o => o.id?.toString() === p.orcamentoId?.toString() || o.id?.toString() === p.orcamento_id?.toString());
+    const vinculado = orcamentos.find(o => o.id?.toString() === p.orcamentoId?.toString() || o.id?.toString() === p.quotation_id?.toString());
     const badges = vinculado ? [`📄 ${vinculado.numero}`] : projOrcamentos.map(o => `📄 ${o.numero}`);
 
     return {
@@ -123,7 +123,7 @@ const ProjectKanban: React.FC = () => {
       description: p.descricao,
       observations: p.observacoes,
       visitaId: p.visitaId || p.visita_id,
-      orcamentoId: p.orcamentoId || p.orcamento_id,
+      orcamentoId: p.orcamentoId || p.quotation_id,
     };
   });
 

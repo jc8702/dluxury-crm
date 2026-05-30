@@ -1,8 +1,6 @@
 import { db } from './drizzle-db.js';
-import { 
-    skuEngenharia, skuComponente, 
-    orcamentos, orcamentoItens, orcamentoListaExplodida 
-} from '../db/schema/engenharia-orcamentos.js';
+import { quotations, quotationItems, quotationBom } from '../db/schema/quotations.js';
+import { skuEngenharia, skuComponente } from '../db/schema/engenharia-orcamentos.js';
 import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
@@ -200,12 +198,12 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
     const aliquotaImposto = Number(conf.aliquota_imposto || 0) / 100;
 
     // 1. Buscar orçamento e itens em UMA query com join
-    const orc = await tx.query.orcamentos.findFirst({
-      where: and(eq(orcamentos.id, orcId), eq(orcamentos.tenantId, tenantId)),
+    const orc = await tx.query.quotations.findFirst({
+      where: and(eq(quotations.id, orcId), eq(quotations.tenantId, tenantId)),
       with: {
         itens: {
           with: {
-            listaExplodida: {
+            bom: {
               with: {
                 componente: true
               }
@@ -237,8 +235,8 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
       // Calcular custo baseado na lista explodida
       let custoUnitario = 0;
       
-      if (item.listaExplodida && item.listaExplodida.length > 0) {
-        custoUnitario = item.listaExplodida.reduce((sum, comp) => {
+      if (item.bom && item.bom.length > 0) {
+        custoUnitario = item.bom.reduce((sum, comp) => {
           const qtdComp = Number(comp.quantidadeAjustada || comp.quantidadeCalculada || 0);
           const custoComp = Number(comp.custoUnitario || 0);
           return sum + (qtdComp * custoComp);
@@ -294,14 +292,14 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
       for (const chunk of chunks) {
         await Promise.all(
           chunk.map(upd =>
-            tx.update(orcamentoItens)
+            tx.update(quotationItems)
               .set({
                 custoUnitarioCalculado: upd.custoCalc,
                 precoVendaUnitario: upd.precoVenda,
                 margemLucro: upd.margem,
                 updatedAt: new Date()
               })
-              .where(eq(orcamentoItens.id, upd.id))
+              .where(eq(quotationItems.id, upd.id))
           )
         );
       }
@@ -310,13 +308,13 @@ export async function recalcularOrcamento(orcId: string, tenantId: string = '000
     // 4. Aplicar desconto e atualizar cabeçalho
     const valorFinal = vendaTotalAcumulada * (1 - (desconto / 100));
 
-    await tx.update(orcamentos)
+    await tx.update(quotations)
       .set({
         valorTotalCusto: validators.sanitizeNumeric(custoTotalAcumulado, 2),
         valorTotalVenda: validators.sanitizeNumeric(valorFinal, 2),
         updatedAt: new Date()
       })
-      .where(and(eq(orcamentos.id, orcId), eq(orcamentos.tenantId, tenantId)));
+      .where(and(eq(quotations.id, orcId), eq(quotations.tenantId, tenantId)));
 
     logger.info(`✅ [RECALCULO OK] Custo: R$ ${custoTotalAcumulado.toFixed(2)} | Venda: R$ ${valorFinal.toFixed(2)}`);
 
@@ -440,15 +438,15 @@ export function _resetRateLimit() {
 export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string = '00000000-0000-0000-0000-000000000000') {
     return await db.transaction(async (tx) => {
         // 1. Verificar se já existe na tabela PRO
-        const proExists = await tx.query.orcamentos.findFirst({
-            where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId))
+        const proExists = await tx.query.quotations.findFirst({
+            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId))
         });
         if (proExists) return proExists;
 
         // 2. Buscar orçamento legado
         const oldOrcs = await tx.execute(dsql`
             SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base 
-            FROM orcamentos 
+            FROM quotations 
             WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid AND deleted_at IS NULL 
             LIMIT 1
         `);
@@ -457,15 +455,15 @@ export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string 
 
         // 3. Buscar itens legados
         const oldItensRes = await tx.execute(dsql`
-            SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, created_at
+            SELECT id, quotation_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, created_at
             FROM itens_orcamento 
-            WHERE orcamento_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
+            WHERE quotation_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
             ORDER BY created_at ASC, id ASC
         `);
         const oldItens = oldItensRes.rows as any[];
 
-        // 4. Inserir cabeçalho no PRO (orcamentos_pro)
-        const [newPro] = await tx.insert(orcamentos).values({
+        // 4. Inserir cabeçalho no PRO (quotations)
+        const [newPro] = await tx.insert(quotations).values({
             id: oldOrc.id,
             numeroOrcamento: oldOrc.numero || `MIG-${oldOrc.id.substring(0,8)}`,
             clienteId: oldOrc.cliente_id,
@@ -483,10 +481,10 @@ export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string 
 
         // 5. Inserir itens no PRO (orcamento_itens)
         if (oldItens.length > 0) {
-            await tx.insert(orcamentoItens).values(
+            await tx.insert(quotationItems).values(
                 oldItens.map((it: any) => ({
                     id: it.id,
-                    orcamentoId: newPro.id,
+                    quotationId: newPro.id,
                     nomeCustomizado: it.descricao || 'Item Legado',
                     quantidade: (it.quantidade || 1).toString(),
                     largura: it.largura_cm?.toString() || null,
@@ -507,7 +505,7 @@ export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string 
     });
 }
 
-export async function handleOrcamentosPro(req: any, res: any) {
+export async function handleQuotations(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
@@ -638,15 +636,15 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 logger.info(`🔍 Buscando orçamento: ${id}`);
                 let result;
                 try {
-                    result = await db.query.orcamentos.findFirst({
-                        where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
+                    result = await db.query.quotations.findFirst({
+                        where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
                         with: {
                             itens: {
                                 orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
                                 with: {
                                     skuEngenharia: true,
                                     skuComponente: true,
-                                    listaExplodida: {
+                                    bom: {
                                         with: {
                                             componente: true
                                         }
@@ -658,7 +656,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 } catch (dbErr: any) {
                     logger.error(`❌ Erro Crítico no Drizzle (findFirst):`, dbErr);
                     // Se falhar o findFirst complexo, tentamos um simples sem 'with' para recuperar o básico
-                    result = await db.query.orcamentos.findFirst({ where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)) });
+                    result = await db.query.quotations.findFirst({ where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)) });
                     if (result) {
                         logger.warn(`⚠️ Recuperado com busca simples. O erro de 'with' persiste.`);
                         (result as any)._error = dbErr.message;
@@ -673,15 +671,15 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     const migrated = await migrarOrcamentoLegadoParaPro(id, tenantId);
                     if (migrated) {
                         // Buscar novamente com relations para retornar tudo pronto e ordenado
-                        result = await db.query.orcamentos.findFirst({
-                            where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
+                        result = await db.query.quotations.findFirst({
+                            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
                             with: {
                                 itens: {
                                     orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
                                     with: {
                                         skuEngenharia: true,
                                         skuComponente: true,
-                                        listaExplodida: {
+                                        bom: {
                                             with: {
                                                 componente: true
                                             }
@@ -707,16 +705,16 @@ export async function handleOrcamentosPro(req: any, res: any) {
             const limit = parseInt(url.searchParams.get('limit') || '10');
             const offset = (page - 1) * limit;
 
-            let query = db.select().from(orcamentos).where(eq(orcamentos.tenantId, tenantId)).orderBy(dsql`${orcamentos.updatedAt} DESC`);
+            let query = db.select().from(quotations).where(eq(quotations.tenantId, tenantId)).orderBy(dsql`${quotations.updatedAt} DESC`);
             
             if (q) {
                 query = db.select()
-                    .from(orcamentos)
-                    .where(and(eq(orcamentos.tenantId, tenantId), ilike(orcamentos.numeroOrcamento, `%${q}%`)))
-                    .orderBy(dsql`${orcamentos.updatedAt} DESC`) as any;
+                    .from(quotations)
+                    .where(and(eq(quotations.tenantId, tenantId), ilike(quotations.numeroOrcamento, `%${q}%`)))
+                    .orderBy(dsql`${quotations.updatedAt} DESC`) as any;
             }
 
-            const total = await db.select({ count: dsql`count(*)` }).from(orcamentos).where(eq(orcamentos.tenantId, tenantId));
+            const total = await db.select({ count: dsql`count(*)` }).from(quotations).where(eq(quotations.tenantId, tenantId));
             const list = await (query as any).limit(limit).offset(offset);
 
             return res.status(200).json({ 
@@ -742,7 +740,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 const result = await withRetry(async () => {
                     return await db.transaction(async (tx) => {
                         // Criar cabeçalho
-                        const [newOrc] = await tx.insert(orcamentos).values({
+                        const [newOrc] = await tx.insert(quotations).values({
                             clienteId: validated.header.clienteId,
                             projetoId: validated.header.projetoId,
                             validadeDias: validated.header.validadeDias,
@@ -758,8 +756,8 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                         // Inserir itens e explodir BOM em paralelo
                         const itemPromises = validated.itens.map(async (itemData) => {
-                            const [newItem] = await tx.insert(orcamentoItens).values({
-                                orcamentoId: newOrc.id,
+                            const [newItem] = await tx.insert(quotationItems).values({
+                                quotationId: newOrc.id,
                                 skuEngenhariaId: itemData.skuEngenhariaId,
                                 quantidade: itemData.quantidade.toString()
                             }).returning();
@@ -768,9 +766,9 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             const componentes = await explodirBOM(itemData.skuEngenhariaId, 1, tenantId);
                             
                             if (componentes.length > 0) {
-                                await tx.insert(orcamentoListaExplodida).values(
+                                await tx.insert(quotationBom).values(
                                     componentes.map(c => ({
-                                        orcamentoItemId: newItem.id,
+                                        quotationItemId: newItem.id,
                                         skuComponenteId: c.skuComponenteId,
                                         quantidadeCalculada: c.quantidadeCalculada.toString(),
                                         quantidadeAjustada: c.quantidadeCalculada.toString(),
@@ -807,7 +805,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                 });
 
             } catch (err: any) {
-                console.error("❌ [CRITICAL] POST /api/orcamentos-pro Error:", err);
+                console.error("❌ [CRITICAL] POST /api/quotations-pro Error:", err);
                 logger.error("❌ Erro ao criar orçamento:", err?.message || err);
                 
                 // Erros de validação retornam 400
@@ -831,7 +829,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
             try {
                 return await withRetry(async () => {
                     // Verificar se o orçamento existe antes de qualquer PUT
-                    let exists = await db.query.orcamentos.findFirst({ where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)) });
+                    let exists = await db.query.quotations.findFirst({ where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)) });
                     
                     // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora com todos os itens.
                     if (!exists) {
@@ -848,14 +846,14 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         
                         // Garantir que a lista explodida pertence a um item deste orçamento do tenant
                         const belongs = await db.select()
-                            .from(orcamentoListaExplodida)
-                            .join(orcamentoItens, eq(orcamentoListaExplodida.orcamentoItemId, orcamentoItens.id))
-                            .where(and(eq(orcamentoListaExplodida.id, bomId), eq(orcamentoItens.orcamentoId, id)));
+                            .from(quotationBom)
+                            .join(quotationItems, eq(quotationBom.quotationItemId, quotationItems.id))
+                            .where(and(eq(quotationBom.id, bomId), eq(quotationItems.quotationId, id)));
                         if (!belongs.length) throw new Error('Item da BOM não pertence a este orçamento');
 
-                        await db.update(orcamentoListaExplodida)
+                        await db.update(quotationBom)
                             .set({ quantidadeAjustada: quantidadeAjustada.toString(), editado: true })
-                            .where(eq(orcamentoListaExplodida.id, bomId));
+                            .where(eq(quotationBom.id, bomId));
                         
                         await recalcularOrcamento(id, tenantId);
                         return res.status(200).json({ success: true });
@@ -869,17 +867,17 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             const isEng = await tx.query.skuEngenharia.findFirst({ where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)) });
                             
                             if (isEng) {
-                                const [newItem] = await tx.insert(orcamentoItens).values({
-                                    orcamentoId: id,
+                                const [newItem] = await tx.insert(quotationItems).values({
+                                    quotationId: id,
                                     skuEngenhariaId: skuId,
                                     quantidade: quantidade.toString()
                                 }).returning();
 
                                 const comps = await explodirBOM(skuId, 1, tenantId);
                                 if (comps.length > 0) {
-                                    await tx.insert(orcamentoListaExplodida).values(
+                                    await tx.insert(quotationBom).values(
                                         comps.map(c => ({
-                                            orcamentoItemId: newItem.id,
+                                            quotationItemId: newItem.id,
                                             skuComponenteId: c.skuComponenteId,
                                             quantidadeCalculada: c.quantidadeCalculada.toString(),
                                             quantidadeAjustada: c.quantidadeCalculada.toString(),
@@ -892,15 +890,15 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 // Verificar se é um componente (Estoque)
                                 const isComp = await tx.query.skuComponente.findFirst({ where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)) });
                                 if (isComp) {
-                                    const [newItem] = await tx.insert(orcamentoItens).values({
-                                        orcamentoId: id,
+                                    const [newItem] = await tx.insert(quotationItems).values({
+                                        quotationId: id,
                                         skuEngenhariaId: null,
                                         quantidade: '1',
                                         observacoes: `ITEM AVULSO: ${isComp.nome}`
                                     }).returning();
 
-                                    await tx.insert(orcamentoListaExplodida).values({
-                                        orcamentoItemId: newItem.id,
+                                    await tx.insert(quotationBom).values({
+                                        quotationItemId: newItem.id,
                                         skuComponenteId: isComp.id,
                                         quantidadeCalculada: quantidade.toString(),
                                         quantidadeAjustada: quantidade.toString(),
@@ -991,7 +989,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                             || 0;
 
                                         const itemPayload = {
-                                            orcamentoId: id,
+                                            quotationId: id,
                                             nomeCustomizado: item.nome,
                                             quantidade: validators.sanitizeNumeric(item.quantidade, 3),
                                             largura: validators.sanitizeString(item.largura, 20),
@@ -1022,7 +1020,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                                 // 5. Inserir todos os itens em batch
                                 if (itemsToInsert.length > 0) {
-                                    const insertedItems = await tx.insert(orcamentoItens)
+                                    const insertedItems = await tx.insert(quotationItems)
                                         .values(itemsToInsert)
                                         .returning();
 
@@ -1035,7 +1033,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                                         if (originalData.skuComponenteId) {
                                             explodidasToInsert.push({
-                                                orcamentoItemId: item.id,
+                                                quotationItemId: item.id,
                                                 skuComponenteId: originalData.skuComponenteId,
                                                 quantidadeCalculada: item.quantidade,
                                                 quantidadeAjustada: item.quantidade,
@@ -1046,7 +1044,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                     }
 
                                     if (explodidasToInsert.length > 0) {
-                                        await tx.insert(orcamentoListaExplodida).values(explodidasToInsert);
+                                        await tx.insert(quotationBom).values(explodidasToInsert);
                                         logger.debug(`✅ ${explodidasToInsert.length} componentes adicionados à lista explodida`);
                                     }
                                 }
@@ -1100,9 +1098,9 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         const { itemIds } = req.body;
                         if (!Array.isArray(itemIds) || itemIds.length === 0) throw new Error('Nenhum item selecionado');
                         
-                        await db.update(orcamentoItens)
+                        await db.update(quotationItems)
                             .set({ possuiOverride: false, precoVendaSobrescrito: null })
-                            .where(and(eq(orcamentoItens.orcamentoId, id), inArray(orcamentoItens.id, itemIds)));
+                            .where(and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)));
                         
                         await recalcularOrcamento(id, tenantId);
                         return res.status(200).json({ success: true });
@@ -1114,18 +1112,18 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                         // Atualizar cabeçalho e resetar overrides sob transação
                         await db.transaction(async (tx) => {
-                            await tx.update(orcamentos)
+                            await tx.update(quotations)
                                 .set({ margemLucroPercentual: margem.toString() })
-                                .where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                                .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
                             
-                            await tx.update(orcamentoItens)
+                            await tx.update(quotationItems)
                                 .set({ possuiOverride: false, precoVendaSobrescrito: null })
-                                .where(eq(orcamentoItens.orcamentoId, id));
+                                .where(eq(quotationItems.quotationId, id));
                         });
 
                         await recalcularOrcamento(id, tenantId);
                         
-                        const count = await db.select({ count: dsql`count(*)` }).from(orcamentoItens).where(eq(orcamentoItens.orcamentoId, id));
+                        const count = await db.select({ count: dsql`count(*)` }).from(quotationItems).where(eq(quotationItems.quotationId, id));
                         
                         return res.status(200).json({ 
                             success: true, 
@@ -1140,8 +1138,8 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         // Aplicar atualizações em lote buscando todos de uma vez
                         await db.transaction(async (tx) => {
                             const items = await tx.select()
-                                .from(orcamentoItens)
-                                .where(and(eq(orcamentoItens.orcamentoId, id), inArray(orcamentoItens.id, itemIds)));
+                                .from(quotationItems)
+                                .where(and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)));
 
                             for (const item of items) {
                                 const finalUpdates = { ...updates };
@@ -1163,7 +1161,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                     delete finalUpdates.percentualCusto;
                                 }
 
-                                await tx.update(orcamentoItens).set(finalUpdates).where(eq(orcamentoItens.id, item.id));
+                                await tx.update(quotationItems).set(finalUpdates).where(eq(quotationItems.id, item.id));
                             }
                         });
 
@@ -1175,18 +1173,18 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         const { itemId, skuId, tipo } = req.body;
                         
                         await db.transaction(async (tx) => {
-                            const item = await tx.query.orcamentoItens.findFirst({ where: eq(orcamentoItens.id, itemId) });
+                            const item = await tx.query.quotationItems.findFirst({ where: eq(quotationItems.id, itemId) });
                             if (!item) throw new Error('Item não encontrado');
 
                             if (tipo === 'ENGENHARIA') {
                                 // Se for módulo, limpa a explodida antiga e gera a nova
-                                await tx.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
+                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
                                 const comps = await explodirBOM(skuId, 1, tenantId);
                                 
                                 if (comps.length > 0) {
-                                    await tx.insert(orcamentoListaExplodida).values(
+                                    await tx.insert(quotationBom).values(
                                         comps.map(c => ({
-                                            orcamentoItemId: itemId,
+                                            quotationItemId: itemId,
                                             skuComponenteId: c.skuComponenteId,
                                             quantidadeCalculada: c.quantidadeCalculada.toString(),
                                             quantidadeAjustada: c.quantidadeCalculada.toString(),
@@ -1196,18 +1194,18 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                     );
                                 }
 
-                                await tx.update(orcamentoItens).set({ 
+                                await tx.update(quotationItems).set({ 
                                     skuEngenhariaId: skuId,
                                     material: null 
-                                }).where(eq(orcamentoItens.id, itemId));
+                                }).where(eq(quotationItems.id, itemId));
                             } else {
                                 // Se for componente direto
                                 const comp = await tx.query.skuComponente.findFirst({ where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)) });
                                 if (!comp) throw new Error('Componente não encontrado');
 
-                                await tx.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
-                                await tx.insert(orcamentoListaExplodida).values({
-                                    orcamentoItemId: itemId,
+                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                                await tx.insert(quotationBom).values({
+                                    quotationItemId: itemId,
                                     skuComponenteId: skuId,
                                     quantidadeCalculada: '1',
                                     quantidadeAjustada: '1',
@@ -1215,11 +1213,11 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                     origem: 'MANUAL'
                                 });
 
-                                await tx.update(orcamentoItens).set({ 
+                                await tx.update(quotationItems).set({ 
                                     skuEngenhariaId: null,
                                     material: comp.codigo,
                                     custoUnitarioCalculado: comp.precoUnitario
-                                }).where(eq(orcamentoItens.id, itemId));
+                                }).where(eq(quotationItems.id, itemId));
                             }
                         });
 
@@ -1234,7 +1232,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         
                         await db.transaction(async (tx) => {
                             // Buscar item atual para comparar SKU
-                            const oldItem = await tx.query.orcamentoItens.findFirst({ where: eq(orcamentoItens.id, itemId) });
+                            const oldItem = await tx.query.quotationItems.findFirst({ where: eq(quotationItems.id, itemId) });
                             
                             if (!oldItem) {
                                 throw new Error('Item não encontrado');
@@ -1256,13 +1254,13 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             // Detectar se o SKU mudou para re-explodir ou atualizar referências
                             if (updates.skuEngenhariaId && updates.skuEngenhariaId !== oldItem.skuEngenhariaId) {
                                 logger.info(`[ORCAMENTOS_PRO] 🔄 SKU de Engenharia mudou. Re-explodindo BOM para item ${itemId}...`);
-                                await tx.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
+                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
                                 const comps = await explodirBOM(updates.skuEngenhariaId, 1, tenantId);
                                 
                                 if (comps.length > 0) {
-                                    await tx.insert(orcamentoListaExplodida).values(
+                                    await tx.insert(quotationBom).values(
                                         comps.map(c => ({
-                                            orcamentoItemId: itemId,
+                                            quotationItemId: itemId,
                                             skuComponenteId: c.skuComponenteId,
                                             quantidadeCalculada: c.quantidadeCalculada.toString(),
                                             quantidadeAjustada: c.quantidadeCalculada.toString(),
@@ -1273,9 +1271,9 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 }
                             } else if (updates.skuComponenteId && updates.skuComponenteId !== oldItem.skuComponenteId) {
                                 logger.info(`[ORCAMENTOS_PRO] 🔄 SKU de Componente mudou para o item ${itemId}.`);
-                                await tx.delete(orcamentoListaExplodida).where(eq(orcamentoListaExplodida.orcamentoItemId, itemId));
-                                await tx.insert(orcamentoListaExplodida).values({
-                                    orcamentoItemId: itemId,
+                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                                await tx.insert(quotationBom).values({
+                                    quotationItemId: itemId,
                                     skuComponenteId: updates.skuComponenteId,
                                     quantidadeCalculada: (updates.quantidade || oldItem.quantidade).toString(),
                                     quantidadeAjustada: (updates.quantidade || oldItem.quantidade).toString(),
@@ -1289,7 +1287,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             delete cleanUpdates.skuId;
                             delete cleanUpdates.skuTipo;
 
-                            await tx.update(orcamentoItens).set(cleanUpdates).where(eq(orcamentoItens.id, itemId));
+                            await tx.update(quotationItems).set(cleanUpdates).where(eq(quotationItems.id, itemId));
                         });
 
                         await recalcularOrcamento(id, tenantId);
@@ -1299,7 +1297,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                     if (action === 'delete-item') {
                         const { itemId } = req.body;
-                        await db.delete(orcamentoItens).where(and(eq(orcamentoItens.id, itemId), eq(orcamentoItens.orcamentoId, id)));
+                        await db.delete(quotationItems).where(and(eq(quotationItems.id, itemId), eq(quotationItems.quotationId, id)));
                         await recalcularOrcamento(id, tenantId);
                         return res.status(200).json({ success: true });
                     }
@@ -1316,13 +1314,13 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             await db.transaction(async (tx) => {
                                 // 1. Atualizar status e cabeçalho do orçamento
                                 const finalBody = { ...req.body, updatedAt: new Date() };
-                                await tx.update(orcamentos)
+                                await tx.update(quotations)
                                     .set(finalBody)
-                                    .where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                                    .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
 
-                                // Sincronizar com a tabela comercial legada 'orcamentos'
+                                // Sincronizar com a tabela comercial legada 'quotations'
                                 await tx.execute(dsql`
-                                    UPDATE orcamentos 
+                                    UPDATE quotations 
                                     SET status = ${req.body.status}, 
                                         updated_at = NOW() 
                                     WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
@@ -1377,7 +1375,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                         
                                         await tx.execute(dsql`
                                             INSERT INTO titulos_receber (
-                                                numero_titulo, cliente_id, orcamento_id,
+                                                numero_titulo, cliente_id, quotation_id,
                                                 valor_original, valor_liquido, valor_aberto,
                                                 data_emissao, data_vencimento, data_competencia,
                                                 classe_financeira_id, forma_recebimento_id,
@@ -1397,10 +1395,10 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 }
 
                                 // 3. FASE 2: Gerar PCP (Ordens de Produção)
-                                const itens = await tx.query.orcamentoItens.findMany({
-                                    where: eq(orcamentoItens.orcamentoId, id),
+                                const itens = await tx.query.quotationItems.findMany({
+                                    where: eq(quotationItems.quotationId, id),
                                     with: {
-                                        listaExplodida: {
+                                        bom: {
                                             with: {
                                                 componente: true
                                             }
@@ -1413,7 +1411,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                         const opId = `OP-${exists.numeroOrcamento}-${Math.floor(1000 + Math.random() * 9000)}`;
                                         
                                         // Mapear peças explodidas da BOM
-                                        const pecas = item.listaExplodida.map((l: any) => ({
+                                        const pecas = item.bom.map((l: any) => ({
                                             sku: l.componente?.codigo || l.skuComponenteId,
                                             nome: l.componente?.nome || 'Insumo',
                                             quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
@@ -1439,7 +1437,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                                     
                                                     await tx.execute(dsql`
                                                         INSERT INTO movimentacoes_estoque (
-                                                            material_id, tipo, quantidade, motivo, orcamento_id,
+                                                            material_id, tipo, quantidade, motivo, quotation_id,
                                                             preco_unitario, valor_total, estoque_antes, estoque_depois,
                                                             created_by, tenant_id
                                                         ) VALUES (
@@ -1470,7 +1468,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
 
                                 const opResult = await tx.execute(dsql`
                                     INSERT INTO ordens_prod (
-                                        id, tenant_id, orcamento_id, numero_op, status, prioridade, data_prazo, observacoes
+                                        id, tenant_id, quotation_id, numero_op, status, prioridade, data_prazo, observacoes
                                     ) VALUES (
                                         gen_random_uuid(),
                                         ${tenantId}::uuid,
@@ -1538,10 +1536,10 @@ export async function handleOrcamentosPro(req: any, res: any) {
                                 }
                             });
                         } else {
-                            await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                            await db.update(quotations).set(req.body).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
                             if (exists) {
                                 await db.execute(dsql`
-                                    UPDATE orcamentos 
+                                    UPDATE quotations 
                                     SET status = ${req.body.status}, 
                                         updated_at = NOW() 
                                     WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
@@ -1549,10 +1547,10 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             }
                         }
                     } else {
-                        await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                        await db.update(quotations).set(req.body).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
                         if (exists) {
                             await db.execute(dsql`
-                                UPDATE orcamentos 
+                                UPDATE quotations 
                                 SET status = ${req.body.status}, 
                                     updated_at = NOW() 
                                 WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
@@ -1574,7 +1572,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
             
             try {
                 return await withRetry(async () => {
-                    await db.delete(orcamentos).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                    await db.delete(quotations).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
                     await auditLog('ORCAMENTO_PRO', id, 'DELETE', user?.id || 'system');
                     return res.status(200).json({ success: true });
                 }, 'DELETE_ORCAMENTO');

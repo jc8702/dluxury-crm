@@ -26,15 +26,15 @@ export interface ModeloMsgWhatsApp {
 }
 
 export const whatsappService = {
-  async getMensagens(filtros: { orcamento_id?: string; operacao_prod_id?: string }): Promise<ConversaWhatsAppResponse> {
+  async getMensagens(filtros: { quotation_id?: string; operacao_prod_id?: string }): Promise<ConversaWhatsAppResponse> {
     const params = new URLSearchParams();
-    if (filtros.orcamento_id) params.append('orcamento_id', filtros.orcamento_id);
+    if (filtros.quotation_id) params.append('quotation_id', filtros.quotation_id);
     if (filtros.operacao_prod_id) params.append('operacao_prod_id', filtros.operacao_prod_id);
     return apiCall<ConversaWhatsAppResponse>(`whatsapp/mensagens?${params.toString()}`);
   },
 
   async enviarMensagem(data: {
-    orcamento_id?: string;
+    quotation_id?: string;
     operacao_prod_id?: string;
     numero_telefone: string;
     conteudo_msg: string;
@@ -50,7 +50,7 @@ export const whatsappService = {
   async receberWebhook(data: {
     from_number: string;
     message_text: string;
-    orcamento_id?: string;
+    quotation_id?: string;
     operacao_prod_id?: string;
   }): Promise<{ success: boolean; data: any }> {
     return apiCall<{ success: boolean; data: any }>('whatsapp/webhook', 'POST', data);

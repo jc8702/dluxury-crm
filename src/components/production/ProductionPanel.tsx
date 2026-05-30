@@ -35,7 +35,7 @@ const ProductionPanel: React.FC = () => {
   const [editingOP, setEditingOP] = useState<OrdemProducao | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [, setShowNewOPModal] = useState(false);
-  const [newOPData, setNewOPData] = useState({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
+  const [newOPData, setNewOPData] = useState({ op_id: '', produto: '', visita_id: '', projeto_id: '', quotation_id: '', pecas: 1 });
   const { error: toastError, success: toastSuccess } = useToast();
   const { projects, updateProject } = useAppContext();
 
@@ -175,7 +175,7 @@ const ProductionPanel: React.FC = () => {
     try {
       await api.production.create(newOPData);
       setShowNewOPModal(false);
-      setNewOPData({ op_id: '', produto: '', visita_id: '', projeto_id: '', orcamento_id: '', pecas: 1 });
+      setNewOPData({ op_id: '', produto: '', visita_id: '', projeto_id: '', quotation_id: '', pecas: 1 });
       fetchOPs();
     } catch (e: any) {
       toastError('Erro ao criar OP', e.message);
@@ -400,7 +400,7 @@ const ProductionPanel: React.FC = () => {
                               pecas: 1,
                               projeto_id: project.id,
                               visita_id: project.visitaId || null,
-                              orcamento_id: project.orcamentoId || null
+                              quotation_id: project.orcamentoId || null
                             })
                           });
                           const data = await res.json();

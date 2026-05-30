@@ -173,7 +173,7 @@ function FeatureGuard({ feature }: { feature: string }) {
   return <Outlet />;
 }
 
-import OrcamentoForm from './modules/orcamentos/pages/OrcamentoForm';
+import QuotationForm from './modules/quotations/pages/QuotationForm';
 
 export default function App() {
   return (
@@ -200,7 +200,7 @@ export default function App() {
                       {/* Rotas Comuns do Plano Basic (e superiores) */}
                       <Route path="painel" element={<DashboardPage />} />
                       <Route path="clientes" element={<ClientsPage />} />
-                      <Route path="orcamentos" element={<OrcamentoForm />} />
+                      <Route path="orcamentos" element={<QuotationForm />} />
                       <Route path="projetos" element={<ProjectsPage />} />
                       <Route path="visitas" element={<VisitsPage />} />
                       <Route path="calendario" element={<CalendarioPage />} />

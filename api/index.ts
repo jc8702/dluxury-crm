@@ -168,9 +168,9 @@ export default async function handler(req: any, res: any) {
       const { handleImportarItensOrcamento } = await import('./orcamentos/importar-itens.js');
       return await handleImportarItensOrcamento(req, res);
     }
-    if (cleanUrl.startsWith('/api/orcamentos-pro')) {
-      const { handleOrcamentosPro } = await import('../src/api-lib/orcamentos_pro.js');
-      return await handleOrcamentosPro(req, res);
+    if (cleanUrl.startsWith("/api/quotations") || cleanUrl.startsWith("/api/orcamentos-pro")) {
+      const { handleQuotations } = await import("../src/api-lib/quotations.js");
+      return await handleQuotations(req, res);
     }
     if (cleanUrl.startsWith('/api/orcamentos/export-pdf')) {
       const { default: handler } = await import('./orcamentos/exportar-pdf.js');

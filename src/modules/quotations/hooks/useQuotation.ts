@@ -1,8 +1,8 @@
-// src/modules/orcamentos/hooks/useOrcamento.ts
+// src/modules/quotations/hooks/useQuotation.ts
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 
-export function useOrcamento(orcamentoId?: string) {
+export function useQuotation(orcamentoId?: string) {
   const { error: toastError } = useToast();
   const [orcamento, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -19,10 +19,10 @@ export function useOrcamento(orcamentoId?: string) {
 
   // ✅ FUNÇÃO DE CARREGAMENTO CENTRALIZADA (API PRO)
   const carregar = useCallback(async (id: string) => {
-    /* console.log(`🔄 [useOrcamento] Carregando orçamento PRO ${id}...`) */;
+    /* console.log(`🔄 [useQuotation] Carregando orçamento PRO ${id}...`) */;
     setLoading(true);
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${id}`, {
+      const response = await fetch(`/api/quotations?id=${id}`, {
         headers: getHeaders()
       }); 
       
@@ -34,13 +34,13 @@ export function useOrcamento(orcamentoId?: string) {
       
       if (result.success) {
         setOrcamento(result.data);
-        /* console.log("✅ [useOrcamento] Dados carregados:", result.data) */;
+        /* console.log("✅ [useQuotation] Dados carregados:", result.data) */;
         return result.data;
       } else {
         throw new Error(result.error || 'Erro ao carregar dados');
       }
     } catch (err: any) {
-      console.error("❌ [useOrcamento] Erro no fetch:", err);
+      console.error("❌ [useQuotation] Erro no fetch:", err);
       setError(err.message);
       setOrcamento(null); // Limpa para evitar UI inconsistente
     } finally {
@@ -63,9 +63,9 @@ export function useOrcamento(orcamentoId?: string) {
         espessura: item.espessura?.toString() || ''
     }));
 
-    /* console.log(`📤 [useOrcamento] Enviando request de importação (${normalizedItems.length} itens)...`) */;
+    /* console.log(`📤 [useQuotation] Enviando request de importação (${normalizedItems.length} itens)...`) */;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=import-items`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=import-items`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ items: normalizedItems })
@@ -74,16 +74,16 @@ export function useOrcamento(orcamentoId?: string) {
       const result = await response.json();
       
       if (result.success) {
-        /* console.log("✅ [useOrcamento] Importação concluída com sucesso!") */;
+        /* console.log("✅ [useQuotation] Importação concluída com sucesso!") */;
         await carregar(orcamentoId); 
         return true;
       } else {
-        console.error("❌ [useOrcamento] Erro retornado pela API:", result.error);
+        console.error("❌ [useQuotation] Erro retornado pela API:", result.error);
         toastError(`Erro na importação`, result.error || 'Erro desconhecido no servidor');
         return false;
       }
     } catch (err: any) {
-      console.error("❌ [useOrcamento] Falha na comunicação com a API:", err);
+      console.error("❌ [useQuotation] Falha na comunicação com a API:", err);
       toastError('Erro de rede ou conexão', err.message);
       return false;
     }
@@ -93,7 +93,7 @@ export function useOrcamento(orcamentoId?: string) {
   const inicializar = useCallback(async (dados: any) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/orcamentos-pro', {
+      const response = await fetch('/api/quotations', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ header: dados, itens: [] })
@@ -102,7 +102,7 @@ export function useOrcamento(orcamentoId?: string) {
       if (result.success) return result.data;
       throw new Error(result.error);
     } catch (err: any) {
-      console.error("❌ [useOrcamento] Erro ao inicializar:", err);
+      console.error("❌ [useQuotation] Erro ao inicializar:", err);
       throw err;
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ export function useOrcamento(orcamentoId?: string) {
   const setHeader = useCallback(async (updates: any) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(updates)
@@ -123,7 +123,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao atualizar cabeçalho:", err);
+      console.error("❌ [useQuotation] Erro ao atualizar cabeçalho:", err);
     }
   }, [orcamentoId, carregar]);
 
@@ -131,7 +131,7 @@ export function useOrcamento(orcamentoId?: string) {
   const addItem = useCallback(async (skuId: string, quantidade: number) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=add-item`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=add-item`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ skuId, quantidade })
@@ -141,7 +141,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao adicionar item:", err);
+      console.error("❌ [useQuotation] Erro ao adicionar item:", err);
     }
   }, [orcamentoId, carregar]);
 
@@ -149,7 +149,7 @@ export function useOrcamento(orcamentoId?: string) {
   const updateItem = useCallback(async (itemId: string, updates: any) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-item`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=update-item`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ itemId, ...updates })
@@ -159,7 +159,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao atualizar item:", err);
+      console.error("❌ [useQuotation] Erro ao atualizar item:", err);
     }
   }, [orcamentoId, carregar]);
 
@@ -167,7 +167,7 @@ export function useOrcamento(orcamentoId?: string) {
   const removerItem = useCallback(async (itemId: string) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=delete-item`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=delete-item`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ itemId })
@@ -177,7 +177,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao remover item:", err);
+      console.error("❌ [useQuotation] Erro ao remover item:", err);
     }
   }, [orcamentoId, carregar]);
 
@@ -185,7 +185,7 @@ export function useOrcamento(orcamentoId?: string) {
   const updateItemExplosion = useCallback(async (bomId: string, quantidadeAjustada: number) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-bom`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=update-bom`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ bomId, quantidadeAjustada })
@@ -195,7 +195,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao atualizar BOM:", err);
+      console.error("❌ [useQuotation] Erro ao atualizar BOM:", err);
     }
   }, [orcamentoId, carregar]);
 
@@ -203,7 +203,7 @@ export function useOrcamento(orcamentoId?: string) {
   const updateItemSku = useCallback(async (itemId: string, skuId: string) => {
     if (!orcamentoId) return;
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=update-sku`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=update-sku`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ itemId, skuId })
@@ -213,7 +213,7 @@ export function useOrcamento(orcamentoId?: string) {
         await carregar(orcamentoId);
       }
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro ao atualizar SKU:", err);
+      console.error("❌ [useQuotation] Erro ao atualizar SKU:", err);
     }
   }, [orcamentoId, carregar]);
   
@@ -222,7 +222,7 @@ export function useOrcamento(orcamentoId?: string) {
     if (!orcamentoId || itemIds.length === 0) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=bulk-update-items`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=bulk-update-items`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ itemIds, updates })
@@ -234,7 +234,7 @@ export function useOrcamento(orcamentoId?: string) {
       }
       return false;
     } catch (err) {
-      console.error("❌ [useOrcamento] Erro em bulk update:", err);
+      console.error("❌ [useQuotation] Erro em bulk update:", err);
       return false;
     } finally {
       setLoading(false);
@@ -251,7 +251,7 @@ export function useOrcamento(orcamentoId?: string) {
     if (!orcamentoId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${orcamentoId}&action=apply-global-margin`, {
+      const response = await fetch(`/api/quotations?id=${orcamentoId}&action=apply-global-margin`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ margem })
@@ -263,7 +263,7 @@ export function useOrcamento(orcamentoId?: string) {
       }
       throw new Error(result.error);
     } catch (err: any) {
-      console.error("❌ [useOrcamento] Erro ao aplicar margem global:", err);
+      console.error("❌ [useQuotation] Erro ao aplicar margem global:", err);
       throw err;
     } finally {
       setLoading(false);
@@ -273,7 +273,7 @@ export function useOrcamento(orcamentoId?: string) {
   // ✅ DELETAR ORÇAMENTO COMPLETO
   const deletarOrcamento = useCallback(async (id: string) => {
     try {
-      const response = await fetch(`/api/orcamentos-pro?id=${id}`, {
+      const response = await fetch(`/api/quotations?id=${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });
@@ -281,7 +281,7 @@ export function useOrcamento(orcamentoId?: string) {
       if (result.success) return true;
       throw new Error(result.error);
     } catch (err: any) {
-      console.error("❌ [useOrcamento] Erro ao deletar orçamento:", err);
+      console.error("❌ [useQuotation] Erro ao deletar orçamento:", err);
       throw err;
     }
   }, []);

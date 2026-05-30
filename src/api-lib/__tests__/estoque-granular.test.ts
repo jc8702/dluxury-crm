@@ -122,7 +122,7 @@ describe('handleEstoqueGranular', () => {
       }
 
       if (qStr.includes('FROM ordens_prod')) {
-        return [{ id: 'op-1', orcamento_id: 'orc-1' }];
+        return [{ id: 'op-1', quotation_id: 'orc-1' }];
       }
       if (qStr.includes('FROM orcamentos')) {
         return [{ materiais_consumidos: [{ sku: 'MDF-BRA-15', quantidade: 5 }] }];
@@ -175,7 +175,7 @@ describe('handleEstoqueGranular', () => {
       url: '/sku-matching',
       query: {},
       body: {
-        orcamento_id: 'orc-1',
+        quotation_id: 'orc-1',
         itens_csv: [
           { sku_promob: 'MDF-BRA-15', descricao: 'MDF BRANCO 15MM', quantidade: 3 },
           { sku_promob: 'MDF-BRANCO-15', descricao: 'MDF BRANQUINHO 15MM', quantidade: 2 }

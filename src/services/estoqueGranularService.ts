@@ -76,11 +76,11 @@ export const estoqueGranularService = {
     return apiCall<{ success: boolean; saldo_novo: number; quantidade_total: number }>('estoque/registrar-movimento', 'POST', data);
   },
 
-  async matchSKUsEmLote(orcamento_id: string, itens_csv: Array<{
+  async matchSKUsEmLote(quotation_id: string, itens_csv: Array<{
     sku_promob: string;
     descricao: string;
     quantidade: number;
   }>): Promise<SKUMatchingLoteResult> {
-    return apiCall<SKUMatchingLoteResult>('orcamentos/sku-matching', 'POST', { orcamento_id, itens_csv });
+    return apiCall<SKUMatchingLoteResult>('orcamentos/sku-matching', 'POST', { quotation_id, itens_csv });
   }
 };

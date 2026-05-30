@@ -32,7 +32,7 @@ export async function handleProjects(req: any, res: any) {
           observations TEXT,
           visita_id TEXT,
           tag TEXT,
-          orcamento_id TEXT,
+          quotation_id TEXT,
           created_at TIMESTAMPTZ DEFAULT NOW(),
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
@@ -40,7 +40,7 @@ export async function handleProjects(req: any, res: any) {
       // Garantir colunas novas em tabelas existentes
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tag TEXT`.catch(() => {});
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS quotation_id TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_name TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS cliente_nome TEXT`.catch(() => {});
@@ -221,7 +221,7 @@ export async function handleProjects(req: any, res: any) {
           responsavel = COALESCE(${f.responsavel}, responsavel), 
           observacoes = COALESCE(${f.observacoes || f.observations}, observacoes), 
           visita_id = COALESCE(${f.visita_id || f.visitaId}, visita_id), 
-          orcamento_id = COALESCE(${f.orcamento_id || f.orcamentoId}, orcamento_id), 
+          quotation_id = COALESCE(${f.quotation_id || f.orcamentoId}, quotation_id), 
           tag = COALESCE(${f.tag}, tag), 
           updated_at = CURRENT_TIMESTAMP 
         WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
@@ -643,8 +643,8 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
       const numeroOp = `OP-PRJ-${rawTag.replace('PRJ-', '')}-${Math.floor(1000 + Math.random() * 9000)}`;
       
       let orcId = null;
-      if (projectData.orcamento_id && projectData.orcamento_id !== 'none' && projectData.orcamento_id !== '') {
-        orcId = projectData.orcamento_id;
+      if (projectData.quotation_id && projectData.quotation_id !== 'none' && projectData.quotation_id !== '') {
+        orcId = projectData.quotation_id;
       }
 
       const produtoNome = projectData.ambiente || `Projeto ${rawTag}`;
@@ -654,7 +654,7 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
           op_id, 
           tenant_id, 
           projeto_id, 
-          orcamento_id, 
+          quotation_id, 
           produto, 
           status, 
           metadata

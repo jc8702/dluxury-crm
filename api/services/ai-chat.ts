@@ -353,7 +353,7 @@ async function consultar_orcamentos(input: { status?: string; limite?: number },
         o.status,
         o.created_at,
         c.nome as cliente_nome
-      FROM orcamentos_pro o
+      FROM quotations o
       LEFT JOIN clients c ON c.id = o.cliente_id
       WHERE o.status = ${status.toUpperCase()} AND o.tenant_id = ${tenantId}::uuid
       ORDER BY o.created_at DESC

@@ -29,7 +29,7 @@ export async function handleCalendario(req: any, res: any) {
           ec.tipo_evento,
           ec.cor_categoria,
           ec.concluido,
-          ec.orcamento_id,
+          ec.quotation_id,
           ec.operacao_prod_id
         FROM eventos_calendario ec
         WHERE ec.tenant_id = $1::uuid
@@ -55,7 +55,7 @@ export async function handleCalendario(req: any, res: any) {
         tipo_evento: e.tipo_evento,
         cor_categoria: e.cor_categoria,
         concluido: !!e.concluido,
-        orcamento_id: e.orcamento_id,
+        quotation_id: e.quotation_id,
         operacao_prod_id: e.operacao_prod_id
       }));
 
@@ -124,7 +124,7 @@ export async function handleCalendario(req: any, res: any) {
             op.status,
             c.nome as cliente_nome
           FROM ordens_prod op
-          JOIN orcamentos_pro o ON op.orcamento_id = o.id
+          JOIN quotations o ON op.quotation_id = o.id
           LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
           WHERE op.tenant_id = ${tenantId}::uuid
             AND op.data_prazo IS NOT NULL
@@ -155,7 +155,7 @@ export async function handleCalendario(req: any, res: any) {
             o.data_orcamento,
             o.prazo_entrega_dias,
             c.nome as cliente_nome
-          FROM orcamentos_pro o
+          FROM quotations o
           LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
           WHERE o.tenant_id = ${tenantId}::uuid
             AND LOWER(o.status) = 'aprovado'
@@ -181,7 +181,7 @@ export async function handleCalendario(req: any, res: any) {
               tipo_evento: 'orcamento',
               cor_categoria: '#3B82F6', // Azul
               concluido: false,
-              orcamento_id: b.id
+              quotation_id: b.id
             });
           }
         });
@@ -191,7 +191,7 @@ export async function handleCalendario(req: any, res: any) {
     }
 
     if (method === 'POST' && url.includes('/criar-evento')) {
-      const { titulo, descricao, data_evento, hora_evento, tipo_evento, orcamento_id, operacao_prod_id, notificacao_dias_antes, cor_categoria } = req.body;
+      const { titulo, descricao, data_evento, hora_evento, tipo_evento, quotation_id, operacao_prod_id, notificacao_dias_antes, cor_categoria } = req.body;
 
       if (!titulo || !data_evento || !tipo_evento) {
         return res.status(400).json({ success: false, error: 'Título, data e tipo são obrigatórios' });
@@ -200,10 +200,10 @@ export async function handleCalendario(req: any, res: any) {
       const [evento] = await sql`
         INSERT INTO eventos_calendario (
           usuario_id, tipo_evento, titulo, descricao, data_evento, hora_evento, 
-          orcamento_id, operacao_prod_id, cor_categoria, notificacao_dias_antes, tenant_id
+          quotation_id, operacao_prod_id, cor_categoria, notificacao_dias_antes, tenant_id
         ) VALUES (
           ${user.id}::uuid, ${tipo_evento}, ${titulo}, ${descricao || null}, ${data_evento}, ${hora_evento || null}, 
-          ${orcamento_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${cor_categoria || '#3B82F6'}, ${notificacao_dias_antes || 0}, ${tenantId}::uuid
+          ${quotation_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${cor_categoria || '#3B82F6'}, ${notificacao_dias_antes || 0}, ${tenantId}::uuid
         ) RETURNING *
       `;
 
@@ -218,17 +218,17 @@ export async function handleCalendario(req: any, res: any) {
     }
 
     if (method === 'POST' && url.includes('/gerar-automatico')) {
-      const { orcamento_id } = req.body;
+      const { quotation_id } = req.body;
 
-      if (!orcamento_id) {
+      if (!quotation_id) {
         return res.status(400).json({ success: false, error: 'ID do orçamento é obrigatório' });
       }
 
       const [orcamento] = await sql`
         SELECT o.*, c.nome as cliente_nome
-        FROM orcamentos_pro o
+        FROM quotations o
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-        WHERE o.id = ${orcamento_id}::uuid AND o.tenant_id = ${tenantId}::uuid
+        WHERE o.id = ${quotation_id}::uuid AND o.tenant_id = ${tenantId}::uuid
       `;
 
       if (!orcamento) {
@@ -250,11 +250,11 @@ export async function handleCalendario(req: any, res: any) {
       for (const u of usuarios) {
         await sql`
           INSERT INTO eventos_calendario (
-            usuario_id, tipo_evento, titulo, descricao, data_evento, orcamento_id, cor_categoria, notificacao_dias_antes, tenant_id
+            usuario_id, tipo_evento, titulo, descricao, data_evento, quotation_id, cor_categoria, notificacao_dias_antes, tenant_id
           ) VALUES (
             ${u.id}::uuid, 'orcamento', ${`Entrega Pedido: ${orcamento.numero_orcamento}`}, 
             ${`Prazo contratual de entrega para o cliente ${orcamento.cliente_nome || ''}`}, 
-            ${formattedDate}, ${orcamento_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid
+            ${formattedDate}, ${quotation_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid
           )
         `;
       }

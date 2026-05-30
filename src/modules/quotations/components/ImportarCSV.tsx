@@ -1,4 +1,4 @@
-// src/modules/orcamentos/components/ImportarCSV.tsx
+// src/modules/quotations/components/ImportarCSV.tsx
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -124,7 +124,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
           setItems([]);
         }, 1500);
       } else {
-        // Se success for false, o erro já deve ter sido alertado pelo useOrcamento ou capturado aqui
+        // Se success for false, o erro já deve ter sido alertado pelo useQuotation ou capturado aqui
         throw new Error('Falha na persistência dos itens. Verifique os logs do servidor.');
       }
     } catch (err: any) {

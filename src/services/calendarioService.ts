@@ -11,7 +11,7 @@ export interface EventoCalendarioType {
   tipo_evento: TipoEventoType;
   cor_categoria: string;
   concluido: boolean;
-  orcamento_id?: string;
+  quotation_id?: string;
   operacao_prod_id?: string;
   dias_restantes?: number;
   atrasado?: boolean;
@@ -24,7 +24,7 @@ export interface CriarEventoPayload {
   data_evento: string;
   hora_evento?: string;
   tipo_evento: TipoEventoType;
-  orcamento_id?: string;
+  quotation_id?: string;
   operacao_prod_id?: string;
   cor_categoria?: string;
   notificacao_dias_antes?: number;
@@ -56,7 +56,7 @@ export const calendarioService = {
    * Solicita a geração automática de eventos com base em orçamento aprovado
    */
   async gerarAutomatico(orcamentoId: string): Promise<{ sucesso: boolean; eventos_criados: number }> {
-    return apiCall<{ sucesso: boolean; eventos_criados: number }>('calendario/gerar-automatico', 'POST', { orcamento_id: orcamentoId });
+    return apiCall<{ sucesso: boolean; eventos_criados: number }>('calendario/gerar-automatico', 'POST', { quotation_id: orcamentoId });
   },
 
   /**

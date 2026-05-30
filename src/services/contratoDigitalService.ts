@@ -33,12 +33,12 @@ export interface HistoricoAssinatura {
 }
 
 export const contratoDigitalService = {
-  async getStatus(orcamento_id: string): Promise<{ success: boolean; contrato: ContratoDigital | null; historico?: HistoricoAssinatura[] }> {
-    return apiCall<{ success: boolean; contrato: ContratoDigital | null; historico?: HistoricoAssinatura[] }>(`contratos/status?orcamento_id=${orcamento_id}`);
+  async getStatus(quotation_id: string): Promise<{ success: boolean; contrato: ContratoDigital | null; historico?: HistoricoAssinatura[] }> {
+    return apiCall<{ success: boolean; contrato: ContratoDigital | null; historico?: HistoricoAssinatura[] }>(`contratos/status?quotation_id=${quotation_id}`);
   },
 
-  async gerarEEnviar(orcamento_id: string): Promise<{ success: boolean; contrato_id: number; numero_contrato: string; url_assinatura: string; status: string }> {
-    return apiCall<{ success: boolean; contrato_id: number; numero_contrato: string; url_assinatura: string; status: string }>('contratos/gerar-e-enviar', 'POST', { orcamento_id });
+  async gerarEEnviar(quotation_id: string): Promise<{ success: boolean; contrato_id: number; numero_contrato: string; url_assinatura: string; status: string }> {
+    return apiCall<{ success: boolean; contrato_id: number; numero_contrato: string; url_assinatura: string; status: string }>('contratos/gerar-e-enviar', 'POST', { quotation_id });
   },
 
   async webhookAssinaturaMock(envelope_id: string, status: 'completed' | 'declined'): Promise<{ success: boolean; message: string }> {

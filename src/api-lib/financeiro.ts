@@ -9,7 +9,7 @@ const TituloSchema = z.object({
   observacoes: z.string().optional().nullable(),
   numero_titulo: z.string().optional().nullable(),
   projeto_id: z.string().uuid().optional().nullable(),
-  orcamento_id: z.string().uuid().optional().nullable(),
+  quotation_id: z.string().uuid().optional().nullable(),
 });
 
 const BaixaSchema = z.object({
@@ -434,7 +434,7 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
 
   if (req.method === 'GET') {
     const { cliente_id, status, data_inicio, data_fim } = req.query;
-    let queryStr = `SELECT id, numero_titulo, cliente_id, projeto_id, orcamento_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_receber WHERE deletado = false AND tenant_id = $1`;
+    let queryStr = `SELECT id, numero_titulo, cliente_id, projeto_id, quotation_id, valor_original, valor_liquido, valor_aberto, data_emissao, data_vencimento, data_competencia, data_pagamento, classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, status, parcela, total_parcelas, observacoes, deletado, created_at, updated_at FROM titulos_receber WHERE deletado = false AND tenant_id = $1`;
     const params: any[] = [tenantId];
     let paramCount = 1;
 
@@ -494,7 +494,7 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
             const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
             const t = await tx`
               INSERT INTO titulos_receber (
-                numero_titulo, cliente_id, projeto_id, orcamento_id, 
+                numero_titulo, cliente_id, projeto_id, quotation_id, 
                 valor_original, valor_liquido, valor_aberto, 
                 data_emissao, data_vencimento, data_competencia, 
                 classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
@@ -504,7 +504,7 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
                 ${(f.numero_titulo || `REC-${Date.now()}`) + suffix + (f.total_parcelas > 1 ? `-P${i}` : '')}, 
                 ${cliente_id}, 
                 ${f.projeto_id || null}, 
-                ${f.orcamento_id || null}, 
+                ${f.quotation_id || null}, 
                 ${f.valor_original / f.total_parcelas}, 
                 ${f.valor_original / f.total_parcelas}, 
                 ${f.valor_original / f.total_parcelas}, 
@@ -1038,9 +1038,9 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     let details: any[] = [];
     
     if (!isPagar && !isHistory) {
-      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.orcamento_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento ASC`;
+      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento ASC`;
     } else if (!isPagar && isHistory) {
-      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.orcamento_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento DESC LIMIT 50`;
+      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento DESC LIMIT 50`;
     } else if (isPagar && !isHistory) {
       details = await sql`SELECT tp.id, tp.numero_titulo, tp.fornecedor_id, tp.pedido_compra_id, tp.valor_original, tp.valor_liquido, tp.valor_aberto, tp.data_emissao, tp.data_vencimento, tp.data_competencia, tp.data_pagamento, tp.classe_financeira_id, tp.condicao_pagamento_id, tp.forma_pagamento_id, tp.conta_bancaria_id, tp.status, tp.parcela, tp.total_parcelas, tp.observacoes, tp.deletado, tp.created_at, tp.updated_at, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false AND tp.tenant_id = ${tenantId} ORDER BY tp.data_vencimento ASC`;
     } else {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleOrcamentosPro, explodirBOM, recalcularOrcamento, _resetRateLimit } from '../orcamentos_pro.js';
+import { handleOrcamentosPro, explodirBOM, recalcularOrcamento, _resetRateLimit } from '../quotations.js';
 import { db } from '../drizzle-db.js';
 import { validateAuth } from '../_db.js';
 import { PgDialect } from 'drizzle-orm/pg-core';
@@ -17,7 +17,7 @@ vi.mock('../drizzle-db.js', () => {
       skuComponente: {
         findFirst: vi.fn(),
       },
-      orcamentoItens: {
+      quotationItems: {
         findFirst: vi.fn(),
       }
     },
@@ -373,7 +373,7 @@ describe('Módulo de Orçamentos PRO', () => {
               itens: []
             })
           },
-          orcamentoItens: {
+          quotationItems: {
             findMany: vi.fn().mockResolvedValue([
               {
                 id: 'item-1',

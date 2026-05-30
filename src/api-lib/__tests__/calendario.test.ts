@@ -44,7 +44,7 @@ describe('handleCalendario', () => {
         // Prazos de OP
         return [{ id: 'op-1', numero_op: 'OP-001', data_prazo: '2026-05-28', status: 'produção', cliente_nome: 'João' }];
       }
-      if (qStr.includes('orcamentos_pro')) {
+      if (qStr.includes('quotations')) {
         // Prazos de propostas aprovadas
         return [{ id: 'orc-1', numero_orcamento: 'PRO-001', data_orcamento: '2026-05-15', prazo_entrega_dias: 15, cliente_nome: 'Maria' }];
       }
@@ -98,7 +98,7 @@ describe('handleCalendario', () => {
       } else if (query && typeof query === 'object' && 'strings' in query) {
         qStr = (query.strings as string[]).join('?');
       }
-      if (qStr.includes('FROM orcamentos_pro')) {
+      if (qStr.includes('FROM quotations')) {
         return [{ id: 'orc-uuid', numero_orcamento: 'PRO-001', data_orcamento: '2026-05-27', prazo_entrega_dias: 10 }];
       }
       if (qStr.includes('FROM users')) {
@@ -111,7 +111,7 @@ describe('handleCalendario', () => {
       method: 'POST',
       url: '/gerar-automatico',
       query: {},
-      body: { orcamento_id: 'orc-uuid' }
+      body: { quotation_id: 'orc-uuid' }
     };
     const res = mockRes();
 

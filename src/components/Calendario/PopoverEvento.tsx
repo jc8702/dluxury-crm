@@ -183,9 +183,9 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 </a>
               )}
 
-              {evento.tipo_evento === 'orcamento' && evento.orcamento_id && (
+              {evento.tipo_evento === 'orcamento' && evento.quotation_id && (
                 <a 
-                  href={`/#/orcamentos-pro?id=${evento.orcamento_id}`} 
+                  href={`/#/orcamentos-pro?id=${evento.quotation_id}`} 
                   className="flex items-center gap-1 text-primary hover:underline font-semibold"
                   onClick={onClose}
                 >

@@ -296,7 +296,7 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
         {chatAtivo && (
           <div className="w-[380px] shrink-0 border-l border-border h-full max-h-[90vh]">
             <ChatIntegrado
-              orcamento_id={card.orcamento_id}
+              quotation_id={card.quotation_id}
               operacao_prod_id={card.operacao_prod_id}
               numero_telefone={card.cliente_telefone || ''}
               contato_nome={card.cliente_nome}

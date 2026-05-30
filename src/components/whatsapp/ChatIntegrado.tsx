@@ -4,14 +4,14 @@ import { whatsappService } from '../../services/whatsappService.js';
 import type { MensagemWhatsApp, ModeloMsgWhatsApp } from '../../services/whatsappService.js';
 
 interface ChatIntegradoProps {
-  orcamento_id?: string;
+  quotation_id?: string;
   operacao_prod_id?: string;
   numero_telefone: string;
   contato_nome: string;
 }
 
 export default function ChatIntegrado({ 
-  orcamento_id, 
+  quotation_id, 
   operacao_prod_id, 
   numero_telefone, 
   contato_nome 
@@ -31,7 +31,7 @@ export default function ChatIntegrado({
   useEffect(() => {
     carregarMensagens();
     carregarModelos();
-  }, [orcamento_id, operacao_prod_id]);
+  }, [quotation_id, operacao_prod_id]);
 
   // Auto-scroll para última mensagem
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function ChatIntegrado({
   const carregarMensagens = async () => {
     setLoadingHistory(true);
     try {
-      const res = await whatsappService.getMensagens({ orcamento_id, operacao_prod_id });
+      const res = await whatsappService.getMensagens({ quotation_id, operacao_prod_id });
       if (res.success) {
         setMensagens(res.mensagens || []);
         setTags(res.tags || []);
@@ -74,7 +74,7 @@ export default function ChatIntegrado({
 
     try {
       const res = await whatsappService.enviarMensagem({
-        orcamento_id,
+        quotation_id,
         operacao_prod_id,
         numero_telefone,
         conteudo_msg: msgTexto,
@@ -143,7 +143,7 @@ export default function ChatIntegrado({
       await whatsappService.receberWebhook({
         from_number: numero_telefone,
         message_text: randomMsg,
-        orcamento_id,
+        quotation_id,
         operacao_prod_id
       });
       

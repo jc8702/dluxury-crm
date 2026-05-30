@@ -1,6 +1,6 @@
 import { db } from '../../src/api-lib/drizzle-db.js';
 import { skuComponente } from '../../src/db/schema/engenharia-orcamentos.js';
-import { recalcularOrcamento } from '../../src/api-lib/orcamentos_pro.js';
+import { recalcularOrcamento } from '../../src/api-lib/quotations.js';
 import { eq, sql } from 'drizzle-orm';
 
 export default async function handler(req: any, res: any) {
@@ -176,8 +176,8 @@ export default async function handler(req: any, res: any) {
     for (const bit of itensProcessados) {
       try {
         const resItem = await db.execute(sql`
-          INSERT INTO orcamento_itens (
-            orcamento_id, nome_customizado, quantidade, 
+          INSERT INTO quotation_items (
+            quotation_id, nome_customizado, quantidade, 
             largura, altura, espessura, material,
             sku_componente_id, sku_codigo, sku_descricao,
             custo_unitario_calculado, preco_venda_unitario, observacoes
@@ -198,8 +198,8 @@ export default async function handler(req: any, res: any) {
           // Se houve match de SKU, adiciona na lista explodida
           if (bit._matchedSKU) {
             await db.execute(sql`
-              INSERT INTO orcamento_lista_explodida (
-                orcamento_item_id, sku_componente_id, 
+              INSERT INTO quotation_bom (
+                quotation_item_id, sku_componente_id, 
                 quantidade_calculada, quantidade_ajustada, 
                 custo_unitario, origem
               )

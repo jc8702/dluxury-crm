@@ -67,7 +67,7 @@ export type Billing = {
   status: 'PAGO' | 'PENDENTE' | 'CANCELADO';
 };
 
-export type OrcamentoItem = {
+export type QuotationItem = {
   id?: string;
   descricao: string;
   ambiente: string;
@@ -105,7 +105,7 @@ export type Orcamento = {
   adicional_urgencia_pct: number;
   observacoes?: string;
   materiais_consumidos?: { material_id: string; quantidade: number }[];
-  itens: OrcamentoItem[];
+  itens: QuotationItem[];
   created_at?: string;
   updated_at?: string;
 };
@@ -198,7 +198,7 @@ export type Material = {
 // ─── COMPOSIÇÃO TÉCNICA ──────────────────────────────────
 export type OrcamentoAmbiente = {
   id: string;
-  orcamento_id: string;
+  quotation_id: string;
   nome: string;
   ordem: number;
   moveis?: OrcamentoMovel[];
@@ -251,7 +251,7 @@ export type OrcamentoFerragem = {
 
 export type OrcamentoCustoExtra = {
   id: string;
-  orcamento_id: string;
+  quotation_id: string;
   descricao: string;
   tipo: 'mao_de_obra_producao' | 'mao_de_obra_instalacao' | 'frete' | 'projeto' | 'outro';
   forma_calculo: 'valor_fixo' | 'percentual_material' | 'por_m2';
@@ -280,7 +280,7 @@ export type MovimentacaoEstoque = {
   quantidade: number;
   motivo?: string;
   projeto_id?: string;
-  orcamento_id?: string;
+  quotation_id?: string;
   preco_unitario?: number;
   valor_total?: number;
   estoque_antes: number;
@@ -607,7 +607,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         observacoes: p.observacoes || p.observations || '',
         tag: p.tag || '',
         ordem_producao_id: p.ordem_producao_id || null,
-        orcamentoId: p.orcamento_id || p.orcamentoId || '',
+        orcamentoId: p.quotation_id || p.orcamentoId || '',
         visitaId: p.visita_id || p.visitaId || ''
       })));
 
@@ -728,7 +728,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       description: data.descricao || '',
       tag: data.tag,
       client_id: data.clientId,
-      orcamento_id: data.orcamentoId === 'none' ? null : data.orcamentoId,
+      quotation_id: data.orcamentoId === 'none' ? null : data.orcamentoId,
       visita_id: data.visitaId === 'none' ? null : data.visitaId
     };
     const saved = await api.projects.create(payload);
@@ -746,7 +746,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       responsavel: data.responsavel,
       observacoes: data.observacoes,
       tag: saved.tag,
-      orcamentoId: saved.orcamento_id || data.orcamentoId || '',
+      orcamentoId: saved.quotation_id || data.orcamentoId || '',
       visitaId: saved.visita_id || data.visitaId || ''
     };
     setProjects((prev: Project[]) => [...prev, mapped]);
@@ -761,7 +761,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.observacoes) payload.observations = data.observacoes;
     if (data.descricao) payload.description = data.descricao;
     if (data.clientId !== undefined) payload.client_id = data.clientId;
-    if (data.orcamentoId !== undefined) payload.orcamento_id = data.orcamentoId === 'none' ? null : data.orcamentoId;
+    if (data.orcamentoId !== undefined) payload.quotation_id = data.orcamentoId === 'none' ? null : data.orcamentoId;
     if (data.visitaId !== undefined) payload.visita_id = data.visitaId === 'none' ? null : data.visitaId;
 
     await api.projects.update(id, payload);

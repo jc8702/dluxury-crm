@@ -299,7 +299,7 @@ export default function PlanoCorteIndustrialPage() {
       criado_em: new Date(plano.created_at || Date.now()),
       status: 'rascunho', // Mantemos como rascunho para permitir edição
       projeto_id: plano.projeto_id,
-      orcamento_id: plano.orcamento_id,
+      quotation_id: plano.quotation_id,
       visita_id: plano.visita_id,
       ordem_producao_id: plano.ordem_producao_id,
     });
@@ -355,7 +355,7 @@ export default function PlanoCorteIndustrialPage() {
         },
         status: projeto.status,
         projeto_id: projeto.projeto_id,
-        orcamento_id: projeto.orcamento_id,
+        quotation_id: projeto.quotation_id,
         visita_id: projeto.visita_id
       };
 
@@ -434,7 +434,7 @@ export default function PlanoCorteIndustrialPage() {
                extras: {
                   nome_projeto: projeto.nome,
                   projeto_id: projeto.projeto_id,
-                  orcamento_id: projeto.orcamento_id,
+                  quotation_id: projeto.quotation_id,
                   visita_id: projeto.visita_id
                },
                duplicados: retalhosDuplicadosResponse.duplicados
@@ -448,7 +448,7 @@ export default function PlanoCorteIndustrialPage() {
       await executeAprovarProducao(materiais_consumidos, retalhos_gerados, {
         nome_projeto: projeto.nome,
         projeto_id: projeto.projeto_id,
-        orcamento_id: projeto.orcamento_id,
+        quotation_id: projeto.quotation_id,
         visita_id: projeto.visita_id
       }, false);
       

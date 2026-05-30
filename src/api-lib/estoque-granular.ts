@@ -265,7 +265,7 @@ export async function handleEstoqueGranular(req: any, res: any) {
 
       // 2. Buscar itens consumidos do orçamento
       const [orc] = await sql`
-        SELECT materiais_consumidos FROM orcamentos WHERE id = ${op.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+        SELECT materiais_consumidos FROM orcamentos WHERE id = ${op.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       const materiais = orc?.materiais_consumidos || [];
@@ -317,7 +317,7 @@ export async function handleEstoqueGranular(req: any, res: any) {
     // POST /api/orcamentos/sku-matching
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/sku-matching')) {
-      const { orcamento_id, itens_csv } = req.body;
+      const { quotation_id, itens_csv } = req.body;
 
       if (!itens_csv || !Array.isArray(itens_csv)) {
         return res.status(400).json({ success: false, error: 'Parâmetro itens_csv deve ser uma lista válida' });
@@ -430,11 +430,11 @@ export async function handleEstoqueGranular(req: any, res: any) {
 
         const melhorMatch = listSugestoes[0] || null;
 
-        // Se o orcamento_id for informado, salvar auditoria do matching
-        if (orcamento_id) {
+        // Se o quotation_id for informado, salvar auditoria do matching
+        if (quotation_id) {
           await sql`
-            INSERT INTO historico_sku_matching (tenant_id, orcamento_id, sku_procurado, skus_sugeridos, sku_selecionado, usuario_id)
-            VALUES (${tenantId}::uuid, ${orcamento_id}::uuid, ${skuProcurado}, ${JSON.stringify(listSugestoes)}, ${melhorMatch?.sku_interno || null}, ${user.id}::uuid)
+            INSERT INTO historico_sku_matching (tenant_id, quotation_id, sku_procurado, skus_sugeridos, sku_selecionado, usuario_id)
+            VALUES (${tenantId}::uuid, ${quotation_id}::uuid, ${skuProcurado}, ${JSON.stringify(listSugestoes)}, ${melhorMatch?.sku_interno || null}, ${user.id}::uuid)
           `;
         }
 

@@ -15,7 +15,7 @@ export async function handleAprovacao(req: any, res: any) {
 
       if (!orc) return res.status(404).json({ success: false, error: 'Proposta não encontrada ou link expirado' });
 
-      const itms = await sql`SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE orcamento_id = ${orc.id} AND tenant_id = ${orc.tenant_id} ORDER BY id ASC`;
+      const itms = await sql`SELECT id, quotation_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE quotation_id = ${orc.id} AND tenant_id = ${orc.tenant_id} ORDER BY id ASC`;
       const condicao = orc.condicao_pagamento_id ? (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${orc.condicao_pagamento_id} AND tenant_id = ${orc.tenant_id}`)[0] : null;
 
       return res.status(200).json({ success: true, data: { ...orc, itens: itms, condicao } });
@@ -27,7 +27,7 @@ export async function handleAprovacao(req: any, res: any) {
       if (!auth.authorized) return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
       const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
-      const { orcamento_id } = req.body;
+      const { quotation_id } = req.body;
       const newToken = crypto.randomUUID();
       const origin = req.headers.origin || 'https://dluxury-crm.vercel.app';
       const url = `${origin}/aprovar/${newToken}`;
@@ -38,7 +38,7 @@ export async function handleAprovacao(req: any, res: any) {
           url_aprovacao = ${url},
           status = 'enviado',
           updated_at = NOW()
-        WHERE id = ${orcamento_id} AND tenant_id = ${tenantId}
+        WHERE id = ${quotation_id} AND tenant_id = ${tenantId}
         RETURNING id, numero, token_aprovacao, url_aprovacao, status, updated_at
       `;
 

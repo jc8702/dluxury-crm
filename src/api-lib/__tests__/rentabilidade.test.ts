@@ -54,7 +54,7 @@ describe('handleRentabilidade', () => {
 
   it('deve retornar lista de projetos (GET /projetos)', async () => {
     vi.mocked(sql).mockResolvedValue([
-      { id: 1, orcamento_id: 'o-uuid', numero_op: 'OP-001', valor_venda: '5000', margem_percentual_real: '35', status: 'lucrativo' }
+      { id: 1, quotation_id: 'o-uuid', numero_op: 'OP-001', valor_venda: '5000', margem_percentual_real: '35', status: 'lucrativo' }
     ] as any);
 
     const req = { method: 'GET', url: '/projetos', query: {}, body: {} };
@@ -69,7 +69,7 @@ describe('handleRentabilidade', () => {
 
   it('deve retornar alertas críticos de margem desvia > 20% ou negativa (GET /alertas)', async () => {
     vi.mocked(sql).mockResolvedValue([
-      { orcamento_id: 'o-uuid', numero_op: 'OP-002', cliente: 'Cliente X', variacao_percentual: '25', margem_percentual_real: '-5', descricao_desvios: 'Mão de obra excedeu' }
+      { quotation_id: 'o-uuid', numero_op: 'OP-002', cliente: 'Cliente X', variacao_percentual: '25', margem_percentual_real: '-5', descricao_desvios: 'Mão de obra excedeu' }
     ] as any);
 
     const req = { method: 'GET', url: '/alertas', query: {}, body: {} };
@@ -124,7 +124,7 @@ describe('handleRentabilidade', () => {
       }
 
       if (qStr.includes('SELECT * FROM custos_reais_op')) {
-        return [{ id: 10, orcamento_id: 'o-uuid', custo_total_estimado: '4000', valor_venda: '6000' }];
+        return [{ id: 10, quotation_id: 'o-uuid', custo_total_estimado: '4000', valor_venda: '6000' }];
       }
       if (qStr.includes('UPDATE custos_reais_op')) {
         return [{ id: 10, custo_total_real: 4200, variacao_percentual: 5 }];
@@ -167,18 +167,18 @@ describe('autoCreateCustosReaisOP', () => {
       }
 
       if (qStr.includes('SELECT op.*')) {
-        return [{ id: 'op-1', orcamento_id: 'o-1', valor_total_custo: '3000', valor_total_venda: '5000', margem_lucro_percentual: '40' }];
+        return [{ id: 'op-1', quotation_id: 'o-1', valor_total_custo: '3000', valor_total_venda: '5000', margem_lucro_percentual: '40' }];
       }
       if (qStr.includes('SELECT id FROM custos_reais_op')) {
         return []; // Não existe ainda
       }
-      if (qStr.includes('SELECT cliente_id FROM orcamentos_pro')) {
+      if (qStr.includes('SELECT cliente_id FROM quotations')) {
         return [{ cliente_id: 100 }];
       }
-      if (qStr.includes('SELECT COUNT(DISTINCT cr.orcamento_id)')) {
+      if (qStr.includes('SELECT COUNT(DISTINCT cr.quotation_id)')) {
         return [{ total_pedidos: '1', total_vendido: '5000', total_custos_reais: '3000', margem_total: '2000', margem_media_percentual: '40', ultimo_pedido_data: '2026-05-27' }];
       }
-      if (qStr.includes('SELECT COUNT(*) as count FROM orcamentos_pro')) {
+      if (qStr.includes('SELECT COUNT(*) as count FROM quotations')) {
         return [{ count: '2' }];
       }
       if (qStr.includes('SELECT id FROM rentabilidade_cliente')) {

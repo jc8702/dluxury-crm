@@ -7,7 +7,7 @@ export interface KanbanCardType {
   etapa_numero: number;
   operacao_prod_id: string;
   numero_op: string;
-  orcamento_id: string;
+  quotation_id: string;
   numero_orcamento: string;
   cliente_nome: string;
   cliente_telefone: string | null;

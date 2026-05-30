@@ -31,7 +31,7 @@ interface PlanoCorteData {
   status: string;
   materiais?: GrupoMaterial[];
   resultado?: ResultadoPlano;
-  orcamento_id?: string;
+  quotation_id?: string;
   projeto_id?: string;
   visita_id?: string;
   criado_em?: string;
@@ -258,7 +258,7 @@ const CuttingPlanPage: React.FC = () => {
         produto: plano.nome || 'Plano de Corte',
         pecas: totalPecas,
         status: 'AGUARDANDO',
-        orcamento_id: plano.orcamento_id || null,
+        quotation_id: plano.quotation_id || null,
         projeto_id: plano.projeto_id || null,
         visita_id: plano.visita_id || null,
         metadata: {

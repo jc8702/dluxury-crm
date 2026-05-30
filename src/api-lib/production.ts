@@ -32,7 +32,7 @@ export async function handleProduction(req: any, res: any) {
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`.catch(() => {});
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS orcamento_id TEXT`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS quotation_id TEXT`.catch(() => {});
     await sql`UPDATE ordens_producao SET status = 'AGUARDANDO' WHERE status = 'PENDENTE'`.catch(() => {});
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res, tenantId);
@@ -55,7 +55,7 @@ export async function handleProduction(req: any, res: any) {
  * Sincroniza as previsões de entrega de toda a fila ativa
  */
 async function syncQueueForecasting(tenantId: string) {
-  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
+  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
   if (allOps.length === 0) return;
 
   const previstos = calcularPrevisaoEntrega(allOps as any);
@@ -72,14 +72,14 @@ async function syncQueueForecasting(tenantId: string) {
 }
 
 async function listOPs(res: any, tenantId: string) {
-  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
+  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
   
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
   const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
   if (precisaSincronizar) {
     /* console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
     await syncQueueForecasting(tenantId);
-    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, orcamento_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
+    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
     return res.status(200).json({ success: true, data: opsAtualizadas });
   }
 
@@ -90,9 +90,9 @@ async function listOPs(res: any, tenantId: string) {
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
 async function createOP(req: any, res: any, tenantId: string) {
-  const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, orcamento_id } = req.body;
+  const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, quotation_id } = req.body;
 
-  /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, orcamento_id }); */
+  /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, quotation_id }); */
 
   if (!op_id || !produto) {
     console.error('[CREATE_OP] Missing required fields:', { op_id, produto });
@@ -111,8 +111,8 @@ async function createOP(req: any, res: any, tenantId: string) {
     const initialStatus = req.body.status || 'PENDENTE';
 
     const [novaOP] = await sql`
-      INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, orcamento_id, tenant_id)
-      VALUES (${op_id.trim().toUpperCase()}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${orcamento_id || null}, ${tenantId})
+      INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, quotation_id, tenant_id)
+      VALUES (${op_id.trim().toUpperCase()}, ${produto}, ${pecas || 0}, ${initialStatus}, ${JSON.stringify(metadata || {})}, ${JSON.stringify(checklistToSave)}, ${visita_id || null}, ${projeto_id || null}, ${quotation_id || null}, ${tenantId})
       RETURNING *
     `;
 

@@ -42,7 +42,7 @@ describe('handleContratoDigital', () => {
       }
 
       if (qStr.includes('FROM contrato_digital')) {
-        return [{ id: 1, orcamento_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente' }];
+        return [{ id: 1, quotation_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente' }];
       }
       if (qStr.includes('FROM historico_assinatura_digital')) {
         return [{ id: 10, contrato_id: 1, acao: 'contrato_gerado', detalhes: 'Emitido' }];
@@ -50,7 +50,7 @@ describe('handleContratoDigital', () => {
       return [];
     });
 
-    const req = { method: 'GET', url: '/status', query: { orcamento_id: 'orc-1' }, body: {} };
+    const req = { method: 'GET', url: '/status', query: { quotation_id: 'orc-1' }, body: {} };
     const res = mockRes();
     await handleContratoDigital(req, res);
 
@@ -94,7 +94,7 @@ describe('handleContratoDigital', () => {
       method: 'POST',
       url: '/gerar-e-enviar',
       query: {},
-      body: { orcamento_id: 'orc-1' }
+      body: { quotation_id: 'orc-1' }
     };
     const res = mockRes();
     await handleContratoDigital(req, res);
@@ -122,7 +122,7 @@ describe('handleContratoDigital', () => {
       sqlQueries.push(qStr);
 
       if (qStr.includes('FROM contrato_digital')) {
-        return [{ id: 1, orcamento_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente', id_assinatura_externa: 'env-1' }];
+        return [{ id: 1, quotation_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente', id_assinatura_externa: 'env-1' }];
       }
       if (qStr.includes('FROM orcamentos')) {
         return [{ id: 'orc-1', numero: 'ORC-2026-001', numero_orcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }];

@@ -58,7 +58,7 @@ export async function handlePlanoCorte(req: any, res: any) {
             sku_engenharia: req.body.sku_engenharia,
             visita_id: safeUuid(req.body.visita_id),
             projeto_id: safeUuid(req.body.projeto_id),
-            orcamento_id: safeUuid(req.body.orcamento_id),
+            quotation_id: safeUuid(req.body.quotation_id),
             ordem_producao_id: safeUuid(req.body.ordem_producao_id),
             tenantId: tenantId,
           }).returning();
@@ -269,14 +269,14 @@ export async function handlePlanoCorte(req: any, res: any) {
           const op_id = `OP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
           
           await rawSql`
-            INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, orcamento_id, visita_id, created_at, updated_at, tenant_id)
+            INSERT INTO ordens_producao (id, op_id, produto, status, projeto_id, quotation_id, visita_id, created_at, updated_at, tenant_id)
             VALUES (
               gen_random_uuid(), 
               ${op_id}, 
               ${req.body.nome_projeto || 'PLANO DE CORTE'}, 
               'AGUARDANDO', 
               ${safeUuid(req.body.projeto_id)}, 
-              ${safeUuid(req.body.orcamento_id)}, 
+              ${safeUuid(req.body.quotation_id)}, 
               ${safeUuid(req.body.visita_id)},
               NOW(),
               NOW(),

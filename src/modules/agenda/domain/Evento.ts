@@ -39,7 +39,7 @@ export const EventoSchema = z.object({
   cliente_id: z.number().optional().nullable(),
   projeto_id: z.string().optional().nullable(),
   visita_id: z.string().optional().nullable(),
-  orcamento_id: z.string().optional().nullable(),
+  quotation_id: z.string().optional().nullable(),
   
   // Visita specific
   endereco: z.string().optional().nullable(),

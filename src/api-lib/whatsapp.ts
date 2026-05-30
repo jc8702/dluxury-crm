@@ -15,7 +15,7 @@ export async function handleWhatsApp(req: any, res: any) {
     // GET /api/whatsapp/mensagens
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'GET' && url.includes('/mensagens')) {
-      const { orcamento_id, operacao_prod_id } = req.query;
+      const { quotation_id, operacao_prod_id } = req.query;
 
       let queryStr = `
         SELECT 
@@ -35,16 +35,16 @@ export async function handleWhatsApp(req: any, res: any) {
       const params: any[] = [tenantId];
       let paramCount = 1;
 
-      if (orcamento_id) {
+      if (quotation_id) {
         paramCount++;
-        queryStr += ` AND c.orcamento_id = $${paramCount}::uuid`;
-        params.push(orcamento_id);
+        queryStr += ` AND c.quotation_id = $${paramCount}::uuid`;
+        params.push(quotation_id);
       } else if (operacao_prod_id) {
         paramCount++;
         queryStr += ` AND c.operacao_prod_id = $${paramCount}::uuid`;
         params.push(operacao_prod_id);
       } else {
-        return res.status(400).json({ success: false, error: 'Parâmetro orcamento_id ou operacao_prod_id é obrigatório' });
+        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id ou operacao_prod_id é obrigatório' });
       }
 
       queryStr += ` ORDER BY m.timestamp_msg ASC`;
@@ -58,9 +58,9 @@ export async function handleWhatsApp(req: any, res: any) {
         WHERE tenant_id = $1::uuid
       `;
       const cParams = [tenantId];
-      if (orcamento_id) {
-        conversaQuery += ` AND orcamento_id = $2::uuid`;
-        cParams.push(orcamento_id);
+      if (quotation_id) {
+        conversaQuery += ` AND quotation_id = $2::uuid`;
+        cParams.push(quotation_id);
       } else {
         conversaQuery += ` AND operacao_prod_id = $2::uuid`;
         cParams.push(operacao_prod_id);
@@ -91,7 +91,7 @@ export async function handleWhatsApp(req: any, res: any) {
     // POST /api/whatsapp/enviar-mensagem
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/enviar-mensagem')) {
-      const { orcamento_id, operacao_prod_id, numero_telefone, conteudo_msg, tags } = req.body;
+      const { quotation_id, operacao_prod_id, numero_telefone, conteudo_msg, tags } = req.body;
 
       if (!conteudo_msg || !numero_telefone) {
         return res.status(400).json({ success: false, error: 'Parâmetros numero_telefone e conteudo_msg são obrigatórios' });
@@ -104,9 +104,9 @@ export async function handleWhatsApp(req: any, res: any) {
         WHERE tenant_id = $1::uuid
       `;
       const cParams = [tenantId];
-      if (orcamento_id) {
-        cQuery += ` AND orcamento_id = $2::uuid`;
-        cParams.push(orcamento_id);
+      if (quotation_id) {
+        cQuery += ` AND quotation_id = $2::uuid`;
+        cParams.push(quotation_id);
       } else if (operacao_prod_id) {
         cQuery += ` AND operacao_prod_id = $2::uuid`;
         cParams.push(operacao_prod_id);
@@ -122,17 +122,17 @@ export async function handleWhatsApp(req: any, res: any) {
       if (conversaRows.length === 0) {
         // Obter nome do cliente da OP/Orçamento se possível
         let contatoNome = 'Cliente';
-        if (orcamento_id) {
+        if (quotation_id) {
           const [oRow] = await sql`
-            SELECT c.nome FROM orcamentos_pro o 
+            SELECT c.nome FROM quotations o 
             LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND o.tenant_id = c.tenant_id
-            WHERE o.id = ${orcamento_id}::uuid
+            WHERE o.id = ${quotation_id}::uuid
           `;
           if (oRow?.nome) contatoNome = oRow.nome;
         } else if (operacao_prod_id) {
           const [oRow] = await sql`
             SELECT c.nome FROM ordens_prod op
-            JOIN orcamentos_pro o ON op.orcamento_id = o.id
+            JOIN quotations o ON op.quotation_id = o.id
             LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND o.tenant_id = c.tenant_id
             WHERE op.id = ${operacao_prod_id}::uuid
           `;
@@ -140,8 +140,8 @@ export async function handleWhatsApp(req: any, res: any) {
         }
 
         const [newConv] = await sql`
-          INSERT INTO conversas_whatsapp (tenant_id, orcamento_id, operacao_prod_id, numero_telefone, contato_nome, ultima_mensagem, timestamp_ultima_msg, tags)
-          VALUES (${tenantId}::uuid, ${orcamento_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${numero_telefone}, ${contatoNome}, ${conteudo_msg}, NOW(), ${tagsStr})
+          INSERT INTO conversas_whatsapp (tenant_id, quotation_id, operacao_prod_id, numero_telefone, contato_nome, ultima_mensagem, timestamp_ultima_msg, tags)
+          VALUES (${tenantId}::uuid, ${quotation_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${numero_telefone}, ${contatoNome}, ${conteudo_msg}, NOW(), ${tagsStr})
           RETURNING id
         `;
         conversa_id = newConv.id;
@@ -202,7 +202,7 @@ export async function handleWhatsApp(req: any, res: any) {
     // POST /api/whatsapp/webhook (Mock para o webhook que simula resposta do cliente)
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/webhook')) {
-      const { from_number, message_text, orcamento_id, operacao_prod_id } = req.body;
+      const { from_number, message_text, quotation_id, operacao_prod_id } = req.body;
 
       if (!from_number || !message_text) {
         return res.status(400).json({ success: false, error: 'from_number e message_text são obrigatórios' });
@@ -219,8 +219,8 @@ export async function handleWhatsApp(req: any, res: any) {
 
       if (conversaRows.length === 0) {
         const [newConv] = await sql`
-          INSERT INTO conversas_whatsapp (tenant_id, orcamento_id, operacao_prod_id, numero_telefone, contato_nome, ultima_mensagem, timestamp_ultima_msg)
-          VALUES (${tenantId}::uuid, ${orcamento_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${from_number}, 'Cliente Autônomo', ${message_text}, NOW())
+          INSERT INTO conversas_whatsapp (tenant_id, quotation_id, operacao_prod_id, numero_telefone, contato_nome, ultima_mensagem, timestamp_ultima_msg)
+          VALUES (${tenantId}::uuid, ${quotation_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${from_number}, 'Cliente Autônomo', ${message_text}, NOW())
           RETURNING id
         `;
         conversa_id = newConv.id;

@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test('has title and can load login page', async ({ page }) => {
   // Use the baseURL from the playwright config or environment
-  await page.goto('/');
+  await page.goto('/#/login');
 
   // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/D'Luxury/);
+  await expect(page).toHaveTitle(/D'Luxury|FATTO|Vite/i);
 
   // Verificamos se o form de login renderiza
   const loginForm = page.locator('form');

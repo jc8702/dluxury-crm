@@ -114,15 +114,15 @@ export async function handleContratoDigital(req: any, res: any) {
     // GET /api/contratos/status
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'GET' && url.includes('/status')) {
-      const { orcamento_id } = req.query;
+      const { quotation_id } = req.query;
 
-      if (!orcamento_id) {
-        return res.status(400).json({ success: false, error: 'Parâmetro orcamento_id é obrigatório' });
+      if (!quotation_id) {
+        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
       }
 
       const [contrato] = await sql`
         SELECT * FROM contrato_digital 
-        WHERE orcamento_id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+        WHERE quotation_id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       if (!contrato) {
@@ -142,16 +142,16 @@ export async function handleContratoDigital(req: any, res: any) {
     // POST /api/contratos/gerar-e-enviar
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/gerar-e-enviar')) {
-      const { orcamento_id } = req.body;
+      const { quotation_id } = req.body;
 
-      if (!orcamento_id) {
-        return res.status(400).json({ success: false, error: 'Parâmetro orcamento_id é obrigatório' });
+      if (!quotation_id) {
+        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
       }
 
       // 1. Buscar orçamento
       const [orc] = await sql`
         SELECT * FROM orcamentos 
-        WHERE id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+        WHERE id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       if (!orc) {
@@ -171,7 +171,7 @@ export async function handleContratoDigital(req: any, res: any) {
       // 3. Buscar itens do orçamento
       const itens = await sql`
         SELECT * FROM itens_orcamento 
-        WHERE orcamento_id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+        WHERE quotation_id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       // 4. Gerar HTML do contrato
@@ -185,7 +185,7 @@ export async function handleContratoDigital(req: any, res: any) {
       // 6. Verificar se já existe um contrato para esse orçamento
       const [contratoExistente] = await sql`
         SELECT id FROM contrato_digital 
-        WHERE orcamento_id = ${orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+        WHERE quotation_id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
       `;
 
       let contratoId: number;
@@ -213,9 +213,9 @@ export async function handleContratoDigital(req: any, res: any) {
         // Criar novo contrato
         const [newContract] = await sql`
           INSERT INTO contrato_digital 
-          (tenant_id, orcamento_id, numero_contrato, empresa_nome, empresa_cnpj, cliente_nome, cliente_cpf_cnpj, html_contrato, arquivo_pdf_url, status_assinatura, id_assinatura_externa, url_assinatura, data_solicitacao_assinatura)
+          (tenant_id, quotation_id, numero_contrato, empresa_nome, empresa_cnpj, cliente_nome, cliente_cpf_cnpj, html_contrato, arquivo_pdf_url, status_assinatura, id_assinatura_externa, url_assinatura, data_solicitacao_assinatura)
           VALUES 
-          (${tenantId}::uuid, ${orcamento_id}::uuid, ${numeroContrato}, 'D''Luxury Planejados LTDA', '12.345.678/0001-90', ${cliente?.nome || 'Cliente'}, ${cliente?.cnpj || cliente?.cpf || ''}, ${htmlContrato}, ${`/contracts/${numeroContrato}.pdf`}, 'pendente', ${envelopeId}, ${urlAssinaturaSimulada}, NOW())
+          (${tenantId}::uuid, ${quotation_id}::uuid, ${numeroContrato}, 'D''Luxury Planejados LTDA', '12.345.678/0001-90', ${cliente?.nome || 'Cliente'}, ${cliente?.cnpj || cliente?.cpf || ''}, ${htmlContrato}, ${`/contracts/${numeroContrato}.pdf`}, 'pendente', ${envelopeId}, ${urlAssinaturaSimulada}, NOW())
           RETURNING id
         `;
         contratoId = newContract.id;
@@ -286,7 +286,7 @@ export async function handleContratoDigital(req: any, res: any) {
         // 4. Buscar o orçamento para acionar o fluxo completo de aprovação
         const [orc] = await sql`
           SELECT * FROM orcamentos 
-          WHERE id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+          WHERE id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
         `;
 
         if (orc && orc.status !== 'fechada') {
@@ -295,7 +295,7 @@ export async function handleContratoDigital(req: any, res: any) {
             UPDATE orcamentos
             SET status = 'fechada',
                 updated_at = NOW()
-            WHERE id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+            WHERE id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
           `;
 
           // 4.2 Gerar OP no Kanban de Produção (Fase 1)
@@ -304,8 +304,8 @@ export async function handleContratoDigital(req: any, res: any) {
           dataPrazo.setDate(dataPrazo.getDate() + Number(orc.prazoEntregaDias || 45));
 
           const [newOp] = await sql`
-            INSERT INTO ordens_prod (id, tenant_id, orcamento_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
-            VALUES (gen_random_uuid(), ${tenantId}::uuid, ${contrato.orcamento_id}::uuid, ${numeroOp}, 'planejamento', 5, ${dataPrazo.toISOString().split('T')[0]}, NOW(), NOW())
+            INSERT INTO ordens_prod (id, tenant_id, quotation_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
+            VALUES (gen_random_uuid(), ${tenantId}::uuid, ${contrato.quotation_id}::uuid, ${numeroOp}, 'planejamento', 5, ${dataPrazo.toISOString().split('T')[0]}, NOW(), NOW())
             RETURNING id
           `;
 
@@ -329,7 +329,7 @@ export async function handleContratoDigital(req: any, res: any) {
           // 4.3 Provisionar materiais consumidos no estoque detalhado (Fase 3)
           const itensOrcamento = await sql`
             SELECT * FROM itens_orcamento 
-            WHERE orcamento_id = ${contrato.orcamento_id}::uuid AND tenant_id = ${tenantId}::uuid
+            WHERE quotation_id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
           `;
 
           for (const item of itensOrcamento) {

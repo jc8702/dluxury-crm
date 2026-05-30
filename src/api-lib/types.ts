@@ -78,7 +78,7 @@ export interface TituloReceber {
   numero_titulo: string;
   cliente_id: string;
   projeto_id?: string;
-  orcamento_id?: string;
+  quotation_id?: string;
   valor_original: number;
   valor_liquido: number;
   valor_juros: number;
