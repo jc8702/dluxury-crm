@@ -7,17 +7,32 @@ interface ItemCardProps {
   item: any;
   onUpdate?: (itemId: string, updates: any) => void;
   onDelete?: (itemId: string) => void;
+  isEditingExternal?: boolean;
 }
 
 /**
  * ITEM CARD - MÓDULO DE ORÇAMENTOS
  * Estrutura refatorada para separar estados de rascunho, persistidos e calculados.
  */
-export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
+export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCardProps) {
   const { error: toastError } = useToast();
   const [isEditing, setIsEditing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const [prevIsEditingExternal, setPrevIsEditingExternal] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    if (isEditingExternal !== prevIsEditingExternal) {
+      if (isEditingExternal === false && state.hasChanges) {
+        handleSave();
+      }
+      if (isEditingExternal !== undefined) {
+        setIsEditing(isEditingExternal);
+      }
+      setPrevIsEditingExternal(isEditingExternal);
+    }
+  }, [isEditingExternal, state.hasChanges, prevIsEditingExternal]);
 
   // 📝 ESTADO DO ITEM (Refatorado conforme item 6 do pedido)
   const [state, setState] = useState({

@@ -35,7 +35,8 @@ export function ModalEnviarCliente({ isOpen, onClose, orcamento, onSave }: {
             const urlAprovacao = linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
 
             if (method === 'whatsapp') {
-                const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
+                const urlPdf = `${window.location.origin}/api/orcamentos/export-pdf?id=${orcamento.id}`;
+                const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
                 const phone = orcamento.cliente?.telefone || '';
                 window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
             } else {

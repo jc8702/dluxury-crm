@@ -26,6 +26,7 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   const [selectedOrcamentoId, setSelectedOrcamentoId] = useState(propOrcamentoId);
   const [selectedNumeroOrcamento, setSelectedNumeroOrcamento] = useState(propNumeroOrcamento);
   const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
+  const [clientsList, setClientsList] = useState<any[]>([]);
   const [selectedOrcamentoDet, setSelectedOrcamentoDet] = useState<any>(null);
 
   const [contrato, setContrato] = useState<ContratoDigital | null>(null);
@@ -35,6 +36,23 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   const [simulating, setSimulating] = useState(false);
   const [error, setError] = useState('');
 
+  const normalizarOrcamento = (orc: any) => {
+    if (!orc) return null;
+    const clienteId = orc.clienteId || orc.cliente_id;
+    const cliente = orc.cliente || clientsList.find(c => String(c.id) === String(clienteId)) || null;
+    return {
+      ...orc,
+      id: orc.id,
+      clienteId,
+      cliente,
+      numeroOrcamento: orc.numeroOrcamento || orc.numero || '',
+      valorTotalVenda: Number(orc.valorTotalVenda || orc.valor_final || orc.valor_base || 0),
+      prazoEntregaDias: orc.prazoEntregaDias || orc.prazo_entrega_dias || 45,
+    };
+  };
+
+  const orcDetNorm = selectedOrcamentoDet ? normalizarOrcamento(selectedOrcamentoDet) : null;
+
   useEffect(() => {
     if (selectedOrcamentoId) {
       carregarContrato(selectedOrcamentoId);
@@ -42,13 +60,15 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   }, [selectedOrcamentoId]);
 
   useEffect(() => {
-    api.orcamentos.list()
-      .then(list => {
-        setOrcamentosList(list || []);
-      })
-      .catch(err => {
-        console.error('Erro ao carregar lista de orçamentos:', err);
-      });
+    Promise.all([
+      api.orcamentos.list().catch(() => []),
+      api.clients.list().catch(() => [])
+    ]).then(([orcamentos, clientes]) => {
+      setClientsList(clientes || []);
+      setOrcamentosList(orcamentos || []);
+    }).catch(err => {
+      console.error('Erro ao carregar dados do modal de contrato:', err);
+    });
   }, []);
 
   const carregarContrato = async (id: string) => {
@@ -85,7 +105,8 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   const handleGerarContrato = async () => {
     if (!selectedOrcamentoId) return setError('Selecione um orçamento de referência.');
 
-    const orcVal = selectedOrcamentoDet || (await api.orcamentos.get(selectedOrcamentoId).catch(() => null));
+    const orcRaw = selectedOrcamentoDet || (await api.orcamentos.get(selectedOrcamentoId).catch(() => null));
+    const orcVal = normalizarOrcamento(orcRaw);
     if (!orcVal || !orcVal.clienteId) {
       setError('O orçamento selecionado não possui cliente associado. Por favor, associe um cliente ao orçamento antes de gerar o contrato.');
       return;
@@ -114,7 +135,7 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
     try {
       const res = await contratoDigitalService.webhookAssinaturaMock(contrato.idAssinaturaExterna, 'completed');
       if (res.success) {
-        await carregarContrato();
+        await carregarContrato(selectedOrcamentoId);
         if (onStatusChanged) onStatusChanged('APROVADO');
       }
     } catch (e: any) {
@@ -182,29 +203,33 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
                 onChange={(e) => handleOrcamentoChange(e.target.value)}
               >
                 <option value="">Selecione...</option>
-                {orcamentosList.map(o => (
-                  <option key={o.id} value={o.id}>
-                    {o.numeroOrcamento || o.numero} - {o.cliente?.nome || 'Sem Cliente'} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(o.valorTotalVenda)})
-                  </option>
-                ))}
+                {orcamentosList.map(o => {
+                  const oNorm = normalizarOrcamento(o);
+                  if (!oNorm) return null;
+                  return (
+                    <option key={oNorm.id} value={oNorm.id}>
+                      {oNorm.numeroOrcamento} - {oNorm.cliente?.nome || 'Sem Cliente'} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(oNorm.valorTotalVenda)})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
-            {selectedOrcamentoDet && (
+            {orcDetNorm && (
               <div className="bg-muted/30 border border-border p-4 rounded-xl max-w-sm mx-auto text-left text-xs space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cliente Signatário:</span>
                   <span className="font-bold text-foreground">
-                    {selectedOrcamentoDet.cliente?.nome || <span className="text-red-500 font-bold">⚠️ Sem Cliente Vinculado</span>}
+                    {orcDetNorm.cliente?.nome || <span className="text-red-500 font-bold">⚠️ Sem Cliente Vinculado</span>}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Valor Total do Contrato:</span>
                   <span className="font-black text-primary">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedOrcamentoDet.valorTotalVenda)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcDetNorm.valorTotalVenda)}
                   </span>
                 </div>
-                {!selectedOrcamentoDet.clienteId && (
+                {!orcDetNorm.clienteId && (
                   <p className="text-red-500 text-[10px] mt-2 font-bold leading-normal">
                     * Vincule um cliente a este orçamento comercial nas configurações comerciais antes de gerar o contrato digital.
                   </p>
@@ -221,7 +246,7 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
 
             <button
               onClick={handleGerarContrato}
-              disabled={generating || !selectedOrcamentoId || (selectedOrcamentoDet && !selectedOrcamentoDet.clienteId)}
+              disabled={generating || !selectedOrcamentoId || (orcDetNorm && !orcDetNorm.clienteId)}
               className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-lg transition disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer text-xs"
             >
               {generating ? (

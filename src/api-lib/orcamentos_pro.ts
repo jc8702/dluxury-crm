@@ -3,7 +3,7 @@ import {
     skuEngenharia, skuComponente, 
     orcamentos, orcamentoItens, orcamentoListaExplodida 
 } from '../db/schema/engenharia-orcamentos.js';
-import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
+import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 
@@ -437,6 +437,76 @@ export function _resetRateLimit() {
   rateLimitMap.clear();
 }
 
+export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string = '00000000-0000-0000-0000-000000000000') {
+    return await db.transaction(async (tx) => {
+        // 1. Verificar se já existe na tabela PRO
+        const proExists = await tx.query.orcamentos.findFirst({
+            where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId))
+        });
+        if (proExists) return proExists;
+
+        // 2. Buscar orçamento legado
+        const oldOrcs = await tx.execute(dsql`
+            SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base 
+            FROM orcamentos 
+            WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid AND deleted_at IS NULL 
+            LIMIT 1
+        `);
+        const oldOrc = oldOrcs.rows[0] as any;
+        if (!oldOrc) return null;
+
+        // 3. Buscar itens legados
+        const oldItensRes = await tx.execute(dsql`
+            SELECT id, orcamento_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, created_at
+            FROM itens_orcamento 
+            WHERE orcamento_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
+            ORDER BY created_at ASC, id ASC
+        `);
+        const oldItens = oldItensRes.rows as any[];
+
+        // 4. Inserir cabeçalho no PRO (orcamentos_pro)
+        const [newPro] = await tx.insert(orcamentos).values({
+            id: oldOrc.id,
+            numeroOrcamento: oldOrc.numero || `MIG-${oldOrc.id.substring(0,8)}`,
+            clienteId: oldOrc.cliente_id,
+            projetoId: oldOrc.projeto_id,
+            dataOrcamento: oldOrc.created_at ? new Date(oldOrc.created_at) : new Date(),
+            status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
+            valorTotalVenda: (oldOrc.valor_final || 0).toString(),
+            valorTotalCusto: (oldOrc.valor_base || 0).toString(),
+            margemLucroPercentual: '30',
+            taxaFinanceiraPercentual: '0',
+            descontoPercentual: '0',
+            validadeDias: 15,
+            tenantId: tenantId
+        }).returning();
+
+        // 5. Inserir itens no PRO (orcamento_itens)
+        if (oldItens.length > 0) {
+            await tx.insert(orcamentoItens).values(
+                oldItens.map((it: any) => ({
+                    id: it.id,
+                    orcamentoId: newPro.id,
+                    nomeCustomizado: it.descricao || 'Item Legado',
+                    quantidade: (it.quantidade || 1).toString(),
+                    largura: it.largura_cm?.toString() || null,
+                    altura: it.altura_cm?.toString() || null,
+                    material: it.material || null,
+                    precoVendaUnitario: (it.valor_unitario || 0).toString(),
+                    custoUnitarioCalculado: '0',
+                    custoBaseEstoque: '0',
+                    origemDados: 'LEGACY',
+                    createdAt: it.created_at ? new Date(it.created_at) : new Date(),
+                    updatedAt: new Date()
+                }))
+            );
+        }
+
+        logger.info(`✅ Orçamento ${id} e seus ${oldItens.length} itens migrados com sucesso para a tabela PRO.`);
+        return newPro;
+    });
+}
+
 export async function handleOrcamentosPro(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
@@ -572,6 +642,7 @@ export async function handleOrcamentosPro(req: any, res: any) {
                         where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
                         with: {
                             itens: {
+                                orderBy: (itens, { asc }) => [asc(itens.createdAt)],
                                 with: {
                                     skuEngenharia: true,
                                     skuComponente: true,
@@ -596,36 +667,29 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     }
                 }
 
-                // FALLBACK: Se não encontrou na tabela PRO, busca na tabela comercial legada
+                // FALLBACK: Se não encontrou na tabela PRO, busca na tabela comercial legada e migra completamente
                 if (!result) {
-                    logger.info(`🔍 ID ${id} não encontrado na tabela PRO. Buscando na tabela comercial...`);
-                    const oldOrc = (await sql`SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base FROM orcamentos WHERE id = ${id} AND tenant_id = ${tenantId} AND deleted_at IS NULL`)[0];
-                    
-                    if (oldOrc) {
-                        logger.info(`✅ Orçamento legado encontrado. Mapeando para formato PRO...`);
-                        const oldItens = await sql`SELECT id, descricao, quantidade, largura_cm, altura_cm, material, valor_unitario, valor_total FROM itens_orcamento WHERE orcamento_id = ${id} AND tenant_id = ${tenantId}`;
-                        
-                        // Converte o formato legado para o formato PRO
-                        result = {
-                            id: oldOrc.id,
-                            numeroOrcamento: oldOrc.numero || `LEG-${oldOrc.id.substring(0,8)}`,
-                            clienteId: oldOrc.cliente_id,
-                            projetoId: oldOrc.projeto_id,
-                            dataOrcamento: oldOrc.created_at,
-                            status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
-                            valorTotalVenda: oldOrc.valor_final || 0,
-                            valorTotalCusto: oldOrc.valor_base || 0,
-                            margemLucroPercentual: 30, // Default para legados
-                            itens: oldItens.map((it: any) => ({
-                                id: it.id,
-                                nomeCustomizado: it.descricao,
-                                quantidade: it.quantidade?.toString() || '1',
-                                largura: it.largura_cm?.toString(),
-                                altura: it.altura_cm?.toString(),
-                                material: it.material,
-                                precoVendaUnitario: it.valor_unitario?.toString() || '0'
-                            }))
-                        };
+                    logger.info(`🔍 ID ${id} não encontrado na tabela PRO. Executando migração automática...`);
+                    const migrated = await migrarOrcamentoLegadoParaPro(id, tenantId);
+                    if (migrated) {
+                        // Buscar novamente com relations para retornar tudo pronto e ordenado
+                        result = await db.query.orcamentos.findFirst({
+                            where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)),
+                            with: {
+                                itens: {
+                                    orderBy: (itens, { asc }) => [asc(itens.createdAt)],
+                                    with: {
+                                        skuEngenharia: true,
+                                        skuComponente: true,
+                                        listaExplodida: {
+                                            with: {
+                                                componente: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
                     }
                 }
 
@@ -769,35 +833,10 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     // Verificar se o orçamento existe antes de qualquer PUT
                     let exists = await db.query.orcamentos.findFirst({ where: and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)) });
                     
-                    // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora.
+                    // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora com todos os itens.
                     if (!exists) {
                         logger.info(`🚀 Migrando orçamento ${id} da tabela legada para a PRO durante atualização...`);
-                        const oldOrc = (await sql`SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base FROM orcamentos WHERE id = ${id} AND tenant_id = ${tenantId} AND deleted_at IS NULL`)[0];
-                        
-                        if (oldOrc) {
-                            try {
-                                const [newPro] = await db.insert(orcamentos).values({
-                                    id: oldOrc.id,
-                                    numeroOrcamento: oldOrc.numero || `MIG-${oldOrc.id.substring(0,8)}`,
-                                    clienteId: oldOrc.cliente_id,
-                                    projetoId: oldOrc.projeto_id,
-                                    dataOrcamento: oldOrc.created_at ? new Date(oldOrc.created_at) : new Date(),
-                                    status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
-                                    valorTotalVenda: (oldOrc.valor_final || 0).toString(),
-                                    valorTotalCusto: (oldOrc.valor_base || 0).toString(),
-                                    margemLucroPercentual: '30',
-                                    taxaFinanceiraPercentual: '0',
-                                    descontoPercentual: '0',
-                                    validadeDias: 15,
-                                    tenantId: tenantId
-                                }).returning();
-                                exists = newPro;
-                                logger.info(`✅ Orçamento ${id} migrado com sucesso.`);
-                            } catch (migErr: any) {
-                                logger.error(`❌ Falha na migração automática:`, migErr);
-                                return res.status(500).json({ success: false, error: 'Erro ao migrar orçamento legado para o novo formato.' });
-                            }
-                        }
+                        exists = await migrarOrcamentoLegadoParaPro(id, tenantId);
                     }
 
                     if (!exists) {
@@ -1266,14 +1305,28 @@ export async function handleOrcamentosPro(req: any, res: any) {
                     }
 
                     // Update Header se não tiver nenhuma action
-                    if (req.body.status === 'APROVADO') {
-                        if (exists && exists.status !== 'APROVADO') {
+                    const reqStatusUpper = req.body.status?.toUpperCase();
+                    const isApprovingStatus = reqStatusUpper === 'APROVADO' || reqStatusUpper === 'FECHADO' || reqStatusUpper === 'FECHADA';
+
+                    if (isApprovingStatus) {
+                        const existsStatusUpper = exists?.status?.toUpperCase();
+                        const wasAlreadyApproved = existsStatusUpper === 'APROVADO' || existsStatusUpper === 'FECHADO' || existsStatusUpper === 'FECHADA';
+
+                        if (exists && !wasAlreadyApproved) {
                             await db.transaction(async (tx) => {
                                 // 1. Atualizar status e cabeçalho do orçamento
                                 const finalBody = { ...req.body, updatedAt: new Date() };
                                 await tx.update(orcamentos)
                                     .set(finalBody)
                                     .where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+
+                                // Sincronizar com a tabela comercial legada 'orcamentos'
+                                await tx.execute(dsql`
+                                    UPDATE orcamentos 
+                                    SET status = ${req.body.status}, 
+                                        updated_at = NOW() 
+                                    WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
+                                `);
                                 
                                 // 2. FASE 1: Gerar Títulos a Receber (Financeiro)
                                 const condId = req.body.condicaoPagamentoId || exists.condicaoPagamentoId;
@@ -1498,9 +1551,25 @@ export async function handleOrcamentosPro(req: any, res: any) {
                             });
                         } else {
                             await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                            if (exists) {
+                                await db.execute(dsql`
+                                    UPDATE orcamentos 
+                                    SET status = ${req.body.status}, 
+                                        updated_at = NOW() 
+                                    WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
+                                `);
+                            }
                         }
                     } else {
                         await db.update(orcamentos).set(req.body).where(and(eq(orcamentos.id, id), eq(orcamentos.tenantId, tenantId)));
+                        if (exists) {
+                            await db.execute(dsql`
+                                UPDATE orcamentos 
+                                SET status = ${req.body.status}, 
+                                    updated_at = NOW() 
+                                WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
+                            `);
+                        }
                     }
                     
                     await recalcularOrcamento(id, tenantId);

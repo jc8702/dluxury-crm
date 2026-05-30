@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/design-system/components';
 import { 
     FileText, Upload, Plus, Trash2, 
-    Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save
+    Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save, Pencil
 } from 'lucide-react';
 import { useOrcamento } from '../hooks/useOrcamento';
 import { ImportarProjeto } from '../components/ImportarProjeto';
@@ -28,6 +28,7 @@ export default function OrcamentoForm() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
+    const [isEditingAll, setIsEditingAll] = useState<boolean | undefined>(undefined);
     const [clients, setClients] = useState<any[]>([]);
     const [skus, setSkus] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -120,6 +121,7 @@ export default function OrcamentoForm() {
 
     const handleUpdateHeader = async (updates: any) => {
         await setHeader(updates);
+        fetchRecentes();
     };
 
     const handleCreateDraft = async () => {
@@ -408,7 +410,7 @@ export default function OrcamentoForm() {
                     <Button 
                         variant="outline" 
                         className="border-border hover:bg-muted text-foreground cursor-pointer" 
-                        onClick={() => exportBudgetToPDF(orcamento)}
+                        onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orcamento.id}`, '_blank')}
                     >
                         <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
                     </Button>
@@ -518,11 +520,40 @@ export default function OrcamentoForm() {
                 </div>
 
                 {/* Coluna Central: Itens do Projeto */}
-                <div className="col-span-12 space-y-6">
-                    <div className="flex justify-between items-center px-2">
-                        <h2 className="text-xl font-black flex items-center gap-2 italic">
-                            <Layers className="w-5 h-5 text-orange-500" /> ITENS DO PROJETO
-                        </h2>
+                <div                    <div className="flex justify-between items-center px-2">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-black flex items-center gap-2 italic">
+                                <Layers className="w-5 h-5 text-orange-500" /> ITENS DO PROJETO
+                            </h2>
+                            {orcamento?.itens && orcamento.itens.length > 0 && (
+                                <div className="flex gap-2">
+                                    {isEditingAll === true ? (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setIsEditingAll(false);
+                                                toastSuccess('Alterações enviadas para gravação!');
+                                                // Forçar atualização do rodapé de recentes após salvar todos
+                                                setTimeout(() => fetchRecentes(), 1200);
+                                            }}
+                                            className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5 bg-primary/10 border-primary/20 hover:bg-primary/20"
+                                        >
+                                            <Save className="w-3.5 h-3.5 text-primary" /> Salvar Todos
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setIsEditingAll(true)}
+                                            className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5 text-primary" /> Editar Todos
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
@@ -568,7 +599,7 @@ export default function OrcamentoForm() {
                             )}
                         </div>
                     </div>
-
+ 
                     {!orcamento?.itens || orcamento.itens.length === 0 ? (
                         <div className="border-2 border-dashed border-border rounded-3xl p-24 text-center bg-card/30">
                             <div className="bg-muted w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
@@ -585,6 +616,7 @@ export default function OrcamentoForm() {
                                     item={item}
                                     onUpdate={updateItem}
                                     onDelete={removerItem}
+                                    isEditingExternal={isEditingAll}
                                 />
                             ))}
                         </div>
