@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
-import { cn } from '../design-system/utils';
+import { cn } from '../utils/cn';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -34,28 +34,43 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const toast = useCallback(({ type, title, message, duration = 5000 }: Omit<ToastMessage, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, type, title, message, duration }]);
+  const toast = useCallback(
+    ({ type, title, message, duration = 5000 }: Omit<ToastMessage, 'id'>) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, type, title, message, duration }]);
 
-    if (duration > 0) {
-      setTimeout(() => removeToast(id), duration);
-    }
-  }, [removeToast]);
+      if (duration > 0) {
+        setTimeout(() => removeToast(id), duration);
+      }
+    },
+    [removeToast],
+  );
 
-  const success = useCallback((title: string, message?: string) => toast({ type: 'success', title, message }), [toast]);
-  const error = useCallback((title: string, message?: string) => toast({ type: 'error', title, message }), [toast]);
-  const warning = useCallback((title: string, message?: string) => toast({ type: 'warning', title, message }), [toast]);
-  const info = useCallback((title: string, message?: string) => toast({ type: 'info', title, message }), [toast]);
+  const success = useCallback(
+    (title: string, message?: string) => toast({ type: 'success', title, message }),
+    [toast],
+  );
+  const error = useCallback(
+    (title: string, message?: string) => toast({ type: 'error', title, message }),
+    [toast],
+  );
+  const warning = useCallback(
+    (title: string, message?: string) => toast({ type: 'warning', title, message }),
+    [toast],
+  );
+  const info = useCallback(
+    (title: string, message?: string) => toast({ type: 'info', title, message }),
+    [toast],
+  );
 
   return (
     <ToastContext.Provider value={{ toast, success, error, warning, info }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
-        {toasts.map(t => (
+        {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onClose={() => removeToast(t.id)} />
         ))}
       </div>
@@ -79,10 +94,10 @@ const ToastItem = ({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
   };
 
   return (
-    <div 
+    <div
       className={cn(
-        "pointer-events-auto flex items-start gap-3 w-80 p-4 rounded-xl border shadow-lg backdrop-blur-md animate-slide-in",
-        bgs[toast.type] || 'bg-card border-border'
+        'pointer-events-auto flex items-start gap-3 w-80 p-4 rounded-xl border shadow-lg backdrop-blur-md animate-slide-in',
+        bgs[toast.type] || 'bg-card border-border',
       )}
       role="alert"
       aria-live="assertive"
@@ -90,7 +105,9 @@ const ToastItem = ({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       <div className="shrink-0 mt-0.5">{icons[toast.type]}</div>
       <div className="flex-1 min-w-0">
         <h4 className="text-sm font-semibold text-foreground">{toast.title}</h4>
-        {toast.message && <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{toast.message}</p>}
+        {toast.message && (
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{toast.message}</p>
+        )}
       </div>
       <button onClick={onClose} className="shrink-0 text-muted-foreground hover:text-foreground">
         <X className="w-4 h-4" />

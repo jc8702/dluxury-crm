@@ -61,8 +61,8 @@ export const extractAndVerifyToken = (req: any) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as any;
+
     return { user: decoded, error: null };
   } catch {
     return { user: null, error: 'Sessão expirada ou inválida' };
@@ -76,10 +76,10 @@ export const validateAuth = (req: any) => {
   if (!user) {
     return { authorized: false, user: null, error: 'Token inválido' };
   }
-  return { 
-    authorized: true, 
-    user, 
-    error: null 
+  return {
+    authorized: true,
+    user,
+    error: null,
   };
 };
 
@@ -89,7 +89,9 @@ export const validateAuth = (req: any) => {
  * 2. Verifica subdominio (ex: artemadeira.dominioapp.com)
  * Retorna o tenant ou null se não encontrado.
  */
-export async function resolveTenantByDomain(host: string): Promise<{ id: string; nome: string; subdominio: string | null } | null> {
+export async function resolveTenantByDomain(
+  host: string,
+): Promise<{ id: string; nome: string; subdominio: string | null } | null> {
   if (!host) return null;
   const hostname = host.split(':')[0].toLowerCase().trim();
 
@@ -121,7 +123,14 @@ export async function resolveTenantByDomain(host: string): Promise<{ id: string;
 /**
  * Registra uma ação no audit_log
  */
-export async function auditLog(entity_type: string, entity_id: string, action: string, user_id: string | null, data_before: any = null, data_after: any = null) {
+export async function auditLog(
+  entity_type: string,
+  entity_id: string,
+  action: string,
+  user_id: string | null,
+  data_before: any = null,
+  data_after: any = null,
+) {
   try {
     await sql`
       INSERT INTO audit_logs (entity_type, entity_id, action, user_id, data_before, data_after)

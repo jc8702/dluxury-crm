@@ -19,7 +19,7 @@ import { Rnd } from 'react-rnd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../../lib/api';
-import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -33,8 +33,20 @@ const MAX_CONVERSATION_HISTORY = 10; // Últimas 10 mensagens (20 turnos)
 
 type ChartSeries = { key: string; label: string; color?: string };
 type ChartData =
-  | { type: 'line' | 'bar'; xKey: string; series: ChartSeries[]; data: Array<Record<string, any>>; title?: string }
-  | { type: 'pie'; nameKey: string; valueKey: string; data: Array<Record<string, any>>; title?: string };
+  | {
+      type: 'line' | 'bar';
+      xKey: string;
+      series: ChartSeries[];
+      data: Array<Record<string, any>>;
+      title?: string;
+    }
+  | {
+      type: 'pie';
+      nameKey: string;
+      valueKey: string;
+      data: Array<Record<string, any>>;
+      title?: string;
+    };
 type TableData = { headers: string[]; rows: (string | number)[][] };
 
 interface DluxMessage {
@@ -80,7 +92,12 @@ function deserializeMessages(raw: any): DluxMessage[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
-    .filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.text === 'string')
+    .filter(
+      (item) =>
+        item &&
+        (item.role === 'user' || item.role === 'assistant') &&
+        typeof item.text === 'string',
+    )
     .map((item) => ({
       role: item.role,
       text: item.text,
@@ -98,10 +115,7 @@ function deserializeMessages(raw: any): DluxMessage[] {
 /**
  * Implementa retry com backoff exponencial e jitter
  */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  context: string
-): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, context: string): Promise<T> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < RETRY_CONFIG.maxRetries; attempt++) {
@@ -114,7 +128,10 @@ async function retryWithBackoff<T>(
       return result as T;
     } catch (error: any) {
       lastError = error;
-      console.warn(`[${context}] Tentativa ${attempt + 1}/${RETRY_CONFIG.maxRetries} falhou:`, error.message);
+      console.warn(
+        `[${context}] Tentativa ${attempt + 1}/${RETRY_CONFIG.maxRetries} falhou:`,
+        error.message,
+      );
 
       // Não tenta novamente em erros 4xx (exceto 429)
       if (error.status >= 400 && error.status < 500 && error.status !== 429) {
@@ -124,13 +141,13 @@ async function retryWithBackoff<T>(
       if (attempt < RETRY_CONFIG.maxRetries - 1) {
         const delay = Math.min(
           RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
-          RETRY_CONFIG.maxDelay
+          RETRY_CONFIG.maxDelay,
         );
         const jitter = Math.random() * 0.3 * delay; // ±30% jitter
         const waitTime = delay + jitter;
 
         /* console.info(`[${context}] Aguardando ${Math.round(waitTime)}ms antes da próxima tentativa...`) */
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
       }
     }
   }
@@ -213,9 +230,11 @@ function validateAndNormalizeResponse(rawResponse: any): {
     table_data,
     suggestions,
     agent: typeof rawResponse.agent === 'string' ? rawResponse.agent : undefined,
-    confidence_score: typeof rawResponse.confidence_score === 'number' ? rawResponse.confidence_score : undefined,
+    confidence_score:
+      typeof rawResponse.confidence_score === 'number' ? rawResponse.confidence_score : undefined,
     sources: Array.isArray(rawResponse.sources) ? rawResponse.sources : undefined,
-    memory_summary: typeof rawResponse.memory_summary === 'string' ? rawResponse.memory_summary : undefined,
+    memory_summary:
+      typeof rawResponse.memory_summary === 'string' ? rawResponse.memory_summary : undefined,
   };
 }
 
@@ -244,9 +263,21 @@ function ChartBlock({ chart }: { chart: ChartData }) {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip
-              contentStyle={{ backgroundColor: 'rgba(13,17,23,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#fff' }}
+              contentStyle={{
+                backgroundColor: 'rgba(13,17,23,0.98)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 12,
+                color: '#fff',
+              }}
             />
-            <Pie data={chart.data} dataKey={chart.valueKey} nameKey={chart.nameKey} innerRadius={56} outerRadius={92} paddingAngle={2}>
+            <Pie
+              data={chart.data}
+              dataKey={chart.valueKey}
+              nameKey={chart.nameKey}
+              innerRadius={56}
+              outerRadius={92}
+              paddingAngle={2}
+            >
               {chart.data.map((_, index) => (
                 <Cell key={index} fill={palette[index % palette.length]} />
               ))}
@@ -264,14 +295,32 @@ function ChartBlock({ chart }: { chart: ChartData }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chart.data}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-            <XAxis dataKey={chart.xKey} tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }} stroke="rgba(255,255,255,0.15)" />
-            <YAxis tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }} stroke="rgba(255,255,255,0.15)" />
+            <XAxis
+              dataKey={chart.xKey}
+              tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }}
+              stroke="rgba(255,255,255,0.15)"
+            />
+            <YAxis
+              tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }}
+              stroke="rgba(255,255,255,0.15)"
+            />
             <Tooltip
-              contentStyle={{ backgroundColor: 'rgba(13,17,23,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#fff' }}
+              contentStyle={{
+                backgroundColor: 'rgba(13,17,23,0.98)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 12,
+                color: '#fff',
+              }}
             />
             <Legend />
             {chart.series.map((series, index) => (
-              <Bar key={series.key} dataKey={series.key} name={series.label} fill={series.color || palette[index % palette.length]} radius={[8, 8, 0, 0]} />
+              <Bar
+                key={series.key}
+                dataKey={series.key}
+                name={series.label}
+                fill={series.color || palette[index % palette.length]}
+                radius={[8, 8, 0, 0]}
+              />
             ))}
           </BarChart>
         </ResponsiveContainer>
@@ -284,14 +333,34 @@ function ChartBlock({ chart }: { chart: ChartData }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chart.data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-          <XAxis dataKey={chart.xKey} tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }} stroke="rgba(255,255,255,0.15)" />
-          <YAxis tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }} stroke="rgba(255,255,255,0.15)" />
+          <XAxis
+            dataKey={chart.xKey}
+            tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }}
+            stroke="rgba(255,255,255,0.15)"
+          />
+          <YAxis
+            tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 12 }}
+            stroke="rgba(255,255,255,0.15)"
+          />
           <Tooltip
-            contentStyle={{ backgroundColor: 'rgba(13,17,23,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#fff' }}
+            contentStyle={{
+              backgroundColor: 'rgba(13,17,23,0.98)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 12,
+              color: '#fff',
+            }}
           />
           <Legend />
           {chart.series.map((series, index) => (
-            <Line key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color || palette[index % palette.length]} strokeWidth={2.5} dot={false} />
+            <Line
+              key={series.key}
+              type="monotone"
+              dataKey={series.key}
+              name={series.label}
+              stroke={series.color || palette[index % palette.length]}
+              strokeWidth={2.5}
+              dot={false}
+            />
           ))}
         </LineChart>
       </ResponsiveContainer>
@@ -301,12 +370,23 @@ function ChartBlock({ chart }: { chart: ChartData }) {
 
 function TableBlock({ table }: { table: TableData }) {
   return (
-    <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16 }}>
+    <div
+      style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16 }}
+    >
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
             {table.headers.map((header) => (
-              <th key={header} style={{ textAlign: 'left', padding: '0.85rem 0.9rem', color: 'rgba(255,255,255,0.7)', fontWeight: 700, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <th
+                key={header}
+                style={{
+                  textAlign: 'left',
+                  padding: '0.85rem 0.9rem',
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 700,
+                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
                 {header}
               </th>
             ))}
@@ -316,7 +396,10 @@ function TableBlock({ table }: { table: TableData }) {
           {table.rows.map((row, rowIndex) => (
             <tr key={rowIndex} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} style={{ padding: '0.8rem 0.9rem', color: 'rgba(255,255,255,0.9)' }}>
+                <td
+                  key={cellIndex}
+                  style={{ padding: '0.8rem 0.9rem', color: 'rgba(255,255,255,0.9)' }}
+                >
                   {formatCell(cell)}
                 </td>
               ))}
@@ -329,7 +412,7 @@ function TableBlock({ table }: { table: TableData }) {
 }
 
 export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps) {
-  const { user } = useAppContext();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
@@ -354,7 +437,11 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
     try {
       const raw = localStorage.getItem(storageKey);
       const restored = deserializeMessages(raw ? JSON.parse(raw) : null);
-      setMessages(restored.length > 0 ? restored : [{ role: 'assistant', text: initialGreeting, timestamp: new Date() }]);
+      setMessages(
+        restored.length > 0
+          ? restored
+          : [{ role: 'assistant', text: initialGreeting, timestamp: new Date() }],
+      );
     } catch {
       setMessages([{ role: 'assistant', text: initialGreeting, timestamp: new Date() }]);
     }
@@ -378,7 +465,10 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
   useEffect(() => {
     if (!loadedRef.current) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(serializeMessages(messages.slice(-MAX_STORED_MESSAGES))));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(serializeMessages(messages.slice(-MAX_STORED_MESSAGES))),
+      );
     } catch {
       // Sem bloqueio se o storage estiver indisponível.
     }
@@ -427,10 +517,10 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
   const sendMessage = async (text: string) => {
     if (!text || loading) return;
 
-    const userMessage: DluxMessage = { 
-      role: 'user', 
-      text, 
-      timestamp: new Date() 
+    const userMessage: DluxMessage = {
+      role: 'user',
+      text,
+      timestamp: new Date(),
     };
 
     // Constrói histórico limitado (últimas N mensagens, excluindo a atual)
@@ -462,7 +552,7 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             rota_atual: window.location.hash || window.location.pathname,
             usuario_id: user?.id || 'anonimo',
             usuario_nome: user?.name || 'Usuário',
-            empresa: 'D\'LUXURY CRM',
+            empresa: "D'LUXURY CRM",
             versao_app: '1.0.0',
           },
           memory_summary: memorySummary || undefined,
@@ -493,7 +583,6 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
       if (validated.memory_summary) {
         setMemorySummary(normalizeMemorySummary(validated.memory_summary));
       }
-
     } catch (err: any) {
       console.error('[DLUX_CHAT_ERROR]', {
         message: err?.message,
@@ -507,10 +596,15 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
       if (err?.status === 429) {
         errorMessage = 'Sistema temporariamente ocupado. Tente novamente em alguns segundos.';
       } else if (err?.status >= 500) {
-        errorMessage = 'Erro no servidor. Nossa equipe foi notificada. Tente novamente em instantes.';
+        errorMessage =
+          'Erro no servidor. Nossa equipe foi notificada. Tente novamente em instantes.';
       } else if (err?.message?.includes('timeout')) {
-        errorMessage = 'A requisição demorou muito. Tente uma pergunta mais específica ou aguarde um momento.';
-      } else if (err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError')) {
+        errorMessage =
+          'A requisição demorou muito. Tente uma pergunta mais específica ou aguarde um momento.';
+      } else if (
+        err?.message?.includes('Failed to fetch') ||
+        err?.message?.includes('NetworkError')
+      ) {
         errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
       }
 
@@ -595,8 +689,14 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
           bounds="window"
           dragHandleClassName="dlux-drag-handle"
           enableResizing={{
-            top: true, right: true, bottom: true, left: true,
-            topRight: true, bottomRight: true, bottomLeft: true, topLeft: true
+            top: true,
+            right: true,
+            bottom: true,
+            left: true,
+            topRight: true,
+            bottomRight: true,
+            bottomLeft: true,
+            topLeft: true,
           }}
           style={{
             zIndex: 1200,
@@ -625,7 +725,7 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             .dlux-drag-handle { cursor: grab; }
             .dlux-drag-handle:active { cursor: grabbing; }
           `}</style>
-          
+
           <header
             className="dlux-drag-handle"
             style={{
@@ -639,14 +739,25 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              <div style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #E2AC00, #00A99D)' }}>
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 14,
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: 'linear-gradient(135deg, #E2AC00, #00A99D)',
+                }}
+              >
                 <Bot size={21} />
               </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1 }}>Dlux</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>IA generativa do D'LUXURY ERP</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1 }}>Dlux</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
+                  IA generativa do D'LUXURY ERP
                 </div>
               </div>
+            </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
@@ -709,47 +820,108 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
           </header>
 
           <div style={{ padding: '0.9rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-               <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Modo do Agente:</div>
-               <select
-                 value={agentMode}
-                 onChange={(e) => setAgentMode(e.target.value)}
-                 style={{
-                   background: 'rgba(255,255,255,0.05)',
-                   color: '#fff',
-                   border: '1px solid rgba(255,255,255,0.1)',
-                   borderRadius: 8,
-                   padding: '0.3rem 0.5rem',
-                   fontSize: 12,
-                   outline: 'none',
-                   cursor: 'pointer'
-                 }}
-               >
-                 <option value="auto" style={{ color: '#000' }}>✨ Automático (Roteador)</option>
-                 <option value="marcenaria" style={{ color: '#000' }}>🪵 Marcenaria</option>
-                 <option value="engenharia" style={{ color: '#000' }}>📐 Engenharia</option>
-                 <option value="producao" style={{ color: '#000' }}>🏭 Produção</option>
-                 <option value="pcp" style={{ color: '#000' }}>📋 PCP</option>
-                 <option value="comercial" style={{ color: '#000' }}>💰 Comercial</option>
-                 <option value="financeiro" style={{ color: '#000' }}>🏦 Financeiro</option>
-                 <option value="estoque" style={{ color: '#000' }}>📦 Estoque</option>
-                 <option value="projetos" style={{ color: '#000' }}>🚀 Projetos</option>
-                 <option value="administrativo" style={{ color: '#000' }}>⚙️ Administrativo</option>
-               </select>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '0.6rem',
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+                Modo do Agente:
+              </div>
+              <select
+                value={agentMode}
+                onChange={(e) => setAgentMode(e.target.value)}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '0.3rem 0.5rem',
+                  fontSize: 12,
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="auto" style={{ color: '#000' }}>
+                  ✨ Automático (Roteador)
+                </option>
+                <option value="marcenaria" style={{ color: '#000' }}>
+                  🪵 Marcenaria
+                </option>
+                <option value="engenharia" style={{ color: '#000' }}>
+                  📐 Engenharia
+                </option>
+                <option value="producao" style={{ color: '#000' }}>
+                  🏭 Produção
+                </option>
+                <option value="pcp" style={{ color: '#000' }}>
+                  📋 PCP
+                </option>
+                <option value="comercial" style={{ color: '#000' }}>
+                  💰 Comercial
+                </option>
+                <option value="financeiro" style={{ color: '#000' }}>
+                  🏦 Financeiro
+                </option>
+                <option value="estoque" style={{ color: '#000' }}>
+                  📦 Estoque
+                </option>
+                <option value="projetos" style={{ color: '#000' }}>
+                  🚀 Projetos
+                </option>
+                <option value="administrativo" style={{ color: '#000' }}>
+                  ⚙️ Administrativo
+                </option>
+              </select>
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.04em', lineHeight: 1.5 }}>
-              Pergunte livremente em português. Eu entendo contexto, histórico e dados do ERP sem precisar de comandos prontos.
+            <div
+              style={{
+                fontSize: 11,
+                color: 'rgba(255,255,255,0.55)',
+                letterSpacing: '0.04em',
+                lineHeight: 1.5,
+              }}
+            >
+              Pergunte livremente em português. Eu entendo contexto, histórico e dados do ERP sem
+              precisar de comandos prontos.
             </div>
             {memorySummary && (
-              <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5 }}>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 10,
+                  color: 'rgba(255,255,255,0.38)',
+                  lineHeight: 1.5,
+                }}
+              >
                 Memória ativa: mantendo preferências e contexto recorrente deste usuário.
               </div>
             )}
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.9rem',
+            }}
+          >
             {messages.map((message, index) => (
-              <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: message.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
+              <div
+                key={index}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: message.role === 'user' ? 'flex-end' : 'flex-start',
+                  gap: 6,
+                }}
+              >
                 <div
                   className={message.role === 'assistant' ? 'dlux-markdown-container' : ''}
                   style={{
@@ -757,8 +929,12 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
                     width: 'fit-content',
                     borderRadius: 18,
                     padding: '0.9rem 1rem',
-                    background: message.role === 'user' ? 'linear-gradient(135deg, #00A99D, #007c73)' : 'rgba(255,255,255,0.05)',
-                    border: message.role === 'assistant' ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                    background:
+                      message.role === 'user'
+                        ? 'linear-gradient(135deg, #00A99D, #007c73)'
+                        : 'rgba(255,255,255,0.05)',
+                    border:
+                      message.role === 'assistant' ? '1px solid rgba(255,255,255,0.06)' : 'none',
                     color: '#fff',
                     whiteSpace: message.role === 'user' ? 'pre-wrap' : 'normal',
                     lineHeight: 1.5,
@@ -766,81 +942,130 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
                   }}
                 >
                   {message.role === 'assistant' ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {message.text}
-                    </ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
                   ) : (
                     message.text
                   )}
                 </div>
 
                 {message.role === 'assistant' && message.chart_data && (
-                  <div style={{ width: '100%', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: '0.85rem', background: 'rgba(255,255,255,0.03)' }}>
-                    {message.chart_data.title && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 8 }}>{message.chart_data.title}</div>}
+                  <div
+                    style={{
+                      width: '100%',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 18,
+                      padding: '0.85rem',
+                      background: 'rgba(255,255,255,0.03)',
+                    }}
+                  >
+                    {message.chart_data.title && (
+                      <div
+                        style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 8 }}
+                      >
+                        {message.chart_data.title}
+                      </div>
+                    )}
                     <ChartBlock chart={message.chart_data} />
                   </div>
                 )}
 
                 {message.role === 'assistant' && message.table_data && (
-                  <div style={{ width: '100%', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: '0.85rem', background: 'rgba(255,255,255,0.03)' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 18,
+                      padding: '0.85rem',
+                      background: 'rgba(255,255,255,0.03)',
+                    }}
+                  >
                     <TableBlock table={message.table_data} />
                   </div>
                 )}
 
-                {message.role === 'assistant' && message.suggestions && message.suggestions.length > 0 && (
-                  <div style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {message.suggestions.map((suggestion) => (
-                      <button
-                        type="button"
-                        key={suggestion}
-                        onClick={() => handleSuggestion(suggestion)}
-                        style={{
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          borderRadius: 999,
-                          padding: '0.45rem 0.7rem',
-                          fontSize: 12,
-                        }}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {message.role === 'assistant' &&
+                  message.suggestions &&
+                  message.suggestions.length > 0 && (
+                    <div style={{ width: '100%', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {message.suggestions.map((suggestion) => (
+                        <button
+                          type="button"
+                          key={suggestion}
+                          onClick={() => handleSuggestion(suggestion)}
+                          style={{
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            background: 'rgba(255,255,255,0.04)',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            borderRadius: 999,
+                            padding: '0.45rem 0.7rem',
+                            fontSize: 12,
+                          }}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span>{message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.35)',
+                    display: 'flex',
+                    gap: '0.5rem',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>
+                    {message.timestamp.toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
                   {message.role === 'assistant' && message.agent && (
                     <>
                       <span>•</span>
-                      <span style={{ color: '#00A99D', fontWeight: 600 }}>Agente: {message.agent.toUpperCase()}</span>
+                      <span style={{ color: '#00A99D', fontWeight: 600 }}>
+                        Agente: {message.agent.toUpperCase()}
+                      </span>
                     </>
                   )}
                   {message.role === 'assistant' && message.confidence_score !== undefined && (
                     <>
                       <span>•</span>
-                      <span style={{ color: message.confidence_score >= 80 ? '#22C55E' : message.confidence_score >= 50 ? '#E2AC00' : '#EF4444' }}>
-                         Confiança: {message.confidence_score}%
+                      <span
+                        style={{
+                          color:
+                            message.confidence_score >= 80
+                              ? '#22C55E'
+                              : message.confidence_score >= 50
+                                ? '#E2AC00'
+                                : '#EF4444',
+                        }}
+                      >
+                        Confiança: {message.confidence_score}%
                       </span>
                     </>
                   )}
                 </div>
                 {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
-                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>
-                     Fontes: {message.sources.join(', ')}
-                   </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: -2 }}>
+                    Fontes: {message.sources.join(', ')}
+                  </div>
                 )}
               </div>
             ))}
 
             {loading && (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'flex-start',
-                gap: 6,
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 6,
+                }}
+              >
                 <div
                   style={{
                     maxWidth: '85%',
@@ -863,13 +1088,20 @@ export default function DluxChat({ onSuggestBOM: _onSuggestBOM }: DluxChatProps)
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSend} style={{ padding: '0.9rem', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.14)' }}>
+          <form
+            onSubmit={handleSend}
+            style={{
+              padding: '0.9rem',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(0,0,0,0.14)',
+            }}
+          >
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Pergunte livremente ao Dlux..."
-                  disabled={loading}
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Pergunte livremente ao Dlux..."
+                disabled={loading}
                 style={{
                   flex: 1,
                   minWidth: 0,

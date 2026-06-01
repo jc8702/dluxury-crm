@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { X, Calendar, MapPin, Clock, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { useAppContext } from '../../context/AppContext';
+import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useEscClose } from '../../hooks/useEscClose';
 
 interface ModalEventoProps {
@@ -16,7 +15,7 @@ interface ModalEventoProps {
 const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, eventToEdit }) => {
   const { error: toastError } = useToast();
   useEscClose(isOpen ? onClose : () => {});
-  const { clients: ctxClients } = useAppContext(); 
+  const { clients: ctxClients } = useCRM();
   const [clientsList, setClientsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,8 +42,16 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
         tipo: eventToEdit.tipo || 'compromisso',
         titulo: eventToEdit.titulo || '',
         descricao: eventToEdit.descricao || '',
-        data_inicio: start ? (typeof start === 'string' ? start.slice(0, 16) : new Date(start).toISOString().slice(0, 16)) : '',
-        data_fim: end ? (typeof end === 'string' ? end.slice(0, 16) : new Date(end).toISOString().slice(0, 16)) : '',
+        data_inicio: start
+          ? typeof start === 'string'
+            ? start.slice(0, 16)
+            : new Date(start).toISOString().slice(0, 16)
+          : '',
+        data_fim: end
+          ? typeof end === 'string'
+            ? end.slice(0, 16)
+            : new Date(end).toISOString().slice(0, 16)
+          : '',
         dia_inteiro: !!eventToEdit.dia_inteiro,
         cliente_id: eventToEdit.cliente_id || null,
         projeto_id: eventToEdit.projeto_id || null,
@@ -59,8 +66,16 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
       const endHour = new Date(now.getTime() + 3600000);
       const hasStart = eventToEdit?.data_inicio;
       const hasEnd = eventToEdit?.data_fim;
-      const startTime = hasStart ? (typeof hasStart === 'string' ? hasStart : new Date(hasStart).toISOString().slice(0, 16)) : now.toISOString().slice(0, 16);
-      const endTime = hasEnd ? (typeof hasEnd === 'string' ? hasEnd : new Date(hasEnd).toISOString().slice(0, 16)) : endHour.toISOString().slice(0, 16);
+      const startTime = hasStart
+        ? typeof hasStart === 'string'
+          ? hasStart
+          : new Date(hasStart).toISOString().slice(0, 16)
+        : now.toISOString().slice(0, 16);
+      const endTime = hasEnd
+        ? typeof hasEnd === 'string'
+          ? hasEnd
+          : new Date(hasEnd).toISOString().slice(0, 16)
+        : endHour.toISOString().slice(0, 16);
       setFormData({
         tipo: eventToEdit?.tipo || 'compromisso',
         titulo: '',
@@ -81,9 +96,10 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
 
   useEffect(() => {
     if (isOpen) {
-      api.clients.list()
-        .then(data => setClientsList(data || []))
-        .catch(err => console.error('Erro ao carregar clientes no ModalEvento:', err));
+      api.clients
+        .list()
+        .then((data) => setClientsList(data || []))
+        .catch((err) => console.error('Erro ao carregar clientes no ModalEvento:', err));
     }
   }, [isOpen]);
 
@@ -100,7 +116,6 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
       onClose();
     } catch (error: any) {
       toastError('Erro ao salvar', error.message);
-
     }
   };
 
@@ -121,45 +136,57 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
 
   return (
     <div className="modal-overlay animate-fade-in" style={{ zIndex: 9999 }}>
-      <div className="modal-content animate-pop-in" style={{ width: '100%', maxWidth: '650px', padding: 0 }}>
-        
+      <div
+        className="modal-content animate-pop-in"
+        style={{ width: '100%', maxWidth: '650px', padding: 0 }}
+      >
         {/* Header */}
-        <div style={{ 
-          padding: '1.5rem 2rem', 
-          borderBottom: '1px solid hsl(var(--border))', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          background: 'rgba(212, 175, 55, 0.05)'
-        }}>
+        <div
+          style={{
+            padding: '1.5rem 2rem',
+            borderBottom: '1px solid hsl(var(--border))',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(212, 175, 55, 0.05)',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <Calendar size={20} color="hsl(var(--primary))" />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
               {eventToEdit?.id ? 'EDITAR EVENTO' : 'NOVO EVENTO'}
             </h2>
           </div>
-          <button onClick={onClose} className="btn" style={{ padding: '0.5rem', minWidth: 0, background: 'transparent' }}>
+          <button
+            onClick={onClose}
+            className="btn"
+            style={{ padding: '0.5rem', minWidth: 0, background: 'transparent' }}
+          >
             <X size={24} />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
+        <form
+          onSubmit={handleSubmit}
+          style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+        >
           {/* Selector de Tipo */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '0.5rem', 
-            padding: '0.35rem', 
-            background: 'var(--input-bg)', 
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--input-border)'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.5rem',
+              padding: '0.35rem',
+              background: 'var(--input-bg)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--input-border)',
+            }}
+          >
             {[
               { id: 'compromisso', label: 'COMPROMISSO', color: '#d4af37' },
               { id: 'visita', label: 'VISITA TÉCNICA', color: '#00A99D' },
-              { id: 'reuniao', label: 'REUNIÃO', color: '#3B82F6' }
-            ].map(t => (
+              { id: 'reuniao', label: 'REUNIÃO', color: '#3B82F6' },
+            ].map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -174,7 +201,8 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   background: formData.tipo === t.id ? 'hsl(var(--primary))' : 'transparent',
-                  color: formData.tipo === t.id ? 'var(--primary-text)' : 'hsl(var(--muted-foreground))'
+                  color:
+                    formData.tipo === t.id ? 'var(--primary-text)' : 'hsl(var(--muted-foreground))',
                 }}
               >
                 {t.label}
@@ -188,22 +216,33 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <input
                 required
                 value={formData.titulo}
-                onChange={e => setFormData({ ...formData, titulo: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                 className="input-base"
                 placeholder="EX: MEDIÇÃO FINAL - RESIDENCIAL BLUMENAU"
               />
             </div>
 
             <div>
-              <label className="label-base">CLIENTE {formData.tipo === 'visita' ? '*' : '(OPCIONAL)'}</label>
+              <label className="label-base">
+                CLIENTE {formData.tipo === 'visita' ? '*' : '(OPCIONAL)'}
+              </label>
               <select
                 required={formData.tipo === 'visita'}
                 value={formData.cliente_id || ''}
-                onChange={e => setFormData({ ...formData, cliente_id: e.target.value ? Number(e.target.value) : null })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    cliente_id: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
                 className="input-base"
               >
                 <option value="">SELECIONAR CLIENTE...</option>
-                {clientsList.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                {clientsList.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -211,12 +250,21 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <div>
                 <label className="label-base">INÍCIO</label>
                 <div style={{ position: 'relative' }}>
-                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
+                  <Clock
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '1rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'hsl(var(--muted-foreground))',
+                    }}
+                  />
                   <input
                     required
                     type="datetime-local"
                     value={formData.data_inicio}
-                    onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
                     className="input-base"
                     style={{ paddingLeft: '3rem' }}
                   />
@@ -225,12 +273,21 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <div>
                 <label className="label-base">FIM</label>
                 <div style={{ position: 'relative' }}>
-                  <Clock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
+                  <Clock
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '1rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'hsl(var(--muted-foreground))',
+                    }}
+                  />
                   <input
                     required
                     type="datetime-local"
                     value={formData.data_fim}
-                    onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
                     className="input-base"
                     style={{ paddingLeft: '3rem' }}
                   />
@@ -239,12 +296,22 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             </div>
 
             {formData.tipo === 'visita' && (
-              <div className="section animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--primary-glow)' }}>
+              <div
+                className="section animate-fade-in"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  border: '1px solid var(--primary-glow)',
+                }}
+              >
                 <div>
-                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>OBJETIVO</label>
+                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
+                    OBJETIVO
+                  </label>
                   <select
                     value={formData.objetivo}
-                    onChange={e => setFormData({ ...formData, objetivo: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
                     className="input-base"
                   >
                     <option value="medicao">MEDIÇÃO</option>
@@ -255,12 +322,23 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                   </select>
                 </div>
                 <div>
-                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>ENDEREÇO DA VISITA</label>
+                  <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
+                    ENDEREÇO DA VISITA
+                  </label>
                   <div style={{ position: 'relative' }}>
-                    <MapPin size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--muted-foreground))' }} />
+                    <MapPin
+                      size={16}
+                      style={{
+                        position: 'absolute',
+                        left: '1rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'hsl(var(--muted-foreground))',
+                      }}
+                    />
                     <input
                       value={formData.endereco}
-                      onChange={e => setFormData({ ...formData, endereco: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                       className="input-base"
                       style={{ paddingLeft: '3rem' }}
                       placeholder="RUA, NÚMERO, BAIRRO..."
@@ -274,7 +352,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
               <label className="label-base">DESCRIÇÃO / OBSERVAÇÕES</label>
               <textarea
                 value={formData.descricao}
-                onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                 className="input-base"
                 style={{ minHeight: '100px' }}
                 placeholder="DETALHES IMPORTANTES PARA O COMPROMISSO..."
@@ -282,56 +360,69 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             </div>
 
             <div className="grid-2">
-               <div>
-                  <label className="label-base">RESPONSÁVEL</label>
-                  <select
-                    required
-                    value={formData.responsavel_id}
-                    onChange={e => setFormData({ ...formData, responsavel_id: e.target.value })}
-                    className="input-base"
+              <div>
+                <label className="label-base">RESPONSÁVEL</label>
+                <select
+                  required
+                  value={formData.responsavel_id}
+                  onChange={(e) => setFormData({ ...formData, responsavel_id: e.target.value })}
+                  className="input-base"
+                >
+                  <option value="admin">ADMINISTRADOR</option>
+                  <option value="vendedor">VENDEDOR</option>
+                  <option value="marceneiro">MARCENEIRO</option>
+                </select>
+              </div>
+              <div>
+                <label className="label-base">COR DE EXIBIÇÃO</label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={formData.cor}
+                    onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
+                    style={{
+                      width: '45px',
+                      height: '45px',
+                      padding: 0,
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      color: 'hsl(var(--muted-foreground))',
+                    }}
                   >
-                    <option value="admin">ADMINISTRADOR</option>
-                    <option value="vendedor">VENDEDOR</option>
-                    <option value="marceneiro">MARCENEIRO</option>
-                  </select>
+                    {formData.cor}
+                  </span>
                 </div>
-                <div>
-                  <label className="label-base">COR DE EXIBIÇÃO</label>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <input
-                      type="color"
-                      value={formData.cor}
-                      onChange={e => setFormData({ ...formData, cor: e.target.value })}
-                      style={{ 
-                        width: '45px', 
-                        height: '45px', 
-                        padding: 0, 
-                        border: 'none', 
-                        background: 'transparent',
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'hsl(var(--muted-foreground))' }}>{formData.cor}</span>
-                  </div>
-                </div>
+              </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div style={{ 
-            marginTop: '1rem', 
-            paddingTop: '1.5rem', 
-            borderTop: '1px solid hsl(var(--border))', 
-            display: 'flex', 
-            justifyContent: 'space-between' 
-          }}>
+          <div
+            style={{
+              marginTop: '1rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid hsl(var(--border))',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
             <div>
               {eventToEdit?.id && (
                 <button
                   type="button"
                   onClick={handleDelete}
                   className="btn btn-outline"
-                  style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive))' }}
+                  style={{
+                    color: 'hsl(var(--destructive))',
+                    borderColor: 'hsl(var(--destructive))',
+                  }}
                 >
                   <Trash2 size={18} /> EXCLUIR
                 </button>

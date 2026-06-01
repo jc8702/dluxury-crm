@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { Repeat, Plus, Trash2, Edit2, Play, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
-import { TableSkeleton } from '../design-system/components/Skeleton';
-import { Button, Modal, Card, CardContent, CardHeader, CardTitle, Badge, Input } from '../design-system/components';
+import { TableSkeleton } from '../components/common/Skeleton';
+import {
+  Button,
+  Modal,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
+  Input,
+} from '../components/common';
 
 export default function FinanceiroRecorrentesPage() {
   const { success, error } = useToast();
@@ -13,7 +22,7 @@ export default function FinanceiroRecorrentesPage() {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  
+
   // States para auxiliares
   const [classes, setClasses] = useState<any[]>([]);
   const [fornecedores, setFornecedores] = useState<any[]>([]);
@@ -29,7 +38,7 @@ export default function FinanceiroRecorrentesPage() {
     fornecedor_id: '',
     forma_pagamento_id: '',
     conta_bancaria_id: '',
-    ativa: true
+    ativa: true,
   });
 
   const [gerarModal, setGerarModal] = useState(false);
@@ -46,7 +55,7 @@ export default function FinanceiroRecorrentesPage() {
         api.financeiro.classesFinanceiras.list(),
         api.suppliers.list(),
         api.financeiro.contasInternas.list(),
-        api.financeiro.formasPagamento.list()
+        api.financeiro.formasPagamento.list(),
       ]);
       setRows(normalizeList(recsRes));
       setClasses(normalizeList(clsRes));
@@ -60,7 +69,8 @@ export default function FinanceiroRecorrentesPage() {
     }
   };
 
-  useEffect(() => { load();
+  useEffect(() => {
+    load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openNew = () => {
@@ -74,7 +84,7 @@ export default function FinanceiroRecorrentesPage() {
       fornecedor_id: '',
       forma_pagamento_id: '',
       conta_bancaria_id: '',
-      ativa: true
+      ativa: true,
     });
     setIsOpen(true);
   };
@@ -94,7 +104,7 @@ export default function FinanceiroRecorrentesPage() {
       }
       setIsOpen(false);
       load();
-      success('Configuração salva com sucesso!');
+      success('ConfiguraÃ§Ã£o salva com sucesso!');
     } catch (e: any) {
       error(e.message || 'Erro ao salvar');
     }
@@ -102,8 +112,8 @@ export default function FinanceiroRecorrentesPage() {
 
   const doDelete = async (id: string) => {
     const isConfirmed = await confirmAction({
-      title: 'Excluir Configuração',
-      description: 'Excluir esta configuração de conta recorrente?'
+      title: 'Excluir ConfiguraÃ§Ã£o',
+      description: 'Excluir esta configuraÃ§Ã£o de conta recorrente?',
     });
     if (!isConfirmed) return;
     try {
@@ -118,37 +128,68 @@ export default function FinanceiroRecorrentesPage() {
     try {
       setLoading(true);
       await api.financeiro.contasRecorrentes.gerarMes(gerarMes, gerarAno);
-      success('Títulos gerados com sucesso no Contas a Pagar!');
+      success('TÃ­tulos gerados com sucesso no Contas a Pagar!');
       setGerarModal(false);
     } catch (e: any) {
-      error(e.message || 'Erro ao gerar títulos');
+      error(e.message || 'Erro ao gerar tÃ­tulos');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="page-container anim-fade-in" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <Button 
-        variant="ghost" 
-        onClick={() => window.location.hash = '#/financeiro'} 
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', marginBottom: '1rem', padding: 0, height: 'auto', background: 'transparent' }}
+    <div
+      className="page-container anim-fade-in"
+      style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}
+    >
+      <Button
+        variant="ghost"
+        onClick={() => (window.location.hash = '#/financeiro')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.75rem',
+          color: 'hsl(var(--muted-foreground))',
+          marginBottom: '1rem',
+          padding: 0,
+          height: 'auto',
+          background: 'transparent',
+        }}
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem',
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 900,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+          >
             <Repeat /> CONTAS RECORRENTES
           </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Configuração de despesas fixas e geração automática mensal</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>
+            ConfiguraÃ§Ã£o de despesas fixas e geraÃ§Ã£o automÃ¡tica mensal
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Button variant="outline" onClick={() => setGerarModal(true)}>
-            <Play className="w-4 h-4 mr-1" /> GERAR TÍTULOS DO MÊS
+            <Play className="w-4 h-4 mr-1" /> GERAR TÃTULOS DO MÃŠS
           </Button>
           <Button variant="primary" onClick={openNew}>
-            <Plus className="w-4 h-4 mr-1" /> NOVA CONFIGURAÇÃO
+            <Plus className="w-4 h-4 mr-1" /> NOVA CONFIGURAÃ‡ÃƒO
           </Button>
         </div>
       </div>
@@ -158,12 +199,12 @@ export default function FinanceiroRecorrentesPage() {
           <thead>
             <tr>
               <th style={{ width: '40px' }}>STATUS</th>
-              <th>DESCRIÇÃO / CONTA FIXA</th>
+              <th>DESCRIÃ‡ÃƒO / CONTA FIXA</th>
               <th>DIA VENC.</th>
               <th>CLASSE FINANCEIRA</th>
               <th>FORNECEDOR</th>
               <th style={{ textAlign: 'right' }}>VALOR ESTIMADO</th>
-              <th style={{ width: '100px' }}>AÇÕES</th>
+              <th style={{ width: '100px' }}>AÃ‡Ã•ES</th>
             </tr>
           </thead>
           <tbody>
@@ -171,156 +212,253 @@ export default function FinanceiroRecorrentesPage() {
               <TableSkeleton rows={4} cols={7} />
             ) : rows.length === 0 ? (
               <tr>
-                 <td colSpan={7} style={{ padding: 0 }}>
-                    <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>Nenhuma conta recorrente configurada.</div>
-                 </td>
-              </tr>
-            ) : rows.map(r => (
-              <tr key={r.id}>
-                <td style={{ textAlign: 'center' }}>
-                  {r.ativa ? (
-                    <Badge variant="success">ATIVA</Badge>
-                  ) : (
-                    <Badge variant="secondary">INATIVA</Badge>
-                  )}
-                </td>
-                <td>
-                  <div style={{ fontWeight: 700 }}>{r.descricao.toUpperCase()}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>{r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}</div>
-                </td>
-                <td style={{ fontWeight: 600 }}>Todo dia {r.dia_vencimento}</td>
-                <td>{classes.find(c => c.id === r.classe_financeira_id)?.nome || '---'}</td>
-                <td>{fornecedores.find(f => f.id === r.fornecedor_id)?.nome || '---'}</td>
-                <td style={{ textAlign: 'right', fontWeight: 900 }}>
-                  R$ {Number(r.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEdit(r)}
-                      aria-label={`Editar conta recorrente ${r.descricao}`}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => doDelete(r.id)}
-                      aria-label={`Excluir conta recorrente ${r.descricao}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                <td colSpan={7} style={{ padding: 0 }}>
+                  <div className="empty-state" style={{ border: 'none', borderRadius: 0 }}>
+                    Nenhuma conta recorrente configurada.
                   </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id}>
+                  <td style={{ textAlign: 'center' }}>
+                    {r.ativa ? (
+                      <Badge variant="success">ATIVA</Badge>
+                    ) : (
+                      <Badge variant="secondary">INATIVA</Badge>
+                    )}
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 700 }}>{r.descricao.toUpperCase()}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                      {r.tipo === 'pagar' ? 'DESPESA FIXA' : 'RECEITA FIXA'}
+                    </div>
+                  </td>
+                  <td style={{ fontWeight: 600 }}>Todo dia {r.dia_vencimento}</td>
+                  <td>{classes.find((c) => c.id === r.classe_financeira_id)?.nome || '---'}</td>
+                  <td>{fornecedores.find((f) => f.id === r.fornecedor_id)?.nome || '---'}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 900 }}>
+                    R$ {Number(r.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(r)}
+                        aria-label={`Editar conta recorrente ${r.descricao}`}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => doDelete(r.id)}
+                        aria-label={`Excluir conta recorrente ${r.descricao}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </Card>
 
-      {/* Modal de Configuração */}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={editing ? "Editar Recorrência" : "Nova Conta Recorrente"} size="lg">
+      {/* Modal de ConfiguraÃ§Ã£o */}
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title={editing ? 'Editar RecorrÃªncia' : 'Nova Conta Recorrente'}
+        size="lg"
+      >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ gridColumn: 'span 2' }}>
-            <Input 
-              label="Descrição da Conta"
+            <Input
+              label="DescriÃ§Ã£o da Conta"
               placeholder="Ex: Aluguel, Internet, Pro-labore"
               value={form.descricao}
-              onChange={e => setForm({...form, descricao: e.target.value})}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />
           </div>
 
           <div>
-            <Input 
+            <Input
               label="Valor Mensal Estimado"
               type="number"
               value={form.valor}
-              onChange={e => setForm({...form, valor: Number(e.target.value)})}
+              onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
             />
           </div>
 
           <div>
-            <Input 
+            <Input
               label="Dia de Vencimento"
               type="number"
-              min="1" max="31"
+              min="1"
+              max="31"
               value={form.dia_vencimento}
-              onChange={e => setForm({...form, dia_vencimento: Number(e.target.value)})}
+              onChange={(e) => setForm({ ...form, dia_vencimento: Number(e.target.value) })}
             />
           </div>
 
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Classe Financeira</label>
-            <select className="input-base" value={form.classe_financeira_id} onChange={e => setForm({...form, classe_financeira_id: e.target.value})}>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">
+              Classe Financeira
+            </label>
+            <select
+              className="input-base"
+              value={form.classe_financeira_id}
+              onChange={(e) => setForm({ ...form, classe_financeira_id: e.target.value })}
+            >
               <option value="">Selecione...</option>
-              {classes.map(c => <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>)}
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome.toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Fornecedor (Opcional)</label>
-            <select className="input-base" value={form.fornecedor_id} onChange={e => setForm({...form, fornecedor_id: e.target.value})}>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">
+              Fornecedor (Opcional)
+            </label>
+            <select
+              className="input-base"
+              value={form.fornecedor_id}
+              onChange={(e) => setForm({ ...form, fornecedor_id: e.target.value })}
+            >
               <option value="">Selecione...</option>
-              {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome.toUpperCase()}</option>)}
+              {fornecedores.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nome.toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Conta Bancária Padrão</label>
-            <select className="input-base" value={form.conta_bancaria_id} onChange={e => setForm({...form, conta_bancaria_id: e.target.value})}>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">
+              Conta BancÃ¡ria PadrÃ£o
+            </label>
+            <select
+              className="input-base"
+              value={form.conta_bancaria_id}
+              onChange={(e) => setForm({ ...form, conta_bancaria_id: e.target.value })}
+            >
               <option value="">Selecione...</option>
-              {contas.map(c => <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>)}
+              {contas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome.toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Forma de Pagamento</label>
-            <select className="input-base" value={form.forma_pagamento_id} onChange={e => setForm({...form, forma_pagamento_id: e.target.value})}>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">
+              Forma de Pagamento
+            </label>
+            <select
+              className="input-base"
+              value={form.forma_pagamento_id}
+              onChange={(e) => setForm({ ...form, forma_pagamento_id: e.target.value })}
+            >
               <option value="">Selecione...</option>
-              {formas.map(f => <option key={f.id} value={f.id}>{f.nome.toUpperCase()}</option>)}
+              {formas.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nome.toUpperCase()}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <input type="checkbox" checked={form.ativa} onChange={e => setForm({...form, ativa: e.target.checked})} />
-            <label style={{ margin: 0 }}>Esta conta está ativa para geração mensal</label>
+          <div
+            style={{
+              gridColumn: 'span 2',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={form.ativa}
+              onChange={(e) => setForm({ ...form, ativa: e.target.checked })}
+            />
+            <label style={{ margin: 0 }}>Esta conta estÃ¡ ativa para geraÃ§Ã£o mensal</label>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>CANCELAR</Button>
-          <Button variant="primary" onClick={save}>SALVAR CONFIGURAÇÃO</Button>
+        <div
+          style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}
+        >
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            CANCELAR
+          </Button>
+          <Button variant="primary" onClick={save}>
+            SALVAR CONFIGURAÃ‡ÃƒO
+          </Button>
         </div>
       </Modal>
 
-      {/* Modal de Geração */}
-      <Modal isOpen={gerarModal} onClose={() => setGerarModal(false)} title="Gerar Títulos Mensais" size="sm">
-        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>
-          Este processo irá criar lançamentos automáticos no <strong>Contas a Pagar</strong> baseados em todas as configurações ativas acima.
+      {/* Modal de GeraÃ§Ã£o */}
+      <Modal
+        isOpen={gerarModal}
+        onClose={() => setGerarModal(false)}
+        title="Gerar TÃ­tulos Mensais"
+        size="sm"
+      >
+        <p
+          style={{
+            marginBottom: '1.5rem',
+            fontSize: '0.9rem',
+            color: 'hsl(var(--muted-foreground))',
+          }}
+        >
+          Este processo irÃ¡ criar lanÃ§amentos automÃ¡ticos no <strong>Contas a Pagar</strong>{' '}
+          baseados em todas as configuraÃ§Ãµes ativas acima.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Mês</label>
-            <select className="input-base" value={gerarMes} onChange={e => setGerarMes(Number(e.target.value))}>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">MÃªs</label>
+            <select
+              className="input-base"
+              value={gerarMes}
+              onChange={(e) => setGerarMes(Number(e.target.value))}
+            >
               {Array.from({ length: 12 }, (_, i) => (
-                <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}</option>
+                <option key={i + 1} value={i + 1}>
+                  {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
+                </option>
               ))}
             </select>
           </div>
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">Ano</label>
-            <input type="number" className="input-base" value={gerarAno} onChange={e => setGerarAno(Number(e.target.value))} />
+            <input
+              type="number"
+              className="input-base"
+              value={gerarAno}
+              onChange={(e) => setGerarAno(Number(e.target.value))}
+            />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-          <Button variant="outline" onClick={() => setGerarModal(false)}>CANCELAR</Button>
+        <div
+          style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}
+        >
+          <Button variant="outline" onClick={() => setGerarModal(false)}>
+            CANCELAR
+          </Button>
           <Button variant="primary" onClick={handleGerar} isLoading={loading}>
-            EXECUTAR GERAÇÃO
+            EXECUTAR GERAÃ‡ÃƒO
           </Button>
         </div>
       </Modal>

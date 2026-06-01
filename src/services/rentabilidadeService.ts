@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { AppError } from '../utils/errorHandler';
 
 export interface KPIRentabilidade {
   receita_total: number;
@@ -63,16 +64,22 @@ export interface GraficoMargemDado {
 
 export const rentabilidadeService = {
   async getKPIs(periodo: string, dataInicio?: string, dataFim?: string): Promise<KPIRentabilidade> {
-    const params = new URLSearchParams({ periodo });
-    if (dataInicio) params.append('data_inicio', dataInicio);
-    if (dataFim) params.append('data_fim', dataFim);
-    return apiCall<KPIRentabilidade>(`rentabilidade/kpi?${params.toString()}`);
+    try {
+      const params = new URLSearchParams({ periodo });
+      if (dataInicio) params.append('data_inicio', dataInicio);
+      if (dataFim) params.append('data_fim', dataFim);
+      return await apiCall<KPIRentabilidade>(`rentabilidade/kpi?${params.toString()}`);
+    } catch (error) {
+      throw new AppError('Erro ao buscar KPIs de rentabilidade', 400, error);
+    }
   },
 
   async getProjetos(cliente?: string): Promise<{ projetos: ProjetoRentabilidade[] }> {
     const params = new URLSearchParams();
     if (cliente) params.append('cliente', cliente);
-    return apiCall<{ projetos: ProjetoRentabilidade[] }>(`rentabilidade/projetos?${params.toString()}`);
+    return apiCall<{ projetos: ProjetoRentabilidade[] }>(
+      `rentabilidade/projetos?${params.toString()}`,
+    );
   },
 
   async getAlertas(): Promise<{ alertas: AlertaRentabilidade[] }> {
@@ -96,6 +103,10 @@ export const rentabilidadeService = {
     custo_desperdicio_material?: number;
     descricao_desvios?: string;
   }): Promise<{ success: boolean; data: any }> {
-    return apiCall<{ success: boolean; data: any }>('rentabilidade/salvar', 'POST', data);
-  }
+    try {
+      return await apiCall<{ success: boolean; data: any }>('rentabilidade/salvar', 'POST', data);
+    } catch (error) {
+      throw new AppError('Erro ao salvar custos reais', 400, error);
+    }
+  },
 };

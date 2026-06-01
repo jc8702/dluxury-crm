@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useAppContext } from '../../../context/AppContext';
+import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
 import { AlertTriangle } from 'lucide-react';
 
 interface EstoqueAlertasBannerProps {
@@ -7,47 +7,53 @@ interface EstoqueAlertasBannerProps {
 }
 
 const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCritico }) => {
-  const { materiais } = useAppContext();
+  const { materiais } = useInventory();
 
   const alertas = useMemo(() => {
-    const criticos = materiais.filter(m => Number(m.estoque_atual || 0) <= Number(m.estoque_minimo || 0) && Number(m.estoque_atual || 0) > 0);
-    const zerados = materiais.filter(m => Number(m.estoque_atual || 0) === 0);
-    
+    const criticos = materiais.filter(
+      (m) =>
+        Number(m.estoque_atual || 0) <= Number(m.estoque_minimo || 0) &&
+        Number(m.estoque_atual || 0) > 0,
+    );
+    const zerados = materiais.filter((m) => Number(m.estoque_atual || 0) === 0);
+
     return {
       criticos: criticos.length,
       zerados: zerados.length,
-      total: criticos.length + zerados.length
+      total: criticos.length + zerados.length,
     };
   }, [materiais]);
 
   if (alertas.total === 0) return null;
 
   return (
-    <div 
-      className="card animate-fade-in" 
+    <div
+      className="card animate-fade-in"
       onClick={onFilterCritico}
-      style={{ 
-        padding: '1rem 1.5rem', 
-        marginBottom: '2rem', 
-        background: 'rgba(239, 68, 68, 0.1)', 
+      style={{
+        padding: '1rem 1.5rem',
+        marginBottom: '2rem',
+        background: 'rgba(239, 68, 68, 0.1)',
         border: '1px solid rgba(239, 68, 68, 0.2)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        cursor: 'pointer'
+        cursor: 'pointer',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ 
-          width: '40px', 
-          height: '40px', 
-          borderRadius: '50%', 
-          background: 'rgba(239, 68, 68, 0.2)', 
-          color: '#ef4444', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}>
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: 'rgba(239, 68, 68, 0.2)',
+            color: '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <AlertTriangle size={20} />
         </div>
         <div>
@@ -63,14 +69,38 @@ const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCri
       <div style={{ display: 'flex', gap: '1.5rem' }}>
         {alertas.criticos > 0 && (
           <div style={{ textAlign: 'center' }}>
-            <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>{alertas.criticos}</span>
-            <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase' }}>Críticos</span>
+            <span
+              style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}
+            >
+              {alertas.criticos}
+            </span>
+            <span
+              style={{
+                fontSize: '0.65rem',
+                color: 'hsl(var(--muted-foreground))',
+                textTransform: 'uppercase',
+              }}
+            >
+              Críticos
+            </span>
           </div>
         )}
         {alertas.zerados > 0 && (
           <div style={{ textAlign: 'center' }}>
-            <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#94a3b8' }}>{alertas.zerados}</span>
-            <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase' }}>Zerados</span>
+            <span
+              style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#94a3b8' }}
+            >
+              {alertas.zerados}
+            </span>
+            <span
+              style={{
+                fontSize: '0.65rem',
+                color: 'hsl(var(--muted-foreground))',
+                textTransform: 'uppercase',
+              }}
+            >
+              Zerados
+            </span>
           </div>
         )}
       </div>
@@ -79,4 +109,3 @@ const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCri
 };
 
 export default EstoqueAlertasBanner;
-

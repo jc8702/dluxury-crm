@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useEscClose } from '../../../hooks/useEscClose';
-import { useAppContext } from '../../../context/AppContext';
-import type { Fornecedor } from '../../../context/AppContext';
+import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
+import type { Fornecedor } from '../../../types/entities';
 import { X, Save } from 'lucide-react';
-import { Input, Modal, Button } from '../../../design-system/components';
+import { Input, Modal, Button } from '../../../components/common';
 
 interface FornecedorFormModalProps {
   fornecedor?: Fornecedor | null;
@@ -11,9 +11,13 @@ interface FornecedorFormModalProps {
   onSuccess: (newSupplierId?: string) => void;
 }
 
-const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, onClose, onSuccess }) => {
+const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({
+  fornecedor,
+  onClose,
+  onSuccess,
+}) => {
   useEscClose(onClose);
-  const { addFornecedor, updateFornecedor } = useAppContext();
+  const { addFornecedor, updateFornecedor } = useInventory();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,7 +29,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
     email: '',
     cidade: '',
     estado: '',
-    observacoes: ''
+    observacoes: '',
   });
 
   useEffect(() => {
@@ -38,7 +42,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
         email: fornecedor.email || '',
         cidade: fornecedor.cidade || '',
         estado: fornecedor.estado || '',
-        observacoes: fornecedor.observacoes || ''
+        observacoes: fornecedor.observacoes || '',
       });
     }
   }, [fornecedor]);
@@ -66,67 +70,78 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Input 
-          label="Razão Social / Nome *" 
-          value={form.nome} 
-          onChange={e => setForm({...form, nome: e.target.value})} 
-          required 
+        <Input
+          label="RazÃ£o Social / Nome *"
+          value={form.nome}
+          onChange={(e) => setForm({ ...form, nome: e.target.value })}
+          required
         />
         <div className="grid grid-cols-2 gap-4">
-          <Input 
-            label="CNPJ" 
-            value={form.cnpj} 
-            onChange={e => setForm({...form, cnpj: e.target.value})} 
+          <Input
+            label="CNPJ"
+            value={form.cnpj}
+            onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
           />
-          <Input 
-            label="Pessoa de Contato" 
-            value={form.contato} 
-            onChange={e => setForm({...form, contato: e.target.value})} 
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Input 
-            label="Telefone" 
-            value={form.telefone} 
-            onChange={e => setForm({...form, telefone: e.target.value})} 
-          />
-          <Input 
-            label="E-mail" 
-            type="email" 
-            value={form.email} 
-            onChange={e => setForm({...form, email: e.target.value})} 
+          <Input
+            label="Pessoa de Contato"
+            value={form.contato}
+            onChange={(e) => setForm({ ...form, contato: e.target.value })}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Input 
-            label="Cidade" 
-            value={form.cidade} 
-            onChange={e => setForm({...form, cidade: e.target.value})} 
+          <Input
+            label="Telefone"
+            value={form.telefone}
+            onChange={(e) => setForm({ ...form, telefone: e.target.value })}
           />
-          <Input 
-            label="Estado" 
-            maxLength={2} 
-            value={form.estado} 
-            onChange={e => setForm({...form, estado: e.target.value.toUpperCase()})} 
+          <Input
+            label="E-mail"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Cidade"
+            value={form.cidade}
+            onChange={(e) => setForm({ ...form, cidade: e.target.value })}
+          />
+          <Input
+            label="Estado"
+            maxLength={2}
+            value={form.estado}
+            onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground/90 mb-2">Observações</label>
-          <textarea 
-            className="flex w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
-            style={{ height: '80px', resize: 'none' }} 
-            value={form.observacoes} 
-            onChange={e => setForm({...form, observacoes: e.target.value})} 
+          <label className="block text-sm font-medium text-foreground/90 mb-2">ObservaÃ§Ãµes</label>
+          <textarea
+            className="flex w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+            style={{ height: '80px', resize: 'none' }}
+            value={form.observacoes}
+            onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
           />
         </div>
 
         {error && <p className="text-destructive text-sm text-center">{error}</p>}
 
         <div className="flex gap-4 mt-4">
-          <Button type="button" onClick={onClose} variant="outline" className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={loading} variant="primary" className="flex-[2] flex items-center justify-center gap-2">
+          <Button type="button" onClick={onClose} variant="outline" className="flex-1">
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            variant="primary"
+            className="flex-[2] flex items-center justify-center gap-2"
+          >
             <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Fornecedor'}
           </Button>
         </div>
@@ -136,4 +151,3 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({ fornecedor, o
 };
 
 export default FornecedorFormModal;
-

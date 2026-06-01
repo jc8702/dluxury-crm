@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Card, CardContent } from '../../design-system/components';
+import { useCrmStore as useCRM } from '../../stores/useCrmStore';
+import { Button, Card, CardContent } from '../../components/common';
 import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {
   const { error: toastError } = useToast();
-  const { events, visits, loadEvents, updateKanbanStatus, removeVisit } = useAppContext();
+  const { events, visits, loadEvents, updateKanbanStatus, removeVisit } = useCRM();
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [
-    { id: 'agendado', title: '📋 AGENDADO' },
-    { id: 'realizado', title: '🏠 REALIZADO' },
-    { id: 'follow_up', title: '📞 FOLLOW-UP' },
+    { id: 'agendado', title: 'ðŸ“‹ AGENDADO' },
+    { id: 'realizado', title: 'ðŸ  REALIZADO' },
+    { id: 'follow_up', title: 'ðŸ“ž FOLLOW-UP' },
   ];
 
   const fetchVisits = async () => {
@@ -38,7 +38,7 @@ const VisitKanban: React.FC = () => {
   };
 
   const handleEdit = (item: any) => {
-    const fullItem = events.find(e => String(e.id) === String(item.id));
+    const fullItem = events.find((e) => String(e.id) === String(item.id));
     setSelectedItem(fullItem);
     setIsModalOpen(true);
   };
@@ -53,35 +53,39 @@ const VisitKanban: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase">
-              Gestão de <span className="text-primary">Visitas</span>
+              GestÃ£o de <span className="text-primary">Visitas</span>
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Fluxo comercial e técnico integrado à agenda industrial.
+              Fluxo comercial e tÃ©cnico integrado Ã agenda industrial.
             </p>
           </div>
         </div>
-        
+
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={fetchVisits} 
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={fetchVisits} disabled={loading}>
             <RefreshCw size={18} className={`mr-2 ${loading ? 'animate-spin' : ''}`} /> Atualizar
           </Button>
-          <Button 
-            onClick={() => { setSelectedItem({ tipo: 'visita' }); setIsModalOpen(true); }}
+          <Button
+            onClick={() => {
+              setSelectedItem({ tipo: 'visita' });
+              setIsModalOpen(true);
+            }}
           >
             <Plus size={20} className="mr-2" /> Agendar Visita
           </Button>
         </div>
       </header>
 
-      {/* Grid de Resumo Rápido */}
+      {/* Grid de Resumo RÃ¡pido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {columns.map(col => {
-          const borderClass = col.id === 'agendado' ? 'border-l-blue-500' : col.id === 'realizado' ? 'border-l-success' : 'border-l-amber-500';
-          const count = visits.filter(v => v.status === col.id).length;
+        {columns.map((col) => {
+          const borderClass =
+            col.id === 'agendado'
+              ? 'border-l-blue-500'
+              : col.id === 'realizado'
+                ? 'border-l-success'
+                : 'border-l-amber-500';
+          const count = visits.filter((v) => v.status === col.id).length;
           return (
             <Card key={col.id} className={`border-l-4 ${borderClass}`}>
               <CardContent className="p-4">
@@ -99,23 +103,25 @@ const VisitKanban: React.FC = () => {
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[2px] rounded-2xl">
             <div className="flex flex-col items-center gap-2">
               <RefreshCw className="animate-spin" size={32} color="hsl(var(--primary))" />
-              <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Sincronizando...</span>
+              <span className="text-[10px] font-bold text-primary tracking-widest uppercase">
+                Sincronizando...
+              </span>
             </div>
           </div>
         )}
-        <KanbanBoard 
-          title="Gestão de Visitas"
-          items={visits} 
-          columns={columns} 
-          onMove={handleMove} 
-          onEdit={handleEdit} 
-          onDelete={removeVisit} 
+        <KanbanBoard
+          title="GestÃ£o de Visitas"
+          items={visits}
+          columns={columns}
+          onMove={handleMove}
+          onEdit={handleEdit}
+          onDelete={removeVisit}
         />
       </div>
 
-      <ModalEvento 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <ModalEvento
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSave={fetchVisits}
         eventToEdit={selectedItem}
       />

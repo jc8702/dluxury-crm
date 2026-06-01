@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
-import { Button, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Card, CardContent } from '../../design-system/components';
-import { useAppContext } from '../../context/AppContext';
-import type { ProjectStatus } from '../../context/AppContext';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Card,
+  CardContent,
+} from '../../components/common';
+import { useCrmStore as useCRM } from '../../stores/useCrmStore';
+import type { ProjectStatus } from '../../types/entities';
 
 const ProjectKanban: React.FC = () => {
-  const { projects, clients, addProject, updateProject, removeProject, orcamentos, events } = useAppContext();
+  const { projects, clients, addProject, updateProject, removeProject, orcamentos, events } =
+    useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -18,26 +30,35 @@ const ProjectKanban: React.FC = () => {
     observacoes: '',
     status: 'lead' as ProjectStatus,
     visitaId: 'none',
-    orcamentoId: 'none'
+    orcamentoId: 'none',
   });
 
   const visitas = events?.filter((e: any) => e.tipo === 'visita') || [];
 
   const columns = [
-    { id: 'lead', title: '📥 Lead' },
-    { id: 'visita_tecnica', title: '📐 Visita Técnica' },
-    { id: 'orcamento_enviado', title: '📄 Orçamento Enviado' },
-    { id: 'aprovado', title: '✅ Aprovado' },
-    { id: 'em_producao', title: '🔨 Em Produção' },
-    { id: 'pronto_entrega', title: '📦 Pronto p/ Entrega' },
-    { id: 'instalado', title: '🏠 Instalado' },
-    { id: 'concluido', title: '🏁 Concluído' },
+    { id: 'lead', title: 'ðŸ“¥ Lead' },
+    { id: 'visita_tecnica', title: 'ðŸ“ Visita TÃ©cnica' },
+    { id: 'orcamento_enviado', title: 'ðŸ“„ OrÃ§amento Enviado' },
+    { id: 'aprovado', title: 'âœ… Aprovado' },
+    { id: 'em_producao', title: 'ðŸ”¨ Em ProduÃ§Ã£o' },
+    { id: 'pronto_entrega', title: 'ðŸ“¦ Pronto p/ Entrega' },
+    { id: 'instalado', title: 'ðŸ  Instalado' },
+    { id: 'concluido', title: 'ðŸ ConcluÃ­do' },
   ];
 
   const ambientes = [
-    'Cozinha', 'Quarto Casal', 'Quarto Solteiro', 'Sala de Estar',
-    'Banheiro', 'Lavanderia', 'Closet', 'Home Office',
-    'Área Gourmet', 'Varanda', 'Sala de Jantar', 'Outro'
+    'Cozinha',
+    'Quarto Casal',
+    'Quarto Solteiro',
+    'Sala de Estar',
+    'Banheiro',
+    'Lavanderia',
+    'Closet',
+    'Home Office',
+    'Ãrea Gourmet',
+    'Varanda',
+    'Sala de Jantar',
+    'Outro',
   ];
 
   const handleMove = (id: string, newStatus: string) => {
@@ -46,7 +67,7 @@ const ProjectKanban: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedClient = clients.find(c => c.id === formData.clientId);
+    const selectedClient = clients.find((c) => c.id === formData.clientId);
     const data = {
       clientId: formData.clientId,
       clientName: selectedClient?.nome || '',
@@ -57,8 +78,8 @@ const ProjectKanban: React.FC = () => {
       responsavel: formData.responsavel || undefined,
       observacoes: formData.observacoes,
       status: formData.status,
-      visitaId: formData.visitaId === 'none' ? undefined : (formData.visitaId || undefined),
-      orcamentoId: formData.orcamentoId === 'none' ? undefined : (formData.orcamentoId || undefined)
+      visitaId: formData.visitaId === 'none' ? undefined : formData.visitaId || undefined,
+      orcamentoId: formData.orcamentoId === 'none' ? undefined : formData.orcamentoId || undefined,
     };
 
     if (editingItem) {
@@ -82,7 +103,7 @@ const ProjectKanban: React.FC = () => {
       observacoes: item.observacoes || item.observations || '',
       status: item.status,
       visitaId: item.visitaId || 'none',
-      orcamentoId: item.orcamentoId || item.quotation_id || 'none'
+      orcamentoId: item.orcamentoId || item.quotation_id || 'none',
     });
     setIsModalOpen(true);
   };
@@ -91,22 +112,38 @@ const ProjectKanban: React.FC = () => {
     setIsModalOpen(false);
     setEditingItem(null);
     setFormData({
-      clientId: '', ambiente: '', descricao: '', valorEstimado: '',
-      prazoEntrega: '', responsavel: '', observacoes: '', status: 'lead', visitaId: 'none', orcamentoId: 'none'
+      clientId: '',
+      ambiente: '',
+      descricao: '',
+      valorEstimado: '',
+      prazoEntrega: '',
+      responsavel: '',
+      observacoes: '',
+      status: 'lead',
+      visitaId: 'none',
+      orcamentoId: 'none',
     });
   };
 
   // Map projects to kanban items format
-  const kanbanItems = projects.map(p => {
-    const projOrcamentos = orcamentos.filter(o => o.projeto_id === p.id?.toString());
-    const vinculado = orcamentos.find(o => o.id?.toString() === p.orcamentoId?.toString() || o.id?.toString() === p.quotation_id?.toString());
-    const badges = vinculado ? [`📄 ${vinculado.numero}`] : projOrcamentos.map(o => `📄 ${o.numero}`);
+  const kanbanItems = projects.map((p) => {
+    const projOrcamentos = orcamentos.filter((o) => o.projeto_id === p.id?.toString());
+    const vinculado = orcamentos.find(
+      (o) =>
+        o.id?.toString() === p.orcamentoId?.toString() ||
+        o.id?.toString() === p.quotation_id?.toString(),
+    );
+    const badges = vinculado
+      ? [`ðŸ“„ ${vinculado.numero}`]
+      : projOrcamentos.map((o) => `ðŸ“„ ${o.numero}`);
 
     return {
       id: p.id,
       title: p.ambiente,
-      subtitle: p.clientName || 'Cliente não identificado',
-      label: p.valorEstimado ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+      subtitle: p.clientName || 'Cliente nÃ£o identificado',
+      label: p.valorEstimado
+        ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+        : '',
       status: p.status,
       type: 'project' as const,
       value: p.valorEstimado,
@@ -129,17 +166,22 @@ const ProjectKanban: React.FC = () => {
 
   // Summary stats
   const totalValue = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
-  const inProduction = projects.filter(p => p.status === 'em_producao').length;
-  const approved = projects.filter(p => p.status === 'aprovado').length;
+  const inProduction = projects.filter((p) => p.status === 'em_producao').length;
+  const approved = projects.filter((p) => p.status === 'aprovado').length;
 
   return (
     <div className="animate-fade-in flex flex-col gap-8">
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Pipeline de Projetos</h2>
-          <p className="text-muted-foreground">Acompanhe cada projeto do lead à instalação.</p>
+          <p className="text-muted-foreground">Acompanhe cada projeto do lead Ã instalaÃ§Ã£o.</p>
         </div>
-        <Button onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
+        <Button
+          onClick={() => {
+            setEditingItem(null);
+            setIsModalOpen(true);
+          }}
+        >
           + Novo Projeto
         </Button>
       </header>
@@ -160,7 +202,7 @@ const ProjectKanban: React.FC = () => {
         </Card>
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Em Produção</p>
+            <p className="text-xs text-muted-foreground mb-1">Em ProduÃ§Ã£o</p>
             <h4 className="text-2xl font-extrabold text-blue-500">{inProduction}</h4>
           </CardContent>
         </Card>
@@ -175,7 +217,7 @@ const ProjectKanban: React.FC = () => {
       </div>
 
       <KanbanBoard
-        title="Gestão de Projetos"
+        title="GestÃ£o de Projetos"
         items={kanbanItems}
         columns={columns}
         onMove={handleMove}
@@ -183,33 +225,48 @@ const ProjectKanban: React.FC = () => {
         onDelete={removeProject}
       />
 
-      <Modal isOpen={isModalOpen} onClose={closeModal}
-        title={editingItem ? "Editar Projeto" : "Novo Projeto"} size="lg">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingItem ? 'Editar Projeto' : 'Novo Projeto'}
+        size="lg"
+      >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-foreground/90">Cliente *</label>
-              <Select value={formData.clientId} onValueChange={val => setFormData({ ...formData, clientId: val })}>
+              <Select
+                value={formData.clientId}
+                onValueChange={(val) => setFormData({ ...formData, clientId: val })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground/90">Ambiente *</label>
-              <Select value={formData.ambiente} onValueChange={val => setFormData({ ...formData, ambiente: val })}>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">
+                Ambiente *
+              </label>
+              <Select
+                value={formData.ambiente}
+                onValueChange={(val) => setFormData({ ...formData, ambiente: val })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {ambientes.map(a => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  {ambientes.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -217,16 +274,31 @@ const ProjectKanban: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Valor Estimado (R$)" type="number" step="0.01" placeholder="0,00"
-              value={formData.valorEstimado} onChange={e => setFormData({ ...formData, valorEstimado: e.target.value })} />
-            <Input label="Prazo de Entrega" type="date"
-              value={formData.prazoEntrega} onChange={e => setFormData({ ...formData, prazoEntrega: e.target.value })} />
+            <Input
+              label="Valor Estimado (R$)"
+              type="number"
+              step="0.01"
+              placeholder="0,00"
+              value={formData.valorEstimado}
+              onChange={(e) => setFormData({ ...formData, valorEstimado: e.target.value })}
+            />
+            <Input
+              label="Prazo de Entrega"
+              type="date"
+              value={formData.prazoEntrega}
+              onChange={(e) => setFormData({ ...formData, prazoEntrega: e.target.value })}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular à Visita</label>
-              <Select value={formData.visitaId} onValueChange={val => setFormData({ ...formData, visitaId: val })}>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">
+                Vincular Ã Visita
+              </label>
+              <Select
+                value={formData.visitaId}
+                onValueChange={(val) => setFormData({ ...formData, visitaId: val })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhuma visita vinculada" />
                 </SelectTrigger>
@@ -234,32 +306,43 @@ const ProjectKanban: React.FC = () => {
                   <SelectItem value="none">Nenhuma visita vinculada</SelectItem>
                   {visitas.map((v: any) => (
                     <SelectItem key={v.id} value={v.id}>
-                      {v.titulo} - {v.cliente_nome || 'Sem cliente'} ({new Date(v.data_inicio).toLocaleDateString('pt-BR')})
+                      {v.titulo} - {v.cliente_nome || 'Sem cliente'} (
+                      {new Date(v.data_inicio).toLocaleDateString('pt-BR')})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground/90">Vincular ao Orçamento</label>
-              <Select 
-                value={formData.orcamentoId} 
-                onValueChange={val => setFormData({ ...formData, orcamentoId: val })}
+              <label className="mb-2 block text-sm font-medium text-foreground/90">
+                Vincular ao OrÃ§amento
+              </label>
+              <Select
+                value={formData.orcamentoId}
+                onValueChange={(val) => setFormData({ ...formData, orcamentoId: val })}
                 disabled={!formData.clientId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={formData.clientId ? "Nenhum orçamento selecionado" : "Selecione o cliente primeiro"} />
+                  <SelectValue
+                    placeholder={
+                      formData.clientId
+                        ? 'Nenhum orÃ§amento selecionado'
+                        : 'Selecione o cliente primeiro'
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum orçamento selecionado</SelectItem>
+                  <SelectItem value="none">Nenhum orÃ§amento selecionado</SelectItem>
                   {orcamentos
                     .filter((o: any) => o.cliente_id?.toString() === formData.clientId?.toString())
                     .map((o: any) => (
                       <SelectItem key={o.id} value={o.id}>
-                        Orçamento #{o.numero || o.id.substring(0,8).toUpperCase()} - R$ {parseFloat(o.valor_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        OrÃ§amento #{o.numero || o.id.substring(0, 8).toUpperCase()} - R${' '}
+                        {parseFloat(o.valor_final || 0).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                        })}
                       </SelectItem>
-                    ))
-                  }
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -267,33 +350,46 @@ const ProjectKanban: React.FC = () => {
 
           <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex justify-between items-center">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Identificador Único (TAG)</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Identificador Ãšnico (TAG)
+              </span>
               <span className="text-base font-extrabold text-primary">
-                {editingItem?.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`}
+                {editingItem?.tag ||
+                  `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Status Atual</span>
-              <span className="text-xs font-bold text-primary">{formData.status.toUpperCase()}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                Status Atual
+              </span>
+              <span className="text-xs font-bold text-primary">
+                {formData.status.toUpperCase()}
+              </span>
             </div>
           </div>
 
-          <Input label="Responsável (Marceneiro)" placeholder="Ex: João"
-            value={formData.responsavel} onChange={e => setFormData({ ...formData, responsavel: e.target.value })} />
+          <Input
+            label="ResponsÃ¡vel (Marceneiro)"
+            placeholder="Ex: JoÃ£o"
+            value={formData.responsavel}
+            onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+          />
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Descrição do Projeto</label>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">
+              DescriÃ§Ã£o do Projeto
+            </label>
             <textarea
               className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-h-[80px] resize-vertical transition-colors"
-              placeholder="Detalhes: materiais, acabamento, referências..."
+              placeholder="Detalhes: materiais, acabamento, referÃªncias..."
               value={formData.descricao}
-              onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
             />
           </div>
 
           <div className="flex gap-4 mt-4">
             <Button type="submit" className="flex-1">
-              ✓ {editingItem ? 'Salvar' : 'Criar Projeto'}
+              âœ“ {editingItem ? 'Salvar' : 'Criar Projeto'}
             </Button>
             <Button type="button" variant="secondary" onClick={closeModal}>
               Cancelar
