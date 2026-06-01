@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Layers, Plus, Search, Loader2, Save, Tag, DollarSign, Package, Edit, Factory, Truck, Clock } from 'lucide-react';
 import { api } from '../../lib/api';
-import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../design-system/components';
-import DataTable from '../ui/DataTable';
+import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/common';
+import DataTable from '../common/DataTable';
 
 const CATEGORIAS_TAXONOMIA = [
   { value: 'CHP', label: 'Chapas (MDF/MDP)' },
   { value: 'FBD', label: 'Fitas de Borda' },
-  { value: 'FER', label: 'Ferragens (Dobradiças, Corrediças)' },
-  { value: 'AC',  label: 'Acessórios' },
-  { value: 'MD',  label: 'Madeiras Maciças' },
+  { value: 'FER', label: 'Ferragens (DobradiÃ§as, CorrediÃ§as)' },
+  { value: 'AC',  label: 'AcessÃ³rios' },
+  { value: 'MD',  label: 'Madeiras MaciÃ§as' },
   { value: 'ACM', label: 'ACM / Metais' },
   { value: 'VID', label: 'Vidros / Espelhos' },
   { value: 'OUT', label: 'Outros Insumos' }
@@ -130,10 +130,10 @@ const SKUPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase flex items-center gap-2">
-              Catálogo de Peças / SKUs
+              CatÃ¡logo de PeÃ§as / SKUs
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Gerenciamento atômico de insumos técnicos e acessórios.
+              Gerenciamento atÃ´mico de insumos tÃ©cnicos e acessÃ³rios.
             </p>
           </div>
         </div>
@@ -148,7 +148,7 @@ const SKUPage: React.FC = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input 
               className="pl-10" 
-              placeholder="Buscar por descrição, código ou categoria..." 
+              placeholder="Buscar por descriÃ§Ã£o, cÃ³digo ou categoria..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -164,7 +164,7 @@ const SKUPage: React.FC = () => {
           </div>
         ) : (
           <DataTable 
-            headers={['Código SKU', 'Categoria', 'Nome do Item', 'Unidade', 'Preço Base', 'Status', 'Ações']}
+            headers={['CÃ³digo SKU', 'Categoria', 'Nome do Item', 'Unidade', 'PreÃ§o Base', 'Status', 'AÃ§Ãµes']}
             data={filteredSkus}
             renderRow={(s) => (
               <>
@@ -186,7 +186,7 @@ const SKUPage: React.FC = () => {
                 </td>
               </>
             )}
-            emptyMessage="Nenhum SKU encontrado no catálogo."
+            emptyMessage="Nenhum SKU encontrado no catÃ¡logo."
           />
         )}
       </div>
@@ -211,7 +211,7 @@ const SKUPage: React.FC = () => {
               <Tag size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
               <Input 
                 required
-                label="Código SKU *"
+                label="CÃ³digo SKU *"
                 className="pl-10" 
                 placeholder="Ex: CHP-0001"
                 value={formData.sku_code}
@@ -225,9 +225,9 @@ const SKUPage: React.FC = () => {
             <Package size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
             <Input 
               required
-              label="Nome da Peça / SKU *"
+              label="Nome da PeÃ§a / SKU *"
               className="pl-10" 
-              placeholder="Ex: Dobradiça 35mm Click"
+              placeholder="Ex: DobradiÃ§a 35mm Click"
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
             />
@@ -255,7 +255,7 @@ const SKUPage: React.FC = () => {
                 required
                 type="number"
                 step="0.0001"
-                label={calcModoChapa ? "Preço Base Final Calculado por M² (R$) *" : "Preço Base de Custo (R$) *"}
+                label={calcModoChapa ? "PreÃ§o Base Final Calculado por MÂ² (R$) *" : "PreÃ§o Base de Custo (R$) *"}
                 className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`} 
                 placeholder="0.00"
                 value={formData.preco_base || ''}
@@ -274,7 +274,7 @@ const SKUPage: React.FC = () => {
                   checked={calcModoChapa}
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />
-                <span className="text-sm font-semibold text-foreground">Calcular preço base a partir do valor da Chapa Inteira</span>
+                <span className="text-sm font-semibold text-foreground">Calcular preÃ§o base a partir do valor da Chapa Inteira</span>
               </label>
 
               {calcModoChapa && (
@@ -304,8 +304,8 @@ const SKUPage: React.FC = () => {
                     onChange={e => setChapaLargura(Number(e.target.value))}
                   />
                   <div className="col-span-1 md:col-span-3 text-xs text-muted-foreground flex justify-between bg-muted p-2 rounded-lg">
-                    <span>Área da Chapa: <strong>{(chapaComprimento * chapaLargura).toFixed(4)} m²</strong></span>
-                    <span>Custo do M²: <strong>R$ {((chapaPrecoInteira) / (chapaComprimento * chapaLargura)).toFixed(4)}</strong></span>
+                    <span>Ãrea da Chapa: <strong>{(chapaComprimento * chapaLargura).toFixed(4)} mÂ²</strong></span>
+                    <span>Custo do MÂ²: <strong>R$ {((chapaPrecoInteira) / (chapaComprimento * chapaLargura)).toFixed(4)}</strong></span>
                   </div>
                 </div>
               )}
@@ -362,3 +362,4 @@ const SKUPage: React.FC = () => {
 };
 
 export default SKUPage;
+

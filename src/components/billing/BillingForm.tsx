@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
-import DataTable from '../ui/DataTable';
-import { Modal } from '../../design-system/components/Modal';
-import { useAppContext } from '../../context/AppContext';
-import type { Billing } from '../../context/AppContext';
+import DataTable from '../common/DataTable';
+import { Modal } from '../../components/common/Modal';
+import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
+import { useCrmStore as useCRM } from '../../stores/useCrmStore';
+import type { Billing } from '../../context/FinanceContext';
+import { formatCurrency } from '../../utils/calculations';
 
 const BillingModule: React.FC = () => {
   const { error: toastError } = useToast();
-  const { billings, addBilling, updateBilling, removeBilling, projects } = useAppContext();
+  const { billings, addBilling, updateBilling, removeBilling } = useFinance();
+  const { projects } = useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBilling, setEditingBilling] = useState<any>(null);
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'entrada' | 'saida'>('ALL');
@@ -26,14 +29,14 @@ const BillingModule: React.FC = () => {
 
   const categorias = {
     entrada: [
-      { value: 'sinal', label: '💰 Sinal / Entrada' },
-      { value: 'parcela', label: '📅 Parcela' },
-      { value: 'final', label: '✅ Pagamento Final' },
+      { value: 'sinal', label: 'ðŸ’° Sinal / Entrada' },
+      { value: 'parcela', label: 'ðŸ“… Parcela' },
+      { value: 'final', label: 'âœ… Pagamento Final' },
     ],
     saida: [
-      { value: 'material', label: '🪵 Material' },
-      { value: 'mo_terceirizada', label: '🔧 MO Terceirizada' },
-      { value: 'outros', label: '📌 Outros' },
+      { value: 'material', label: 'ðŸªµ Material' },
+      { value: 'mo_terceirizada', label: 'ðŸ”§ MO Terceirizada' },
+      { value: 'outros', label: 'ðŸ“Œ Outros' },
     ]
   };
 
@@ -50,8 +53,6 @@ const BillingModule: React.FC = () => {
   const totalEntradas = billings.filter(b => b.tipo === 'entrada' && b.status === 'PAGO').reduce((acc, b) => acc + b.valor, 0);
   const totalSaidas = billings.filter(b => b.tipo === 'saida' && b.status === 'PAGO').reduce((acc, b) => acc + b.valor, 0);
   const saldo = totalEntradas - totalSaidas;
-
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +109,7 @@ const BillingModule: React.FC = () => {
     outline: 'none',
   };
 
-  const headers = ['Data', 'Tipo', 'Descrição', 'Cliente', 'Projeto', 'Categoria', 'Valor', 'Status', 'Ações'];
+  const headers = ['Data', 'Tipo', 'DescriÃ§Ã£o', 'Cliente', 'Projeto', 'Categoria', 'Valor', 'Status', 'AÃ§Ãµes'];
 
   const renderRow = (b: Billing) => {
     const linkedProject = projects.find(p => p.id === b.projectId);
@@ -123,7 +124,7 @@ const BillingModule: React.FC = () => {
           background: b.tipo === 'entrada' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
           color: b.tipo === 'entrada' ? '#10b981' : '#ef4444',
         }}>
-          {b.tipo === 'entrada' ? '↑ Entrada' : '↓ Saída'}
+          {b.tipo === 'entrada' ? 'â†‘ Entrada' : 'â†“ SaÃ­da'}
         </span>
       </td>
       <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{b.descricao || '-'}</td>
@@ -139,7 +140,7 @@ const BillingModule: React.FC = () => {
             {linkedProject.ambiente}
           </span>
         ) : (
-          <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>—</span>
+          <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>â€”</span>
         )}
       </td>
       <td style={{ padding: '0.75rem' }}>
@@ -186,14 +187,14 @@ const BillingModule: React.FC = () => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Financeiro</h2>
-          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Controle de entradas e saídas por projeto.</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))' }}>Controle de entradas e saÃ­das por projeto.</p>
         </div>
         <button className="btn" onClick={() => { setEditingBilling(null); setIsModalOpen(true); }}
           style={{
             background: 'linear-gradient(135deg, #d4af37, #b49050)', color: '#1a1a2e',
             fontWeight: '700', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer'
           }}>
-          + Novo Lançamento
+          + Novo LanÃ§amento
         </button>
       </header>
 
@@ -204,7 +205,7 @@ const BillingModule: React.FC = () => {
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981' }}>{formatCurrency(totalEntradas)}</h3>
         </div>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: '3px solid #ef4444' }}>
-          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Total Saídas</p>
+          <p style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>Total SaÃ­das</p>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>{formatCurrency(totalSaidas)}</h3>
         </div>
         <div className="card glass" style={{ padding: '1.25rem', borderLeft: `3px solid ${saldo >= 0 ? '#d4af37' : '#ef4444'}` }}>
@@ -216,14 +217,14 @@ const BillingModule: React.FC = () => {
       {/* Filtros + tabela */}
       <div className="card">
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', alignItems: 'center' }}>
-          <input type="text" className="input" placeholder="Buscar por descrição..."
+          <input type="text" className="input" placeholder="Buscar por descriÃ§Ã£o..."
             style={{ flex: 1 }} value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {[
               { id: 'ALL', label: 'Todos', color: '#d4af37' },
-              { id: 'entrada', label: '↑ Entradas', color: '#10b981' },
-              { id: 'saida', label: '↓ Saídas', color: '#ef4444' },
+              { id: 'entrada', label: 'â†‘ Entradas', color: '#10b981' },
+              { id: 'saida', label: 'â†“ SaÃ­das', color: '#ef4444' },
             ].map(f => (
               <button key={f.id} onClick={() => { setTypeFilter(f.id as any); setCurrentPage(1); }}
                 style={{
@@ -244,17 +245,17 @@ const BillingModule: React.FC = () => {
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
             <button className="btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}
-              style={{ padding: '0.5rem 0.75rem' }}>←</button>
+              style={{ padding: '0.5rem 0.75rem' }}>â†</button>
             <span style={{ alignSelf: 'center', fontSize: '0.8rem' }}>{currentPage}/{totalPages}</span>
             <button className="btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}
-              style={{ padding: '0.5rem 0.75rem' }}>→</button>
+              style={{ padding: '0.5rem 0.75rem' }}>â†’</button>
           </div>
         )}
       </div>
 
       {/* Modal */}
       <Modal isOpen={isModalOpen} onClose={resetForm}
-        title={editingBilling ? "Editar Lançamento" : "Novo Lançamento"}>
+        title={editingBilling ? "Editar LanÃ§amento" : "Novo LanÃ§amento"}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -266,13 +267,13 @@ const BillingModule: React.FC = () => {
                   background: formData.tipo === t ? (t === 'entrada' ? '#10b981' : '#ef4444') : 'transparent',
                   color: formData.tipo === t ? 'white' : 'hsl(var(--muted-foreground))',
                 }}>
-                {t === 'entrada' ? '↑ Entrada' : '↓ Saída'}
+                {t === 'entrada' ? 'â†‘ Entrada' : 'â†“ SaÃ­da'}
               </button>
             ))}
           </div>
 
           <div>
-            <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>Descrição *</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: '600', display: 'block', marginBottom: '0.4rem' }}>DescriÃ§Ã£o *</label>
             <input style={inputStyle} required placeholder="Ex: Sinal Cozinha Maria"
               value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} />
           </div>
@@ -284,7 +285,7 @@ const BillingModule: React.FC = () => {
                 onChange={e => setFormData({ ...formData, projectId: e.target.value })}>
                 <option value="" style={{ background: '#1a1a1a' }}>Sem projeto</option>
                 {projects.map(p => (
-                  <option key={p.id} value={p.id} style={{ background: '#1a1a1a' }}>{p.ambiente} — {p.clientName}</option>
+                  <option key={p.id} value={p.id} style={{ background: '#1a1a1a' }}>{p.ambiente} â€” {p.clientName}</option>
                 ))}
               </select>
             </div>
@@ -318,7 +319,7 @@ const BillingModule: React.FC = () => {
               fontWeight: '700', border: 'none', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
               fontSize: '1rem', marginTop: '0.5rem'
             }}>
-            {editingBilling ? 'Salvar' : 'Lançar'}
+            {editingBilling ? 'Salvar' : 'LanÃ§ar'}
           </button>
         </form>
       </Modal>
@@ -327,4 +328,5 @@ const BillingModule: React.FC = () => {
 };
 
 export default BillingModule;
+
 

@@ -1,18 +1,19 @@
 import React from 'react';
-import DataTable from '../ui/DataTable';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../design-system/components';
+import DataTable from '../common/DataTable';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/common';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, AreaChart, Area } from 'recharts';
 import { PlusCircle, FileText, Wrench, Users, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
-import type { Project, ProjectStatus } from '../../context/AppContext';
+import { useCrmStore as useCRM } from '../../stores/useCrmStore';
+import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
+import type { Project, ProjectStatus } from '../../context/CRMContext';
+import { formatCurrency } from '../../utils/calculations';
 
 const Dashboard: React.FC = () => {
-  const { projects, clients, billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } = useAppContext();
+  const { projects, clients } = useCRM();
+  const { billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } = useFinance();
   const [editGoal, setEditGoal] = React.useState(false);
   const [goalValue, setGoalValue] = React.useState('');
-
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const periods = [
     { id: '2026-01', label: 'Jan/26' }, { id: '2026-02', label: 'Fev/26' },
@@ -23,16 +24,16 @@ const Dashboard: React.FC = () => {
     { id: '2026-11', label: 'Nov/26' }, { id: '2026-12', label: 'Dez/26' },
   ];
 
-  // ─── KPIs ──────────────────────────────────────────────
+  // â”€â”€â”€ KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const statusLabels: Record<ProjectStatus, string> = {
-    lead: '📥 Lead',
-    visita_tecnica: '📐 Visita Técnica',
-    orcamento_enviado: '📄 Orçamento Enviado',
-    aprovado: '✅ Aprovado',
-    em_producao: '🔨 Em Produção',
-    pronto_entrega: '📦 Pronto p/ Entrega',
-    instalado: '🏠 Instalado',
-    concluido: '🏁 Concluído',
+    lead: 'ðŸ“¥ Lead',
+    visita_tecnica: 'ðŸ“ Visita TÃ©cnica',
+    orcamento_enviado: 'ðŸ“„ OrÃ§amento Enviado',
+    aprovado: 'âœ… Aprovado',
+    em_producao: 'ðŸ”¨ Em ProduÃ§Ã£o',
+    pronto_entrega: 'ðŸ“¦ Pronto p/ Entrega',
+    instalado: 'ðŸ  Instalado',
+    concluido: 'ðŸ ConcluÃ­do',
   };
 
   const _statusCounts = Object.keys(statusLabels).map(status => ({
@@ -62,12 +63,12 @@ const Dashboard: React.FC = () => {
   }, [clients]);
 
   const origemLabels: Record<string, { label: string; color: string }> = {
-    indicacao: { label: '👥 Indicação', color: '#10b981' },
-    instagram: { label: '📸 Instagram', color: '#e1306c' },
-    google: { label: '🔍 Google', color: '#4285f4' },
-    feira: { label: '🎪 Feira', color: '#f59e0b' },
-    passante: { label: '🚶 Passante', color: '#8b5cf6' },
-    outro: { label: '📌 Outro', color: '#6b7280' },
+    indicacao: { label: 'ðŸ‘¥ IndicaÃ§Ã£o', color: '#10b981' },
+    instagram: { label: 'ðŸ“¸ Instagram', color: '#e1306c' },
+    google: { label: 'ðŸ” Google', color: '#4285f4' },
+    feira: { label: 'ðŸŽª Feira', color: '#f59e0b' },
+    passante: { label: 'ðŸš¶ Passante', color: '#8b5cf6' },
+    outro: { label: 'ðŸ“Œ Outro', color: '#6b7280' },
   };
 
   const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
@@ -82,12 +83,12 @@ const Dashboard: React.FC = () => {
       <header className="flex justify-between items-start">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground font-display">Painel Geral</h2>
-          <p className="text-sm text-muted-foreground font-medium">Visão executiva — Fatto OS (Móveis Planejados)</p>
+          <p className="text-sm text-muted-foreground font-medium">VisÃ£o executiva â€” Fatto OS (MÃ³veis Planejados)</p>
         </div>
         <div className="flex gap-3 items-center">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-[140px] border-foreground/10 rounded-xl focus:ring-[#8B5A2B]">
-              <SelectValue placeholder="Período..." />
+              <SelectValue placeholder="PerÃ­odo..." />
             </SelectTrigger>
             <SelectContent>
               {periods.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
@@ -114,19 +115,19 @@ const Dashboard: React.FC = () => {
         </Card>
         <Card className="border-l-4 border-l-accent bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Em Produção</p>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Em ProduÃ§Ã£o</p>
             <h3 className="text-3xl font-black text-accent font-display">{inProduction}</h3>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-emerald-600 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Concluídos</p>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">ConcluÃ­dos</p>
             <h3 className="text-3xl font-black text-emerald-700 font-display">{concluidos}</h3>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-foreground bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Ticket Médio</p>
+            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Ticket MÃ©dio</p>
             <h3 className="text-xl font-black text-foreground font-display mt-1">{formatCurrency(ticketMedio)}</h3>
           </CardContent>
         </Card>
@@ -137,7 +138,7 @@ const Dashboard: React.FC = () => {
         {/* Meta mensal */}
         <Card className="flex flex-col items-center justify-center p-6 text-center bg-card border-none shadow-sm rounded-2xl">
           <CardContent className="flex flex-col items-center gap-4 w-full p-0">
-            <h3 className="text-sm font-bold text-muted-foreground tracking-wider uppercase">Meta do Período</h3>
+            <h3 className="text-sm font-bold text-muted-foreground tracking-wider uppercase">Meta do PerÃ­odo</h3>
             <div className="w-[140px] h-[140px] rounded-full flex items-center justify-center" style={{
               background: `conic-gradient(#D4AF37 ${percentualMeta * 3.6}deg, rgba(28,46,36,0.06) 0deg)`,
             }}>
@@ -158,7 +159,7 @@ const Dashboard: React.FC = () => {
         {/* Pipeline resumo (Recharts) */}
         <Card className="p-6 bg-card border-none shadow-sm rounded-2xl flex flex-col">
           <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Evolução Financeira (Últimos 6 meses)</CardTitle>
+            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">EvoluÃ§Ã£o Financeira (Ãšltimos 6 meses)</CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 flex flex-col">
             <div className="h-[250px] w-full">
@@ -168,7 +169,7 @@ const Dashboard: React.FC = () => {
                     const monthBillings = billings.filter(b => b.data && b.data.startsWith(p.id));
                     const entradas = monthBillings.filter(b => b.tipo !== 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
                     const saidas = monthBillings.filter(b => b.tipo === 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
-                    return { name: p.label, Entradas: entradas, Saídas: saidas };
+                    return { name: p.label, Entradas: entradas, Saidas: saidas };
                   })}
                   margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
                 >
@@ -182,7 +183,7 @@ const Dashboard: React.FC = () => {
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
                   <Bar dataKey="Entradas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Bar dataKey="Saídas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="Saidas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -190,9 +191,9 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Ações Rápidas (Quick Actions) */}
+      {/* AÃ§Ãµes RÃ¡pidas (Quick Actions) */}
       <div>
-        <h3 className="text-lg font-black tracking-wider uppercase text-foreground mb-4 font-display">Ações Rápidas</h3>
+        <h3 className="text-lg font-black tracking-wider uppercase text-foreground mb-4 font-display">AÃ§Ãµes RÃ¡pidas</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
             <Link to="/clientes">
@@ -203,7 +204,7 @@ const Dashboard: React.FC = () => {
           <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
             <Link to="/orcamentos">
               <FileText className="w-6 h-6 text-primary" />
-              <span className="text-xs font-bold text-foreground">Novo Orçamento</span>
+              <span className="text-xs font-bold text-foreground">Novo OrÃ§amento</span>
             </Link>
           </Button>
           <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
@@ -285,26 +286,26 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* 💡 Dlux Copilot - Insights Rápidos */}
+      {/* ðŸ’¡ Dlux Copilot - Insights RÃ¡pidos */}
       <Card className="bg-gradient-to-br from-[#1C2E24]/5 to-[#8B5A2B]/5 border border-primary/15 rounded-2xl p-6">
         <CardContent className="flex flex-col gap-4 p-0">
           <div className="flex items-center gap-2">
-            <span className="text-xl">💡</span>
-            <h3 className="text-lg font-bold text-foreground font-display">Dlux Copilot — Consultoria Técnica & Insights</h3>
+            <span className="text-xl">ðŸ’¡</span>
+            <h3 className="text-lg font-bold text-foreground font-display">Dlux Copilot â€” Consultoria TÃ©cnica & Insights</h3>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
-            Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a nossa IA especialista.
+            Acesse insights operacionais e resolva dÃºvidas de engenharia moveleira em tempo real com a nossa IA especialista.
           </p>
           <div className="flex flex-wrap gap-2.5 mt-2">
             {[
-              { label: '📊 Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
-              { label: '💎 Ambientes Mais Lucrativos', query: 'Quais os produtos/ambientes mais lucrativos este mês?' },
-              { label: '🔮 Previsão de Faturamento', query: 'Previsão de faturamento baseada nos projetos ativos' },
-              { label: '🔥 Análise PUR vs Hotmelt', query: 'Qual a diferença prática na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?' },
-              { label: '📐 Altura Ergonômica de Bancadas', query: 'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapé?' },
-              { label: '🪵 MDF vs MDP na Estrutura', query: 'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário planejado?' },
-              { label: '📦 Regras de Dobradiça 165°', query: 'Em quais situações em armários de cozinha a dobradiça de 165 graus de abertura é obrigatória?' },
-              { label: '📉 Evitar Flambagem em Prateleiras', query: 'Qual é o vão livre máximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?' },
+              { label: 'ðŸ“Š SaÃºde Financeira Geral', query: 'Como estÃ¡ a saÃºde financeira da empresa?' },
+              { label: 'ðŸ’Ž Ambientes Mais Lucrativos', query: 'Quais os produtos/ambientes mais lucrativos este mÃªs?' },
+              { label: 'ðŸ”® PrevisÃ£o de Faturamento', query: 'PrevisÃ£o de faturamento baseada nos projetos ativos' },
+              { label: 'ðŸ”¥ AnÃ¡lise PUR vs Hotmelt', query: 'Qual a diferenÃ§a prÃ¡tica na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?' },
+              { label: 'ðŸ“ Altura ErgonÃ´mica de Bancadas', query: 'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapÃ©?' },
+              { label: 'ðŸªµ MDF vs MDP na Estrutura', query: 'Quando devo usar MDP em vez de MDF no projeto estrutural de um armÃ¡rio planejado?' },
+              { label: 'ðŸ“¦ Regras de DobradiÃ§a 165Â°', query: 'Em quais situaÃ§Ãµes em armÃ¡rios de cozinha a dobradiÃ§a de 165 graus de abertura Ã© obrigatÃ³ria?' },
+              { label: 'ðŸ“‰ Evitar Flambagem em Prateleiras', query: 'Qual Ã© o vÃ£o livre mÃ¡ximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?' },
             ].map((item, idx) => (
               <Button
                 key={idx}
@@ -318,7 +319,7 @@ const Dashboard: React.FC = () => {
                 }}
                 className="bg-card hover:bg-primary/10 hover:text-primary text-muted-foreground border border-border transition-all flex items-center gap-1.5 rounded-xl font-semibold shadow-sm text-xs"
               >
-                <span>✨</span>
+                <span>âœ¨</span>
                 {item.label}
               </Button>
             ))}
@@ -342,4 +343,5 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
 

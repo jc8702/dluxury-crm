@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/design-system/components';
-import DataTable from '@/components/ui/DataTable';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/common';
+import DataTable from '@/components/common/DataTable';
 import { 
     FileText, Upload, Plus, Trash2, 
     Layers, CheckCircle2, FileDown, Search, ArrowLeft, Save, Pencil
@@ -77,7 +77,7 @@ export default function QuotationForm() {
                 setPagination(result.pagination);
             }
         } catch (err) {
-            console.error('Erro ao carregar orçamentos:', err);
+            console.error('Erro ao carregar orÃ§amentos:', err);
         }
     }, [pagination.page, pagination.limit, searchQuery]);
 
@@ -87,7 +87,7 @@ export default function QuotationForm() {
         
         fetchRecentes();
 
-        // Abrir modal de importação se vier do fluxo "Criar e Importar"
+        // Abrir modal de importaÃ§Ã£o se vier do fluxo "Criar e Importar"
         const isImporting = urlParams.get('import') === 'true';
         if (isImporting && orcamentoId) {
             setIsImportModalOpen(true);
@@ -99,7 +99,7 @@ export default function QuotationForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orcamentoId]);
 
-    // Atalho ESC para fechar barra de ações
+    // Atalho ESC para fechar barra de aÃ§Ãµes
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -156,8 +156,8 @@ export default function QuotationForm() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
                 <div className="bg-red-500/10 p-6 rounded-2xl mb-6">
-                    <span className="text-red-500 text-5xl">⚠️</span>
-                    <h2 className="text-2xl font-bold text-foreground mb-2">Erro ao carregar orçamento</h2>
+                    <span className="text-red-500 text-5xl">âš ï¸</span>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">Erro ao carregar orÃ§amento</h2>
                     <p className="text-muted-foreground mb-8 max-w-md">{error}</p>
                     <div className="flex gap-4">
                         <button 
@@ -193,31 +193,31 @@ export default function QuotationForm() {
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Deseja realmente excluir este orçamento?')) return;
+        if (!confirm('Deseja realmente excluir este orÃ§amento?')) return;
         try {
             const success = await deletarOrcamento(id);
             if (success) {
-                toastSuccess('Orçamento excluído com sucesso');
+                toastSuccess('OrÃ§amento excluÃ­do com sucesso');
                 fetchRecentes();
             }
         } catch (_err) {
-            toastError('Erro ao excluir orçamento');
+            toastError('Erro ao excluir orÃ§amento');
         }
     };
 
-    // Renderizar lista de orçamentos (utilizado tanto no estado limpo quanto no rodapé)
+    // Renderizar lista de orÃ§amentos (utilizado tanto no estado limpo quanto no rodapÃ©)
     const renderListaRecentes = () => (
         <Card className="bg-card border-border shadow-2xl overflow-hidden mt-12">
             <CardHeader className="bg-muted/40 border-b border-border py-4 px-6 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-6">
                     <CardTitle className="text-xs uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-3 font-black">
-                        <FileText className="w-4 h-4 text-primary" /> Últimos Orçamentos
+                        <FileText className="w-4 h-4 text-primary" /> Ãšltimos OrÃ§amentos
                     </CardTitle>
                     <div className="relative">
                         <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input 
                             type="text"
-                            placeholder="BUSCAR NÚMERO..."
+                            placeholder="BUSCAR NÃšMERO..."
                             className="rounded-full pl-8 pr-4 h-8 text-[10px] w-48 font-bold bg-background border-border"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,12 +246,12 @@ export default function QuotationForm() {
             <CardContent className="p-0">
                 {orcamentosRecentes.length === 0 ? (
                     <div className="p-12 text-center text-muted-foreground italic text-sm">
-                        Nenhum orçamento encontrado.
+                        Nenhum orÃ§amento encontrado.
                     </div>
                 ) : (
                     <div className="overflow-x-auto p-4">
                         <DataTable
-                            headers={['Número', 'Data de Criação', 'Data de Revisão', 'Qual Revisão', 'Usuário que Criou', 'Status', 'Ações']}
+                            headers={['NÃºmero', 'Data de CriaÃ§Ã£o', 'Data de RevisÃ£o', 'Qual RevisÃ£o', 'UsuÃ¡rio que Criou', 'Status', 'AÃ§Ãµes']}
                             data={orcamentosRecentes}
                             renderRow={(orc: any) => (
                                 <>
@@ -270,7 +270,7 @@ export default function QuotationForm() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-muted-foreground text-sm cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
-                                        {orc.usuarioId ? 'Usuário do Sistema' : 'Sistema'}
+                                        {orc.usuarioId ? 'UsuÃ¡rio do Sistema' : 'Sistema'}
                                     </td>
                                     <td className="px-6 py-4 cursor-pointer" onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orc.id}`, '_blank')}>
                                         <span className={`text-[10px] font-black px-2 py-1 rounded uppercase ${
@@ -316,9 +316,9 @@ export default function QuotationForm() {
                     <div className="flex justify-between items-end">
                         <div>
                             <h1 className="text-4xl font-black italic tracking-tighter text-foreground">
-                                ORÇAMENTOS <span className="text-primary">PRO</span>
+                                ORÃ‡AMENTOS <span className="text-primary">PRO</span>
                             </h1>
-                            <p className="text-muted-foreground mt-2 font-medium">Gestão de orçamentos industriais e cálculos de engenharia.</p>
+                            <p className="text-muted-foreground mt-2 font-medium">GestÃ£o de orÃ§amentos industriais e cÃ¡lculos de engenharia.</p>
                         </div>
                         <div className="flex gap-4">
                             <Button 
@@ -326,7 +326,7 @@ export default function QuotationForm() {
                                 className="border-border hover:bg-muted h-14 px-8 text-lg font-bold text-foreground cursor-pointer"
                                 onClick={handleCreateDraft}
                             >
-                                <Plus className="w-5 h-5 mr-2" /> Novo Orçamento
+                                <Plus className="w-5 h-5 mr-2" /> Novo OrÃ§amento
                             </Button>
                             <Button 
                                 className="bg-primary hover:bg-primary-hover text-primary-foreground font-black h-14 px-10 text-lg shadow-xl cursor-pointer"
@@ -339,17 +339,17 @@ export default function QuotationForm() {
 
                     <div className="grid grid-cols-3 gap-6">
                         <Card className="bg-card border-border p-6">
-                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Total de Orçamentos</div>
+                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Total de OrÃ§amentos</div>
                             <div className="text-4xl font-black italic text-foreground">{orcamentosRecentes.length}</div>
                         </Card>
                         <Card className="bg-card border-border p-6 border-l-primary border-l-4">
-                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Aguardando Aprovação</div>
+                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Aguardando AprovaÃ§Ã£o</div>
                             <div className="text-4xl font-black italic text-primary">
                                 {orcamentosRecentes.filter(o => o.status === 'RASCUNHO' || o.status === 'ENVIADO').length}
                             </div>
                         </Card>
                         <Card className="bg-card border-border p-6 border-l-green-500 border-l-4">
-                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Aprovados este Mês</div>
+                            <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">Aprovados este MÃªs</div>
                             <div className="text-4xl font-black italic text-green-500">
                                 {orcamentosRecentes.filter(o => o.status === 'APROVADO').length}
                             </div>
@@ -379,7 +379,7 @@ export default function QuotationForm() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
-                            Orçamento <span className="text-primary">{orcamento?.numeroOrcamento || '...'}</span>
+                            OrÃ§amento <span className="text-primary">{orcamento?.numeroOrcamento || '...'}</span>
                         </h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-muted-foreground text-sm">Status:</p>
@@ -392,7 +392,7 @@ export default function QuotationForm() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="rascunho">Rascunho</SelectItem>
-                                    <SelectItem value="negociacao">Negociação</SelectItem>
+                                    <SelectItem value="negociacao">NegociaÃ§Ã£o</SelectItem>
                                     <SelectItem value="enviado">Enviado</SelectItem>
                                     <SelectItem value="fechada">Fechado</SelectItem>
                                     <SelectItem value="perdida">Perdida</SelectItem>
@@ -444,7 +444,7 @@ export default function QuotationForm() {
                     <Card className="bg-card border-border shadow-2xl overflow-hidden">
                         <CardHeader className="bg-muted/40 border-b border-border py-3">
                             <CardTitle className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 font-black">
-                                <FileText className="w-3 h-3 text-primary" /> Configurações Comerciais
+                                <FileText className="w-3 h-3 text-primary" /> ConfiguraÃ§Ãµes Comerciais
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -538,8 +538,8 @@ export default function QuotationForm() {
                                         size="sm"
                                         onClick={() => {
                                             setIsEditingAll(false);
-                                            toastSuccess('Alterações enviadas para gravação!');
-                                            // Forçar atualização do rodapé de recentes após salvar todos
+                                            toastSuccess('AlteraÃ§Ãµes enviadas para gravaÃ§Ã£o!');
+                                            // ForÃ§ar atualizaÃ§Ã£o do rodapÃ© de recentes apÃ³s salvar todos
                                             setTimeout(() => fetchRecentes(), 1200);
                                         }}
                                         className="border-border hover:bg-muted text-foreground cursor-pointer text-xs h-9 px-3 font-bold flex items-center gap-1.5 bg-primary/10 border-primary/20 hover:bg-primary/20"
@@ -600,8 +600,8 @@ export default function QuotationForm() {
                             <div className="bg-muted w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
                                 <Layers className="w-10 h-10 text-muted-foreground -rotate-12" />
                             </div>
-                            <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">O orçamento está vazio</p>
-                            <p className="text-muted-foreground/80 text-xs mt-2">Utilize a busca acima para adicionar módulos de engenharia.</p>
+                            <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">O orÃ§amento estÃ¡ vazio</p>
+                            <p className="text-muted-foreground/80 text-xs mt-2">Utilize a busca acima para adicionar mÃ³dulos de engenharia.</p>
                         </div>
                     ) : (
                         <div className="grid gap-4">
@@ -619,9 +619,9 @@ export default function QuotationForm() {
                 </div>
             </div>
 
-            {/* Barra de Ações Removida */}
+            {/* Barra de AÃ§Ãµes Removida */}
 
-            {/* Lista de Últimos Orçamentos (Rodapé) */}
+            {/* Lista de Ãšltimos OrÃ§amentos (RodapÃ©) */}
             <div className="max-w-6xl mx-auto mt-20">
                 {renderListaRecentes()}
             </div>
@@ -655,3 +655,4 @@ export default function QuotationForm() {
         </div>
     );
 }
+

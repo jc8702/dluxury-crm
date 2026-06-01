@@ -1,5 +1,5 @@
-import React from 'react';
-import { TableSkeleton } from '../../design-system/components/Skeleton';
+﻿import React from 'react';
+import { TableSkeleton } from './Skeleton';
 
 interface DataTableProps<T> {
   headers: string[];
@@ -45,3 +45,4 @@ const DataTable = <T,>({ headers, data, renderRow, emptyMessage = 'Nenhum regist
 };
 
 export default DataTable;
+

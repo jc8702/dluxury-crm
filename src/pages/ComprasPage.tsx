@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import SearchableSelect from '../components/ui/SearchableSelect';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import SearchableSelect from '../components/common/SearchableSelect';
 import { 
   Plus, ShoppingCart, 
   Trash2, Eye, AlertCircle, 
@@ -9,8 +9,8 @@ import { api } from '../lib/api';
 
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
-import { CardSkeleton } from '../design-system/components/Skeleton';
-import { Button, Card, CardContent, Input, Modal, Badge } from '../design-system/components';
+import { CardSkeleton } from '../components/common/Skeleton';
+import { Button, Card, CardContent, Input, Modal, Badge } from '../components/common';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
@@ -61,8 +61,8 @@ const ComprasPage: React.FC = () => {
     <div className="animate-fade-in space-y-6">
       <header className="flex justify-between items-center pb-4 border-b border-border">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Gestão de Compras</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Fluxos de suprimentos, histórico de preços e reposição de estoque.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">GestÃ£o de Compras</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Fluxos de suprimentos, histÃ³rico de preÃ§os e reposiÃ§Ã£o de estoque.</p>
         </div>
         <Button 
           variant="primary"
@@ -76,8 +76,8 @@ const ComprasPage: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-2 p-1 bg-muted/30 border border-border rounded-xl w-fit">
         <TabButton active={activeTab === 'ativos'} onClick={() => setActiveTab('ativos')} icon={<ShoppingCart size={18} />}>Pedidos Ativos</TabButton>
-        <TabButton active={activeTab === 'sugestoes'} onClick={() => setActiveTab('sugestoes')} icon={<AlertCircle size={18} />}>Sugestões de Reposição</TabButton>
-        <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} icon={<History size={18} />}>Histórico</TabButton>
+        <TabButton active={activeTab === 'sugestoes'} onClick={() => setActiveTab('sugestoes')} icon={<AlertCircle size={18} />}>SugestÃµes de ReposiÃ§Ã£o</TabButton>
+        <TabButton active={activeTab === 'historico'} onClick={() => setActiveTab('historico')} icon={<History size={18} />}>HistÃ³rico</TabButton>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -128,9 +128,9 @@ const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ s
           <tr className="border-b border-border bg-muted/20">
             <th className="text-left p-4 font-semibold text-muted-foreground">Material / SKU</th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Estoque Atual</th>
-            <th className="text-center p-4 font-semibold text-muted-foreground">Mínimo</th>
-            <th className="text-right p-4 font-semibold text-muted-foreground">Preço Últ. Compra</th>
-            <th className="text-center p-4 font-semibold text-muted-foreground">Ações</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">MÃ­nimo</th>
+            <th className="text-right p-4 font-semibold text-muted-foreground">PreÃ§o Ãšlt. Compra</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -139,7 +139,7 @@ const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({ s
               <td colSpan={5} className="p-0">
                 <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
                   <AlertCircle className="w-8 h-8 mb-2 text-muted-foreground/60" />
-                  <span>Estoque saudável. Nenhuma sugestão de compra pendente.</span>
+                  <span>Estoque saudÃ¡vel. Nenhuma sugestÃ£o de compra pendente.</span>
                 </div>
               </td>
             </tr>
@@ -179,12 +179,12 @@ const PedidosTable: React.FC<{ pedidos: any[]; onView: (p: any) => void; getStat
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/20">
-            <th className="text-left p-4 font-semibold text-muted-foreground">Nº Pedido</th>
+            <th className="text-left p-4 font-semibold text-muted-foreground">NÂº Pedido</th>
             <th className="text-left p-4 font-semibold text-muted-foreground">Fornecedor</th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Data</th>
             <th className="text-right p-4 font-semibold text-muted-foreground">Total</th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Status</th>
-            <th className="text-center p-4 font-semibold text-muted-foreground">Ações</th>
+            <th className="text-center p-4 font-semibold text-muted-foreground">AÃ§Ãµes</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -198,7 +198,7 @@ const PedidosTable: React.FC<{ pedidos: any[]; onView: (p: any) => void; getStat
             pedidos.map(p => (
               <tr key={p.id} className="hover:bg-muted/10 transition-colors">
                 <td className="p-4 font-bold text-primary">{p.numero}</td>
-                <td className="p-4 text-foreground">{p.fornecedor_nome || 'Não definido'}</td>
+                <td className="p-4 text-foreground">{p.fornecedor_nome || 'NÃ£o definido'}</td>
                 <td className="p-4 text-center text-muted-foreground">
                   {new Date(p.data_pedido || p.criado_em).toLocaleDateString('pt-BR')}
                 </td>
@@ -322,7 +322,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
   };
 
   const handleDeletePedido = useCallback(async () => {
-    if (!pedido?.id) return toastError('Pedido não salvo ainda');
+    if (!pedido?.id) return toastError('Pedido nÃ£o salvo ainda');
     const isConfirmed = await confirmAction({
       title: 'Excluir Pedido',
       description: 'Deseja excluir este Pedido de Compra?'
@@ -330,7 +330,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
     if (!isConfirmed) return;
     try {
       await fetch(`/api/compras?id=${encodeURIComponent(pedido.id)}&type=pedidos`, { method: 'DELETE' });
-      success('Pedido excluído com sucesso!');
+      success('Pedido excluÃ­do com sucesso!');
       onSave();
     } catch (e: any) {
       toastError('Erro ao excluir pedido: ' + e.message);
@@ -383,7 +383,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                      <SearchableSelect
                        items={materiais.map(m => ({ id: m.id, label: m.nome, sku: m.sku, _meta: m.fornecedor_principal }))}
                        value={newItem.material_id}
-                       placeholder="Buscar por descrição ou SKU"
+                       placeholder="Buscar por descriÃ§Ã£o ou SKU"
                        onChange={(id) => {
                          const m = materiais.find(mat => mat.id === id);
                          setNewItem({ ...newItem, material_id: id, preco: m?.preco_custo || 0 });
@@ -427,9 +427,9 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
                     <tr className="border-b border-border bg-muted/20">
                       <th className="text-left p-3 font-semibold text-muted-foreground">SKU / Material</th>
                       <th className="text-center p-3 font-semibold text-muted-foreground">Qtd</th>
-                      <th className="text-right p-3 font-semibold text-muted-foreground">Unitário</th>
+                      <th className="text-right p-3 font-semibold text-muted-foreground">UnitÃ¡rio</th>
                       <th className="text-right p-3 font-semibold text-muted-foreground">Subtotal</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground">Ações</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground">AÃ§Ãµes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -519,4 +519,5 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
 };
 
 export default ComprasPage;
+
 

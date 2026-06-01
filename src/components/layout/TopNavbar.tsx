@@ -1,6 +1,6 @@
 import React from 'react';
-import ThemeToggle from '../ui/ThemeToggle';
-import Breadcrumbs from '../ui/Breadcrumbs';
+import ThemeToggle from '../common/ThemeToggle';
+import Breadcrumbs from '../common/Breadcrumbs';
 import { Menu } from 'lucide-react';
 
 interface TopNavbarProps {
