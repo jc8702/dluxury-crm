@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo } from 'react';
 import { Plus, Trash2, Scissors, AlertTriangle, Layers } from 'lucide-react';
 import type { Peca } from '../../domain/types';
-import { Button } from '../../../../design-system/components';
+import { Button } from '../../../../components/common';
 
 interface PainelPecasChapaProps {
   chapaId: string;
@@ -25,7 +25,7 @@ export function PainelPecasChapa({
   onOtimizar,
   isOtimizando,
   larguraChapa,
-  alturaChapa
+  alturaChapa,
 }: PainelPecasChapaProps) {
   const areaInfo = useMemo(() => {
     if (!larguraChapa || !alturaChapa || pecas.length === 0) return null;
@@ -33,7 +33,7 @@ export function PainelPecasChapa({
     const areaChapa = larguraChapa * alturaChapa;
     const areaTotalPecas = pecas.reduce((sum, p) => {
       const qtd = p.quantidade || 1;
-      return sum + (p.largura * p.altura * qtd);
+      return sum + p.largura * p.altura * qtd;
     }, 0);
 
     const chapasEstimadas = Math.ceil(areaTotalPecas / areaChapa);
@@ -52,7 +52,9 @@ export function PainelPecasChapa({
             <Scissors size={20} />
           </div>
           <div>
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFA500]">Peças da Chapa</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFA500]">
+              PeÃ§as da Chapa
+            </h3>
             <p className="text-[9px] font-mono text-[#666]">{pecas.length} itens configurados</p>
           </div>
         </div>
@@ -61,7 +63,7 @@ export function PainelPecasChapa({
           size="icon"
           onClick={onAddPeca}
           className="h-9 w-9 hover:bg-[#FFA500] hover:text-black border-[#FFA500]/20 text-[#FFA500]"
-          title="Adicionar Peça"
+          title="Adicionar PeÃ§a"
         >
           <Plus size={18} />
         </Button>
@@ -73,15 +75,19 @@ export function PainelPecasChapa({
           <AlertTriangle size={14} className="text-[#FFA500] flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider leading-tight">
-              Área total das peças excede a chapa
+              Ãrea total das peÃ§as excede a chapa
             </p>
             <p className="text-[8px] font-mono text-[#888] mt-0.5">
-              {areaInfo.areaTotalPecas.toLocaleString()} mm² necessário · {areaInfo.areaChapa.toLocaleString()} mm² disponível · ~{areaInfo.chapasEstimadas} chapas
+              {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² necessÃ¡rio Â·{' '}
+              {areaInfo.areaChapa.toLocaleString()} mmÂ² disponÃ­vel Â· ~{areaInfo.chapasEstimadas}{' '}
+              chapas
             </p>
           </div>
           <div className="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-md">
             <Layers size={10} className="text-[#FFA500]" />
-            <span className="text-[10px] font-black text-[#FFA500]">{areaInfo.chapasEstimadas}x</span>
+            <span className="text-[10px] font-black text-[#FFA500]">
+              {areaInfo.chapasEstimadas}x
+            </span>
           </div>
         </div>
       )}
@@ -89,33 +95,37 @@ export function PainelPecasChapa({
       {areaInfo && !areaInfo.extrapolou && pecas.length > 0 && (
         <div className="px-4 py-2 bg-white/5 border-b border-[#333]">
           <p className="text-[8px] font-mono text-[#555]">
-            {areaInfo.areaTotalPecas.toLocaleString()} mm² de {areaInfo.areaChapa.toLocaleString()} mm² ({areaInfo.percentualArea.toFixed(0)}%)
+            {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² de {areaInfo.areaChapa.toLocaleString()}{' '}
+            mmÂ² ({areaInfo.percentualArea.toFixed(0)}%)
           </p>
         </div>
       )}
 
-      {/* Lista de Peças */}
+      {/* Lista de PeÃ§as */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
         {pecas.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center">
-            <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peça adicionada</p>
+            <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peÃ§a adicionada</p>
             <Button
               onClick={onAddPeca}
               className="bg-[#FFA500] text-black hover:bg-[#FFD700] px-4 py-2 h-auto text-[10px] font-black flex items-center gap-2 uppercase tracking-wider"
             >
-              <Plus size={14} /> Adicionar Primeira Peça
+              <Plus size={14} /> Adicionar Primeira PeÃ§a
             </Button>
           </div>
         ) : (
-          pecas.map(p => (
-            <div key={p.id} className="group bg-[#222] border border-[#333] p-4 rounded-xl hover:border-[#FFA500]/30 transition-all">
+          pecas.map((p) => (
+            <div
+              key={p.id}
+              className="group bg-[#222] border border-[#333] p-4 rounded-xl hover:border-[#FFA500]/30 transition-all"
+            >
               <div className="flex items-start justify-between mb-3">
                 <input
                   type="text"
                   value={p.nome}
-                  onChange={e => onUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
+                  onChange={(e) => onUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
                   className="bg-transparent text-[11px] font-black text-white w-full focus:outline-none uppercase tracking-wider"
-                  placeholder="NOME DA PEÇA"
+                  placeholder="NOME DA PEÃ‡A"
                 />
                 <Button
                   variant="ghost"
@@ -129,36 +139,44 @@ export function PainelPecasChapa({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">Largura (mm)</label>
+                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                    Largura (mm)
+                  </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
                     <input
                       type="number"
                       value={p.largura}
-                      onChange={e => onUpdatePeca(p.id, { largura: Number(e.target.value) })}
+                      onChange={(e) => onUpdatePeca(p.id, { largura: Number(e.target.value) })}
                       className="bg-transparent text-xs text-[#FFA500] font-black w-full focus:outline-none"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">Altura (mm)</label>
+                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                    Altura (mm)
+                  </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
                     <input
                       type="number"
                       value={p.altura}
-                      onChange={e => onUpdatePeca(p.id, { altura: Number(e.target.value) })}
+                      onChange={(e) => onUpdatePeca(p.id, { altura: Number(e.target.value) })}
                       className="bg-transparent text-xs text-[#FFA500] font-black w-full focus:outline-none"
                     />
                   </div>
                 </div>
-                
+
                 {/* Campo Material - Fase 2 */}
                 <div className="space-y-1 col-span-2">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">Material / Acabamento</label>
+                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                    Material / Acabamento
+                  </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
                     <input
                       type="text"
                       value={p.material || ''}
-                      onChange={e => onUpdatePeca(p.id, { material: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        onUpdatePeca(p.id, { material: e.target.value.toUpperCase() })
+                      }
                       className="bg-transparent text-[10px] text-white/50 font-bold w-full focus:outline-none uppercase"
                       placeholder="MDF BRANCO, GRAFITE, ETC."
                     />
@@ -172,17 +190,19 @@ export function PainelPecasChapa({
                   <input
                     type="number"
                     value={p.quantidade || 1}
-                    onChange={e => onUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
+                    onChange={(e) => onUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
                     className="bg-[#111] border border-[#333] rounded px-2 py-1 text-[10px] font-bold text-white w-12 text-center"
                   />
                 </div>
-                
+
                 <label className="flex items-center gap-2 cursor-pointer group/label">
-                  <span className="text-[9px] font-black text-[#444] uppercase group-hover/label:text-[#666]">Girar</span>
+                  <span className="text-[9px] font-black text-[#444] uppercase group-hover/label:text-[#666]">
+                    Girar
+                  </span>
                   <input
                     type="checkbox"
                     checked={p.rotacionavel}
-                    onChange={e => onUpdatePeca(p.id, { rotacionavel: e.target.checked })}
+                    onChange={(e) => onUpdatePeca(p.id, { rotacionavel: e.target.checked })}
                     className="w-3 h-3 accent-[#FFA500]"
                   />
                 </label>
@@ -192,12 +212,12 @@ export function PainelPecasChapa({
         )}
       </div>
 
-      {/* Footer com Ação */}
+      {/* Footer com AÃ§Ã£o */}
       {pecas.length > 0 && (
         <div className="p-4 bg-[#222] border-t border-[#333]">
           {areaInfo && areaInfo.extrapolou && (
             <p className="text-[8px] font-bold text-[#FFA500] uppercase tracking-wider text-center mb-2">
-              A otimização distribuirá as peças em {areaInfo.chapasEstimadas} chapas
+              A otimizaÃ§Ã£o distribuirÃ¡ as peÃ§as em {areaInfo.chapasEstimadas} chapas
             </p>
           )}
           <Button

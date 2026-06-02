@@ -1,14 +1,28 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Modal } from '../design-system/components/Modal';
-import { Button } from '../design-system/components/Button';
-import { Input } from '../design-system/components/Input';
-import { Plus, CheckCircle, Trash2, ArrowUpRight, Calendar, ChevronDown, ChevronRight, Edit2, Printer, FileText, CheckSquare, Layers, ArrowLeft } from 'lucide-react';
+import { Modal } from '../components/common/Modal';
+import { Button } from '../components/common/Button';
+import { Input } from '../components/common/Input';
+import {
+  Plus,
+  CheckCircle,
+  Trash2,
+  ArrowUpRight,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  Printer,
+  FileText,
+  CheckSquare,
+  Layers,
+  ArrowLeft,
+} from 'lucide-react';
 import ReciboModal from '../components/ReciboModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
-import { TableSkeleton } from '../design-system/components/Skeleton';
+import { TableSkeleton } from '../components/common/Skeleton';
 
 export default function FinanceiroTitulosPagarPage() {
   const { success, error, warning } = useToast();
@@ -17,7 +31,7 @@ export default function FinanceiroTitulosPagarPage() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [total, setTotal] = useState(0);
-  const [suppliersMap, setSuppliersMap] = useState<Record<string,string>>({});
+  const [suppliersMap, setSuppliersMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [baixaModal, setBaixaModal] = useState<Titulo | null>(null);
   const [reciboModal, setReciboModal] = useState<Titulo | null>(null);
@@ -25,14 +39,18 @@ export default function FinanceiroTitulosPagarPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loteModal, setLoteModal] = useState(false);
-  const [loteData, setLoteData] = useState({ conta_interna_id: '', data_baixa: new Date().toISOString().split('T')[0], observacoes: '' });
+  const [loteData, setLoteData] = useState({
+    conta_interna_id: '',
+    data_baixa: new Date().toISOString().split('T')[0],
+    observacoes: '',
+  });
   const [loteLoading, setLoteLoading] = useState(false);
   const [editModal, setEditModal] = useState<Titulo | null>(null);
 
   const [stats, setStats] = useState({
     totalAberto: 0,
     totalVencido: 0,
-    totalPago: 0
+    totalPago: 0,
   });
 
   const load = async (p = 1) => {
@@ -40,7 +58,7 @@ export default function FinanceiroTitulosPagarPage() {
     try {
       const res = await api.financeiro.titulosPagar.list({ page: p, perPage });
       let dataRows: any[] = [];
-      
+
       if (Array.isArray(res)) {
         dataRows = res;
         setTotal(res.length);
@@ -51,7 +69,7 @@ export default function FinanceiroTitulosPagarPage() {
         dataRows = [];
         setTotal(0);
       }
-      
+
       setRows(dataRows);
 
       let aberto = 0;
@@ -59,7 +77,7 @@ export default function FinanceiroTitulosPagarPage() {
       let pago = 0;
       const hoje = new Date();
 
-      dataRows.forEach(r => {
+      dataRows.forEach((r) => {
         const valor = Number(r.valor_aberto) || 0;
         if (r.status === 'pago') {
           pago += Number(r.valor_original);
@@ -73,10 +91,12 @@ export default function FinanceiroTitulosPagarPage() {
       setStats({ totalAberto: aberto, totalVencido: vencido, totalPago: pago });
 
       const suppliers = await api.suppliers.list();
-      const map: Record<string,string> = {};
-      (suppliers || []).forEach((s: any) => { map[s.id] = s.nome || s.name || `${s.id}`; });
+      const map: Record<string, string> = {};
+      (suppliers || []).forEach((s: any) => {
+        map[s.id] = s.nome || s.name || `${s.id}`;
+      });
       setSuppliersMap(map);
-      
+
       const cts = await api.financeiro.contasInternas.list();
       setContas(cts || []);
     } catch (err: any) {
@@ -86,18 +106,19 @@ export default function FinanceiroTitulosPagarPage() {
     }
   };
 
-  useEffect(() => { load(page);
+  useEffect(() => {
+    load(page);
   }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const _confirmarBaixa = async () => {
     try {
       const contaId = (document.getElementById('conta-interna-id') as HTMLSelectElement).value;
       if (!contaId) throw new Error('Selecione uma conta');
-      
+
       await api.financeiro.titulosPagar.baixar(baixaModal.id, {
         valor_baixa: baixaModal.valor_aberto,
         conta_interna_id: contaId,
-        data_baixa: new Date()
+        data_baixa: new Date(),
       });
       setBaixaModal(null);
       load(page);
@@ -109,8 +130,8 @@ export default function FinanceiroTitulosPagarPage() {
 
   const doDelete = async (id: string) => {
     const isConfirmed = await confirmAction({
-      title: 'Excluir Título',
-      description: 'Confirma exclusão do título?'
+      title: 'Excluir TÃ­tulo',
+      description: 'Confirma exclusÃ£o do tÃ­tulo?',
     });
     if (!isConfirmed) return;
     try {
@@ -122,7 +143,7 @@ export default function FinanceiroTitulosPagarPage() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -131,15 +152,22 @@ export default function FinanceiroTitulosPagarPage() {
   };
 
   const selectAllAbertos = () => {
-    const ids = rows.filter(r => r.status === 'aberto').map((r: any) => r.id);
+    const ids = rows.filter((r) => r.status === 'aberto').map((r: any) => r.id);
     setSelectedIds(new Set(ids));
   };
 
   const handleBaixaLote = async () => {
-    if (!loteData.conta_interna_id) { warning('Selecione a conta de pagamento'); return; }
-    if (selectedIds.size === 0) { warning('Nenhum título selecionado'); return; }
+    if (!loteData.conta_interna_id) {
+      warning('Selecione a conta de pagamento');
+      return;
+    }
+    if (selectedIds.size === 0) {
+      warning('Nenhum tÃ­tulo selecionado');
+      return;
+    }
     setLoteLoading(true);
-    let ok = 0, fail = 0;
+    let ok = 0,
+      fail = 0;
     for (const id of selectedIds) {
       try {
         await api.financeiro.titulosPagar.baixar(id, {
@@ -148,15 +176,16 @@ export default function FinanceiroTitulosPagarPage() {
           observacoes: loteData.observacoes || 'Baixa em lote',
         });
         ok++;
-      } catch { fail++; }
+      } catch {
+        fail++;
+      }
     }
     setLoteLoading(false);
     setLoteModal(false);
     setSelectedIds(new Set());
-    success(`${ok} títulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
+    success(`${ok} tÃ­tulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
     load(page);
   };
-
 
   const saveEdit = async () => {
     try {
@@ -166,27 +195,28 @@ export default function FinanceiroTitulosPagarPage() {
         data_vencimento: editModal.data_vencimento,
         taxa_financeira: editModal.taxa_financeira,
         valor_custo_financeiro: editModal.valor_custo_financeiro,
-        status: editModal.status
+        status: editModal.status,
       });
       setEditModal(null);
       load(page);
-      success('Alterações salvas com sucesso');
+      success('AlteraÃ§Ãµes salvas com sucesso');
     } catch (err: any) {
-      error(err.message || 'Erro ao salvar alterações');
+      error(err.message || 'Erro ao salvar alteraÃ§Ãµes');
     }
   };
 
   const _getStatusStyle = (status: string, vencimento: string) => {
     if (status === 'pago') return { background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' };
-    if (new Date(vencimento) < new Date()) return { background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' };
+    if (new Date(vencimento) < new Date())
+      return { background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' };
     return { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' };
   };
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen">
-      <Button 
-        variant="ghost" 
-        onClick={() => window.location.hash = '#/financeiro'} 
+      <Button
+        variant="ghost"
+        onClick={() => (window.location.hash = '#/financeiro')}
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
@@ -196,16 +226,16 @@ export default function FinanceiroTitulosPagarPage() {
         <div>
           <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
             <ArrowUpRight className="text-red-500 w-10 h-10" />
-            TÍTULOS A PAGAR
+            TÃTULOS A PAGAR
           </h1>
           <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
-            Gestão Industrial de Saídas & Compromissos
+            GestÃ£o Industrial de SaÃ­das & Compromissos
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
           {selectedIds.size > 0 && (
-            <Button 
+            <Button
               variant="primary"
               size="md"
               className="italic tracking-widest font-black text-[11px] bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-950/20"
@@ -214,7 +244,7 @@ export default function FinanceiroTitulosPagarPage() {
               <Layers className="w-4 h-4" /> PAGAR {selectedIds.size} EM LOTE
             </Button>
           )}
-          <Button 
+          <Button
             variant="outline"
             size="md"
             className="italic tracking-widest font-black text-[11px] text-white border-white/20 hover:bg-white/10"
@@ -223,20 +253,20 @@ export default function FinanceiroTitulosPagarPage() {
             <CheckSquare className="w-4 h-4" /> SELECIONAR ABERTOS
           </Button>
           {selectedIds.size > 0 && (
-            <Button 
-              variant="outline" 
-              size="md" 
-              className="italic font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase" 
+            <Button
+              variant="outline"
+              size="md"
+              className="italic font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase"
               onClick={() => setSelectedIds(new Set())}
             >
               LIMPAR ({selectedIds.size})
             </Button>
           )}
-          <Button 
+          <Button
             variant="danger"
             size="md"
             className="italic tracking-widest font-black text-[11px] bg-red-600 border-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
-            onClick={() => window.location.hash = '#/financeiro/titulos-pagar/wizard'}
+            onClick={() => (window.location.hash = '#/financeiro/titulos-pagar/wizard')}
           >
             <Plus className="w-4 h-4" /> NOVO PAGAMENTO
           </Button>
@@ -246,21 +276,49 @@ export default function FinanceiroTitulosPagarPage() {
       {/* Stats Grid Industrial */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {[
-          { label: 'Total a Pagar', value: stats.totalAberto, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: ArrowUpRight },
-          { label: 'Total Pago', value: stats.totalPago, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: CheckCircle },
-          { label: 'Total Vencido', value: stats.totalVencido, color: 'text-red-600', bg: 'bg-red-600/15', border: 'border-red-600/30', icon: Calendar },
+          {
+            label: 'Total a Pagar',
+            value: stats.totalAberto,
+            color: 'text-red-500',
+            bg: 'bg-red-500/10',
+            border: 'border-red-500/20',
+            icon: ArrowUpRight,
+          },
+          {
+            label: 'Total Pago',
+            value: stats.totalPago,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/10',
+            border: 'border-emerald-500/20',
+            icon: CheckCircle,
+          },
+          {
+            label: 'Total Vencido',
+            value: stats.totalVencido,
+            color: 'text-red-600',
+            bg: 'bg-red-600/15',
+            border: 'border-red-600/30',
+            icon: Calendar,
+          },
         ].map((stat, i) => (
-          <div key={i} className={`glass-elevated p-6 rounded-2xl border ${stat.border} ${stat.bg} relative overflow-hidden group hover:scale-[1.02] transition-all duration-500`}>
-             <div className="flex justify-between items-start mb-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground italic group-hover:text-white transition-colors">
-                  {stat.label}
-                </span>
-                <stat.icon className={`w-5 h-5 ${stat.color} opacity-80 group-hover:scale-110 transition-transform`} />
-             </div>
-             <div className="text-3xl font-black tracking-tighter italic text-white group-hover:text-primary transition-colors">
-               R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-             </div>
-             <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${stat.color} opacity-5 blur-3xl rounded-full group-hover:opacity-10 transition-opacity`}></div>
+          <div
+            key={i}
+            className={`glass-elevated p-6 rounded-2xl border ${stat.border} ${stat.bg} relative overflow-hidden group hover:scale-[1.02] transition-all duration-500`}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground italic group-hover:text-white transition-colors">
+                {stat.label}
+              </span>
+              <stat.icon
+                className={`w-5 h-5 ${stat.color} opacity-80 group-hover:scale-110 transition-transform`}
+              />
+            </div>
+            <div className="text-3xl font-black tracking-tighter italic text-white group-hover:text-primary transition-colors">
+              R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <div
+              className={`absolute -right-4 -bottom-4 w-24 h-24 ${stat.color} opacity-5 blur-3xl rounded-full group-hover:opacity-10 transition-opacity`}
+            ></div>
           </div>
         ))}
       </div>
@@ -271,29 +329,50 @@ export default function FinanceiroTitulosPagarPage() {
             <thead>
               <tr className="bg-white/[0.03] border-b border-white/5">
                 <th className="w-12 px-6 py-5">
-                   <div className="flex items-center justify-center">
-                     <button onClick={selectAllAbertos} className="text-muted-foreground hover:text-primary transition-colors">
-                       <CheckSquare className="w-4 h-4" />
-                     </button>
-                   </div>
+                  <div className="flex items-center justify-center">
+                    <button
+                      onClick={selectAllAbertos}
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <CheckSquare className="w-4 h-4" />
+                    </button>
+                  </div>
                 </th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Identificação</th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Status Operacional</th>
-                <th className="text-right px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Valor Bruto</th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Vencimento</th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Badges</th>
-                <th className="text-center px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Comandos</th>
+                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  IdentificaÃ§Ã£o
+                </th>
+                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  Status Operacional
+                </th>
+                <th className="text-right px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  Valor Bruto
+                </th>
+                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  Vencimento
+                </th>
+                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  Badges
+                </th>
+                <th className="text-center px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                  Comandos
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
-                <tr><td colSpan={7} className="p-0"><TableSkeleton rows={8} cols={7} /></td></tr>
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <TableSkeleton rows={8} cols={7} />
+                  </td>
+                </tr>
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-4 opacity-20">
                       <FileText className="w-16 h-16" />
-                      <p className="text-xs font-black uppercase tracking-[0.4em]">Nenhum compromisso industrial registrado</p>
+                      <p className="text-xs font-black uppercase tracking-[0.4em]">
+                        Nenhum compromisso industrial registrado
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -304,23 +383,34 @@ export default function FinanceiroTitulosPagarPage() {
                     if (!acc[sid]) acc[sid] = [];
                     acc[sid].push(r);
                     return acc;
-                  }, {})
+                  }, {}),
                 ).map(([sid, groupRows]: [string, any]) => {
                   const isExpanded = expandedGroups[sid];
-                  const supplierName = (suppliersMap[sid] || 'FORNECEDOR NÃO IDENTIFICADO').toUpperCase();
-                  const totalGroup = groupRows.reduce((sum: number, r: any) => sum + Number(r.valor_original), 0);
-                  
+                  const supplierName = (
+                    suppliersMap[sid] || 'FORNECEDOR NÃƒO IDENTIFICADO'
+                  ).toUpperCase();
+                  const totalGroup = groupRows.reduce(
+                    (sum: number, r: any) => sum + Number(r.valor_original),
+                    0,
+                  );
+
                   return (
                     <React.Fragment key={sid}>
                       {/* Grupo: Fornecedor */}
-                      <tr 
-                        onClick={() => setExpandedGroups(prev => ({ ...prev, [sid]: !prev[sid] }))}
+                      <tr
+                        onClick={() =>
+                          setExpandedGroups((prev) => ({ ...prev, [sid]: !prev[sid] }))
+                        }
                         className="bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-all border-l-4 border-red-500 group"
                       >
                         <td className="px-6 py-4">
-                           <div className="flex items-center justify-center">
-                             {isExpanded ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary" />}
-                           </div>
+                          <div className="flex items-center justify-center">
+                            {isExpanded ? (
+                              <ChevronDown className="w-5 h-5 text-primary" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+                            )}
+                          </div>
                         </td>
                         <td colSpan={2} className="px-4 py-4">
                           <div className="flex items-center gap-4">
@@ -328,8 +418,12 @@ export default function FinanceiroTitulosPagarPage() {
                               {supplierName.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-black text-white italic tracking-tight uppercase">{supplierName}</div>
-                              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{groupRows.length} Títulos Industriais</div>
+                              <div className="text-sm font-black text-white italic tracking-tight uppercase">
+                                {supplierName}
+                              </div>
+                              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                {groupRows.length} TÃ­tulos Industriais
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -339,185 +433,318 @@ export default function FinanceiroTitulosPagarPage() {
                           </div>
                         </td>
                         <td colSpan={3} className="px-6 py-4 text-right">
-                           <Button 
-                             variant="outline"
-                             size="sm"
-                             className="text-[10px] font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase italic flex items-center gap-2 ml-auto"
-                             onClick={async (e) => { 
-                               e.stopPropagation(); 
-                               const isConfirmed = await confirmAction({
-                                 title: 'ELIMINAÇÃO EM MASSA',
-                                 description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÍTULOS DESTE FORNECEDOR? ESTA AÇÃO É IRREVERSÍVEL NO ERP.`
-                               });
-                               if(isConfirmed) {
-                                 api.financeiro.titulosPagar.deleteBatch(sid).then(() => {
-                                   load(page);
-                                 });
-                               }
-                             }}
-                           >
-                             <Trash2 className="w-3 h-3" /> EXCLUIR LOTE
-                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase italic flex items-center gap-2 ml-auto"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const isConfirmed = await confirmAction({
+                                title: 'ELIMINAÃ‡ÃƒO EM MASSA',
+                                description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÃTULOS DESTE FORNECEDOR? ESTA AÃ‡ÃƒO Ã‰ IRREVERSÃVEL NO ERP.`,
+                              });
+                              if (isConfirmed) {
+                                api.financeiro.titulosPagar.deleteBatch(sid).then(() => {
+                                  load(page);
+                                });
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" /> EXCLUIR LOTE
+                          </Button>
                         </td>
                       </tr>
 
                       {/* Linhas Detalhadas */}
-                      {isExpanded && groupRows.map((r: any) => {
-                        const isSelected = selectedIds.has(r.id);
-                        return (
-                          <tr key={r.id} className={`hover:bg-white/[0.03] transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
-                            <td className="px-6 py-4">
-                               <div className="flex items-center justify-center">
-                                 <button 
-                                   onClick={(e) => { e.stopPropagation(); toggleSelect(r.id); }}
-                                   className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${isSelected ? 'bg-primary border-primary text-black' : 'border-white/20 text-transparent hover:border-primary/50'}`}
-                                 >
-                                   <CheckSquare className="w-3.5 h-3.5" />
-                                 </button>
-                               </div>
-                            </td>
-                            <td className="px-4 py-4 font-mono text-xs font-black text-red-400 tracking-widest italic">{r.numero_titulo}</td>
-                            <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase italic tracking-widest">Compromisso Individual</td>
-                            <td className="text-right px-4 py-4 font-black text-white italic tracking-tighter">
-                              R$ {Number(r.valor_original).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider italic">
-                                <Calendar className="w-3.5 h-3.5 opacity-50 text-primary" />
-                                {new Date(r.data_vencimento).toLocaleDateString()}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <span className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest italic ${
-                                r.status === 'pago' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
-                                (new Date(r.data_vencimento) < new Date() ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20')
-                              }`}>
-                                {r.status === 'pago' ? 'LIQUIDADO' : (new Date(r.data_vencimento) < new Date() ? 'ATRASADO' : 'PENDENTE')}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                               <div className="flex justify-center gap-2">
-                                 <Button variant="ghost" size="sm" className="p-2.5 rounded-xl border border-white/10" onClick={() => setEditModal(r)} title="Manutenção"><Edit2 className="w-4 h-4" /></Button>
-                                 <Button variant="primary" size="sm" className={`p-2.5 rounded-xl transition-all ${r.status === 'pago' ? 'opacity-20 cursor-not-allowed text-muted-foreground' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'}`} onClick={() => r.status !== 'pago' && setBaixaModal(r)} disabled={r.status === 'pago'} title="Efetivar Pagamento"><ArrowUpRight className="w-4 h-4" /></Button>
-                                 <Button variant="danger" size="sm" className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500 hover:bg-red-500/20 transition-all" onClick={() => doDelete(r.id)} title="Excluir"><Trash2 className="w-4 h-4" /></Button>
-                                 <Button variant="outline" size="sm" className="p-2.5 rounded-xl bg-primary/5 border border-primary/10 text-primary hover:bg-primary/20 transition-all" onClick={() => setReciboModal(r)} title="Imprimir Comprovante"><Printer className="w-4 h-4" /></Button>
-                               </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {isExpanded &&
+                        groupRows.map((r: any) => {
+                          const isSelected = selectedIds.has(r.id);
+                          return (
+                            <tr
+                              key={r.id}
+                              className={`hover:bg-white/[0.03] transition-colors ${isSelected ? 'bg-primary/5' : ''}`}
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center justify-center">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleSelect(r.id);
+                                    }}
+                                    className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${isSelected ? 'bg-primary border-primary text-black' : 'border-white/20 text-transparent hover:border-primary/50'}`}
+                                  >
+                                    <CheckSquare className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 font-mono text-xs font-black text-red-400 tracking-widest italic">
+                                {r.numero_titulo}
+                              </td>
+                              <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase italic tracking-widest">
+                                Compromisso Individual
+                              </td>
+                              <td className="text-right px-4 py-4 font-black text-white italic tracking-tighter">
+                                R${' '}
+                                {Number(r.valor_original).toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider italic">
+                                  <Calendar className="w-3.5 h-3.5 opacity-50 text-primary" />
+                                  {new Date(r.data_vencimento).toLocaleDateString()}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span
+                                  className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest italic ${
+                                    r.status === 'pago'
+                                      ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                      : new Date(r.data_vencimento) < new Date()
+                                        ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                        : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+                                  }`}
+                                >
+                                  {r.status === 'pago'
+                                    ? 'LIQUIDADO'
+                                    : new Date(r.data_vencimento) < new Date()
+                                      ? 'ATRASADO'
+                                      : 'PENDENTE'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex justify-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="p-2.5 rounded-xl border border-white/10"
+                                    onClick={() => setEditModal(r)}
+                                    title="ManutenÃ§Ã£o"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    className={`p-2.5 rounded-xl transition-all ${r.status === 'pago' ? 'opacity-20 cursor-not-allowed text-muted-foreground' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'}`}
+                                    onClick={() => r.status !== 'pago' && setBaixaModal(r)}
+                                    disabled={r.status === 'pago'}
+                                    title="Efetivar Pagamento"
+                                  >
+                                    <ArrowUpRight className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
+                                    onClick={() => doDelete(r.id)}
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="p-2.5 rounded-xl bg-primary/5 border border-primary/10 text-primary hover:bg-primary/20 transition-all"
+                                    onClick={() => setReciboModal(r)}
+                                    title="Imprimir Comprovante"
+                                  >
+                                    <Printer className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </React.Fragment>
-                  )
+                  );
                 })
               )}
             </tbody>
           </table>
-                {/* Footer com contagem industrial */}
-        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic">
-          <div>Exibindo <span className="text-white">{rows.length}</span> de <span className="text-white">{total}</span> compromissos operacionais</div>
-           <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white" disabled={page === 1} onClick={() => setPage(page-1)}>Anterior</Button>
-              <Button variant="outline" size="sm" className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white" disabled={page * perPage >= total} onClick={() => setPage(page+1)}>Próxima</Button>
-           </div>
+          {/* Footer com contagem industrial */}
+          <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic">
+            <div>
+              Exibindo <span className="text-white">{rows.length}</span> de{' '}
+              <span className="text-white">{total}</span> compromissos operacionais
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white"
+                disabled={page * perPage >= total}
+                onClick={() => setPage(page + 1)}
+              >
+                PrÃ³xima
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Modal Pagamento Individual */}
-      <Modal isOpen={!!baixaModal} onClose={() => setBaixaModal(null)} title="Registrar Pagamento Industrial">
+      <Modal
+        isOpen={!!baixaModal}
+        onClose={() => setBaixaModal(null)}
+        title="Registrar Pagamento Industrial"
+      >
         <div className="min-w-[450px] p-2">
-          {baixaModal && (() => {
-            const hoje = new Date();
-            const venc = new Date(baixaModal.data_vencimento);
-            const atraso = Math.max(0, Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24)));
-            const valorAberto = Number(baixaModal.valor_aberto || 0);
-            
-            const multaPerc = atraso > 0 ? 0.02 : 0; 
-            const jurosDiarioPerc = 0.00033; 
-            const valorMulta = valorAberto * multaPerc;
-            const valorJuros = valorAberto * jurosDiarioPerc * atraso;
-            const valorTotal = valorAberto + valorMulta + valorJuros;
+          {baixaModal &&
+            (() => {
+              const hoje = new Date();
+              const venc = new Date(baixaModal.data_vencimento);
+              const atraso = Math.max(
+                0,
+                Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24)),
+              );
+              const valorAberto = Number(baixaModal.valor_aberto || 0);
 
-            return (
-              <div className="space-y-6">
-                <div className="glass-elevated p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Valor Original</span>
-                    <span className="font-bold text-white italic text-lg tracking-tighter">R$ {valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  {atraso > 0 && (
-                    <>
-                      <div className="flex justify-between items-center text-red-400">
-                        <span className="text-[11px] font-bold uppercase tracking-wider">Multa (2% - {atraso} dias)</span>
-                        <span className="font-bold italic">+ R$ {valorMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-red-400">
-                        <span className="text-[11px] font-bold uppercase tracking-wider">Juros (1%/mês)</span>
-                        <span className="font-bold italic">+ R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="pt-4 border-t border-white/10 flex justify-between items-end">
-                    <span className="text-[11px] font-black text-red-500 uppercase tracking-[0.2em]">Total a Debitar</span>
-                    <span className="text-3xl font-black text-red-500 italic tracking-tighter">R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">Conta Bancária / Débito</label>
-                  <select id="conta-interna-id-pagar" className="input-base">
-                    <option value="">Selecione a conta de origem...</option>
-                    {contas.map(c => (
-                      <option key={c.id} value={c.id}>{c.nome.toUpperCase()} - DISPONÍVEL: R$ {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</option>
-                    ))}
-                  </select>
-                </div>
+              const multaPerc = atraso > 0 ? 0.02 : 0;
+              const jurosDiarioPerc = 0.00033;
+              const valorMulta = valorAberto * multaPerc;
+              const valorJuros = valorAberto * jurosDiarioPerc * atraso;
+              const valorTotal = valorAberto + valorMulta + valorJuros;
 
-                <div className="flex gap-4 justify-end">
-                  <Button variant="outline" size="md" className="uppercase font-black italic text-xs tracking-widest text-white border-white/20 hover:bg-white/10" onClick={() => setBaixaModal(null)}>CANCELAR</Button>
-                  <Button variant="danger" size="md" className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20 text-white" onClick={async () => {
-                    try {
-                      const contaId = (document.getElementById('conta-interna-id-pagar') as HTMLSelectElement).value;
-                      if (!contaId) throw new Error('Selecione uma conta');
-                      
-                      await api.financeiro.titulosPagar.baixar(baixaModal.id, {
-                        valor_baixa: valorTotal,
-                        valor_original_baixa: valorAberto,
-                        valor_multa: valorMulta,
-                        valor_juros: valorJuros,
-                        conta_interna_id: contaId,
-                        data_baixa: new Date()
-                      });
-                      setBaixaModal(null);
-                      load(page);
-                      success('Pagamento industrial registrado e saldo atualizado!');
-                    } catch (err: any) {
-                      error(err.message || 'Erro ao registrar pagamento');
-                    }
-                  }}>CONFIRMAR PAGAMENTO</Button>
+              return (
+                <div className="space-y-6">
+                  <div className="glass-elevated p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Valor Original
+                      </span>
+                      <span className="font-bold text-white italic text-lg tracking-tighter">
+                        R$ {valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    {atraso > 0 && (
+                      <>
+                        <div className="flex justify-between items-center text-red-400">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">
+                            Multa (2% - {atraso} dias)
+                          </span>
+                          <span className="font-bold italic">
+                            + R$ {valorMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-red-400">
+                          <span className="text-[11px] font-bold uppercase tracking-wider">
+                            Juros (1%/mÃªs)
+                          </span>
+                          <span className="font-bold italic">
+                            + R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                      <span className="text-[11px] font-black text-red-500 uppercase tracking-[0.2em]">
+                        Total a Debitar
+                      </span>
+                      <span className="text-3xl font-black text-red-500 italic tracking-tighter">
+                        R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+                      Conta BancÃ¡ria / DÃ©bito
+                    </label>
+                    <select id="conta-interna-id-pagar" className="input-base">
+                      <option value="">Selecione a conta de origem...</option>
+                      {contas.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome.toUpperCase()} - DISPONÃVEL: R${' '}
+                          {Number(c.saldo_atual).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2,
+                          })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-4 justify-end">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="uppercase font-black italic text-xs tracking-widest text-white border-white/20 hover:bg-white/10"
+                      onClick={() => setBaixaModal(null)}
+                    >
+                      CANCELAR
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="md"
+                      className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20 text-white"
+                      onClick={async () => {
+                        try {
+                          const contaId = (
+                            document.getElementById('conta-interna-id-pagar') as HTMLSelectElement
+                          ).value;
+                          if (!contaId) throw new Error('Selecione uma conta');
+
+                          await api.financeiro.titulosPagar.baixar(baixaModal.id, {
+                            valor_baixa: valorTotal,
+                            valor_original_baixa: valorAberto,
+                            valor_multa: valorMulta,
+                            valor_juros: valorJuros,
+                            conta_interna_id: contaId,
+                            data_baixa: new Date(),
+                          });
+                          setBaixaModal(null);
+                          load(page);
+                          success('Pagamento industrial registrado e saldo atualizado!');
+                        } catch (err: any) {
+                          error(err.message || 'Erro ao registrar pagamento');
+                        }
+                      }}
+                    >
+                      CONFIRMAR PAGAMENTO
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
         </div>
       </Modal>
 
-      <Modal isOpen={!!editModal} onClose={() => setEditModal(null)} title="Manutenção de Compromisso Industrial" size="lg">
+      <Modal
+        isOpen={!!editModal}
+        onClose={() => setEditModal(null)}
+        title="ManutenÃ§Ã£o de Compromisso Industrial"
+        size="lg"
+      >
         <div className="p-4 space-y-6">
           <div className="grid grid-cols-2 gap-6">
-            <Input 
-              label="Número do Título"
-              type="text" 
-              className="font-mono font-bold" 
-              value={editModal?.numero_titulo || ''} 
-              onChange={e => editModal && setEditModal({...editModal, numero_titulo: e.target.value})}
+            <Input
+              label="NÃºmero do TÃ­tulo"
+              type="text"
+              className="font-mono font-bold"
+              value={editModal?.numero_titulo || ''}
+              onChange={(e) =>
+                editModal && setEditModal({ ...editModal, numero_titulo: e.target.value })
+              }
             />
             <div className="space-y-2">
-              <label className="mb-2 block text-sm font-medium text-foreground/90 uppercase tracking-widest text-muted-foreground text-[10px] ml-1">Status Operacional</label>
-              <select 
-                className="input-base uppercase font-bold" 
-                value={editModal?.status || ''} 
-                onChange={e => editModal && setEditModal({...editModal, status: e.target.value as any})}
+              <label className="mb-2 block text-sm font-medium text-foreground/90 uppercase tracking-widest text-muted-foreground text-[10px] ml-1">
+                Status Operacional
+              </label>
+              <select
+                className="input-base uppercase font-bold"
+                value={editModal?.status || ''}
+                onChange={(e) =>
+                  editModal && setEditModal({ ...editModal, status: e.target.value as any })
+                }
               >
                 <option value="aberto">ABERTO / PENDENTE</option>
                 <option value="pago">PAGO / LIQUIDADO</option>
@@ -527,84 +754,157 @@ export default function FinanceiroTitulosPagarPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input 
+            <Input
               label="Valor Original (R$)"
-              type="number" 
-              className="font-bold italic" 
-              value={editModal?.valor_original || 0} 
-              onChange={e => editModal && setEditModal({...editModal, valor_original: Number(e.target.value)})}
+              type="number"
+              className="font-bold italic"
+              value={editModal?.valor_original || 0}
+              onChange={(e) =>
+                editModal && setEditModal({ ...editModal, valor_original: Number(e.target.value) })
+              }
             />
-            <Input 
+            <Input
               label="Data de Vencimento"
-              type="date" 
-              className="font-bold" 
-              value={editModal?.data_vencimento ? new Date(editModal.data_vencimento).toISOString().split('T')[0] : ''} 
-              onChange={e => editModal && setEditModal({...editModal, data_vencimento: e.target.value})}
+              type="date"
+              className="font-bold"
+              value={
+                editModal?.data_vencimento
+                  ? new Date(editModal.data_vencimento).toISOString().split('T')[0]
+                  : ''
+              }
+              onChange={(e) =>
+                editModal && setEditModal({ ...editModal, data_vencimento: e.target.value })
+              }
             />
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input 
+            <Input
               label="Taxa Financeira (%)"
-              type="number" 
-              value={editModal?.taxa_financeira || 0} 
-              onChange={e => editModal && setEditModal({...editModal, taxa_financeira: Number(e.target.value)})}
+              type="number"
+              value={editModal?.taxa_financeira || 0}
+              onChange={(e) =>
+                editModal && setEditModal({ ...editModal, taxa_financeira: Number(e.target.value) })
+              }
             />
-            <Input 
+            <Input
               label="Custo Financeiro (R$)"
-              type="number" 
-              value={editModal?.valor_custo_financeiro || 0} 
-              onChange={e => editModal && setEditModal({...editModal, valor_custo_financeiro: Number(e.target.value)})}
+              type="number"
+              value={editModal?.valor_custo_financeiro || 0}
+              onChange={(e) =>
+                editModal &&
+                setEditModal({ ...editModal, valor_custo_financeiro: Number(e.target.value) })
+              }
             />
           </div>
 
           <div className="flex gap-4 justify-end pt-6 border-t border-white/5">
-            <Button variant="outline" size="md" className="uppercase font-black italic text-xs tracking-widest text-white border-white/20 hover:bg-white/10" onClick={() => setEditModal(null)}>CANCELAR</Button>
-            <Button variant="danger" size="md" className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 text-white" onClick={saveEdit}>SALVAR ALTERAÇÕES</Button>
+            <Button
+              variant="outline"
+              size="md"
+              className="uppercase font-black italic text-xs tracking-widest text-white border-white/20 hover:bg-white/10"
+              onClick={() => setEditModal(null)}
+            >
+              CANCELAR
+            </Button>
+            <Button
+              variant="danger"
+              size="md"
+              className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 text-white"
+              onClick={saveEdit}
+            >
+              SALVAR ALTERAÃ‡Ã•ES
+            </Button>
           </div>
         </div>
       </Modal>
 
-      <ReciboModal 
-        isOpen={!!reciboModal} 
-        onClose={() => setReciboModal(null)} 
-        titulo={reciboModal as any} 
-        tipo="pagar" 
-        beneficiarioOuPagador={reciboModal ? suppliersMap[reciboModal.fornecedor_id] || 'Fornecedor' : ''} 
+      <ReciboModal
+        isOpen={!!reciboModal}
+        onClose={() => setReciboModal(null)}
+        titulo={reciboModal as any}
+        tipo="pagar"
+        beneficiarioOuPagador={
+          reciboModal ? suppliersMap[reciboModal.fornecedor_id] || 'Fornecedor' : ''
+        }
       />
 
       {/* Modal de Pagamento em Lote Industrial */}
-      <Modal isOpen={loteModal} onClose={() => setLoteModal(false)} title={`Liquidação em Lote (${selectedIds.size} Títulos)`}>
+      <Modal
+        isOpen={loteModal}
+        onClose={() => setLoteModal(false)}
+        title={`LiquidaÃ§Ã£o em Lote (${selectedIds.size} TÃ­tulos)`}
+      >
         <div className="p-2 space-y-6">
           <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-[11px] font-bold text-orange-400 uppercase tracking-wider italic flex items-center gap-3">
             <Layers className="w-5 h-5" />
-            Atenção: Os {selectedIds.size} títulos selecionados serão baixados pelo valor nominal (em aberto).
+            AtenÃ§Ã£o: Os {selectedIds.size} tÃ­tulos selecionados serÃ£o baixados pelo valor
+            nominal (em aberto).
           </div>
-          
+
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">Conta Bancária Corporativa *</label>
-              <select className="input-base uppercase font-bold" value={loteData.conta_interna_id} onChange={e => setLoteData(d => ({ ...d, conta_interna_id: e.target.value }))}>
-                <option value="">Selecione a conta para débito...</option>
-                {contas.map((c) => <option key={c.id} value={c.id}>{c.nome.toUpperCase()} — R$ {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</option>)}
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+                Conta BancÃ¡ria Corporativa *
+              </label>
+              <select
+                className="input-base uppercase font-bold"
+                value={loteData.conta_interna_id}
+                onChange={(e) => setLoteData((d) => ({ ...d, conta_interna_id: e.target.value }))}
+              >
+                <option value="">Selecione a conta para dÃ©bito...</option>
+                {contas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome.toUpperCase()} â€” R${' '}
+                    {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">Data da Liquidação</label>
-                <input type="date" className="input-base font-bold" value={loteData.data_baixa} onChange={e => setLoteData(d => ({ ...d, data_baixa: e.target.value }))} />
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+                  Data da LiquidaÃ§Ã£o
+                </label>
+                <input
+                  type="date"
+                  className="input-base font-bold"
+                  value={loteData.data_baixa}
+                  onChange={(e) => setLoteData((d) => ({ ...d, data_baixa: e.target.value }))}
+                />
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">Observação Interna</label>
-                <input type="text" className="input-base" placeholder="Motivo da baixa em lote..." value={loteData.observacoes} onChange={e => setLoteData(d => ({ ...d, observacoes: e.target.value }))} />
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+                  ObservaÃ§Ã£o Interna
+                </label>
+                <input
+                  type="text"
+                  className="input-base"
+                  placeholder="Motivo da baixa em lote..."
+                  value={loteData.observacoes}
+                  onChange={(e) => setLoteData((d) => ({ ...d, observacoes: e.target.value }))}
+                />
               </div>
             </div>
           </div>
 
           <div className="flex gap-4 justify-end pt-4 border-t border-white/5">
-            <Button variant="outline" size="md" className="uppercase font-black italic text-xs tracking-widest" onClick={() => setLoteModal(false)}>CANCELAR</Button>
-            <Button variant="primary" size="md" className="uppercase font-black italic text-xs tracking-widest bg-orange-600 border-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-900/20 text-white" onClick={handleBaixaLote} isLoading={loteLoading}>
+            <Button
+              variant="outline"
+              size="md"
+              className="uppercase font-black italic text-xs tracking-widest"
+              onClick={() => setLoteModal(false)}
+            >
+              CANCELAR
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              className="uppercase font-black italic text-xs tracking-widest bg-orange-600 border-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-900/20 text-white"
+              onClick={handleBaixaLote}
+              isLoading={loteLoading}
+            >
               CONFIRMAR PAGAMENTO EM MASSA
             </Button>
           </div>

@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { calendarioService } from '../../services/calendarioService.js';
-import type { EventoCalendarioType } from '../../services/calendarioService.js';
-import { X, CheckCircle, Trash2, Calendar, Clock, Tag, ExternalLink, HelpCircle } from 'lucide-react';
+import { calendarService } from '../../services/calendarService.js';
+import type { EventoCalendarioType } from '../../services/calendarService.js';
+import {
+  X,
+  CheckCircle,
+  Trash2,
+  Calendar,
+  Clock,
+  Tag,
+  ExternalLink,
+  HelpCircle,
+} from 'lucide-react';
 
 interface PopoverEventoProps {
   evento: EventoCalendarioType;
@@ -35,12 +44,14 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
       // Como os IDs manuais são prefixados com 'manual-', extraímos o número
       const isManual = evento.id.startsWith('manual-');
       if (!isManual) {
-        alert('Este é um evento gerado automaticamente pelo sistema (OP/Orçamento) e não pode ser concluído diretamente por aqui.');
+        alert(
+          'Este é um evento gerado automaticamente pelo sistema (OP/Orçamento) e não pode ser concluído diretamente por aqui.',
+        );
         setLoading(false);
         return;
       }
       const rawId = parseInt(evento.id.replace('manual-', ''), 10);
-      await calendarioService.updateEvento(rawId, { concluido: !evento.concluido });
+      await calendarService.updateEvento(rawId, { concluido: !evento.concluido });
       onUpdate();
       onClose();
     } catch (err: any) {
@@ -62,7 +73,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
         return;
       }
       const rawId = parseInt(evento.id.replace('manual-', ''), 10);
-      await calendarioService.deleteEvento(rawId);
+      await calendarService.deleteEvento(rawId);
       onUpdate();
       onClose();
     } catch (err: any) {
@@ -86,23 +97,19 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Cabecalho Colorido */}
-        <div 
-          className="h-3 w-full" 
-          style={{ backgroundColor: evento.cor_categoria }}
-        />
+        <div className="h-3 w-full" style={{ backgroundColor: evento.cor_categoria }} />
 
         {/* Header */}
         <div className="flex items-start justify-between p-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span 
+              <span
                 className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
-                style={{ 
-                  color: evento.cor_categoria, 
+                style={{
+                  color: evento.cor_categoria,
                   borderColor: `${evento.cor_categoria}40`,
-                  backgroundColor: `${evento.cor_categoria}15`
+                  backgroundColor: `${evento.cor_categoria}15`,
                 }}
               >
                 {obterNomeTipo(evento.tipo_evento)}
@@ -113,9 +120,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 </span>
               )}
             </div>
-            <h3 className="text-lg font-bold text-foreground leading-snug">
-              {evento.titulo}
-            </h3>
+            <h3 className="text-lg font-bold text-foreground leading-snug">{evento.titulo}</h3>
           </div>
           <button
             onClick={onClose}
@@ -167,14 +172,12 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
             <div className="p-3 rounded-xl border border-border bg-primary/5 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4 text-primary" />
-                <span className="font-medium text-foreground">
-                  Vinculado ao Sistema
-                </span>
+                <span className="font-medium text-foreground">Vinculado ao Sistema</span>
               </div>
-              
+
               {evento.tipo_evento === 'prazo_entrega' && evento.operacao_prod_id && (
-                <a 
-                  href={`/#/producao`} 
+                <a
+                  href={`/#/producao`}
                   className="flex items-center gap-1 text-primary hover:underline font-semibold"
                   onClick={onClose}
                 >
@@ -184,8 +187,8 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
               )}
 
               {evento.tipo_evento === 'orcamento' && evento.quotation_id && (
-                <a 
-                  href={`/#/orcamentos-pro?id=${evento.quotation_id}`} 
+                <a
+                  href={`/#/orcamentos-pro?id=${evento.quotation_id}`}
                   className="flex items-center gap-1 text-primary hover:underline font-semibold"
                   onClick={onClose}
                 >
@@ -220,7 +223,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
             >
               Fechar
             </button>
-            
+
             {isManual && (
               <button
                 onClick={alternarConclusao}
@@ -236,7 +239,6 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

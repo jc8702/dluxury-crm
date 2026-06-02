@@ -1,5 +1,5 @@
 import React from 'react';
-import type { EventoCalendarioType } from '../../services/calendarioService.js';
+import type { EventoCalendarioType } from '../../services/calendarService.js';
 import { AlertCircle } from 'lucide-react';
 
 interface CalendarioMesProps {
@@ -9,7 +9,12 @@ interface CalendarioMesProps {
   onDiaClick: (dia: Date) => void;
 }
 
-export default function CalendarioMes({ dataSelecionada, eventos, onEventoClick, onDiaClick }: CalendarioMesProps) {
+export default function CalendarioMes({
+  dataSelecionada,
+  eventos,
+  onEventoClick,
+  onDiaClick,
+}: CalendarioMesProps) {
   const ano = dataSelecionada.getFullYear();
   const mes = dataSelecionada.getMonth();
 
@@ -36,7 +41,7 @@ export default function CalendarioMes({ dataSelecionada, eventos, onEventoClick,
     const mesStr = String(data.getMonth() + 1).padStart(2, '0');
     const diaStr = String(data.getDate()).padStart(2, '0');
     const dateStr = `${anoStr}-${mesStr}-${diaStr}`;
-    
+
     return eventos.filter((evt) => evt.data_evento === dateStr);
   };
 
@@ -70,7 +75,7 @@ export default function CalendarioMes({ dataSelecionada, eventos, onEventoClick,
                 <>
                   {/* Número do Dia */}
                   <div className="flex justify-between items-center mb-1">
-                    <span 
+                    <span
                       className={`
                         text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full
                         ${isHoje ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/80'}
@@ -92,10 +97,10 @@ export default function CalendarioMes({ dataSelecionada, eventos, onEventoClick,
                           e.stopPropagation(); // Impede de abrir o modal de criar evento no dia
                           onEventoClick(evento);
                         }}
-                        style={{ 
+                        style={{
                           backgroundColor: `${evento.cor_categoria}18`,
                           borderLeft: `3px solid ${evento.cor_categoria}`,
-                          color: evento.cor_categoria
+                          color: evento.cor_categoria,
                         }}
                         className={`
                           px-2 py-0.5 rounded text-[10px] font-medium truncate hover:brightness-95 transition flex items-center justify-between gap-1

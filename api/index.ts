@@ -12,10 +12,10 @@ export const config = {
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  '/api/auth': { max: 10, windowMs: 60_000 },       // 10 req/min para auth
-  '/api/init-db': { max: 3, windowMs: 300_000 },    // 3 req/5min para init
-  '/api/ai/chat': { max: 5, windowMs: 10_000 },     // 5 req/10s para chat de IA
-  default: { max: 100, windowMs: 60_000 },          // 100 req/min default
+  '/api/auth': { max: 10, windowMs: 60_000 }, // 10 req/min para auth
+  '/api/init-db': { max: 3, windowMs: 300_000 }, // 3 req/5min para init
+  '/api/ai/chat': { max: 5, windowMs: 10_000 }, // 5 req/10s para chat de IA
+  default: { max: 100, windowMs: 60_000 }, // 100 req/min default
 };
 
 function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfter?: number } {
@@ -59,10 +59,12 @@ function cleanupRateLimitMap() {
 
 function getClientIP(req: any): string {
   const headers = req.headers || {};
-  return headers['x-forwarded-for']?.split(',')[0]?.trim() 
-    || headers['x-real-ip'] 
-    || req.socket?.remoteAddress 
-    || 'unknown';
+  return (
+    headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    headers['x-real-ip'] ||
+    req.socket?.remoteAddress ||
+    'unknown'
+  );
 }
 
 function getCorsOrigin(req: any): string {
@@ -84,23 +86,41 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
+  // Security Headers - proteção contra XSS, clickjacking, MIME sniffing, etc.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'",
+  );
+  // HSTS apenas em conexões HTTPS (produção)
+  if (req.headers?.['x-forwarded-proto'] === 'https' || (req.connection?.encrypted ?? false)) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // Obter informacoes de autenticacao para chave de rate limit isolada por tenant/usuario
   const { validateAuth } = await import('../src/api-lib/_db.js');
   const auth = validateAuth(req);
   const clientIP = getClientIP(req);
-  const rateKey = auth.authorized && auth.user ? `${auth.user.tenantId || '00000000-0000-0000-0000-000000000000'}:${auth.user.id}` : clientIP;
+  const rateKey =
+    auth.authorized && auth.user
+      ? `${auth.user.tenantId || '00000000-0000-0000-0000-000000000000'}:${auth.user.id}`
+      : clientIP;
 
   // Rate limiting
   const cleanUrl = (req.url || '').split('?')[0];
   const rateResult = checkRateLimit(rateKey, cleanUrl);
   if (!rateResult.allowed) {
     res.setHeader('Retry-After', String(rateResult.retryAfter || 60));
-    return res.status(429).json({ 
-      success: false, 
+    return res.status(429).json({
+      success: false,
       error: 'Muitas requisições. Tente novamente em alguns segundos.',
-      retryAfter: rateResult.retryAfter 
+      retryAfter: rateResult.retryAfter,
     });
   }
 
@@ -147,7 +167,12 @@ export default async function handler(req: any, res: any) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
     }
-    if (cleanUrl.startsWith('/api/estoque/items') || cleanUrl.startsWith('/api/estoque/alertas') || cleanUrl.startsWith('/api/estoque/registrar-movimento') || cleanUrl.startsWith('/api/estoque/finalizar-op')) {
+    if (
+      cleanUrl.startsWith('/api/estoque/items') ||
+      cleanUrl.startsWith('/api/estoque/alertas') ||
+      cleanUrl.startsWith('/api/estoque/registrar-movimento') ||
+      cleanUrl.startsWith('/api/estoque/finalizar-op')
+    ) {
       const { handleEstoqueGranular } = await import('../src/api-lib/estoque-granular.js');
       return await handleEstoqueGranular(req, res);
     }
@@ -168,8 +193,8 @@ export default async function handler(req: any, res: any) {
       const { handleImportarItensOrcamento } = await import('./orcamentos/importar-itens.js');
       return await handleImportarItensOrcamento(req, res);
     }
-    if (cleanUrl.startsWith("/api/quotations") || cleanUrl.startsWith("/api/orcamentos-pro")) {
-      const { handleQuotations } = await import("../src/api-lib/quotations.js");
+    if (cleanUrl.startsWith('/api/quotations') || cleanUrl.startsWith('/api/orcamentos-pro')) {
+      const { handleQuotations } = await import('../src/api-lib/quotations.js');
       return await handleQuotations(req, res);
     }
     if (cleanUrl.startsWith('/api/orcamentos/export-pdf')) {
@@ -202,18 +227,20 @@ export default async function handler(req: any, res: any) {
       }
 
       if (message.length > 4000) {
-        return res.status(400).json({ success: false, error: 'Mensagem muito longa (máximo 4000 caracteres)' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Mensagem muito longa (máximo 4000 caracteres)' });
       }
 
       // Enriquecer contexto com data pt-BR
       const enrichedContext = {
         ...context,
-        data_atual: context.data_atual || new Date().toISOString()
+        data_atual: context.data_atual || new Date().toISOString(),
       };
 
       try {
         const { processarChat } = await import('./services/ai-chat.js');
-        
+
         // Timeout de 45 segundos usando Promise.race
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => {
@@ -233,43 +260,50 @@ export default async function handler(req: any, res: any) {
           context: enrichedContext,
           memory_summary,
           tenantId,
-          usuarioId
+          usuarioId,
         });
 
-        const result = await Promise.race([chatPromise, timeoutPromise]) as any;
-        
+        const result = (await Promise.race([chatPromise, timeoutPromise])) as any;
+
         res.setHeader('X-Agent', result.agent || 'administrativo');
         return res.status(200).json(result);
       } catch (err: any) {
         console.error('[AI_CHAT_ROUTE_ERROR]', err);
-        
+
         const status = err.status || err.statusCode || 500;
         const errMsg = err.message || '';
-        
+
         if (errMsg === 'TIMEOUT_ERROR' || status === 408) {
           return res.status(408).json({
             success: false,
-            error: 'Tempo limite de resposta excedido. A IA demorou mais de 45 segundos para responder.'
+            error:
+              'Tempo limite de resposta excedido. A IA demorou mais de 45 segundos para responder.',
           });
         }
-        
+
         if (status === 429 || errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED')) {
           return res.status(429).json({
             success: false,
-            error: 'Muitas requisições. O limite de cota da API da IA foi excedido. Tente novamente mais tarde.'
+            error:
+              'Muitas requisições. O limite de cota da API da IA foi excedido. Tente novamente mais tarde.',
           });
         }
-        
-        if (status === 503 || errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('indisponivel')) {
+
+        if (
+          status === 503 ||
+          errMsg.includes('503') ||
+          errMsg.includes('UNAVAILABLE') ||
+          errMsg.includes('indisponivel')
+        ) {
           return res.status(503).json({
             success: false,
-            error: 'Serviço temporariamente indisponível. Tente novamente em instantes.'
+            error: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
           });
         }
 
         return res.status(status >= 400 && status < 600 ? status : 500).json({
           success: false,
-          error: err.message || 'Erro interno ao processar chat com IA'
+          error: err.message || 'Erro interno ao processar chat com IA',
         });
       }
     }
@@ -290,7 +324,12 @@ export default async function handler(req: any, res: any) {
       const { handleGoals } = await import('../src/api-lib/crm.js');
       return await handleGoals(req, res);
     }
-    if (cleanUrl.startsWith('/api/kanban/move-card') || cleanUrl.startsWith('/api/kanban/board') || cleanUrl.startsWith('/api/kanban/card-details') || cleanUrl.startsWith('/api/kanban/card-history')) {
+    if (
+      cleanUrl.startsWith('/api/kanban/move-card') ||
+      cleanUrl.startsWith('/api/kanban/board') ||
+      cleanUrl.startsWith('/api/kanban/card-details') ||
+      cleanUrl.startsWith('/api/kanban/card-history')
+    ) {
       const { handleKanbanProducao } = await import('../src/api-lib/kanban-producao.js');
       return await handleKanbanProducao(req, res);
     }
@@ -414,7 +453,12 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/resolve-dominio')) {
       const host = req.query.host || req.headers['host'] || '';
       const tenant = await resolveTenantByDomain(host);
-      return res.status(200).json({ success: true, tenant: tenant ? { nome: tenant.nome, subdominio: tenant.subdominio } : null });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          tenant: tenant ? { nome: tenant.nome, subdominio: tenant.subdominio } : null,
+        });
     }
 
     // Endpoint para configurar domínio personalizado (admin)
@@ -422,11 +466,15 @@ export default async function handler(req: any, res: any) {
       const { sql } = await import('../src/api-lib/_db.js');
       const auth = validateAuth(req);
       if (!auth.authorized || auth.user?.role !== 'admin') {
-        return res.status(403).json({ success: false, error: 'Apenas admin pode configurar domínio' });
+        return res
+          .status(403)
+          .json({ success: false, error: 'Apenas admin pode configurar domínio' });
       }
       const { tenantId, dominio } = req.body;
       if (!tenantId || !dominio) {
-        return res.status(400).json({ success: false, error: 'tenantId e dominio são obrigatórios' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'tenantId e dominio são obrigatórios' });
       }
       await sql`UPDATE tenants SET dominio_personalizado = ${dominio} WHERE id = ${tenantId}::uuid`;
       return res.status(200).json({ success: true, message: 'Domínio atualizado' });
@@ -437,12 +485,14 @@ export default async function handler(req: any, res: any) {
     }
 
     console.warn(`[ROUTER] 404 - No route matched for: ${cleanUrl}`);
-    return res.status(404).json({ success: false, error: 'Rota da API não encontrada', path: cleanUrl });
+    return res
+      .status(404)
+      .json({ success: false, error: 'Rota da API não encontrada', path: cleanUrl });
   } catch (err: any) {
     console.error('API Router Error:', err);
-    return res.status(500).json({ 
-      success: false, 
-      error: err.message || 'Erro interno no servidor da API'
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Erro interno no servidor da API',
     });
   }
 }

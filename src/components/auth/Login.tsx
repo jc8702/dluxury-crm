@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { api, setAuthToken } from '../../lib/api';
-import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Login: React.FC = () => {
-  const { setUser } = useAppContext();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,44 +27,109 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'hsl(var(--background))', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        width: '100vw',
+        background: 'hsl(var(--background))',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src="/logo.png" alt="D'Luxury" style={{ width: '120px', height: '120px', marginBottom: '1.5rem', objectFit: 'contain' }} />
-          <h1 style={{ color: 'hsl(var(--primary))', fontSize: '1.5rem', fontWeight: 'bold' }}>D'LUXURY</h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem', letterSpacing: '0.1em' }}>MÓVEIS SOB MEDIDA</p>
+          <img
+            src="/logo.png"
+            alt="D'Luxury"
+            style={{
+              width: '120px',
+              height: '120px',
+              marginBottom: '1.5rem',
+              objectFit: 'contain',
+            }}
+          />
+          <h1 style={{ color: 'hsl(var(--primary))', fontSize: '1.5rem', fontWeight: 'bold' }}>
+            D'LUXURY
+          </h1>
+          <p
+            style={{
+              color: 'hsl(var(--muted-foreground))',
+              fontSize: '0.85rem',
+              letterSpacing: '0.1em',
+            }}
+          >
+            MÓVEIS SOB MEDIDA
+          </p>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'hsl(var(--destructive))', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center', border: '1px solid hsl(var(--destructive))' }}>
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: 'hsl(var(--destructive))',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
+              textAlign: 'center',
+              border: '1px solid hsl(var(--destructive))',
+            }}
+          >
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form
+          onSubmit={handleLogin}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+        >
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>E-mail</label>
-            <input 
-              type="email" 
-              className="input" 
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.85rem',
+                marginBottom: '0.5rem',
+                color: 'hsl(var(--muted-foreground))',
+              }}
+            >
+              E-mail
+            </label>
+            <input
+              type="email"
+              className="input"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              required 
+              required
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>Senha</label>
-            <input 
-              type="password" 
-              className="input" 
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.85rem',
+                marginBottom: '0.5rem',
+                color: 'hsl(var(--muted-foreground))',
+              }}
+            >
+              Senha
+            </label>
+            <input
+              type="password"
+              className="input"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              required 
+              required
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '0.5rem', width: '100%' }}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ marginTop: '0.5rem', width: '100%' }}
+          >
             {loading ? 'Entrando...' : 'Acessar Sistema'}
           </button>
         </form>
@@ -74,4 +139,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

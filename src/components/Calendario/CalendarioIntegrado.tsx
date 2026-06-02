@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, AlertTriangle, Sparkles, Filter, Plus } from 'lucide-react';
-import { calendarioService } from '../../services/calendarioService.js';
-import type { EventoCalendarioType, TipoEventoType } from '../../services/calendarioService.js';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Clock,
+  AlertTriangle,
+  Sparkles,
+  Filter,
+  Plus,
+} from 'lucide-react';
+import { calendarService } from '../../services/calendarService.js';
+import type { EventoCalendarioType, TipoEventoType } from '../../services/calendarService.js';
 import CalendarioMes from './CalendarioMes.tsx';
 import CalendarioSemana from './CalendarioSemana.tsx';
 import PopoverEvento from './PopoverEvento.tsx';
@@ -38,9 +47,9 @@ export default function CalendarioIntegrado() {
     try {
       const mes = dataSelecionada.getMonth() + 1;
       const ano = dataSelecionada.getFullYear();
-      
-      const data = await calendarioService.getEventos(mes, ano, filtroTipo || undefined);
-      
+
+      const data = await calendarService.getEventos(mes, ano, filtroTipo || undefined);
+
       // Mapear se está atrasado (se data_evento < hoje e não está concluído)
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -50,7 +59,7 @@ export default function CalendarioIntegrado() {
         dataEvt.setHours(0, 0, 0, 0);
         return {
           ...evt,
-          atrasado: dataEvt < hoje && !evt.concluido
+          atrasado: dataEvt < hoje && !evt.concluido,
         };
       });
 
@@ -103,7 +112,7 @@ export default function CalendarioIntegrado() {
       const dia = String(diaSelecionadoParaCriar.getDate()).padStart(2, '0');
       const data_evento = `${ano}-${mes}-${dia}`;
 
-      await calendarioService.criarEvento({
+      await calendarService.criarEvento({
         titulo: formTitulo.trim(),
         descricao: formDescricao.trim() || undefined,
         data_evento,
@@ -130,8 +139,10 @@ export default function CalendarioIntegrado() {
   // Ajusta cores no form baseado no tipo selecionado
   const handleTipoChange = (tipo: TipoEventoType) => {
     setFormTipo(tipo);
-    if (tipo === 'tarefa') setFormCor('#10B981'); // Verde
-    else if (tipo === 'lembrete_compra') setFormCor('#F59E0B'); // Âmbar
+    if (tipo === 'tarefa')
+      setFormCor('#10B981'); // Verde
+    else if (tipo === 'lembrete_compra')
+      setFormCor('#F59E0B'); // Âmbar
     else if (tipo === 'reuniao') setFormCor('#8B5CF6'); // Roxo
   };
 
@@ -149,7 +160,8 @@ export default function CalendarioIntegrado() {
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
             </h2>
             <p className="text-xs text-muted-foreground">
-              Agenda integrada contendo tarefas, reuniões, prazos de OPs e prazos de propostas aprovadas.
+              Agenda integrada contendo tarefas, reuniões, prazos de OPs e prazos de propostas
+              aprovadas.
             </p>
           </div>
         </div>
@@ -265,7 +277,6 @@ export default function CalendarioIntegrado() {
       {showCreateModal && diaSelecionadoParaCriar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
           <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
             <div className="flex items-center justify-between p-6 border-b border-border bg-muted/30">
               <h3 className="text-lg font-bold text-foreground">
                 Agendar para: {diaSelecionadoParaCriar.toLocaleDateString('pt-BR')}
@@ -393,7 +404,6 @@ export default function CalendarioIntegrado() {
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

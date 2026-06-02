@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { api, setAuthToken } from '../lib/api';
 import { Link, useNavigate } from 'react-router-dom';
 
 const SignupPage: React.FC = () => {
-  const { setUser } = useAppContext();
+  const { setUser } = useAuth();
   const navigate = useNavigate();
 
   // Estados do formulário
@@ -14,13 +14,15 @@ const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
-  
+
   // Seleção de planos (default: pro)
   const [plano, setPlano] = useState<'basic' | 'pro' | 'enterprise'>('pro');
   const [aceitouTermos, setAceitouTermos] = useState(false);
 
   // Estados de UI/Feedback
-  const [subdomainStatus, setSubdomainStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [subdomainStatus, setSubdomainStatus] = useState<
+    'idle' | 'checking' | 'available' | 'unavailable'
+  >('idle');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +36,10 @@ const SignupPage: React.FC = () => {
       return;
     }
 
-    const subClean = subdominio.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const subClean = subdominio
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
     if (subClean !== subdominio) {
       setSubdominio(subClean);
     }
@@ -97,12 +102,12 @@ const SignupPage: React.FC = () => {
         email,
         senha,
         nomeAdmin,
-        plano
+        plano,
       });
 
       if (res.token) setAuthToken(res.token);
       if (res.user) setUser(res.user);
-      
+
       // Redireciona para o painel
       navigate('/painel');
     } catch (err: any) {
@@ -112,7 +117,8 @@ const SignupPage: React.FC = () => {
     }
   };
 
-  const inputClass = "w-full py-3.5 px-4 rounded-xl bg-card border border-border/30 text-card-foreground outline-none text-sm transition-all duration-200 focus:border-primary focus:ring-1 focus:ring-primary/30";
+  const inputClass =
+    'w-full py-3.5 px-4 rounded-xl bg-card border border-border/30 text-card-foreground outline-none text-sm transition-all duration-200 focus:border-primary focus:ring-1 focus:ring-primary/30';
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans p-12 box-border relative">
@@ -131,7 +137,6 @@ const SignupPage: React.FC = () => {
 
       {/* Main Container */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-[1200px] w-full mx-auto flex-1 items-start">
-        
         {/* Formulário de Cadastro */}
         <section className="bg-card border border-border/30 rounded-3xl p-10 text-card-foreground shadow-lg">
           <h2 className="text-xl font-extrabold mb-6 uppercase tracking-wide">
@@ -139,7 +144,6 @@ const SignupPage: React.FC = () => {
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            
             {/* Nome da Marcenaria */}
             <div>
               <label className="text-xs font-bold block mb-1.5 uppercase tracking-wide">
@@ -147,8 +151,10 @@ const SignupPage: React.FC = () => {
               </label>
               <input
                 id="input-empresa"
-                type="text" required value={empresa}
-                onChange={e => setEmpresa(e.target.value)}
+                type="text"
+                required
+                value={empresa}
+                onChange={(e) => setEmpresa(e.target.value)}
                 placeholder="Marcenaria de Luxo S/A"
                 className={inputClass}
               />
@@ -162,20 +168,32 @@ const SignupPage: React.FC = () => {
               <div className="flex items-center relative">
                 <input
                   id="input-subdominio"
-                  type="text" required value={subdominio}
-                  onChange={e => setSubdominio(e.target.value)}
+                  type="text"
+                  required
+                  value={subdominio}
+                  onChange={(e) => setSubdominio(e.target.value)}
                   placeholder="suamarcenaria"
                   className={`${inputClass} pr-[120px]`}
                 />
-                <span className="absolute right-3 text-primary text-sm font-bold">
-                  .fatto-os
-                </span>
+                <span className="absolute right-3 text-primary text-sm font-bold">.fatto-os</span>
               </div>
               <div className="mt-1.5 text-xs flex items-center gap-2">
-                {subdomainStatus === 'checking' && <span className="text-muted-foreground">Verificando disponibilidade...</span>}
-                {subdomainStatus === 'available' && <span className="text-success font-bold">✓ Subdomínio disponível</span>}
-                {subdomainStatus === 'unavailable' && <span className="text-destructive font-bold">✗ Subdomínio em uso ou inválido</span>}
-                {subdomainStatus === 'idle' && <span className="text-muted-foreground font-medium">Exemplo: suamarcenaria.fatto-os.vercel.app</span>}
+                {subdomainStatus === 'checking' && (
+                  <span className="text-muted-foreground">Verificando disponibilidade...</span>
+                )}
+                {subdomainStatus === 'available' && (
+                  <span className="text-success font-bold">✓ Subdomínio disponível</span>
+                )}
+                {subdomainStatus === 'unavailable' && (
+                  <span className="text-destructive font-bold">
+                    ✗ Subdomínio em uso ou inválido
+                  </span>
+                )}
+                {subdomainStatus === 'idle' && (
+                  <span className="text-muted-foreground font-medium">
+                    Exemplo: suamarcenaria.fatto-os.vercel.app
+                  </span>
+                )}
               </div>
             </div>
 
@@ -186,8 +204,10 @@ const SignupPage: React.FC = () => {
               </label>
               <input
                 id="input-nome-admin"
-                type="text" required value={nomeAdmin}
-                onChange={e => setNomeAdmin(e.target.value)}
+                type="text"
+                required
+                value={nomeAdmin}
+                onChange={(e) => setNomeAdmin(e.target.value)}
                 placeholder="Nome do Gestor"
                 className={inputClass}
               />
@@ -200,8 +220,10 @@ const SignupPage: React.FC = () => {
               </label>
               <input
                 id="input-email"
-                type="email" required value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="exemplo@marcenaria.com"
                 className={inputClass}
               />
@@ -214,8 +236,10 @@ const SignupPage: React.FC = () => {
               </label>
               <input
                 id="input-senha"
-                type="password" required value={senha}
-                onChange={e => setSenha(e.target.value)}
+                type="password"
+                required
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
                 placeholder="******"
                 className={inputClass}
               />
@@ -228,8 +252,10 @@ const SignupPage: React.FC = () => {
               </label>
               <input
                 id="input-confirmar-senha"
-                type="password" required value={confirmarSenha}
-                onChange={e => setConfirmarSenha(e.target.value)}
+                type="password"
+                required
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="******"
                 className={inputClass}
               />
@@ -241,11 +267,32 @@ const SignupPage: React.FC = () => {
                 id="checkbox-termos"
                 type="checkbox"
                 checked={aceitouTermos}
-                onChange={e => setAceitouTermos(e.target.checked)}
+                onChange={(e) => setAceitouTermos(e.target.checked)}
                 className="mt-0.5 cursor-pointer accent-primary"
               />
-              <label htmlFor="checkbox-termos" className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium">
-                Eu concordo com os <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary no-underline font-bold hover:underline">Termos de Uso</a> e com a <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary no-underline font-bold hover:underline">Política de Privacidade</a> de acordo com as normas da LGPD.
+              <label
+                htmlFor="checkbox-termos"
+                className="text-xs text-muted-foreground leading-snug cursor-pointer font-medium"
+              >
+                Eu concordo com os{' '}
+                <a
+                  href="/termos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary no-underline font-bold hover:underline"
+                >
+                  Termos de Uso
+                </a>{' '}
+                e com a{' '}
+                <a
+                  href="/privacidade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary no-underline font-bold hover:underline"
+                >
+                  Política de Privacidade
+                </a>{' '}
+                de acordo com as normas da LGPD.
               </label>
             </div>
 
@@ -267,9 +314,10 @@ const SignupPage: React.FC = () => {
 
             <div className="text-center mt-2 text-sm font-medium">
               <span className="text-muted-foreground">Já possui uma conta? </span>
-              <Link to="/login" className="text-primary no-underline font-bold hover:underline">Entrar</Link>
+              <Link to="/login" className="text-primary no-underline font-bold hover:underline">
+                Entrar
+              </Link>
             </div>
-
           </form>
         </section>
 
@@ -279,25 +327,28 @@ const SignupPage: React.FC = () => {
             Selecione seu Plano Comercial
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Qualquer plano selecionado inicia em modo <strong>Trial gratuito de 14 dias</strong>, dando acesso total a todos os módulos do ERP (equivalente ao plano Pro) durante o período de testes.
+            Qualquer plano selecionado inicia em modo <strong>Trial gratuito de 14 dias</strong>,
+            dando acesso total a todos os módulos do ERP (equivalente ao plano Pro) durante o
+            período de testes.
           </p>
 
           {/* Grid de Planos */}
           <div className="flex flex-col gap-5">
-            
             {/* PLANO BASIC */}
-            <div 
+            <div
               id="plan-basic"
               onClick={() => setPlano('basic')}
               className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 shadow-md ${
-                plano === 'basic' 
-                  ? 'border-2 border-accent bg-accent/5' 
+                plano === 'basic'
+                  ? 'border-2 border-accent bg-accent/5'
                   : 'border border-border/20 bg-card/40 hover:bg-card/60'
               }`}
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-extrabold">BASIC</h3>
-                <span className="text-xl font-black text-accent">R$ 97<span className="text-sm font-medium text-muted-foreground">/mês</span></span>
+                <span className="text-xl font-black text-accent">
+                  R$ 97<span className="text-sm font-medium text-muted-foreground">/mês</span>
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2 mb-4">
                 Ideal para marceneiros autônomos organizando orçamentos e clientes.
@@ -312,12 +363,12 @@ const SignupPage: React.FC = () => {
             </div>
 
             {/* PLANO PRO (RECOMENDADO) */}
-            <div 
+            <div
               id="plan-pro"
               onClick={() => setPlano('pro')}
               className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 shadow-md relative ${
-                plano === 'pro' 
-                  ? 'border-2 border-accent bg-accent/8' 
+                plano === 'pro'
+                  ? 'border-2 border-accent bg-accent/8'
                   : 'border border-accent/30 bg-card/60 hover:bg-card/80'
               }`}
             >
@@ -326,7 +377,9 @@ const SignupPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-black text-accent">PRO</h3>
-                <span className="text-2xl font-black text-accent">R$ 197<span className="text-sm font-medium text-muted-foreground">/mês</span></span>
+                <span className="text-2xl font-black text-accent">
+                  R$ 197<span className="text-sm font-medium text-muted-foreground">/mês</span>
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2 mb-4">
                 Gestão completa, controle financeiro integrado e IA inteligente de marcenaria.
@@ -334,40 +387,44 @@ const SignupPage: React.FC = () => {
               <ul className="list-none p-0 m-0 flex flex-col gap-1.5 text-sm text-muted-foreground">
                 <li>✓ Módulos CRM + Orçamentos Completos</li>
                 <li>✓ Módulo Financeiro, Caixa e Relatórios DRE</li>
-                <li>✓ <strong>Assistente IA (Dlux)</strong> integrado no chat</li>
+                <li>
+                  ✓ <strong>Assistente IA (Dlux)</strong> integrado no chat
+                </li>
                 <li>✓ Plano de Corte Industrial e Sobras</li>
                 <li>✓ Até 5 usuários simultâneos</li>
               </ul>
             </div>
 
             {/* PLANO ENTERPRISE */}
-            <div 
+            <div
               id="plan-enterprise"
               onClick={() => setPlano('enterprise')}
               className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 shadow-md ${
-                plano === 'enterprise' 
-                  ? 'border-2 border-accent bg-accent/5' 
+                plano === 'enterprise'
+                  ? 'border-2 border-accent bg-accent/5'
                   : 'border border-border/20 bg-card/40 hover:bg-card/60'
               }`}
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-extrabold">ENTERPRISE</h3>
-                <span className="text-xl font-black text-accent">R$ 397<span className="text-sm font-medium text-muted-foreground">/mês</span></span>
+                <span className="text-xl font-black text-accent">
+                  R$ 397<span className="text-sm font-medium text-muted-foreground">/mês</span>
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2 mb-4">
                 Operação industrial em larga escala, controle CNC e suporte corporativo.
               </p>
               <ul className="list-none p-0 m-0 flex flex-col gap-1.5 text-sm text-muted-foreground">
                 <li>✓ Tudo do plano PRO</li>
-                <li>✓ <strong>Simulador 3D CNC</strong> e percursos G-Code</li>
+                <li>
+                  ✓ <strong>Simulador 3D CNC</strong> e percursos G-Code
+                </li>
                 <li>✓ Controle de Ordens de Produção Gantry</li>
                 <li>✓ Usuários ilimitados e suporte VIP dedicado</li>
               </ul>
             </div>
-
           </div>
         </section>
-
       </div>
     </div>
   );

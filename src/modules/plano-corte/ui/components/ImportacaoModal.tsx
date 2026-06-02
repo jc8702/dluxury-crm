@@ -1,10 +1,18 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useCallback } from 'react';
-import { FileSpreadsheet, Ruler, Upload, AlertTriangle, Loader2, CheckCircle2, FileText } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Ruler,
+  Upload,
+  AlertTriangle,
+  Loader2,
+  CheckCircle2,
+  FileText,
+} from 'lucide-react';
 import { parseCSV, parsePlanoCorteCSV } from '../../infrastructure/parsers/CSVParser';
 import { parseSketchUpDAE } from '../../infrastructure/parsers/SketchUpParser';
-import { Modal, Button } from '../../../../design-system/components';
+import { Modal, Button } from '../../../../components/common';
 
 interface ImportacaoModalProps {
   onImportar: (pecas: any[]) => void;
@@ -43,7 +51,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
       }
 
       if (pecas.length === 0) {
-        throw new Error('Nenhuma peça encontrada no arquivo');
+        throw new Error('Nenhuma peÃ§a encontrada no arquivo');
       }
 
       onImportar(pecas);
@@ -56,22 +64,19 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
   }, [arquivo, tipo, onImportar, onFechar]);
 
   return (
-    <Modal
-      isOpen={true}
-      onClose={onFechar}
-      title="Importar Peças"
-      size="md"
-    >
+    <Modal isOpen={true} onClose={onFechar} title="Importar PeÃ§as" size="md">
       <div className="space-y-6">
-        {/* TIPO DE IMPORTAÇÃO */}
+        {/* TIPO DE IMPORTAÃ‡ÃƒO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo de Arquivo</label>
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Tipo de Arquivo
+          </label>
           <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => setTipo('planocorte')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
-                tipo === 'planocorte' 
-                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
+                tipo === 'planocorte'
+                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
               }`}
             >
@@ -81,8 +86,8 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             <button
               onClick={() => setTipo('csv')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
-                tipo === 'csv' 
-                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
+                tipo === 'csv'
+                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
               }`}
             >
@@ -92,8 +97,8 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             <button
               onClick={() => setTipo('sketchup')}
               className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
-                tipo === 'sketchup' 
-                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20' 
+                tipo === 'sketchup'
+                  ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
               }`}
             >
@@ -103,19 +108,22 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
           </div>
         </div>
 
-        {/* DESCRIÇÃO DO FORMATO */}
+        {/* DESCRIÃ‡ÃƒO DO FORMATO */}
         {tipo === 'planocorte' && (
           <div className="p-3 rounded-xl bg-foreground/5 border border-border/40">
             <p className="text-[9px] font-bold text-muted-foreground leading-relaxed">
-              Formato: planilha com colunas Designação, Quantidade, Comprimento, Largura, Espessura. 
-              Suporta também Nome do Material, Identificação, e Bordas para fio de fita.
+              Formato: planilha com colunas DesignaÃ§Ã£o, Quantidade, Comprimento, Largura,
+              Espessura. Suporta tambÃ©m Nome do Material, IdentificaÃ§Ã£o, e Bordas para fio de
+              fita.
             </p>
           </div>
         )}
 
         {/* UPLOAD ARQUIVO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Selecionar Arquivo</label>
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Selecionar Arquivo
+          </label>
           <div className="relative">
             <input
               type="file"
@@ -124,11 +132,14 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
               className="hidden"
               id="file-upload"
             />
-            <label 
+            <label
               htmlFor="file-upload"
               className="flex flex-col items-center justify-center w-full py-10 bg-foreground/5 border-2 border-dashed border-border/60 rounded-2xl cursor-pointer hover:border-primary/50 hover:bg-foreground/10 transition-all group"
             >
-              <Upload size={32} className="text-muted-foreground group-hover:text-primary transition-colors mb-3" />
+              <Upload
+                size={32}
+                className="text-muted-foreground group-hover:text-primary transition-colors mb-3"
+              />
               <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground uppercase tracking-widest transition-colors">
                 {arquivo ? arquivo.name : 'Clique para selecionar'}
               </span>
@@ -150,13 +161,9 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
           </div>
         )}
 
-        {/* AÇÕES */}
+        {/* AÃ‡Ã•ES */}
         <div className="flex gap-4 pt-4 border-t border-border/40">
-          <Button
-            variant="ghost"
-            onClick={onFechar}
-            className="flex-1"
-          >
+          <Button variant="ghost" onClick={onFechar} className="flex-1">
             Cancelar
           </Button>
           <Button
@@ -178,4 +185,3 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
     </Modal>
   );
 }
-

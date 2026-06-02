@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { HeartHandshake, Plus, Clock, CheckCircle, AlertTriangle, Loader2, Save } from 'lucide-react';
 import { api } from '../lib/api';
-import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../design-system/components';
+import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/common';
 import { useToast } from '../context/ToastContext';
-import DataTable from '../components/ui/DataTable';
+import DataTable from '../components/common/DataTable';
 
 const PosVendaPage: React.FC = () => {
   const { error: toastError } = useToast();
@@ -81,7 +81,7 @@ const PosVendaPage: React.FC = () => {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await api.afterSales.update({ id, status, solucao_aplicada: 'Resolvido via atendimento padrão' });
+      await api.afterSales.update({ id, status, solucao_aplicada: 'Resolvido via atendimento padrÃ£o' });
       await fetchData();
     } catch (err) {
       console.error('Update failed:', err);
@@ -97,10 +97,10 @@ const PosVendaPage: React.FC = () => {
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <HeartHandshake size={32} className="text-primary" /> Pós-Venda e Garantia
+            <HeartHandshake size={32} className="text-primary" /> PÃ³s-Venda e Garantia
           </h2>
           <p className="text-muted-foreground mt-1">
-            Gestão de assistências técnicas e satisfação do cliente.
+            GestÃ£o de assistÃªncias tÃ©cnicas e satisfaÃ§Ã£o do cliente.
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -122,7 +122,7 @@ const PosVendaPage: React.FC = () => {
           size="sm"
           onClick={() => setActiveTab('historico')}
         >
-          Histórico
+          HistÃ³rico
         </Button>
         <Button 
           variant={activeTab === 'indicadores' ? 'primary' : 'ghost'} 
@@ -138,7 +138,7 @@ const PosVendaPage: React.FC = () => {
            <Card className="flex flex-col items-center justify-center p-6 text-center">
              <CardContent className="flex flex-col items-center gap-2 p-0">
                <Clock size={32} className="text-primary mb-2" />
-               <h4 className="text-sm font-semibold text-muted-foreground">Média de Resolução</h4>
+               <h4 className="text-sm font-semibold text-muted-foreground">MÃ©dia de ResoluÃ§Ã£o</h4>
                <p className="text-3xl font-extrabold mt-1">
                  {stats?.tempo_medio ? Number(stats.tempo_medio).toFixed(1) : '---'} dias
                </p>
@@ -147,7 +147,7 @@ const PosVendaPage: React.FC = () => {
            <Card className="flex flex-col items-center justify-center p-6 text-center border-l-4 border-l-destructive">
              <CardContent className="flex flex-col items-center gap-2 p-0">
                <AlertTriangle size={32} className="text-destructive mb-2" />
-               <h4 className="text-sm font-semibold text-muted-foreground">Chamados Críticos</h4>
+               <h4 className="text-sm font-semibold text-muted-foreground">Chamados CrÃ­ticos</h4>
                <p className="text-3xl font-extrabold text-destructive mt-1">
                  {chamados.filter(c => c.prioridade === 'urgente').length}
                </p>
@@ -165,7 +165,7 @@ const PosVendaPage: React.FC = () => {
         <div className="card p-6">
           <DataTable 
             loading={loading}
-            headers={['Número', 'Cliente', 'Título', 'Prioridade', 'Status', 'Ações']}
+            headers={['NÃºmero', 'Cliente', 'TÃ­tulo', 'Prioridade', 'Status', 'AÃ§Ãµes']}
             data={chamadosFiltrados}
             renderRow={(c) => (
               <>
@@ -232,8 +232,8 @@ const PosVendaPage: React.FC = () => {
 
           <Input 
             required 
-            label="Título do Problema *" 
-            placeholder="Ex: Dobradiça solta / Porta desalinhada" 
+            label="TÃ­tulo do Problema *" 
+            placeholder="Ex: DobradiÃ§a solta / Porta desalinhada" 
             value={formData.titulo} 
             onChange={e => setFormData({ ...formData, titulo: e.target.value })} 
           />
@@ -247,7 +247,7 @@ const PosVendaPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="garantia">Garantia</SelectItem>
-                  <SelectItem value="assistencia">Assistência Técnica</SelectItem>
+                  <SelectItem value="assistencia">AssistÃªncia TÃ©cnica</SelectItem>
                   <SelectItem value="ajuste">Ajuste / Regulagem</SelectItem>
                 </SelectContent>
               </Select>
@@ -276,7 +276,7 @@ const PosVendaPage: React.FC = () => {
           />
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-foreground/90">Descrição Detalhada *</label>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">DescriÃ§Ã£o Detalhada *</label>
             <textarea 
               required 
               className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-h-[100px] resize-vertical transition-colors" 
@@ -302,3 +302,4 @@ const PosVendaPage: React.FC = () => {
 };
 
 export default PosVendaPage;
+

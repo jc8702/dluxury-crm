@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+﻿import React, { useState } from 'react';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 export const useConfirm = () => {
   const [promise, setPromise] = useState<{ resolve: (value: boolean) => void } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState({
-    title: 'Confirmação',
+    title: 'ConfirmaÃ§Ã£o',
     description: 'Tem certeza que deseja continuar?',
     confirmLabel: 'Confirmar',
     cancelLabel: 'Cancelar',
-    variant: 'danger' as 'danger' | 'warning' | 'primary'
+    variant: 'danger' as 'danger' | 'warning' | 'primary',
   });
 
   const confirm = (options: {
@@ -17,9 +17,9 @@ export const useConfirm = () => {
     description?: string;
     confirmLabel?: string;
     cancelLabel?: string;
-    variant?: 'danger' | 'warning' | 'primary'
+    variant?: 'danger' | 'warning' | 'primary';
   }) => {
-    setConfig(prev => ({ ...prev, ...options }));
+    setConfig((prev) => ({ ...prev, ...options }));
     setIsOpen(true);
     return new Promise<boolean>((resolve) => {
       setPromise({ resolve });
@@ -37,12 +37,7 @@ export const useConfirm = () => {
   };
 
   const ConfirmationDialog = () => (
-    <ConfirmDialog
-      isOpen={isOpen}
-      onClose={handleClose}
-      onConfirm={handleConfirm}
-      {...config}
-    />
+    <ConfirmDialog isOpen={isOpen} onClose={handleClose} onConfirm={handleConfirm} {...config} />
   );
 
   return [ConfirmationDialog, confirm] as const;
