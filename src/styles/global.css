@@ -85,7 +85,7 @@
    DARK MODE — Override das CSS vars canônicas (`--ds-*`)
    Espelha `designSystemDark` de `src/styles/design-system.ts`.
    Aplicado automaticamente via `class="dark"` no <html>,
-   controlado por `ThemeContext` (localStorage key: `fatto-theme`).
+   controlado por `ThemeContext` (localStorage key: `dluxury-theme`).
    ═══════════════════════════════════════════════════════════════ */
 .dark,
 [data-theme='dark'] {

@@ -39,16 +39,19 @@ const Login: React.FC = () => {
     >
       <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img
-            src="/logo.png"
-            alt="D'Luxury"
-            style={{
-              width: '120px',
-              height: '120px',
-              marginBottom: '1.5rem',
-              objectFit: 'contain',
-            }}
-          />
+          <picture>
+            <source srcSet="/logo.webp" type="image/webp" />
+            <img
+              src="/logo.png"
+              alt="D'Luxury"
+              style={{
+                width: '120px',
+                height: '120px',
+                marginBottom: '1.5rem',
+                objectFit: 'contain',
+              }}
+            />
+          </picture>
           <h1 style={{ color: 'hsl(var(--primary))', fontSize: '1.5rem', fontWeight: 'bold' }}>
             D'LUXURY
           </h1>

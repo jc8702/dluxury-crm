@@ -8,7 +8,7 @@ interface ThemeContextType {
   setTheme: (t: Theme) => void;
 }
 
-const STORAGE_KEY = 'fatto-theme';
+const STORAGE_KEY = 'dluxury-theme';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, applyTheme]);
 
   const toggleTheme = useCallback(() => {
-    setThemeState(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
