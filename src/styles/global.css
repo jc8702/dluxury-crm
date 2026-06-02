@@ -1,0 +1,194 @@
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — Camada de tokens canônicos (CSS Custom Properties)
+   ═══════════════════════════════════════════════════════════════
+   Este arquivo complementa `src/index.css` (Tailwind v4 theme) sem
+   sobrescrevê-lo. Os tokens aqui usam o prefixo `--ds-*` para evitar
+   colisão com as vars do tema Tailwind (`--primary`, `--secondary`,
+   `--accent`, etc.) e mantêm coexistência segura.
+
+   Fonte de valores: src/styles/design-system.ts
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Cores: Primary ─── */
+  --ds-color-primary-50: #f0f7ff;
+  --ds-color-primary-100: #e0efff;
+  --ds-color-primary-500: #0d66cc;
+  --ds-color-primary-600: #0d5fb8;
+  --ds-color-primary-900: #003d82;
+
+  /* ─── Cores: Secondary ─── */
+  --ds-color-secondary-50: #f0fffb;
+  --ds-color-secondary-500: #00a99d;
+  --ds-color-secondary-600: #008b84;
+  --ds-color-secondary-900: #004d47;
+
+  /* ─── Cores: Accent + Base ─── */
+  --ds-color-accent: #e2ac00;
+  --ds-color-background: #fafafa;
+  --ds-color-surface: #ffffff;
+  --ds-color-border: #e0e0e0;
+
+  /* ─── Cores: Texto ─── */
+  --ds-color-text-primary: #1a1a1a;
+  --ds-color-text-secondary: #666666;
+  --ds-color-text-disabled: #cccccc;
+
+  /* ─── Cores: Semânticas ─── */
+  --ds-color-error: #dc3545;
+  --ds-color-success: #28a745;
+  --ds-color-warning: #ffc107;
+  --ds-color-info: #17a2b8;
+
+  /* ─── Espaçamento (escala 4px) ─── */
+  --ds-spacing-xs: 4px;
+  --ds-spacing-sm: 8px;
+  --ds-spacing-md: 16px;
+  --ds-spacing-lg: 24px;
+  --ds-spacing-xl: 32px;
+  --ds-spacing-2xl: 48px;
+
+  /* ─── Tipografia ─── */
+  --ds-font-family: 'Plus Jakarta Sans', sans-serif;
+
+  --ds-font-size-xs: 12px;
+  --ds-font-size-sm: 14px;
+  --ds-font-size-md: 16px;
+  --ds-font-size-lg: 18px;
+  --ds-font-size-xl: 20px;
+  --ds-font-size-2xl: 24px;
+  --ds-font-size-3xl: 32px;
+
+  --ds-font-weight-light: 300;
+  --ds-font-weight-normal: 400;
+  --ds-font-weight-medium: 500;
+  --ds-font-weight-semibold: 600;
+  --ds-font-weight-bold: 700;
+
+  --ds-line-height-tight: 1.2;
+  --ds-line-height-normal: 1.5;
+  --ds-line-height-relaxed: 1.75;
+
+  /* ─── Sombras ─── */
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ds-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --ds-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* ─── Border Radius ─── */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+  --ds-radius-full: 9999px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE — Override das CSS vars canônicas (`--ds-*`)
+   Espelha `designSystemDark` de `src/styles/design-system.ts`.
+   Aplicado automaticamente via `class="dark"` no <html>,
+   controlado por `ThemeContext` (localStorage key: `fatto-theme`).
+   ═══════════════════════════════════════════════════════════════ */
+.dark,
+[data-theme='dark'] {
+  --ds-color-primary-50: #001a33;
+  --ds-color-primary-100: #002952;
+  --ds-color-primary-500: #3d8bff;
+  --ds-color-primary-600: #0d66cc;
+  --ds-color-primary-900: #0d66cc;
+
+  --ds-color-secondary-50: #001f1b;
+  --ds-color-secondary-500: #2dd4bf;
+  --ds-color-secondary-600: #00a99d;
+  --ds-color-secondary-900: #5eead4;
+
+  --ds-color-accent: #f59e0b;
+  --ds-color-background: #0b0f19;
+  --ds-color-surface: #111827;
+  --ds-color-border: #1f2937;
+
+  --ds-color-text-primary: #f9fafb;
+  --ds-color-text-secondary: #9ca3af;
+  --ds-color-text-disabled: #4b5563;
+
+  --ds-color-error: #f87171;
+  --ds-color-success: #34d399;
+  --ds-color-warning: #fbbf24;
+  --ds-color-info: #60a5fa;
+
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ds-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --ds-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
+}
+
+.dark body {
+  background: var(--ds-color-background);
+  color: var(--ds-color-text-primary);
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--ds-color-surface);
+  color: var(--ds-color-text-primary);
+  border-color: var(--ds-color-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET GLOBAL — base compartilhada por toda a aplicação
+   ═══════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--ds-font-family);
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-background);
+  line-height: var(--ds-line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+a {
+  color: var(--ds-color-primary-500);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--ds-color-primary-600);
+}

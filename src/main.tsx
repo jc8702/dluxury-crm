@@ -1,18 +1,19 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+import '@/styles/global.css';
 
 // Capturar erros não tratados em produção para diagnóstico
 window.addEventListener('error', (event) => {
-  console.error('[Global Error]', event.error)
-})
+  console.error('[Global Error]', event.error);
+});
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('[Unhandled Promise]', event.reason)
-})
+  console.error('[Unhandled Promise]', event.reason);
+});
 
-const rootElement = document.getElementById('root')
+const rootElement = document.getElementById('root');
 
 if (!rootElement) {
   document.body.innerHTML = `
@@ -22,11 +23,11 @@ if (!rootElement) {
       Erro crítico de inicialização: elemento #root não encontrado.<br/>
       Por favor, tente recarregar a página.
     </div>
-  `
+  `;
 } else {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <App />
-    </React.StrictMode>
-  )
+    </React.StrictMode>,
+  );
 }

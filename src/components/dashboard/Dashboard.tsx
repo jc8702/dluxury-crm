@@ -1,9 +1,31 @@
 import React from 'react';
-import DataTable from '../common/DataTable';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/common';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, AreaChart, Area } from 'recharts';
-import { PlusCircle, FileText, Wrench, Users, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PlusCircle, FileText, Wrench, UserPlus } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from 'recharts';
+
+import DataTable from '../common/DataTable';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../common';
+
+import { designSystem } from '@/styles/design-system';
+
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import type { Project, ProjectStatus } from '../../context/CRMContext';
@@ -11,49 +33,49 @@ import { formatCurrency } from '../../utils/calculations';
 
 const Dashboard: React.FC = () => {
   const { projects, clients } = useCRM();
-  const { billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } = useFinance();
+  const { billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } =
+    useFinance();
   const [editGoal, setEditGoal] = React.useState(false);
   const [goalValue, setGoalValue] = React.useState('');
 
   const periods = [
-    { id: '2026-01', label: 'Jan/26' }, { id: '2026-02', label: 'Fev/26' },
-    { id: '2026-03', label: 'Mar/26' }, { id: '2026-04', label: 'Abr/26' },
-    { id: '2026-05', label: 'Mai/26' }, { id: '2026-06', label: 'Jun/26' },
-    { id: '2026-07', label: 'Jul/26' }, { id: '2026-08', label: 'Ago/26' },
-    { id: '2026-09', label: 'Set/26' }, { id: '2026-10', label: 'Out/26' },
-    { id: '2026-11', label: 'Nov/26' }, { id: '2026-12', label: 'Dez/26' },
+    { id: '2026-01', label: 'Jan/26' },
+    { id: '2026-02', label: 'Fev/26' },
+    { id: '2026-03', label: 'Mar/26' },
+    { id: '2026-04', label: 'Abr/26' },
+    { id: '2026-05', label: 'Mai/26' },
+    { id: '2026-06', label: 'Jun/26' },
+    { id: '2026-07', label: 'Jul/26' },
+    { id: '2026-08', label: 'Ago/26' },
+    { id: '2026-09', label: 'Set/26' },
+    { id: '2026-10', label: 'Out/26' },
+    { id: '2026-11', label: 'Nov/26' },
+    { id: '2026-12', label: 'Dez/26' },
   ];
 
-  // â”€â”€â”€ KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const statusLabels: Record<ProjectStatus, string> = {
-    lead: 'ðŸ“¥ Lead',
-    visita_tecnica: 'ðŸ“ Visita TÃ©cnica',
-    orcamento_enviado: 'ðŸ“„ OrÃ§amento Enviado',
-    aprovado: 'âœ… Aprovado',
-    em_producao: 'ðŸ”¨ Em ProduÃ§Ã£o',
-    pronto_entrega: 'ðŸ“¦ Pronto p/ Entrega',
-    instalado: 'ðŸ  Instalado',
-    concluido: 'ðŸ ConcluÃ­do',
+    lead: 'Lead',
+    visita_tecnica: 'Visita Técnica',
+    orcamento_enviado: 'Orçamento Enviado',
+    aprovado: 'Aprovado',
+    em_producao: 'Em Produção',
+    pronto_entrega: 'Pronto p/ Entrega',
+    instalado: 'Instalado',
+    concluido: 'Concluído',
   };
 
-  const _statusCounts = Object.keys(statusLabels).map(status => ({
-    status: status as ProjectStatus,
-    label: statusLabels[status as ProjectStatus],
-    count: projects.filter(p => p.status === status).length,
-    value: projects.filter(p => p.status === status).reduce((acc, p) => acc + (p.valorEstimado || 0), 0),
-  }));
+  const inProduction = projects.filter((p) => p.status === 'em_producao').length;
+  const concluidos = projects.filter((p) => p.status === 'concluido').length;
+  const ticketMedio =
+    concluidos > 0
+      ? projects
+          .filter((p) => p.status === 'concluido')
+          .reduce((acc, p) => acc + (p.valorFinal || p.valorEstimado || 0), 0) / concluidos
+      : 0;
 
-  const _totalPipeline = projects.reduce((acc, p) => acc + (p.valorEstimado || 0), 0);
-  const inProduction = projects.filter(p => p.status === 'em_producao').length;
-  const concluidos = projects.filter(p => p.status === 'concluido').length;
-  const ticketMedio = concluidos > 0
-    ? projects.filter(p => p.status === 'concluido').reduce((acc, p) => acc + (p.valorFinal || p.valorEstimado || 0), 0) / concluidos
-    : 0;
-
-  // Origem dos leads
   const origemCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
-    clients.forEach(c => {
+    clients.forEach((c) => {
       const key = c.origem || 'outro';
       counts[key] = (counts[key] || 0) + 1;
     });
@@ -63,277 +85,671 @@ const Dashboard: React.FC = () => {
   }, [clients]);
 
   const origemLabels: Record<string, { label: string; color: string }> = {
-    indicacao: { label: 'ðŸ‘¥ IndicaÃ§Ã£o', color: '#10b981' },
-    instagram: { label: 'ðŸ“¸ Instagram', color: '#e1306c' },
-    google: { label: 'ðŸ” Google', color: '#4285f4' },
-    feira: { label: 'ðŸŽª Feira', color: '#f59e0b' },
-    passante: { label: 'ðŸš¶ Passante', color: '#8b5cf6' },
-    outro: { label: 'ðŸ“Œ Outro', color: '#6b7280' },
+    indicacao: { label: 'Indicação', color: designSystem.colors.secondary[500] },
+    instagram: { label: 'Instagram', color: '#e1306c' },
+    google: { label: 'Google', color: designSystem.colors.primary[500] },
+    feira: { label: 'Feira', color: designSystem.colors.accent },
+    passante: { label: 'Passante', color: '#8b5cf6' },
+    outro: { label: 'Outro', color: designSystem.colors.text.secondary },
   };
 
-  const percentualMeta = currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
+  const percentualMeta =
+    currentMeta > 0 ? Math.min(Math.round((totalPeriodo / currentMeta) * 100), 100) : 0;
 
-  // Recent projects
   const recentProjects = [...projects]
-    .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at || 0).getTime() -
+        new Date(a.updated_at || a.created_at || 0).getTime(),
+    )
     .slice(0, 6);
 
+  const styles = {
+    page: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: designSystem.spacing.xl,
+      padding: designSystem.spacing.lg,
+      color: designSystem.colors.text.primary,
+      fontFamily: designSystem.typography.fontFamily,
+    },
+    headerRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      flexWrap: 'wrap' as const,
+      gap: designSystem.spacing.md,
+    },
+    h1: {
+      fontSize: designSystem.typography.fontSizes['3xl'],
+      fontWeight: designSystem.typography.fontWeights.bold,
+      lineHeight: designSystem.typography.lineHeights.tight,
+      color: designSystem.colors.text.primary,
+      margin: 0,
+    },
+    h2: {
+      fontSize: designSystem.typography.fontSizes.xl,
+      fontWeight: designSystem.typography.fontWeights.semibold,
+      lineHeight: designSystem.typography.lineHeights.tight,
+      color: designSystem.colors.text.primary,
+      margin: 0,
+    },
+    subtitle: {
+      fontSize: designSystem.typography.fontSizes.sm,
+      color: designSystem.colors.text.secondary,
+      margin: `${designSystem.spacing.xs} 0 0 0`,
+    },
+    sectionTitle: {
+      fontSize: designSystem.typography.fontSizes.lg,
+      fontWeight: designSystem.typography.fontWeights.semibold,
+      color: designSystem.colors.text.primary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.06em',
+      marginBottom: designSystem.spacing.md,
+    },
+    kpiLabel: {
+      fontSize: designSystem.typography.fontSizes.xs,
+      fontWeight: designSystem.typography.fontWeights.semibold,
+      color: designSystem.colors.text.secondary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.06em',
+      marginBottom: designSystem.spacing.xs,
+    },
+    kpiValue: {
+      fontSize: designSystem.typography.fontSizes['2xl'],
+      fontWeight: designSystem.typography.fontWeights.bold,
+      lineHeight: designSystem.typography.lineHeights.tight,
+      color: designSystem.colors.text.primary,
+      margin: 0,
+    },
+    kpiGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: designSystem.spacing.lg,
+    },
+    kpiCard: (accentColor: string) => ({
+      background: designSystem.colors.surface,
+      padding: designSystem.spacing.lg,
+      borderRadius: designSystem.borderRadius.lg,
+      boxShadow: designSystem.shadows.md,
+      borderLeft: `4px solid ${accentColor}`,
+      transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+    }),
+    splitGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+      gap: designSystem.spacing.lg,
+    },
+    card: {
+      background: designSystem.colors.surface,
+      padding: designSystem.spacing.lg,
+      borderRadius: designSystem.borderRadius.lg,
+      boxShadow: designSystem.shadows.md,
+    },
+    quickActionsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      gap: designSystem.spacing.md,
+    },
+    quickAction: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: designSystem.spacing.sm,
+      height: 96,
+      padding: designSystem.spacing.md,
+      background: designSystem.colors.surface,
+      border: `1px solid ${designSystem.colors.border}`,
+      borderRadius: designSystem.borderRadius.lg,
+      boxShadow: designSystem.shadows.sm,
+      color: designSystem.colors.text.primary,
+      fontFamily: designSystem.typography.fontFamily,
+      fontSize: designSystem.typography.fontSizes.sm,
+      fontWeight: designSystem.typography.fontWeights.semibold,
+      textDecoration: 'none',
+      transition: 'box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
+    },
+    copilotCard: {
+      background: designSystem.colors.surface,
+      padding: designSystem.spacing.lg,
+      borderRadius: designSystem.borderRadius.lg,
+      boxShadow: designSystem.shadows.md,
+      border: `1px solid ${designSystem.colors.primary[100]}`,
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: designSystem.spacing.md,
+    },
+    copilotChip: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: designSystem.spacing.xs,
+      padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
+      background: designSystem.colors.primary[50],
+      color: designSystem.colors.primary[600],
+      border: `1px solid ${designSystem.colors.primary[100]}`,
+      borderRadius: designSystem.borderRadius.full,
+      fontSize: designSystem.typography.fontSizes.xs,
+      fontWeight: designSystem.typography.fontWeights.semibold,
+      cursor: 'pointer',
+      fontFamily: designSystem.typography.fontFamily,
+    },
+  } as const;
+
   return (
-    <div className="animate-fade-in flex flex-col gap-8">
-      <header className="flex justify-between items-start">
+    <div className="ds-dashboard" style={styles.page}>
+      <style>{`
+        .ds-dashboard * { box-sizing: border-box; }
+        .ds-dashboard .ds-kpi-card:hover { box-shadow: 0 10px 15px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .ds-dashboard .ds-quick-action:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: ${designSystem.colors.primary[500]}; }
+        @media (max-width: 768px) {
+          .ds-dashboard .ds-header-row { flex-direction: column; align-items: stretch; }
+          .ds-dashboard .ds-chart-box { height: 220px !important; }
+        }
+        @media (max-width: 480px) {
+          .ds-dashboard { padding: ${designSystem.spacing.md} !important; }
+          .ds-dashboard .ds-kpi-value { font-size: ${designSystem.typography.fontSizes.xl} !important; }
+        }
+      `}</style>
+
+      <header className="ds-header-row" style={styles.headerRow}>
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground font-display">Painel Geral</h2>
-          <p className="text-sm text-muted-foreground font-medium">VisÃ£o executiva â€” Fatto OS (MÃ³veis Planejados)</p>
+          <h1 style={styles.h1}>Painel Geral</h1>
+          <p style={styles.subtitle}>Visão executiva — D'Luxury CRM (Fatto OS)</p>
         </div>
-        <div className="flex gap-3 items-center">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[140px] border-foreground/10 rounded-xl focus:ring-[#8B5A2B]">
-              <SelectValue placeholder="PerÃ­odo..." />
-            </SelectTrigger>
-            <SelectContent>
-              {periods.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <SelectTrigger
+            style={{
+              width: 160,
+              border: `1px solid ${designSystem.colors.border}`,
+              borderRadius: designSystem.borderRadius.md,
+              padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
+              background: designSystem.colors.surface,
+              fontFamily: designSystem.typography.fontFamily,
+            }}
+          >
+            <SelectValue placeholder="Período..." />
+          </SelectTrigger>
+          <SelectContent>
+            {periods.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </header>
 
       {/* KPIs principais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <Card className="border-l-4 border-l-primary bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Total Clientes</p>
-            <h3 className="text-3xl font-black text-primary font-display">{clients.length}</h3>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-blue-500 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Projetos Ativos</p>
-            <h3 className="text-3xl font-black text-blue-600 font-display">
-              {projects.filter(p => !['concluido'].includes(p.status)).length}
+      <section aria-label="Indicadores principais">
+        <div style={styles.kpiGrid}>
+          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.primary[500])}>
+            <p style={styles.kpiLabel}>Total Clientes</p>
+            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.primary[600] }}>
+              {clients.length}
             </h3>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-accent bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Em ProduÃ§Ã£o</p>
-            <h3 className="text-3xl font-black text-accent font-display">{inProduction}</h3>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-emerald-600 bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">ConcluÃ­dos</p>
-            <h3 className="text-3xl font-black text-emerald-700 font-display">{concluidos}</h3>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-foreground bg-card shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground tracking-wider mb-1 uppercase">Ticket MÃ©dio</p>
-            <h3 className="text-xl font-black text-foreground font-display mt-1">{formatCurrency(ticketMedio)}</h3>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.info)}>
+            <p style={styles.kpiLabel}>Projetos Ativos</p>
+            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.info }}>
+              {projects.filter((p) => p.status !== 'concluido').length}
+            </h3>
+          </div>
+          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.accent)}>
+            <p style={styles.kpiLabel}>Em Produção</p>
+            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.accent }}>
+              {inProduction}
+            </h3>
+          </div>
+          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.success)}>
+            <p style={styles.kpiLabel}>Concluídos</p>
+            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.success }}>{concluidos}</h3>
+          </div>
+          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.text.primary)}>
+            <p style={styles.kpiLabel}>Ticket Médio</p>
+            <h3 style={{ ...styles.kpiValue, fontSize: designSystem.typography.fontSizes.xl }}>
+              {formatCurrency(ticketMedio)}
+            </h3>
+          </div>
+        </div>
+      </section>
 
       {/* Meta + Pipeline por etapa */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Meta mensal */}
-        <Card className="flex flex-col items-center justify-center p-6 text-center bg-card border-none shadow-sm rounded-2xl">
-          <CardContent className="flex flex-col items-center gap-4 w-full p-0">
-            <h3 className="text-sm font-bold text-muted-foreground tracking-wider uppercase">Meta do PerÃ­odo</h3>
-            <div className="w-[140px] h-[140px] rounded-full flex items-center justify-center" style={{
-              background: `conic-gradient(#D4AF37 ${percentualMeta * 3.6}deg, rgba(28,46,36,0.06) 0deg)`,
-            }}>
-              <div className="w-[110px] h-[110px] rounded-full bg-card flex flex-col items-center justify-center shadow-inner">
-                <span className="text-2xl font-black text-foreground font-display">{percentualMeta}%</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">atingido</span>
-              </div>
+      <section style={styles.splitGrid}>
+        <div
+          style={{
+            ...styles.card,
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: designSystem.spacing.md,
+          }}
+        >
+          <h3 style={styles.sectionTitle}>Meta do Período</h3>
+          <div
+            style={{
+              width: 140,
+              height: 140,
+              borderRadius: designSystem.borderRadius.full,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `conic-gradient(${designSystem.colors.accent} ${percentualMeta * 3.6}deg, ${designSystem.colors.border} 0deg)`,
+            }}
+          >
+            <div
+              style={{
+                width: 110,
+                height: 110,
+                borderRadius: designSystem.borderRadius.full,
+                background: designSystem.colors.surface,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'inset 0 0 0 1px ' + designSystem.colors.border,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: designSystem.typography.fontSizes['2xl'],
+                  fontWeight: designSystem.typography.fontWeights.bold,
+                }}
+              >
+                {percentualMeta}%
+              </span>
+              <span
+                style={{
+                  fontSize: designSystem.typography.fontSizes.xs,
+                  color: designSystem.colors.text.secondary,
+                  textTransform: 'uppercase',
+                }}
+              >
+                atingido
+              </span>
             </div>
-            <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(totalPeriodo)} <span className="text-muted-foreground font-normal">/ {formatCurrency(currentMeta)}</span>
-            </p>
-            <Button variant="outline" size="sm" onClick={() => { setEditGoal(true); setGoalValue(currentMeta.toString()); }} className="rounded-xl border-primary text-primary hover:bg-primary/5 font-bold px-5">
-              Editar Meta
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Pipeline resumo (Recharts) */}
-        <Card className="p-6 bg-card border-none shadow-sm rounded-2xl flex flex-col">
-          <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">EvoluÃ§Ã£o Financeira (Ãšltimos 6 meses)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 flex flex-col">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={periods.slice(0, 6).reverse().map(p => {
-                    const monthBillings = billings.filter(b => b.data && b.data.startsWith(p.id));
-                    const entradas = monthBillings.filter(b => b.tipo !== 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
-                    const saidas = monthBillings.filter(b => b.tipo === 'saida').reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
-                    return { name: p.label, Entradas: entradas, Saidas: saidas };
-                  })}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} dy={10} />
-                  <YAxis tickFormatter={(val) => `R$${val/1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
-                  <Tooltip 
-                    cursor={{ fill: 'var(--surface-hover)', opacity: 0.5 }}
-                    contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow-md)' }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                  <Bar dataKey="Entradas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Bar dataKey="Saidas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* AÃ§Ãµes RÃ¡pidas (Quick Actions) */}
-      <div>
-        <h3 className="text-lg font-black tracking-wider uppercase text-foreground mb-4 font-display">AÃ§Ãµes RÃ¡pidas</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
-            <Link to="/clientes">
-              <UserPlus className="w-6 h-6 text-emerald-600" />
-              <span className="text-xs font-bold text-foreground">Novo Cliente</span>
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
-            <Link to="/orcamentos">
-              <FileText className="w-6 h-6 text-primary" />
-              <span className="text-xs font-bold text-foreground">Novo OrÃ§amento</span>
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
-            <Link to="/plano-corte">
-              <Wrench className="w-6 h-6 text-blue-600" />
-              <span className="text-xs font-bold text-foreground">Plano de Corte</span>
-            </Link>
-          </Button>
-          <Button asChild variant="secondary" className="h-20 flex flex-col gap-2 justify-center rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 transition-all">
-            <Link to="/financeiro/contas">
-              <PlusCircle className="w-6 h-6 text-accent" />
-              <span className="text-xs font-bold text-foreground">Nova Despesa</span>
-            </Link>
+          </div>
+          <p
+            style={{
+              fontSize: designSystem.typography.fontSizes.md,
+              color: designSystem.colors.text.primary,
+              margin: 0,
+            }}
+          >
+            <strong>{formatCurrency(totalPeriodo)}</strong>{' '}
+            <span style={{ color: designSystem.colors.text.secondary }}>
+              / {formatCurrency(currentMeta)}
+            </span>
+          </p>
+          <Button
+            onClick={() => {
+              setEditGoal(true);
+              setGoalValue(currentMeta.toString());
+            }}
+            style={{
+              background: 'transparent',
+              color: designSystem.colors.primary[600],
+              border: `1px solid ${designSystem.colors.primary[500]}`,
+              borderRadius: designSystem.borderRadius.md,
+              padding: `${designSystem.spacing.xs} ${designSystem.spacing.lg}`,
+              fontWeight: designSystem.typography.fontWeights.semibold,
+            }}
+          >
+            Editar Meta
           </Button>
         </div>
-      </div>
+
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Evolução Financeira (6 meses)</h3>
+          <div className="ds-chart-box" style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={periods
+                  .slice(0, 6)
+                  .reverse()
+                  .map((p) => {
+                    const monthBillings = billings.filter((b) => b.data && b.data.startsWith(p.id));
+                    const entradas = monthBillings
+                      .filter((b) => b.tipo !== 'saida')
+                      .reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+                    const saidas = monthBillings
+                      .filter((b) => b.tipo === 'saida')
+                      .reduce((acc, b) => acc + (Number(b.valor) || 0), 0);
+                    return { name: p.label, Entradas: entradas, Saidas: saidas };
+                  })}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke={designSystem.colors.border}
+                  opacity={0.5}
+                />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: designSystem.colors.text.secondary }}
+                  dy={10}
+                />
+                <YAxis
+                  tickFormatter={(val) => `R$${val / 1000}k`}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: designSystem.colors.text.secondary }}
+                />
+                <Tooltip
+                  cursor={{ fill: designSystem.colors.background, opacity: 0.5 }}
+                  contentStyle={{
+                    backgroundColor: designSystem.colors.surface,
+                    borderColor: designSystem.colors.border,
+                    borderRadius: designSystem.borderRadius.md,
+                    boxShadow: designSystem.shadows.md,
+                  }}
+                  formatter={(value: number) => formatCurrency(value)}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                <Bar
+                  dataKey="Entradas"
+                  fill={designSystem.colors.success}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar
+                  dataKey="Saidas"
+                  fill={designSystem.colors.primary[500]}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      {/* Ações Rápidas */}
+      <section aria-label="Ações rápidas">
+        <h3 style={styles.sectionTitle}>Ações Rápidas</h3>
+        <div style={styles.quickActionsGrid}>
+          <Link to="/clientes" className="ds-quick-action" style={styles.quickAction}>
+            <UserPlus size={24} color={designSystem.colors.success} />
+            <span>Novo Cliente</span>
+          </Link>
+          <Link to="/orcamentos" className="ds-quick-action" style={styles.quickAction}>
+            <FileText size={24} color={designSystem.colors.primary[500]} />
+            <span>Novo Orçamento</span>
+          </Link>
+          <Link to="/plano-corte" className="ds-quick-action" style={styles.quickAction}>
+            <Wrench size={24} color={designSystem.colors.info} />
+            <span>Plano de Corte</span>
+          </Link>
+          <Link to="/financeiro/contas" className="ds-quick-action" style={styles.quickAction}>
+            <PlusCircle size={24} color={designSystem.colors.accent} />
+            <span>Nova Despesa</span>
+          </Link>
+        </div>
+      </section>
 
       {/* Origem de leads + Projetos recentes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 p-6 bg-card border-none shadow-sm rounded-2xl">
-          <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Origem dos Leads</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {origemCounts.length === 0 ? (
-              <div className="text-muted-foreground text-center py-8 font-medium">Nenhum cliente cadastrado.</div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {origemCounts.map(o => {
-                  const info = origemLabels[o.key] || origemLabels.outro;
-                  const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
-                  return (
-                    <div key={o.key} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-muted-foreground w-[120px] truncate">{info.label}</span>
-                      <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden shadow-inner">
-                        <div className="rounded-full transition-all duration-500 h-full shadow-sm" style={{
+      <section style={styles.splitGrid}>
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Origem dos Leads</h3>
+          {origemCounts.length === 0 ? (
+            <div
+              style={{
+                color: designSystem.colors.text.secondary,
+                textAlign: 'center',
+                padding: designSystem.spacing.xl,
+              }}
+            >
+              Nenhum cliente cadastrado.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.md }}>
+              {origemCounts.map((o) => {
+                const info = origemLabels[o.key] || origemLabels.outro;
+                const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
+                return (
+                  <div
+                    key={o.key}
+                    style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.md }}
+                  >
+                    <span
+                      style={{
+                        fontSize: designSystem.typography.fontSizes.xs,
+                        color: designSystem.colors.text.secondary,
+                        width: 120,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {info.label}
+                    </span>
+                    <div
+                      style={{
+                        flex: 1,
+                        background: designSystem.colors.background,
+                        borderRadius: designSystem.borderRadius.full,
+                        height: 16,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
                           width: `${pct}%`,
-                          backgroundColor: o.key === 'indicacao' ? '#1C2E24' : o.key === 'outro' ? '#8B5A2B' : info.color,
-                          minWidth: pct > 0 ? '16px' : '0'
-                        }} />
-                      </div>
-                      <span className="text-xs font-black w-10 text-right text-muted-foreground">{o.count}</span>
+                          minWidth: pct > 0 ? 16 : 0,
+                          height: '100%',
+                          backgroundColor: info.color,
+                          borderRadius: designSystem.borderRadius.full,
+                          transition: 'width 0.5s ease',
+                        }}
+                      />
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    <span
+                      style={{
+                        fontSize: designSystem.typography.fontSizes.xs,
+                        fontWeight: designSystem.typography.fontWeights.semibold,
+                        color: designSystem.colors.text.secondary,
+                        width: 40,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {o.count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-        <Card className="lg:col-span-2 p-6 bg-card border-none shadow-sm rounded-2xl">
-          <CardHeader className="p-0 mb-4">
-            <CardTitle className="text-base font-black text-foreground tracking-wider uppercase font-display">Projetos Recentes</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {recentProjects.length === 0 ? (
-              <div className="text-muted-foreground text-center py-8 font-medium">Nenhum projeto cadastrado.</div>
-            ) : (
-              <DataTable
-                headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
-                data={recentProjects}
-                renderRow={(p: Project) => (
-                  <>
-                    <td className="p-4 font-bold text-sm text-foreground font-display">{p.ambiente}</td>
-                    <td className="p-4 text-sm text-muted-foreground font-semibold">{p.clientName || '-'}</td>
-                    <td className="p-4 font-black text-sm text-primary">
-                      {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
-                    </td>
-                    <td className="p-4">
-                      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-                        {statusLabels[p.status] || p.status}
-                      </span>
-                    </td>
-                  </>
-                )}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        <div style={styles.card}>
+          <h3 style={styles.sectionTitle}>Projetos Recentes</h3>
+          {recentProjects.length === 0 ? (
+            <div
+              style={{
+                color: designSystem.colors.text.secondary,
+                textAlign: 'center',
+                padding: designSystem.spacing.xl,
+              }}
+            >
+              Nenhum projeto cadastrado.
+            </div>
+          ) : (
+            <DataTable
+              headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
+              data={recentProjects}
+              renderRow={(p: Project) => (
+                <>
+                  <td
+                    style={{
+                      padding: designSystem.spacing.md,
+                      fontSize: designSystem.typography.fontSizes.sm,
+                      fontWeight: designSystem.typography.fontWeights.semibold,
+                    }}
+                  >
+                    {p.ambiente}
+                  </td>
+                  <td
+                    style={{
+                      padding: designSystem.spacing.md,
+                      fontSize: designSystem.typography.fontSizes.sm,
+                      color: designSystem.colors.text.secondary,
+                    }}
+                  >
+                    {p.clientName || '-'}
+                  </td>
+                  <td
+                    style={{
+                      padding: designSystem.spacing.md,
+                      fontSize: designSystem.typography.fontSizes.sm,
+                      fontWeight: designSystem.typography.fontWeights.bold,
+                      color: designSystem.colors.primary[600],
+                    }}
+                  >
+                    {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
+                  </td>
+                  <td style={{ padding: designSystem.spacing.md }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
+                        fontSize: designSystem.typography.fontSizes.xs,
+                        fontWeight: designSystem.typography.fontWeights.semibold,
+                        background: designSystem.colors.primary[50],
+                        color: designSystem.colors.primary[600],
+                        border: `1px solid ${designSystem.colors.primary[100]}`,
+                        borderRadius: designSystem.borderRadius.full,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {statusLabels[p.status] || p.status}
+                    </span>
+                  </td>
+                </>
+              )}
+            />
+          )}
+        </div>
+      </section>
 
-      {/* ðŸ’¡ Dlux Copilot - Insights RÃ¡pidos */}
-      <Card className="bg-gradient-to-br from-[#1C2E24]/5 to-[#8B5A2B]/5 border border-primary/15 rounded-2xl p-6">
-        <CardContent className="flex flex-col gap-4 p-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">ðŸ’¡</span>
-            <h3 className="text-lg font-bold text-foreground font-display">Dlux Copilot â€” Consultoria TÃ©cnica & Insights</h3>
-          </div>
-          <p className="text-sm text-muted-foreground font-medium">
-            Acesse insights operacionais e resolva dÃºvidas de engenharia moveleira em tempo real com a nossa IA especialista.
-          </p>
-          <div className="flex flex-wrap gap-2.5 mt-2">
-            {[
-              { label: 'ðŸ“Š SaÃºde Financeira Geral', query: 'Como estÃ¡ a saÃºde financeira da empresa?' },
-              { label: 'ðŸ’Ž Ambientes Mais Lucrativos', query: 'Quais os produtos/ambientes mais lucrativos este mÃªs?' },
-              { label: 'ðŸ”® PrevisÃ£o de Faturamento', query: 'PrevisÃ£o de faturamento baseada nos projetos ativos' },
-              { label: 'ðŸ”¥ AnÃ¡lise PUR vs Hotmelt', query: 'Qual a diferenÃ§a prÃ¡tica na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?' },
-              { label: 'ðŸ“ Altura ErgonÃ´mica de Bancadas', query: 'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapÃ©?' },
-              { label: 'ðŸªµ MDF vs MDP na Estrutura', query: 'Quando devo usar MDP em vez de MDF no projeto estrutural de um armÃ¡rio planejado?' },
-              { label: 'ðŸ“¦ Regras de DobradiÃ§a 165Â°', query: 'Em quais situaÃ§Ãµes em armÃ¡rios de cozinha a dobradiÃ§a de 165 graus de abertura Ã© obrigatÃ³ria?' },
-              { label: 'ðŸ“‰ Evitar Flambagem em Prateleiras', query: 'Qual Ã© o vÃ£o livre mÃ¡ximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?' },
-            ].map((item, idx) => (
-              <Button
-                key={idx}
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  const event = new CustomEvent('dlux-open-chat', {
-                    detail: { query: item.query }
-                  });
-                  window.dispatchEvent(event);
-                }}
-                className="bg-card hover:bg-primary/10 hover:text-primary text-muted-foreground border border-border transition-all flex items-center gap-1.5 rounded-xl font-semibold shadow-sm text-xs"
-              >
-                <span>âœ¨</span>
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Dlux Copilot - Insights Rápidos */}
+      <section style={styles.copilotCard}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.sm }}>
+          <span style={{ fontSize: designSystem.typography.fontSizes.xl }}>💡</span>
+          <h3 style={styles.h2}>Dlux Copilot — Consultoria Técnica &amp; Insights</h3>
+        </div>
+        <p
+          style={{
+            color: designSystem.colors.text.secondary,
+            fontSize: designSystem.typography.fontSizes.sm,
+            margin: 0,
+          }}
+        >
+          Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a
+          nossa IA especialista.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: designSystem.spacing.sm }}>
+          {[
+            { label: 'Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
+            {
+              label: 'Ambientes Mais Lucrativos',
+              query: 'Quais os produtos/ambientes mais lucrativos este mês?',
+            },
+            {
+              label: 'Previsão de Faturamento',
+              query: 'Previsão de faturamento baseada nos projetos ativos',
+            },
+            {
+              label: 'Análise PUR vs Hotmelt',
+              query:
+                'Qual a diferença prática na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?',
+            },
+            {
+              label: 'Altura Ergonômica de Bancadas',
+              query:
+                'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapé?',
+            },
+            {
+              label: 'MDF vs MDP na Estrutura',
+              query:
+                'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário planejado?',
+            },
+            {
+              label: 'Regras de Dobradiça 165°',
+              query:
+                'Em quais situações em armários de cozinha a dobradiça de 165 graus de abertura é obrigatória?',
+            },
+            {
+              label: 'Evitar Flambagem em Prateleiras',
+              query:
+                'Qual é o vão livre máximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?',
+            },
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              className="ds-quick-action"
+              style={styles.copilotChip}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent('dlux-open-chat', { detail: { query: item.query } }),
+                );
+              }}
+            >
+              ✨ {item.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Modal editar meta */}
-      <Modal isOpen={editGoal} onClose={() => setEditGoal(false)} title="Definir Meta Mensal" size="sm">
-        <div className="flex flex-col gap-4">
-          <label className="text-sm font-semibold text-muted-foreground">Valor da meta para {selectedPeriod}:</label>
-          <Input type="number" className="text-lg font-bold border-border rounded-xl"
-            value={goalValue} onChange={e => setGoalValue(e.target.value)} />
-          <Button onClick={() => { setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0); setEditGoal(false); }} className="w-full bg-primary hover:bg-[#704822] text-primary-foreground font-bold rounded-xl py-3 shadow-[0_4px_12px_rgba(139,90,43,0.25)]">
+      <Modal
+        isOpen={editGoal}
+        onClose={() => setEditGoal(false)}
+        title="Definir Meta Mensal"
+        size="sm"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.md }}>
+          <label
+            style={{
+              fontSize: designSystem.typography.fontSizes.sm,
+              color: designSystem.colors.text.secondary,
+            }}
+          >
+            Valor da meta para {selectedPeriod}:
+          </label>
+          <Input
+            type="number"
+            value={goalValue}
+            onChange={(e) => setGoalValue(e.target.value)}
+            style={{
+              border: `1px solid ${designSystem.colors.border}`,
+              borderRadius: designSystem.borderRadius.md,
+              padding: designSystem.spacing.sm,
+              fontSize: designSystem.typography.fontSizes.lg,
+              fontWeight: designSystem.typography.fontWeights.semibold,
+              fontFamily: designSystem.typography.fontFamily,
+            }}
+          />
+          <Button
+            onClick={() => {
+              setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0);
+              setEditGoal(false);
+            }}
+            style={{
+              width: '100%',
+              background: designSystem.colors.primary[500],
+              color: designSystem.colors.surface,
+              border: 'none',
+              borderRadius: designSystem.borderRadius.md,
+              padding: designSystem.spacing.md,
+              fontWeight: designSystem.typography.fontWeights.bold,
+              boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+            }}
+          >
             Salvar Meta
           </Button>
         </div>
@@ -343,5 +759,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-
