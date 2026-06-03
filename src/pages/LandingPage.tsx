@@ -141,9 +141,9 @@ const LandingPage: React.FC = () => {
       <nav className="relative z-50 flex items-center justify-between px-6 py-4 mx-auto max-w-7xl border-b border-border/20 backdrop-blur-xl bg-background/50 sticky top-0">
         <div className="text-2xl font-black tracking-widest drop-shadow-sm flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
-            F
+            DL
           </div>
-          <span className="text-gradient-primary">FATTO OS</span>
+          <span className="text-gradient-primary">D'LUXURY CRM</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a
@@ -229,7 +229,7 @@ const LandingPage: React.FC = () => {
             <div className="w-3 h-3 rounded-full bg-accent/80" />
             <div className="w-3 h-3 rounded-full bg-green-500/80" />
             <div className="ml-4 text-xs font-mono text-muted-foreground bg-background/50 px-3 py-1 rounded-md">
-              app.fatto-os.com/painel
+              app.dluxury-crm.com/painel
             </div>
           </div>
 
@@ -495,9 +495,9 @@ const LandingPage: React.FC = () => {
       <footer className="relative z-10 border-t border-border/20 bg-background py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
           <div className="flex flex-col gap-2">
-            <div className="text-xl font-black text-foreground/80">FATTO OS</div>
+            <div className="text-xl font-black text-foreground/80">D'LUXURY CRM</div>
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Fatto OS Tecnologias. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} D'Luxury CRM. Todos os direitos reservados.
             </p>
           </div>
 
@@ -517,7 +517,7 @@ const LandingPage: React.FC = () => {
 
       {/* WhatsApp FAB */}
       <a
-        href="https://wa.me/5511999999999?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20Fatto%20OS"
+        href="https://wa.me/5511999999999?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20o%20D'Luxury%20CRM"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-green-500 text-white rounded-full shadow-[0_4px_20px_rgba(34,197,94,0.4)] hover:scale-110 hover:shadow-[0_8px_30px_rgba(34,197,94,0.6)] transition-all duration-300"

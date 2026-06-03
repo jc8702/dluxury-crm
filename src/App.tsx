@@ -66,7 +66,7 @@ function LoadingScreen() {
     <div className="flex items-center justify-center h-screen bg-background flex-col gap-4">
       <div className="w-9 h-9 border-3 border-border border-t-primary rounded-full animate-spin" />
       <span className="text-foreground text-[13px] font-semibold tracking-widest font-display">
-        FATTO OS
+        D'LUXURY CRM
       </span>
     </div>
   );

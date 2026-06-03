@@ -125,10 +125,10 @@ const SignupPage: React.FC = () => {
       {/* Header / Brand */}
       <div className="text-center mb-14">
         <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-primary">
-          F
+          DL
         </div>
         <h1 id="signup-title" className="text-[2.4rem] font-black m-0 tracking-wider">
-          FATTO OS
+          D'LUXURY CRM
         </h1>
         <p className="text-accent text-sm font-bold mt-2 uppercase tracking-[3px]">
           Plataforma de Gestão Moveleira Premium
@@ -175,7 +175,9 @@ const SignupPage: React.FC = () => {
                   placeholder="suamarcenaria"
                   className={`${inputClass} pr-[120px]`}
                 />
-                <span className="absolute right-3 text-primary text-sm font-bold">.fatto-os</span>
+                <span className="absolute right-3 text-primary text-sm font-bold">
+                  .dluxury-crm
+                </span>
               </div>
               <div className="mt-1.5 text-xs flex items-center gap-2">
                 {subdomainStatus === 'checking' && (
@@ -191,7 +193,7 @@ const SignupPage: React.FC = () => {
                 )}
                 {subdomainStatus === 'idle' && (
                   <span className="text-muted-foreground font-medium">
-                    Exemplo: suamarcenaria.fatto-os.vercel.app
+                    Exemplo: suamarcenaria.dluxury-crm.vercel.app
                   </span>
                 )}
               </div>

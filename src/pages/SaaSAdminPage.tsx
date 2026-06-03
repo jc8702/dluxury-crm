@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Users, 
-  CreditCard, 
-  Calendar, 
-  UserPlus, 
-  Edit3, 
-  Search, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock, 
-  X, 
+import {
+  Building2,
+  Users,
+  CreditCard,
+  Calendar,
+  UserPlus,
+  Edit3,
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  X,
   ChevronRight,
   TrendingUp,
   Sliders,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
@@ -53,7 +53,7 @@ export default function SaaSAdminPage() {
   const [editPlano, setEditPlano] = useState<'basic' | 'pro' | 'enterprise'>('pro');
   const [editStatus, setEditStatus] = useState<'ativo' | 'inativo' | 'pendente'>('ativo');
   const [editVencimento, setEditVencimento] = useState('');
-  const [editValor, setEditValor] = useState(197.00);
+  const [editValor, setEditValor] = useState(197.0);
   const [editDiaVencimento, setEditDiaVencimento] = useState(5);
   const [submittingEdit, setSubmittingEdit] = useState(false);
 
@@ -70,8 +70,8 @@ export default function SaaSAdminPage() {
       setLoading(true);
       const res = await fetch('/api/saas-admin/tenants', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
       const json = await res.json();
       if (json.success) {
@@ -96,9 +96,12 @@ export default function SaaSAdminPage() {
     setSelectedTenant(tenant);
     setEditPlano(tenant.planoTier);
     setEditStatus(tenant.status);
-    setEditValor(tenant.subscription?.valor || (tenant.planoTier === 'basic' ? 97 : tenant.planoTier === 'pro' ? 197 : 397));
+    setEditValor(
+      tenant.subscription?.valor ||
+        (tenant.planoTier === 'basic' ? 97 : tenant.planoTier === 'pro' ? 197 : 397),
+    );
     setEditDiaVencimento(tenant.subscription?.diaVencimento || 5);
-    
+
     if (tenant.subscription?.currentPeriodEnd) {
       setEditVencimento(new Date(tenant.subscription.currentPeriodEnd).toISOString().split('T')[0]);
     } else {
@@ -118,7 +121,7 @@ export default function SaaSAdminPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           tenantId: selectedTenant.id,
@@ -126,8 +129,8 @@ export default function SaaSAdminPage() {
           status: editStatus,
           currentPeriodEnd: editVencimento ? new Date(editVencimento).toISOString() : null,
           diaVencimento: editDiaVencimento,
-          valor: editValor
-        })
+          valor: editValor,
+        }),
       });
 
       const json = await res.json();
@@ -167,15 +170,15 @@ export default function SaaSAdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           tenantId: selectedTenant.id,
           name: userName,
           email: userEmail,
           role: userRole,
-          password: userPassword
-        })
+          password: userPassword,
+        }),
       });
 
       const json = await res.json();
@@ -194,11 +197,13 @@ export default function SaaSAdminPage() {
   };
 
   // Filtragem local dos tenants
-  const filteredTenants = tenants.filter(t => {
-    const matchesSearch = t.nome.toLowerCase().includes(search.toLowerCase()) || 
-                          t.subdominio.toLowerCase().includes(search.toLowerCase()) ||
-                          (t.dominioPersonalizado && t.dominioPersonalizado.toLowerCase().includes(search.toLowerCase()));
-    
+  const filteredTenants = tenants.filter((t) => {
+    const matchesSearch =
+      t.nome.toLowerCase().includes(search.toLowerCase()) ||
+      t.subdominio.toLowerCase().includes(search.toLowerCase()) ||
+      (t.dominioPersonalizado &&
+        t.dominioPersonalizado.toLowerCase().includes(search.toLowerCase()));
+
     const matchesStatus = filterStatus === 'all' || t.status === filterStatus;
     const matchesPlano = filterPlano === 'all' || t.planoTier === filterPlano;
 
@@ -207,16 +212,15 @@ export default function SaaSAdminPage() {
 
   // Métricas
   const totalTenants = tenants.length;
-  const activeTenants = tenants.filter(t => t.status === 'ativo').length;
+  const activeTenants = tenants.filter((t) => t.status === 'ativo').length;
   const mrrEstimado = tenants
-    .filter(t => t.status === 'ativo' && t.subscription)
+    .filter((t) => t.status === 'ativo' && t.subscription)
     .reduce((acc, t) => acc + (t.subscription?.valor || 0), 0);
 
-  const pendingPayments = tenants.filter(t => t.subscription?.status === 'overdue').length;
+  const pendingPayments = tenants.filter((t) => t.subscription?.status === 'overdue').length;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8 animate-fade-in">
-      
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
@@ -225,18 +229,20 @@ export default function SaaSAdminPage() {
             Painel Administrativo SaaS
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Controle global de tenants, assinaturas, planos de faturamento e usuários do ecossistema FATTO OS.
+            Controle global de tenants, assinaturas, planos de faturamento e usuários do ecossistema
+            D'LUXURY CRM.
           </p>
         </div>
       </div>
 
       {/* Cards de Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
         {/* Total Tenants */}
         <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total de Tenants</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Total de Tenants
+            </span>
             <div className="text-2xl font-bold font-display text-foreground">{totalTenants}</div>
           </div>
           <div className="p-3 rounded-lg bg-primary/10 text-primary">
@@ -247,7 +253,9 @@ export default function SaaSAdminPage() {
         {/* Ativos */}
         <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tenants Ativos</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Tenants Ativos
+            </span>
             <div className="text-2xl font-bold font-display text-emerald-500">{activeTenants}</div>
           </div>
           <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-500">
@@ -258,9 +266,13 @@ export default function SaaSAdminPage() {
         {/* MRR Estimado */}
         <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Receita Recorrente (MRR)</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Receita Recorrente (MRR)
+            </span>
             <div className="text-2xl font-bold font-display text-primary">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(mrrEstimado)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                mrrEstimado,
+              )}
             </div>
           </div>
           <div className="p-3 rounded-lg bg-primary/10 text-primary">
@@ -271,19 +283,19 @@ export default function SaaSAdminPage() {
         {/* Inadimplentes */}
         <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Inadimplentes (Overdue)</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Inadimplentes (Overdue)
+            </span>
             <div className="text-2xl font-bold font-display text-rose-500">{pendingPayments}</div>
           </div>
           <div className="p-3 rounded-lg bg-rose-500/10 text-rose-500">
             <AlertTriangle className="h-6 w-6" />
           </div>
         </div>
-
       </div>
 
       {/* Tabela de Controle e Filtros */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        
         {/* Barra de Filtros */}
         <div className="p-4 border-b border-border flex flex-col md:flex-row items-center gap-4 bg-muted/30">
           <div className="relative flex-1 w-full">
@@ -292,7 +304,7 @@ export default function SaaSAdminPage() {
               type="text"
               placeholder="Buscar por empresa, subdomínio ou domínio..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -300,7 +312,7 @@ export default function SaaSAdminPage() {
           <div className="flex items-center gap-2 w-full md:w-auto">
             <select
               value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
+              onChange={(e) => setFilterStatus(e.target.value)}
               className="flex-1 md:flex-initial bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             >
               <option value="all">Todos os Status</option>
@@ -311,7 +323,7 @@ export default function SaaSAdminPage() {
 
             <select
               value={filterPlano}
-              onChange={e => setFilterPlano(e.target.value)}
+              onChange={(e) => setFilterPlano(e.target.value)}
               className="flex-1 md:flex-initial bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             >
               <option value="all">Todos os Planos</option>
@@ -327,7 +339,9 @@ export default function SaaSAdminPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12 flex-col gap-3">
               <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
-              <span className="text-xs text-muted-foreground">Carregando tenants cadastrados...</span>
+              <span className="text-xs text-muted-foreground">
+                Carregando tenants cadastrados...
+              </span>
             </div>
           ) : filteredTenants.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground text-sm">
@@ -346,9 +360,15 @@ export default function SaaSAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-sm text-foreground">
-                {filteredTenants.map(tenant => {
-                  const diasRestantes = tenant.subscription?.currentPeriodEnd 
-                    ? Math.max(0, Math.ceil((new Date(tenant.subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                {filteredTenants.map((tenant) => {
+                  const diasRestantes = tenant.subscription?.currentPeriodEnd
+                    ? Math.max(
+                        0,
+                        Math.ceil(
+                          (new Date(tenant.subscription.currentPeriodEnd).getTime() - Date.now()) /
+                            (1000 * 60 * 60 * 24),
+                        ),
+                      )
                     : 0;
 
                   return (
@@ -356,33 +376,44 @@ export default function SaaSAdminPage() {
                       <td className="px-6 py-4">
                         <div className="font-semibold text-foreground">{tenant.nome}</div>
                         <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                          <span className="bg-muted px-1.5 py-0.5 rounded border border-border font-mono">{tenant.subdominio}.fatto.os</span>
+                          <span className="bg-muted px-1.5 py-0.5 rounded border border-border font-mono">
+                            {tenant.subdominio}.dluxury.crm
+                          </span>
                           {tenant.dominioPersonalizado && (
-                            <span className="text-primary font-mono font-medium">({tenant.dominioPersonalizado})</span>
+                            <span className="text-primary font-mono font-medium">
+                              ({tenant.dominioPersonalizado})
+                            </span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-                          tenant.planoTier === 'enterprise' 
-                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                            : tenant.planoTier === 'pro'
-                            ? 'bg-primary/10 text-primary border-primary/20'
-                            : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                            tenant.planoTier === 'enterprise'
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                              : tenant.planoTier === 'pro'
+                                ? 'bg-primary/10 text-primary border-primary/20'
+                                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                          }`}
+                        >
                           {tenant.planoTier.toUpperCase()}
                         </span>
                       </td>
                       <td className="px-6 py-4 font-medium text-foreground">
-                        {tenant.subscription?.valor 
-                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tenant.subscription.valor)
+                        {tenant.subscription?.valor
+                          ? new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(tenant.subscription.valor)
                           : 'R$ 0,00'}
                       </td>
                       <td className="px-6 py-4">
                         {tenant.subscription?.currentPeriodEnd ? (
                           <div className="space-y-1">
                             <div className="text-xs text-foreground font-medium">
-                              {new Date(tenant.subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                              {new Date(tenant.subscription.currentPeriodEnd).toLocaleDateString(
+                                'pt-BR',
+                              )}
                             </div>
                             <div className="text-[11px] text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" />
@@ -394,16 +425,24 @@ export default function SaaSAdminPage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          tenant.status === 'ativo' 
-                            ? 'bg-emerald-500/10 text-emerald-400' 
-                            : tenant.status === 'inativo'
-                            ? 'bg-rose-500/10 text-rose-400'
-                            : 'bg-amber-500/10 text-amber-400'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            tenant.status === 'ativo' ? 'bg-emerald-400' : tenant.status === 'inativo' ? 'bg-rose-400' : 'bg-amber-400'
-                          }`} />
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            tenant.status === 'ativo'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : tenant.status === 'inativo'
+                                ? 'bg-rose-500/10 text-rose-400'
+                                : 'bg-amber-500/10 text-amber-400'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              tenant.status === 'ativo'
+                                ? 'bg-emerald-400'
+                                : tenant.status === 'inativo'
+                                  ? 'bg-rose-400'
+                                  : 'bg-amber-400'
+                            }`}
+                          />
                           {tenant.status.toUpperCase()}
                         </span>
                       </td>
@@ -432,20 +471,18 @@ export default function SaaSAdminPage() {
             </table>
           )}
         </div>
-
       </div>
 
       {/* Modal 1: Editar Plano / Assinatura */}
       {isEditModalOpen && selectedTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-up">
-            
             <div className="p-5 border-b border-border flex items-center justify-between">
               <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-primary" />
                 Editar Assinatura: {selectedTenant.nome}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsEditModalOpen(false)}
                 className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"
               >
@@ -454,12 +491,13 @@ export default function SaaSAdminPage() {
             </div>
 
             <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
-              
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plano Contratado</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Plano Contratado
+                </label>
                 <select
                   value={editPlano}
-                  onChange={e => setEditPlano(e.target.value as any)}
+                  onChange={(e) => setEditPlano(e.target.value as any)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="basic">Basic (R$ 97,00)</option>
@@ -469,10 +507,12 @@ export default function SaaSAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status da Conta</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Status da Conta
+                </label>
                 <select
                   value={editStatus}
-                  onChange={e => setEditStatus(e.target.value as any)}
+                  onChange={(e) => setEditStatus(e.target.value as any)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="ativo">Ativo</option>
@@ -483,25 +523,29 @@ export default function SaaSAdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor Mensal (R$)</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Valor Mensal (R$)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={editValor}
-                    onChange={e => setEditValor(parseFloat(e.target.value))}
+                    onChange={(e) => setEditValor(parseFloat(e.target.value))}
                     className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dia do Vencimento</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Dia do Vencimento
+                  </label>
                   <input
                     type="number"
                     min="1"
                     max="28"
                     value={editDiaVencimento}
-                    onChange={e => setEditDiaVencimento(parseInt(e.target.value))}
+                    onChange={(e) => setEditDiaVencimento(parseInt(e.target.value))}
                     className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   />
@@ -509,14 +553,18 @@ export default function SaaSAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data de Vencimento do Acesso</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Data de Vencimento do Acesso
+                </label>
                 <input
                   type="date"
                   value={editVencimento}
-                  onChange={e => setEditVencimento(e.target.value)}
+                  onChange={(e) => setEditVencimento(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-                <span className="text-[11px] text-muted-foreground">Define quando o período de trial ou acesso pago expira.</span>
+                <span className="text-[11px] text-muted-foreground">
+                  Define quando o período de trial ou acesso pago expira.
+                </span>
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-border mt-6">
@@ -537,10 +585,11 @@ export default function SaaSAdminPage() {
                       <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                       Salvando...
                     </>
-                  ) : 'Salvar Alterações'}
+                  ) : (
+                    'Salvar Alterações'
+                  )}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
@@ -550,13 +599,12 @@ export default function SaaSAdminPage() {
       {isUserModalOpen && selectedTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-up">
-            
             <div className="p-5 border-b border-border flex items-center justify-between">
               <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-primary" />
                 Criar Usuário: {selectedTenant.nome}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsUserModalOpen(false)}
                 className="p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted"
               >
@@ -565,36 +613,41 @@ export default function SaaSAdminPage() {
             </div>
 
             <form onSubmit={handleCreateUser} className="p-5 space-y-4">
-              
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nome Completo</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Nome Completo
+                </label>
                 <input
                   type="text"
                   placeholder="Ex: João da Silva"
                   value={userName}
-                  onChange={e => setUserName(e.target.value)}
+                  onChange={(e) => setUserName(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">E-mail</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  E-mail
+                </label>
                 <input
                   type="email"
                   placeholder="Ex: joao@empresa.com"
                   value={userEmail}
-                  onChange={e => setUserEmail(e.target.value)}
+                  onChange={(e) => setUserEmail(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nível de Acesso (Role)</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Nível de Acesso (Role)
+                </label>
                 <select
                   value={userRole}
-                  onChange={e => setUserRole(e.target.value)}
+                  onChange={(e) => setUserRole(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="admin">Administrador (Acesso Total)</option>
@@ -605,12 +658,14 @@ export default function SaaSAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Senha Provisória</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Senha Provisória
+                </label>
                 <input
                   type="password"
                   placeholder="Mínimo 8 caracteres"
                   value={userPassword}
-                  onChange={e => setUserPassword(e.target.value)}
+                  onChange={(e) => setUserPassword(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                   minLength={8}
@@ -635,15 +690,15 @@ export default function SaaSAdminPage() {
                       <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                       Criando...
                     </>
-                  ) : 'Criar Usuário'}
+                  ) : (
+                    'Criar Usuário'
+                  )}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

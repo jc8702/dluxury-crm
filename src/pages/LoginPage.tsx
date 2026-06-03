@@ -64,9 +64,11 @@ const LoginPage: React.FC = () => {
       <div className="bg-card p-[3.5rem_3rem] rounded-3xl w-[420px] border border-border/30 shadow-lg">
         <div className="text-center mb-10">
           <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-5 text-primary-foreground font-black text-2xl shadow-primary">
-            F
+            DL
           </div>
-          <h1 className="text-foreground text-[1.6rem] font-black m-0 tracking-wider">FATTO OS</h1>
+          <h1 className="text-foreground text-[1.6rem] font-black m-0 tracking-wider">
+            D'LUXURY CRM
+          </h1>
           <p className="text-primary text-xs font-bold mt-1.5 uppercase tracking-[2px]">
             {tenantInfo ? tenantInfo.nome : 'DESIGN & TECH'}
           </p>

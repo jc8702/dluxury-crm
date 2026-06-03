@@ -390,11 +390,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground text-base shadow-primary">
-          F
+          DL
         </div>
         <div className="flex flex-col sidebar-label">
           <span className="text-sm font-black text-sidebar-accent-foreground leading-tight tracking-wider font-display">
-            FATTO OS
+            D'LUXURY CRM
           </span>
           <span className="text-[0.55rem] font-bold text-sidebar-primary tracking-[0.2em] leading-tight">
             DESIGN & TECH
@@ -427,13 +427,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
               Seu Workspace
             </div>
             <a
-              href={`https://${user.subdominio}.fatto-os.vercel.app`}
+              href={`https://${user.subdominio}.dluxury-crm.vercel.app`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-sidebar-foreground hover:text-primary transition-colors flex items-center gap-1 bg-sidebar-accent/50 px-2 py-1.5 rounded-lg border border-sidebar-border"
               title="Acessar URL exclusiva"
             >
-              <span className="truncate">{user.subdominio}.fatto-os.vercel.app</span>
+              <span className="truncate">{user.subdominio}.dluxury-crm.vercel.app</span>
             </a>
           </div>
         )}
