@@ -44,7 +44,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
           }
           setTitulos(filtered);
         })
-        .catch((err) => console.error('Erro ao carregar tÃ­tulos para notas fiscais:', err))
+        .catch((err) => console.error('Erro ao carregar títulos para notas fiscais:', err))
         .finally(() => setLoadingTitulos(false));
     } else {
       setTitulos([]);
@@ -102,14 +102,14 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Erro ao registrar movimentaÃ§Ã£o.');
+      setError(err.message || 'Erro ao registrar movimentação.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Registrar MovimentaÃ§Ã£o" size="md">
+    <Modal isOpen={true} onClose={onClose} title="Registrar Movimentação" size="md">
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">{material.nome}</p>
       </div>
@@ -123,7 +123,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               icon: <ArrowUpCircle size={18} />,
               color: '#10b981',
             },
-            { id: 'saida', label: 'SaÃ­da', icon: <ArrowDownCircle size={18} />, color: '#ef4444' },
+            { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#ef4444' },
             { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#3b82f6' },
           ].map((t) => (
             <button
@@ -160,7 +160,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               <Input
                 type="number"
                 step="0.01"
-                label="PreÃ§o Custo (R$)"
+                label="Preço Custo (R$)"
                 value={precoUnitario}
                 onChange={(e) => setPrecoUnitario(Number(e.target.value))}
               />
@@ -170,7 +170,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
 
         <div>
           <Input
-            label="Motivo / ReferÃªncia"
+            label="Motivo / Referência"
             placeholder="Ex: Compra NF 123, Consumo projeto X..."
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
@@ -211,7 +211,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
             {(selecaoNF === 'manual' || notasFiscaisUnicas.length === 0) && (
               <div className="animate-fade-in">
                 <Input
-                  label="NÃºmero da NF"
+                  label="Número da NF"
                   placeholder="Ex: 000123"
                   value={notaFiscal}
                   onChange={(e) => setNotaFiscal(e.target.value)}
@@ -242,7 +242,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground/90 mb-2">
-                OrÃ§amento (Opcional)
+                Orçamento (Opcional)
               </label>
               <select
                 className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"

@@ -70,7 +70,7 @@ export default function SaaSAdminPage() {
       setLoading(true);
       const res = await fetch('/api/saas-admin/tenants', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('dluxury_token')}`,
         },
       });
       const json = await res.json();
@@ -121,7 +121,7 @@ export default function SaaSAdminPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('dluxury_token')}`,
         },
         body: JSON.stringify({
           tenantId: selectedTenant.id,
@@ -170,7 +170,7 @@ export default function SaaSAdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('dluxury_token')}`,
         },
         body: JSON.stringify({
           tenantId: selectedTenant.id,

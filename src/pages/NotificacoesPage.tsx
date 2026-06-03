@@ -23,7 +23,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '../comp
 export default function NotificacoesPage() {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'todas' | 'nÃ£o_lidas'>('nÃ£o_lidas');
+  const [filter, setFilter] = useState<'todas' | 'não_lidas'>('não_lidas');
   const [priorityFilter, setPriorityFilter] = useState<'todas' | 'critica' | 'alta' | 'normal'>(
     'todas',
   );
@@ -37,11 +37,11 @@ export default function NotificacoesPage() {
   const fetchNotificacoes = async () => {
     setLoading(true);
     try {
-      const data = await api.notificacoes.list(filter === 'nÃ£o_lidas');
+      const data = await api.notificacoes.list(filter === 'não_lidas');
       setNotificacoes(data || []);
     } catch (error) {
-      console.error('Erro ao carregar notificaÃ§Ãµes:', error);
-      toastError('Erro ao carregar lista de notificaÃ§Ãµes');
+      console.error('Erro ao carregar notificações:', error);
+      toastError('Erro ao carregar lista de notificações');
     } finally {
       setLoading(false);
     }
@@ -54,12 +54,12 @@ export default function NotificacoesPage() {
       await fetchNotificacoes();
       const criadas = res?.criadas || res?.stats?.criadas || 0;
       if (criadas > 0) {
-        toastSuccess(`${criadas} nova(s) notificaÃ§Ã£o(Ãµes) gerada(s)`);
+        toastSuccess(`${criadas} nova(s) notificação(ões) gerada(s)`);
       } else {
         toastSuccess('Nenhum alerta novo identificado');
       }
     } catch (err: any) {
-      toastError(err.message || 'Erro ao processar verificaÃ§Ã£o');
+      toastError(err.message || 'Erro ao processar verificação');
     } finally {
       setChecking(false);
     }
@@ -69,7 +69,7 @@ export default function NotificacoesPage() {
     try {
       await api.notificacoes.markAllRead();
       fetchNotificacoes();
-      toastSuccess('Todas as notificaÃ§Ãµes foram marcadas como lidas');
+      toastSuccess('Todas as notificações foram marcadas como lidas');
     } catch (error) {
       toastError('Erro ao marcar todas como lidas');
     }
@@ -78,14 +78,14 @@ export default function NotificacoesPage() {
   const handleMarkRead = async (id: string) => {
     try {
       await api.notificacoes.markRead(id);
-      // AtualizaÃ§Ã£o otimista no local state para evitar lag de rede
+      // Atualização otimista no local state para evitar lag de rede
       setNotificacoes((prev) => prev.map((n) => (n.id === id ? { ...n, lida: true } : n)));
     } catch (error) {
       console.error('Erro ao marcar como lida:', error);
     }
   };
 
-  // Contadores analÃ­ticos
+  // Contadores analíticos
   const stats = useMemo(() => {
     const total = notificacoes.length;
     const naoLidas = notificacoes.filter((n) => !n.lida).length;
@@ -154,8 +154,8 @@ export default function NotificacoesPage() {
             </span>
           </h1>
           <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
-            Monitoramento em tempo real de gargalos operacionais, estoques mÃ­nimos, prazos de
-            projetos e cobranÃ§as financeiras.
+            Monitoramento em tempo real de gargalos operacionais, estoques mínimos, prazos de
+            projetos e cobranças financeiras.
           </p>
         </div>
 
@@ -183,7 +183,7 @@ export default function NotificacoesPage() {
         </div>
       </div>
 
-      {/* Grid de MÃ©tricas */}
+      {/* Grid de Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         {[
           {
@@ -191,28 +191,28 @@ export default function NotificacoesPage() {
             value: stats.naoLidas,
             color: 'text-primary',
             border: 'border-primary/20',
-            desc: 'Aguardando verificaÃ§Ã£o',
+            desc: 'Aguardando verificação',
           },
           {
-            label: 'Risco CrÃ­tico',
+            label: 'Risco Crítico',
             value: stats.criticas,
             color: 'text-red-400',
             border: 'border-red-500/30',
-            desc: 'CobranÃ§as e estoques zerados',
+            desc: 'Cobranças e estoques zerados',
           },
           {
-            label: 'UrgÃªncias (Alta)',
+            label: 'Urgências (Alta)',
             value: stats.altas,
             color: 'text-amber-400',
             border: 'border-amber-500/30',
             desc: 'Prazos e garantias',
           },
           {
-            label: 'Total HistÃ³rico',
+            label: 'Total Histórico',
             value: stats.total,
             color: 'text-blue-400',
             border: 'border-blue-500/30',
-            desc: 'NotificaÃ§Ãµes no cache atual',
+            desc: 'Notificações no cache atual',
           },
         ].map((card, i) => (
           <div
@@ -241,14 +241,14 @@ export default function NotificacoesPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2 p-4 pt-0">
               <Button
-                variant={filter === 'nÃ£o_lidas' ? 'primary' : 'ghost'}
+                variant={filter === 'não_lidas' ? 'primary' : 'ghost'}
                 className="w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs"
-                onClick={() => setFilter('nÃ£o_lidas')}
+                onClick={() => setFilter('não_lidas')}
               >
                 <div
-                  className={`w-2.5 h-2.5 rounded-full mr-3 ${filter === 'nÃ£o_lidas' ? 'bg-black' : 'bg-primary'}`}
+                  className={`w-2.5 h-2.5 rounded-full mr-3 ${filter === 'não_lidas' ? 'bg-black' : 'bg-primary'}`}
                 />
-                NÃ£o Lidas ({stats.naoLidas})
+                Não Lidas ({stats.naoLidas})
               </Button>
               <Button
                 variant={filter === 'todas' ? 'primary' : 'ghost'}
@@ -258,7 +258,7 @@ export default function NotificacoesPage() {
                 <div
                   className={`w-2.5 h-2.5 rounded-full mr-3 ${filter === 'todas' ? 'bg-black' : 'bg-muted-foreground'}`}
                 />
-                Todas no HistÃ³rico ({stats.total})
+                Todas no Histórico ({stats.total})
               </Button>
             </CardContent>
           </Card>
@@ -272,7 +272,7 @@ export default function NotificacoesPage() {
             <CardContent className="flex flex-col gap-2 p-4 pt-0">
               {[
                 { val: 'todas', label: 'Todos os Alertas', color: 'bg-muted-foreground' },
-                { val: 'critica', label: 'CrÃ­tico', color: 'bg-red-500' },
+                { val: 'critica', label: 'Crítico', color: 'bg-red-500' },
                 { val: 'alta', label: 'Alto', color: 'bg-amber-500' },
                 { val: 'normal', label: 'Normal', color: 'bg-blue-500' },
               ].map((item) => (
@@ -310,8 +310,8 @@ export default function NotificacoesPage() {
                       TUDO MONITORADO
                     </h3>
                     <p className="text-muted-foreground mt-2 max-w-sm font-medium text-xs uppercase tracking-wider leading-relaxed">
-                      Nenhuma notificaÃ§Ã£o identificada para os parÃ¢metros selecionados. Sua
-                      operaÃ§Ã£o estÃ¡ sob controle.
+                      Nenhuma notificação identificada para os parâmetros selecionados. Sua operação
+                      está sob controle.
                     </p>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export default function NotificacoesPage() {
                         key={n.id}
                         className={`flex gap-6 p-6 transition-all duration-300 relative group hover:bg-muted/10 ${n.lida ? 'opacity-50' : ''}`}
                       >
-                        {/* Linha vertical de destaque para nÃ£o lidas */}
+                        {/* Linha vertical de destaque para não lidas */}
                         {!n.lida && (
                           <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-primary" />
                         )}

@@ -51,7 +51,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
       }
 
       if (pecas.length === 0) {
-        throw new Error('Nenhuma peÃ§a encontrada no arquivo');
+        throw new Error('Nenhuma peça encontrada no arquivo');
       }
 
       onImportar(pecas);
@@ -64,7 +64,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
   }, [arquivo, tipo, onImportar, onFechar]);
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="Importar PeÃ§as" size="md">
+    <Modal isOpen={true} onClose={onFechar} title="Importar Peças" size="md">
       <div className="space-y-6">
         {/* TIPO DE IMPORTAÃ‡ÃƒO */}
         <div className="space-y-2">
@@ -112,9 +112,8 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
         {tipo === 'planocorte' && (
           <div className="p-3 rounded-xl bg-foreground/5 border border-border/40">
             <p className="text-[9px] font-bold text-muted-foreground leading-relaxed">
-              Formato: planilha com colunas DesignaÃ§Ã£o, Quantidade, Comprimento, Largura,
-              Espessura. Suporta tambÃ©m Nome do Material, IdentificaÃ§Ã£o, e Bordas para fio de
-              fita.
+              Formato: planilha com colunas Designação, Quantidade, Comprimento, Largura, Espessura.
+              Suporta também Nome do Material, Identificação, e Bordas para fio de fita.
             </p>
           </div>
         )}
@@ -161,7 +160,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
           </div>
         )}
 
-        {/* AÃ‡Ã•ES */}
+        {/* AÃ‡ÕES */}
         <div className="flex gap-4 pt-4 border-t border-border/40">
           <Button variant="ghost" onClick={onFechar} className="flex-1">
             Cancelar

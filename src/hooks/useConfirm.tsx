@@ -5,7 +5,7 @@ export const useConfirm = () => {
   const [promise, setPromise] = useState<{ resolve: (value: boolean) => void } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState({
-    title: 'ConfirmaÃ§Ã£o',
+    title: 'Confirmação',
     description: 'Tem certeza que deseja continuar?',
     confirmLabel: 'Confirmar',
     cancelLabel: 'Cancelar',

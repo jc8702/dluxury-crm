@@ -69,9 +69,9 @@ const FinanceiroCondicoesPage: React.FC = () => {
       }
       setIsOpen(false);
       fetch();
-      success('CondiÃ§Ã£o de pagamento salva com sucesso!');
+      success('Condição de pagamento salva com sucesso!');
     } catch (e: any) {
-      error(e.message || 'Erro ao salvar condiÃ§Ã£o de pagamento');
+      error(e.message || 'Erro ao salvar condição de pagamento');
     }
   };
 
@@ -116,10 +116,10 @@ const FinanceiroCondicoesPage: React.FC = () => {
               margin: 0,
             }}
           >
-            <CreditCard style={{ color: 'hsl(var(--primary))' }} /> CONDIÃ‡Ã•ES DE PAGAMENTO
+            <CreditCard style={{ color: 'hsl(var(--primary))' }} /> CONDIÃ‡ÕES DE PAGAMENTO
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>
-            ParÃ¢metros de parcelamento, juros e entrada
+            Parâmetros de parcelamento, juros e entrada
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -141,7 +141,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
             variant="primary"
             onClick={openNew}
             style={{ fontSize: '0.85rem' }}
-            aria-label="Nova condiÃ§Ã£o de pagamento"
+            aria-label="Nova condição de pagamento"
           >
             <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVA CONDIÃ‡ÃƒO
           </Button>
@@ -171,7 +171,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
                 color: 'hsl(var(--muted-foreground))',
               }}
             >
-              Nenhuma condiÃ§Ã£o de pagamento cadastrada.
+              Nenhuma condição de pagamento cadastrada.
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }} className="custom-scrollbar">
@@ -326,7 +326,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={editing ? 'Editar CondiÃ§Ã£o de Pagamento' : 'Nova CondiÃ§Ã£o de Pagamento'}
+        title={editing ? 'Editar Condição de Pagamento' : 'Nova Condição de Pagamento'}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
@@ -358,10 +358,10 @@ const FinanceiroCondicoesPage: React.FC = () => {
                 display: 'block',
               }}
             >
-              DescriÃ§Ã£o
+              Descrição
             </label>
             <Input
-              placeholder="DescriÃ§Ã£o ou observaÃ§Ãµes adicionais"
+              placeholder="Descrição ou observações adicionais"
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />

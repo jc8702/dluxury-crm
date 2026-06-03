@@ -69,11 +69,11 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
           </div>
         </div>
 
-        {/* Direita: AdiÃ§Ã£o Manual */}
+        {/* Direita: Adição Manual */}
         <div className="flex flex-col gap-6">
           <h3 className="text-base font-bold flex items-center gap-2">
             <Settings2 className="text-primary" size={20} />
-            InserÃ§Ã£o Manual
+            Inserção Manual
           </h3>
 
           <div className="flex flex-col gap-5">

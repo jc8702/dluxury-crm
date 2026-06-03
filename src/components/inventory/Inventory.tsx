@@ -92,10 +92,10 @@ const Inventory: React.FC = () => {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-border">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <Package size={32} className="text-primary" /> GestÃ£o de Estoque
+            <Package size={32} className="text-primary" /> Gestão de Estoque
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Controle de materiais, entradas/saÃ­das e alertas de reposiÃ§Ã£o.
+            Controle de materiais, entradas/saídas e alertas de reposição.
           </p>
         </div>
         <Button onClick={handleNew} variant="primary" className="flex items-center gap-2">
@@ -105,7 +105,7 @@ const Inventory: React.FC = () => {
 
       <EstoqueAlertasBanner onFilterCritico={() => setFilterStatus('critico_zerado')} />
 
-      {/* NavegaÃ§Ã£o e Filtros */}
+      {/* Navegação e Filtros */}
       <Card>
         <CardContent className="p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="flex gap-2">
@@ -114,14 +114,14 @@ const Inventory: React.FC = () => {
               variant={activeTab === 'materials' ? 'primary' : 'ghost'}
               className="text-sm font-semibold flex items-center gap-2"
             >
-              <LayoutGrid size={16} /> InventÃ¡rio
+              <LayoutGrid size={16} /> Inventário
             </Button>
             <Button
               onClick={() => setActiveTab('history')}
               variant={activeTab === 'history' ? 'primary' : 'ghost'}
               className="text-sm font-semibold flex items-center gap-2"
             >
-              <History size={16} /> MovimentaÃ§Ãµes
+              <History size={16} /> Movimentações
             </Button>
             <Button
               onClick={() => setActiveTab('granular')}
@@ -165,9 +165,9 @@ const Inventory: React.FC = () => {
               <option value="">Todos Status</option>
               <option value="ok">Estoque OK</option>
               <option value="alerta">Alerta</option>
-              <option value="critico">CrÃ­tico</option>
+              <option value="critico">Crítico</option>
               <option value="zerado">Zerado</option>
-              <option value="critico_zerado">AtenÃ§Ã£o (CrÃ­tico/Zerado)</option>
+              <option value="critico_zerado">Atenção (Crítico/Zerado)</option>
             </select>
           </div>
         </CardContent>
@@ -183,7 +183,7 @@ const Inventory: React.FC = () => {
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                 onClick={() => setViewMode('grid')}
                 className="p-2 h-8 w-8"
-                aria-label="VisualizaÃ§Ã£o em Grade"
+                aria-label="Visualização em Grade"
               >
                 <LayoutGrid size={18} />
               </Button>
@@ -191,7 +191,7 @@ const Inventory: React.FC = () => {
                 variant={viewMode === 'table' ? 'secondary' : 'ghost'}
                 onClick={() => setViewMode('table')}
                 className="p-2 h-8 w-8"
-                aria-label="VisualizaÃ§Ã£o em Lista"
+                aria-label="Visualização em Lista"
               >
                 <List size={18} />
               </Button>
@@ -232,9 +232,7 @@ const Inventory: React.FC = () => {
                         Equivalente
                       </th>
                       <th className="text-left p-4 font-semibold text-muted-foreground">Status</th>
-                      <th className="text-right p-4 font-semibold text-muted-foreground">
-                        AÃ§Ãµes
-                      </th>
+                      <th className="text-right p-4 font-semibold text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -262,7 +260,7 @@ const Inventory: React.FC = () => {
                           </td>
                           <td className="p-4">
                             <Badge variant={getStatusBadgeVariant(status)}>
-                              {status ? status.toUpperCase() : 'â€”'}
+                              {status ? status.toUpperCase() : '—'}
                             </Badge>
                           </td>
                           <td className="p-4 text-right flex justify-end gap-2">
@@ -281,7 +279,7 @@ const Inventory: React.FC = () => {
                               variant="primary"
                               size="sm"
                               className="h-8 text-xs"
-                              aria-label={`Registrar movimentaÃ§Ã£o para ${m.nome}`}
+                              aria-label={`Registrar movimentação para ${m.nome}`}
                             >
                               Movimentar
                             </Button>
@@ -314,7 +312,7 @@ const Inventory: React.FC = () => {
       ) : (
         <Card className="animate-fade-in">
           <div className="p-4 border-b border-border">
-            <h3 className="text-lg font-bold text-foreground">HistÃ³rico de MovimentaÃ§Ãµes</h3>
+            <h3 className="text-lg font-bold text-foreground">Histórico de Movimentações</h3>
           </div>
           <CardContent className="p-0 overflow-x-auto custom-scrollbar">
             <table className="w-full border-collapse text-sm">
@@ -325,7 +323,7 @@ const Inventory: React.FC = () => {
                   <th className="p-4 font-semibold text-muted-foreground">Tipo</th>
                   <th className="p-4 font-semibold text-muted-foreground">Qtd</th>
                   <th className="p-4 font-semibold text-muted-foreground">Motivo</th>
-                  <th className="p-4 font-semibold text-muted-foreground">ResponsÃ¡vel</th>
+                  <th className="p-4 font-semibold text-muted-foreground">Responsável</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -372,7 +370,7 @@ const Inventory: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={6} className="p-12 text-center text-muted-foreground">
-                      Nenhuma movimentaÃ§Ã£o registrada no sistema.
+                      Nenhuma movimentação registrada no sistema.
                     </td>
                   </tr>
                 )}
@@ -405,47 +403,47 @@ const Inventory: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="text-xl">ðŸ’¡</span>
             <h3 className="text-lg font-bold text-foreground">
-              Dlux Copilot â€” Consultas RÃ¡pidas de Estoque
+              Dlux Copilot — Consultas Rápidas de Estoque
             </h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Consulte regras de estocagem de insumos e especificaÃ§Ãµes tÃ©cnicas de ferragens
-            diretamente com a nossa inteligÃªncia.
+            Consulte regras de estocagem de insumos e especificações técnicas de ferragens
+            diretamente com a nossa inteligência.
           </p>
           <div className="flex flex-wrap gap-2">
             {[
               {
-                label: 'ðŸš¨ Estoque CrÃ­tico & Compras',
-                query: 'Verificar materiais abaixo do estoque mÃ­nimo e plano de compras',
+                label: 'ðŸš¨ Estoque Crítico & Compras',
+                query: 'Verificar materiais abaixo do estoque mínimo e plano de compras',
               },
               {
                 label: 'ðŸªµ Estoque MDF & Consumo',
-                query: 'AnÃ¡lise de estoque de chapas MDF e consumo recente',
+                query: 'Análise de estoque de chapas MDF e consumo recente',
               },
               {
-                label: 'ðŸ“¦ CorrediÃ§as TelescÃ³picas vs Ocultas',
+                label: 'ðŸ“¦ Corrediças Telescópicas vs Ocultas',
                 query:
-                  'Qual a diferenÃ§a de folga lateral e rebaixo inferior exigida entre corrediÃ§a telescÃ³pica e invisÃ­vel?',
+                  'Qual a diferença de folga lateral e rebaixo inferior exigida entre corrediça telescópica e invisível?',
               },
               {
                 label: 'ðŸªµ MDF 15mm vs 18mm estrutural',
                 query:
-                  'Quando o projeto exige prateleiras de MDF 18mm para evitar envergamento e qual o vÃ£o mÃ¡ximo para 15mm?',
+                  'Quando o projeto exige prateleiras de MDF 18mm para evitar envergamento e qual o vão máximo para 15mm?',
               },
               {
-                label: 'ðŸ”— DobradiÃ§a click com amortecimento',
+                label: 'ðŸ”— Dobradiça click com amortecimento',
                 query:
-                  'Como dimensionar o nÃºmero de dobradiÃ§as tipo caneco de 35mm para portas de giro baseando-se no peso e altura?',
+                  'Como dimensionar o número de dobradiças tipo caneco de 35mm para portas de giro baseando-se no peso e altura?',
               },
               {
                 label: 'ðŸ“ Dispositivo Minifix e VB',
                 query:
-                  'Quais os diÃ¢metros e profundidades de furaÃ§Ã£o exigidos para instalaÃ§Ã£o do sistema de uniÃ£o Minifix e VB?',
+                  'Quais os diâmetros e profundidades de furação exigidos para instalação do sistema de união Minifix e VB?',
               },
               {
-                label: 'ðŸ›¡ï¸ VedaÃ§Ã£o e Chapas Ultra',
+                label: 'ðŸ›¡ï¸ Vedação e Chapas Ultra',
                 query:
-                  "Quais materiais e tÃ©cnicas de vedaÃ§Ã£o sÃ£o obrigatÃ³rios para gabinetes de pia sob Ã¡reas Ãºmidas no padrÃ£o D'Luxury?",
+                  "Quais materiais e técnicas de vedação são obrigatórios para gabinetes de pia sob áreas úmidas no padrão D'Luxury?",
               },
             ].map((item, idx) => (
               <button

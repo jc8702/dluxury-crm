@@ -38,7 +38,7 @@ export default function FinanceiroTitulosReceberWizard() {
   const valorComTaxa = formData.valor_base + valorCustoFinanceiro;
 
   const _formaSelecionada = formasRecebimento.find((f) => f.id === formData.forma_recebimento_id);
-  // exibeTaxa removido para ser sempre visÃ­vel como solicitado
+  // exibeTaxa removido para ser sempre visível como solicitado
 
   useEffect(() => {
     const loadOpts = async () => {
@@ -102,19 +102,19 @@ export default function FinanceiroTitulosReceberWizard() {
         valor_custo_financeiro: valorCustoFinanceiro,
         rateio: formData.showRateio ? formData.rateios : [],
       });
-      success('TÃ­tulos gerados com sucesso!');
+      success('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-receber';
     } catch (err: any) {
-      error('Erro ao salvar tÃ­tulos: ' + (err.message || ''));
+      error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
       setLoading(false);
     }
   };
 
-  // â”€â”€â”€ PASSO 1: IdentificaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 1: Identificação ───────────────────────────────────────────────
   const renderStep1 = () => (
     <div className="animate-fade-in space-y-6">
-      <h3 className="text-xl font-bold text-white uppercase tracking-wider">IdentificaÃ§Ã£o</h3>
+      <h3 className="text-xl font-bold text-white uppercase tracking-wider">Identificação</h3>
       <div className="flex flex-col gap-5">
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
@@ -153,17 +153,17 @@ export default function FinanceiroTitulosReceberWizard() {
           </select>
         </div>
         <Input
-          label="NÃºmero do Documento / TÃ­tulo"
+          label="Número do Documento / Título"
           value={formData.numero_titulo}
           onChange={(e) => setFormData({ ...formData, numero_titulo: e.target.value })}
           placeholder="Ex: NF-12345"
-          helperText="Gerado automaticamente. Pode editar para o nÃºmero da NF."
+          helperText="Gerado automaticamente. Pode editar para o número da NF."
         />
       </div>
     </div>
   );
 
-  // â”€â”€â”€ PASSO 2: Valores + Forma + Parcelas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 2: Valores + Forma + Parcelas ──────────────────────────────────
   const renderStep2 = () => (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">
@@ -201,7 +201,7 @@ export default function FinanceiroTitulosReceberWizard() {
           </select>
         </div>
 
-        {/* Taxa Financeira â€“ Sempre disponÃ­vel para ajuste manual */}
+        {/* Taxa Financeira – Sempre disponível para ajuste manual */}
         <div className="animate-fade-in p-4 border border-amber-500/30 rounded-xl bg-amber-500/5">
           <div className="flex items-center gap-2 mb-3 text-amber-400 font-black text-xs uppercase tracking-widest">
             <AlertCircle size={16} /> CUSTO FINANCEIRO / TAXAS (%)
@@ -239,7 +239,7 @@ export default function FinanceiroTitulosReceberWizard() {
           />
           <Input
             type="number"
-            label="Repetir por X meses (RecorrÃªncia)"
+            label="Repetir por X meses (Recorrência)"
             min={1}
             max={36}
             value={formData.recorrencia_meses || 1}
@@ -249,7 +249,7 @@ export default function FinanceiroTitulosReceberWizard() {
           />
         </div>
 
-        {/* Data + ObservaÃ§Ã£o */}
+        {/* Data + Observação */}
         <div className="grid grid-cols-2 gap-4">
           <Input
             type="date"
@@ -330,7 +330,7 @@ export default function FinanceiroTitulosReceberWizard() {
                       setFormData({ ...formData, rateios: newR });
                     }}
                   >
-                    <option value="">Mesma do TÃ­tulo</option>
+                    <option value="">Mesma do Título</option>
                     {classes.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome.toUpperCase()}
@@ -366,7 +366,7 @@ export default function FinanceiroTitulosReceberWizard() {
 
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
-            DescriÃ§Ã£o / ObservaÃ§Ã£o
+            Descrição / Observação
           </label>
           <textarea
             className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -380,7 +380,7 @@ export default function FinanceiroTitulosReceberWizard() {
     </div>
   );
 
-  // â”€â”€â”€ PASSO 3: ConfirmaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 3: Confirmação ─────────────────────────────────────────────────
   const renderStep3 = () => (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">
@@ -441,7 +441,7 @@ export default function FinanceiroTitulosReceberWizard() {
       </Button>
 
       <div className="glass-elevated p-8 md:p-12 animate-pop-in">
-        {/* Stepper â€“ 3 passos */}
+        {/* Stepper – 3 passos */}
         <div className="flex justify-between mb-12 relative">
           <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />
           {[1, 2, 3].map((s) => (
@@ -459,14 +459,14 @@ export default function FinanceiroTitulosReceberWizard() {
           ))}
         </div>
 
-        {/* ConteÃºdo */}
+        {/* Conteúdo */}
         <div className="min-h-[320px]">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
         </div>
 
-        {/* BotÃµes */}
+        {/* Botões */}
         <div className="mt-10 flex gap-4 justify-between">
           <Button
             variant="outline"

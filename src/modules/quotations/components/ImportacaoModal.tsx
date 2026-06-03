@@ -42,7 +42,7 @@ export function ImportacaoModal({
       setResults(response);
       setStatus('success');
     } catch (err: any) {
-      console.error('Erro na importaÃ§Ã£o:', err);
+      console.error('Erro na importação:', err);
       toastError('Falha ao processar arquivo', err.message || 'Erro desconhecido');
       setStatus('idle');
     }
@@ -55,7 +55,7 @@ export function ImportacaoModal({
       await onAddItems(results);
       onClose();
     } catch (_err) {
-      toastError('Erro ao adicionar itens ao orÃ§amento');
+      toastError('Erro ao adicionar itens ao orçamento');
     } finally {
       setIsAdding(false);
     }
@@ -86,7 +86,7 @@ export function ImportacaoModal({
             <div className="text-center">
               <p className="font-semibold text-foreground">Clique ou arraste o arquivo aqui</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Formatos suportados: .pdf tÃ©cnico ou exportaÃ§Ã£o SketchUp
+                Formatos suportados: .pdf técnico ou exportação SketchUp
               </p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export function ImportacaoModal({
               <CheckCircle2 className="w-10 h-10 text-emerald-500" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-bold text-foreground">ImportaÃ§Ã£o ConcluÃ­da!</h3>
+              <h3 className="text-lg font-bold text-foreground">Importação Concluída!</h3>
               <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg border border-border text-left space-y-2 min-w-[300px]">
                 <div className="flex justify-between">
                   <span>Itens detectados:</span>{' '}
@@ -127,7 +127,7 @@ export function ImportacaoModal({
               onClick={handleAdd}
               disabled={isAdding}
             >
-              {isAdding ? 'Adicionando...' : 'Adicionar ao OrÃ§amento'}
+              {isAdding ? 'Adicionando...' : 'Adicionar ao Orçamento'}
             </Button>
           </div>
         )}
@@ -136,7 +136,7 @@ export function ImportacaoModal({
       <div className="flex items-start gap-2 p-4 bg-warning/10 border border-warning/20 rounded-xl text-[11px] text-warning">
         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
-          O parser utiliza extraÃ§Ã£o de texto e padrÃµes geomÃ©tricos para identificar componentes.
+          O parser utiliza extração de texto e padrões geométricos para identificar componentes.
           Sempre revise as quantidades finais.
         </p>
       </div>

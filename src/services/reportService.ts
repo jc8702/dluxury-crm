@@ -2,7 +2,7 @@
 import 'jspdf-autotable';
 import { formatDatePtBR } from '../utils/dateUtils';
 
-// Estender jsPDF com autoTable (necessÃ¡rio para TS)
+// Estender jsPDF com autoTable (necessário para TS)
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -11,7 +11,7 @@ declare module 'jspdf' {
 
 export const reportService = {
   /**
-   * Gera o Romaneio de ProduÃ§Ã£o (Oficina)
+   * Gera o Romaneio de Produção (Oficina)
    */
   async generateRomaneioProducao(projetoNome: string, itens: any[]) {
     const doc = new jsPDF();
@@ -24,11 +24,11 @@ export const reportService = {
 
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
-    doc.text('ROMANEIO TÃ‰CNICO DE PRODUÃ‡ÃƒO', 105, 30, { align: 'center' });
+    doc.text('ROMANEIO TÉCNICO DE PRODUÃ‡ÃƒO', 105, 30, { align: 'center' });
 
     doc.setFontSize(10);
     doc.text(`Projeto: ${projetoNome}`, 14, 45);
-    doc.text(`EmissÃ£o: ${date}`, 14, 50);
+    doc.text(`Emissão: ${date}`, 14, 50);
     doc.line(14, 55, 196, 55);
 
     // Tabela de Itens
@@ -56,7 +56,7 @@ export const reportService = {
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      "Este documento contÃ©m especificaÃ§Ãµes tÃ©cnicas proprietÃ¡rias da D'Luxury MÃ³veis.",
+      "Este documento contém especificações técnicas proprietárias da D'Luxury Móveis.",
       105,
       285,
       { align: 'center' },
@@ -66,7 +66,7 @@ export const reportService = {
   },
 
   /**
-   * Gera AnÃ¡lise de Rentabilidade
+   * Gera Análise de Rentabilidade
    */
   async generateMapaCustos(dados: any[]) {
     const doc = new jsPDF();
@@ -82,7 +82,7 @@ export const reportService = {
 
     doc.autoTable({
       startY: 40,
-      head: [['Projeto', 'Cliente', 'Ambiente', 'MÃ³dulos', 'Custo Material (R$)']],
+      head: [['Projeto', 'Cliente', 'Ambiente', 'Módulos', 'Custo Material (R$)']],
       body: dados.map((d) => [
         `PRJ-${d.project_id.substring(0, 6).toUpperCase()}`,
         d.cliente,

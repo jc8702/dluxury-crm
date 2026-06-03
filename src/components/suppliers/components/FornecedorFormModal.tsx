@@ -77,7 +77,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Input
-          label="RazÃ£o Social / Nome *"
+          label="Razão Social / Nome *"
           value={form.nome}
           onChange={(e) => setForm({ ...form, nome: e.target.value })}
           required
@@ -121,7 +121,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground/90 mb-2">ObservaÃ§Ãµes</label>
+          <label className="block text-sm font-medium text-foreground/90 mb-2">Observações</label>
           <textarea
             className="flex w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
             style={{ height: '80px', resize: 'none' }}

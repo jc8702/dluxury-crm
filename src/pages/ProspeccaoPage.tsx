@@ -677,14 +677,14 @@ export default function ProspeccaoPage() {
 
       const [leadsRes, metricsRes] = await Promise.all([
         fetch(`/api/prospeccao?${params}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
         }).then((r) => r.json()),
         fetch('/api/prospeccao/metrics', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
         }).then((r) => r.json()),
       ]);
 
-      if (leadsRes.success) setLeads(leadsRes.data);
+      if (leadsRes.success) setLeads(leadsRes.data || []);
       if (metricsRes.success) setMetrics(metricsRes.data);
     } catch {
       showToast('Erro ao carregar prospecções', 'error');
@@ -699,7 +699,7 @@ export default function ProspeccaoPage() {
 
   const handleSave = async (data: Partial<Prospeccao>) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dluxury_token');
       if (editTarget) {
         const r = await fetch(`/api/prospeccao/${editTarget.id}`, {
           method: 'PATCH',
@@ -730,7 +730,7 @@ export default function ProspeccaoPage() {
     try {
       const r = await fetch(`/api/prospeccao/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
       }).then((r) => r.json());
       if (!r.success) throw new Error(r.error);
       showToast('Lead removido', 'info');
@@ -746,7 +746,7 @@ export default function ProspeccaoPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('dluxury_token')}`,
         },
         body: JSON.stringify({ status: newStatus }),
       }).then((r) => r.json());

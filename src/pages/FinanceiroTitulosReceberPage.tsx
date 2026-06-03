@@ -38,7 +38,7 @@ export default function FinanceiroTitulosReceberPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [editModal, setEditModal] = useState<Titulo | null>(null);
   const [antecipacaoModal, setAntecipacaoModal] = useState<Titulo | null>(null);
-  const [taxaAntecipacao, setTaxaAntecipacao] = useState(3.5); // Taxa mensal padrÃ£o
+  const [taxaAntecipacao, setTaxaAntecipacao] = useState(3.5); // Taxa mensal padrão
 
   const [stats, setStats] = useState({
     totalAberto: 0,
@@ -105,8 +105,8 @@ export default function FinanceiroTitulosReceberPage() {
 
   const doDelete = async (id: string) => {
     const isConfirmed = await confirmAction({
-      title: 'Excluir TÃ­tulo',
-      description: 'Confirma exclusÃ£o do tÃ­tulo?',
+      title: 'Excluir Título',
+      description: 'Confirma exclusão do título?',
     });
     if (!isConfirmed) return;
     try {
@@ -130,9 +130,9 @@ export default function FinanceiroTitulosReceberPage() {
       });
       setEditModal(null);
       load(page);
-      success('AlteraÃ§Ãµes salvas com sucesso');
+      success('Alterações salvas com sucesso');
     } catch (err: any) {
-      error(err.message || 'Erro ao salvar alteraÃ§Ãµes');
+      error(err.message || 'Erro ao salvar alterações');
     }
   };
 
@@ -157,10 +157,10 @@ export default function FinanceiroTitulosReceberPage() {
         <div>
           <h1 className="text-4xl font-black tracking-tighter flex items-center gap-3 uppercase italic">
             <ArrowDownLeft className="text-primary w-10 h-10" />
-            TÃ­tulos a <span className="text-primary">Receber</span>
+            Títulos a <span className="text-primary">Receber</span>
           </h1>
           <p className="text-muted-foreground mt-1 font-medium italic">
-            GestÃ£o estratÃ©gica de recebÃ­veis e fluxo de caixa industrial
+            Gestão estratégica de recebíveis e fluxo de caixa industrial
           </p>
         </div>
         <Button
@@ -218,7 +218,7 @@ export default function FinanceiroTitulosReceberPage() {
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">
                 <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">
-                  TÃ­tulo
+                  Título
                 </th>
                 <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">
                   Cliente
@@ -233,7 +233,7 @@ export default function FinanceiroTitulosReceberPage() {
                   Status
                 </th>
                 <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase text-center">
-                  AÃ§Ãµes
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -244,7 +244,7 @@ export default function FinanceiroTitulosReceberPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-20 text-center">
                     <p className="text-muted-foreground font-medium italic">
-                      Nenhum lanÃ§amento encontrado no perÃ­odo.
+                      Nenhum lançamento encontrado no período.
                     </p>
                   </td>
                 </tr>
@@ -288,7 +288,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 {clientName}
                               </div>
                               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                                {groupRows.length} tÃ­tulos pendentes
+                                {groupRows.length} títulos pendentes
                               </div>
                             </div>
                           </div>
@@ -307,7 +307,7 @@ export default function FinanceiroTitulosReceberPage() {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
                                 title: 'Excluir Lote Industrial',
-                                description: `ATENÃ‡ÃƒO: Deseja realmente excluir todos os ${groupRows.length} tÃ­tulos deste cliente? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`,
+                                description: `ATENÃ‡ÃƒO: Deseja realmente excluir todos os ${groupRows.length} títulos deste cliente? Esta ação não pode ser desfeita.`,
                               });
                               if (isConfirmed) {
                                 api.financeiro.titulosReceber
@@ -336,7 +336,7 @@ export default function FinanceiroTitulosReceberPage() {
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-[11px] text-muted-foreground font-medium italic">
-                                LanÃ§amento Direto
+                                Lançamento Direto
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right font-black text-white italic">
@@ -386,7 +386,7 @@ export default function FinanceiroTitulosReceberPage() {
                                   variant="secondary"
                                   size="sm"
                                   className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-20 transition-all"
-                                  title="Baixar TÃ­tulo"
+                                  title="Baixar Título"
                                   disabled={r.status === 'pago'}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -435,7 +435,7 @@ export default function FinanceiroTitulosReceberPage() {
                                     await WhatsAppService.notificarProducaoIniciada(
                                       clientsMap[r.cliente_id] || 'Cliente',
                                       '4799999-9999',
-                                      `TÃ­tulo ${r.numero_titulo} - ${msg}`,
+                                      `Título ${r.numero_titulo} - ${msg}`,
                                     );
                                     success('Mensagem enviada!');
                                   }}
@@ -446,7 +446,7 @@ export default function FinanceiroTitulosReceberPage() {
                                   variant="secondary"
                                   size="sm"
                                   className="p-2 rounded-lg bg-white/5 border border-white/10 text-primary hover:bg-primary/20 disabled:opacity-20 transition-all"
-                                  title="Simular AntecipaÃ§Ã£o"
+                                  title="Simular Antecipação"
                                   disabled={r.status === 'pago'}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -470,7 +470,7 @@ export default function FinanceiroTitulosReceberPage() {
         <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-black text-muted-foreground uppercase tracking-widest">
           <div>
             Exibindo <span className="text-white font-black">{rows.length}</span> de{' '}
-            <span className="text-white font-black">{total}</span> tÃ­tulos industriais
+            <span className="text-white font-black">{total}</span> títulos industriais
           </div>
           <div className="flex gap-2">
             <Button
@@ -489,17 +489,17 @@ export default function FinanceiroTitulosReceberPage() {
               disabled={page * perPage >= total}
               onClick={() => setPage(page + 1)}
             >
-              PrÃ³xima
+              Próxima
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Modal AntecipaÃ§Ã£o */}
+      {/* Modal Antecipação */}
       <Modal
         isOpen={!!antecipacaoModal}
         onClose={() => setAntecipacaoModal(null)}
-        title="Simulador de AntecipaÃ§Ã£o Industrial"
+        title="Simulador de Antecipação Industrial"
         size="md"
       >
         {antecipacaoModal &&
@@ -525,7 +525,7 @@ export default function FinanceiroTitulosReceberPage() {
                   label="Taxa Mensal de Desconto (%)"
                   value={taxaAntecipacao}
                   onChange={(e) => setTaxaAntecipacao(Number(e.target.value))}
-                  helperText="MÃ©dia corporativa D'Luxury: 2.8% a 4.5%"
+                  helperText="Média corporativa D'Luxury: 2.8% a 4.5%"
                 />
 
                 <div className="p-6 rounded-xl space-y-3 bg-primary/5 border border-primary/20">
@@ -547,7 +547,7 @@ export default function FinanceiroTitulosReceberPage() {
                   </div>
                   <div className="flex justify-between items-center text-red-400">
                     <span className="text-[11px] font-bold uppercase tracking-wider">
-                      Desconto BancÃ¡rio
+                      Desconto Bancário
                     </span>
                     <span className="font-bold italic">
                       - R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -563,7 +563,7 @@ export default function FinanceiroTitulosReceberPage() {
                   </div>
                   <div className="pt-4 border-t border-white/10 flex justify-between items-end">
                     <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">
-                      Valor LÃ­quido
+                      Valor Líquido
                     </span>
                     <span className="text-3xl font-black text-primary italic tracking-tighter">
                       R$ {valorLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -579,12 +579,12 @@ export default function FinanceiroTitulosReceberPage() {
                     variant="primary"
                     onClick={async () => {
                       const isConfirmed = await confirmAction({
-                        title: 'Efetivar AntecipaÃ§Ã£o Industrial',
+                        title: 'Efetivar Antecipação Industrial',
                         description:
-                          'A antecipaÃ§Ã£o gera uma despesa financeira imediata. Deseja registrar a baixa com este valor lÃ­quido?',
+                          'A antecipação gera uma despesa financeira imediata. Deseja registrar a baixa com este valor líquido?',
                       });
                       if (isConfirmed) {
-                        success('Fluxo de antecipaÃ§Ã£o registrado na DRE com sucesso!');
+                        success('Fluxo de antecipação registrado na DRE com sucesso!');
                         setAntecipacaoModal(null);
                       }
                     }}
@@ -643,7 +643,7 @@ export default function FinanceiroTitulosReceberPage() {
                       </div>
                       <div className="flex justify-between items-center text-red-400">
                         <span className="text-[11px] font-bold uppercase tracking-wider">
-                          Juros (1%/mÃªs)
+                          Juros (1%/mês)
                         </span>
                         <span className="font-bold italic">
                           + R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -663,7 +663,7 @@ export default function FinanceiroTitulosReceberPage() {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
-                    Conta BancÃ¡ria de Destino
+                    Conta Bancária de Destino
                   </label>
                   <select
                     id="conta-interna-id-receber"
@@ -718,17 +718,17 @@ export default function FinanceiroTitulosReceberPage() {
           })()}
       </Modal>
 
-      {/* Modal EdiÃ§Ã£o Individual */}
+      {/* Modal Edição Individual */}
       <Modal
         isOpen={!!editModal}
         onClose={() => setEditModal(null)}
-        title="ManutenÃ§Ã£o de TÃ­tulo Industrial"
+        title="Manutenção de Título Industrial"
         size="lg"
       >
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <Input
-              label="NÃºmero do TÃ­tulo"
+              label="Número do Título"
               className="font-mono font-bold"
               value={editModal?.numero_titulo || ''}
               onChange={(e) =>
@@ -803,7 +803,7 @@ export default function FinanceiroTitulosReceberPage() {
               CANCELAR
             </Button>
             <Button variant="primary" onClick={saveEdit}>
-              SALVAR ALTERAÃ‡Ã•ES
+              SALVAR ALTERAÃ‡ÕES
             </Button>
           </div>
         </div>

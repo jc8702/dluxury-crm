@@ -104,7 +104,7 @@ export default function FinanceiroRecorrentesPage() {
       }
       setIsOpen(false);
       load();
-      success('ConfiguraÃ§Ã£o salva com sucesso!');
+      success('Configuração salva com sucesso!');
     } catch (e: any) {
       error(e.message || 'Erro ao salvar');
     }
@@ -112,8 +112,8 @@ export default function FinanceiroRecorrentesPage() {
 
   const doDelete = async (id: string) => {
     const isConfirmed = await confirmAction({
-      title: 'Excluir ConfiguraÃ§Ã£o',
-      description: 'Excluir esta configuraÃ§Ã£o de conta recorrente?',
+      title: 'Excluir Configuração',
+      description: 'Excluir esta configuração de conta recorrente?',
     });
     if (!isConfirmed) return;
     try {
@@ -128,10 +128,10 @@ export default function FinanceiroRecorrentesPage() {
     try {
       setLoading(true);
       await api.financeiro.contasRecorrentes.gerarMes(gerarMes, gerarAno);
-      success('TÃ­tulos gerados com sucesso no Contas a Pagar!');
+      success('Títulos gerados com sucesso no Contas a Pagar!');
       setGerarModal(false);
     } catch (e: any) {
-      error(e.message || 'Erro ao gerar tÃ­tulos');
+      error(e.message || 'Erro ao gerar títulos');
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ export default function FinanceiroRecorrentesPage() {
             <Repeat /> CONTAS RECORRENTES
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))' }}>
-            ConfiguraÃ§Ã£o de despesas fixas e geraÃ§Ã£o automÃ¡tica mensal
+            Configuração de despesas fixas e geração automática mensal
           </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -204,7 +204,7 @@ export default function FinanceiroRecorrentesPage() {
               <th>CLASSE FINANCEIRA</th>
               <th>FORNECEDOR</th>
               <th style={{ textAlign: 'right' }}>VALOR ESTIMADO</th>
-              <th style={{ width: '100px' }}>AÃ‡Ã•ES</th>
+              <th style={{ width: '100px' }}>AÃ‡ÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -268,17 +268,17 @@ export default function FinanceiroRecorrentesPage() {
         </table>
       </Card>
 
-      {/* Modal de ConfiguraÃ§Ã£o */}
+      {/* Modal de Configuração */}
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={editing ? 'Editar RecorrÃªncia' : 'Nova Conta Recorrente'}
+        title={editing ? 'Editar Recorrência' : 'Nova Conta Recorrente'}
         size="lg"
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ gridColumn: 'span 2' }}>
             <Input
-              label="DescriÃ§Ã£o da Conta"
+              label="Descrição da Conta"
               placeholder="Ex: Aluguel, Internet, Pro-labore"
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -343,7 +343,7 @@ export default function FinanceiroRecorrentesPage() {
 
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">
-              Conta BancÃ¡ria PadrÃ£o
+              Conta Bancária Padrão
             </label>
             <select
               className="input-base"
@@ -391,7 +391,7 @@ export default function FinanceiroRecorrentesPage() {
               checked={form.ativa}
               onChange={(e) => setForm({ ...form, ativa: e.target.checked })}
             />
-            <label style={{ margin: 0 }}>Esta conta estÃ¡ ativa para geraÃ§Ã£o mensal</label>
+            <label style={{ margin: 0 }}>Esta conta está ativa para geração mensal</label>
           </div>
         </div>
 
@@ -407,11 +407,11 @@ export default function FinanceiroRecorrentesPage() {
         </div>
       </Modal>
 
-      {/* Modal de GeraÃ§Ã£o */}
+      {/* Modal de Geração */}
       <Modal
         isOpen={gerarModal}
         onClose={() => setGerarModal(false)}
-        title="Gerar TÃ­tulos Mensais"
+        title="Gerar Títulos Mensais"
         size="sm"
       >
         <p
@@ -421,13 +421,13 @@ export default function FinanceiroRecorrentesPage() {
             color: 'hsl(var(--muted-foreground))',
           }}
         >
-          Este processo irÃ¡ criar lanÃ§amentos automÃ¡ticos no <strong>Contas a Pagar</strong>{' '}
-          baseados em todas as configuraÃ§Ãµes ativas acima.
+          Este processo irá criar lançamentos automáticos no <strong>Contas a Pagar</strong>{' '}
+          baseados em todas as configurações ativas acima.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
-            <label className="mb-2 block text-sm font-medium text-foreground/90">MÃªs</label>
+            <label className="mb-2 block text-sm font-medium text-foreground/90">Mês</label>
             <select
               className="input-base"
               value={gerarMes}

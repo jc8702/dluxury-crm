@@ -38,7 +38,7 @@ export async function handleCalendario(req: any, res: any) {
       `;
 
       const params: any[] = [tenantId, mesNum, anoNum];
-      
+
       if (filtro_tipo) {
         queryStr += ` AND ec.tipo_evento = $4`;
         params.push(filtro_tipo);
@@ -56,11 +56,11 @@ export async function handleCalendario(req: any, res: any) {
         cor_categoria: e.cor_categoria,
         concluido: !!e.concluido,
         quotation_id: e.quotation_id,
-        operacao_prod_id: e.operacao_prod_id
+        operacao_prod_id: e.operacao_prod_id,
       }));
 
       // 1.5 Buscar compromissos/visitas da tabela `eventos`
-      let queryAgendaStr = `
+      const queryAgendaStr = `
         SELECT 
           e.id::text,
           e.titulo,
@@ -81,8 +81,8 @@ export async function handleCalendario(req: any, res: any) {
       const dbAgenda = await sql(queryAgendaStr as any, ...agendaParams);
 
       dbAgenda.forEach((e: any) => {
-        const tipoEventoMapped = (e.tipo === 'visita' || e.tipo === 'reuniao') ? 'reuniao' : 'tarefa';
-        
+        const tipoEventoMapped = e.tipo === 'visita' || e.tipo === 'reuniao' ? 'reuniao' : 'tarefa';
+
         if (filtro_tipo && filtro_tipo !== tipoEventoMapped) {
           return;
         }
@@ -110,7 +110,7 @@ export async function handleCalendario(req: any, res: any) {
           tipo_evento: tipoEventoMapped,
           cor_categoria: e.cor || '#d4af37',
           concluido: false,
-          cliente_nome: e.cliente_nome || undefined
+          cliente_nome: e.cliente_nome || undefined,
         });
       });
 
@@ -126,7 +126,7 @@ export async function handleCalendario(req: any, res: any) {
           FROM ordens_prod op
           JOIN quotations o ON op.quotation_id = o.id
           LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-          WHERE op.tenant_id = ${tenantId}::uuid
+          WHERE o.tenant_id = ${tenantId}::uuid
             AND op.data_prazo IS NOT NULL
             AND EXTRACT(MONTH FROM op.data_prazo) = ${mesNum}
             AND EXTRACT(YEAR FROM op.data_prazo) = ${anoNum}
@@ -141,7 +141,7 @@ export async function handleCalendario(req: any, res: any) {
             tipo_evento: 'prazo_entrega',
             cor_categoria: '#DC2626', // Vermelho
             concluido: op.status === 'concluído',
-            operacao_prod_id: op.id
+            operacao_prod_id: op.id,
           });
         });
       }
@@ -167,7 +167,7 @@ export async function handleCalendario(req: any, res: any) {
           if (b.prazo_entrega_dias) {
             dateObj.setDate(dateObj.getDate() + parseInt(b.prazo_entrega_dias));
           }
-          
+
           const eventMonth = dateObj.getMonth() + 1;
           const eventYear = dateObj.getFullYear();
 
@@ -181,7 +181,7 @@ export async function handleCalendario(req: any, res: any) {
               tipo_evento: 'orcamento',
               cor_categoria: '#3B82F6', // Azul
               concluido: false,
-              quotation_id: b.id
+              quotation_id: b.id,
             });
           }
         });
@@ -191,10 +191,22 @@ export async function handleCalendario(req: any, res: any) {
     }
 
     if (method === 'POST' && url.includes('/criar-evento')) {
-      const { titulo, descricao, data_evento, hora_evento, tipo_evento, quotation_id, operacao_prod_id, notificacao_dias_antes, cor_categoria } = req.body;
+      const {
+        titulo,
+        descricao,
+        data_evento,
+        hora_evento,
+        tipo_evento,
+        quotation_id,
+        operacao_prod_id,
+        notificacao_dias_antes,
+        cor_categoria,
+      } = req.body;
 
       if (!titulo || !data_evento || !tipo_evento) {
-        return res.status(400).json({ success: false, error: 'Título, data e tipo são obrigatórios' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Título, data e tipo são obrigatórios' });
       }
 
       const [evento] = await sql`
@@ -232,7 +244,9 @@ export async function handleCalendario(req: any, res: any) {
       `;
 
       if (!orcamento) {
-        return res.status(404).json({ success: false, error: 'Orçamento não encontrado no tenant' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Orçamento não encontrado no tenant' });
       }
 
       const usuarios = await sql`
@@ -275,7 +289,7 @@ export async function handleCalendario(req: any, res: any) {
 
       for (const ev of eventosProximos) {
         const msg = `Lembrete: O evento "${ev.titulo}" vence em ${ev.notificacao_dias_antes} dias (${ev.data_evento})`;
-        
+
         await sql`
           INSERT INTO notificacoes_calendario (evento_calendario_id, tipo_notificacao, mensagem, tenant_id)
           VALUES (${ev.id}, 'email', ${msg}, ${tenantId}::uuid)
@@ -288,7 +302,9 @@ export async function handleCalendario(req: any, res: any) {
         `;
       }
 
-      return res.status(200).json({ success: true, notificacoes_disparadas: eventosProximos.length });
+      return res
+        .status(200)
+        .json({ success: true, notificacoes_disparadas: eventosProximos.length });
     }
 
     if (method === 'PATCH' && req.query.id) {

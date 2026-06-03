@@ -20,10 +20,10 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
     async function carregarOrcamentos() {
       try {
         const list = await api.orcamentos.list();
-        // Filtrar orÃ§amentos que possuem itens ou estÃ£o fechados/aprovados
+        // Filtrar orçamentos que possuem itens ou estão fechados/aprovados
         setOrcamentos(list || []);
       } catch (err) {
-        console.error('Erro ao carregar orÃ§amentos:', err);
+        console.error('Erro ao carregar orçamentos:', err);
       } finally {
         setLoading(false);
       }
@@ -45,19 +45,19 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
     try {
       const orcDet = await api.orcamentos.get(orcamentoId);
       if (!orcDet || !orcDet.itens || orcDet.itens.length === 0) {
-        alert('Este orÃ§amento nÃ£o contÃ©m itens ou peÃ§as cadastradas.');
+        alert('Este orçamento não contém itens ou peças cadastradas.');
         setImporting(false);
         return;
       }
 
-      // Filtrar apenas itens que parecem ser peÃ§as de MDF/chapas
+      // Filtrar apenas itens que parecem ser peças de MDF/chapas
       const itensMdf = orcDet.itens.filter((item: any) => {
         const materialUpper = String(item.material || item.skuDescricao || '').toUpperCase();
         const skuUpper = String(item.skuCodigo || '').toUpperCase();
         const temLargura = parseBrazilianNumber(item.largura) > 0;
         const temAltura = parseBrazilianNumber(item.altura) > 0;
 
-        // CritÃ©rio: ter largura, altura e ter "MDF" ou "CHP" ou "CHAPA" no nome/material
+        // Critério: ter largura, altura e ter "MDF" ou "CHP" ou "CHAPA" no nome/material
         return (
           temLargura &&
           temAltura &&
@@ -65,17 +65,17 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
             materialUpper.includes('CHAPA') ||
             skuUpper.includes('CHP-') ||
             skuUpper.includes('MDF-') ||
-            !item.skuEngenhariaId) // Componentes avulsos do orÃ§amento geralmente sÃ£o chapas
+            !item.skuEngenhariaId) // Componentes avulsos do orçamento geralmente são chapas
         );
       });
 
       if (itensMdf.length === 0) {
-        alert('NÃ£o foram encontradas peÃ§as de MDF com dimensÃµes vÃ¡lidas neste orÃ§amento.');
+        alert('Não foram encontradas peças de MDF com dimensões válidas neste orçamento.');
         setImporting(false);
         return;
       }
 
-      // Agrupar as peÃ§as por material e espessura
+      // Agrupar as peças por material e espessura
       const grupos: Record<string, any[]> = {};
 
       itensMdf.forEach((item: any) => {
@@ -94,14 +94,14 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
         let largura = parseBrazilianNumber(item.largura);
         let altura = parseBrazilianNumber(item.altura);
 
-        // ConversÃ£o de cm para mm
+        // Conversão de cm para mm
         if (largura > 0 && largura < 150) largura = largura * 10;
         if (altura > 0 && altura < 150) altura = altura * 10;
 
         const peca = {
           id: `peca_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
           nome: item.nomeCustomizado || item.skuDescricao || 'PEÃ‡A ORÃ‡AMENTO',
-          largura: Math.max(largura, altura), // A maior dimensÃ£o sempre na largura para seguir fibra padrÃ£o
+          largura: Math.max(largura, altura), // A maior dimensão sempre na largura para seguir fibra padrão
           altura: Math.min(largura, altura),
           quantidade: Math.max(parseInt(item.quantidade) || 1, 1),
           rotacionavel: true,
@@ -116,7 +116,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
         grupos[key].push(peca);
       });
 
-      // Criar as chapas com suas respectivas peÃ§as agrupadas
+      // Criar as chapas com suas respectivas peças agrupadas
       const chapasImportadas = Object.entries(grupos).map(([key, pecas]) => {
         const [material, espessuraStr] = key.split('_');
         const espessura = parseInt(espessuraStr) || 15;
@@ -126,8 +126,8 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
           id: `chapa_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
           sku_chapa: skuChapa,
           nome_exibicao: `${material} ${espessura}MM`,
-          largura_mm: 2750, // PadrÃ£o
-          altura_mm: 1830, // PadrÃ£o
+          largura_mm: 2750, // Padrão
+          altura_mm: 1830, // Padrão
           espessura_mm: espessura,
           preco_unitario: '0.00',
           pecas: pecas,
@@ -137,8 +137,8 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
       onImportar(chapasImportadas);
       onFechar();
     } catch (err) {
-      console.error('Erro ao importar orÃ§amento:', err);
-      alert('Ocorreu um erro ao carregar e processar os itens do orÃ§amento.');
+      console.error('Erro ao importar orçamento:', err);
+      alert('Ocorreu um erro ao carregar e processar os itens do orçamento.');
     } finally {
       setImporting(false);
     }
@@ -152,7 +152,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
   });
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="Importar PeÃ§as do OrÃ§amento" size="md">
+    <Modal isOpen={true} onClose={onFechar} title="Importar Peças do Orçamento" size="md">
       <div className="flex flex-col gap-6 max-h-[75vh]">
         <div className="relative group">
           <Search
@@ -161,7 +161,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
           />
           <input
             type="text"
-            placeholder="Buscar por nÃºmero ou cliente..."
+            placeholder="Buscar por número ou cliente..."
             value={filtroTexto}
             onChange={(e) => setFiltroTexto(e.target.value)}
             className="w-full h-11 pl-11 pr-4 bg-input border border-border/80 rounded-xl text-sm focus:border-primary/50 outline-none transition-all text-foreground"
@@ -173,7 +173,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
               <p className="text-xs font-bold uppercase tracking-widest opacity-50">
-                {importing ? 'Processando e separando MDFs...' : 'Carregando orÃ§amentos...'}
+                {importing ? 'Processando e separando MDFs...' : 'Carregando orçamentos...'}
               </p>
             </div>
           ) : orcamentosFiltrados.length > 0 ? (
@@ -189,7 +189,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
                   </div>
                   <div>
                     <h4 className="font-bold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">
-                      OrÃ§amento #{o.numeroOrcamento || o.numero}
+                      Orçamento #{o.numeroOrcamento || o.numero}
                     </h4>
                     <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
                       Cliente: {o.clienteNome || o.cliente?.nome || 'N/A'}
@@ -213,7 +213,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
               <FileText size={40} className="mb-3" />
               <h3 className="text-xs font-bold uppercase tracking-widest">
-                Nenhum orÃ§amento encontrado
+                Nenhum orçamento encontrado
               </h3>
             </div>
           )}

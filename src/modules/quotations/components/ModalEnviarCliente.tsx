@@ -26,7 +26,7 @@ export function ModalEnviarCliente({
       await onSave();
       setStep('method');
     } catch {
-      toastError('Erro ao salvar orÃ§amento antes do envio.');
+      toastError('Erro ao salvar orçamento antes do envio.');
     } finally {
       setLoading(false);
     }
@@ -35,28 +35,28 @@ export function ModalEnviarCliente({
   const handleSend = async () => {
     setLoading(true);
     try {
-      // Gerar token e URL de aprovaÃ§Ã£o no backend (muda o status para 'enviado' e retorna a url)
+      // Gerar token e URL de aprovação no backend (muda o status para 'enviado' e retorna a url)
       const linkData = await api.aprovacao.gerarLink(orcamento.id);
       const urlAprovacao =
         linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
 
       if (method === 'whatsapp') {
         const urlPdf = `${window.location.origin}/api/orcamentos/export-pdf?id=${orcamento.id}`;
-        const text = `OlÃ¡! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
+        const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
         const phone = orcamento.cliente?.telefone || '';
         window.open(
           `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`,
           '_blank',
         );
       } else {
-        // SimulaÃ§Ã£o de envio de email
-        toastSuccess('E-mail em homologaÃ§Ã£o', `Link de aprovaÃ§Ã£o gerado: ${urlAprovacao}`);
+        // Simulação de envio de email
+        toastSuccess('E-mail em homologação', `Link de aprovação gerado: ${urlAprovacao}`);
       }
 
       onClose();
-      toastSuccess('OrÃ§amento processado com sucesso!');
+      toastSuccess('Orçamento processado com sucesso!');
     } catch (err: any) {
-      toastError(err.message || 'Erro ao enviar orÃ§amento.');
+      toastError(err.message || 'Erro ao enviar orçamento.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export function ModalEnviarCliente({
                 SALVAR E PROSSEGUIR?
               </h3>
               <p className="text-muted-foreground">
-                Recomendamos salvar o estado atual do orÃ§amento para que o cliente receba a versÃ£o
+                Recomendamos salvar o estado atual do orçamento para que o cliente receba a versão
                 mais recente.
               </p>
             </div>

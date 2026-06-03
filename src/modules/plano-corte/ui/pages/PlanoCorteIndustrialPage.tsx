@@ -30,7 +30,7 @@ import { CanvasComAbas } from '../components/CanvasComAbas';
 import { PainelPecasChapa } from '../components/PainelPecasChapa';
 import { Button } from '../../../../components/common';
 
-// Camada de AplicaÃ§Ã£o / Casos de Uso
+// Camada de Aplicação / Casos de Uso
 import { OtimizarPorChapa } from '../../application/use-cases/OtimizarPorChapa';
 import { ProcessarPDF } from '../../application/use-cases/ProcessarPDF';
 
@@ -42,9 +42,9 @@ import type {
   ResultadoOtimizacaoPorChapa,
 } from '../../domain/types.js';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────────
 // COMPONENTES AUXILIARES
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────────
 
 const Toast = ({
   message,
@@ -81,9 +81,9 @@ const Toast = ({
   );
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────────
 
 export default function PlanoCorteIndustrialPage() {
   // --- ESTADO ---
@@ -165,7 +165,7 @@ export default function PlanoCorteIndustrialPage() {
           };
         }),
       }));
-      // Limpar resultado se houver alteraÃ§Ã£o tÃ©cnica
+      // Limpar resultado se houver alteração técnica
       if (resultados[chapaId]) {
         setResultados((prev) => {
           const { [chapaId]: _, ...rest } = prev;
@@ -218,13 +218,13 @@ export default function PlanoCorteIndustrialPage() {
   const handleImportPecas = useCallback(
     (pecasImportadas: any[]) => {
       if (!chapaAtivaId) {
-        showToast('Selecione um material antes de importar peÃ§as.', 'error');
+        showToast('Selecione um material antes de importar peças.', 'error');
         return;
       }
 
       const novasPecas: Peca[] = pecasImportadas.map((csv: any, i: number) => ({
         id: `csv_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 4)}`,
-        nome: csv.nome || `PeÃ§a ${i + 1}`,
+        nome: csv.nome || `Peça ${i + 1}`,
         largura: csv.largura_mm,
         altura: csv.altura_mm,
         quantidade: csv.quantidade || 1,
@@ -250,7 +250,7 @@ export default function PlanoCorteIndustrialPage() {
         });
       }
 
-      showToast(`${novasPecas.length} peÃ§as importadas via CSV!`, 'success');
+      showToast(`${novasPecas.length} peças importadas via CSV!`, 'success');
     },
     [chapaAtivaId, resultados],
   );
@@ -264,7 +264,7 @@ export default function PlanoCorteIndustrialPage() {
           (c) => c.sku_chapa.toUpperCase() === chapaImp.sku_chapa.toUpperCase(),
         );
         if (existenteIdx !== -1) {
-          // Mesclar as peÃ§as na chapa existente
+          // Mesclar as peças na chapa existente
           novasChapas[existenteIdx] = {
             ...novasChapas[existenteIdx],
             pecas: [...novasChapas[existenteIdx].pecas, ...chapaImp.pecas],
@@ -288,7 +288,7 @@ export default function PlanoCorteIndustrialPage() {
 
     const totalPecas = chapasImportadas.reduce((acc, c) => acc + c.pecas.length, 0);
     showToast(
-      `${totalPecas} peÃ§as importadas de ${chapasImportadas.length} materiais diferentes!`,
+      `${totalPecas} peças importadas de ${chapasImportadas.length} materiais diferentes!`,
       'success',
     );
   }, []);
@@ -298,7 +298,7 @@ export default function PlanoCorteIndustrialPage() {
     async (chapaId: string) => {
       const chapa = projeto.chapas.find((c) => c.id === chapaId);
       if (!chapa || chapa.pecas.length === 0)
-        return showToast('Adicione peÃ§as antes de otimizar.', 'error');
+        return showToast('Adicione peças antes de otimizar.', 'error');
 
       setLoading(true);
       try {
@@ -313,9 +313,9 @@ export default function PlanoCorteIndustrialPage() {
 
         const res = await otimizador.executar(chapa, pecasExpandidas);
         setResultados((prev) => ({ ...prev, [chapaId]: res }));
-        showToast(`OtimizaÃ§Ã£o de ${chapa.nome_exibicao} concluÃ­da!`, 'success');
+        showToast(`Otimização de ${chapa.nome_exibicao} concluída!`, 'success');
       } catch (err: any) {
-        showToast(`Erro na otimizaÃ§Ã£o: ${err.message}`, 'error');
+        showToast(`Erro na otimização: ${err.message}`, 'error');
       } finally {
         setLoading(false);
       }
@@ -330,7 +330,7 @@ export default function PlanoCorteIndustrialPage() {
       nome: plano.nome || 'PLANO CARREGADO',
       chapas: plano.materiais || [],
       criado_em: new Date(plano.created_at || Date.now()),
-      status: 'rascunho', // Mantemos como rascunho para permitir ediÃ§Ã£o
+      status: 'rascunho', // Mantemos como rascunho para permitir edição
       projeto_id: plano.projeto_id,
       quotation_id: plano.quotation_id,
       visita_id: plano.visita_id,
@@ -427,7 +427,7 @@ export default function PlanoCorteIndustrialPage() {
 
   const handleAprovarProducao = async () => {
     if (Object.keys(resultados).length === 0) {
-      return showToast('Otimize as chapas antes de aprovar a produÃ§Ã£o.', 'error');
+      return showToast('Otimize as chapas antes de aprovar a produção.', 'error');
     }
 
     setLoading(true);
@@ -462,7 +462,7 @@ export default function PlanoCorteIndustrialPage() {
         });
       });
 
-      // VerificaÃ§Ã£o de retalhos duplicados se o plano jÃ¡ tem ID (foi salvo ou carregado)
+      // Verificação de retalhos duplicados se o plano já tem ID (foi salvo ou carregado)
       if (projeto.id && !projeto.id.startsWith('proj_')) {
         const retalhosDuplicadosResponse = await api.planoCorte.verificarRetalhosDuplicados(
           projeto.id,
@@ -498,7 +498,7 @@ export default function PlanoCorteIndustrialPage() {
         false,
       );
     } catch (err: any) {
-      showToast(`Erro na aprovaÃ§Ã£o: ${err.message}`, 'error');
+      showToast(`Erro na aprovação: ${err.message}`, 'error');
       setLoading(false);
     }
   };
@@ -521,12 +521,12 @@ export default function PlanoCorteIndustrialPage() {
         setProjeto((prev) => ({ ...prev, status: 'producao' }));
         setShowDuplicateScrapsModal(false);
         showToast(
-          `ProduÃ§Ã£o aprovada! OP: ${opId}. Estoque atualizado e sobras registradas.`,
+          `Produção aprovada! OP: ${opId}. Estoque atualizado e sobras registradas.`,
           'success',
         );
       }
     } catch (err: any) {
-      showToast(`Erro na aprovaÃ§Ã£o: ${err.message}`, 'error');
+      showToast(`Erro na aprovação: ${err.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -545,7 +545,7 @@ export default function PlanoCorteIndustrialPage() {
             </div>
           </div>
           <h2 className="mt-8 text-xl font-black tracking-[0.2em] uppercase text-white animate-pulse">
-            Processando InteligÃªncia Industrial
+            Processando Inteligência Industrial
           </h2>
           <p className="mt-2 text-[10px] font-bold text-[#888] uppercase tracking-widest">
             Extraindo dados e otimizando layout...
@@ -594,7 +594,7 @@ export default function PlanoCorteIndustrialPage() {
           <Button
             variant="outline"
             onClick={() => {
-              // SimulaÃ§Ã£o de PDF para teste
+              // Simulação de PDF para teste
               showToast('Simulando processamento de PDF...', 'info');
               setTimeout(async () => {
                 const mockFile = { name: 'PROJETO_DEMO_DLUXURY.pdf' } as File;
@@ -620,7 +620,7 @@ export default function PlanoCorteIndustrialPage() {
             className="flex items-center gap-2 h-11"
           >
             <FileText size={14} />
-            Importar OrÃ§amento
+            Importar Orçamento
           </Button>
 
           <Button
@@ -638,7 +638,7 @@ export default function PlanoCorteIndustrialPage() {
             className="flex items-center gap-2 h-11"
           >
             <Cpu size={14} className={executionMode ? 'animate-pulse' : ''} />
-            {executionMode ? 'ExecuÃ§Ã£o Ativa' : 'Modo Projeto'}
+            {executionMode ? 'Execução Ativa' : 'Modo Projeto'}
           </Button>
 
           {projeto.status !== 'producao' && (
@@ -649,7 +649,7 @@ export default function PlanoCorteIndustrialPage() {
               className="bg-success text-success-foreground hover:bg-success/90 h-11 flex items-center gap-2"
             >
               <CheckCircle size={16} />
-              Aprovar ProduÃ§Ã£o
+              Aprovar Produção
             </Button>
           )}
 
@@ -678,7 +678,7 @@ export default function PlanoCorteIndustrialPage() {
             size="icon"
             onClick={() => setShowHistorico(true)}
             className="text-muted-foreground hover:bg-foreground/10 h-11 w-11"
-            title="HistÃ³rico de Planos"
+            title="Histórico de Planos"
           >
             <Clock size={18} />
           </Button>
@@ -691,7 +691,7 @@ export default function PlanoCorteIndustrialPage() {
         <aside className="bg-card border-r border-border flex flex-col overflow-hidden p-6 gap-6">
           <div className="flex flex-col gap-2">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-              SeleÃ§Ã£o de Material
+              Seleção de Material
             </span>
             <BuscaSKU onAdicionarChapa={handleAdicionarChapa} chapasSelecionadas={projeto.chapas} />
           </div>
@@ -744,7 +744,7 @@ export default function PlanoCorteIndustrialPage() {
               {resultadoAtivo && (
                 <div className="pt-6 border-t border-border space-y-4">
                   <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                    AÃ§Ãµes da Chapa
+                    Ações da Chapa
                   </span>
 
                   {resultadoAtivo.chapas_necessarias > 1 && (
@@ -752,14 +752,14 @@ export default function PlanoCorteIndustrialPage() {
                       <AlertTriangle size={14} className="text-warning mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-[9px] font-black text-warning uppercase tracking-wider">
-                          {resultadoAtivo.chapas_necessarias} Chapas NecessÃ¡rias
+                          {resultadoAtivo.chapas_necessarias} Chapas Necessárias
                         </p>
                         <p className="text-[8px] text-muted-foreground mt-0.5 font-mono">
-                          {resultadoAtivo.pecas_total_count || 0} peÃ§as distribuÃ­das em{' '}
+                          {resultadoAtivo.pecas_total_count || 0} peças distribuídas em{' '}
                           {resultadoAtivo.layouts.length} layouts
                           {resultadoAtivo.pecas_rejeitadas &&
                           resultadoAtivo.pecas_rejeitadas.length > 0
-                            ? ` Â· ${resultadoAtivo.pecas_rejeitadas.length} nÃ£o couberam`
+                            ? ` Â· ${resultadoAtivo.pecas_rejeitadas.length} não couberam`
                             : ''}
                         </p>
                       </div>
@@ -790,7 +790,7 @@ export default function PlanoCorteIndustrialPage() {
                     ) : (
                       <CheckCircle size={16} />
                     )}
-                    Aprovar ProduÃ§Ã£o
+                    Aprovar Produção
                   </Button>
                 </div>
               )}
@@ -801,7 +801,7 @@ export default function PlanoCorteIndustrialPage() {
                 <Scissors size={24} />
               </div>
               <span className="text-xs font-black uppercase tracking-[0.2em]">
-                Selecione uma chapa para gerenciar peÃ§as
+                Selecione uma chapa para gerenciar peças
               </span>
             </div>
           )}
@@ -811,7 +811,7 @@ export default function PlanoCorteIndustrialPage() {
       {/* MODALS E TOASTS */}
       {showExportModal && resultadoAtivo && (
         <ExportacaoModal
-          resultado={resultadoAtivo as any} // Ajustar tipagem legada se necessÃ¡rio
+          resultado={resultadoAtivo as any} // Ajustar tipagem legada se necessário
           planoNome={projeto.nome}
           activeSuperficie={resultadoAtivo.layouts[0]}
           activeChapaIdx={0}
@@ -839,12 +839,12 @@ export default function PlanoCorteIndustrialPage() {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-orange-500" />
             <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-4 flex items-center gap-2">
               <Scissors className="text-yellow-500" size={24} />
-              AtenÃ§Ã£o: Sobras Duplicadas
+              Atenção: Sobras Duplicadas
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Notamos que vocÃª jÃ¡ gerou sobras deste mesmo plano de corte com dimensÃµes
-              idÃªnticas anteriormente. Como vocÃª editou e tentou aprovar novamente, isso pode
-              duplicar os retalhos no estoque.
+              Notamos que você já gerou sobras deste mesmo plano de corte com dimensões idênticas
+              anteriormente. Como você editou e tentou aprovar novamente, isso pode duplicar os
+              retalhos no estoque.
             </p>
             <div className="bg-muted p-4 mb-8 max-h-[150px] overflow-y-auto custom-scrollbar rounded-xl border border-border">
               {duplicateScrapsPayload.duplicados.map((dup: any, i: number) => (

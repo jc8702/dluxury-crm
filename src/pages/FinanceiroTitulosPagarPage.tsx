@@ -130,8 +130,8 @@ export default function FinanceiroTitulosPagarPage() {
 
   const doDelete = async (id: string) => {
     const isConfirmed = await confirmAction({
-      title: 'Excluir TÃ­tulo',
-      description: 'Confirma exclusÃ£o do tÃ­tulo?',
+      title: 'Excluir Título',
+      description: 'Confirma exclusão do título?',
     });
     if (!isConfirmed) return;
     try {
@@ -162,7 +162,7 @@ export default function FinanceiroTitulosPagarPage() {
       return;
     }
     if (selectedIds.size === 0) {
-      warning('Nenhum tÃ­tulo selecionado');
+      warning('Nenhum título selecionado');
       return;
     }
     setLoteLoading(true);
@@ -183,7 +183,7 @@ export default function FinanceiroTitulosPagarPage() {
     setLoteLoading(false);
     setLoteModal(false);
     setSelectedIds(new Set());
-    success(`${ok} tÃ­tulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
+    success(`${ok} títulos pagos com sucesso.${fail > 0 ? ` ${fail} falharam.` : ''}`);
     load(page);
   };
 
@@ -199,9 +199,9 @@ export default function FinanceiroTitulosPagarPage() {
       });
       setEditModal(null);
       load(page);
-      success('AlteraÃ§Ãµes salvas com sucesso');
+      success('Alterações salvas com sucesso');
     } catch (err: any) {
-      error(err.message || 'Erro ao salvar alteraÃ§Ãµes');
+      error(err.message || 'Erro ao salvar alterações');
     }
   };
 
@@ -229,7 +229,7 @@ export default function FinanceiroTitulosPagarPage() {
             TÃTULOS A PAGAR
           </h1>
           <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
-            GestÃ£o Industrial de SaÃ­das & Compromissos
+            Gestão Industrial de Saídas & Compromissos
           </p>
         </div>
 
@@ -339,7 +339,7 @@ export default function FinanceiroTitulosPagarPage() {
                   </div>
                 </th>
                 <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
-                  IdentificaÃ§Ã£o
+                  Identificação
                 </th>
                 <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
                   Status Operacional
@@ -422,7 +422,7 @@ export default function FinanceiroTitulosPagarPage() {
                                 {supplierName}
                               </div>
                               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                {groupRows.length} TÃ­tulos Industriais
+                                {groupRows.length} Títulos Industriais
                               </div>
                             </div>
                           </div>
@@ -441,7 +441,7 @@ export default function FinanceiroTitulosPagarPage() {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
                                 title: 'ELIMINAÃ‡ÃƒO EM MASSA',
-                                description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÃTULOS DESTE FORNECEDOR? ESTA AÃ‡ÃƒO Ã‰ IRREVERSÃVEL NO ERP.`,
+                                description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÃTULOS DESTE FORNECEDOR? ESTA AÃ‡ÃƒO É IRREVERSÃVEL NO ERP.`,
                               });
                               if (isConfirmed) {
                                 api.financeiro.titulosPagar.deleteBatch(sid).then(() => {
@@ -519,7 +519,7 @@ export default function FinanceiroTitulosPagarPage() {
                                     size="sm"
                                     className="p-2.5 rounded-xl border border-white/10"
                                     onClick={() => setEditModal(r)}
-                                    title="ManutenÃ§Ã£o"
+                                    title="Manutenção"
                                   >
                                     <Edit2 className="w-4 h-4" />
                                   </Button>
@@ -585,7 +585,7 @@ export default function FinanceiroTitulosPagarPage() {
                 disabled={page * perPage >= total}
                 onClick={() => setPage(page + 1)}
               >
-                PrÃ³xima
+                Próxima
               </Button>
             </div>
           </div>
@@ -638,7 +638,7 @@ export default function FinanceiroTitulosPagarPage() {
                         </div>
                         <div className="flex justify-between items-center text-red-400">
                           <span className="text-[11px] font-bold uppercase tracking-wider">
-                            Juros (1%/mÃªs)
+                            Juros (1%/mês)
                           </span>
                           <span className="font-bold italic">
                             + R$ {valorJuros.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -658,7 +658,7 @@ export default function FinanceiroTitulosPagarPage() {
 
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
-                      Conta BancÃ¡ria / DÃ©bito
+                      Conta Bancária / Débito
                     </label>
                     <select id="conta-interna-id-pagar" className="input-base">
                       <option value="">Selecione a conta de origem...</option>
@@ -721,13 +721,13 @@ export default function FinanceiroTitulosPagarPage() {
       <Modal
         isOpen={!!editModal}
         onClose={() => setEditModal(null)}
-        title="ManutenÃ§Ã£o de Compromisso Industrial"
+        title="Manutenção de Compromisso Industrial"
         size="lg"
       >
         <div className="p-4 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <Input
-              label="NÃºmero do TÃ­tulo"
+              label="Número do Título"
               type="text"
               className="font-mono font-bold"
               value={editModal?.numero_titulo || ''}
@@ -813,7 +813,7 @@ export default function FinanceiroTitulosPagarPage() {
               className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 text-white"
               onClick={saveEdit}
             >
-              SALVAR ALTERAÃ‡Ã•ES
+              SALVAR ALTERAÃ‡ÕES
             </Button>
           </div>
         </div>
@@ -833,29 +833,29 @@ export default function FinanceiroTitulosPagarPage() {
       <Modal
         isOpen={loteModal}
         onClose={() => setLoteModal(false)}
-        title={`LiquidaÃ§Ã£o em Lote (${selectedIds.size} TÃ­tulos)`}
+        title={`Liquidação em Lote (${selectedIds.size} Títulos)`}
       >
         <div className="p-2 space-y-6">
           <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-[11px] font-bold text-orange-400 uppercase tracking-wider italic flex items-center gap-3">
             <Layers className="w-5 h-5" />
-            AtenÃ§Ã£o: Os {selectedIds.size} tÃ­tulos selecionados serÃ£o baixados pelo valor
-            nominal (em aberto).
+            Atenção: Os {selectedIds.size} títulos selecionados serão baixados pelo valor nominal
+            (em aberto).
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
-                Conta BancÃ¡ria Corporativa *
+                Conta Bancária Corporativa *
               </label>
               <select
                 className="input-base uppercase font-bold"
                 value={loteData.conta_interna_id}
                 onChange={(e) => setLoteData((d) => ({ ...d, conta_interna_id: e.target.value }))}
               >
-                <option value="">Selecione a conta para dÃ©bito...</option>
+                <option value="">Selecione a conta para débito...</option>
                 {contas.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nome.toUpperCase()} â€” R${' '}
+                    {c.nome.toUpperCase()} — R${' '}
                     {Number(c.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </option>
                 ))}
@@ -865,7 +865,7 @@ export default function FinanceiroTitulosPagarPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
-                  Data da LiquidaÃ§Ã£o
+                  Data da Liquidação
                 </label>
                 <input
                   type="date"
@@ -876,7 +876,7 @@ export default function FinanceiroTitulosPagarPage() {
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
-                  ObservaÃ§Ã£o Interna
+                  Observação Interna
                 </label>
                 <input
                   type="text"

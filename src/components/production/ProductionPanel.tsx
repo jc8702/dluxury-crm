@@ -58,7 +58,7 @@ const ProductionPanel: React.FC = () => {
       const data = await api.production.list();
       setOps(data || []);
     } catch (e) {
-      console.error('Erro ao buscar Ordens de ProduÃ§Ã£o', e);
+      console.error('Erro ao buscar Ordens de Produção', e);
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ const ProductionPanel: React.FC = () => {
     fetchOPs();
     const interval = setInterval(fetchOPs, 10000);
 
-    // Recarrega OPs imediatamente quando uma OP Ã© criada/atualizada/excluÃ­da por outro mÃ³dulo
+    // Recarrega OPs imediatamente quando uma OP é criada/atualizada/excluída por outro módulo
     const onOpCreated = () => fetchOPs();
     const onOpUpdated = () => fetchOPs();
     const onOpDeleted = () => fetchOPs();
@@ -125,7 +125,7 @@ const ProductionPanel: React.FC = () => {
       }
 
       if (!isComplete || !piecesComplete) {
-        toastError('Checklist ou peÃ§as pendentes', 'Conclua todas as tarefas antes de avanÃ§ar.');
+        toastError('Checklist ou peças pendentes', 'Conclua todas as tarefas antes de avançar.');
         return;
       }
       novoStatus = fluxo[index + 1] || op.status;
@@ -140,7 +140,7 @@ const ProductionPanel: React.FC = () => {
       if (updated) {
         setOps((prev) => prev.map((o) => (o.op_id === op.op_id ? updated : o)));
 
-        // NotificaÃ§Ãµes Inteligentes
+        // Notificações Inteligentes
         if (novoStatus === 'PRODUCAO') {
           await WhatsAppService.notificarProducaoIniciada(
             op.produto, // Simulado
@@ -176,7 +176,7 @@ const ProductionPanel: React.FC = () => {
     async (op_id: string) => {
       if (
         !confirm(
-          'Deseja realmente excluir esta Ordem de ProduÃ§Ã£o? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
+          'Deseja realmente excluir esta Ordem de Produção? Esta ação não pode ser desfeita.',
         )
       )
         return;
@@ -224,9 +224,9 @@ const ProductionPanel: React.FC = () => {
 
   const colunas: { id: StatusCol; label: string; color: string }[] = [
     { id: 'AGUARDANDO', label: 'Aguardando', color: '#6b7280' },
-    { id: 'PRODUCAO', label: 'ProduÃ§Ã£o / Corte', color: '#f59e0b' },
+    { id: 'PRODUCAO', label: 'Produção / Corte', color: '#f59e0b' },
     { id: 'MONTAGEM', label: 'Montagem / Acabamento', color: '#3b82f6' },
-    { id: 'INSPECAO', label: 'InspeÃ§Ã£o Final', color: '#ec4899' },
+    { id: 'INSPECAO', label: 'Inspeção Final', color: '#ec4899' },
     { id: 'PRONTO', label: 'Pronto p/ Entrega', color: '#10b981' },
     { id: 'FINALIZADO', label: 'Finalizado', color: '#059669' },
   ];
@@ -238,9 +238,9 @@ const ProductionPanel: React.FC = () => {
 
   const defaultTasksByStatus: Record<string, string[]> = {
     AGUARDANDO: [],
-    PRODUCAO: ['Corte', 'Fita de Borda', 'FuraÃ§Ãµes'],
-    MONTAGEM: ['PrÃ©-Montagem', 'Pintura', 'Acabamento / Limpeza'],
-    INSPECAO: ['InspeÃ§Ã£o de Qualidade'],
+    PRODUCAO: ['Corte', 'Fita de Borda', 'Furações'],
+    MONTAGEM: ['Pré-Montagem', 'Pintura', 'Acabamento / Limpeza'],
+    INSPECAO: ['Inspeção de Qualidade'],
     PRONTO: ['Embalagem'],
     FINALIZADO: [],
   };
@@ -277,7 +277,7 @@ const ProductionPanel: React.FC = () => {
                 }}
                 className="text-destructive opacity-60 hover:opacity-100 transition-opacity p-0.5"
                 title="Excluir OP"
-                aria-label={`Excluir ordem de produÃ§Ã£o ${op.op_id}`}
+                aria-label={`Excluir ordem de produção ${op.op_id}`}
               >
                 <Trash2 size={12} />
               </button>
@@ -329,7 +329,7 @@ const ProductionPanel: React.FC = () => {
 
           <div className="p-2 bg-muted/20 border border-border/30 rounded-xl flex flex-col gap-1">
             <div className="flex justify-between text-[10px]">
-              <span className="text-muted-foreground">ðŸ“… PrevisÃ£o:</span>
+              <span className="text-muted-foreground">ðŸ“… Previsão:</span>
               <span
                 className={`font-bold ${op.data_prevista_entrega && new Date(op.data_prevista_entrega).getTime() < Date.now() ? 'text-destructive animate-pulse' : 'text-foreground'}`}
               >
@@ -387,12 +387,12 @@ const ProductionPanel: React.FC = () => {
                       canAdvance
                         ? updateStatus(op, 'avancar')
                         : toastError(
-                            'Checklist ou peÃ§as pendentes',
-                            'Conclua todas as tarefas antes de avanÃ§ar.',
+                            'Checklist ou peças pendentes',
+                            'Conclua todas as tarefas antes de avançar.',
                           )
                     }
                     disabled={!canAdvance}
-                    title={!canAdvance ? 'Checklist ou peÃ§as pendentes' : 'AvanÃ§ar OP'}
+                    title={!canAdvance ? 'Checklist ou peças pendentes' : 'Avançar OP'}
                     className={`text-[10px] font-extrabold px-3 py-1 h-7 ${canAdvance ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
                   >
                     AVANÃ‡AR â†’
@@ -410,7 +410,7 @@ const ProductionPanel: React.FC = () => {
       <div className="py-20 flex flex-col justify-center items-center gap-3 text-muted-foreground">
         <Loader2 className="animate-spin text-primary" size={32} />
         <span className="text-sm font-semibold tracking-wider">
-          Sincronizando com chÃ£o de fÃ¡brica...
+          Sincronizando com chão de fábrica...
         </span>
       </div>
     );
@@ -470,7 +470,7 @@ const ProductionPanel: React.FC = () => {
                       className="w-full text-xs font-bold"
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (!confirm('Gerar Ordem de ProduÃ§Ã£o para este projeto?')) return;
+                        if (!confirm('Gerar Ordem de Produção para este projeto?')) return;
                         try {
                           const opId = `OP-${project.id?.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
                           const res = await fetch('/api/production', {
@@ -510,7 +510,7 @@ const ProductionPanel: React.FC = () => {
         );
       })}
 
-      {/* Modal de EdiÃ§Ã£o Industrial */}
+      {/* Modal de Edição Industrial */}
       {editingOP && (
         <Modal
           isOpen={!!editingOP}
@@ -521,7 +521,7 @@ const ProductionPanel: React.FC = () => {
           <div className="flex flex-col gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="flex justify-between items-center pb-2 border-b border-border/50">
               <span className="text-xs text-muted-foreground">
-                Configure as tarefas e confira as peÃ§as.
+                Configure as tarefas e confira as peças.
               </span>
               <Button
                 variant="destructive"
@@ -568,7 +568,7 @@ const ProductionPanel: React.FC = () => {
                   <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                     {(editingOP.checklist || []).length === 0 && (
                       <div className="text-center py-6 text-xs text-muted-foreground border border-dashed border-border rounded-xl">
-                        Nenhuma tarefa de conferÃªncia definida.
+                        Nenhuma tarefa de conferência definida.
                       </div>
                     )}
                     {(editingOP.checklist || []).map((item, idx) => (
@@ -593,7 +593,7 @@ const ProductionPanel: React.FC = () => {
                             newCheck[idx].task = e.target.value;
                             setEditingOP({ ...editingOP, checklist: newCheck });
                           }}
-                          placeholder="DescriÃ§Ã£o da tarefa"
+                          placeholder="Descrição da tarefa"
                           className={`flex-1 bg-transparent border-none focus:outline-none focus:ring-0 p-0 text-sm ${item.completed ? 'text-muted-foreground line-through' : 'text-foreground font-medium'}`}
                         />
                         <button
@@ -645,7 +645,7 @@ const ProductionPanel: React.FC = () => {
                 <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2">
                   {((editingOP as any).metadata?.pecas || []).length === 0 && (
                     <div className="text-xs text-muted-foreground py-4 text-center">
-                      Sem lista de peÃ§as
+                      Sem lista de peças
                     </div>
                   )}
                   {((editingOP as any).metadata?.pecas || []).map((p: any, i: number) => (
@@ -679,10 +679,7 @@ const ProductionPanel: React.FC = () => {
                               setEditingOP(saved as any);
                             } catch (err: any) {
                               console.error('Erro salvando metadata da OP:', err);
-                              toastError(
-                                'Erro ao salvar conferÃªncia da peÃ§a',
-                                err.message || err,
-                              );
+                              toastError('Erro ao salvar conferência da peça', err.message || err);
                             }
                           }}
                         />

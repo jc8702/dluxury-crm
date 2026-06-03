@@ -153,20 +153,20 @@ export default function FinanceiroTitulosPagarWizard() {
         valor_custo_financeiro: valorCustoFinanceiro,
         rateio: formData.showRateio ? formData.rateios : [],
       });
-      success('TÃ­tulos gerados com sucesso!');
+      success('Títulos gerados com sucesso!');
       window.location.hash = '#/financeiro/titulos-pagar';
     } catch (err: any) {
-      error('Erro ao salvar tÃ­tulos: ' + (err.message || ''));
+      error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
       setLoading(false);
     }
   };
 
-  // â”€â”€â”€ PASSO 1: IdentificaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 1: Identificação ───────────────────────────────────────────────
   const renderStep1 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-        IdentificaÃ§Ã£o da Despesa
+        Identificação da Despesa
       </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div>
@@ -280,7 +280,7 @@ export default function FinanceiroTitulosPagarWizard() {
         <div className="space-y-2">
           <Input
             type="text"
-            label="NÃºmero da Duplicata / TÃ­tulo"
+            label="Número da Duplicata / Título"
             value={formData.numero_titulo}
             onChange={(e) => setFormData({ ...formData, numero_titulo: e.target.value })}
             placeholder="Ex: NF-12345"
@@ -290,7 +290,7 @@ export default function FinanceiroTitulosPagarWizard() {
     </div>
   );
 
-  // â”€â”€â”€ PASSO 2: Valores + Pagamento + Parcelas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 2: Valores + Pagamento + Parcelas ─────────────────────────────
   const renderStep2 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
@@ -301,7 +301,7 @@ export default function FinanceiroTitulosPagarWizard() {
         <div className="space-y-2">
           <Input
             type="number"
-            label="Valor da ObrigaÃ§Ã£o (sem taxas)"
+            label="Valor da Obrigação (sem taxas)"
             value={formData.valor_base}
             onChange={(e) => setFormData({ ...formData, valor_base: Number(e.target.value) })}
           />
@@ -344,7 +344,7 @@ export default function FinanceiroTitulosPagarWizard() {
           </div>
         </div>
 
-        {/* Taxa Financeira â€“ Sempre disponÃ­vel para ajuste manual */}
+        {/* Taxa Financeira – Sempre disponível para ajuste manual */}
         <div
           className="animate-fade-in"
           style={{
@@ -431,7 +431,7 @@ export default function FinanceiroTitulosPagarWizard() {
           />
           <Input
             type="number"
-            label="Repetir por X meses (RecorrÃªncia)"
+            label="Repetir por X meses (Recorrência)"
             min={1}
             max={36}
             value={formData.recorrencia_meses || 1}
@@ -441,7 +441,7 @@ export default function FinanceiroTitulosPagarWizard() {
           />
         </div>
 
-        {/* Data + ObservaÃ§Ã£o */}
+        {/* Data + Observação */}
         <div
           style={{
             display: 'grid',
@@ -452,7 +452,7 @@ export default function FinanceiroTitulosPagarWizard() {
         >
           <Input
             type="date"
-            label="Data de EmissÃ£o / CompetÃªncia"
+            label="Data de Emissão / Competência"
             value={formData.data_base}
             onChange={(e) => setFormData({ ...formData, data_base: e.target.value })}
           />
@@ -550,7 +550,7 @@ export default function FinanceiroTitulosPagarWizard() {
                       setFormData({ ...formData, rateios: newR });
                     }}
                   >
-                    <option value="">Mesma do TÃ­tulo</option>
+                    <option value="">Mesma do Título</option>
                     {classes.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome}
@@ -592,7 +592,7 @@ export default function FinanceiroTitulosPagarWizard() {
         )}
 
         <div>
-          <label className="label-base">ObservaÃ§Ãµes Internas</label>
+          <label className="label-base">Observações Internas</label>
           <textarea
             className="input-base"
             rows={2}
@@ -605,11 +605,11 @@ export default function FinanceiroTitulosPagarWizard() {
     </div>
   );
 
-  // â”€â”€â”€ PASSO 3: ConfirmaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── PASSO 3: Confirmação ─────────────────────────────────────────────────
   const renderStep3 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-        ConfirmaÃ§Ã£o Financeira
+        Confirmação Financeira
       </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {preview.map((p, i) => (
@@ -690,7 +690,7 @@ export default function FinanceiroTitulosPagarWizard() {
       </Button>
 
       <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
-        {/* Stepper â€“ 3 passos */}
+        {/* Stepper – 3 passos */}
         <div
           style={{
             display: 'flex',
@@ -742,14 +742,14 @@ export default function FinanceiroTitulosPagarWizard() {
           ))}
         </div>
 
-        {/* ConteÃºdo */}
+        {/* Conteúdo */}
         <div style={{ minHeight: '320px' }}>
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
         </div>
 
-        {/* BotÃµes */}
+        {/* Botões */}
         <div
           style={{
             marginTop: '2.5rem',

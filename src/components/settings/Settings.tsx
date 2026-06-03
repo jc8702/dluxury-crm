@@ -46,7 +46,7 @@ const Settings: React.FC = () => {
     try {
       setLoadingInvoices(true);
       const res = await fetch('/api/checkout/invoices', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
       });
       const json = await res.json();
       if (json.success) {
@@ -63,7 +63,7 @@ const Settings: React.FC = () => {
     try {
       const res = await fetch('/api/checkout/gerar-boleto', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
       });
       const json = await res.json();
       if (json.success) {
@@ -82,7 +82,7 @@ const Settings: React.FC = () => {
   const handleCancelSubscription = async () => {
     if (
       !confirm(
-        'ATENÃ‡ÃƒO: Deseja realmente cancelar sua assinatura? O acesso ao sistema serÃ¡ suspenso imediatamente.',
+        'ATENÃ‡ÃƒO: Deseja realmente cancelar sua assinatura? O acesso ao sistema será suspenso imediatamente.',
       )
     )
       return;
@@ -90,7 +90,7 @@ const Settings: React.FC = () => {
       setCancelling(true);
       const res = await fetch('/api/checkout/cancel', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
       });
       const json = await res.json();
       if (json.success) {
@@ -120,7 +120,7 @@ const Settings: React.FC = () => {
   }, []);
   const [profileMsg, setProfileMsg] = useState('');
 
-  // GestÃ£o de UsuÃ¡rios
+  // Gestão de Usuários
   const [showUserModal, setShowUserModal] = useState(false);
   const [userError, setUserError] = useState('');
   const [newUser, setNewUser] = useState({
@@ -135,7 +135,7 @@ const Settings: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // GestÃ£o de CondiÃ§Ãµes de Pagamento
+  // Gestão de Condições de Pagamento
   const [showCondModal, setShowCondModal] = useState(false);
   const [newCond, setNewCond] = useState({ nome: '', n_parcelas: 1 });
   const [editingCondId, setEditingCondId] = useState<string | null>(null);
@@ -152,9 +152,9 @@ const Settings: React.FC = () => {
       setShowCondModal(false);
       setNewCond({ nome: '', n_parcelas: 1 });
       setEditingCondId(null);
-      toastSuccess('CondiÃ§Ã£o salva com sucesso');
+      toastSuccess('Condição salva com sucesso');
     } catch (_err: any) {
-      toastError('Erro ao salvar condiÃ§Ã£o');
+      toastError('Erro ao salvar condição');
     }
   };
 
@@ -167,7 +167,7 @@ const Settings: React.FC = () => {
       setShowUserModal(false);
       setNewUser({ name: '', email: '', password: '', role: 'vendedor' });
     } catch (err: any) {
-      setUserError(err.message || 'Erro ao registrar usuÃ¡rio');
+      setUserError(err.message || 'Erro ao registrar usuário');
     }
   };
 
@@ -177,7 +177,7 @@ const Settings: React.FC = () => {
         await api.users.delete(id);
         await loadSystemUsers();
       } catch (err: any) {
-        toastError(err.message || 'Erro ao remover usuÃ¡rio');
+        toastError(err.message || 'Erro ao remover usuário');
       }
     }
   };
@@ -190,7 +190,7 @@ const Settings: React.FC = () => {
         email: profileData.email,
         password: profileData.password || undefined,
       });
-      setProfileMsg('Dados atualizados com sucesso! FaÃ§a login novamente se alterou a senha.');
+      setProfileMsg('Dados atualizados com sucesso! Faça login novamente se alterou a senha.');
       setProfileData({ ...profileData, password: '' });
     } catch (err: any) {
       setProfileMsg('Erro: ' + (err.message || 'Falha ao atualizar'));
@@ -201,9 +201,9 @@ const Settings: React.FC = () => {
     <div className="animate-fade-in flex flex-col gap-8">
       <header>
         <h2 className="text-3xl font-bold tracking-tight text-foreground">
-          ConfiguraÃ§Ãµes do Sistema
+          Configurações do Sistema
         </h2>
-        <p className="text-muted-foreground text-sm">Gerencie permissÃµes e dados de acesso.</p>
+        <p className="text-muted-foreground text-sm">Gerencie permissões e dados de acesso.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -251,11 +251,11 @@ const Settings: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* GestÃ£o de Equipe */}
+        {/* Gestão de Equipe */}
         <div className="flex flex-col gap-8">
           <Card className="glass">
             <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-4">
-              <CardTitle>GestÃ£o de Equipe</CardTitle>
+              <CardTitle>Gestão de Equipe</CardTitle>
               <Button onClick={() => setShowUserModal(true)} size="sm">
                 + Novo Acesso
               </Button>
@@ -290,7 +290,7 @@ const Settings: React.FC = () => {
                 </div>
               ))}
               {systemUsers.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhum outro usuÃ¡rio cadastrado.</p>
+                <p className="text-sm text-muted-foreground">Nenhum outro usuário cadastrado.</p>
               )}
             </CardContent>
           </Card>
@@ -298,16 +298,16 @@ const Settings: React.FC = () => {
           <Card className="border-dashed bg-transparent shadow-none border-border/60">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground font-normal">
-                InformaÃ§Ãµes do Sistema
+                Informações do Sistema
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                VersÃ£o: 2.0.0-auth
+                Versão: 2.0.0-auth
                 <br />
-                Ambiente: ProduÃ§Ã£o (Neon PostgreSQL)
+                Ambiente: Produção (Neon PostgreSQL)
                 <br />
-                MÃ³dulo Acesso Multi-usuÃ¡rio: Ativo
+                Módulo Acesso Multi-usuário: Ativo
                 <br />
                 {user?.subdominio && (
                   <>
@@ -323,27 +323,22 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* PadrÃµes de OrÃ§amento */}
+      {/* Padrões de Orçamento */}
       <Card className="glass">
         <CardHeader>
           <CardTitle className="text-primary flex items-center gap-2">
-            ðŸ’° PadrÃµes de OrÃ§amento
+            ðŸ’° Padrões de Orçamento
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Input
-              type="number"
-              step="0.1"
-              label="Taxa Financeira PadrÃ£o (%)"
-              defaultValue={0.0}
-            />
-            <Input type="number" label="Prazo PadrÃ£o de Entrega (Dias Ãšteis)" defaultValue={45} />
-            <Input type="number" label="Adicional de UrgÃªncia (%)" defaultValue={15} />
+            <Input type="number" step="0.1" label="Taxa Financeira Padrão (%)" defaultValue={0.0} />
+            <Input type="number" label="Prazo Padrão de Entrega (Dias Ãšteis)" defaultValue={45} />
+            <Input type="number" label="Adicional de Urgência (%)" defaultValue={15} />
           </div>
           <p className="text-xs text-muted-foreground italic mt-2">
-            * O parcelamento e as taxas agora sÃ£o definidos manualmente em cada transaÃ§Ã£o (Pagar,
-            Receber e OrÃ§amentos).
+            * O parcelamento e as taxas agora são definidos manualmente em cada transação (Pagar,
+            Receber e Orçamentos).
           </p>
         </CardContent>
       </Card>
@@ -377,7 +372,7 @@ const Settings: React.FC = () => {
                 className="ml-2 capitalize"
               >
                 {subData?.status === 'trial'
-                  ? 'PerÃ­odo de Teste'
+                  ? 'Período de Teste'
                   : subData?.status === 'active'
                     ? 'Ativo'
                     : subData?.status === 'suspended'
@@ -390,38 +385,38 @@ const Settings: React.FC = () => {
               <span className="font-bold text-lg text-foreground">
                 R$ {(subData?.valor || 197.0).toFixed(2).replace('.', ',')}
               </span>
-              <span className="text-xs text-muted-foreground"> /mÃªs</span>
+              <span className="text-xs text-muted-foreground"> /mês</span>
             </div>
             <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
               <span className="text-xs text-muted-foreground block mb-1">STATUS DE COBRANÃ‡A</span>
               <span className="font-bold text-sm text-foreground block">
                 {subData?.status === 'trial'
-                  ? `AvaliaÃ§Ã£o ativa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
+                  ? `Avaliação ativa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
                   : subData?.currentPeriodEnd
-                    ? `PrÃ³ximo vencimento: ${new Date(subData.currentPeriodEnd).toLocaleDateString('pt-BR')}`
-                    : 'Aguardando configuraÃ§Ã£o'}
+                    ? `Próximo vencimento: ${new Date(subData.currentPeriodEnd).toLocaleDateString('pt-BR')}`
+                    : 'Aguardando configuração'}
               </span>
             </div>
           </div>
 
-          {/* HistÃ³rico de Faturas Virtuais */}
+          {/* Histórico de Faturas Virtuais */}
           <div className="mt-4 space-y-3">
             <h4 className="font-bold text-sm text-foreground tracking-tight">
-              HistÃ³rico de Mensalidades
+              Histórico de Mensalidades
             </h4>
             {loadingInvoices ? (
-              <div className="text-xs text-muted-foreground">Carregando histÃ³rico...</div>
+              <div className="text-xs text-muted-foreground">Carregando histórico...</div>
             ) : invoices.length === 0 ? (
-              <div className="text-xs text-muted-foreground">Nenhuma fatura disponÃ­vel ainda.</div>
+              <div className="text-xs text-muted-foreground">Nenhuma fatura disponível ainda.</div>
             ) : (
               <div className="border border-border/40 rounded-xl overflow-hidden text-xs">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-white/5 border-b border-border/40 text-muted-foreground font-semibold">
-                      <th className="px-4 py-2">CompetÃªncia</th>
+                      <th className="px-4 py-2">Competência</th>
                       <th className="px-4 py-2">Valor</th>
                       <th className="px-4 py-2">Vencimento</th>
-                      <th className="px-4 py-2">MÃ©todo</th>
+                      <th className="px-4 py-2">Método</th>
                       <th className="px-4 py-2">Status</th>
                     </tr>
                   </thead>
@@ -464,7 +459,7 @@ const Settings: React.FC = () => {
               className="flex-1 font-semibold"
               disabled={subData?.status === 'suspended'}
             >
-              Emitir Boleto do MÃªs
+              Emitir Boleto do Mês
             </Button>
 
             <Button
@@ -500,7 +495,7 @@ const Settings: React.FC = () => {
               label="Nome"
               value={newUser.name}
               onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              placeholder="JoÃ£o Silva"
+              placeholder="João Silva"
             />
             <Input
               required
@@ -513,7 +508,7 @@ const Settings: React.FC = () => {
             <Input
               required
               type="password"
-              label="Senha TemporÃ¡ria"
+              label="Senha Temporária"
               value={newUser.password}
               onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
               placeholder="******"
@@ -531,7 +526,7 @@ const Settings: React.FC = () => {
                   Vendedor (Comercial)
                 </option>
                 <option value="marceneiro" style={{ background: '#1a1a1a' }}>
-                  Marceneiro (FÃ¡brica)
+                  Marceneiro (Fábrica)
                 </option>
                 <option value="admin" style={{ background: '#1a1a1a' }}>
                   Administrador (Total)
@@ -566,7 +561,7 @@ const Settings: React.FC = () => {
         />
       )}
 
-      {/* Modal de ExibiÃ§Ã£o de Boleto */}
+      {/* Modal de Exibição de Boleto */}
       {showBoletoModal && boletoData && (
         <Modal
           isOpen={showBoletoModal}
@@ -576,9 +571,9 @@ const Settings: React.FC = () => {
         >
           <div className="space-y-5 text-sm text-foreground">
             <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl space-y-1">
-              <div className="font-semibold">Boleto BancÃ¡rio Emitido</div>
+              <div className="font-semibold">Boleto Bancário Emitido</div>
               <div className="text-xs text-muted-foreground">
-                Use o cÃ³digo abaixo ou baixe o PDF para pagar a mensalidade.
+                Use o código abaixo ou baixe o PDF para pagar a mensalidade.
               </div>
             </div>
 
@@ -599,7 +594,7 @@ const Settings: React.FC = () => {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Linha DigitÃ¡vel / CÃ³digo de Barras
+                Linha Digitável / Código de Barras
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -612,7 +607,7 @@ const Settings: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(boletoData.codigoBarras);
-                    toastSuccess('Linha digitÃ¡vel copiada!');
+                    toastSuccess('Linha digitável copiada!');
                   }}
                 >
                   Copiar
@@ -635,7 +630,7 @@ const Settings: React.FC = () => {
   );
 };
 
-// Modal CondiÃ§Ã£o de Pagamento
+// Modal Condição de Pagamento
 const CondicaoModal: React.FC<{
   show: boolean;
   onClose: () => void;
@@ -648,13 +643,13 @@ const CondicaoModal: React.FC<{
     <Modal
       isOpen={show}
       onClose={onClose}
-      title={isEditing ? 'Editar CondiÃ§Ã£o' : 'Nova CondiÃ§Ã£o de Pagamento'}
+      title={isEditing ? 'Editar Condição' : 'Nova Condição de Pagamento'}
       size="sm"
     >
       <form onSubmit={onSave} className="flex flex-col gap-4">
         <Input
           required
-          label="Nome da CondiÃ§Ã£o"
+          label="Nome da Condição"
           value={data.nome}
           onChange={(e) => setData({ ...data, nome: e.target.value.toUpperCase() })}
           placeholder="EX: 4X CARTÃƒO"
@@ -663,7 +658,7 @@ const CondicaoModal: React.FC<{
           required
           type="number"
           min="1"
-          label="NÃºmero de Parcelas"
+          label="Número de Parcelas"
           value={data.n_parcelas}
           onChange={(e) => setData({ ...data, n_parcelas: Number(e.target.value) })}
         />
@@ -680,32 +675,32 @@ const CondicaoModal: React.FC<{
   );
 };
 
-// â”€â”€â”€ SEÃ‡ÃƒO DE CONFIGURAÃ‡Ã•ES DE NOTIFICAÃ‡Ã•ES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SEÃ‡ÃƒO DE CONFIGURAÃ‡ÕES DE NOTIFICAÃ‡ÕES ────────────────
 const NotificationSettingsSection: React.FC = () => {
   const alerts = [
     {
-      title: 'ðŸ“‰ Estoque CrÃ­tico',
-      desc: 'Avisa quando materiais atingem o nÃ­vel mÃ­nimo.',
+      title: 'ðŸ“‰ Estoque Crítico',
+      desc: 'Avisa quando materiais atingem o nível mínimo.',
       type: 'estoque',
     },
     {
       title: 'â° Prazos de Projetos',
-      desc: 'Alerta sobre entregas previstas para os prÃ³ximos 3 dias.',
+      desc: 'Alerta sobre entregas previstas para os próximos 3 dias.',
       type: 'projeto',
     },
     {
-      title: 'ðŸ’° CobranÃ§as Vencidas',
+      title: 'ðŸ’° Cobranças Vencidas',
       desc: 'Identifica faturas que passaram da data de vencimento.',
       type: 'financeiro',
     },
     {
-      title: 'ðŸ“ OrÃ§amentos s/ Retorno',
-      desc: 'Avisa sobre orÃ§amentos enviados hÃ¡ mais de 7 dias.',
+      title: 'ðŸ“ Orçamentos s/ Retorno',
+      desc: 'Avisa sobre orçamentos enviados há mais de 7 dias.',
       type: 'comercial',
     },
     {
       title: 'ðŸ› ï¸ Garantias Pendentes',
-      desc: 'Alerta sobre chamados tÃ©cnicos abertos hÃ¡ mais de 3 dias.',
+      desc: 'Alerta sobre chamados técnicos abertos há mais de 3 dias.',
       type: 'pos-venda',
     },
   ];
@@ -714,12 +709,12 @@ const NotificationSettingsSection: React.FC = () => {
     <Card className="glass">
       <CardHeader>
         <CardTitle className="text-primary flex items-center gap-2 text-xl font-bold">
-          ðŸ”” AutomaÃ§Ã£o de Alertas e NotificaÃ§Ãµes
+          ðŸ”” Automação de Alertas e Notificações
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <p className="text-sm text-muted-foreground">
-          O sistema monitora os seguintes eventos automaticamente e gera notificaÃ§Ãµes no sino
+          O sistema monitora os seguintes eventos automaticamente e gera notificações no sino
           superior para todos os administradores.
         </p>
 
@@ -745,9 +740,9 @@ const NotificationSettingsSection: React.FC = () => {
 
         <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong>Nota:</strong> No momento, as regras de alerta sÃ£o globais. Para solicitar
-            alteraÃ§Ãµes nos limites (ex: 7 dias para orÃ§amentos), entre em contato com o suporte
-            tÃ©cnico.
+            <strong>Nota:</strong> No momento, as regras de alerta são globais. Para solicitar
+            alterações nos limites (ex: 7 dias para orçamentos), entre em contato com o suporte
+            técnico.
           </p>
         </div>
       </CardContent>
@@ -755,7 +750,7 @@ const NotificationSettingsSection: React.FC = () => {
   );
 };
 
-// â”€â”€â”€ SEÃ‡ÃƒO DE PRECIPICAÃ‡ÃƒO TÃ‰CNICA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SEÃ‡ÃƒO DE PRECIPICAÃ‡ÃƒO TÉCNICA ───────────────────────
 const TechnicalPricingSection: React.FC = () => {
   const { error: toastError, success: toastSuccess } = useToast();
   const [config, setConfig] = useState<ConfiguracaoPrecificacao | null>(null);
@@ -774,9 +769,9 @@ const TechnicalPricingSection: React.FC = () => {
     setSaving(true);
     try {
       await api.orcamentoTecnico.updateConfig(config);
-      toastSuccess('ConfiguraÃ§Ãµes salvas com sucesso!');
+      toastSuccess('Configurações salvas com sucesso!');
     } catch (_err) {
-      toastError('Erro ao salvar configuraÃ§Ãµes');
+      toastError('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
@@ -788,7 +783,7 @@ const TechnicalPricingSection: React.FC = () => {
     <Card className="glass">
       <CardHeader>
         <CardTitle className="text-primary text-xl font-bold">
-          ðŸ“ ConfiguraÃ§Ãµes de PrecificaÃ§Ã£o TÃ©cnica (Marcenaria)
+          ðŸ“ Configurações de Precificação Técnica (Marcenaria)
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -796,21 +791,21 @@ const TechnicalPricingSection: React.FC = () => {
           <Input
             type="number"
             step="0.01"
-            label="Markup PadrÃ£o (x)"
+            label="Markup Padrão (x)"
             value={config?.markup_padrao}
             onChange={(e) => setConfig({ ...config!, markup_padrao: Number(e.target.value) })}
           />
           <Input
             type="number"
             step="0.01"
-            label="AlÃ­quota de Imposto (%)"
+            label="Alíquota de Imposto (%)"
             value={config?.aliquota_imposto}
             onChange={(e) => setConfig({ ...config!, aliquota_imposto: Number(e.target.value) })}
           />
           <Input
             type="number"
             step="0.01"
-            label="Margem de Alerta MÃ­nima (%)"
+            label="Margem de Alerta Mínima (%)"
             value={config?.margem_minima_alerta ? config.margem_minima_alerta * 100 : 25}
             onChange={(e) =>
               setConfig({ ...config!, margem_minima_alerta: Number(e.target.value) / 100 })
@@ -819,14 +814,14 @@ const TechnicalPricingSection: React.FC = () => {
           <Input
             type="number"
             step="1"
-            label="Fator de Perda PadrÃ£o (%)"
+            label="Fator de Perda Padrão (%)"
             value={config?.fator_perda_padrao}
             onChange={(e) => setConfig({ ...config!, fator_perda_padrao: Number(e.target.value) })}
           />
           <Input
             type="number"
             step="0.01"
-            label="M.O. ProduÃ§Ã£o (% do material)"
+            label="M.O. Produção (% do material)"
             value={config?.mo_producao_pct_padrao ? config.mo_producao_pct_padrao * 100 : 30}
             onChange={(e) =>
               setConfig({ ...config!, mo_producao_pct_padrao: Number(e.target.value) / 100 })
@@ -835,7 +830,7 @@ const TechnicalPricingSection: React.FC = () => {
           <Input
             type="number"
             step="0.01"
-            label="M.O. InstalaÃ§Ã£o (% do material)"
+            label="M.O. Instalação (% do material)"
             value={config?.mo_instalacao_pct_padrao ? config.mo_instalacao_pct_padrao * 100 : 15}
             onChange={(e) =>
               setConfig({ ...config!, mo_instalacao_pct_padrao: Number(e.target.value) / 100 })
@@ -849,7 +844,7 @@ const TechnicalPricingSection: React.FC = () => {
           size="lg"
           className="w-full mt-2"
         >
-          {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÃ‡Ã•ES TÃ‰CNICAS'}
+          {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÃ‡ÕES TÉCNICAS'}
         </Button>
       </CardContent>
     </Card>

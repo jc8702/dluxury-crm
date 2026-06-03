@@ -1,18 +1,42 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Layers, Plus, Search, Loader2, Save, Tag, DollarSign, Package, Edit, Factory, Truck, Clock } from 'lucide-react';
+import {
+  Layers,
+  Plus,
+  Search,
+  Loader2,
+  Save,
+  Tag,
+  DollarSign,
+  Package,
+  Edit,
+  Factory,
+  Truck,
+  Clock,
+} from 'lucide-react';
 import { api } from '../../lib/api';
-import { Button, Card, CardContent, Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/common';
+import {
+  Button,
+  Card,
+  CardContent,
+  Input,
+  Modal,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../components/common';
 import DataTable from '../common/DataTable';
 
 const CATEGORIAS_TAXONOMIA = [
   { value: 'CHP', label: 'Chapas (MDF/MDP)' },
   { value: 'FBD', label: 'Fitas de Borda' },
-  { value: 'FER', label: 'Ferragens (DobradiÃ§as, CorrediÃ§as)' },
-  { value: 'AC',  label: 'AcessÃ³rios' },
-  { value: 'MD',  label: 'Madeiras MaciÃ§as' },
+  { value: 'FER', label: 'Ferragens (Dobradiças, Corrediças)' },
+  { value: 'AC', label: 'Acessórios' },
+  { value: 'MD', label: 'Madeiras Maciças' },
   { value: 'ACM', label: 'ACM / Metais' },
   { value: 'VID', label: 'Vidros / Espelhos' },
-  { value: 'OUT', label: 'Outros Insumos' }
+  { value: 'OUT', label: 'Outros Insumos' },
 ];
 
 const SKUPage: React.FC = () => {
@@ -21,21 +45,21 @@ const SKUPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const defaultForm = { 
+
+  const defaultForm = {
     id: '',
-    sku_code: '', 
-    nome: '', 
-    preco_base: 0, 
-    unidade_medida: 'UN', 
+    sku_code: '',
+    nome: '',
+    preco_base: 0,
+    unidade_medida: 'UN',
     categoria_taxonomia: '',
     fabricante: '',
     fornecedor_principal: '',
     lead_time_dias: 0,
-    atributos: {} 
+    atributos: {},
   };
   const [formData, setFormData] = useState(defaultForm);
-  
+
   const [calcModoChapa, setCalcModoChapa] = useState(false);
   const [chapaPrecoInteira, setChapaPrecoInteira] = useState(0);
   const [chapaComprimento, setChapaComprimento] = useState(2.75);
@@ -43,9 +67,9 @@ const SKUPage: React.FC = () => {
 
   useEffect(() => {
     if (calcModoChapa && chapaComprimento > 0 && chapaLargura > 0) {
-       const area = chapaComprimento * chapaLargura;
-       const precoM2 = chapaPrecoInteira / area;
-       setFormData(prev => ({ ...prev, preco_base: precoM2 || 0 }));
+      const area = chapaComprimento * chapaLargura;
+      const precoM2 = chapaPrecoInteira / area;
+      setFormData((prev) => ({ ...prev, preco_base: precoM2 || 0 }));
     }
   }, [calcModoChapa, chapaPrecoInteira, chapaComprimento, chapaLargura]);
 
@@ -66,12 +90,12 @@ const SKUPage: React.FC = () => {
   };
 
   const handleCategoriaChange = async (val: string) => {
-    setFormData(prev => ({ ...prev, categoria_taxonomia: val }));
+    setFormData((prev) => ({ ...prev, categoria_taxonomia: val }));
     if (!formData.id) {
       try {
         const res = await api.skus.getNextCode(val);
         if (res?.nextCode) {
-          setFormData(prev => ({ ...prev, sku_code: res.nextCode }));
+          setFormData((prev) => ({ ...prev, sku_code: res.nextCode }));
         }
       } catch (err) {
         console.error('Failed to get next code:', err);
@@ -110,15 +134,19 @@ const SKUPage: React.FC = () => {
       fabricante: s.fabricante || '',
       fornecedor_principal: s.fornecedor_principal || '',
       lead_time_dias: Number(s.lead_time_dias) || 0,
-      atributos: {}
+      atributos: {},
     });
     setCalcModoChapa(false);
     setIsModalOpen(true);
   };
 
-  const filteredSkus = skus.filter(s => {
+  const filteredSkus = skus.filter((s) => {
     const term = searchTerm.toLowerCase();
-    return s.nome.toLowerCase().includes(term) || s.sku.toLowerCase().includes(term) || (s.categoria_taxonomia || '').toLowerCase().includes(term);
+    return (
+      s.nome.toLowerCase().includes(term) ||
+      s.sku.toLowerCase().includes(term) ||
+      (s.categoria_taxonomia || '').toLowerCase().includes(term)
+    );
   });
 
   return (
@@ -130,14 +158,19 @@ const SKUPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase flex items-center gap-2">
-              CatÃ¡logo de PeÃ§as / SKUs
+              Catálogo de Peças / SKUs
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Gerenciamento atÃ´mico de insumos tÃ©cnicos e acessÃ³rios.
+              Gerenciamento atômico de insumos técnicos e acessórios.
             </p>
           </div>
         </div>
-        <Button onClick={() => { setFormData(defaultForm); setIsModalOpen(true); }}>
+        <Button
+          onClick={() => {
+            setFormData(defaultForm);
+            setIsModalOpen(true);
+          }}
+        >
           <Plus size={20} className="mr-2" /> Novo SKU
         </Button>
       </header>
@@ -145,12 +178,15 @@ const SKUPage: React.FC = () => {
       <Card className="p-4">
         <CardContent className="p-0 flex gap-4 items-center">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              className="pl-10" 
-              placeholder="Buscar por descriÃ§Ã£o, cÃ³digo ou categoria..." 
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              className="pl-10"
+              placeholder="Buscar por descrição, código ou categoria..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardContent>
@@ -160,83 +196,126 @@ const SKUPage: React.FC = () => {
         {loading ? (
           <div className="py-20 flex flex-col justify-center items-center gap-3 text-muted-foreground">
             <Loader2 className="animate-spin text-primary" size={32} />
-            <span className="text-sm font-semibold tracking-wider">Sincronizando com o banco industrial...</span>
+            <span className="text-sm font-semibold tracking-wider">
+              Sincronizando com o banco industrial...
+            </span>
           </div>
         ) : (
-          <DataTable 
-            headers={['CÃ³digo SKU', 'Categoria', 'Nome do Item', 'Unidade', 'PreÃ§o Base', 'Status', 'AÃ§Ãµes']}
+          <DataTable
+            headers={[
+              'Código SKU',
+              'Categoria',
+              'Nome do Item',
+              'Unidade',
+              'Preço Base',
+              'Status',
+              'Ações',
+            ]}
             data={filteredSkus}
             renderRow={(s) => (
               <>
-                <td className="p-4"><span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold border border-primary/20">{s.sku}</span></td>
-                <td className="p-4"><span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{s.categoria_taxonomia || '-'}</span></td>
+                <td className="p-4">
+                  <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold border border-primary/20">
+                    {s.sku}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">
+                    {s.categoria_taxonomia || '-'}
+                  </span>
+                </td>
                 <td className="p-4 font-semibold">{s.nome}</td>
                 <td className="p-4 text-sm">{s.unidade_medida}</td>
                 <td className="p-4 text-sm font-semibold">R$ {Number(s.preco_base).toFixed(2)}</td>
                 <td className="p-4">
-                  <span className={`flex items-center gap-1.5 text-xs font-bold ${s.ativo ? 'text-success' : 'text-muted-foreground'}`}>
-                    <div className={`w-2 h-2 rounded-full ${s.ativo ? 'bg-success' : 'bg-muted-foreground'}`} />
+                  <span
+                    className={`flex items-center gap-1.5 text-xs font-bold ${s.ativo ? 'text-success' : 'text-muted-foreground'}`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${s.ativo ? 'bg-success' : 'bg-muted-foreground'}`}
+                    />
                     {s.ativo ? 'ATIVO' : 'INATIVO'}
                   </span>
                 </td>
                 <td className="p-4">
-                  <button onClick={() => openEdit(s)} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-primary transition-colors">
+                  <button
+                    onClick={() => openEdit(s)}
+                    className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-primary transition-colors"
+                  >
                     <Edit size={16} />
                   </button>
                 </td>
               </>
             )}
-            emptyMessage="Nenhum SKU encontrado no catÃ¡logo."
+            emptyMessage="Nenhum SKU encontrado no catálogo."
           />
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={formData.id ? "Editar SKU" : "Cadastrar Novo SKU"} size="lg">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={formData.id ? 'Editar SKU' : 'Cadastrar Novo SKU'}
+        size="lg"
+      >
         <form onSubmit={handleSave} className="flex flex-col gap-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground/90">Categoria (Taxonomia) *</label>
-              <Select value={formData.categoria_taxonomia} onValueChange={handleCategoriaChange} required>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">
+                Categoria (Taxonomia) *
+              </label>
+              <Select
+                value={formData.categoria_taxonomia}
+                onValueChange={handleCategoriaChange}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a Categoria..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIAS_TAXONOMIA.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  {CATEGORIAS_TAXONOMIA.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="relative">
               <Tag size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-              <Input 
+              <Input
                 required
-                label="CÃ³digo SKU *"
-                className="pl-10" 
+                label="Código SKU *"
+                className="pl-10"
                 placeholder="Ex: CHP-0001"
                 value={formData.sku_code}
-                onChange={e => setFormData({...formData, sku_code: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, sku_code: e.target.value })}
                 disabled={!formData.id}
               />
             </div>
           </div>
-          
+
           <div className="relative">
             <Package size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-            <Input 
+            <Input
               required
-              label="Nome da PeÃ§a / SKU *"
-              className="pl-10" 
-              placeholder="Ex: DobradiÃ§a 35mm Click"
+              label="Nome da Peça / SKU *"
+              className="pl-10"
+              placeholder="Ex: Dobradiça 35mm Click"
               value={formData.nome}
-              onChange={e => setFormData({...formData, nome: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground/90">Unidade de Medida</label>
-              <Select value={formData.unidade_medida} onValueChange={val => setFormData({...formData, unidade_medida: val})}>
+              <label className="mb-2 block text-sm font-medium text-foreground/90">
+                Unidade de Medida
+              </label>
+              <Select
+                value={formData.unidade_medida}
+                onValueChange={(val) => setFormData({ ...formData, unidade_medida: val })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -251,15 +330,19 @@ const SKUPage: React.FC = () => {
             </div>
             <div className="relative md:col-span-2">
               <DollarSign size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-              <Input 
+              <Input
                 required
                 type="number"
                 step="0.0001"
-                label={calcModoChapa ? "PreÃ§o Base Final Calculado por MÂ² (R$) *" : "PreÃ§o Base de Custo (R$) *"}
-                className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`} 
+                label={
+                  calcModoChapa
+                    ? 'Preço Base Final Calculado por MÂ² (R$) *'
+                    : 'Preço Base de Custo (R$) *'
+                }
+                className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`}
                 placeholder="0.00"
                 value={formData.preco_base || ''}
-                onChange={e => setFormData({...formData, preco_base: Number(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, preco_base: Number(e.target.value) })}
                 disabled={calcModoChapa}
               />
             </div>
@@ -268,44 +351,54 @@ const SKUPage: React.FC = () => {
           {formData.unidade_medida === 'M2' && !formData.id && (
             <div className="mt-2 p-4 bg-muted/10 border border-border rounded-xl space-y-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   className="rounded border-border bg-background text-orange-500 focus:ring-orange-500 focus:ring-offset-background"
                   checked={calcModoChapa}
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />
-                <span className="text-sm font-semibold text-foreground">Calcular preÃ§o base a partir do valor da Chapa Inteira</span>
+                <span className="text-sm font-semibold text-foreground">
+                  Calcular preço base a partir do valor da Chapa Inteira
+                </span>
               </label>
 
               {calcModoChapa && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border/50">
-                  <Input 
+                  <Input
                     type="number"
                     step="0.01"
                     label="Valor Chapa Inteira (R$)"
                     placeholder="Ex: 230.00"
                     value={chapaPrecoInteira || ''}
-                    onChange={e => setChapaPrecoInteira(Number(e.target.value))}
+                    onChange={(e) => setChapaPrecoInteira(Number(e.target.value))}
                   />
-                  <Input 
+                  <Input
                     type="number"
                     step="0.01"
                     label="Comprimento (Metros)"
                     placeholder="Ex: 2.75"
                     value={chapaComprimento || ''}
-                    onChange={e => setChapaComprimento(Number(e.target.value))}
+                    onChange={(e) => setChapaComprimento(Number(e.target.value))}
                   />
-                  <Input 
+                  <Input
                     type="number"
                     step="0.01"
                     label="Largura (Metros)"
                     placeholder="Ex: 1.85"
                     value={chapaLargura || ''}
-                    onChange={e => setChapaLargura(Number(e.target.value))}
+                    onChange={(e) => setChapaLargura(Number(e.target.value))}
                   />
                   <div className="col-span-1 md:col-span-3 text-xs text-muted-foreground flex justify-between bg-muted p-2 rounded-lg">
-                    <span>Ãrea da Chapa: <strong>{(chapaComprimento * chapaLargura).toFixed(4)} mÂ²</strong></span>
-                    <span>Custo do MÂ²: <strong>R$ {((chapaPrecoInteira) / (chapaComprimento * chapaLargura)).toFixed(4)}</strong></span>
+                    <span>
+                      Ãrea da Chapa:{' '}
+                      <strong>{(chapaComprimento * chapaLargura).toFixed(4)} mÂ²</strong>
+                    </span>
+                    <span>
+                      Custo do MÂ²:{' '}
+                      <strong>
+                        R$ {(chapaPrecoInteira / (chapaComprimento * chapaLargura)).toFixed(4)}
+                      </strong>
+                    </span>
                   </div>
                 </div>
               )}
@@ -315,40 +408,46 @@ const SKUPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border">
             <div className="relative">
               <Factory size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-              <Input 
+              <Input
                 label="Fabricante"
-                className="pl-10" 
+                className="pl-10"
                 placeholder="Ex: Arauco, FGVTN"
                 value={formData.fabricante}
-                onChange={e => setFormData({...formData, fabricante: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, fabricante: e.target.value })}
               />
             </div>
             <div className="relative">
               <Truck size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-              <Input 
+              <Input
                 label="Fornecedor Principal"
-                className="pl-10" 
+                className="pl-10"
                 placeholder="Ex: Leo Madeiras"
                 value={formData.fornecedor_principal}
-                onChange={e => setFormData({...formData, fornecedor_principal: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, fornecedor_principal: e.target.value })}
               />
             </div>
             <div className="relative">
               <Clock size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
-              <Input 
+              <Input
                 type="number"
                 label="Lead Time (Dias)"
-                className="pl-10" 
+                className="pl-10"
                 placeholder="Ex: 5"
                 value={formData.lead_time_dias || ''}
-                onChange={e => setFormData({...formData, lead_time_dias: Number(e.target.value)})}
+                onChange={(e) =>
+                  setFormData({ ...formData, lead_time_dias: Number(e.target.value) })
+                }
               />
             </div>
           </div>
 
           <div className="flex gap-4 mt-4">
             <Button type="submit" className="flex-1" disabled={saving}>
-              {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
+              {saving ? (
+                <Loader2 className="animate-spin mr-2" size={20} />
+              ) : (
+                <Save className="mr-2" size={20} />
+              )}
               Salvar SKU
             </Button>
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
@@ -362,4 +461,3 @@ const SKUPage: React.FC = () => {
 };
 
 export default SKUPage;
-

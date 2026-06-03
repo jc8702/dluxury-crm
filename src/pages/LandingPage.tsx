@@ -143,8 +143,8 @@ const LandingPage: React.FC = () => {
           <div className="w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 flex items-center justify-center text-primary-foreground text-sm font-bold">
             DL
           </div>
-          <span className="bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 bg-clip-text text-transparent">
-            D'LUXURY CRM
+          <span className="text-gradient-primary font-extrabold uppercase tracking-wider">
+            D'Luxury CRM
           </span>
         </div>
         <div className="hidden md:flex items-center gap-8">
@@ -196,9 +196,7 @@ const LandingPage: React.FC = () => {
           style={{ animationDelay: '0.1s' }}
         >
           O ERP Definitivo para <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-pulse">
-            Fábricas e Marcenarias
-          </span>
+          <span className="text-gradient-primary animate-pulse">Fábricas e Marcenarias</span>
         </h1>
 
         <p

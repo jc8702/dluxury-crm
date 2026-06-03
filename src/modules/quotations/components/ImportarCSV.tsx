@@ -51,20 +51,20 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
           };
 
           const nome =
-            getVal(['DesignaÃ§Ã£o', 'designacao', 'nome', 'Description', 'Item', 'Component']) ||
+            getVal(['Designação', 'designacao', 'nome', 'Description', 'Item', 'Component']) ||
             'Item sem nome';
 
-          // Tratar quantidade com suporte a vÃ­rgula decimal
+          // Tratar quantidade com suporte a vírgula decimal
           let qtdStr = getVal(['Quantidade', 'Qtd', 'quantidade', 'Quantity', 'Count']) || '0';
           if (typeof qtdStr === 'string') qtdStr = qtdStr.replace(',', '.');
           const quantidade = parseFloat(qtdStr);
 
-          // DimensÃµes e Material
+          // Dimensões e Material
           const largura = getVal(['Largura', 'Larg', 'largura', 'Width']) || '';
           const altura = getVal(['Comprimento', 'Comp', 'altura', 'Length', 'Height']) || '';
           const espessura = getVal(['Espessura', 'Esp', 'espessura', 'Thickness']) || '';
           const material =
-            getVal(['DescriÃ§Ã£o do material', 'Material', 'material', 'Finish']) || '';
+            getVal(['Descrição do material', 'Material', 'material', 'Finish']) || '';
           const sku_informado = getVal(['SKU', 'SKU Banco', 'sku', 'Part Number']) || '';
 
           return { nome, quantidade, largura, altura, espessura, material, sku_informado };
@@ -115,18 +115,18 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
     setError(null);
 
     try {
-      // ValidaÃ§Ã£o prÃ©via de sanidade dos itens
+      // Validação prévia de sanidade dos itens
       const sanitizedItems = items.map((it, idx) => {
         const q = parseFloat(it.quantidade);
         if (isNaN(q))
           console.warn(
-            `âš ï¸ [ImportarCSV] Item ${idx} (${it.nome}) com quantidade invÃ¡lida:`,
+            `âš ï¸ [ImportarCSV] Item ${idx} (${it.nome}) com quantidade inválida:`,
             it.quantidade,
           );
         return {
           ...it,
           quantidade: isNaN(q) ? 1 : q,
-          // Garantir que nÃ£o existam campos nulos crÃ­ticos
+          // Garantir que não existam campos nulos críticos
           nome: it.nome || 'Sem Nome',
           sku_id: it.sku_id || it.produto_id || it.match_sugerido?.sku_componente_id || null,
         };
@@ -142,16 +142,16 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
           setItems([]);
         }, 1500);
       } else {
-        // Se success for false, o erro jÃ¡ deve ter sido alertado pelo useQuotation ou capturado aqui
-        throw new Error('Falha na persistÃªncia dos itens. Verifique os logs do servidor.');
+        // Se success for false, o erro já deve ter sido alertado pelo useQuotation ou capturado aqui
+        throw new Error('Falha na persistência dos itens. Verifique os logs do servidor.');
       }
     } catch (err: any) {
-      console.error('âŒ [ImportarCSV] Falha crÃ­tica na confirmaÃ§Ã£o:', {
+      console.error('âŒ [ImportarCSV] Falha crítica na confirmação:', {
         message: err.message,
         stack: err.stack,
         itemsCount: items.length,
       });
-      setError(err.message || 'Erro ao processar importaÃ§Ã£o. Tente novamente.');
+      setError(err.message || 'Erro ao processar importação. Tente novamente.');
       setStatus('error');
     }
   };
@@ -185,10 +185,10 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                   setItems([]);
                 }, 1500);
               } else {
-                throw new Error('Falha na inserÃ§Ã£o dos itens no orÃ§amento');
+                throw new Error('Falha na inserção dos itens no orçamento');
               }
             } catch (e: any) {
-              setError(e.message || 'Erro ao processar importaÃ§Ã£o');
+              setError(e.message || 'Erro ao processar importação');
               setStatus('error');
             }
           }}
@@ -211,7 +211,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
               Importar Projeto <span className="text-primary">SketchUp</span>
             </h2>
             <p className="text-muted-foreground text-xs mt-1 uppercase tracking-widest font-bold">
-              InjeÃ§Ã£o Industrial de Dados via CSV
+              Injeção Industrial de Dados via CSV
             </p>
           </div>
           <button
@@ -241,7 +241,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                 </div>
                 <p className="text-foreground font-black text-lg">Selecione o arquivo CSV</p>
                 <p className="text-muted-foreground text-xs mt-2 font-bold uppercase tracking-tighter">
-                  ExportaÃ§Ã£o do CutList Plus ou SketchUp
+                  Exportação do CutList Plus ou SketchUp
                 </p>
               </label>
             </div>
@@ -278,11 +278,11 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                 <table className="w-full text-left text-xs">
                   <thead className="bg-muted/50 text-muted-foreground font-black uppercase tracking-widest">
                     <tr>
-                      <th className="px-6 py-4">Item / DesignaÃ§Ã£o</th>
+                      <th className="px-6 py-4">Item / Designação</th>
                       <th className="px-6 py-4 text-center">Qtd</th>
-                      <th className="px-6 py-4">DimensÃµes (LxAxE)</th>
+                      <th className="px-6 py-4">Dimensões (LxAxE)</th>
                       <th className="px-6 py-4">Material</th>
-                      <th className="px-6 py-4">SKU / VÃ­nculo</th>
+                      <th className="px-6 py-4">SKU / Vínculo</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -316,7 +316,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                                 {item.sku_informado || '-'}
                               </span>
                               <span className="text-[10px] text-red-500/50 uppercase">
-                                NÃ£o encontrado
+                                Não encontrado
                               </span>
                             </div>
                           )}
@@ -354,9 +354,9 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <p className="text-green-500 font-black text-xl uppercase tracking-widest">
-                ImportaÃ§Ã£o ConcluÃ­da!
+                Importação Concluída!
               </p>
-              <p className="text-muted-foreground">O orÃ§amento foi atualizado com sucesso.</p>
+              <p className="text-muted-foreground">O orçamento foi atualizado com sucesso.</p>
             </div>
           )}
         </div>
@@ -375,7 +375,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
               className="bg-primary hover:bg-primary-hover text-primary-foreground font-black px-12 h-14 text-lg shadow-xl shadow-primary/20"
               onClick={handleConfirmarImportacao}
             >
-              Confirmar ImportaÃ§Ã£o
+              Confirmar Importação
             </Button>
           </div>
         )}
