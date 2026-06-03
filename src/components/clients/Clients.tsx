@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Plus, Users, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useToast } from '../../context/ToastContext';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
@@ -6,7 +7,8 @@ import type { Client } from '../../types/entities';
 import type { ClientFormData } from '../../validators';
 import { ClientList } from '../../pages/Clients/ClientList';
 import { ClientForm } from '../../pages/Clients/ClientForm';
-import { X } from 'lucide-react';
+import { Button, Modal, Card, CardStat } from '../ui';
+import { ConfirmDialog } from '../ui/Modal';
 
 const Clients: React.FC = () => {
   const { success: showToastSuccess } = useToast();
@@ -15,6 +17,7 @@ const Clients: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Client | null>(null);
 
   const projectCountByName = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -24,6 +27,14 @@ const Clients: React.FC = () => {
     });
     return counts;
   }, [projects]);
+
+  const stats = useMemo(() => {
+    const total = clients.length;
+    const ativos = clients.filter((c) => (c.status || 'ativo') === 'ativo').length;
+    const inativos = total - ativos;
+    const cidades = new Set(clients.map((c) => (c.cidade || '').trim()).filter(Boolean)).size;
+    return { total, ativos, inativos, cidades };
+  }, [clients]);
 
   const handleCreate = () => {
     setEditingClient(null);
@@ -35,14 +46,14 @@ const Clients: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (client: Client) => {
-    const ok = window.confirm(
-      `Excluir o cliente "${client.nome}"? Esta ação não pode ser desfeita.`,
-    );
-    if (!ok) return;
+  const handleDelete = (client: Client) => setPendingDelete(client);
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
     try {
-      void removeClient(client.id);
-      showToastSuccess('Removido', `Cliente "${client.nome}" foi excluído.`);
+      void removeClient(pendingDelete.id);
+      showToastSuccess('Removido', `Cliente "${pendingDelete.nome}" foi excluído.`);
+      setPendingDelete(null);
     } catch (error: unknown) {
       handleError(error);
     }
@@ -90,50 +101,111 @@ const Clients: React.FC = () => {
   };
 
   return (
-    <>
-      <ClientList
-        clients={clients}
-        projectCountByName={projectCountByName}
-        onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/35 backdrop-blur-[1px] flex justify-end items-center z-[9999] animate-fade-in"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-card border border-border shadow-2xl rounded-2xl h-[calc(100vh-2rem)] m-4 w-full max-w-[550px] flex flex-col overflow-hidden animate-slide-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header do Drawer */}
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary/5">
-              <h2 className="text-lg font-bold text-foreground">
-                {editingClient ? `Editar: ${editingClient.nome}` : 'Novo Cliente'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Body do Drawer com Scroll */}
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              <ClientForm
-                key={editingClient?.id || 'new'}
-                initialData={editingClient}
-                onSubmit={handleSubmit}
-                onCancel={handleCloseModal}
-              />
-            </div>
-          </div>
+    <div className="ui-stack ui-gap-4 p-4 md:p-6 max-w-[1400px] ui-mx-auto">
+      {/* ── Header ── */}
+      <div className="ui-row-between flex-wrap ui-gap-3">
+        <div>
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight">Clientes</h1>
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
+            Gerencie sua base de clientes e acompanhe o relacionamento.
+          </p>
         </div>
-      )}
-    </>
+        <Button
+          variant="primary"
+          size="md"
+          leftIcon={<Plus className="h-4 w-4" />}
+          onClick={handleCreate}
+        >
+          Novo cliente
+        </Button>
+      </div>
+
+      {/* ── Stats (4 cards) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 ui-gap-3">
+        <CardStat
+          label="Total"
+          value={stats.total}
+          icon={<Users className="h-4 w-4" />}
+          tone="default"
+        />
+        <CardStat
+          label="Ativos"
+          value={stats.ativos}
+          icon={<UserCheck className="h-4 w-4" />}
+          tone="success"
+        />
+        <CardStat
+          label="Inativos"
+          value={stats.inativos}
+          icon={<UserX className="h-4 w-4" />}
+          tone="warning"
+        />
+        <CardStat
+          label="Cidades"
+          value={stats.cidades}
+          icon={<Building2 className="h-4 w-4" />}
+          tone="info"
+        />
+      </div>
+
+      {/* ── Lista ── */}
+      <Card variant="default" padding="none">
+        <ClientList
+          clients={clients}
+          projectCountByName={projectCountByName}
+          onCreate={handleCreate}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </Card>
+
+      {/* ── Modal de edição/criação ── */}
+      <Modal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingClient ? `Editar: ${editingClient.nome}` : 'Novo cliente'}
+        description={
+          editingClient
+            ? 'Atualize os dados do cliente e salve as alterações.'
+            : 'Preencha os dados para cadastrar um novo cliente.'
+        }
+        size="lg"
+        placement="right"
+        footer={
+          <>
+            <Button variant="ghost" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" form="client-form">
+              {editingClient ? 'Salvar alterações' : 'Cadastrar cliente'}
+            </Button>
+          </>
+        }
+      >
+        <ClientForm
+          key={editingClient?.id || 'new'}
+          initialData={editingClient}
+          onSubmit={handleSubmit}
+          onCancel={handleCloseModal}
+        />
+      </Modal>
+
+      {/* ── Confirmação de exclusão ── */}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        title="Excluir cliente"
+        description={
+          pendingDelete
+            ? `Tem certeza que deseja excluir "${pendingDelete.nome}"? Esta ação não pode ser desfeita.`
+            : ''
+        }
+        confirmText="Excluir"
+        cancelText="Manter"
+        tone="danger"
+      />
+    </div>
   );
 };
 

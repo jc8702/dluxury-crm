@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import '@/styles/global.css';
+import '@/styles/tokens.css';
+import '@/styles/globals.css';
+import '@/styles/utilities.css';
 
 // Capturar erros não tratados em produção para diagnóstico
 window.addEventListener('error', (event) => {

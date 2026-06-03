@@ -1,0 +1,205 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   UI DESIGN TOKENS — Camada moderna do Design System (v2)
+   ════════════════════════════════════════════════════════════════════════════
+   Paleta: Navy / Teal / Gold — desktop CRM compacto (não luxuoso).
+   Coexiste com `--ds-*` (legado) e Tailwind v4 theme via prefixo `--ui-*`.
+
+   Convenção:
+     --ui-color-*   → cores (light)
+     --ui-space-*   → grid 4px
+     --ui-radius-*  → cantos
+     --ui-shadow-*  → elevações (depth 1/2/3)
+     --ui-font-*    → tipografia
+     --ui-z-*       → camadas de empilhamento
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Cores: Navy (primária / superfícies escuras) ─── */
+  --ui-color-navy-50: #f5f7fa;
+  --ui-color-navy-100: #e3e7ec;
+  --ui-color-navy-200: #c2cad3;
+  --ui-color-navy-300: #8a96a4;
+  --ui-color-navy-400: #5a6573;
+  --ui-color-navy-500: #2f3743;
+  --ui-color-navy-600: #1d242e;
+  --ui-color-navy-700: #141a23;
+  --ui-color-navy-800: #0d1117;
+  --ui-color-navy-900: #060a10;
+
+  /* ─── Cores: Teal (secundária / ação complementar) ─── */
+  --ui-color-teal-50: #e6faf8;
+  --ui-color-teal-100: #b8f0e9;
+  --ui-color-teal-200: #7ee0d4;
+  --ui-color-teal-300: #3ecabc;
+  --ui-color-teal-400: #00b3a6;
+  --ui-color-teal-500: #00a99d;
+  --ui-color-teal-600: #008b84;
+  --ui-color-teal-700: #006b66;
+  --ui-color-teal-800: #004d47;
+  --ui-color-teal-900: #002e2b;
+
+  /* ─── Cores: Gold (acento / destaque) ─── */
+  --ui-color-gold-50: #fdf6e1;
+  --ui-color-gold-100: #fae7a3;
+  --ui-color-gold-200: #f3d365;
+  --ui-color-gold-300: #ecc130;
+  --ui-color-gold-400: #e2ac00;
+  --ui-color-gold-500: #c49400;
+  --ui-color-gold-600: #9a7600;
+  --ui-color-gold-700: #6e5500;
+  --ui-color-gold-800: #423300;
+  --ui-color-gold-900: #1f1700;
+
+  /* ─── Cores: Semânticas (alinhadas à paleta) ─── */
+  --ui-color-success: #16a34a;
+  --ui-color-success-soft: #dcfce7;
+  --ui-color-warning: #d97706;
+  --ui-color-warning-soft: #fef3c7;
+  --ui-color-danger: #dc2626;
+  --ui-color-danger-soft: #fee2e2;
+  --ui-color-info: #2563eb;
+  --ui-color-info-soft: #dbeafe;
+
+  /* ─── Cores: Neutros (gray) ─── */
+  --ui-color-neutral-0: #ffffff;
+  --ui-color-neutral-50: #fafafa;
+  --ui-color-neutral-100: #f4f4f5;
+  --ui-color-neutral-200: #e4e4e7;
+  --ui-color-neutral-300: #d4d4d8;
+  --ui-color-neutral-400: #a1a1aa;
+  --ui-color-neutral-500: #71717a;
+  --ui-color-neutral-600: #52525b;
+  --ui-color-neutral-700: #3f3f46;
+  --ui-color-neutral-800: #27272a;
+  --ui-color-neutral-900: #18181b;
+
+  /* ─── Semânticas do tema (light) ─── */
+  --ui-bg: var(--ui-color-neutral-50);
+  --ui-bg-elevated: var(--ui-color-neutral-0);
+  --ui-bg-subtle: var(--ui-color-neutral-100);
+  --ui-surface: var(--ui-color-neutral-0);
+  --ui-surface-hover: var(--ui-color-neutral-50);
+  --ui-border: var(--ui-color-neutral-200);
+  --ui-border-strong: var(--ui-color-neutral-300);
+  --ui-text-primary: var(--ui-color-navy-800);
+  --ui-text-secondary: var(--ui-color-neutral-500);
+  --ui-text-muted: var(--ui-color-neutral-400);
+  --ui-text-inverse: var(--ui-color-neutral-0);
+
+  /* ─── Ações ─── */
+  --ui-action-primary: var(--ui-color-navy-800);
+  --ui-action-primary-hover: var(--ui-color-navy-700);
+  --ui-action-primary-fg: var(--ui-color-neutral-0);
+  --ui-action-secondary: var(--ui-color-teal-500);
+  --ui-action-secondary-hover: var(--ui-color-teal-600);
+  --ui-action-secondary-fg: var(--ui-color-neutral-0);
+  --ui-action-accent: var(--ui-color-gold-400);
+  --ui-action-accent-hover: var(--ui-color-gold-500);
+  --ui-action-accent-fg: var(--ui-color-navy-800);
+  --ui-action-danger: var(--ui-color-danger);
+  --ui-action-danger-hover: #b91c1c;
+  --ui-action-danger-fg: var(--ui-color-neutral-0);
+
+  /* ─── Foco ─── */
+  --ui-focus-ring: 0 0 0 2px var(--ui-bg), 0 0 0 4px var(--ui-color-teal-500);
+  --ui-focus-ring-danger: 0 0 0 2px var(--ui-bg), 0 0 0 4px var(--ui-color-danger);
+
+  /* ─── Espaçamento (grid 4px) ─── */
+  --ui-space-0: 0;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-space-10: 40px;
+  --ui-space-12: 48px;
+  --ui-space-16: 64px;
+  --ui-space-20: 80px;
+  --ui-space-24: 96px;
+
+  /* ─── Tipografia ─── */
+  --ui-font-sans:
+    'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --ui-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ui-text-xs: 11px;
+  --ui-text-sm: 13px;
+  --ui-text-base: 14px;
+  --ui-text-md: 15px;
+  --ui-text-lg: 16px;
+  --ui-text-xl: 18px;
+  --ui-text-2xl: 22px;
+  --ui-text-3xl: 28px;
+
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-semibold: 600;
+  --ui-weight-bold: 700;
+
+  --ui-leading-tight: 1.2;
+  --ui-leading-normal: 1.45;
+  --ui-leading-relaxed: 1.6;
+
+  --ui-tracking-tight: -0.01em;
+  --ui-tracking-normal: 0;
+  --ui-tracking-wide: 0.04em;
+
+  /* ─── Border radius ─── */
+  --ui-radius-xs: 4px;
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-xl: 16px;
+  --ui-radius-2xl: 20px;
+  --ui-radius-full: 9999px;
+
+  /* ─── Sombras (depth 1/2/3) ─── */
+  --ui-shadow-1: 0 1px 2px 0 rgb(13 17 23 / 0.04), 0 1px 1px 0 rgb(13 17 23 / 0.03);
+  --ui-shadow-2: 0 4px 8px -2px rgb(13 17 23 / 0.06), 0 2px 4px -2px rgb(13 17 23 / 0.04);
+  --ui-shadow-3: 0 12px 24px -4px rgb(13 17 23 / 0.1), 0 4px 8px -2px rgb(13 17 23 / 0.06);
+  --ui-shadow-focus: 0 0 0 3px rgb(0 169 157 / 0.2);
+  --ui-shadow-danger-focus: 0 0 0 3px rgb(220 38 38 / 0.2);
+
+  /* ─── Camadas (z-index) ─── */
+  --ui-z-base: 0;
+  --ui-z-dropdown: 50;
+  --ui-z-sticky: 80;
+  --ui-z-modal-backdrop: 100;
+  --ui-z-modal: 110;
+  --ui-z-toast: 200;
+  --ui-z-tooltip: 300;
+
+  /* ─── Transições ─── */
+  --ui-duration-fast: 120ms;
+  --ui-duration-base: 180ms;
+  --ui-duration-slow: 260ms;
+  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ui-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── DARK MODE ─── */
+[data-theme='dark'],
+.dark {
+  --ui-bg: var(--ui-color-navy-800);
+  --ui-bg-elevated: var(--ui-color-navy-700);
+  --ui-bg-subtle: var(--ui-color-navy-600);
+  --ui-surface: var(--ui-color-navy-700);
+  --ui-surface-hover: var(--ui-color-navy-600);
+  --ui-border: var(--ui-color-navy-600);
+  --ui-border-strong: var(--ui-color-navy-500);
+  --ui-text-primary: var(--ui-color-neutral-50);
+  --ui-text-secondary: var(--ui-color-neutral-300);
+  --ui-text-muted: var(--ui-color-neutral-400);
+  --ui-text-inverse: var(--ui-color-navy-800);
+
+  --ui-action-primary: var(--ui-color-teal-500);
+  --ui-action-primary-hover: var(--ui-color-teal-400);
+  --ui-action-primary-fg: var(--ui-color-navy-800);
+
+  --ui-shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --ui-shadow-2: 0 4px 8px -2px rgb(0 0 0 / 0.5);
+  --ui-shadow-3: 0 12px 24px -4px rgb(0 0 0 / 0.6);
+}

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "name": "D'Luxury CRM UI Design System v2",
+  "version": "2.0.0",
+  "description": "Design System moderno — Navy/Teal/Gold. Compacto para desktop CRM.",
+  "color": {
+    "navy": {
+      "50": "#f5f7fa",
+      "100": "#e3e7ec",
+      "200": "#c2cad3",
+      "300": "#8a96a4",
+      "400": "#5a6573",
+      "500": "#2f3743",
+      "600": "#1d242e",
+      "700": "#141a23",
+      "800": "#0d1117",
+      "900": "#060a10"
+    },
+    "teal": {
+      "50": "#e6faf8",
+      "100": "#b8f0e9",
+      "200": "#7ee0d4",
+      "300": "#3ecabc",
+      "400": "#00b3a6",
+      "500": "#00a99d",
+      "600": "#008b84",
+      "700": "#006b66",
+      "800": "#004d47",
+      "900": "#002e2b"
+    },
+    "gold": {
+      "50": "#fdf6e1",
+      "100": "#fae7a3",
+      "200": "#f3d365",
+      "300": "#ecc130",
+      "400": "#e2ac00",
+      "500": "#c49400",
+      "600": "#9a7600",
+      "700": "#6e5500",
+      "800": "#423300",
+      "900": "#1f1700"
+    },
+    "neutral": {
+      "0": "#ffffff",
+      "50": "#fafafa",
+      "100": "#f4f4f5",
+      "200": "#e4e4e7",
+      "300": "#d4d4d8",
+      "400": "#a1a1aa",
+      "500": "#71717a",
+      "600": "#52525b",
+      "700": "#3f3f46",
+      "800": "#27272a",
+      "900": "#18181b"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "success-soft": "#dcfce7",
+      "warning": "#d97706",
+      "warning-soft": "#fef3c7",
+      "danger": "#dc2626",
+      "danger-soft": "#fee2e2",
+      "info": "#2563eb",
+      "info-soft": "#dbeafe"
+    }
+  },
+  "spacing": {
+    "0": "0px",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px",
+    "scale": "4px-grid"
+  },
+  "radius": {
+    "xs": "4px",
+    "sm": "6px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "2xl": "20px",
+    "full": "9999px",
+    "components": "8px",
+    "containers": "12px"
+  },
+  "shadow": {
+    "depth-1": "0 1px 2px 0 rgb(13 17 23 / 0.04), 0 1px 1px 0 rgb(13 17 23 / 0.03)",
+    "depth-2": "0 4px 8px -2px rgb(13 17 23 / 0.06), 0 2px 4px -2px rgb(13 17 23 / 0.04)",
+    "depth-3": "0 12px 24px -4px rgb(13 17 23 / 0.10), 0 4px 8px -2px rgb(13 17 23 / 0.06)",
+    "focus": "0 0 0 3px rgb(0 169 157 / 0.20)",
+    "focus-danger": "0 0 0 3px rgb(220 38 38 / 0.20)"
+  },
+  "typography": {
+    "family": {
+      "sans": "Plus Jakarta Sans, system-ui, -apple-system, sans-serif",
+      "mono": "ui-monospace, SFMono-Regular, SF Mono, Menlo, monospace"
+    },
+    "size": {
+      "xs": "11px",
+      "sm": "13px",
+      "base": "14px",
+      "md": "15px",
+      "lg": "16px",
+      "xl": "18px",
+      "2xl": "22px",
+      "3xl": "28px"
+    },
+    "weight": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.45,
+      "relaxed": 1.6
+    }
+  },
+  "z-index": {
+    "base": 0,
+    "dropdown": 50,
+    "sticky": 80,
+    "modal-backdrop": 100,
+    "modal": 110,
+    "toast": 200,
+    "tooltip": 300
+  },
+  "motion": {
+    "duration": {
+      "fast": "120ms",
+      "base": "180ms",
+      "slow": "260ms"
+    },
+    "ease": {
+      "out": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "in-out": "cubic-bezier(0.4, 0, 0.2, 1)"
+    }
+  }
+}
