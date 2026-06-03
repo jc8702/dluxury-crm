@@ -15,7 +15,7 @@ const VisitKanban: React.FC = () => {
 
   const columns = [
     { id: 'agendado', title: '📋 AGENDADO' },
-    { id: 'realizado', title: 'ðŸ  REALIZADO' },
+    { id: 'realizado', title: '✅ REALIZADO' },
     { id: 'follow_up', title: '📞 FOLLOW-UP' },
   ];
 
@@ -60,7 +60,7 @@ const VisitKanban: React.FC = () => {
               Gestão de <span className="text-primary">Visitas</span>
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Fluxo comercial e técnico integrado Ã agenda industrial.
+              Fluxo comercial e técnico integrado à agenda industrial.
             </p>
           </div>
         </div>

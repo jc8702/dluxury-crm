@@ -122,6 +122,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         .map((v: any) => ({
           ...v,
           id: v.id?.toString(),
+          title: v.titulo || 'Visita Sem Título',
+          subtitle: v.cliente_nome || 'Sem Cliente',
           status: v.status_visita || 'agendado',
         }));
 
