@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
@@ -24,6 +24,10 @@ const VisitKanban: React.FC = () => {
     await loadEvents();
     setLoading(false);
   };
+
+  React.useEffect(() => {
+    fetchVisits();
+  }, []);
 
   const handleMove = async (id: string, newStatus: string) => {
     try {
