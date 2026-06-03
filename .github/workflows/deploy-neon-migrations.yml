@@ -2,7 +2,11 @@ name: Neon Migrations
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - 'drizzle/**'
+      - 'src/db/schema/**'
+      - 'drizzle.config.ts'
 
 jobs:
   migrate:
@@ -14,14 +18,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install deps
         run: npm ci
 
-      - name: Run migrations against Neon
+      - name: Run Drizzle migrations against Neon
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
         run: |
-          echo "Running migrations..."
-          # execute migration script if present
-          node migrate-db.js || true
+          echo "Running Drizzle migrations..."
+          npx drizzle-kit migrate
