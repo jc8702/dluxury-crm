@@ -135,11 +135,26 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
 
   if (!isOpen) return null;
 
+  const isVisita = formData.tipo === 'visita';
+
   return (
-    <div className="modal-overlay animate-fade-in" style={{ zIndex: 9999 }}>
+    <div
+      className={
+        isVisita
+          ? 'fixed inset-0 bg-black/35 backdrop-blur-[1px] flex justify-end items-center z-[9999] animate-fade-in'
+          : 'modal-overlay animate-fade-in'
+      }
+      style={{ zIndex: 9999 }}
+      onClick={onClose}
+    >
       <div
-        className="modal-content animate-pop-in"
-        style={{ width: '100%', maxWidth: '650px', padding: 0 }}
+        className={
+          isVisita
+            ? 'bg-card border border-border shadow-2xl rounded-2xl h-[calc(100vh-2rem)] m-4 w-full max-w-[500px] flex flex-col overflow-hidden animate-slide-in'
+            : 'modal-content animate-pop-in'
+        }
+        style={{ width: '100%', maxWidth: isVisita ? '500px' : '650px', padding: 0 }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -170,7 +185,14 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
         {/* Body */}
         <form
           onSubmit={handleSubmit}
-          style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+          className={isVisita ? 'overflow-y-auto flex-1 custom-scrollbar' : ''}
+          style={{
+            padding: '2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
+            maxHeight: isVisita ? 'calc(100vh - 8rem)' : 'none',
+          }}
         >
           {/* Selector de Tipo */}
           <div
