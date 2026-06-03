@@ -150,10 +150,6 @@ export default async function handler(req: any, res: any) {
       const { handleAuth } = await import('../src/api-lib/auth.js');
       return await handleAuth(req, res);
     }
-    if (cleanUrl.startsWith('/api/clients/sync-audit')) {
-      const { default: handler } = await import('./clients/sync-audit.js');
-      return await handler(req, res);
-    }
     if (cleanUrl.startsWith('/api/clients')) {
       const { handleClients } = await import('../src/api-lib/crm.js');
       return await handleClients(req, res);
