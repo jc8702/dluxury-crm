@@ -26,7 +26,7 @@ export async function handleMatchSKUs(req: any, res: any) {
         or(ilike(skuComponente.codigo, query), ilike(skuComponente.nome, query)),
       ];
       if (categoria) {
-        industrialFilters.push(eq(skuComponente.categoria, categoria));
+        industrialFilters.push(eq(skuComponente.tipo, categoria));
       }
 
       const resultsIndustrial = await db
