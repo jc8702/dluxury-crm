@@ -139,11 +139,11 @@ const LandingPage: React.FC = () => {
 
       {/* ── NAVBAR ── */}
       <nav className="relative z-50 flex items-center justify-between px-6 py-4 mx-auto max-w-7xl border-b border-border/20 backdrop-blur-xl bg-background/50 sticky top-0">
-        <div className="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-primary drop-shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm">
+        <div className="text-2xl font-black tracking-widest drop-shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
             F
           </div>
-          FATTO OS
+          <span className="text-gradient-primary">FATTO OS</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a
@@ -190,9 +190,7 @@ const LandingPage: React.FC = () => {
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8">
           O ERP Definitivo para <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-primary">
-            Fábricas e Marcenarias
-          </span>
+          <span className="text-gradient-primary">Fábricas e Marcenarias</span>
         </h1>
 
         <p className="max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed mb-12">
