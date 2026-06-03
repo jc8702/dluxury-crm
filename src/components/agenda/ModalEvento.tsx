@@ -4,6 +4,7 @@ import { X, Calendar, MapPin, Clock, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useEscClose } from '../../hooks/useEscClose';
+import { Card } from '../common';
 
 interface ModalEventoProps {
   isOpen: boolean;
@@ -296,15 +297,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             </div>
 
             {formData.tipo === 'visita' && (
-              <div
-                className="section animate-fade-in"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  border: '1px solid var(--primary-glow)',
-                }}
-              >
+              <Card variant="primary" padding="md" className="animate-fade-in flex flex-col gap-4">
                 <div>
                   <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
                     OBJETIVO
@@ -345,7 +338,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
                     />
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             <div>
