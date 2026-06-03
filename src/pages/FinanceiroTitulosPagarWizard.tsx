@@ -8,7 +8,17 @@ import { Button, Input } from '../components/common';
 // Meios que exigem campo de taxa financeira
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
-export default function FinanceiroTitulosPagarWizard() {
+interface FinanceiroTitulosPagarWizardProps {
+  isDrawer?: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
+}
+
+export default function FinanceiroTitulosPagarWizard({
+  isDrawer = false,
+  onClose,
+  onSuccess,
+}: FinanceiroTitulosPagarWizardProps = {}) {
   const { success, error } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -108,7 +118,7 @@ export default function FinanceiroTitulosPagarWizard() {
         pedido_compra_id: pedido.id,
         valor_base: Number(pedido.valor_total),
         numero_titulo: pedido.numero ? `FAT-${pedido.numero}` : formData.numero_titulo,
-        descricao: `Referente Ã  Ordem de Compra ${pedido.numero}`,
+        descricao: `Referente à Ordem de Compra ${pedido.numero}`,
       });
     }
   };
@@ -154,7 +164,12 @@ export default function FinanceiroTitulosPagarWizard() {
         rateio: formData.showRateio ? formData.rateios : [],
       });
       success('Títulos gerados com sucesso!');
-      window.location.hash = '#/financeiro/titulos-pagar';
+      if (isDrawer) {
+        onSuccess?.();
+        onClose?.();
+      } else {
+        window.location.hash = '#/financeiro/titulos-pagar';
+      }
     } catch (err: any) {
       error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
@@ -210,7 +225,7 @@ export default function FinanceiroTitulosPagarWizard() {
                   setFormData({ ...formData, pedido_compra_id: '', valor_base: 0 });
                 }}
               >
-                NÃƒO
+                NÃO
               </Button>
             </div>
             {hasOC === 'sim' && (
@@ -488,7 +503,7 @@ export default function FinanceiroTitulosPagarWizard() {
                 alignItems: 'center',
               }}
             >
-              DISTRIBUIÃ‡ÃƒO POR PROJETO
+              DISTRIBUIÇÃO POR PROJETO
               <Button
                 variant="danger"
                 size="sm"
@@ -584,7 +599,7 @@ export default function FinanceiroTitulosPagarWizard() {
                     setFormData({ ...formData, rateios: newR });
                   }}
                 >
-                  Ã—
+                  ×
                 </Button>
               </div>
             ))}
@@ -680,16 +695,23 @@ export default function FinanceiroTitulosPagarWizard() {
   );
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <Button
-        variant="outline"
-        style={{ marginBottom: '2rem' }}
-        onClick={() => (window.location.hash = '#/financeiro/titulos-pagar')}
-      >
-        <ArrowLeft /> VOLTAR PARA LISTAGEM
-      </Button>
+    <div
+      style={isDrawer ? { padding: 0 } : { padding: '2rem', maxWidth: '800px', margin: '0 auto' }}
+    >
+      {!isDrawer && (
+        <Button
+          variant="outline"
+          style={{ marginBottom: '2rem' }}
+          onClick={() => (window.location.hash = '#/financeiro/titulos-pagar')}
+        >
+          <ArrowLeft /> VOLTAR PARA LISTAGEM
+        </Button>
+      )}
 
-      <div className="card glass animate-pop-in" style={{ padding: '2.5rem' }}>
+      <div
+        className={isDrawer ? 'animate-pop-in' : 'card glass animate-pop-in'}
+        style={isDrawer ? { padding: 0 } : { padding: '2.5rem' }}
+      >
         {/* Stepper – 3 passos */}
         <div
           style={{
@@ -774,7 +796,7 @@ export default function FinanceiroTitulosPagarWizard() {
               isLoading={loading}
               onClick={handleNext}
             >
-              PRÃ“XIMO <ArrowRight />
+              PRÓXIMO <ArrowRight />
             </Button>
           ) : (
             <Button

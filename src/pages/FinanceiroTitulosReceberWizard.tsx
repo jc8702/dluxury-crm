@@ -6,7 +6,17 @@ import { Button, Input } from '../components/common';
 
 const _MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
-export default function FinanceiroTitulosReceberWizard() {
+interface FinanceiroTitulosReceberWizardProps {
+  isDrawer?: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
+}
+
+export default function FinanceiroTitulosReceberWizard({
+  isDrawer = false,
+  onClose,
+  onSuccess,
+}: FinanceiroTitulosReceberWizardProps = {}) {
   const { success, error } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -103,7 +113,12 @@ export default function FinanceiroTitulosReceberWizard() {
         rateio: formData.showRateio ? formData.rateios : [],
       });
       success('Títulos gerados com sucesso!');
-      window.location.hash = '#/financeiro/titulos-receber';
+      if (isDrawer) {
+        onSuccess?.();
+        onClose?.();
+      } else {
+        window.location.hash = '#/financeiro/titulos-receber';
+      }
     } catch (err: any) {
       error('Erro ao salvar títulos: ' + (err.message || ''));
     } finally {
@@ -274,7 +289,7 @@ export default function FinanceiroTitulosReceberWizard() {
         {formData.showRateio && (
           <div className="animate-fade-in p-5 border border-dashed border-white/10 rounded-xl bg-white/[0.01] space-y-4">
             <div className="text-xs font-black uppercase tracking-widest text-muted-foreground flex justify-between items-center">
-              DISTRIBUIÃ‡ÃƒO POR PROJETO
+              DISTRIBUIÇÃO POR PROJETO
               <Button
                 variant="primary"
                 size="sm"
@@ -357,7 +372,7 @@ export default function FinanceiroTitulosReceberWizard() {
                     setFormData({ ...formData, rateios: newR });
                   }}
                 >
-                  Ã—
+                  ×
                 </Button>
               </div>
             ))}
@@ -431,16 +446,18 @@ export default function FinanceiroTitulosReceberWizard() {
   );
 
   return (
-    <div className="py-10 max-w-4xl mx-auto px-4">
-      <Button
-        variant="outline"
-        className="mb-8 uppercase font-black italic text-xs tracking-widest"
-        onClick={() => (window.location.hash = '#/financeiro/titulos-receber')}
-      >
-        <ArrowLeft size={16} /> VOLTAR PARA LISTAGEM
-      </Button>
+    <div className={isDrawer ? '' : 'py-10 max-w-4xl mx-auto px-4'}>
+      {!isDrawer && (
+        <Button
+          variant="outline"
+          className="mb-8 uppercase font-black italic text-xs tracking-widest"
+          onClick={() => (window.location.hash = '#/financeiro/titulos-receber')}
+        >
+          <ArrowLeft size={16} /> VOLTAR PARA LISTAGEM
+        </Button>
+      )}
 
-      <div className="glass-elevated p-8 md:p-12 animate-pop-in">
+      <div className={isDrawer ? 'animate-pop-in' : 'glass-elevated p-8 md:p-12 animate-pop-in'}>
         {/* Stepper – 3 passos */}
         <div className="flex justify-between mb-12 relative">
           <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />
@@ -488,7 +505,7 @@ export default function FinanceiroTitulosReceberWizard() {
                 <Loader className="animate-spin" size={16} />
               ) : (
                 <>
-                  PRÃ“XIMO <ArrowRight size={16} />
+                  PRÓXIMO <ArrowRight size={16} />
                 </>
               )}
             </Button>

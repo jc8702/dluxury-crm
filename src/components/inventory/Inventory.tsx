@@ -272,7 +272,7 @@ const Inventory: React.FC = () => {
                               title="Editar"
                               aria-label={`Editar material ${m.nome}`}
                             >
-                              âœŽ
+                              ✏️
                             </Button>
                             <Button
                               onClick={() => handleOpenMov(m)}
@@ -291,7 +291,7 @@ const Inventory: React.FC = () => {
                               title="Excluir"
                               aria-label={`Excluir material ${m.nome}`}
                             >
-                              ðŸ—‘
+                              🗑️
                             </Button>
                           </td>
                         </tr>
@@ -397,11 +397,11 @@ const Inventory: React.FC = () => {
         />
       )}
 
-      {/* ðŸ’¡ Consultas de Estoque Inteligentes com Dlux */}
+      {/* 💡 Consultas de Estoque Inteligentes com Dlux */}
       <Card className="bg-gradient-to-br from-primary/5 via-violet-500/5 to-transparent border-primary/20 animate-fade-in">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">ðŸ’¡</span>
+            <span className="text-xl">💡</span>
             <h3 className="text-lg font-bold text-foreground">
               Dlux Copilot — Consultas Rápidas de Estoque
             </h3>
@@ -413,35 +413,35 @@ const Inventory: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             {[
               {
-                label: 'ðŸš¨ Estoque Crítico & Compras',
+                label: '🚨 Estoque Crítico & Compras',
                 query: 'Verificar materiais abaixo do estoque mínimo e plano de compras',
               },
               {
-                label: 'ðŸªµ Estoque MDF & Consumo',
+                label: '🪵 Estoque MDF & Consumo',
                 query: 'Análise de estoque de chapas MDF e consumo recente',
               },
               {
-                label: 'ðŸ“¦ Corrediças Telescópicas vs Ocultas',
+                label: '📦 Corrediças Telescópicas vs Ocultas',
                 query:
                   'Qual a diferença de folga lateral e rebaixo inferior exigida entre corrediça telescópica e invisível?',
               },
               {
-                label: 'ðŸªµ MDF 15mm vs 18mm estrutural',
+                label: '🪵 MDF 15mm vs 18mm estrutural',
                 query:
                   'Quando o projeto exige prateleiras de MDF 18mm para evitar envergamento e qual o vão máximo para 15mm?',
               },
               {
-                label: 'ðŸ”— Dobradiça click com amortecimento',
+                label: '🔗 Dobradiça click com amortecimento',
                 query:
                   'Como dimensionar o número de dobradiças tipo caneco de 35mm para portas de giro baseando-se no peso e altura?',
               },
               {
-                label: 'ðŸ“ Dispositivo Minifix e VB',
+                label: '📏 Dispositivo Minifix e VB',
                 query:
                   'Quais os diâmetros e profundidades de furação exigidos para instalação do sistema de união Minifix e VB?',
               },
               {
-                label: 'ðŸ›¡ï¸ Vedação e Chapas Ultra',
+                label: '🛡️ Vedação e Chapas Ultra',
                 query:
                   "Quais materiais e técnicas de vedação são obrigatórios para gabinetes de pia sob áreas úmidas no padrão D'Luxury?",
               },
@@ -456,7 +456,7 @@ const Inventory: React.FC = () => {
                 }}
                 className="bg-muted/40 hover:bg-primary/10 border border-border hover:border-primary text-foreground px-3 py-2 rounded-xl text-xs transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
               >
-                <span>âœ¨</span>
+                <span>✨</span>
                 {item.label}
               </button>
             ))}

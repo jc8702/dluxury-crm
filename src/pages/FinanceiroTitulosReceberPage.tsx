@@ -22,6 +22,8 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../components/common/Skeleton';
+import FinanceiroTitulosReceberWizard from './FinanceiroTitulosReceberWizard';
+import { X } from 'lucide-react';
 
 export default function FinanceiroTitulosReceberPage() {
   const { success, error } = useToast();
@@ -39,6 +41,7 @@ export default function FinanceiroTitulosReceberPage() {
   const [editModal, setEditModal] = useState<Titulo | null>(null);
   const [antecipacaoModal, setAntecipacaoModal] = useState<Titulo | null>(null);
   const [taxaAntecipacao, setTaxaAntecipacao] = useState(3.5); // Taxa mensal padrão
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const [stats, setStats] = useState({
     totalAberto: 0,
@@ -166,7 +169,7 @@ export default function FinanceiroTitulosReceberPage() {
         <Button
           variant="primary"
           className="h-14 px-8 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
-          onClick={() => (window.location.hash = '#/financeiro/titulos-receber/wizard')}
+          onClick={() => setIsWizardOpen(true)}
         >
           <Plus size={24} /> NOVO RECEBIMENTO
         </Button>
@@ -258,7 +261,7 @@ export default function FinanceiroTitulosReceberPage() {
                   }, {}),
                 ).map(([cid, groupRows]: [string, Titulo[]]) => {
                   const isExpanded = expandedGroups[cid];
-                  const clientName = clientsMap[cid] || 'NÃƒO IDENTIFICADO';
+                  const clientName = clientsMap[cid] || 'NÃO IDENTIFICADO';
                   const totalGroup = groupRows.reduce(
                     (sum, r) => sum + Number(r.valor_original),
                     0,
@@ -307,7 +310,7 @@ export default function FinanceiroTitulosReceberPage() {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
                                 title: 'Excluir Lote Industrial',
-                                description: `ATENÃ‡ÃƒO: Deseja realmente excluir todos os ${groupRows.length} títulos deste cliente? Esta ação não pode ser desfeita.`,
+                                description: `ATENÇÃO: Deseja realmente excluir todos os ${groupRows.length} títulos deste cliente? Esta ação não pode ser desfeita.`,
                               });
                               if (isConfirmed) {
                                 api.financeiro.titulosReceber
@@ -589,7 +592,7 @@ export default function FinanceiroTitulosReceberPage() {
                       }
                     }}
                   >
-                    EFETIVAR ANTECIPAÃ‡ÃƒO
+                    EFETIVAR ANTECIPAÇÃO
                   </Button>
                 </div>
               </div>
@@ -803,7 +806,7 @@ export default function FinanceiroTitulosReceberPage() {
               CANCELAR
             </Button>
             <Button variant="primary" onClick={saveEdit}>
-              SALVAR ALTERAÃ‡ÕES
+              SALVAR ALTERAÇÕES
             </Button>
           </div>
         </div>
@@ -816,6 +819,41 @@ export default function FinanceiroTitulosReceberPage() {
         tipo="receber"
         beneficiarioOuPagador={reciboModal ? clientsMap[reciboModal.cliente_id] || 'Cliente' : ''}
       />
+
+      {/* Drawer do Wizard Novo Recebimento */}
+      {isWizardOpen && (
+        <div
+          className="fixed inset-0 bg-black/45 backdrop-blur-[2px] flex justify-end items-center z-[9999] animate-fade-in"
+          onClick={() => setIsWizardOpen(false)}
+        >
+          <div
+            className="bg-card border border-border shadow-2xl rounded-l-2xl h-screen w-full max-w-[650px] flex flex-col overflow-hidden animate-slide-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header do Drawer */}
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary/5">
+              <h2 className="text-lg font-bold text-foreground">
+                Novo Lançamento - Contas a Receber
+              </h2>
+              <button
+                onClick={() => setIsWizardOpen(false)}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body do Drawer com Scroll */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
+              <FinanceiroTitulosReceberWizard
+                isDrawer={true}
+                onClose={() => setIsWizardOpen(false)}
+                onSuccess={() => load(page)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {ConfirmDialogElement}
     </div>

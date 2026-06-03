@@ -23,6 +23,8 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Titulo, ContaInterna } from '../modules/financeiro/domain/types';
 import { TableSkeleton } from '../components/common/Skeleton';
+import FinanceiroTitulosPagarWizard from './FinanceiroTitulosPagarWizard';
+import { X } from 'lucide-react';
 
 export default function FinanceiroTitulosPagarPage() {
   const { success, error, warning } = useToast();
@@ -46,6 +48,7 @@ export default function FinanceiroTitulosPagarPage() {
   });
   const [loteLoading, setLoteLoading] = useState(false);
   const [editModal, setEditModal] = useState<Titulo | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const [stats, setStats] = useState({
     totalAberto: 0,
@@ -266,7 +269,7 @@ export default function FinanceiroTitulosPagarPage() {
             variant="danger"
             size="md"
             className="italic tracking-widest font-black text-[11px] bg-red-600 border-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
-            onClick={() => (window.location.hash = '#/financeiro/titulos-pagar/wizard')}
+            onClick={() => setIsWizardOpen(true)}
           >
             <Plus className="w-4 h-4" /> NOVO PAGAMENTO
           </Button>
@@ -387,7 +390,7 @@ export default function FinanceiroTitulosPagarPage() {
                 ).map(([sid, groupRows]: [string, any]) => {
                   const isExpanded = expandedGroups[sid];
                   const supplierName = (
-                    suppliersMap[sid] || 'FORNECEDOR NÃƒO IDENTIFICADO'
+                    suppliersMap[sid] || 'FORNECEDOR NÃO IDENTIFICADO'
                   ).toUpperCase();
                   const totalGroup = groupRows.reduce(
                     (sum: number, r: any) => sum + Number(r.valor_original),
@@ -440,7 +443,7 @@ export default function FinanceiroTitulosPagarPage() {
                             onClick={async (e) => {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
-                                title: 'ELIMINAÃ‡ÃƒO EM MASSA',
+                                title: 'ELIMINAÇÃO EM MASSA',
                                 description: `DESEJA REALMENTE EXCLUIR TODOS OS ${groupRows.length} TÃTULOS DESTE FORNECEDOR? ESTA AÃ‡ÃƒO É IRREVERSÃVEL NO ERP.`,
                               });
                               if (isConfirmed) {
@@ -813,7 +816,7 @@ export default function FinanceiroTitulosPagarPage() {
               className="uppercase font-black italic text-xs tracking-widest bg-red-600 border-red-600 hover:bg-red-700 text-white"
               onClick={saveEdit}
             >
-              SALVAR ALTERAÃ‡ÕES
+              SALVAR ALTERAÇÕES
             </Button>
           </div>
         </div>
@@ -910,6 +913,41 @@ export default function FinanceiroTitulosPagarPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Drawer do Wizard Novo Pagamento */}
+      {isWizardOpen && (
+        <div
+          className="fixed inset-0 bg-black/45 backdrop-blur-[2px] flex justify-end items-center z-[9999] animate-fade-in"
+          onClick={() => setIsWizardOpen(false)}
+        >
+          <div
+            className="bg-card border border-border shadow-2xl rounded-l-2xl h-screen w-full max-w-[650px] flex flex-col overflow-hidden animate-slide-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header do Drawer */}
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary/5">
+              <h2 className="text-lg font-bold text-foreground">
+                Novo Lançamento - Contas a Pagar
+              </h2>
+              <button
+                onClick={() => setIsWizardOpen(false)}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body do Drawer com Scroll */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
+              <FinanceiroTitulosPagarWizard
+                isDrawer={true}
+                onClose={() => setIsWizardOpen(false)}
+                onSuccess={() => load(page)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {ConfirmDialogElement}
     </div>

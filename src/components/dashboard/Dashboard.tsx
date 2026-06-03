@@ -102,297 +102,113 @@ const Dashboard: React.FC = () => {
     )
     .slice(0, 6);
 
-  const styles = {
-    page: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '32px',
-      padding: '24px',
-      color: '#1A1A1A',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-    },
-    headerRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      flexWrap: 'wrap' as const,
-      gap: '16px',
-    },
-    h1: {
-      fontSize: '32px',
-      fontWeight: 700,
-      lineHeight: 1.2,
-      color: '#1A1A1A',
-      margin: 0,
-    },
-    h2: {
-      fontSize: '20px',
-      fontWeight: 600,
-      lineHeight: 1.2,
-      color: '#1A1A1A',
-      margin: 0,
-    },
-    subtitle: {
-      fontSize: '14px',
-      color: '#666666',
-      margin: `4px 0 0 0`,
-    },
-    sectionTitle: {
-      fontSize: '18px',
-      fontWeight: 600,
-      color: '#1A1A1A',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.06em',
-      marginBottom: '16px',
-    },
-    kpiLabel: {
-      fontSize: '12px',
-      fontWeight: 600,
-      color: '#666666',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.06em',
-      marginBottom: '4px',
-    },
-    kpiValue: {
-      fontSize: '24px',
-      fontWeight: 700,
-      lineHeight: 1.2,
-      color: '#1A1A1A',
-      margin: 0,
-    },
-    kpiGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '24px',
-    },
-    kpiCard: (accentColor: string) => ({
-      background: '#FFFFFF',
-      padding: '24px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-      borderLeft: `4px solid ${accentColor}`,
-      transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-    }),
-    splitGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-      gap: '24px',
-    },
-    card: {
-      background: '#FFFFFF',
-      padding: '24px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    },
-    quickActionsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      gap: '16px',
-    },
-    quickAction: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px',
-      height: 96,
-      padding: '16px',
-      background: '#FFFFFF',
-      border: `1px solid #E0E0E0`,
-      borderRadius: '12px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-      color: '#1A1A1A',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      fontSize: '14px',
-      fontWeight: 600,
-      textDecoration: 'none',
-      transition: 'box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
-    },
-    copilotCard: {
-      background: '#FFFFFF',
-      padding: '24px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-      border: `1px solid #E0EFFF`,
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '16px',
-    },
-    copilotChip: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '4px',
-      padding: `4px 8px`,
-      background: '#F0F7FF',
-      color: '#0D5FB8',
-      border: `1px solid #E0EFFF`,
-      borderRadius: '9999px',
-      fontSize: '12px',
-      fontWeight: 600,
-      cursor: 'pointer',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-    },
-  } as const;
-
   return (
-    <div className="ds-dashboard" style={styles.page}>
-      <style>{`
-        .ds-dashboard * { box-sizing: border-box; }
-        .ds-dashboard .ds-kpi-card:hover { box-shadow: 0 10px 15px rgba(0,0,0,0.1); transform: translateY(-1px); }
-        .ds-dashboard .ds-quick-action:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #0D66CC; }
-        @media (max-width: 768px) {
-          .ds-dashboard .ds-header-row { flex-direction: column; align-items: stretch; }
-          .ds-dashboard .ds-chart-box { height: 220px !important; }
-        }
-        @media (max-width: 480px) {
-          .ds-dashboard { padding: 16px !important; }
-          .ds-dashboard .ds-kpi-value { font-size: 20px !important; }
-        }
-      `}</style>
-
-      <header className="ds-header-row" style={styles.headerRow}>
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pb-4 border-b border-border">
         <div>
-          <h1 style={styles.h1}>Painel Geral</h1>
-          <p style={styles.subtitle}>Visão executiva — D'Luxury CRM (Fatto OS)</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Painel Geral</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Visão executiva — D'Luxury CRM (Fatto OS)
+          </p>
         </div>
-        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger
-            style={{
-              width: 160,
-              border: `1px solid #E0E0E0`,
-              borderRadius: '8px',
-              padding: `4px 16px`,
-              background: '#FFFFFF',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-          >
-            <SelectValue placeholder="Período..." />
-          </SelectTrigger>
-          <SelectContent>
-            {periods.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3">
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-40 border border-border/80 rounded-xl px-4 py-2 bg-card text-foreground font-semibold text-sm">
+              <SelectValue placeholder="Período..." />
+            </SelectTrigger>
+            <SelectContent className="bg-card border border-border/80 rounded-xl shadow-lg">
+              {periods.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </header>
 
       {/* KPIs principais */}
       <section aria-label="Indicadores principais">
-        <div style={styles.kpiGrid}>
-          <div className="ds-kpi-card" style={styles.kpiCard('#0D66CC')}>
-            <p style={styles.kpiLabel}>Total Clientes</p>
-            <h3 style={{ ...styles.kpiValue, color: '#0D5FB8' }}>{clients.length}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-primary transition-all hover:scale-[1.015] hover:shadow-md">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              Total Clientes
+            </p>
+            <h3 className="text-2xl font-black text-primary">{clients.length}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard('#17A2B8')}>
-            <p style={styles.kpiLabel}>Projetos Ativos</p>
-            <h3 style={{ ...styles.kpiValue, color: '#17A2B8' }}>
+          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-info transition-all hover:scale-[1.015] hover:shadow-md">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              Projetos Ativos
+            </p>
+            <h3 className="text-2xl font-black text-info">
               {projects.filter((p) => p.status !== 'concluido').length}
             </h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard('#E2AC00')}>
-            <p style={styles.kpiLabel}>Em Produção</p>
-            <h3 style={{ ...styles.kpiValue, color: '#E2AC00' }}>{inProduction}</h3>
+          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-warning transition-all hover:scale-[1.015] hover:shadow-md">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              Em Produção
+            </p>
+            <h3 className="text-2xl font-black text-warning">{inProduction}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard('#28A745')}>
-            <p style={styles.kpiLabel}>Concluídos</p>
-            <h3 style={{ ...styles.kpiValue, color: '#28A745' }}>{concluidos}</h3>
+          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-success transition-all hover:scale-[1.015] hover:shadow-md">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              Concluídos
+            </p>
+            <h3 className="text-2xl font-black text-success">{concluidos}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard('#1A1A1A')}>
-            <p style={styles.kpiLabel}>Ticket Médio</p>
-            <h3 style={{ ...styles.kpiValue, fontSize: '20px' }}>{formatCurrency(ticketMedio)}</h3>
+          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-accent transition-all hover:scale-[1.015] hover:shadow-md">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              Ticket Médio
+            </p>
+            <h3 className="text-xl font-black text-foreground truncate">
+              {formatCurrency(ticketMedio)}
+            </h3>
           </div>
         </div>
       </section>
 
       {/* Meta + Pipeline por etapa */}
-      <section style={styles.splitGrid}>
-        <div
-          style={{
-            ...styles.card,
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          <h3 style={styles.sectionTitle}>Meta do Período</h3>
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col items-center justify-center gap-6">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+            Meta do Período
+          </h3>
           <div
+            className="relative w-36 h-36 rounded-full flex items-center justify-center shadow-inner"
             style={{
-              width: 140,
-              height: 140,
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: `conic-gradient(#E2AC00 ${percentualMeta * 3.6}deg, #E0E0E0 0deg)`,
+              background: `conic-gradient(hsl(var(--primary)) ${percentualMeta * 3.6}deg, hsl(var(--border)) 0deg)`,
             }}
           >
-            <div
-              style={{
-                width: 110,
-                height: 110,
-                borderRadius: '9999px',
-                background: '#FFFFFF',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'inset 0 0 0 1px ' + '#E0E0E0',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                }}
-              >
-                {percentualMeta}%
-              </span>
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#666666',
-                  textTransform: 'uppercase',
-                }}
-              >
+            <div className="w-28 h-28 rounded-full bg-card flex flex-col items-center justify-center border border-border/30 shadow-sm">
+              <span className="text-2xl font-black text-foreground">{percentualMeta}%</span>
+              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
                 atingido
               </span>
             </div>
           </div>
-          <p
-            style={{
-              fontSize: '16px',
-              color: '#1A1A1A',
-              margin: 0,
-            }}
-          >
-            <strong>{formatCurrency(totalPeriodo)}</strong>{' '}
-            <span style={{ color: '#666666' }}>/ {formatCurrency(currentMeta)}</span>
+          <p className="text-sm text-foreground text-center">
+            <strong className="text-base font-bold text-primary">
+              {formatCurrency(totalPeriodo)}
+            </strong>{' '}
+            <span className="text-muted-foreground">/ {formatCurrency(currentMeta)}</span>
           </p>
           <Button
             onClick={() => {
               setEditGoal(true);
               setGoalValue(currentMeta.toString());
             }}
-            style={{
-              background: 'transparent',
-              color: '#0D5FB8',
-              border: `1px solid #0D66CC`,
-              borderRadius: '8px',
-              padding: `4px 24px`,
-              fontWeight: 600,
-            }}
+            variant="outline"
+            className="px-6 py-2 rounded-xl text-xs"
           >
             Editar Meta
           </Button>
         </div>
 
-        <div style={styles.card}>
-          <h3 style={styles.sectionTitle}>Evolução Financeira (6 meses)</h3>
-          <div className="ds-chart-box" style={{ width: '100%', height: 260 }}>
+        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm lg:col-span-2 flex flex-col justify-between">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
+            Evolução Financeira (6 meses)
+          </h3>
+          <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={periods
@@ -413,35 +229,46 @@ const Dashboard: React.FC = () => {
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke={'#E0E0E0'}
-                  opacity={0.5}
+                  stroke="hsl(var(--border))"
+                  opacity={0.3}
                 />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#666666' }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                   dy={10}
                 />
                 <YAxis
                   tickFormatter={(val) => `R$${val / 1000}k`}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#666666' }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                 />
                 <Tooltip
-                  cursor={{ fill: '#FAFAFA', opacity: 0.5 }}
+                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.15 }}
                   contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    borderColor: '#E0E0E0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '12px',
+                    color: 'hsl(var(--foreground))',
+                    fontSize: 12,
                   }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                <Bar dataKey="Entradas" fill={'#28A745'} radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="Saidas" fill={'#0D66CC'} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
+                <Bar
+                  dataKey="Entradas"
+                  fill="hsl(var(--success))"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={32}
+                />
+                <Bar
+                  dataKey="Saidas"
+                  fill="hsl(var(--primary))"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={32}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -450,89 +277,69 @@ const Dashboard: React.FC = () => {
 
       {/* Ações Rápidas */}
       <section aria-label="Ações rápidas">
-        <h3 style={styles.sectionTitle}>Ações Rápidas</h3>
-        <div style={styles.quickActionsGrid}>
-          <Link to="/clientes" className="ds-quick-action" style={styles.quickAction}>
-            <UserPlus size={24} color={'#28A745'} />
-            <span>Novo Cliente</span>
+        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
+          Ações Rápidas
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link
+            to="/clientes"
+            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-success/50 hover:shadow-success/5 hover:scale-[1.02] transition-all duration-200"
+          >
+            <UserPlus size={24} className="text-success" />
+            <span className="text-sm font-semibold">Novo Cliente</span>
           </Link>
-          <Link to="/orcamentos" className="ds-quick-action" style={styles.quickAction}>
-            <FileText size={24} color={'#0D66CC'} />
-            <span>Novo Orçamento</span>
+          <Link
+            to="/orcamentos"
+            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-primary/50 hover:shadow-primary/5 hover:scale-[1.02] transition-all duration-200"
+          >
+            <FileText size={24} className="text-primary" />
+            <span className="text-sm font-semibold">Novo Orçamento</span>
           </Link>
-          <Link to="/plano-corte" className="ds-quick-action" style={styles.quickAction}>
-            <Wrench size={24} color={'#17A2B8'} />
-            <span>Plano de Corte</span>
+          <Link
+            to="/plano-de-corte"
+            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-info/50 hover:shadow-info/5 hover:scale-[1.02] transition-all duration-200"
+          >
+            <Wrench size={24} className="text-info" />
+            <span className="text-sm font-semibold">Plano de Corte</span>
           </Link>
-          <Link to="/financeiro/contas" className="ds-quick-action" style={styles.quickAction}>
-            <PlusCircle size={24} color={'#E2AC00'} />
-            <span>Nova Despesa</span>
+          <Link
+            to="/financeiro/contas"
+            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-accent/50 hover:shadow-accent/5 hover:scale-[1.02] transition-all duration-200"
+          >
+            <PlusCircle size={24} className="text-accent" />
+            <span className="text-sm font-semibold">Nova Despesa</span>
           </Link>
         </div>
       </section>
 
       {/* Origem de leads + Projetos recentes */}
-      <section style={styles.splitGrid}>
-        <div style={styles.card}>
-          <h3 style={styles.sectionTitle}>Origem dos Leads</h3>
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
+            Origem dos Leads
+          </h3>
           {origemCounts.length === 0 ? (
-            <div
-              style={{
-                color: '#666666',
-                textAlign: 'center',
-                padding: '32px',
-              }}
-            >
-              Nenhum cliente cadastrado.
-            </div>
+            <div className="text-muted-foreground text-center py-8">Nenhum cliente cadastrado.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="flex flex-col gap-4">
               {origemCounts.map((o) => {
                 const info = origemLabels[o.key] || origemLabels.outro;
                 const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
                 return (
-                  <div key={o.key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        color: '#666666',
-                        width: 120,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
+                  <div key={o.key} className="flex items-center gap-4">
+                    <span className="text-xs text-muted-foreground w-24 truncate">
                       {info.label}
                     </span>
-                    <div
-                      style={{
-                        flex: 1,
-                        background: '#FAFAFA',
-                        borderRadius: '9999px',
-                        height: 16,
-                        overflow: 'hidden',
-                      }}
-                    >
+                    <div className="flex-1 bg-muted rounded-full h-3.5 overflow-hidden">
                       <div
+                        className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${pct}%`,
-                          minWidth: pct > 0 ? 16 : 0,
-                          height: '100%',
                           backgroundColor: info.color,
-                          borderRadius: '9999px',
-                          transition: 'width 0.5s ease',
                         }}
                       />
                     </div>
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        color: '#666666',
-                        width: 40,
-                        textAlign: 'right',
-                      }}
-                    >
+                    <span className="text-xs font-bold text-muted-foreground w-10 text-right">
                       {o.count}
                     </span>
                   </div>
@@ -542,93 +349,52 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        <div style={styles.card}>
-          <h3 style={styles.sectionTitle}>Projetos Recentes</h3>
+        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
+            Projetos Recentes
+          </h3>
           {recentProjects.length === 0 ? (
-            <div
-              style={{
-                color: '#666666',
-                textAlign: 'center',
-                padding: '32px',
-              }}
-            >
-              Nenhum projeto cadastrado.
-            </div>
+            <div className="text-muted-foreground text-center py-8">Nenhum projeto cadastrado.</div>
           ) : (
-            <DataTable
-              headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
-              data={recentProjects}
-              renderRow={(p: Project) => (
-                <>
-                  <td
-                    style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {p.ambiente}
-                  </td>
-                  <td
-                    style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      color: '#666666',
-                    }}
-                  >
-                    {p.clientName || '-'}
-                  </td>
-                  <td
-                    style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#0D5FB8',
-                    }}
-                  >
-                    {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: `4px 8px`,
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        background: '#F0F7FF',
-                        color: '#0D5FB8',
-                        border: `1px solid #E0EFFF`,
-                        borderRadius: '9999px',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {statusLabels[p.status] || p.status}
-                    </span>
-                  </td>
-                </>
-              )}
-            />
+            <div className="overflow-x-auto">
+              <DataTable
+                headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
+                data={recentProjects}
+                renderRow={(p: Project) => (
+                  <>
+                    <td className="px-4 py-3.5 font-bold text-foreground text-sm">{p.ambiente}</td>
+                    <td className="px-4 py-3.5 text-muted-foreground text-sm">
+                      {p.clientName || '-'}
+                    </td>
+                    <td className="px-4 py-3.5 font-extrabold text-primary text-sm">
+                      {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider border border-primary/20">
+                        {statusLabels[p.status] || p.status}
+                      </span>
+                    </td>
+                  </>
+                )}
+              />
+            </div>
           )}
         </div>
       </section>
 
       {/* Dlux Copilot - Insights Rápidos */}
-      <section style={styles.copilotCard}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '20px' }}>💡</span>
-          <h3 style={styles.h2}>Dlux Copilot — Consultoria Técnica &amp; Insights</h3>
+      <section className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-primary/60 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">💡</span>
+          <h3 className="text-lg font-bold text-foreground">
+            Dlux Copilot — Consultoria Técnica &amp; Insights
+          </h3>
         </div>
-        <p
-          style={{
-            color: '#666666',
-            fontSize: '14px',
-            margin: 0,
-          }}
-        >
+        <p className="text-sm text-muted-foreground">
           Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a
           nossa IA especialista.
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="flex flex-wrap gap-2.5">
           {[
             { label: 'Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
             {
@@ -668,8 +434,7 @@ const Dashboard: React.FC = () => {
             <button
               key={item.label}
               type="button"
-              className="ds-quick-action"
-              style={styles.copilotChip}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-muted hover:bg-muted-hover text-muted-foreground hover:text-foreground rounded-full text-xs font-semibold transition-colors duration-150 border border-border/50"
               onClick={() => {
                 window.dispatchEvent(
                   new CustomEvent('dlux-open-chat', { detail: { query: item.query } }),
@@ -689,43 +454,22 @@ const Dashboard: React.FC = () => {
         title="Definir Meta Mensal"
         size="sm"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <label
-            style={{
-              fontSize: '14px',
-              color: '#666666',
-            }}
-          >
+        <div className="flex flex-col gap-4 p-2">
+          <label className="text-sm text-muted-foreground">
             Valor da meta para {selectedPeriod}:
           </label>
           <Input
             type="number"
             value={goalValue}
             onChange={(e) => setGoalValue(e.target.value)}
-            style={{
-              border: `1px solid #E0E0E0`,
-              borderRadius: '8px',
-              padding: '8px',
-              fontSize: '18px',
-              fontWeight: 600,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
+            className="w-full border border-border rounded-xl p-3 text-lg font-bold bg-card text-foreground"
           />
           <Button
             onClick={() => {
               setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0);
               setEditGoal(false);
             }}
-            style={{
-              width: '100%',
-              background: '#0D66CC',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '16px',
-              fontWeight: 700,
-              boxShadow: `0 4px 12px #0D66CC40`,
-            }}
+            className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold p-3.5 rounded-xl shadow-md transition-all"
           >
             Salvar Meta
           </Button>

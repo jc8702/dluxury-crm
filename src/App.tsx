@@ -5,13 +5,15 @@ import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+import LandingPage from './pages/landing/Landing';
+
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
+const QuotationForm = lazy(() => import('./modules/quotations/pages/QuotationForm'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProductionPage = lazy(() => import('./pages/ProductionPage'));
 const CuttingPlanPage = lazy(
@@ -162,8 +164,6 @@ function FeatureGuard({ feature }: { feature: string }) {
   return <Outlet />;
 }
 
-import QuotationForm from './modules/quotations/pages/QuotationForm';
-
 export default function App() {
   return (
     <ToastProvider>
@@ -173,15 +173,7 @@ export default function App() {
             <HashRouter>
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
-                  {/* Rotas Públicas */}
-                  <Route
-                    path="/"
-                    element={
-                      <Suspense fallback={<LoadingScreen />}>
-                        <LandingPage />
-                      </Suspense>
-                    }
-                  />
+                  <Route path="/" element={<LandingPage />} />
                   <Route path="login" element={<Navigate to="/painel" replace />} />
                   <Route
                     path="signup"

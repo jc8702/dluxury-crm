@@ -228,7 +228,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             </h5>
             <div className="flex flex-col gap-4">
               <Input
-                label="SKU / Código Ãšnico *"
+                label="SKU / Código Único *"
                 value={form.sku}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 required
@@ -314,7 +314,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                   >
                     <option value="un">Unidade</option>
                     <option value="m">Metro (m)</option>
-                    <option value="m2">MetroÂ² (mÂ²)</option>
+                    <option value="m2">Metro² (m²)</option>
                     <option value="kg">Quilo (kg)</option>
                     <option value="par">Par</option>
                     <option value="barra">Barra</option>
@@ -324,10 +324,10 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
               <Input
                 type="number"
                 step="0.0001"
-                label="Fator de Conversão (Compra â†’ Uso)"
+                label="Fator de Conversão (Compra → Uso)"
                 value={form.fator_conversao}
                 onChange={(e) => setForm({ ...form, fator_conversao: Number(e.target.value) })}
-                helperText="Ex: 1 chapa = 5.0325 mÂ². 1 rolo = 50m."
+                helperText="Ex: 1 chapa = 5.0325 m². 1 rolo = 50m."
               />
               {(form.unidade_compra === 'chapa' || form.unidade_uso === 'm2') && (
                 <div className="grid grid-cols-2 gap-4">

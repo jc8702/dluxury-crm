@@ -176,7 +176,7 @@ const SugestoesGrid: React.FC<{ sugestoes: any[]; onAction: () => void }> = ({
             <th className="text-center p-4 font-semibold text-muted-foreground">Estoque Atual</th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Mínimo</th>
             <th className="text-right p-4 font-semibold text-muted-foreground">
-              Preço Ãšlt. Compra
+              Preço Últ. Compra
             </th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Ações</th>
           </tr>
@@ -236,7 +236,7 @@ const PedidosTable: React.FC<{
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/20">
-            <th className="text-left p-4 font-semibold text-muted-foreground">NÂº Pedido</th>
+            <th className="text-left p-4 font-semibold text-muted-foreground">Nº Pedido</th>
             <th className="text-left p-4 font-semibold text-muted-foreground">Fornecedor</th>
             <th className="text-center p-4 font-semibold text-muted-foreground">Data</th>
             <th className="text-right p-4 font-semibold text-muted-foreground">Total</th>
