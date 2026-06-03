@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const LoginPage = lazy(() => import('./pages/LoginPage'));

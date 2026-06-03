@@ -124,7 +124,7 @@ const SignupPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans p-12 box-border relative">
       {/* Header / Brand */}
       <div className="text-center mb-14">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-primary to-accent flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-lg shadow-primary/30">
+        <div className="w-16 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-lg shadow-primary/30">
           DL
         </div>
         <h1 id="signup-title" className="text-[2.4rem] font-black m-0 tracking-wider">
