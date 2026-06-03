@@ -170,13 +170,13 @@ const LandingPage: React.FC = () => {
           <div className="flex items-center gap-3 ml-4">
             <button
               onClick={() => navigate('/login')}
-              className="px-5 py-2 text-sm font-bold rounded-lg border border-border/30 hover:border-accent/50 hover:bg-accent/5 transition-all duration-300"
+              className="px-5 py-2.5 text-sm font-bold text-foreground bg-card/50 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
             >
               Entrar
             </button>
             <button
               onClick={() => navigate('/signup')}
-              className="px-6 py-2.5 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 rounded-lg shadow-lg shadow-primary/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+              className="px-6 py-2.5 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl shadow-[0_4px_14px_rgb(245,158,11,0.2)] hover:shadow-[0_6px_20px_rgb(245,158,11,0.3)] hover:-translate-y-0.5 transition-all duration-300"
             >
               Teste Grátis
             </button>
@@ -186,35 +186,46 @@ const LandingPage: React.FC = () => {
 
       {/* ── HERO SECTION ── */}
       <header className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-24 mx-auto max-w-5xl">
-        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-xs font-bold tracking-widest text-accent uppercase rounded-full border border-accent/30 bg-accent/10 backdrop-blur-md">
-          <Star className="w-4 h-4" /> A revolução na marcenaria de alto padrão
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-xs font-bold tracking-widest text-accent uppercase rounded-full border border-accent/30 bg-accent/10 backdrop-blur-md animate-fade-in">
+          <Star className="w-4 h-4 text-accent animate-pulse" /> A revolução na marcenaria de alto
+          padrão
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8">
+        <h1
+          className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8 animate-slide-in"
+          style={{ animationDelay: '0.1s' }}
+        >
           O ERP Definitivo para <br className="hidden md:block" />
-          <span className="bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 bg-clip-text text-transparent">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-pulse">
             Fábricas e Marcenarias
           </span>
         </h1>
 
-        <p className="max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed mb-12">
+        <p
+          className="max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed mb-12 animate-slide-in"
+          style={{ animationDelay: '0.2s' }}
+        >
           Do fechamento da venda ao plano de corte, orçamentos automáticos, fluxo de caixa e gestão
           CNC. Potencialize seu faturamento com a{' '}
           <strong className="text-foreground/80">Inteligência Artificial Integrada</strong>.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div
+          className="flex flex-col sm:flex-row items-center gap-6 animate-slide-in"
+          style={{ animationDelay: '0.3s' }}
+        >
           <button
             onClick={() => navigate('/signup')}
-            className="group flex items-center gap-2 px-8 py-4 text-base font-black tracking-wide text-primary-foreground uppercase bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 rounded-xl shadow-lg shadow-primary/30 hover:shadow-lg hover:scale-105 transition-all duration-300"
+            className="group relative flex items-center justify-center gap-2 px-8 py-4 text-base font-black tracking-wide text-primary-foreground uppercase bg-primary hover:bg-primary-hover rounded-xl shadow-[0_8px_20px_rgb(245,158,11,0.2)] hover:shadow-[0_12px_25px_rgb(245,158,11,0.3)] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
           >
-            Começar Teste de 14 Dias
-            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <span className="relative z-10">Começar Teste de 14 Dias</span>
+            <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
           </button>
 
           <a
             href="#modulos"
-            className="px-8 py-4 text-base font-bold rounded-xl border border-border/30 bg-card/5 backdrop-blur-lg hover:bg-card/10 hover:border-accent/50 transition-all duration-300"
+            className="px-8 py-4 text-base font-bold rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl hover:bg-card/60 hover:border-accent/50 transition-all duration-300 shadow-sm"
           >
             Explorar Módulos
           </a>
@@ -332,9 +343,12 @@ const LandingPage: React.FC = () => {
       {/* ── PLANOS E PREÇOS ── */}
       <section
         id="precos"
-        className="relative z-10 py-32 px-4 border-t border-border/20 bg-background/80"
+        className="relative z-10 py-32 px-4 border-t border-border/20 bg-background/50"
       >
         <div className="text-center mb-20 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-xs font-bold tracking-widest text-accent uppercase rounded-full border border-accent/30 bg-accent/10">
+            <DollarSign className="w-4 h-4" /> Investimento
+          </div>
           <h2 className="text-3xl md:text-5xl font-black mb-6">
             Planos Transparentes. <span className="text-accent">Sem Surpresas.</span>
           </h2>
@@ -344,11 +358,11 @@ const LandingPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {/* BASIC */}
-          <div className="flex flex-col p-8 rounded-3xl border border-border/20 bg-card/50 backdrop-blur-md">
-            <h3 className="text-2xl font-black mb-2">BASIC</h3>
-            <p className="text-sm text-muted-foreground mb-8">
+          <div className="flex flex-col p-8 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-sm hover:border-primary/50 transition-colors">
+            <h3 className="text-2xl font-black mb-2 text-foreground">BASIC</h3>
+            <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">
               Para marceneiros autônomos e pequenas lojas.
             </p>
             <div className="flex items-end gap-1 mb-8">
@@ -357,68 +371,70 @@ const LandingPage: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/signup')}
-              className="w-full py-3 px-4 mb-8 text-sm font-bold bg-card/20 border border-border/30 rounded-xl hover:bg-card/40 transition-colors"
+              className="w-full py-3 px-4 mb-8 text-sm font-bold bg-secondary/50 border border-border/50 text-foreground rounded-xl hover:bg-secondary transition-colors"
             >
               Começar Teste Grátis
             </button>
-            <ul className="flex flex-col gap-4 text-sm text-foreground/80">
+            <ul className="flex flex-col gap-4 text-sm text-foreground/80 mt-auto">
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> CRM & Clientes
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> CRM & Clientes
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Orçamentos Básicos
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Orçamentos Básicos
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Agenda de Visitas
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Agenda de Visitas
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Até 2 usuários
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Até 2 usuários
               </li>
             </ul>
           </div>
 
           {/* PRO (Destaque) */}
-          <div className="relative flex flex-col p-8 rounded-3xl border-2 border-accent bg-card/80 backdrop-blur-xl shadow-lg shadow-primary/30 transform md:-translate-y-4">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 text-primary-foreground text-xs font-black tracking-widest uppercase rounded-full shadow-lg">
-              Mais Escolhido
+          <div className="relative flex flex-col p-8 rounded-3xl border-2 border-primary bg-card backdrop-blur-2xl shadow-xl shadow-primary/10 transform md:-translate-y-4">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-primary-foreground text-xs font-black tracking-widest uppercase rounded-full shadow-lg shadow-primary/30 flex items-center gap-2">
+              <Star className="w-3 h-3 fill-current" /> Mais Escolhido
             </div>
-            <h3 className="text-2xl font-black text-accent mb-2 mt-4">PRO</h3>
-            <p className="text-sm text-muted-foreground mb-8">
+            <h3 className="text-2xl font-black text-primary mb-2 mt-4">PRO</h3>
+            <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">
               Gestão 360° com Financeiro e Integrações.
             </p>
             <div className="flex items-end gap-1 mb-8">
-              <span className="text-5xl font-black">R$ 197</span>
-              <span className="text-muted-foreground font-semibold mb-1">/mês</span>
+              <span className="text-5xl font-black text-foreground">R$ 197</span>
+              <span className="text-muted-foreground font-semibold mb-2">/mês</span>
             </div>
             <button
               onClick={() => navigate('/signup')}
-              className="w-full py-4 px-4 mb-8 text-sm font-black text-primary-foreground bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 rounded-xl shadow-lg shadow-primary/30 hover:shadow-lg transition-all hover:-translate-y-1"
+              className="w-full py-4 px-4 mb-8 text-sm font-black text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl shadow-[0_8px_20px_rgb(245,158,11,0.2)] hover:shadow-[0_12px_25px_rgb(245,158,11,0.3)] transition-all hover:-translate-y-1"
             >
               Começar Teste Grátis
             </button>
-            <ul className="flex flex-col gap-4 text-sm font-medium">
+            <ul className="flex flex-col gap-4 text-sm font-medium mt-auto">
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Tudo do Plano Basic
+                <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Tudo do Plano Basic
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Financeiro e Fluxo de Caixa
+                <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Financeiro e Fluxo de
+                Caixa
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Inteligência Artificial Dlux
+                <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Inteligência Artificial
+                Dlux
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Plano de Corte Integrado
+                <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Plano de Corte Integrado
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Até 5 usuários simultâneos
+                <CheckCircle className="w-5 h-5 text-primary shrink-0" /> Até 5 usuários simultâneos
               </li>
             </ul>
           </div>
 
           {/* ENTERPRISE */}
-          <div className="flex flex-col p-8 rounded-3xl border border-border/20 bg-card/50 backdrop-blur-md">
-            <h3 className="text-2xl font-black mb-2">ENTERPRISE</h3>
-            <p className="text-sm text-muted-foreground mb-8">
+          <div className="flex flex-col p-8 rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-sm hover:border-primary/50 transition-colors">
+            <h3 className="text-2xl font-black mb-2 text-foreground">ENTERPRISE</h3>
+            <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">
               Controle de Indústria e Simulação CNC 3D.
             </p>
             <div className="flex items-end gap-1 mb-8">
@@ -427,22 +443,23 @@ const LandingPage: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/signup')}
-              className="w-full py-3 px-4 mb-8 text-sm font-bold bg-card/20 border border-border/30 rounded-xl hover:bg-card/40 transition-colors"
+              className="w-full py-3 px-4 mb-8 text-sm font-bold bg-secondary/50 border border-border/50 text-foreground rounded-xl hover:bg-secondary transition-colors"
             >
               Falar com Consultor
             </button>
-            <ul className="flex flex-col gap-4 text-sm text-foreground/80">
+            <ul className="flex flex-col gap-4 text-sm text-foreground/80 mt-auto">
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Tudo do Plano PRO
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Tudo do Plano PRO
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Simulador CNC Tridimensional
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Simulador CNC
+                Tridimensional
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Ordens de Produção (OP)
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Ordens de Produção (OP)
               </li>
               <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" /> Usuários Ilimitados
+                <CheckCircle className="w-5 h-5 text-accent shrink-0" /> Usuários Ilimitados
               </li>
             </ul>
           </div>
