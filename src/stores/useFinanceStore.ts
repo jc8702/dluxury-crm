@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
-import { Billing, CondicaoPagamento } from '../types';
+import type { Billing, CondicaoPagamento } from '../types';
 
 interface FinanceState {
   billings: Billing[];

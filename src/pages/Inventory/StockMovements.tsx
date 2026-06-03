@@ -30,7 +30,6 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { designSystem } from '@/styles/design-system';
 import { Button, Card, CardContent } from '../../components/common';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
@@ -326,10 +325,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
         onClick={() => toggleSort(k)}
         style={{
-          padding: designSystem.spacing.md,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.semibold,
-          color: active ? designSystem.colors.primary[600] : designSystem.colors.text.secondary,
+          padding: '16px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: active ? '#0D5FB8' : '#666666',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -338,9 +337,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           textAlign: align,
         }}
       >
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: designSystem.spacing.xs }}
-        >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {label}
           {active ? (
             sortDir === 'asc' ? (
@@ -364,19 +361,19 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.xl,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '32px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
         .ds-stock-movements input:focus, .ds-stock-movements select:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-stock-movements table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-stock-movements table tbody tr:hover { background: ${designSystem.colors.background}; box-shadow: ${designSystem.shadows.sm}; }
+        .ds-stock-movements table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
       `}</style>
 
       <header
@@ -385,10 +382,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.md }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             type="button"
             onClick={() => (onBack ? onBack() : navigate(-1))}
@@ -399,10 +396,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               justifyContent: 'center',
               width: 36,
               height: 36,
-              borderRadius: designSystem.borderRadius.md,
-              border: `1px solid ${designSystem.colors.border}`,
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.secondary,
+              borderRadius: '8px',
+              border: `1px solid #E0E0E0`,
+              background: '#FFFFFF',
+              color: '#666666',
               cursor: 'pointer',
             }}
           >
@@ -411,30 +408,30 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           <div>
             <h1
               style={{
-                fontSize: designSystem.typography.fontSizes['3xl'],
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                fontSize: '32px',
+                fontWeight: 700,
+                color: '#1A1A1A',
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
-                gap: designSystem.spacing.sm,
+                gap: '8px',
               }}
             >
-              <History size={26} color={designSystem.colors.primary[600]} />
+              <History size={26} color={'#0D5FB8'} />
               Histórico de Movimentações
             </h1>
             <p
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.sm,
-                margin: `${designSystem.spacing.xs} 0 0 0`,
+                color: '#666666',
+                fontSize: '14px',
+                margin: `4px 0 0 0`,
               }}
             >
               Entradas, saídas e ajustes de estoque com auditoria completa.
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Button onClick={() => reloadInventoryData()} style={secondaryBtnStyle}>
             <RefreshCw size={14} /> Atualizar
           </Button>
@@ -446,8 +443,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={onNewEntry}
               style={{
                 ...primaryBtnStyle,
-                background: designSystem.colors.success,
-                boxShadow: `0 4px 12px ${designSystem.colors.success}40`,
+                background: '#28A745',
+                boxShadow: `0 4px 12px #28A74540`,
               }}
             >
               <ArrowDownCircle size={16} /> + Entrada
@@ -458,8 +455,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={onNewExit}
               style={{
                 ...primaryBtnStyle,
-                background: designSystem.colors.error,
-                boxShadow: `0 4px 12px ${designSystem.colors.error}40`,
+                background: '#DC3545',
+                boxShadow: `0 4px 12px #DC354540`,
               }}
             >
               <ArrowUpCircle size={16} /> - Saída
@@ -472,33 +469,33 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <MetricCard
           icon={<TrendingUp size={16} />}
           label="Entradas"
-          accent={designSystem.colors.success}
+          accent={'#28A745'}
           value={metrics.entradas}
           subtitle={formatCurrency(metrics.valorEntradas)}
         />
         <MetricCard
           icon={<TrendingDown size={16} />}
           label="Saídas"
-          accent={designSystem.colors.error}
+          accent={'#DC3545'}
           value={metrics.saidas}
           subtitle={formatCurrency(metrics.valorSaidas)}
         />
         <MetricCard
           icon={<Settings2 size={16} />}
           label="Ajustes"
-          accent={designSystem.colors.warning}
+          accent={'#FFC107'}
           value={metrics.ajustes}
         />
         <MetricCard
           icon={<History size={16} />}
           label="Total Movimentos"
-          accent={designSystem.colors.primary[600]}
+          accent={'#0D5FB8'}
           value={metrics.total}
         />
       </section>
@@ -507,17 +504,17 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: designSystem.spacing.lg,
+          gap: '24px',
         }}
       >
         <Card>
-          <CardContent style={{ padding: designSystem.spacing.lg }}>
+          <CardContent style={{ padding: '24px' }}>
             <h3
               style={{
-                margin: `0 0 ${designSystem.spacing.md} 0`,
-                fontSize: designSystem.typography.fontSizes.md,
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                margin: `0 0 16px 0`,
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#1A1A1A',
               }}
             >
               Movimentação Diária (últimos 14 dias)
@@ -525,10 +522,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             {chartData.length === 0 ? (
               <div
                 style={{
-                  padding: designSystem.spacing.xl,
+                  padding: '32px',
                   textAlign: 'center',
-                  color: designSystem.colors.text.secondary,
-                  fontSize: designSystem.typography.fontSizes.sm,
+                  color: '#666666',
+                  fontSize: '14px',
                 }}
               >
                 Sem dados de movimentação no período.
@@ -537,39 +534,26 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               <div style={{ width: '100%', height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke={designSystem.colors.border} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="dia"
-                      tick={{ fontSize: 11, fill: designSystem.colors.text.secondary }}
-                    />
-                    <YAxis tick={{ fontSize: 11, fill: designSystem.colors.text.secondary }} />
+                    <CartesianGrid stroke={'#E0E0E0'} strokeDasharray="3 3" />
+                    <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#666666' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#666666' }} />
                     <Tooltip
                       contentStyle={{
-                        background: designSystem.colors.surface,
-                        border: `1px solid ${designSystem.colors.border}`,
-                        borderRadius: designSystem.borderRadius.md,
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontFamily: designSystem.typography.fontFamily,
+                        background: '#FFFFFF',
+                        border: `1px solid #E0E0E0`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                       }}
                     />
                     <Legend
                       wrapperStyle={{
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontFamily: designSystem.typography.fontFamily,
+                        fontSize: '12px',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                       }}
                     />
-                    <Bar
-                      dataKey="entrada"
-                      name="Entradas"
-                      fill={designSystem.colors.success}
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="saida"
-                      name="Saídas"
-                      fill={designSystem.colors.error}
-                      radius={[4, 4, 0, 0]}
-                    />
+                    <Bar dataKey="entrada" name="Entradas" fill={'#28A745'} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="saida" name="Saídas" fill={'#DC3545'} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -578,13 +562,13 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         </Card>
 
         <Card>
-          <CardContent style={{ padding: designSystem.spacing.lg }}>
+          <CardContent style={{ padding: '24px' }}>
             <h3
               style={{
-                margin: `0 0 ${designSystem.spacing.md} 0`,
-                fontSize: designSystem.typography.fontSizes.md,
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                margin: `0 0 16px 0`,
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#1A1A1A',
               }}
             >
               Saldo Líquido (últimos 14 dias)
@@ -592,10 +576,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             {chartData.length === 0 ? (
               <div
                 style={{
-                  padding: designSystem.spacing.xl,
+                  padding: '32px',
                   textAlign: 'center',
-                  color: designSystem.colors.text.secondary,
-                  fontSize: designSystem.typography.fontSizes.sm,
+                  color: '#666666',
+                  fontSize: '14px',
                 }}
               >
                 Sem dados para exibir.
@@ -604,32 +588,29 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               <div style={{ width: '100%', height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke={designSystem.colors.border} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="dia"
-                      tick={{ fontSize: 11, fill: designSystem.colors.text.secondary }}
-                    />
-                    <YAxis tick={{ fontSize: 11, fill: designSystem.colors.text.secondary }} />
+                    <CartesianGrid stroke={'#E0E0E0'} strokeDasharray="3 3" />
+                    <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#666666' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#666666' }} />
                     <Tooltip
                       contentStyle={{
-                        background: designSystem.colors.surface,
-                        border: `1px solid ${designSystem.colors.border}`,
-                        borderRadius: designSystem.borderRadius.md,
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontFamily: designSystem.typography.fontFamily,
+                        background: '#FFFFFF',
+                        border: `1px solid #E0E0E0`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                       }}
                     />
                     <Legend
                       wrapperStyle={{
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontFamily: designSystem.typography.fontFamily,
+                        fontSize: '12px',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                       }}
                     />
                     <Line
                       type="monotone"
                       dataKey="liquido"
                       name="Líquido"
-                      stroke={designSystem.colors.primary[500]}
+                      stroke={'#0D66CC'}
                       strokeWidth={2}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
@@ -645,18 +626,18 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
       {topMaterials.length > 0 && (
         <section
           style={{
-            background: designSystem.colors.surface,
-            borderRadius: designSystem.borderRadius.lg,
-            boxShadow: designSystem.shadows.md,
-            padding: designSystem.spacing.lg,
+            background: '#FFFFFF',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            padding: '24px',
           }}
         >
           <h3
             style={{
-              margin: `0 0 ${designSystem.spacing.md} 0`,
-              fontSize: designSystem.typography.fontSizes.md,
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              margin: `0 0 16px 0`,
+              fontSize: '16px',
+              fontWeight: 700,
+              color: '#1A1A1A',
             }}
           >
             Top materiais com mais movimento
@@ -665,24 +646,24 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
             }}
           >
             {topMaterials.map((m, idx) => (
               <div
                 key={idx}
                 style={{
-                  background: designSystem.colors.background,
-                  border: `1px solid ${designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
-                  padding: designSystem.spacing.sm,
+                  background: '#FAFAFA',
+                  border: `1px solid #E0E0E0`,
+                  borderRadius: '8px',
+                  padding: '8px',
                 }}
               >
                 <div
                   style={{
                     fontSize: '11px',
-                    color: designSystem.colors.text.secondary,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
+                    color: '#666666',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                   }}
@@ -691,9 +672,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 </div>
                 <div
                   style={{
-                    fontSize: designSystem.typography.fontSizes.sm,
-                    fontWeight: designSystem.typography.fontWeights.bold,
-                    color: designSystem.colors.text.primary,
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: '#1A1A1A',
                     marginBottom: 4,
                   }}
                 >
@@ -702,16 +683,16 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
                   <span
                     style={{
-                      color: designSystem.colors.success,
-                      fontWeight: designSystem.typography.fontWeights.semibold,
+                      color: '#28A745',
+                      fontWeight: 600,
                     }}
                   >
                     +{m.entrada}
                   </span>
                   <span
                     style={{
-                      color: designSystem.colors.error,
-                      fontWeight: designSystem.typography.fontWeights.semibold,
+                      color: '#DC3545',
+                      fontWeight: 600,
                     }}
                   >
                     -{m.saida}
@@ -725,10 +706,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <div
@@ -737,18 +718,18 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              gap: '4px',
+              color: '#666666',
+              fontSize: '14px',
+              fontWeight: 600,
             }}
           >
             <Filter size={14} /> Filtros
@@ -759,8 +740,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -768,10 +749,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                left: designSystem.spacing.md,
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -820,8 +801,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             ))}
           </select>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.xs }}>
-            <Calendar size={14} color={designSystem.colors.text.secondary} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={14} color={'#666666'} />
             <input
               type="date"
               value={dateFrom}
@@ -830,12 +811,12 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 setPage(1);
               }}
               aria-label="Data inicial"
-              style={{ ...inputStyle, paddingLeft: designSystem.spacing.md }}
+              style={{ ...inputStyle, paddingLeft: '16px' }}
             />
             <span
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.xs,
+                color: '#666666',
+                fontSize: '12px',
               }}
             >
               até
@@ -848,7 +829,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 setPage(1);
               }}
               aria-label="Data final"
-              style={{ ...inputStyle, paddingLeft: designSystem.spacing.md }}
+              style={{ ...inputStyle, paddingLeft: '16px' }}
             />
           </div>
 
@@ -858,18 +839,18 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: designSystem.colors.error,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#DC3545',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: designSystem.spacing.xs,
+                gap: '4px',
               }}
             >
               <X size={12} /> Limpar filtros
@@ -881,15 +862,15 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           style={{
             width: '100%',
             overflowX: 'auto',
-            borderRadius: designSystem.borderRadius.md,
-            border: `1px solid ${designSystem.colors.border}`,
+            borderRadius: '8px',
+            border: `1px solid #E0E0E0`,
           }}
         >
           <table
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontSize: designSystem.typography.fontSizes.sm,
+              fontSize: '14px',
             }}
             role="table"
             aria-label="Histórico de movimentações de estoque"
@@ -897,8 +878,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             <thead>
               <tr
                 style={{
-                  background: designSystem.colors.background,
-                  borderBottom: `2px solid ${designSystem.colors.border}`,
+                  background: '#FAFAFA',
+                  borderBottom: `2px solid #E0E0E0`,
                 }}
               >
                 <SortHeader k="data" label="Data" />
@@ -916,9 +897,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   <td
                     colSpan={7}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     Carregando movimentações…
@@ -929,16 +910,16 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   <td
                     colSpan={7}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     <History
                       size={32}
                       style={{ opacity: 0.3, margin: '0 auto', display: 'block' }}
                     />
-                    <p style={{ margin: `${designSystem.spacing.sm} 0 0 0` }}>
+                    <p style={{ margin: `8px 0 0 0` }}>
                       {hasActiveFilter
                         ? 'Nenhuma movimentação encontrada com os filtros atuais.'
                         : 'Nenhuma movimentação registrada no sistema.'}
@@ -950,30 +931,27 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   const meta = TYPE_META[m.tipo as MovementType] || TYPE_META.ajuste;
                   const mat = materiais.find((x) => x.id === m.material_id);
                   return (
-                    <tr
-                      key={m.id}
-                      style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                    >
+                    <tr key={m.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
-                          fontSize: designSystem.typography.fontSizes.xs,
+                          padding: '16px',
+                          color: '#666666',
+                          fontSize: '12px',
                           whiteSpace: 'nowrap',
                         }}
                       >
                         {formatDateTime(m.created_at)}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <span
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
-                            padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                            borderRadius: designSystem.borderRadius.full,
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            fontWeight: designSystem.typography.fontWeights.bold,
+                            padding: `4px 8px`,
+                            borderRadius: '9999px',
+                            fontSize: '12px',
+                            fontWeight: 700,
                             background: meta.bg,
                             color: meta.fg,
                             border: `1px solid ${meta.border}`,
@@ -982,11 +960,11 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           {meta.icon} {meta.label}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {m.material_nome || mat?.nome || '—'}
@@ -994,7 +972,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                         <div
                           style={{
                             fontSize: '11px',
-                            color: designSystem.colors.text.secondary,
+                            color: '#666666',
                             fontFamily: 'monospace',
                             marginTop: 2,
                           }}
@@ -1002,16 +980,16 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           {m.material_sku || mat?.sku || ''}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.bold,
+                            fontWeight: 700,
                             color:
                               m.tipo === 'entrada'
-                                ? designSystem.colors.success
+                                ? '#28A745'
                                 : m.tipo === 'saida'
-                                  ? designSystem.colors.error
-                                  : designSystem.colors.text.primary,
+                                  ? '#DC3545'
+                                  : '#1A1A1A',
                           }}
                         >
                           {meta.sign}
@@ -1022,7 +1000,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: designSystem.colors.text.secondary,
+                              color: '#666666',
                               marginTop: 2,
                             }}
                           >
@@ -1032,8 +1010,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
+                          padding: '16px',
+                          color: '#666666',
                           maxWidth: 240,
                         }}
                       >
@@ -1044,8 +1022,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: designSystem.colors.primary[600],
-                              fontWeight: designSystem.typography.fontWeights.semibold,
+                              color: '#0D5FB8',
+                              fontWeight: 600,
                               marginTop: 2,
                             }}
                           >
@@ -1055,9 +1033,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
-                          fontSize: designSystem.typography.fontSizes.xs,
+                          padding: '16px',
+                          color: '#666666',
+                          fontSize: '12px',
                         }}
                       >
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -1066,8 +1044,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
+                          padding: '16px',
+                          color: '#666666',
                           fontFamily: 'monospace',
                           fontSize: '11px',
                           whiteSpace: 'nowrap',
@@ -1090,8 +1068,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              marginTop: designSystem.spacing.lg,
+              gap: '4px',
+              marginTop: '24px',
             }}
           >
             <Button
@@ -1106,17 +1084,15 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 key={n}
                 onClick={() => setPage(n)}
                 style={{
-                  background:
-                    n === safePage ? designSystem.colors.primary[500] : designSystem.colors.surface,
-                  color:
-                    n === safePage ? designSystem.colors.surface : designSystem.colors.text.primary,
-                  border: `1px solid ${n === safePage ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
-                  padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                  fontSize: designSystem.typography.fontSizes.sm,
-                  fontWeight: designSystem.typography.fontWeights.semibold,
+                  background: n === safePage ? '#0D66CC' : '#FFFFFF',
+                  color: n === safePage ? '#FFFFFF' : '#1A1A1A',
+                  border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                  borderRadius: '8px',
+                  padding: `4px 16px`,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: designSystem.typography.fontFamily,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   minWidth: 36,
                 }}
               >
@@ -1146,14 +1122,14 @@ const MetricCard: React.FC<{
 }> = ({ icon, label, value, subtitle, accent }) => (
   <div
     style={{
-      background: designSystem.colors.surface,
-      border: `1px solid ${designSystem.colors.border}`,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.sm,
-      padding: designSystem.spacing.md,
+      background: '#FFFFFF',
+      border: `1px solid #E0E0E0`,
+      borderRadius: '12px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      padding: '16px',
       display: 'flex',
       alignItems: 'center',
-      gap: designSystem.spacing.sm,
+      gap: '8px',
     }}
   >
     <span
@@ -1163,7 +1139,7 @@ const MetricCard: React.FC<{
         justifyContent: 'center',
         width: 36,
         height: 36,
-        borderRadius: designSystem.borderRadius.md,
+        borderRadius: '8px',
         background: `${accent}15`,
         color: accent,
       }}
@@ -1174,8 +1150,8 @@ const MetricCard: React.FC<{
       <div
         style={{
           fontSize: '11px',
-          color: designSystem.colors.text.secondary,
-          fontWeight: designSystem.typography.fontWeights.semibold,
+          color: '#666666',
+          fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.04em',
         }}
@@ -1184,18 +1160,16 @@ const MetricCard: React.FC<{
       </div>
       <div
         style={{
-          fontSize: designSystem.typography.fontSizes.xl,
-          fontWeight: designSystem.typography.fontWeights.bold,
-          color: designSystem.colors.text.primary,
+          fontSize: '20px',
+          fontWeight: 700,
+          color: '#1A1A1A',
           lineHeight: 1.1,
         }}
       >
         {value.toLocaleString('pt-BR')}
       </div>
       {subtitle && (
-        <div style={{ fontSize: '11px', color: designSystem.colors.text.secondary, marginTop: 2 }}>
-          {subtitle}
-        </div>
+        <div style={{ fontSize: '11px', color: '#666666', marginTop: 2 }}>{subtitle}</div>
       )}
     </div>
   </div>
@@ -1203,68 +1177,68 @@ const MetricCard: React.FC<{
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: designSystem.colors.surface,
-  border: `1px solid ${designSystem.colors.border}`,
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-  paddingLeft: designSystem.spacing['2xl'],
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontFamily: designSystem.typography.fontFamily,
-  color: designSystem.colors.text.primary,
+  background: '#FFFFFF',
+  border: `1px solid #E0E0E0`,
+  borderRadius: '8px',
+  padding: `8px 16px`,
+  paddingLeft: '48px',
+  fontSize: '14px',
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  color: '#1A1A1A',
   outline: 'none',
   boxSizing: 'border-box',
 };
 
 const thStyle: React.CSSProperties = {
-  padding: designSystem.spacing.md,
-  fontSize: designSystem.typography.fontSizes.xs,
-  fontWeight: designSystem.typography.fontWeights.semibold,
-  color: designSystem.colors.text.secondary,
+  padding: '16px',
+  fontSize: '12px',
+  fontWeight: 600,
+  color: '#666666',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   textAlign: 'left',
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  background: designSystem.colors.primary[500],
-  color: designSystem.colors.surface,
+  background: '#0D66CC',
+  color: '#FFFFFF',
   border: 'none',
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  borderRadius: '8px',
+  padding: `8px 24px`,
+  fontSize: '14px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.sm,
+  gap: '8px',
   cursor: 'pointer',
 };
 
 const secondaryBtnStyle: React.CSSProperties = {
-  background: designSystem.colors.surface,
-  color: designSystem.colors.text.primary,
-  border: `1px solid ${designSystem.colors.border}`,
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  background: '#FFFFFF',
+  color: '#1A1A1A',
+  border: `1px solid #E0E0E0`,
+  borderRadius: '8px',
+  padding: `8px 24px`,
+  fontSize: '14px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.sm,
+  gap: '8px',
   cursor: 'pointer',
 };
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: designSystem.colors.surface,
-    color: designSystem.colors.text.primary,
-    border: `1px solid ${designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    background: '#FFFFFF',
+    color: '#1A1A1A',
+    border: `1px solid #E0E0E0`,
+    borderRadius: '8px',
+    padding: `4px 16px`,
+    fontSize: '14px',
+    fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 

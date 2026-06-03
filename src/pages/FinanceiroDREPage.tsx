@@ -187,7 +187,7 @@ export default function FinanceiroDREPage() {
             DRE CORPORATIVO
           </h1>
           <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
-            DemonstraÃ§Ã£o do Resultado do ExercÃ­cio
+            Demonstração do Resultado do Exercício
           </p>
         </div>
 
@@ -212,7 +212,7 @@ export default function FinanceiroDREPage() {
             </span>
           </Button>
 
-          {/* Filtro de PerÃ­odo Industrial */}
+          {/* Filtro de Período Industrial */}
           <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-border">
             <input
               type="date"
@@ -221,7 +221,7 @@ export default function FinanceiroDREPage() {
               onChange={(e) => setPeriodo((p) => ({ ...p, inicio: e.target.value }))}
             />
             <span className="text-[10px] font-black text-muted-foreground opacity-50 italic">
-              ATÃ‰
+              ATÉ
             </span>
             <input
               type="date"
@@ -254,7 +254,7 @@ export default function FinanceiroDREPage() {
         <div className="glass-elevated p-20 rounded-3xl text-center">
           <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
           <p className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">
-            Sem dados operacionais para o perÃ­odo
+            Sem dados operacionais para o período
           </p>
         </div>
       ) : (
@@ -268,10 +268,10 @@ export default function FinanceiroDREPage() {
               value={data.receita_bruta}
               colorClass="border-emerald-500"
               sectionKey="receitas"
-              sublabel="ConsolidaÃ§Ã£o de Vendas e ServiÃ§os Industriais"
+              sublabel="Consolidação de Vendas e Serviços Industriais"
             >
               {data.detalhes?.receitas?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} â€” ${r.nome}`} value={r.valor} />
+                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} />
               ))}
             </Block>
 
@@ -287,15 +287,15 @@ export default function FinanceiroDREPage() {
             <Divider label="CUSTOS DE PRODUÃ‡ÃƒO" />
 
             <Block
-              label="MATÃ‰RIA-PRIMA & MÃƒO DE OBRA"
+              label="MATÉRIA-PRIMA & MÃƒO DE OBRA"
               value={data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0}
               colorClass="border-orange-500"
               isNegative
               sectionKey="custos"
-              sublabel="Custos Diretos AtribuÃ­veis (Classes 2.1 e 2.2)"
+              sublabel="Custos Diretos Atribuíveis (Classes 2.1 e 2.2)"
             >
               {data.detalhes?.custos_diretos?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} â€” ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -307,7 +307,7 @@ export default function FinanceiroDREPage() {
                   LUCRO BRUTO INDUSTRIAL
                 </span>
                 <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-widest mt-1">
-                  Margem de ContribuiÃ§Ã£o: {fmtPct(data.margem_bruta)}
+                  Margem de Contribuição: {fmtPct(data.margem_bruta)}
                 </span>
               </span>
               <span
@@ -331,7 +331,7 @@ export default function FinanceiroDREPage() {
               sublabel="Apoio de Vendas, Fretes e Marketing"
             >
               {data.detalhes?.despesas_operacionais?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} â€” ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -346,10 +346,10 @@ export default function FinanceiroDREPage() {
               colorClass="border-red-500"
               isNegative
               sectionKey="despesasAdmin"
-              sublabel="Custos Fixos de GestÃ£o e Suporte"
+              sublabel="Custos Fixos de Gestão e Suporte"
             >
               {data.detalhes?.despesas_administrativas?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} â€” ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -398,7 +398,7 @@ export default function FinanceiroDREPage() {
                   LUCRO LÃQUIDO OPERACIONAL
                 </div>
                 <div className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">
-                  Margem LÃ­quida Final:{' '}
+                  Margem Líquida Final:{' '}
                   <span className={data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500'}>
                     {fmtPct(data.margem_liquida)}
                   </span>
@@ -412,7 +412,7 @@ export default function FinanceiroDREPage() {
             </div>
           </div>
 
-          {/* Sidebar de InteligÃªncia Financeira */}
+          {/* Sidebar de Inteligência Financeira */}
           <div className="lg:col-span-4 space-y-8 sticky top-8">
             <div className="glass-elevated p-8 rounded-3xl border border-border space-y-8">
               <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50 flex items-center gap-2">
@@ -433,7 +433,7 @@ export default function FinanceiroDREPage() {
                   bg: 'bg-primary',
                 },
                 {
-                  label: 'Margem LÃ­quida',
+                  label: 'Margem Líquida',
                   value: data.margem_liquida,
                   color: data.margem_liquida >= 0 ? 'text-emerald-500' : 'text-red-500',
                   bg: data.margem_liquida >= 0 ? 'bg-emerald-500' : 'bg-red-500',
@@ -527,12 +527,12 @@ export default function FinanceiroDREPage() {
                 ) : (
                   <Minus className="w-5 h-5 text-primary rotate-90" />
                 )}
-                {regime === 'competencia' ? 'ESTRATÃ‰GIA COMPETÃŠNCIA' : 'REALIDADE CAIXA'}
+                {regime === 'competencia' ? 'ESTRATÉGIA COMPETÃŠNCIA' : 'REALIDADE CAIXA'}
               </div>
               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-3 opacity-60 leading-relaxed">
                 {regime === 'competencia'
-                  ? 'Reconhecimento contÃ¡bil por emissÃ£o de fatura/vencimento'
-                  : 'Reconhecimento efetivo por entrada e saÃ­da de numerÃ¡rio'}
+                  ? 'Reconhecimento contábil por emissão de fatura/vencimento'
+                  : 'Reconhecimento efetivo por entrada e saída de numerário'}
               </p>
             </div>
           </div>

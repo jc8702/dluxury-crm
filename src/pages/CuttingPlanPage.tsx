@@ -91,7 +91,7 @@ const CuttingPlanPage: React.FC = () => {
     api.estoque.list().then(setMateriaisEstoque).catch(console.error);
   }, []);
 
-  // Reagir a mudanÃ§as de ID na URL para carregar o plano
+  // Reagir a mudanças de ID na URL para carregar o plano
   useEffect(() => {
     if (currentUrlId) {
       setLoading(true);
@@ -132,7 +132,7 @@ const CuttingPlanPage: React.FC = () => {
 
   const handleCalcular = async () => {
     if (grupos.length === 0 || pecas.length === 0) {
-      warning('Adicione ao menos um material e uma peÃ§a.');
+      warning('Adicione ao menos um material e uma peça.');
       return;
     }
 
@@ -141,16 +141,14 @@ const CuttingPlanPage: React.FC = () => {
       setResultado(res);
       setActiveChapaIdx(0);
     } catch (e: any) {
-      console.error('Erro no cÃ¡lculo:', e);
-      error(
-        `Erro ao calcular plano de corte: ${e.message || 'Verifique as dimensÃµes das peÃ§as'}`,
-      );
+      console.error('Erro no cálculo:', e);
+      error(`Erro ao calcular plano de corte: ${e.message || 'Verifique as dimensões das peças'}`);
     }
   };
 
   const handleSave = async () => {
     if (!resultado) {
-      warning('Realize o cÃ¡lculo antes de salvar.');
+      warning('Realize o cálculo antes de salvar.');
       return;
     }
 
@@ -231,7 +229,7 @@ const CuttingPlanPage: React.FC = () => {
 
   const handleAprovarProducao = async () => {
     if (!resultado || !plano.id) {
-      warning('Salve o plano antes de aprovar a produÃ§Ã£o.');
+      warning('Salve o plano antes de aprovar a produção.');
       return;
     }
 
@@ -296,7 +294,7 @@ const CuttingPlanPage: React.FC = () => {
       success(`PRODUÃ‡ÃƒO APROVADA! OP ${opId} GERADA COM SUCESSO.`);
       navigate('/producao');
     } catch (e) {
-      console.error('Erro ao aprovar produÃ§Ã£o', e);
+      console.error('Erro ao aprovar produção', e);
       error('FALHA AO APROVAR PRODUÃ‡ÃƒO.');
     } finally {
       setLoading(false);
@@ -351,7 +349,7 @@ const CuttingPlanPage: React.FC = () => {
       ...pecas,
       {
         id: Math.random().toString(36).substring(7),
-        descricao: `PeÃ§a ${pecas.length + 1}`,
+        descricao: `Peça ${pecas.length + 1}`,
         larguraMm: 500,
         alturaMm: 400,
         quantidade: 1,
@@ -378,7 +376,7 @@ const CuttingPlanPage: React.FC = () => {
       );
 
       if (approvedOrcs.length === 0) {
-        warning('Este projeto nÃ£o possui orÃ§amentos aprovados.');
+        warning('Este projeto não possui orçamentos aprovados.');
         setLoading(false);
         return;
       }
@@ -454,7 +452,7 @@ const CuttingPlanPage: React.FC = () => {
 
           novasPecas.push({
             id: Math.random().toString(36).substring(7),
-            descricao: peca.descricao_peca || 'PeÃ§a Importada',
+            descricao: peca.descricao_peca || 'Peça Importada',
             larguraMm: Math.round(Number(peca.largura_cm) * 10),
             alturaMm: Math.round(Number(peca.altura_cm) * 10),
             quantidade: Number(peca.quantidade) || 1,
@@ -473,7 +471,7 @@ const CuttingPlanPage: React.FC = () => {
       setShowImportModal(false);
 
       if (totalImportado > 0) {
-        success(`${totalImportado} peÃ§as importadas com sucesso!`);
+        success(`${totalImportado} peças importadas com sucesso!`);
       }
     } catch (_e) {
       error('FALHA AO IMPORTAR PEÃ‡AS.');
@@ -509,7 +507,7 @@ const CuttingPlanPage: React.FC = () => {
 
       novasPecas.push({
         id: Math.random().toString(36).substring(7),
-        descricao: p.nome || 'PeÃ§a Importada',
+        descricao: p.nome || 'Peça Importada',
         larguraMm: p.largura_mm || p.largura,
         alturaMm: p.altura_mm || p.altura,
         quantidade: p.quantidade || 1,
@@ -880,14 +878,14 @@ const CuttingPlanPage: React.FC = () => {
                     Aguardando Engenharia
                   </h2>
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
-                    Configure os materiais e peÃ§as no painel lateral
+                    Configure os materiais e peças no painel lateral
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* PAINEL DE MÃ‰TRICAS BOTTOM */}
+          {/* PAINEL DE MÉTRICAS BOTTOM */}
           {resultado && (
             <div className="p-8 pb-10">
               <div className="glass-elevated bg-primary/5 rounded-[2.5rem] border border-primary/20 p-8 flex items-center justify-between backdrop-blur-xl shadow-2xl shadow-black/40 animate-slide-up">
@@ -986,7 +984,7 @@ const CuttingPlanPage: React.FC = () => {
                   </div>
                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                     <History className="w-3 h-3" />{' '}
-                    {p.criado_em ? new Date(p.criado_em).toLocaleString() : 'Data nÃ£o informada'}
+                    {p.criado_em ? new Date(p.criado_em).toLocaleString() : 'Data não informada'}
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center group-hover:border-primary/30 group-hover:text-primary transition-all">
@@ -1033,7 +1031,7 @@ const CuttingPlanPage: React.FC = () => {
         width="1200px"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-4">
-          {/* OpÃ§Ã£o 1: Arquivos Externos */}
+          {/* Opção 1: Arquivos Externos */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
@@ -1053,7 +1051,7 @@ const CuttingPlanPage: React.FC = () => {
             </div>
           </div>
 
-          {/* OpÃ§Ã£o 2: CRM/ERP */}
+          {/* Opção 2: CRM/ERP */}
           <div className="space-y-6 flex flex-col h-full">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">

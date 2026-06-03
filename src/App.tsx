@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -44,6 +44,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const NotificacoesPage = lazy(() => import('./pages/NotificacoesPage'));
 const ComprasPage = lazy(() => import('./pages/ComprasPage'));
 const AprovacaoPage = lazy(() => import('./pages/AprovacaoPage'));
+const ProspeccaoPage = lazy(() => import('./pages/ProspeccaoPage'));
 const PlanoCorteDemoPage = lazy(() => import('./pages/PlanoCorteDemo'));
 const RetalhosPage = lazy(() => import('./pages/RetalhosPage'));
 const SaaSAdminPage = lazy(() => import('./pages/SaaSAdminPage'));
@@ -65,7 +66,7 @@ function LoadingScreen() {
     <div className="flex items-center justify-center h-screen bg-background flex-col gap-4">
       <div className="w-9 h-9 border-3 border-border border-t-primary rounded-full animate-spin" />
       <span className="text-foreground text-[13px] font-semibold tracking-widest font-display">
-        FATTO OS
+        D'LUXURY CRM
       </span>
     </div>
   );
@@ -238,6 +239,7 @@ export default function App() {
                       <Route path="painel" element={<DashboardPage />} />
                       <Route path="clientes" element={<ClientsPage />} />
                       <Route path="orcamentos" element={<QuotationForm />} />
+                      <Route path="prospeccao" element={<ProspeccaoPage />} />
                       <Route path="projetos" element={<ProjectsPage />} />
                       <Route path="visitas" element={<VisitsPage />} />
                       <Route path="calendario" element={<CalendarioPage />} />

@@ -115,7 +115,7 @@ export function ImportarProjeto({
                 onClick={handleConfirmarImportacao}
                 disabled={isAdding}
               >
-                {isAdding ? 'Adicionando...' : 'Adicionar ao OrÃ§amento'}
+                {isAdding ? 'Adicionando...' : 'Adicionar ao Orçamento'}
               </Button>
             </div>
           )}
@@ -124,8 +124,8 @@ export function ImportarProjeto({
         <div className="flex items-start gap-2 p-4 bg-muted/30 border border-border rounded-xl text-[10px] text-muted-foreground">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
           <p>
-            Importe listas de peÃ§as diretamente dos seus projetos 3D para economizar tempo e evitar
-            erros de digitaÃ§Ã£o.
+            Importe listas de peças diretamente dos seus projetos 3D para economizar tempo e evitar
+            erros de digitação.
           </p>
         </div>
       </Modal>

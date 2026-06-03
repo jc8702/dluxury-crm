@@ -30,7 +30,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
       printWindow.document.write(`
         <html>
           <head>
-            <title>Recibo de QuitaÃ§Ã£o - ${titulo.numero_titulo}</title>
+            <title>Recibo de Quitação - ${titulo.numero_titulo}</title>
             <style>
               body { font-family: sans-serif; padding: 40px; color: #333; }
               .recibo { border: 2px solid #eee; padding: 40px; position: relative; }
@@ -57,7 +57,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Recibo de QuitaÃ§Ã£o" width="700px">
+    <Modal isOpen={isOpen} onClose={onClose} title="Recibo de Quitação" width="700px">
       <div id="recibo-print-area">
         <div
           className="recibo"
@@ -84,7 +84,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
                   margin: '0.25rem 0 0 0',
                 }}
               >
-                TÃ­tulo NÂº {titulo.numero_titulo}
+                Título NÂº {titulo.numero_titulo}
               </p>
             </div>
             <div
@@ -112,7 +112,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
           >
             <p>
               Recebemos {tipo === 'receber' ? 'de' : 'para'}{' '}
-              <strong>{beneficiarioOuPagador.toUpperCase()}</strong> a importÃ¢ncia de
+              <strong>{beneficiarioOuPagador.toUpperCase()}</strong> a importância de
               <strong>
                 {' '}
                 R${' '}
@@ -120,12 +120,12 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
                   minimumFractionDigits: 2,
                 })}
               </strong>
-              , referente Ã quitaÃ§Ã£o do tÃ­tulo mencionado acima, com vencimento em{' '}
+              , referente Ã quitação do título mencionado acima, com vencimento em{' '}
               <strong>{new Date(titulo.data_vencimento).toLocaleDateString('pt-BR')}</strong>.
             </p>
             <p>
-              Pela presente, damos plena, geral e irrevogÃ¡vel quitaÃ§Ã£o do referido valor, para
-              nada mais reclamar a qualquer tÃ­tulo ou tempo.
+              Pela presente, damos plena, geral e irrevogável quitação do referido valor, para nada
+              mais reclamar a qualquer título ou tempo.
             </p>
           </div>
 
@@ -170,7 +170,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
               justifyContent: 'space-between',
             }}
           >
-            <span>AutenticaÃ§Ã£o EletrÃ´nica: {titulo.id?.substring(0, 18).toUpperCase()}</span>
+            <span>Autenticação Eletrônica: {titulo.id?.substring(0, 18).toUpperCase()}</span>
             <span>Emitido via D'Luxury ERP</span>
           </div>
         </div>

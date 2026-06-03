@@ -132,7 +132,7 @@ export default function FinanceiroFluxoCaixaPage() {
             </h1>
           </div>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.95rem', margin: 0 }}>
-            ProjeÃ§Ã£o estratÃ©gica de liquidez e saÃºde financeira
+            Projeção estratégica de liquidez e saúde financeira
           </p>
         </div>
 
@@ -227,13 +227,13 @@ export default function FinanceiroFluxoCaixaPage() {
             icon: ArrowRight,
           },
           {
-            label: 'Total SaÃ­das',
+            label: 'Total Saídas',
             value: periodos.reduce((s, p) => s + p.despesas, 0),
             color: 'hsl(var(--destructive))',
             icon: ArrowRight,
           },
           {
-            label: 'Ponto de EquilÃ­brio (Final)',
+            label: 'Ponto de Equilíbrio (Final)',
             value: periodos[periodos.length - 1]?.saldo_projetado || saldoAtual,
             color: 'hsl(var(--accent))',
             icon: TrendingUp,
@@ -383,7 +383,7 @@ export default function FinanceiroFluxoCaixaPage() {
                   DETALHAMENTO TEMPORAL
                 </CardTitle>
                 <div style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-                  * Clique na linha para selecionar o perÃ­odo
+                  * Clique na linha para selecionar o período
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Button
@@ -416,7 +416,7 @@ export default function FinanceiroFluxoCaixaPage() {
                           textTransform: 'uppercase',
                         }}
                       >
-                        PerÃ­odo
+                        Período
                       </th>
                       <th
                         style={{
@@ -582,7 +582,7 @@ export default function FinanceiroFluxoCaixaPage() {
                 >
                   <Info size={32} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                   <p style={{ fontSize: '0.85rem' }}>
-                    Selecione um perÃ­odo no grid para ver os tÃ­tulos individuais
+                    Selecione um período no grid para ver os títulos individuais
                   </p>
                 </div>
               ) : (
@@ -605,7 +605,7 @@ export default function FinanceiroFluxoCaixaPage() {
                         marginBottom: '1rem',
                       }}
                     >
-                      {new Date(selectedPeriod.inicio).toLocaleDateString()} atÃ©{' '}
+                      {new Date(selectedPeriod.inicio).toLocaleDateString()} até{' '}
                       {new Date(selectedPeriod.fim).toLocaleDateString()}
                     </div>
                   </div>
@@ -702,7 +702,7 @@ export default function FinanceiroFluxoCaixaPage() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <span>SaÃ­das Previstas</span>
+                      <span>Saídas Previstas</span>
                       <span>{fmt(selectedPeriod.despesas)}</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -717,7 +717,7 @@ export default function FinanceiroFluxoCaixaPage() {
                             borderRadius: '8px',
                           }}
                         >
-                          Nenhuma saÃ­da.
+                          Nenhuma saída.
                         </div>
                       ) : (
                         selectedPeriod.titulos_pagar.map((t: any, i: number) => (
@@ -791,8 +791,8 @@ export default function FinanceiroFluxoCaixaPage() {
                   margin: 0,
                 }}
               >
-                Este valor representa o saldo final projetado apÃ³s todas as movimentaÃ§Ãµes
-                previstas atÃ© o fim deste perÃ­odo.
+                Este valor representa o saldo final projetado após todas as movimentações previstas
+                até o fim deste período.
               </p>
             </CardContent>
           </Card>

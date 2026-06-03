@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
-import { CategoriaMaterial, Material, MovimentacaoEstoque, Fornecedor } from '../types';
+import type { CategoriaMaterial, Material, MovimentacaoEstoque, Fornecedor } from '../types';
 
 interface InventoryState {
   categorias: CategoriaMaterial[];

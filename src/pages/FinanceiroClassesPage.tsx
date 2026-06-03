@@ -31,14 +31,14 @@ const TIPOS_MARCENARIA = [
   // RECEITAS
   {
     codigo: '1.1',
-    nome: 'Vendas de MÃ³veis Sob Medida',
+    nome: 'Vendas de Móveis Sob Medida',
     tipo: 'receita',
     natureza: 'credora',
     pai_id: null,
   },
   {
     codigo: '1.1.1',
-    nome: 'DormitÃ³rios e SuÃ­tes',
+    nome: 'Dormitórios e Suítes',
     tipo: 'receita',
     natureza: 'credora',
     pai_id: null,
@@ -53,14 +53,14 @@ const TIPOS_MARCENARIA = [
   { codigo: '1.1.3', nome: 'Home Office', tipo: 'receita', natureza: 'credora', pai_id: null },
   {
     codigo: '1.1.4',
-    nome: 'Ãreas de ServiÃ§o e Banheiros',
+    nome: 'Ãreas de Serviço e Banheiros',
     tipo: 'receita',
     natureza: 'credora',
     pai_id: null,
   },
   {
     codigo: '1.2',
-    nome: 'ServiÃ§os e Montagem',
+    nome: 'Serviços e Montagem',
     tipo: 'receita',
     natureza: 'credora',
     pai_id: null,
@@ -81,7 +81,7 @@ const TIPOS_MARCENARIA = [
     pai_id: null,
   },
   // DESPESAS
-  { codigo: '2.1', nome: 'MatÃ©ria-Prima', tipo: 'despesa', natureza: 'devedora', pai_id: null },
+  { codigo: '2.1', nome: 'Matéria-Prima', tipo: 'despesa', natureza: 'devedora', pai_id: null },
   {
     codigo: '2.1.1',
     nome: 'Chapas MDF / MDP',
@@ -91,35 +91,35 @@ const TIPOS_MARCENARIA = [
   },
   {
     codigo: '2.1.2',
-    nome: 'Ferragens e AcessÃ³rios',
+    nome: 'Ferragens e Acessórios',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
   },
   {
     codigo: '2.1.3',
-    nome: 'MÃ£o de Obra de ProduÃ§Ã£o',
+    nome: 'Mão de Obra de Produção',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
   },
   {
     codigo: '2.2',
-    nome: 'Custos de ProduÃ§Ã£o',
+    nome: 'Custos de Produção',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
   },
   {
     codigo: '2.2.1',
-    nome: 'Energia ElÃ©trica ProduÃ§Ã£o',
+    nome: 'Energia Elétrica Produção',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
   },
   {
     codigo: '2.2.2',
-    nome: 'ManutenÃ§Ã£o de MÃ¡quinas',
+    nome: 'Manutenção de Máquinas',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
@@ -161,7 +161,7 @@ const TIPOS_MARCENARIA = [
     natureza: 'devedora',
     pai_id: null,
   },
-  { codigo: '2.5.1', nome: 'SalÃ¡rios', tipo: 'despesa', natureza: 'devedora', pai_id: null },
+  { codigo: '2.5.1', nome: 'Salários', tipo: 'despesa', natureza: 'devedora', pai_id: null },
   {
     codigo: '2.5.2',
     nome: 'Encargos Trabalhistas',
@@ -178,7 +178,7 @@ const TIPOS_MARCENARIA = [
   },
   {
     codigo: '2.6.1',
-    nome: 'Contador / HonorÃ¡rios',
+    nome: 'Contador / Honorários',
     tipo: 'despesa',
     natureza: 'devedora',
     pai_id: null,
@@ -272,7 +272,7 @@ function TreeNode({
           )}
         </button>
 
-        {/* CÃ³digo */}
+        {/* Código */}
         <span
           style={{
             fontFamily: 'monospace',
@@ -318,7 +318,7 @@ function TreeNode({
               variant="outline"
               style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              <Activity size={12} /> {usage} tÃ­tulo{usage !== 1 ? 's' : ''}
+              <Activity size={12} /> {usage} título{usage !== 1 ? 's' : ''}
             </Badge>
           )}
 
@@ -390,8 +390,8 @@ export default function FinanceiroClassesPage() {
 
   const handleSeed = async () => {
     const isConfirmed = await confirmAction({
-      title: 'Criar Plano de Contas PadrÃ£o',
-      description: 'Isso vai criar o plano de contas padrÃ£o para marcenaria. Continuar?',
+      title: 'Criar Plano de Contas Padrão',
+      description: 'Isso vai criar o plano de contas padrão para marcenaria. Continuar?',
     });
     if (!isConfirmed) return;
     setSeeding(true);
@@ -437,7 +437,7 @@ export default function FinanceiroClassesPage() {
     try {
       await api.financeiro.classesFinanceiras.delete(id);
       await load();
-      success('Classe excluÃ­da com sucesso!');
+      success('Classe excluída com sucesso!');
     } catch (err: any) {
       error(err.message || 'Erro ao excluir classe');
     }
@@ -650,7 +650,7 @@ export default function FinanceiroClassesPage() {
                     display: 'block',
                   }}
                 >
-                  CÃ³digo *
+                  Código *
                 </label>
                 <Input
                   placeholder="ex: 1.1.2"
@@ -786,7 +786,7 @@ export default function FinanceiroClassesPage() {
                     setModal((m) => ({ ...m, permite_lancamento: e.target.checked }))
                   }
                 />
-                Permite LanÃ§amento
+                Permite Lançamento
               </label>
             </div>
             <div

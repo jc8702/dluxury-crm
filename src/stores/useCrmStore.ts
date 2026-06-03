@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
-import { Client, Project, Orcamento } from '../types';
+import type { Client, Project, Orcamento } from '../types';
 
 interface CrmState {
   clients: Client[];
   projects: Project[];
   orcamentos: Orcamento[];
   events: any[];
+  visits: any[];
 
   // Actions
   addClient: (data: Omit<Client, 'id'>) => Promise<void>;
@@ -24,6 +25,8 @@ interface CrmState {
   removeVisit: (id: string) => Promise<void>;
 
   reloadCRMData: () => Promise<void>;
+  loadEvents: () => Promise<void>;
+  updateKanbanStatus: (id: string, status: string) => Promise<void>;
 }
 
 export const useCrmStore = create<CrmState>((set, get) => ({
@@ -31,6 +34,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   projects: [],
   orcamentos: [],
   events: [],
+  visits: [],
 
   reloadCRMData: async () => {
     try {
@@ -113,7 +117,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
           }))
         : [];
 
-      set({ clients, events, projects, orcamentos });
+      const visits = events
+        .filter((e: any) => (e.tipo || '').toLowerCase() === 'visita')
+        .map((v: any) => ({
+          ...v,
+          id: v.id?.toString(),
+          status: v.status_visita || 'agendado',
+        }));
+
+      set({ clients, events, projects, orcamentos, visits });
     } catch (error) {
       console.error('Falha ao carregar dados do CRM:', error);
     }
@@ -185,6 +197,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
 
   removeVisit: async (id: string) => {
     await api.agenda.delete(id);
+    await get().reloadCRMData();
+  },
+
+  loadEvents: async () => {
+    await get().reloadCRMData();
+  },
+
+  updateKanbanStatus: async (id: string, status: string) => {
+    await api.agenda.move(id, status);
     await get().reloadCRMData();
   },
 }));

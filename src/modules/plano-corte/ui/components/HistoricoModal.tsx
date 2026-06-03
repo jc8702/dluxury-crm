@@ -36,7 +36,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
         setPlanos(listaPlanos || []);
         setProjetos(listaProjetos || []);
       } catch (err) {
-        console.error('Erro ao carregar histÃ³rico:', err);
+        console.error('Erro ao carregar histórico:', err);
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
   });
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="HistÃ³rico de Planos" size="lg">
+    <Modal isOpen={true} onClose={onFechar} title="Histórico de Planos" size="lg">
       <div className="flex flex-col gap-6 max-h-[75vh]">
         {/* FILTROS */}
         <div className="flex gap-4 items-center">
@@ -132,7 +132,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
                       </span>
                       {plano.projeto_id && (
                         <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
-                          {projetos.find((p) => p.id === plano.projeto_id)?.nome || 'MÃ³vel Custom'}
+                          {projetos.find((p) => p.id === plano.projeto_id)?.nome || 'Móvel Custom'}
                         </span>
                       )}
                     </div>
@@ -145,7 +145,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
                       <span className="text-sm opacity-50">%</span>
                     </div>
                     <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
-                      EficiÃªncia
+                      Eficiência
                     </div>
                   </div>
                   <div className="w-9 h-9 rounded-xl bg-foreground/5 border border-border/40 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all shadow-lg group-hover:shadow-primary/20">

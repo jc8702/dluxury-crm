@@ -27,7 +27,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const { error: toastError } = useToast();
 
-  // Mapeamento De-Para: Legado (utils/planodeCorte) -> DomÃ­nio (entities/CuttingPlan)
+  // Mapeamento De-Para: Legado (utils/planodeCorte) -> Domínio (entities/CuttingPlan)
   const mapearParaDominio = (): ResultadoOtimizacao => {
     const layouts: LayoutChapa[] = resultado.grupos.flatMap((g) =>
       g.superficies.map((s, idx) => ({
@@ -63,7 +63,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
     try {
       const headers = [
         'Etiqueta',
-        'DescriÃ§Ã£o',
+        'Descrição',
         'L (mm)',
         'A (mm)',
         'Qtd',
@@ -173,7 +173,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Central de ExportaÃ§Ã£o" size="lg">
+    <Modal isOpen={true} onClose={onClose} title="Central de Exportação" size="lg">
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mapa de Corte */}
@@ -189,7 +189,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               Mapa de Corte (PDF)
             </h3>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Escala 1:8 em formato A3 para montagem na fÃ¡brica.
+              Escala 1:8 em formato A3 para montagem na fábrica.
             </p>
           </button>
 
@@ -203,10 +203,10 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               <Printer size={24} />
             </div>
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
-              Etiquetas (TÃ©rmica)
+              Etiquetas (Térmica)
             </h3>
             <p className="text-[10px] text-muted-foreground mt-1">
-              Etiquetas 100x50mm com QR Code e informaÃ§Ãµes industriais.
+              Etiquetas 100x50mm com QR Code e informações industriais.
             </p>
           </button>
 
@@ -229,7 +229,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             </p>
           </button>
 
-          {/* Lista de ProduÃ§Ã£o (CSV) */}
+          {/* Lista de Produção (CSV) */}
           <button
             onClick={handleExportCSV}
             disabled={isExporting}
@@ -239,10 +239,10 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
               <FileSpreadsheet size={24} />
             </div>
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
-              Lista de PeÃ§as (CSV)
+              Lista de Peças (CSV)
             </h3>
             <p className="text-[10px] text-muted-foreground mt-1">
-              ExportaÃ§Ã£o bruta de peÃ§as para ERPs e planilhas externas.
+              Exportação bruta de peças para ERPs e planilhas externas.
             </p>
           </button>
         </div>
@@ -251,7 +251,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
           <div className="p-4 bg-primary/5 border border-primary/15 rounded-xl flex items-center justify-center gap-3">
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
             <span className="text-xs font-bold text-primary">
-              Gerando arquivos de exportaÃ§Ã£o...
+              Gerando arquivos de exportação...
             </span>
           </div>
         )}

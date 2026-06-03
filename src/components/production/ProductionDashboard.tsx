@@ -21,7 +21,7 @@ const ProductionDashboard: React.FC = () => {
       const data = await api.production.getMetrics();
       setMetrics(data);
     } catch (e) {
-      console.error('Erro ao buscar mÃ©tricas de produÃ§Ã£o', e);
+      console.error('Erro ao buscar métricas de produção', e);
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ const ProductionDashboard: React.FC = () => {
             textTransform: 'uppercase',
           }}
         >
-          Atrasos CrÃ­ticos
+          Atrasos Críticos
         </p>
         <h4
           style={{
@@ -90,7 +90,7 @@ const ProductionDashboard: React.FC = () => {
         >
           {metrics?.opsAtrasadas || 0}
         </h4>
-        <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>âš ï¸ Requer AtenÃ§Ã£o</div>
+        <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>âš ï¸ Requer Atenção</div>
       </div>
 
       <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
@@ -119,7 +119,7 @@ const ProductionDashboard: React.FC = () => {
             textTransform: 'uppercase',
           }}
         >
-          OEE / EficiÃªncia
+          OEE / Eficiência
         </p>
         <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>
           {(metrics?.taxaEficiencia ?? 0).toFixed(1)}%

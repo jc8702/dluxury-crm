@@ -124,11 +124,11 @@ const SignupPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans p-12 box-border relative">
       {/* Header / Brand */}
       <div className="text-center mb-14">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-primary">
-          F
+        <div className="w-16 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20 flex items-center justify-center mx-auto mb-6 text-primary-foreground font-black text-3xl shadow-lg shadow-primary/30">
+          DL
         </div>
         <h1 id="signup-title" className="text-[2.4rem] font-black m-0 tracking-wider">
-          FATTO OS
+          D'LUXURY CRM
         </h1>
         <p className="text-accent text-sm font-bold mt-2 uppercase tracking-[3px]">
           Plataforma de Gestão Moveleira Premium
@@ -175,7 +175,9 @@ const SignupPage: React.FC = () => {
                   placeholder="suamarcenaria"
                   className={`${inputClass} pr-[120px]`}
                 />
-                <span className="absolute right-3 text-primary text-sm font-bold">.fatto-os</span>
+                <span className="absolute right-3 text-primary text-sm font-bold">
+                  .dluxury-crm
+                </span>
               </div>
               <div className="mt-1.5 text-xs flex items-center gap-2">
                 {subdomainStatus === 'checking' && (
@@ -191,7 +193,7 @@ const SignupPage: React.FC = () => {
                 )}
                 {subdomainStatus === 'idle' && (
                   <span className="text-muted-foreground font-medium">
-                    Exemplo: suamarcenaria.fatto-os.vercel.app
+                    Exemplo: suamarcenaria.dluxury-crm.vercel.app
                   </span>
                 )}
               </div>
@@ -307,7 +309,7 @@ const SignupPage: React.FC = () => {
               id="btn-signup-submit"
               type="submit"
               disabled={loading || subdomainStatus !== 'available'}
-              className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-primary transition-all duration-200 hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Provisionando Conta...' : 'Iniciar Teste de 14 Dias'}
             </button>

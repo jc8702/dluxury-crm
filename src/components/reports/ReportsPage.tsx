@@ -54,7 +54,7 @@ const ReportsPage: React.FC = () => {
       setReportData(data || []);
       setActiveReport(type);
     } catch (err) {
-      console.error('Erro ao carregar relatÃ³rio:', err);
+      console.error('Erro ao carregar relatório:', err);
     } finally {
       setLoading(false);
     }
@@ -71,14 +71,14 @@ const ReportsPage: React.FC = () => {
         const prj = projects.find((p) => p.id === selectedProjectId);
         await reportService.generateRomaneioProducao(prj?.ambiente || 'Projeto', reportData);
       } else {
-        toastInfo('ExportaÃ§Ã£o para este relatÃ³rio estÃ¡ sendo preparada.');
+        toastInfo('Exportação para este relatório está sendo preparada.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Renderiza grÃ¡fico reativo com base no tipo de relatÃ³rio ativo
+  // Renderiza gráfico reativo com base no tipo de relatório ativo
   const renderChart = () => {
     if (reportData.length === 0) return null;
 
@@ -88,14 +88,14 @@ const ReportsPage: React.FC = () => {
         name: (item.projeto || item.name || '').substring(0, 15),
         'Valor Venda': Number(item.valor_venda || item.receita || 0),
         'Custo Insumos': Number(item.custo_material || item.custo || 0),
-        'Margem LÃ­quida': Number(item.margem_valor || item.lucro || 0),
+        'Margem Líquida': Number(item.margem_valor || item.lucro || 0),
       }));
 
       return (
         <Card className="mb-6 border-border/50">
           <CardHeader>
             <CardTitle className="text-xs font-black tracking-widest uppercase italic text-primary">
-              AnÃ¡lise de Rentabilidade por Projeto
+              Análise de Rentabilidade por Projeto
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
@@ -126,7 +126,7 @@ const ReportsPage: React.FC = () => {
                 <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                 <Bar dataKey="Valor Venda" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Custo Insumos" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Margem LÃ­quida" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Margem Líquida" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -137,7 +137,7 @@ const ReportsPage: React.FC = () => {
     if (activeReport === 'com-necessidade') {
       const chartData = reportData.slice(0, 8).map((item) => ({
         name: (item.material || item.sku || '').substring(0, 15),
-        'Qtd NecessÃ¡ria': Number(item.quantidade_necessaria || item.quantidade || 0),
+        'Qtd Necessária': Number(item.quantidade_necessaria || item.quantidade || 0),
         'Qtd Estoque': Number(item.quantidade_estoque || item.estoque || 0),
       }));
 
@@ -145,7 +145,7 @@ const ReportsPage: React.FC = () => {
         <Card className="mb-6 border-border/50">
           <CardHeader>
             <CardTitle className="text-xs font-black tracking-widest uppercase italic text-primary">
-              Necessidade de MatÃ©ria-Prima em Estoque
+              Necessidade de Matéria-Prima em Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
@@ -173,7 +173,7 @@ const ReportsPage: React.FC = () => {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                <Bar dataKey="Qtd NecessÃ¡ria" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Qtd Necessária" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Qtd Estoque" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -205,19 +205,19 @@ const ReportsPage: React.FC = () => {
             </span>
           </h1>
           <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
-            MÃ©tricas de produÃ§Ã£o marcenaria, fluxo de caixa, custos integrados de peÃ§as e
-            insumos para auditoria gerencial.
+            Métricas de produção marcenaria, fluxo de caixa, custos integrados de peças e insumos
+            para auditoria gerencial.
           </p>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        {/* Menu Lateral de RelatÃ³rios */}
+        {/* Menu Lateral de Relatórios */}
         <aside className="md:col-span-3 space-y-6">
           <Card className="glass-elevated rounded-3xl border border-border">
             <CardHeader>
               <CardTitle className="text-xs font-black tracking-widest uppercase italic">
-                PainÃ©is Financeiros
+                Painéis Financeiros
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 p-4 pt-0">
@@ -233,7 +233,7 @@ const ReportsPage: React.FC = () => {
           <Card className="glass-elevated rounded-3xl border border-border">
             <CardHeader>
               <CardTitle className="text-xs font-black tracking-widest uppercase italic">
-                Operacional & ProduÃ§Ã£o
+                Operacional & Produção
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 p-4 pt-0">
@@ -302,30 +302,30 @@ const ReportsPage: React.FC = () => {
                   QUETIONADOR DE BI DESATIVADO
                 </h3>
                 <p className="text-muted-foreground max-w-md mx-auto text-xs uppercase tracking-wider font-medium leading-relaxed mb-6">
-                  Selecione um dos relatÃ³rios do menu ao lado para extrair inteligÃªncia,
-                  renderizar grÃ¡ficos interativos e exportar documentos PDF oficiais.
+                  Selecione um dos relatórios do menu ao lado para extrair inteligência, renderizar
+                  gráficos interativos e exportar documentos PDF oficiais.
                 </p>
               </Card>
 
               {[
                 {
                   title: 'Rentabilidade',
-                  desc: 'AnÃ¡lise de margem por contrato, deduzindo chapas MDF, fita de borda e ferragens vinculadas.',
+                  desc: 'Análise de margem por contrato, deduzindo chapas MDF, fita de borda e ferragens vinculadas.',
                   icon: TrendingUp,
                 },
                 {
-                  title: 'Romaneio TÃ©cnico',
-                  desc: 'Lista detalhada de peÃ§as prontas para a expediÃ§Ã£o e entrega na obra com etiquetas.',
+                  title: 'Romaneio Técnico',
+                  desc: 'Lista detalhada de peças prontas para a expedição e entrega na obra com etiquetas.',
                   icon: Layers,
                 },
                 {
-                  title: 'Desvios de ProduÃ§Ã£o',
-                  desc: 'IdentificaÃ§Ã£o de retrabalhos de corte ou peÃ§as refeitas por falhas no processo.',
+                  title: 'Desvios de Produção',
+                  desc: 'Identificação de retrabalhos de corte ou peças refeitas por falhas no processo.',
                   icon: AlertCircle,
                 },
                 {
                   title: 'Planejamento de Compras',
-                  desc: 'PrevisÃ£o de faltas de insumos com base em orÃ§amentos recÃ©m-fechados no funil.',
+                  desc: 'Previsão de faltas de insumos com base em orçamentos recém-fechados no funil.',
                   icon: ShoppingCart,
                 },
               ].map((box, i) => (
@@ -349,10 +349,10 @@ const ReportsPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* GrÃ¡ficos em Tempo Real */}
+              {/* Gráficos em Tempo Real */}
               {renderChart()}
 
-              {/* Tabela de Dados e AÃ§Ãµes */}
+              {/* Tabela de Dados e Ações */}
               <Card className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl">
                 <CardHeader className="flex flex-row justify-between items-center border-b border-border p-6 flex-wrap gap-4 bg-muted/10">
                   <div>

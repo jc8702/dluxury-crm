@@ -53,7 +53,7 @@ export function PainelPecasChapa({
           </div>
           <div>
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFA500]">
-              PeÃ§as da Chapa
+              Peças da Chapa
             </h3>
             <p className="text-[9px] font-mono text-[#666]">{pecas.length} itens configurados</p>
           </div>
@@ -63,7 +63,7 @@ export function PainelPecasChapa({
           size="icon"
           onClick={onAddPeca}
           className="h-9 w-9 hover:bg-[#FFA500] hover:text-black border-[#FFA500]/20 text-[#FFA500]"
-          title="Adicionar PeÃ§a"
+          title="Adicionar Peça"
         >
           <Plus size={18} />
         </Button>
@@ -75,11 +75,11 @@ export function PainelPecasChapa({
           <AlertTriangle size={14} className="text-[#FFA500] flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider leading-tight">
-              Ãrea total das peÃ§as excede a chapa
+              Ãrea total das peças excede a chapa
             </p>
             <p className="text-[8px] font-mono text-[#888] mt-0.5">
-              {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² necessÃ¡rio Â·{' '}
-              {areaInfo.areaChapa.toLocaleString()} mmÂ² disponÃ­vel Â· ~{areaInfo.chapasEstimadas}{' '}
+              {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² necessário Â·{' '}
+              {areaInfo.areaChapa.toLocaleString()} mmÂ² disponível Â· ~{areaInfo.chapasEstimadas}{' '}
               chapas
             </p>
           </div>
@@ -101,16 +101,16 @@ export function PainelPecasChapa({
         </div>
       )}
 
-      {/* Lista de PeÃ§as */}
+      {/* Lista de Peças */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
         {pecas.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center">
-            <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peÃ§a adicionada</p>
+            <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peça adicionada</p>
             <Button
               onClick={onAddPeca}
               className="bg-[#FFA500] text-black hover:bg-[#FFD700] px-4 py-2 h-auto text-[10px] font-black flex items-center gap-2 uppercase tracking-wider"
             >
-              <Plus size={14} /> Adicionar Primeira PeÃ§a
+              <Plus size={14} /> Adicionar Primeira Peça
             </Button>
           </div>
         ) : (
@@ -212,12 +212,12 @@ export function PainelPecasChapa({
         )}
       </div>
 
-      {/* Footer com AÃ§Ã£o */}
+      {/* Footer com Ação */}
       {pecas.length > 0 && (
         <div className="p-4 bg-[#222] border-t border-[#333]">
           {areaInfo && areaInfo.extrapolou && (
             <p className="text-[8px] font-bold text-[#FFA500] uppercase tracking-wider text-center mb-2">
-              A otimizaÃ§Ã£o distribuirÃ¡ as peÃ§as em {areaInfo.chapasEstimadas} chapas
+              A otimização distribuirá as peças em {areaInfo.chapasEstimadas} chapas
             </p>
           )}
           <Button

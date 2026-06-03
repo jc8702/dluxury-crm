@@ -67,7 +67,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
 
       setForm((prev) => ({ ...prev, sku: nextSku }));
     }
-  }, [form.categoria_id, material]); // Ignorando 'materiais' de propÃ³sito para rodar apenas ao trocar categoria
+  }, [form.categoria_id, material]); // Ignorando 'materiais' de propósito para rodar apenas ao trocar categoria
 
   useEffect(() => {
     if (material) {
@@ -101,14 +101,14 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     }
   }, [material]);
 
-  // CÃ¡lculos em Tempo Real
+  // Cálculos em Tempo Real
   const calculos = React.useMemo(() => {
     const custoNF = Number(form.preco_custo || 0);
     const fator = Number(form.fator_conversao || 1);
     const margem = Number(form.margem_lucro || 0);
 
     const custoUnitBruto = custoNF / fator;
-    // Perda tÃ©cnica: 10% para Chapas, 1.0 para outros
+    // Perda técnica: 10% para Chapas, 1.0 para outros
     const fatorPerda = form.unidade_compra === 'chapa' ? 1.1 : 1.05;
     const custoComPerda = custoUnitBruto * fatorPerda;
     const precoVendaCalculado = custoComPerda + margem;
@@ -129,7 +129,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         next.fator_conversao = Number(area.toFixed(4));
       }
 
-      // Recalcula o preÃ§o de venda para manter sincronia
+      // Recalcula o preço de venda para manter sincronia
       const custoNF = next.preco_custo;
       const margemVal = next.margem_lucro;
       const fator = next.fator_conversao || 1;
@@ -161,7 +161,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         next.fator_conversao = 1;
       }
 
-      // Recalcula o preÃ§o de venda para manter sincronia
+      // Recalcula o preço de venda para manter sincronia
       const custoNF = next.preco_custo;
       const margemVal = next.margem_lucro;
       const fator = next.fator_conversao || 1;
@@ -176,7 +176,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
   const handlePriceChange = (field: 'preco_custo' | 'margem_lucro', value: number) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      // Recalcula o preÃ§o de venda para manter sincronia no estado antes de salvar
+      // Recalcula o preço de venda para manter sincronia no estado antes de salvar
       const custoNF = field === 'preco_custo' ? value : prev.preco_custo;
       const margemVal = field === 'margem_lucro' ? value : prev.margem_lucro;
       const fator = prev.fator_conversao || 1;
@@ -215,20 +215,20 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
     >
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">
-          Cadastre as especificaÃ§Ãµes tÃ©cnicas para controle MRP.
+          Cadastre as especificações técnicas para controle MRP.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* IdentificaÃ§Ã£o */}
+          {/* Identificação */}
           <div className="flex flex-col gap-4">
             <h5 className="text-xs font-bold text-primary border-b border-border pb-2 uppercase tracking-wider">
-              IdentificaÃ§Ã£o
+              Identificação
             </h5>
             <div className="flex flex-col gap-4">
               <Input
-                label="SKU / CÃ³digo Ãšnico *"
+                label="SKU / Código Ãšnico *"
                 value={form.sku}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 required
@@ -276,10 +276,10 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
             </div>
           </div>
 
-          {/* ConversÃ£o e LogÃ­stica */}
+          {/* Conversão e Logística */}
           <div className="flex flex-col gap-4">
             <h5 className="text-xs font-bold text-primary border-b border-border pb-2 uppercase tracking-wider">
-              ConversÃ£o e LogÃ­stica
+              Conversão e Logística
             </h5>
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
@@ -324,7 +324,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
               <Input
                 type="number"
                 step="0.0001"
-                label="Fator de ConversÃ£o (Compra â†’ Uso)"
+                label="Fator de Conversão (Compra â†’ Uso)"
                 value={form.fator_conversao}
                 onChange={(e) => setForm({ ...form, fator_conversao: Number(e.target.value) })}
                 helperText="Ex: 1 chapa = 5.0325 mÂ². 1 rolo = 50m."
@@ -351,16 +351,16 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
           </div>
         </div>
 
-        {/* ParÃ¢metros Financeiros e PrecificaÃ§Ã£o */}
+        {/* Parâmetros Financeiros e Precificação */}
         <div className="flex flex-col gap-4">
           <h5 className="text-xs font-bold text-primary border-b border-border pb-2 uppercase tracking-wider">
-            ParÃ¢metros Financeiros e PrecificaÃ§Ã£o
+            Parâmetros Financeiros e Precificação
           </h5>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               type="number"
               step="0.01"
-              label="PreÃ§o Custo (Total NF R$)"
+              label="Preço Custo (Total NF R$)"
               value={form.preco_custo}
               onChange={(e) => handlePriceChange('preco_custo', Number(e.target.value))}
             />
@@ -377,7 +377,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
           <div className="mt-2 p-4 bg-primary/5 border border-dashed border-primary rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
               <span className="text-xs text-muted-foreground block font-medium">
-                Resumo de ProduÃ§Ã£o
+                Resumo de Produção
               </span>
               <span className="text-sm font-semibold">
                 Este material custa{' '}
@@ -387,12 +387,12 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 por {form.unidade_uso} efetivo.
               </span>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Considerando {calculos.perdaPct}% de perda tÃ©cnica sobre o custo unitÃ¡rio de R${' '}
+                Considerando {calculos.perdaPct}% de perda técnica sobre o custo unitário de R${' '}
                 {calculos.unitarioBruto.toFixed(2)}.
               </p>
             </div>
             <div className="md:text-right">
-              <span className="text-xs text-muted-foreground font-medium">SugestÃ£o de Venda:</span>
+              <span className="text-xs text-muted-foreground font-medium">Sugestão de Venda:</span>
               <div className="text-lg font-bold text-success">R$ {calculos.venda.toFixed(2)}</div>
             </div>
           </div>
@@ -441,11 +441,11 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
         {/* Dados Fiscais */}
         <div className="flex flex-col gap-4">
           <h5 className="text-xs font-bold text-primary border-b border-border pb-2 uppercase tracking-wider">
-            InformaÃ§Ãµes Fiscais (Brasil)
+            Informações Fiscais (Brasil)
           </h5>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="CFOP PadrÃ£o"
+              label="CFOP Padrão"
               value={form.cfop}
               onChange={(e) => setForm({ ...form, cfop: e.target.value })}
               placeholder="5.101"
@@ -464,7 +464,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 onChange={(e) => setForm({ ...form, origem: Number(e.target.value) })}
               >
                 <option value={0}>0 - Nacional</option>
-                <option value={1}>1 - Estrangeira (ImportaÃ§Ã£o Direta)</option>
+                <option value={1}>1 - Estrangeira (Importação Direta)</option>
                 <option value={2}>2 - Estrangeira (Adquirida no Mercado Interno)</option>
               </select>
             </div>
@@ -489,7 +489,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
 
         <div>
           <label className="block text-sm font-medium text-foreground/90 mb-2">
-            ObservaÃ§Ãµes Internas
+            Observações Internas
           </label>
           <textarea
             className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"

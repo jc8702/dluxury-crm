@@ -23,7 +23,6 @@ import {
   FileText,
   Clock,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button, Card, CardContent, Badge } from '../../components/common';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
@@ -401,13 +400,13 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: designSystem.spacing['2xl'],
-          gap: designSystem.spacing.md,
-          color: designSystem.colors.text.secondary,
+          padding: '48px',
+          gap: '16px',
+          color: '#666666',
           minHeight: 320,
         }}
       >
-        <Loader2 size={32} className="animate-spin" color={designSystem.colors.primary[500]} />
+        <Loader2 size={32} className="animate-spin" color={'#0D66CC'} />
         <span>Sincronizando com o chão de fábrica…</span>
       </div>
     );
@@ -415,22 +414,20 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
 
   if (!order) {
     return (
-      <div style={{ padding: designSystem.spacing.xl, textAlign: 'center' }}>
-        <AlertTriangle size={32} color={designSystem.colors.warning} style={{ marginBottom: 8 }} />
-        <p style={{ color: designSystem.colors.text.secondary }}>
-          Ordem de produção não encontrada.
-        </p>
+      <div style={{ padding: '32px', textAlign: 'center' }}>
+        <AlertTriangle size={32} color={'#FFC107'} style={{ marginBottom: 8 }} />
+        <p style={{ color: '#666666' }}>Ordem de produção não encontrada.</p>
         <Button
           onClick={() => (onBack ? onBack() : navigate(-1))}
           style={{
-            marginTop: designSystem.spacing.md,
-            background: designSystem.colors.primary[500],
-            color: designSystem.colors.surface,
+            marginTop: '16px',
+            background: '#0D66CC',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: designSystem.borderRadius.md,
-            padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-            fontSize: designSystem.typography.fontSizes.sm,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            borderRadius: '8px',
+            padding: `8px 24px`,
+            fontSize: '14px',
+            fontWeight: 600,
             cursor: 'pointer',
           }}
         >
@@ -446,16 +443,16 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.lg,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '24px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
         .ds-production-detail input:focus, .ds-production-detail select:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         @media print {
           .ds-production-detail .no-print { display: none !important; }
@@ -470,10 +467,10 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.md }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             type="button"
             onClick={() => (onBack ? onBack() : navigate(-1))}
@@ -484,10 +481,10 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
               justifyContent: 'center',
               width: 36,
               height: 36,
-              borderRadius: designSystem.borderRadius.md,
-              border: `1px solid ${designSystem.colors.border}`,
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.secondary,
+              borderRadius: '8px',
+              border: `1px solid #E0E0E0`,
+              background: '#FFFFFF',
+              color: '#666666',
               cursor: 'pointer',
             }}
           >
@@ -496,29 +493,29 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
           <div>
             <h1
               style={{
-                fontSize: designSystem.typography.fontSizes['2xl'],
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#1A1A1A',
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
-                gap: designSystem.spacing.sm,
+                gap: '8px',
               }}
             >
-              <Hammer size={22} color={designSystem.colors.primary[600]} /> Ordem #{order.op_id}
+              <Hammer size={22} color={'#0D5FB8'} /> Ordem #{order.op_id}
             </h1>
             <p
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.sm,
-                margin: `${designSystem.spacing.xs} 0 0 0`,
+                color: '#666666',
+                fontSize: '14px',
+                margin: `4px 0 0 0`,
               }}
             >
               {order.produto} • {order.pecas} {order.pecas === 1 ? 'peça' : 'peças'}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Button onClick={fetchOrder} style={secondaryBtnStyle} aria-label="Atualizar">
             <RefreshCw size={14} /> Atualizar
           </Button>
@@ -531,7 +528,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       <section
         style={{
           display: 'grid',
-          gap: designSystem.spacing.md,
+          gap: '16px',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         }}
       >
@@ -540,7 +537,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               flexWrap: 'wrap',
             }}
           >
@@ -549,10 +546,10 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                borderRadius: designSystem.borderRadius.full,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.bold,
+                padding: `4px 8px`,
+                borderRadius: '9999px',
+                fontSize: '12px',
+                fontWeight: 700,
                 background: statusMeta?.bg,
                 color: statusMeta?.fg,
                 border: `1px solid ${statusMeta?.border}`,
@@ -566,9 +563,9 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 4,
-                  color: designSystem.colors.error,
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  fontWeight: designSystem.typography.fontWeights.semibold,
+                  color: '#DC3545',
+                  fontSize: '12px',
+                  fontWeight: 600,
                 }}
               >
                 <AlertTriangle size={12} /> Em atraso
@@ -579,17 +576,15 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         <SummaryCard icon={<User size={16} />} label="Cliente">
           <div
             style={{
-              fontSize: designSystem.typography.fontSizes.sm,
-              color: designSystem.colors.text.primary,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              fontSize: '14px',
+              color: '#1A1A1A',
+              fontWeight: 600,
             }}
           >
             {order.cliente || '—'}
           </div>
           {order.quotation_numero && (
-            <div
-              style={{ fontSize: '11px', color: designSystem.colors.text.secondary, marginTop: 2 }}
-            >
+            <div style={{ fontSize: '11px', color: '#666666', marginTop: 2 }}>
               Orçamento #{order.quotation_numero}
             </div>
           )}
@@ -597,25 +592,23 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         <SummaryCard icon={<Calendar size={16} />} label="Previsão de Entrega">
           <div
             style={{
-              fontSize: designSystem.typography.fontSizes.sm,
-              color: late ? designSystem.colors.error : designSystem.colors.text.primary,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              fontSize: '14px',
+              color: late ? '#DC3545' : '#1A1A1A',
+              fontWeight: 600,
             }}
           >
             {formatDate(order.data_prevista_entrega)}
           </div>
-          <div
-            style={{ fontSize: '11px', color: designSystem.colors.text.secondary, marginTop: 2 }}
-          >
+          <div style={{ fontSize: '11px', color: '#666666', marginTop: 2 }}>
             Início: {formatDate(order.data_inicio || order.created_at)}
           </div>
         </SummaryCard>
         <SummaryCard icon={<ClipboardList size={16} />} label="Etapas Concluídas">
           <div
             style={{
-              fontSize: designSystem.typography.fontSizes.sm,
-              color: designSystem.colors.text.primary,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              fontSize: '14px',
+              color: '#1A1A1A',
+              fontWeight: 600,
             }}
           >
             {steps.filter((s) => s.completed).length} / {steps.length}
@@ -633,27 +626,27 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       <section
         className="no-print"
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
           display: 'flex',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.sm,
+          gap: '8px',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
         <div
           style={{
-            color: designSystem.colors.text.secondary,
-            fontSize: designSystem.typography.fontSizes.sm,
+            color: '#666666',
+            fontSize: '14px',
           }}
         >
-          <strong style={{ color: designSystem.colors.text.primary }}>Ações da OP</strong> —
-          atualize o status conforme o avanço da produção.
+          <strong style={{ color: '#1A1A1A' }}>Ações da OP</strong> — atualize o status conforme o
+          avanço da produção.
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Button
             onClick={handleStart}
             disabled={
@@ -664,8 +657,8 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             }
             style={{
               ...actionBtnStyle,
-              background: designSystem.colors.success,
-              color: designSystem.colors.surface,
+              background: '#28A745',
+              color: '#FFFFFF',
               opacity: actionLoading === 'start' || isRunning || isCompleted ? 0.5 : 1,
             }}
           >
@@ -681,7 +674,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             disabled={!!actionLoading || isCompleted || !isRunning || isPaused}
             style={{
               ...actionBtnStyle,
-              background: designSystem.colors.warning,
+              background: '#FFC107',
               color: '#1A1A1A',
               opacity: actionLoading === 'pause' || isCompleted || !isRunning || isPaused ? 0.5 : 1,
             }}
@@ -698,8 +691,8 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             disabled={!!actionLoading || isCompleted}
             style={{
               ...actionBtnStyle,
-              background: designSystem.colors.primary[500],
-              color: designSystem.colors.surface,
+              background: '#0D66CC',
+              color: '#FFFFFF',
               opacity: actionLoading === 'complete' || isCompleted ? 0.5 : 1,
             }}
           >
@@ -716,8 +709,8 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             style={{
               ...actionBtnStyle,
               background: 'transparent',
-              color: designSystem.colors.error,
-              border: `1px solid ${designSystem.colors.error}`,
+              color: '#DC3545',
+              border: `1px solid #DC3545`,
               opacity: actionLoading === 'cancel' || isCompleted || isPaused ? 0.5 : 1,
             }}
           >
@@ -735,17 +728,17 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: designSystem.spacing.lg,
+          gap: '24px',
         }}
       >
         <Card>
-          <CardContent style={{ padding: designSystem.spacing.lg }}>
+          <CardContent style={{ padding: '24px' }}>
             <SectionTitle icon={<Scissors size={16} />} title="Passo a passo (Cutting Plan)" />
             {steps.length === 0 ? (
               <p
                 style={{
-                  color: designSystem.colors.text.secondary,
-                  fontSize: designSystem.typography.fontSizes.sm,
+                  color: '#666666',
+                  fontSize: '14px',
                 }}
               >
                 Nenhuma etapa definida para esta ordem.
@@ -758,7 +751,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   margin: 0,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: designSystem.spacing.sm,
+                  gap: '8px',
                 }}
               >
                 {steps.map((s, idx) => (
@@ -767,11 +760,11 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: designSystem.spacing.sm,
-                      padding: designSystem.spacing.sm,
-                      background: s.completed ? '#E6F4EA' : designSystem.colors.background,
-                      border: `1px solid ${s.completed ? '#A8D5B6' : designSystem.colors.border}`,
-                      borderRadius: designSystem.borderRadius.md,
+                      gap: '8px',
+                      padding: '8px',
+                      background: s.completed ? '#E6F4EA' : '#FAFAFA',
+                      border: `1px solid ${s.completed ? '#A8D5B6' : '#E0E0E0'}`,
+                      borderRadius: '8px',
                     }}
                   >
                     <button
@@ -782,10 +775,10 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                       style={{
                         width: 28,
                         height: 28,
-                        borderRadius: designSystem.borderRadius.full,
-                        border: `2px solid ${s.completed ? designSystem.colors.success : designSystem.colors.border}`,
-                        background: s.completed ? designSystem.colors.success : 'transparent',
-                        color: designSystem.colors.surface,
+                        borderRadius: '9999px',
+                        border: `2px solid ${s.completed ? '#28A745' : '#E0E0E0'}`,
+                        background: s.completed ? '#28A745' : 'transparent',
+                        color: '#FFFFFF',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -798,20 +791,18 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                     <div style={{ flex: 1 }}>
                       <div
                         style={{
-                          fontSize: designSystem.typography.fontSizes.xs,
-                          color: designSystem.colors.text.secondary,
-                          fontWeight: designSystem.typography.fontWeights.semibold,
+                          fontSize: '12px',
+                          color: '#666666',
+                          fontWeight: 600,
                         }}
                       >
                         Etapa {idx + 1}
                       </div>
                       <div
                         style={{
-                          fontSize: designSystem.typography.fontSizes.sm,
-                          color: s.completed
-                            ? designSystem.colors.success
-                            : designSystem.colors.text.primary,
-                          fontWeight: designSystem.typography.fontWeights.semibold,
+                          fontSize: '14px',
+                          color: s.completed ? '#28A745' : '#1A1A1A',
+                          fontWeight: 600,
                           textDecoration: s.completed ? 'line-through' : 'none',
                         }}
                       >
@@ -827,13 +818,13 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             {cuttingPlan && (
               <div
                 style={{
-                  marginTop: designSystem.spacing.md,
-                  padding: designSystem.spacing.sm,
-                  background: designSystem.colors.background,
-                  border: `1px dashed ${designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  color: designSystem.colors.text.secondary,
+                  marginTop: '16px',
+                  padding: '8px',
+                  background: '#FAFAFA',
+                  border: `1px dashed #E0E0E0`,
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  color: '#666666',
                 }}
               >
                 <strong>Plano de corte vinculado:</strong> {cuttingPlan.nome || cuttingPlan.id}
@@ -844,13 +835,13 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         </Card>
 
         <Card>
-          <CardContent style={{ padding: designSystem.spacing.lg }}>
+          <CardContent style={{ padding: '24px' }}>
             <SectionTitle icon={<Layers size={16} />} title="Itens a Produzir" />
             {(order.metadata?.pecas?.length ?? 0) === 0 ? (
               <p
                 style={{
-                  color: designSystem.colors.text.secondary,
-                  fontSize: designSystem.typography.fontSizes.sm,
+                  color: '#666666',
+                  fontSize: '14px',
                 }}
               >
                 Nenhuma peça cadastrada para esta ordem.
@@ -859,22 +850,22 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
               <div
                 style={{
                   overflowX: 'auto',
-                  borderRadius: designSystem.borderRadius.md,
-                  border: `1px solid ${designSystem.colors.border}`,
+                  borderRadius: '8px',
+                  border: `1px solid #E0E0E0`,
                 }}
               >
                 <table
                   style={{
                     width: '100%',
                     borderCollapse: 'collapse',
-                    fontSize: designSystem.typography.fontSizes.sm,
+                    fontSize: '14px',
                   }}
                 >
                   <thead>
                     <tr
                       style={{
-                        background: designSystem.colors.background,
-                        borderBottom: `2px solid ${designSystem.colors.border}`,
+                        background: '#FAFAFA',
+                        borderBottom: `2px solid #E0E0E0`,
                       }}
                     >
                       <th style={thStyle}>Peça</th>
@@ -885,23 +876,20 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   </thead>
                   <tbody>
                     {order.metadata!.pecas!.map((p, i) => (
-                      <tr
-                        key={i}
-                        style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                      >
+                      <tr key={i} style={{ borderBottom: `1px solid #E0E0E0` }}>
                         <td
                           style={{
-                            padding: designSystem.spacing.sm,
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            padding: '8px',
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {p.nome}
                         </td>
                         <td
                           style={{
-                            padding: designSystem.spacing.sm,
-                            color: designSystem.colors.text.secondary,
+                            padding: '8px',
+                            color: '#666666',
                             fontFamily: 'monospace',
                           }}
                         >
@@ -909,17 +897,17 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                         </td>
                         <td
                           style={{
-                            padding: designSystem.spacing.sm,
-                            fontWeight: designSystem.typography.fontWeights.bold,
-                            color: designSystem.colors.text.primary,
+                            padding: '8px',
+                            fontWeight: 700,
+                            color: '#1A1A1A',
                           }}
                         >
                           {p.quantidade ?? 1}
                         </td>
                         <td
                           style={{
-                            padding: designSystem.spacing.sm,
-                            color: designSystem.colors.text.secondary,
+                            padding: '8px',
+                            color: '#666666',
                           }}
                         >
                           {p.material || '—'}
@@ -932,13 +920,13 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             )}
 
             {(order.metadata?.materiais?.length ?? 0) > 0 && (
-              <div style={{ marginTop: designSystem.spacing.lg }}>
+              <div style={{ marginTop: '24px' }}>
                 <h4
                   style={{
-                    fontSize: designSystem.typography.fontSizes.sm,
-                    fontWeight: designSystem.typography.fontWeights.bold,
-                    color: designSystem.colors.text.primary,
-                    marginBottom: designSystem.spacing.sm,
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: '#1A1A1A',
+                    marginBottom: '8px',
                   }}
                 >
                   <Package
@@ -947,9 +935,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   />{' '}
                   Materiais previstos
                 </h4>
-                <div
-                  style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.xs }}
-                >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {order.metadata!.materiais!.map((m, i) => (
                     <div
                       key={i}
@@ -957,25 +943,25 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: designSystem.spacing.sm,
-                        background: designSystem.colors.background,
-                        border: `1px solid ${designSystem.colors.border}`,
-                        borderRadius: designSystem.borderRadius.md,
-                        fontSize: designSystem.typography.fontSizes.sm,
+                        padding: '8px',
+                        background: '#FAFAFA',
+                        border: `1px solid #E0E0E0`,
+                        borderRadius: '8px',
+                        fontSize: '14px',
                       }}
                     >
                       <span
                         style={{
-                          color: designSystem.colors.text.primary,
-                          fontWeight: designSystem.typography.fontWeights.semibold,
+                          color: '#1A1A1A',
+                          fontWeight: 600,
                         }}
                       >
                         {m.descricao}
                       </span>
                       <span
                         style={{
-                          color: designSystem.colors.text.secondary,
-                          fontWeight: designSystem.typography.fontWeights.semibold,
+                          color: '#666666',
+                          fontWeight: 600,
                         }}
                       >
                         {m.quantidade} {m.unidade || ''}
@@ -991,11 +977,11 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
         <Card>
           <CardContent
             style={{
-              padding: designSystem.spacing.lg,
+              padding: '24px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: designSystem.spacing.md,
+              gap: '16px',
             }}
           >
             <SectionTitle icon={<FileText size={16} />} title="QR de Rastreamento" align="center" />
@@ -1006,10 +992,10 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                 style={{
                   width: 200,
                   height: 200,
-                  border: `1px solid ${designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
+                  border: `1px solid #E0E0E0`,
+                  borderRadius: '8px',
                   padding: 8,
-                  background: designSystem.colors.surface,
+                  background: '#FFFFFF',
                 }}
               />
             ) : (
@@ -1020,7 +1006,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: designSystem.colors.text.secondary,
+                  color: '#666666',
                 }}
               >
                 <Loader2 className="animate-spin" />
@@ -1029,7 +1015,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             <p
               style={{
                 fontSize: '11px',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 textAlign: 'center',
                 maxWidth: 240,
               }}
@@ -1044,9 +1030,9 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                fontSize: designSystem.typography.fontSizes.xs,
-                color: designSystem.colors.primary[600],
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                fontSize: '12px',
+                color: '#0D5FB8',
+                fontWeight: 600,
                 textDecoration: 'none',
               }}
             >
@@ -1056,17 +1042,17 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
             <div
               style={{
                 width: '100%',
-                borderTop: `1px solid ${designSystem.colors.border}`,
-                marginTop: designSystem.spacing.md,
-                paddingTop: designSystem.spacing.md,
+                borderTop: `1px solid #E0E0E0`,
+                marginTop: '16px',
+                paddingTop: '16px',
               }}
             >
               <h4
                 style={{
-                  fontSize: designSystem.typography.fontSizes.sm,
-                  fontWeight: designSystem.typography.fontWeights.bold,
-                  color: designSystem.colors.text.primary,
-                  marginBottom: designSystem.spacing.sm,
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#1A1A1A',
+                  marginBottom: '8px',
                 }}
               >
                 <Clock
@@ -1080,24 +1066,24 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 4,
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  color: designSystem.colors.text.secondary,
+                  fontSize: '12px',
+                  color: '#666666',
                 }}
               >
                 <div>
-                  <strong style={{ color: designSystem.colors.text.primary }}>Criada:</strong>{' '}
+                  <strong style={{ color: '#1A1A1A' }}>Criada:</strong>{' '}
                   {formatDateTime(order.created_at)}
                 </div>
                 <div>
-                  <strong style={{ color: designSystem.colors.text.primary }}>Iniciada:</strong>{' '}
+                  <strong style={{ color: '#1A1A1A' }}>Iniciada:</strong>{' '}
                   {formatDateTime(order.data_inicio)}
                 </div>
                 <div>
-                  <strong style={{ color: designSystem.colors.text.primary }}>Finalizada:</strong>{' '}
+                  <strong style={{ color: '#1A1A1A' }}>Finalizada:</strong>{' '}
                   {formatDateTime(order.data_fim)}
                 </div>
                 <div>
-                  <strong style={{ color: designSystem.colors.text.primary }}>Atualizada:</strong>{' '}
+                  <strong style={{ color: '#1A1A1A' }}>Atualizada:</strong>{' '}
                   {formatDateTime(order.updated_at)}
                 </div>
               </div>
@@ -1110,36 +1096,36 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
 };
 
 const secondaryBtnStyle: React.CSSProperties = {
-  background: designSystem.colors.surface,
-  color: designSystem.colors.text.primary,
-  border: `1px solid ${designSystem.colors.border}`,
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-  fontSize: designSystem.typography.fontSizes.xs,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  background: '#FFFFFF',
+  color: '#1A1A1A',
+  border: `1px solid #E0E0E0`,
+  borderRadius: '8px',
+  padding: `4px 16px`,
+  fontSize: '12px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.xs,
+  gap: '4px',
   cursor: 'pointer',
 };
 
 const actionBtnStyle: React.CSSProperties = {
   border: 'none',
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  borderRadius: '8px',
+  padding: `8px 24px`,
+  fontSize: '14px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.xs,
+  gap: '4px',
   cursor: 'pointer',
 };
 
 const thStyle: React.CSSProperties = {
-  padding: designSystem.spacing.sm,
+  padding: '8px',
   fontSize: '11px',
-  fontWeight: designSystem.typography.fontWeights.semibold,
-  color: designSystem.colors.text.secondary,
+  fontWeight: 600,
+  color: '#666666',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   textAlign: 'left',
@@ -1153,11 +1139,11 @@ const SummaryCard: React.FC<{
 }> = ({ icon, label, children, accent }) => (
   <div
     style={{
-      background: designSystem.colors.surface,
-      border: `1px solid ${designSystem.colors.border}`,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.sm,
-      padding: designSystem.spacing.md,
+      background: '#FFFFFF',
+      border: `1px solid #E0E0E0`,
+      borderRadius: '12px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      padding: '16px',
     }}
   >
     <div
@@ -1165,12 +1151,12 @@ const SummaryCard: React.FC<{
         display: 'flex',
         alignItems: 'center',
         gap: 6,
-        color: accent || designSystem.colors.text.secondary,
+        color: accent || '#666666',
         fontSize: '11px',
-        fontWeight: designSystem.typography.fontWeights.bold,
+        fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
-        marginBottom: designSystem.spacing.xs,
+        marginBottom: '4px',
       }}
     >
       {icon} {label}
@@ -1189,10 +1175,10 @@ const SectionTitle: React.FC<{
       display: 'flex',
       alignItems: 'center',
       gap: 6,
-      color: designSystem.colors.text.primary,
-      fontSize: designSystem.typography.fontSizes.md,
-      fontWeight: designSystem.typography.fontWeights.bold,
-      margin: `0 0 ${designSystem.spacing.md} 0`,
+      color: '#1A1A1A',
+      fontSize: '16px',
+      fontWeight: 700,
+      margin: `0 0 16px 0`,
       textAlign: align,
       justifyContent: align === 'center' ? 'center' : 'flex-start',
     }}
@@ -1206,11 +1192,11 @@ const ProgressBar: React.FC<{ value: number }> = ({ value }) => {
   return (
     <div
       style={{
-        marginTop: designSystem.spacing.xs,
+        marginTop: '4px',
         width: '100%',
         height: 6,
-        background: designSystem.colors.border,
-        borderRadius: designSystem.borderRadius.full,
+        background: '#E0E0E0',
+        borderRadius: '9999px',
         overflow: 'hidden',
       }}
     >
@@ -1218,7 +1204,7 @@ const ProgressBar: React.FC<{ value: number }> = ({ value }) => {
         style={{
           width: `${pct}%`,
           height: '100%',
-          background: pct === 100 ? designSystem.colors.success : designSystem.colors.primary[500],
+          background: pct === 100 ? '#28A745' : '#0D66CC',
           transition: 'width 0.3s ease',
         }}
       />

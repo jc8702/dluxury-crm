@@ -63,15 +63,15 @@ export default function FinanceiroAgingPage() {
     });
     const dataVenc = new Date(item.data_vencimento).toLocaleDateString('pt-BR');
 
-    const subject = encodeURIComponent(`CobranÃ§a - TÃ­tulo ${item.numero_titulo}`);
+    const subject = encodeURIComponent(`Cobrança - Título ${item.numero_titulo}`);
     const body = encodeURIComponent(
-      `Prezado(a) ${nome},\n\nInformamos que o tÃ­tulo ${item.numero_titulo} no valor de ${valor} venceu in ${dataVenc}.\n\nPor favor, entre em contato para regularizar a situaÃ§Ã£o.\n\nAtenciosamente,\nD'LUXURY Ambientes`,
+      `Prezado(a) ${nome},\n\nInformamos que o título ${item.numero_titulo} no valor de ${valor} venceu in ${dataVenc}.\n\nPor favor, entre em contato para regularizar a situação.\n\nAtenciosamente,\nD'LUXURY Ambientes`,
     );
 
     if (email) {
       window.open(`mailto:${email}?subject=${subject}&body=${body}`);
     } else {
-      warning('E-mail nÃ£o encontrado para este cliente/fornecedor');
+      warning('E-mail não encontrado para este cliente/fornecedor');
     }
   };
 
@@ -87,14 +87,14 @@ export default function FinanceiroAgingPage() {
     const dataVenc = new Date(item.data_vencimento).toLocaleDateString('pt-BR');
 
     const mensagem = encodeURIComponent(
-      `OlÃ¡ ${nome}, tudo bem? Aqui Ã© da D'LUXURY. Seu tÃ­tulo de ${valor} venceu em ${dataVenc}. Podemos conversar sobre a regularizaÃ§Ã£o?`,
+      `Olá ${nome}, tudo bem? Aqui é da D'LUXURY. Seu título de ${valor} venceu em ${dataVenc}. Podemos conversar sobre a regularização?`,
     );
 
     if (telefone) {
       const cleanPhone = telefone.replace(/\D/g, '');
       window.open(`https://wa.me/55${cleanPhone}?text=${mensagem}`, '_blank');
     } else {
-      warning('Telefone nÃ£o encontrado para este cliente/fornecedor');
+      warning('Telefone não encontrado para este cliente/fornecedor');
     }
   };
 
@@ -155,13 +155,13 @@ export default function FinanceiroAgingPage() {
             {modo === 'receber'
               ? historico
                 ? 'HISTÃ“RICO RECEBER'
-                : 'InadimplÃªncia'
+                : 'Inadimplência'
               : historico
                 ? 'HISTÃ“RICO PAGAR'
-                : 'DÃ­vidas'}
+                : 'Dívidas'}
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>
-            AnÃ¡lise de atrasos e gestÃ£o de cobranÃ§a
+            Análise de atrasos e gestão de cobrança
           </p>
         </div>
 
@@ -224,7 +224,7 @@ export default function FinanceiroAgingPage() {
                   R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>
-                  {item?.qtd_titulos || 0} tÃ­tulo(s)
+                  {item?.qtd_titulos || 0} título(s)
                 </div>
               </CardContent>
             </Card>
@@ -255,11 +255,11 @@ export default function FinanceiroAgingPage() {
             <thead>
               <tr>
                 <th>{modo === 'receber' ? 'Cliente' : 'Fornecedor'}</th>
-                <th>TÃ­tulo</th>
+                <th>Título</th>
                 <th>Vencimento</th>
                 <th>Atraso</th>
                 <th style={{ textAlign: 'right' }}>Valor Aberto</th>
-                <th style={{ textAlign: 'center' }}>AÃ§Ãµes</th>
+                <th style={{ textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -272,7 +272,7 @@ export default function FinanceiroAgingPage() {
                       className="empty-state"
                       style={{ border: 'none', borderRadius: 0, color: 'hsl(var(--success))' }}
                     >
-                      Nenhum tÃ­tulo vencido encontrado. ParabÃ©ns!
+                      Nenhum título vencido encontrado. Parabéns!
                     </div>
                   </td>
                 </tr>
@@ -306,7 +306,7 @@ export default function FinanceiroAgingPage() {
                             <div style={{ fontWeight: 700 }}>
                               {t.entidade_nome ||
                                 (modo === 'receber' ? 'Cliente' : 'Fornecedor') +
-                                  ' nÃ£o identificado'}
+                                  ' não identificado'}
                             </div>
                             <div
                               style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}
@@ -347,7 +347,7 @@ export default function FinanceiroAgingPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            title="E-mail CobranÃ§a"
+                            title="E-mail Cobrança"
                             onClick={() => handleEmail(t)}
                           >
                             <Mail className="w-4 h-4" />
@@ -363,7 +363,7 @@ export default function FinanceiroAgingPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            title="HistÃ³rico"
+                            title="Histórico"
                             onClick={() => handleHistory(t)}
                           >
                             <Clock className="w-4 h-4" />
@@ -388,7 +388,7 @@ export default function FinanceiroAgingPage() {
       <Modal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
-        title="HistÃ³rico de Pagamentos"
+        title="Histórico de Pagamentos"
         size="md"
       >
         {selectedItem && (
@@ -403,13 +403,13 @@ export default function FinanceiroAgingPage() {
             <strong>{selectedItem.entidade_nome}</strong>
             <br />
             <small style={{ color: 'hsl(var(--muted-foreground))' }}>
-              TÃ­tulo: {selectedItem.numero_titulo}
+              Título: {selectedItem.numero_titulo}
             </small>
           </div>
         )}
         {historyData.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
-            Nenhum histÃ³rico encontrado
+            Nenhum histórico encontrado
           </p>
         ) : (
           <table>

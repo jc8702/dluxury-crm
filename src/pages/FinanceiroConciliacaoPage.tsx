@@ -72,7 +72,7 @@ function parseOFX(content: string): OFXTransaction[] {
 
 function autoMatch(ofxTxns: OFXTransaction[], internals: InternalEntry[]): OFXTransaction[] {
   return ofxTxns.map((txn) => {
-    // Tentar match por valor exato + tipo compatÃ­vel (Â±3 dias de tolerÃ¢ncia)
+    // Tentar match por valor exato + tipo compatível (Â±3 dias de tolerância)
     const txnDate = new Date(txn.date);
     const isCredit = txn.type === 'CREDIT';
 
@@ -109,9 +109,9 @@ export default function FinanceiroConciliacaoPage() {
     try {
       const content = await file.text();
       const parsed = parseOFX(content);
-      if (parsed.length === 0) throw new Error('Arquivo OFX invÃ¡lido ou sem transaÃ§Ãµes');
+      if (parsed.length === 0) throw new Error('Arquivo OFX inválido ou sem transações');
 
-      // Carregar tÃ­tulos pendentes
+      // Carregar títulos pendentes
       const [recRes, pagRes] = await Promise.all([
         fetch('/api/financeiro/titulos-receber?status=aberto', {
           headers: { Authorization: `Bearer ${token}` },
@@ -168,12 +168,12 @@ export default function FinanceiroConciliacaoPage() {
   const persistConciliacao = async () => {
     const matched = ofxTxns.filter((t) => t.status === 'matched' || t.status === 'manual');
     if (matched.length === 0) {
-      warning('Nenhuma transaÃ§Ã£o conciliada para persistir.');
+      warning('Nenhuma transação conciliada para persistir.');
       return;
     }
     setPersistindo(true);
     try {
-      // Marcar como conferidos no backend via endpoint de conferÃªncia
+      // Marcar como conferidos no backend via endpoint de conferência
       for (const txn of matched) {
         if (txn.matchedTitulo) {
           await fetch('/api/financeiro/conferencia', {
@@ -188,7 +188,7 @@ export default function FinanceiroConciliacaoPage() {
         }
       }
       setPersisted(true);
-      success('ConciliaÃ§Ã£o persistida com sucesso!');
+      success('Conciliação persistida com sucesso!');
     } finally {
       setPersistindo(false);
     }
@@ -243,7 +243,7 @@ export default function FinanceiroConciliacaoPage() {
             <RefreshCw /> CONCILIAÃ‡ÃƒO BANCÃRIA
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
-            Importe seu extrato OFX e compare com os lanÃ§amentos internos
+            Importe seu extrato OFX e compare com os lançamentos internos
           </p>
         </div>
         {ofxTxns.length > 0 && (
@@ -313,7 +313,7 @@ export default function FinanceiroConciliacaoPage() {
               marginTop: '0.35rem',
             }}
           >
-            CompatÃ­vel com todos os bancos brasileiros
+            Compatível com todos os bancos brasileiros
           </p>
           {error && (
             <p style={{ color: 'hsl(var(--destructive))', marginTop: '0.75rem', fontWeight: 700 }}>
@@ -325,7 +325,7 @@ export default function FinanceiroConciliacaoPage() {
 
       {ofxTxns.length > 0 && (
         <>
-          {/* MÃ©tricas */}
+          {/* Métricas */}
           <div
             style={{
               display: 'grid',
@@ -351,7 +351,7 @@ export default function FinanceiroConciliacaoPage() {
                 label: 'Pendentes',
                 value: unmatched.length,
                 color: 'hsl(var(--warning))',
-                sub: 'Sem correspondÃªncia',
+                sub: 'Sem correspondência',
               },
               {
                 label: 'Ignoradas',
@@ -442,7 +442,7 @@ export default function FinanceiroConciliacaoPage() {
               style={{ padding: '1rem 1.5rem', borderBottom: '1px solid hsl(var(--border))' }}
             >
               <CardTitle style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-                TRANSAÃ‡Ã•ES DO EXTRATO OFX
+                TRANSAÃ‡ÕES DO EXTRATO OFX
               </CardTitle>
             </CardHeader>
             <div style={{ overflowX: 'auto' }}>
@@ -456,7 +456,7 @@ export default function FinanceiroConciliacaoPage() {
                       'VALOR',
                       'STATUS',
                       'CORRESPONDÃŠNCIA',
-                      'AÃ‡Ã•ES',
+                      'AÃ‡ÕES',
                     ].map((h) => (
                       <th
                         key={h}
@@ -561,7 +561,7 @@ export default function FinanceiroConciliacaoPage() {
                             color: 'hsl(var(--muted-foreground))',
                           }}
                         >
-                          {txn.matchedTitulo || 'â€”'}
+                          {txn.matchedTitulo || '—'}
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
                           <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -668,7 +668,7 @@ export default function FinanceiroConciliacaoPage() {
                                         fontSize: '0.72rem',
                                       }}
                                     >
-                                      {fmt(entry.valor)} â€¢ {entry.data}
+                                      {fmt(entry.valor)} • {entry.data}
                                     </div>
                                   </button>
                                 ))}
@@ -681,7 +681,7 @@ export default function FinanceiroConciliacaoPage() {
                                     fontSize: '0.82rem',
                                   }}
                                 >
-                                  Nenhum tÃ­tulo compatÃ­vel disponÃ­vel
+                                  Nenhum título compatível disponível
                                 </span>
                               )}
                             </div>

@@ -37,13 +37,13 @@ const ProjectKanban: React.FC = () => {
 
   const columns = [
     { id: 'lead', title: 'ðŸ“¥ Lead' },
-    { id: 'visita_tecnica', title: 'ðŸ“ Visita TÃ©cnica' },
-    { id: 'orcamento_enviado', title: 'ðŸ“„ OrÃ§amento Enviado' },
+    { id: 'visita_tecnica', title: 'ðŸ“ Visita Técnica' },
+    { id: 'orcamento_enviado', title: 'ðŸ“„ Orçamento Enviado' },
     { id: 'aprovado', title: 'âœ… Aprovado' },
-    { id: 'em_producao', title: 'ðŸ”¨ Em ProduÃ§Ã£o' },
+    { id: 'em_producao', title: 'ðŸ”¨ Em Produção' },
     { id: 'pronto_entrega', title: 'ðŸ“¦ Pronto p/ Entrega' },
     { id: 'instalado', title: 'ðŸ  Instalado' },
-    { id: 'concluido', title: 'ðŸ ConcluÃ­do' },
+    { id: 'concluido', title: 'ðŸ Concluído' },
   ];
 
   const ambientes = [
@@ -140,7 +140,7 @@ const ProjectKanban: React.FC = () => {
     return {
       id: p.id,
       title: p.ambiente,
-      subtitle: p.clientName || 'Cliente nÃ£o identificado',
+      subtitle: p.clientName || 'Cliente não identificado',
       label: p.valorEstimado
         ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
         : '',
@@ -174,7 +174,7 @@ const ProjectKanban: React.FC = () => {
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Pipeline de Projetos</h2>
-          <p className="text-muted-foreground">Acompanhe cada projeto do lead Ã instalaÃ§Ã£o.</p>
+          <p className="text-muted-foreground">Acompanhe cada projeto do lead Ã instalação.</p>
         </div>
         <Button
           onClick={() => {
@@ -202,7 +202,7 @@ const ProjectKanban: React.FC = () => {
         </Card>
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Em ProduÃ§Ã£o</p>
+            <p className="text-xs text-muted-foreground mb-1">Em Produção</p>
             <h4 className="text-2xl font-extrabold text-blue-500">{inProduction}</h4>
           </CardContent>
         </Card>
@@ -217,7 +217,7 @@ const ProjectKanban: React.FC = () => {
       </div>
 
       <KanbanBoard
-        title="GestÃ£o de Projetos"
+        title="Gestão de Projetos"
         items={kanbanItems}
         columns={columns}
         onMove={handleMove}
@@ -315,7 +315,7 @@ const ProjectKanban: React.FC = () => {
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-foreground/90">
-                Vincular ao OrÃ§amento
+                Vincular ao Orçamento
               </label>
               <Select
                 value={formData.orcamentoId}
@@ -326,18 +326,18 @@ const ProjectKanban: React.FC = () => {
                   <SelectValue
                     placeholder={
                       formData.clientId
-                        ? 'Nenhum orÃ§amento selecionado'
+                        ? 'Nenhum orçamento selecionado'
                         : 'Selecione o cliente primeiro'
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum orÃ§amento selecionado</SelectItem>
+                  <SelectItem value="none">Nenhum orçamento selecionado</SelectItem>
                   {orcamentos
                     .filter((o: any) => o.cliente_id?.toString() === formData.clientId?.toString())
                     .map((o: any) => (
                       <SelectItem key={o.id} value={o.id}>
-                        OrÃ§amento #{o.numero || o.id.substring(0, 8).toUpperCase()} - R${' '}
+                        Orçamento #{o.numero || o.id.substring(0, 8).toUpperCase()} - R${' '}
                         {parseFloat(o.valor_final || 0).toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                         })}
@@ -369,19 +369,19 @@ const ProjectKanban: React.FC = () => {
           </div>
 
           <Input
-            label="ResponsÃ¡vel (Marceneiro)"
-            placeholder="Ex: JoÃ£o"
+            label="Responsável (Marceneiro)"
+            placeholder="Ex: João"
             value={formData.responsavel}
             onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
           />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground/90">
-              DescriÃ§Ã£o do Projeto
+              Descrição do Projeto
             </label>
             <textarea
               className="flex w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background min-h-[80px] resize-vertical transition-colors"
-              placeholder="Detalhes: materiais, acabamento, referÃªncias..."
+              placeholder="Detalhes: materiais, acabamento, referências..."
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
             />

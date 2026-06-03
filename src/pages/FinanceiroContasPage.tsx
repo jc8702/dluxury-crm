@@ -75,7 +75,7 @@ const FinanceiroContasPage = () => {
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'entrada' | 'saida'>('todos');
   const [filtroBusca, setFiltroBusca] = useState('');
 
-  // TransferÃªncia
+  // Transferência
   const [showTransferencia, setShowTransferencia] = useState(false);
   const [transferForm, setTransferForm] = useState<FormTransferencia>({
     conta_origem_id: '',
@@ -132,7 +132,7 @@ const FinanceiroContasPage = () => {
     try {
       await api.financeiro.fechamentos.save(fechamentoForm);
       fetchFechamentos();
-      success('PerÃ­odo atualizado com sucesso!');
+      success('Período atualizado com sucesso!');
     } catch (e: any) {
       error(e.message || 'Erro ao salvar fechamento');
     }
@@ -179,7 +179,7 @@ const FinanceiroContasPage = () => {
   const doDelete = async (id: string, nome: string) => {
     const isConfirmed = await confirm({
       title: 'EXCLUIR CONTA',
-      description: `CONFIRMA A EXCLUSÃƒO DA CONTA "${nome.toUpperCase()}"?\nESTA OPERAÃ‡ÃƒO Ã‰ IRREVERSÃVEL.`,
+      description: `CONFIRMA A EXCLUSÃƒO DA CONTA "${nome.toUpperCase()}"?\nESTA OPERAÃ‡ÃƒO É IRREVERSÃVEL.`,
     });
     if (!isConfirmed) return;
     try {
@@ -305,7 +305,7 @@ const FinanceiroContasPage = () => {
         descricao: '',
       });
       fetchContas();
-      success('TransferÃªncia realizada com sucesso!');
+      success('Transferência realizada com sucesso!');
     } catch (e: any) {
       setTransferErro(e.message || 'Erro ao realizar transfer\u00eancia');
     }
@@ -344,7 +344,7 @@ const FinanceiroContasPage = () => {
             </span>
           </h1>
           <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
-            ConsolidaÃ§Ã£o de saldos bancÃ¡rios, caixas operacionais e investimentos. GestÃ£o de
+            Consolidação de saldos bancários, caixas operacionais e investimentos. Gestão de
             liquidez em tempo real com auditoria de extratos.
           </p>
         </div>
@@ -406,8 +406,8 @@ const FinanceiroContasPage = () => {
               </div>
               <h3 className="text-2xl font-black italic tracking-tight mb-3">TESOURARIA VAZIA</h3>
               <p className="text-muted-foreground mb-10 max-w-md mx-auto font-medium">
-                Sua infraestrutura financeira ainda nÃ£o possui contas ativas. Configure seus caixas
-                ou contas bancÃ¡rias para iniciar a gestÃ£o.
+                Sua infraestrutura financeira ainda não possui contas ativas. Configure seus caixas
+                ou contas bancárias para iniciar a gestão.
               </p>
               <Button
                 variant="primary"
@@ -478,7 +478,7 @@ const FinanceiroContasPage = () => {
                       <div className="flex gap-4 pt-4 border-t border-border">
                         <div className="flex-1">
                           <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-                            AgÃªncia
+                            Agência
                           </div>
                           <div className="text-sm font-mono font-black">{c.agencia}</div>
                         </div>
@@ -638,7 +638,7 @@ const FinanceiroContasPage = () => {
         </div>
       </Modal>
 
-      {/* Modal TransferÃªncia */}
+      {/* Modal Transferência */}
       <Modal
         isOpen={showTransferencia}
         onClose={() => setShowTransferencia(false)}
@@ -649,8 +649,8 @@ const FinanceiroContasPage = () => {
           <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[2rem] flex gap-4 items-start">
             <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
             <p className="text-[11px] text-blue-200/70 font-medium leading-relaxed uppercase tracking-wider">
-              <strong>TransferÃªncia entre contas:</strong> O valor serÃ¡ debitado da origem e
-              creditado no destino instantaneamente, gerando lanÃ§amentos auditÃ¡veis em ambos os
+              <strong>Transferência entre contas:</strong> O valor será debitado da origem e
+              creditado no destino instantaneamente, gerando lançamentos auditáveis em ambos os
               extratos.
             </p>
           </div>
@@ -771,7 +771,7 @@ const FinanceiroContasPage = () => {
       <Modal
         isOpen={showExtrato}
         onClose={() => setShowExtrato(false)}
-        title={`EXTRATO ANALÃTICO â€” ${extratoContaNome.toUpperCase()}`}
+        title={`EXTRATO ANALÃTICO — ${extratoContaNome.toUpperCase()}`}
         size="full"
       >
         {extratoLoading ? (
@@ -799,7 +799,7 @@ const FinanceiroContasPage = () => {
                   icon: <ArrowUpCircle className="w-4 h-4" />,
                 },
                 {
-                  label: 'Total SaÃ­das',
+                  label: 'Total Saídas',
                   value: extratoTotais.saidas,
                   color: 'text-red-500',
                   border: 'border-red-500/30',
@@ -831,7 +831,7 @@ const FinanceiroContasPage = () => {
               ))}
             </div>
 
-            {/* Filtros e AÃ§Ãµes */}
+            {/* Filtros e Ações */}
             <div className="flex flex-col xl:flex-row gap-6 items-end bg-muted/20 p-8 rounded-[2.5rem] border border-border">
               <div className="flex-1 w-full space-y-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">
@@ -841,7 +841,7 @@ const FinanceiroContasPage = () => {
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-50 z-10" />
                   <Input
                     className="pl-14"
-                    placeholder="Filtrar por descriÃ§Ã£o, origem ou tipo de operaÃ§Ã£o..."
+                    placeholder="Filtrar por descrição, origem ou tipo de operação..."
                     value={filtroBusca}
                     onChange={(e) => setFiltroBusca(e.target.value)}
                   />
@@ -890,13 +890,13 @@ const FinanceiroContasPage = () => {
                   <thead className="sticky top-0 bg-[#0A0A0A] z-20">
                     <tr className="border-b border-border">
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
-                        Data de EfetivaÃ§Ã£o
+                        Data de Efetivação
                       </th>
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
-                        Memorial / DescriÃ§Ã£o
+                        Memorial / Descrição
                       </th>
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
-                        MÃ³dulo Origem
+                        Módulo Origem
                       </th>
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">
                         Valor Operacional
@@ -915,7 +915,7 @@ const FinanceiroContasPage = () => {
                         <td colSpan={6} className="px-8 py-32 text-center">
                           <Info className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
                           <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] italic">
-                            Nenhum lanÃ§amento identificado para os filtros aplicados
+                            Nenhum lançamento identificado para os filtros aplicados
                           </p>
                         </td>
                       </tr>
@@ -1023,9 +1023,9 @@ const FinanceiroContasPage = () => {
                 PROTOCOLO DE SEGURANÃ‡A
               </h4>
               <p className="text-xs text-orange-200/60 font-medium leading-relaxed uppercase tracking-widest">
-                O fechamento de perÃ­odo Ã© uma aÃ§Ã£o crÃ­tica que <strong>BLOQUEIA</strong>{' '}
-                permanentemente qualquer alteraÃ§Ã£o em lanÃ§amentos retroativos. Certifique-se de
-                que todas as contas foram auditadas e conferidas antes de selar o mÃªs.
+                O fechamento de período é uma ação crítica que <strong>BLOQUEIA</strong>{' '}
+                permanentemente qualquer alteração em lançamentos retroativos. Certifique-se de que
+                todas as contas foram auditadas e conferidas antes de selar o mês.
               </p>
             </div>
           </div>
@@ -1097,7 +1097,7 @@ const FinanceiroContasPage = () => {
                       Status de Integridade
                     </th>
                     <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest text-right">
-                      AÃ§Ãµes de Gestor
+                      Ações de Gestor
                     </th>
                   </tr>
                 </thead>
@@ -1136,7 +1136,7 @@ const FinanceiroContasPage = () => {
                               const ok = await confirm({
                                 title: 'REABRIR PERÃODO',
                                 description:
-                                  'ESTA AÃ‡ÃƒO PERMITIRÃ ALTERAÃ‡Ã•ES RETROATIVAS. CONFIRMAR DESBLOQUEIO?',
+                                  'ESTA AÃ‡ÃƒO PERMITIRÃ ALTERAÃ‡ÕES RETROATIVAS. CONFIRMAR DESBLOQUEIO?',
                               });
                               if (ok)
                                 api.financeiro.fechamentos

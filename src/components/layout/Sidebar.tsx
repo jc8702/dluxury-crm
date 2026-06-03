@@ -28,6 +28,7 @@ import {
   Clock3,
   ChevronDown,
   ChevronRight,
+  Target,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,7 +36,7 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onCloseMobile }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -75,6 +76,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
       roles: ['admin', 'vendedor'],
       group: 'COMERCIAL',
       feature: 'orcamentos',
+    },
+    {
+      id: 'prospeccao',
+      path: 'prospeccao',
+      label: 'Prospecção',
+      icon: <Target size={18} />,
+      roles: ['admin', 'vendedor'],
+      group: 'COMERCIAL',
+      feature: 'crm',
     },
     {
       id: 'visits',
@@ -271,7 +281,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
 
   const groups = ['COMERCIAL', 'OPERAÇÕES', 'FINANCEIRO', 'SISTEMA'];
 
-  const renderMenuItem = (item: any, isSubItem = false) => {
+  const renderMenuItem = (item: any, _isSubItem = false) => {
     const isActive =
       currentPath === item.path || (item.id === 'finance' && currentPath.startsWith('financeiro'));
     const isExpanded = openMenus[item.id];
@@ -380,11 +390,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground text-base shadow-primary">
-          F
+          DL
         </div>
         <div className="flex flex-col sidebar-label">
           <span className="text-sm font-black text-sidebar-accent-foreground leading-tight tracking-wider font-display">
-            FATTO OS
+            D'LUXURY CRM
           </span>
           <span className="text-[0.55rem] font-bold text-sidebar-primary tracking-[0.2em] leading-tight">
             DESIGN & TECH
@@ -417,13 +427,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
               Seu Workspace
             </div>
             <a
-              href={`https://${user.subdominio}.fatto-os.vercel.app`}
+              href={`https://${user.subdominio}.dluxury-crm.vercel.app`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-sidebar-foreground hover:text-primary transition-colors flex items-center gap-1 bg-sidebar-accent/50 px-2 py-1.5 rounded-lg border border-sidebar-border"
               title="Acessar URL exclusiva"
             >
-              <span className="truncate">{user.subdominio}.fatto-os.vercel.app</span>
+              <span className="truncate">{user.subdominio}.dluxury-crm.vercel.app</span>
             </a>
           </div>
         )}

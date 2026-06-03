@@ -135,7 +135,7 @@ const FinanceiroFormasPage: React.FC = () => {
             <DollarSign style={{ color: 'hsl(var(--primary))' }} /> FORMAS DE PAGAMENTO
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>
-            Meios de transaÃ§Ã£o, taxas associadas e prazos de compensaÃ§Ã£o
+            Meios de transação, taxas associadas e prazos de compensação
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -167,7 +167,7 @@ const FinanceiroFormasPage: React.FC = () => {
       <Card style={{ overflow: 'hidden' }}>
         <CardHeader>
           <CardTitle style={{ fontSize: '1rem', fontWeight: 800 }}>
-            MÃ©todos de Pagamento Ativos
+            Métodos de Pagamento Ativos
           </CardTitle>
         </CardHeader>
         <CardContent style={{ padding: 0 }}>
@@ -332,7 +332,7 @@ const FinanceiroFormasPage: React.FC = () => {
               Nome *
             </label>
             <Input
-              placeholder="ex: CartÃ£o Visa CrÃ©dito, Boleto Sicredi"
+              placeholder="ex: Cartão Visa Crédito, Boleto Sicredi"
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
             />
@@ -371,16 +371,16 @@ const FinanceiroFormasPage: React.FC = () => {
                 Dinheiro
               </option>
               <option value="credito" style={{ background: '#1e293b' }}>
-                CartÃ£o de CrÃ©dito
+                Cartão de Crédito
               </option>
               <option value="debito" style={{ background: '#1e293b' }}>
-                CartÃ£o de DÃ©bito
+                Cartão de Débito
               </option>
               <option value="boleto" style={{ background: '#1e293b' }}>
                 Boleto
               </option>
-              <option value="transferÃªncia" style={{ background: '#1e293b' }}>
-                TransferÃªncia BancÃ¡ria / TED
+              <option value="transferência" style={{ background: '#1e293b' }}>
+                Transferência Bancária / TED
               </option>
             </select>
           </div>
@@ -417,7 +417,7 @@ const FinanceiroFormasPage: React.FC = () => {
                   display: 'block',
                 }}
               >
-                Prazo de CompensaÃ§Ã£o (Dias)
+                Prazo de Compensação (Dias)
               </label>
               <Input
                 type="number"

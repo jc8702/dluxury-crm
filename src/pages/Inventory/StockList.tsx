@@ -17,7 +17,6 @@ import {
   FileDown,
   RefreshCw,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button } from '../../components/common';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
@@ -266,10 +265,10 @@ export const StockList: React.FC<StockListProps> = ({
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
         onClick={() => toggleSort(k)}
         style={{
-          padding: designSystem.spacing.md,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.semibold,
-          color: active ? designSystem.colors.primary[600] : designSystem.colors.text.secondary,
+          padding: '16px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: active ? '#0D5FB8' : '#666666',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -278,9 +277,7 @@ export const StockList: React.FC<StockListProps> = ({
           textAlign: align,
         }}
       >
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: designSystem.spacing.xs }}
-        >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {label}
           {active ? (
             sortDir === 'asc' ? (
@@ -304,19 +301,19 @@ export const StockList: React.FC<StockListProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.xl,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '32px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
         .ds-stock-list input:focus, .ds-stock-list select:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-stock-list table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-stock-list table tbody tr:hover { background: ${designSystem.colors.background}; box-shadow: ${designSystem.shadows.sm}; }
+        .ds-stock-list table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .ds-stock-list .ds-row-actions { opacity: 0.7; transition: opacity 0.15s ease; }
         .ds-stock-list table tbody tr:hover .ds-row-actions { opacity: 1; }
       `}</style>
@@ -327,36 +324,36 @@ export const StockList: React.FC<StockListProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: designSystem.typography.fontSizes['3xl'],
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1A1A1A',
               margin: 0,
-              lineHeight: designSystem.typography.lineHeights.tight,
+              lineHeight: 1.2,
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
             }}
           >
-            <Package size={28} color={designSystem.colors.primary[600]} />
+            <Package size={28} color={'#0D5FB8'} />
             Estoque de Materiais
           </h1>
           <p
             style={{
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              margin: `${designSystem.spacing.xs} 0 0 0`,
+              color: '#666666',
+              fontSize: '14px',
+              margin: `4px 0 0 0`,
             }}
           >
             SKUs, saldos, localizações e status de cada item em tempo real.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Button
             onClick={() => {
               reloadInventoryData();
@@ -393,8 +390,8 @@ export const StockList: React.FC<StockListProps> = ({
               }}
               style={{
                 ...primaryBtnStyle,
-                background: designSystem.colors.success,
-                boxShadow: `0 4px 12px ${designSystem.colors.success}40`,
+                background: '#28A745',
+                boxShadow: `0 4px 12px #28A74540`,
               }}
             >
               <ArrowDownCircle size={16} /> + Entrada
@@ -407,7 +404,7 @@ export const StockList: React.FC<StockListProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         {[
@@ -423,17 +420,17 @@ export const StockList: React.FC<StockListProps> = ({
               type="button"
               onClick={() => setStatusFilter(active ? 'all' : key)}
               style={{
-                background: active ? meta.bg : designSystem.colors.surface,
-                border: `1px solid ${active ? meta.border : designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.lg,
-                padding: designSystem.spacing.md,
+                background: active ? meta.bg : '#FFFFFF',
+                border: `1px solid ${active ? meta.border : '#E0E0E0'}`,
+                borderRadius: '12px',
+                padding: '16px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 display: 'flex',
                 alignItems: 'center',
-                gap: designSystem.spacing.sm,
-                boxShadow: active ? designSystem.shadows.sm : 'none',
-                fontFamily: designSystem.typography.fontFamily,
+                gap: '8px',
+                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 transition: 'all 0.15s ease',
               }}
               aria-pressed={active}
@@ -445,7 +442,7 @@ export const StockList: React.FC<StockListProps> = ({
                   justifyContent: 'center',
                   width: 32,
                   height: 32,
-                  borderRadius: designSystem.borderRadius.md,
+                  borderRadius: '8px',
                   background: meta.bg,
                   color: meta.fg,
                 }}
@@ -457,7 +454,7 @@ export const StockList: React.FC<StockListProps> = ({
                   style={{
                     fontSize: '11px',
                     color: meta.fg,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                   }}
@@ -466,9 +463,9 @@ export const StockList: React.FC<StockListProps> = ({
                 </div>
                 <div
                   style={{
-                    fontSize: designSystem.typography.fontSizes['2xl'],
-                    fontWeight: designSystem.typography.fontWeights.bold,
-                    color: designSystem.colors.text.primary,
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    color: '#1A1A1A',
                     lineHeight: 1.1,
                   }}
                 >
@@ -480,13 +477,13 @@ export const StockList: React.FC<StockListProps> = ({
         })}
         <div
           style={{
-            background: designSystem.colors.surface,
-            border: `1px solid ${designSystem.colors.border}`,
-            borderRadius: designSystem.borderRadius.lg,
-            padding: designSystem.spacing.md,
+            background: '#FFFFFF',
+            border: `1px solid #E0E0E0`,
+            borderRadius: '12px',
+            padding: '16px',
             display: 'flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
+            gap: '8px',
           }}
         >
           <span
@@ -496,9 +493,9 @@ export const StockList: React.FC<StockListProps> = ({
               justifyContent: 'center',
               width: 32,
               height: 32,
-              borderRadius: designSystem.borderRadius.md,
-              background: designSystem.colors.primary[50],
-              color: designSystem.colors.primary[600],
+              borderRadius: '8px',
+              background: '#F0F7FF',
+              color: '#0D5FB8',
             }}
           >
             <Tag size={16} />
@@ -507,8 +504,8 @@ export const StockList: React.FC<StockListProps> = ({
             <div
               style={{
                 fontSize: '11px',
-                color: designSystem.colors.text.secondary,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#666666',
+                fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
               }}
@@ -517,9 +514,9 @@ export const StockList: React.FC<StockListProps> = ({
             </div>
             <div
               style={{
-                fontSize: designSystem.typography.fontSizes.lg,
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                fontSize: '18px',
+                fontWeight: 700,
+                color: '#1A1A1A',
                 lineHeight: 1.1,
               }}
             >
@@ -531,10 +528,10 @@ export const StockList: React.FC<StockListProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <div
@@ -543,18 +540,18 @@ export const StockList: React.FC<StockListProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              gap: '4px',
+              color: '#666666',
+              fontSize: '14px',
+              fontWeight: 600,
             }}
           >
             <Filter size={14} /> Filtros
@@ -565,8 +562,8 @@ export const StockList: React.FC<StockListProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -574,10 +571,10 @@ export const StockList: React.FC<StockListProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                left: designSystem.spacing.md,
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -649,18 +646,18 @@ export const StockList: React.FC<StockListProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: designSystem.colors.error,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#DC3545',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: designSystem.spacing.xs,
+                gap: '4px',
               }}
             >
               <X size={12} /> Limpar filtros
@@ -672,15 +669,15 @@ export const StockList: React.FC<StockListProps> = ({
           style={{
             width: '100%',
             overflowX: 'auto',
-            borderRadius: designSystem.borderRadius.md,
-            border: `1px solid ${designSystem.colors.border}`,
+            borderRadius: '8px',
+            border: `1px solid #E0E0E0`,
           }}
         >
           <table
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontSize: designSystem.typography.fontSizes.sm,
+              fontSize: '14px',
             }}
             role="table"
             aria-label="Lista de materiais em estoque"
@@ -688,8 +685,8 @@ export const StockList: React.FC<StockListProps> = ({
             <thead>
               <tr
                 style={{
-                  background: designSystem.colors.background,
-                  borderBottom: `2px solid ${designSystem.colors.border}`,
+                  background: '#FAFAFA',
+                  borderBottom: `2px solid #E0E0E0`,
                 }}
               >
                 <SortHeader k="sku" label="SKU" />
@@ -700,10 +697,10 @@ export const StockList: React.FC<StockListProps> = ({
                 <SortHeader k="status" label="Status" />
                 <th
                   style={{
-                    padding: designSystem.spacing.md,
-                    fontSize: designSystem.typography.fontSizes.xs,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
-                    color: designSystem.colors.text.secondary,
+                    padding: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#666666',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     textAlign: 'right',
@@ -719,9 +716,9 @@ export const StockList: React.FC<StockListProps> = ({
                   <td
                     colSpan={7}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     Carregando materiais…
@@ -732,16 +729,16 @@ export const StockList: React.FC<StockListProps> = ({
                   <td
                     colSpan={7}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     <Package
                       size={32}
                       style={{ opacity: 0.3, margin: '0 auto', display: 'block' }}
                     />
-                    <p style={{ margin: `${designSystem.spacing.sm} 0 0 0` }}>
+                    <p style={{ margin: `8px 0 0 0` }}>
                       {hasActiveFilter
                         ? 'Nenhum material encontrado com os filtros atuais.'
                         : 'Nenhum material cadastrado.'}
@@ -754,27 +751,24 @@ export const StockList: React.FC<StockListProps> = ({
                   const estoqueAtual = Number(material.estoque_atual || 0);
                   const estoqueMin = Number(material.estoque_minimo || 0);
                   return (
-                    <tr
-                      key={material.id}
-                      style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                    >
-                      <td style={{ padding: designSystem.spacing.md }}>
+                    <tr key={material.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
                             fontFamily: 'monospace',
-                            fontWeight: designSystem.typography.fontWeights.bold,
-                            color: designSystem.colors.primary[600],
-                            fontSize: designSystem.typography.fontSizes.xs,
+                            fontWeight: 700,
+                            color: '#0D5FB8',
+                            fontSize: '12px',
                           }}
                         >
                           {material.sku || '—'}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {material.nome || 'Sem nome'}
@@ -782,8 +776,8 @@ export const StockList: React.FC<StockListProps> = ({
                         {material.marca && (
                           <div
                             style={{
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              color: designSystem.colors.text.secondary,
+                              fontSize: '12px',
+                              color: '#666666',
                               marginTop: 2,
                             }}
                           >
@@ -793,24 +787,24 @@ export const StockList: React.FC<StockListProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
+                          padding: '16px',
+                          color: '#666666',
                         }}
                       >
                         {categoria?.nome || '—'}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.bold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 700,
+                            color: '#1A1A1A',
                           }}
                         >
                           {estoqueAtual.toLocaleString('pt-BR')}{' '}
                           <span
                             style={{
-                              fontWeight: designSystem.typography.fontWeights.normal,
-                              color: designSystem.colors.text.secondary,
+                              fontWeight: 400,
+                              color: '#666666',
                               fontSize: '11px',
                             }}
                           >
@@ -821,7 +815,7 @@ export const StockList: React.FC<StockListProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: designSystem.colors.text.secondary,
+                              color: '#666666',
                               marginTop: 2,
                             }}
                           >
@@ -831,9 +825,9 @@ export const StockList: React.FC<StockListProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
-                          fontSize: designSystem.typography.fontSizes.xs,
+                          padding: '16px',
+                          color: '#666666',
+                          fontSize: '12px',
                         }}
                       >
                         {localizacao ? (
@@ -841,19 +835,19 @@ export const StockList: React.FC<StockListProps> = ({
                             <MapPin size={11} /> {localizacao}
                           </span>
                         ) : (
-                          <span style={{ color: designSystem.colors.text.disabled }}>—</span>
+                          <span style={{ color: '#CCCCCC' }}>—</span>
                         )}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <span
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
-                            padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                            borderRadius: designSystem.borderRadius.full,
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            fontWeight: designSystem.typography.fontWeights.bold,
+                            padding: `4px 8px`,
+                            borderRadius: '9999px',
+                            fontSize: '12px',
+                            fontWeight: 700,
                             background: meta.bg,
                             color: meta.fg,
                             border: `1px solid ${meta.border}`,
@@ -862,10 +856,10 @@ export const StockList: React.FC<StockListProps> = ({
                           {meta.icon} {meta.label}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div
                           className="ds-row-actions"
-                          style={{ display: 'inline-flex', gap: designSystem.spacing.xs }}
+                          style={{ display: 'inline-flex', gap: '4px' }}
                         >
                           {onEntry && (
                             <button
@@ -873,7 +867,7 @@ export const StockList: React.FC<StockListProps> = ({
                               onClick={() => onEntry(material)}
                               aria-label={`Registrar entrada de ${material.nome}`}
                               title="Registrar entrada"
-                              style={iconBtn(designSystem.colors.success, '#E6F4EA', '#A8D5B6')}
+                              style={iconBtn('#28A745', '#E6F4EA', '#A8D5B6')}
                             >
                               <ArrowDownCircle size={12} />
                             </button>
@@ -884,11 +878,7 @@ export const StockList: React.FC<StockListProps> = ({
                               onClick={() => onEdit(material)}
                               aria-label={`Editar ${material.nome}`}
                               title="Editar"
-                              style={iconBtn(
-                                designSystem.colors.primary[600],
-                                designSystem.colors.primary[50],
-                                designSystem.colors.primary[100],
-                              )}
+                              style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
                             >
                               <Edit3 size={12} />
                             </button>
@@ -901,7 +891,7 @@ export const StockList: React.FC<StockListProps> = ({
                               }
                               aria-label={`Excluir ${material.nome}`}
                               title="Excluir"
-                              style={iconBtn(designSystem.colors.error, '#FBE9EB', '#F0A8AE')}
+                              style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
                             >
                               <Trash2 size={12} />
                             </button>
@@ -922,8 +912,8 @@ export const StockList: React.FC<StockListProps> = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              marginTop: designSystem.spacing.lg,
+              gap: '4px',
+              marginTop: '24px',
             }}
           >
             <Button
@@ -938,17 +928,15 @@ export const StockList: React.FC<StockListProps> = ({
                 key={n}
                 onClick={() => setPage(n)}
                 style={{
-                  background:
-                    n === safePage ? designSystem.colors.primary[500] : designSystem.colors.surface,
-                  color:
-                    n === safePage ? designSystem.colors.surface : designSystem.colors.text.primary,
-                  border: `1px solid ${n === safePage ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
-                  padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                  fontSize: designSystem.typography.fontSizes.sm,
-                  fontWeight: designSystem.typography.fontWeights.semibold,
+                  background: n === safePage ? '#0D66CC' : '#FFFFFF',
+                  color: n === safePage ? '#FFFFFF' : '#1A1A1A',
+                  border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                  borderRadius: '8px',
+                  padding: `4px 16px`,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: designSystem.typography.fontFamily,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   minWidth: 36,
                 }}
               >
@@ -971,44 +959,44 @@ export const StockList: React.FC<StockListProps> = ({
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: designSystem.colors.surface,
-  border: `1px solid ${designSystem.colors.border}`,
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-  paddingLeft: designSystem.spacing['2xl'],
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontFamily: designSystem.typography.fontFamily,
-  color: designSystem.colors.text.primary,
+  background: '#FFFFFF',
+  border: `1px solid #E0E0E0`,
+  borderRadius: '8px',
+  padding: `8px 16px`,
+  paddingLeft: '48px',
+  fontSize: '14px',
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  color: '#1A1A1A',
   outline: 'none',
   boxSizing: 'border-box',
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  background: designSystem.colors.primary[500],
-  color: designSystem.colors.surface,
+  background: '#0D66CC',
+  color: '#FFFFFF',
   border: 'none',
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  borderRadius: '8px',
+  padding: `8px 24px`,
+  fontSize: '14px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.sm,
+  gap: '8px',
   cursor: 'pointer',
-  boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+  boxShadow: `0 4px 12px #0D66CC40`,
 };
 
 const secondaryBtnStyle: React.CSSProperties = {
-  background: designSystem.colors.surface,
-  color: designSystem.colors.text.primary,
-  border: `1px solid ${designSystem.colors.border}`,
-  borderRadius: designSystem.borderRadius.md,
-  padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-  fontSize: designSystem.typography.fontSizes.sm,
-  fontWeight: designSystem.typography.fontWeights.semibold,
+  background: '#FFFFFF',
+  color: '#1A1A1A',
+  border: `1px solid #E0E0E0`,
+  borderRadius: '8px',
+  padding: `8px 24px`,
+  fontSize: '14px',
+  fontWeight: 600,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: designSystem.spacing.sm,
+  gap: '8px',
   cursor: 'pointer',
 };
 
@@ -1022,25 +1010,25 @@ function iconBtn(color: string, bgHover: string, border: string): React.CSSPrope
     background: 'transparent',
     color,
     border: `1px solid ${border}`,
-    borderRadius: designSystem.borderRadius.md,
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'background-color 0.15s ease',
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: designSystem.colors.surface,
-    color: designSystem.colors.text.primary,
-    border: `1px solid ${designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    background: '#FFFFFF',
+    color: '#1A1A1A',
+    border: `1px solid #E0E0E0`,
+    borderRadius: '8px',
+    padding: `4px 16px`,
+    fontSize: '14px',
+    fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 

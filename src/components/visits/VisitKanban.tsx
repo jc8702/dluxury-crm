@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
@@ -14,9 +14,9 @@ const VisitKanban: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [
-    { id: 'agendado', title: 'ðŸ“‹ AGENDADO' },
+    { id: 'agendado', title: '📋 AGENDADO' },
     { id: 'realizado', title: 'ðŸ  REALIZADO' },
-    { id: 'follow_up', title: 'ðŸ“ž FOLLOW-UP' },
+    { id: 'follow_up', title: '📞 FOLLOW-UP' },
   ];
 
   const fetchVisits = async () => {
@@ -24,6 +24,10 @@ const VisitKanban: React.FC = () => {
     await loadEvents();
     setLoading(false);
   };
+
+  React.useEffect(() => {
+    fetchVisits();
+  }, []);
 
   const handleMove = async (id: string, newStatus: string) => {
     try {
@@ -53,10 +57,10 @@ const VisitKanban: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase">
-              GestÃ£o de <span className="text-primary">Visitas</span>
+              Gestão de <span className="text-primary">Visitas</span>
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Fluxo comercial e tÃ©cnico integrado Ã agenda industrial.
+              Fluxo comercial e técnico integrado Ã agenda industrial.
             </p>
           </div>
         </div>
@@ -76,7 +80,7 @@ const VisitKanban: React.FC = () => {
         </div>
       </header>
 
-      {/* Grid de Resumo RÃ¡pido */}
+      {/* Grid de Resumo Rápido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {columns.map((col) => {
           const borderClass =
@@ -110,7 +114,7 @@ const VisitKanban: React.FC = () => {
           </div>
         )}
         <KanbanBoard
-          title="GestÃ£o de Visitas"
+          title="Gestão de Visitas"
           items={visits}
           columns={columns}
           onMove={handleMove}
