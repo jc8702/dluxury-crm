@@ -140,10 +140,12 @@ const LandingPage: React.FC = () => {
       {/* ── NAVBAR ── */}
       <nav className="relative z-50 flex items-center justify-between px-6 py-4 mx-auto max-w-7xl border-b border-border/20 backdrop-blur-xl bg-background/50 sticky top-0">
         <div className="text-2xl font-black tracking-widest drop-shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center text-primary-foreground text-sm font-bold">
             DL
           </div>
-          <span className="text-gradient-primary">D'LUXURY CRM</span>
+          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            D'LUXURY CRM
+          </span>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a
@@ -174,7 +176,7 @@ const LandingPage: React.FC = () => {
             </button>
             <button
               onClick={() => navigate('/signup')}
-              className="px-6 py-2.5 text-sm font-bold text-primary-foreground bg-gradient-primary rounded-lg shadow-primary hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+              className="px-6 py-2.5 text-sm font-bold text-primary-foreground bg-gradient-to-r from-primary to-accent rounded-lg shadow-lg shadow-primary/30 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
             >
               Teste Grátis
             </button>
@@ -190,7 +192,9 @@ const LandingPage: React.FC = () => {
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8">
           O ERP Definitivo para <br className="hidden md:block" />
-          <span className="text-gradient-primary">Fábricas e Marcenarias</span>
+          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Fábricas e Marcenarias
+          </span>
         </h1>
 
         <p className="max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed mb-12">
@@ -202,7 +206,7 @@ const LandingPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <button
             onClick={() => navigate('/signup')}
-            className="group flex items-center gap-2 px-8 py-4 text-base font-black tracking-wide text-primary-foreground uppercase bg-gradient-primary rounded-xl shadow-primary hover:shadow-lg hover:scale-105 transition-all duration-300"
+            className="group flex items-center gap-2 px-8 py-4 text-base font-black tracking-wide text-primary-foreground uppercase bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg shadow-primary/30 hover:shadow-lg hover:scale-105 transition-all duration-300"
           >
             Começar Teste de 14 Dias
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -374,8 +378,8 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* PRO (Destaque) */}
-          <div className="relative flex flex-col p-8 rounded-3xl border-2 border-accent bg-card/80 backdrop-blur-xl shadow-primary transform md:-translate-y-4">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-primary text-primary-foreground text-xs font-black tracking-widest uppercase rounded-full shadow-lg">
+          <div className="relative flex flex-col p-8 rounded-3xl border-2 border-accent bg-card/80 backdrop-blur-xl shadow-lg shadow-primary/30 transform md:-translate-y-4">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-black tracking-widest uppercase rounded-full shadow-lg">
               Mais Escolhido
             </div>
             <h3 className="text-2xl font-black text-accent mb-2 mt-4">PRO</h3>
@@ -388,7 +392,7 @@ const LandingPage: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/signup')}
-              className="w-full py-4 px-4 mb-8 text-sm font-black text-primary-foreground bg-gradient-primary rounded-xl shadow-primary hover:shadow-lg transition-all hover:-translate-y-1"
+              className="w-full py-4 px-4 mb-8 text-sm font-black text-primary-foreground bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg shadow-primary/30 hover:shadow-lg transition-all hover:-translate-y-1"
             >
               Começar Teste Grátis
             </button>

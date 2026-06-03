@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-background font-sans p-4 relative">
       <div className="bg-card p-[3.5rem_3rem] rounded-3xl w-[420px] border border-border/30 shadow-lg">
         <div className="text-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-5 text-primary-foreground font-black text-2xl shadow-primary">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-primary to-accent flex items-center justify-center mx-auto mb-5 text-primary-foreground font-black text-2xl shadow-lg shadow-primary/30">
             DL
           </div>
           <h1 className="text-foreground text-[1.6rem] font-black m-0 tracking-wider">
@@ -111,7 +111,7 @@ const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-xl mt-2 bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-primary transition-all duration-200 hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 rounded-xl mt-2 bg-primary text-primary-foreground font-bold border-none cursor-pointer text-base tracking-wider uppercase shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Acessando...' : 'Entrar no Sistema'}
           </button>
