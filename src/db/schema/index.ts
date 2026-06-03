@@ -12,3 +12,4 @@ export * from './whatsapp.js';
 export * from './estoque-granular.js';
 export * from './contrato-digital.js';
 export * from './quotations.js';
+export * from './prospeccao.js';

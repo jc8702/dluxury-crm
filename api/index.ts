@@ -45,15 +45,6 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfte
   return { allowed: true };
 }
 
-function cleanupRateLimitMap() {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap.entries()) {
-    if (now > entry.resetTime) {
-      rateLimitMap.delete(key);
-    }
-  }
-}
-
 // Note: setInterval removed for Vercel serverless compatibility.
 // Rate limit map cleanup happens naturally as entries expire.
 
@@ -434,6 +425,28 @@ export default async function handler(req: any, res: any) {
       return await handleEstoque(req, res);
     }
 
+    // MÓDULO 9 — Prospecção Marcenaria
+    if (cleanUrl.startsWith('/api/prospeccao/metrics')) {
+      const { handleProspeccaoMetrics } = await import('../src/api-lib/prospeccao.js');
+      return await handleProspeccaoMetrics(req, res);
+    }
+    if (cleanUrl.match(/^\/api\/prospeccao\/[^/]+\/interacoes/)) {
+      const parts = cleanUrl.split('/');
+      req.query = { ...req.query, prospeccao_id: parts[3] };
+      const { handleInteracoes } = await import('../src/api-lib/prospeccao.js');
+      return await handleInteracoes(req, res);
+    }
+    if (cleanUrl.match(/^\/api\/prospeccao\/[^/]+$/)) {
+      const id = cleanUrl.split('/')[3];
+      req.query = { ...req.query, id };
+      const { handleProspeccaoById } = await import('../src/api-lib/prospeccao.js');
+      return await handleProspeccaoById(req, res);
+    }
+    if (cleanUrl.startsWith('/api/prospeccao')) {
+      const { handleProspeccoes } = await import('../src/api-lib/prospeccao.js');
+      return await handleProspeccoes(req, res);
+    }
+
     // Endpoint init-db - requer header x-init-key
     if (cleanUrl.startsWith('/api/init-db')) {
       const initKey = req.headers['x-init-key'];
@@ -453,12 +466,10 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/resolve-dominio')) {
       const host = req.query.host || req.headers['host'] || '';
       const tenant = await resolveTenantByDomain(host);
-      return res
-        .status(200)
-        .json({
-          success: true,
-          tenant: tenant ? { nome: tenant.nome, subdominio: tenant.subdominio } : null,
-        });
+      return res.status(200).json({
+        success: true,
+        tenant: tenant ? { nome: tenant.nome, subdominio: tenant.subdominio } : null,
+      });
     }
 
     // Endpoint para configurar domínio personalizado (admin)

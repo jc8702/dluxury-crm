@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Search, Edit3, Trash2, ChevronUp, ChevronDown, MessageCircle } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button } from '../../components/common';
 import type { Client } from '../../types/entities';
 
@@ -107,10 +106,10 @@ export const ClientList: React.FC<ClientListProps> = ({
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
         onClick={() => toggleSort(k)}
         style={{
-          padding: designSystem.spacing.md,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.semibold,
-          color: active ? designSystem.colors.primary[600] : designSystem.colors.text.secondary,
+          padding: '16px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: active ? '#0D5FB8' : '#666666',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -119,9 +118,7 @@ export const ClientList: React.FC<ClientListProps> = ({
           transition: 'color 0.15s ease',
         }}
       >
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: designSystem.spacing.xs }}
-        >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {label}
           {active ? (
             sortDir === 'asc' ? (
@@ -142,45 +139,45 @@ export const ClientList: React.FC<ClientListProps> = ({
   const pageStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    gap: designSystem.spacing.xl,
-    padding: designSystem.spacing.lg,
-    fontFamily: designSystem.typography.fontFamily,
-    color: designSystem.colors.text.primary,
+    gap: '32px',
+    padding: '24px',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A1A1A',
   };
 
   const cardStyle: React.CSSProperties = {
-    background: designSystem.colors.surface,
-    borderRadius: designSystem.borderRadius.lg,
-    boxShadow: designSystem.shadows.md,
-    padding: designSystem.spacing.lg,
+    background: '#FFFFFF',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    padding: '24px',
   };
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: designSystem.colors.surface,
-    border: `1px solid ${designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontFamily: designSystem.typography.fontFamily,
-    color: designSystem.colors.text.primary,
+    background: '#FFFFFF',
+    border: `1px solid #E0E0E0`,
+    borderRadius: '8px',
+    padding: `8px 16px`,
+    fontSize: '14px',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A1A1A',
     outline: 'none',
     transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   const emptyState: React.CSSProperties = {
-    padding: designSystem.spacing['2xl'],
+    padding: '48px',
     textAlign: 'center',
-    color: designSystem.colors.text.secondary,
-    fontSize: designSystem.typography.fontSizes.sm,
+    color: '#666666',
+    fontSize: '14px',
   };
 
   return (
     <div className="ds-client-list" style={pageStyle}>
       <style>{`
-        .ds-client-list input:focus { border-color: ${designSystem.colors.primary[500]} !important; box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]}; }
+        .ds-client-list input:focus { border-color: #0D66CC !important; box-shadow: 0 0 0 3px #E0EFFF; }
         .ds-client-list table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-client-list table tbody tr:hover { background: ${designSystem.colors.background}; box-shadow: ${designSystem.shadows.sm}; }
+        .ds-client-list table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .ds-client-list .ds-row-actions { opacity: 0.7; transition: opacity 0.15s ease; }
         .ds-client-list table tbody tr:hover .ds-row-actions { opacity: 1; }
       `}</style>
@@ -192,17 +189,17 @@ export const ClientList: React.FC<ClientListProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: designSystem.typography.fontSizes['3xl'],
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1A1A1A',
               margin: 0,
-              lineHeight: designSystem.typography.lineHeights.tight,
+              lineHeight: 1.2,
             }}
           >
             Clientes
@@ -211,14 +208,14 @@ export const ClientList: React.FC<ClientListProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.md,
-              marginTop: designSystem.spacing.xs,
+              gap: '16px',
+              marginTop: '4px',
             }}
           >
             <p
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.sm,
+                color: '#666666',
+                fontSize: '14px',
                 margin: 0,
               }}
             >
@@ -226,13 +223,13 @@ export const ClientList: React.FC<ClientListProps> = ({
             </p>
             <span
               style={{
-                background: designSystem.colors.primary[50],
-                color: designSystem.colors.primary[600],
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                borderRadius: designSystem.borderRadius.full,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
-                border: `1px solid ${designSystem.colors.primary[100]}`,
+                background: '#F0F7FF',
+                color: '#0D5FB8',
+                padding: `4px 8px`,
+                borderRadius: '9999px',
+                fontSize: '12px',
+                fontWeight: 600,
+                border: `1px solid #E0EFFF`,
               }}
             >
               {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
@@ -242,17 +239,17 @@ export const ClientList: React.FC<ClientListProps> = ({
         <Button
           onClick={onCreate}
           style={{
-            background: designSystem.colors.primary[500],
-            color: designSystem.colors.surface,
+            background: '#0D66CC',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: designSystem.borderRadius.md,
-            padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-            fontSize: designSystem.typography.fontSizes.sm,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            borderRadius: '8px',
+            padding: `8px 24px`,
+            fontSize: '14px',
+            fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
-            boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+            gap: '8px',
+            boxShadow: `0 4px 12px #0D66CC40`,
             cursor: 'pointer',
           }}
         >
@@ -268,8 +265,8 @@ export const ClientList: React.FC<ClientListProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -277,10 +274,10 @@ export const ClientList: React.FC<ClientListProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                left: designSystem.spacing.md,
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -292,7 +289,7 @@ export const ClientList: React.FC<ClientListProps> = ({
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              style={{ ...inputStyle, paddingLeft: designSystem.spacing['2xl'] }}
+              style={{ ...inputStyle, paddingLeft: '48px' }}
               aria-label="Buscar clientes"
             />
           </div>
@@ -307,7 +304,7 @@ export const ClientList: React.FC<ClientListProps> = ({
                 ...inputStyle,
                 appearance: 'none',
                 cursor: 'pointer',
-                paddingRight: designSystem.spacing['2xl'],
+                paddingRight: '48px',
               }}
               aria-label="Filtrar por status"
             >
@@ -319,10 +316,10 @@ export const ClientList: React.FC<ClientListProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                right: designSystem.spacing.md,
+                right: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -334,15 +331,15 @@ export const ClientList: React.FC<ClientListProps> = ({
           style={{
             width: '100%',
             overflowX: 'auto',
-            borderRadius: designSystem.borderRadius.md,
-            border: `1px solid ${designSystem.colors.border}`,
+            borderRadius: '8px',
+            border: `1px solid #E0E0E0`,
           }}
         >
           <table
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontSize: designSystem.typography.fontSizes.sm,
+              fontSize: '14px',
             }}
             role="table"
             aria-label="Lista de clientes"
@@ -350,17 +347,17 @@ export const ClientList: React.FC<ClientListProps> = ({
             <thead>
               <tr
                 style={{
-                  background: designSystem.colors.background,
-                  borderBottom: `2px solid ${designSystem.colors.border}`,
+                  background: '#FAFAFA',
+                  borderBottom: `2px solid #E0E0E0`,
                 }}
               >
                 <SortHeader k="nome" label="Cliente" />
                 <th
                   style={{
-                    padding: designSystem.spacing.md,
-                    fontSize: designSystem.typography.fontSizes.xs,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
-                    color: designSystem.colors.text.secondary,
+                    padding: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#666666',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -370,10 +367,10 @@ export const ClientList: React.FC<ClientListProps> = ({
                 <SortHeader k="cidade" label="Cidade/UF" />
                 <th
                   style={{
-                    padding: designSystem.spacing.md,
-                    fontSize: designSystem.typography.fontSizes.xs,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
-                    color: designSystem.colors.text.secondary,
+                    padding: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#666666',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -384,10 +381,10 @@ export const ClientList: React.FC<ClientListProps> = ({
                 <SortHeader k="status" label="Status" />
                 <th
                   style={{
-                    padding: designSystem.spacing.md,
-                    fontSize: designSystem.typography.fontSizes.xs,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
-                    color: designSystem.colors.text.secondary,
+                    padding: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#666666',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     textAlign: 'right',
@@ -411,42 +408,39 @@ export const ClientList: React.FC<ClientListProps> = ({
                   const projetoCount = projectCountByName[c.nome] || 0;
                   const isActive = (c.status || 'ativo') === 'ativo';
                   return (
-                    <tr
-                      key={c.id}
-                      style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                    >
-                      <td style={{ padding: designSystem.spacing.md }}>
+                    <tr key={c.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {tipoImovelIcon[c.tipoImovel || ''] || '·'} {c.nome}
                         </div>
                         <div
                           style={{
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            color: designSystem.colors.text.secondary,
+                            fontSize: '12px',
+                            color: '#666666',
                             marginTop: 2,
                           }}
                         >
                           {c.cpf || 'CPF não informado'}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         {c.telefone ? (
                           <a
                             href={`https://wa.me/55${c.telefone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noreferrer"
                             style={{
-                              color: designSystem.colors.success,
-                              fontWeight: designSystem.typography.fontWeights.semibold,
-                              fontSize: designSystem.typography.fontSizes.sm,
+                              color: '#28A745',
+                              fontWeight: 600,
+                              fontSize: '14px',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: designSystem.spacing.xs,
+                              gap: '4px',
                               textDecoration: 'none',
                             }}
                           >
@@ -456,8 +450,8 @@ export const ClientList: React.FC<ClientListProps> = ({
                         ) : (
                           <span
                             style={{
-                              color: designSystem.colors.text.disabled,
-                              fontSize: designSystem.typography.fontSizes.sm,
+                              color: '#CCCCCC',
+                              fontSize: '14px',
                             }}
                           >
                             —
@@ -466,8 +460,8 @@ export const ClientList: React.FC<ClientListProps> = ({
                         {c.email && (
                           <div
                             style={{
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              color: designSystem.colors.text.secondary,
+                              fontSize: '12px',
+                              color: '#666666',
                               marginTop: 2,
                             }}
                           >
@@ -477,64 +471,59 @@ export const ClientList: React.FC<ClientListProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
-                          fontSize: designSystem.typography.fontSizes.sm,
+                          padding: '16px',
+                          color: '#666666',
+                          fontSize: '14px',
                         }}
                       >
                         {c.cidade ? `${c.cidade}/${c.uf || '—'}` : '—'}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <span
                           style={{
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                            borderRadius: designSystem.borderRadius.full,
-                            background: designSystem.colors.background,
-                            color: designSystem.colors.text.secondary,
-                            border: `1px solid ${designSystem.colors.border}`,
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            padding: `4px 8px`,
+                            borderRadius: '9999px',
+                            background: '#FAFAFA',
+                            color: '#666666',
+                            border: `1px solid #E0E0E0`,
                           }}
                         >
                           {origemLabels[c.origem || 'outro'] || c.origem}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'center' }}>
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
                         <span
                           style={{
-                            fontSize: designSystem.typography.fontSizes.lg,
-                            fontWeight: designSystem.typography.fontWeights.bold,
-                            color:
-                              projetoCount > 0
-                                ? designSystem.colors.primary[600]
-                                : designSystem.colors.text.disabled,
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            color: projetoCount > 0 ? '#0D5FB8' : '#CCCCCC',
                           }}
                         >
                           {projetoCount}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <span
                           style={{
                             display: 'inline-block',
-                            padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                            borderRadius: designSystem.borderRadius.sm,
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            fontWeight: designSystem.typography.fontWeights.bold,
+                            padding: `4px 8px`,
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
                             background: isActive ? '#E6F4EA' : '#FBE9EB',
-                            color: isActive
-                              ? designSystem.colors.success
-                              : designSystem.colors.error,
+                            color: isActive ? '#28A745' : '#DC3545',
                             border: `1px solid ${isActive ? '#A8D5B6' : '#F0A8AE'}`,
                           }}
                         >
                           {isActive ? 'ATIVO' : 'INATIVO'}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div
                           className="ds-row-actions"
-                          style={{ display: 'inline-flex', gap: designSystem.spacing.xs }}
+                          style={{ display: 'inline-flex', gap: '4px' }}
                         >
                           <button
                             type="button"
@@ -543,21 +532,20 @@ export const ClientList: React.FC<ClientListProps> = ({
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: designSystem.spacing.xs,
-                              padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
+                              gap: '4px',
+                              padding: `4px 8px`,
                               background: 'transparent',
-                              border: `1px solid ${designSystem.colors.primary[100]}`,
-                              color: designSystem.colors.primary[600],
-                              borderRadius: designSystem.borderRadius.md,
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              fontWeight: designSystem.typography.fontWeights.semibold,
+                              border: `1px solid #E0EFFF`,
+                              color: '#0D5FB8',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 600,
                               cursor: 'pointer',
-                              fontFamily: designSystem.typography.fontFamily,
+                              fontFamily: "'Plus Jakarta Sans', sans-serif",
                               transition: 'background-color 0.15s ease',
                             }}
                             onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLElement).style.background =
-                                designSystem.colors.primary[50];
+                              (e.currentTarget as HTMLElement).style.background = '#F0F7FF';
                             }}
                             onMouseLeave={(e) => {
                               (e.currentTarget as HTMLElement).style.background = 'transparent';
@@ -573,16 +561,16 @@ export const ClientList: React.FC<ClientListProps> = ({
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: designSystem.spacing.xs,
-                              padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
+                              gap: '4px',
+                              padding: `4px 8px`,
                               background: 'transparent',
                               border: `1px solid #F0A8AE`,
-                              color: designSystem.colors.error,
-                              borderRadius: designSystem.borderRadius.md,
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              fontWeight: designSystem.typography.fontWeights.semibold,
+                              color: '#DC3545',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 600,
                               cursor: 'pointer',
-                              fontFamily: designSystem.typography.fontFamily,
+                              fontFamily: "'Plus Jakarta Sans', sans-serif",
                               transition: 'background-color 0.15s ease',
                             }}
                             onMouseEnter={(e) => {
@@ -612,24 +600,24 @@ export const ClientList: React.FC<ClientListProps> = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              marginTop: designSystem.spacing.lg,
+              gap: '4px',
+              marginTop: '24px',
             }}
           >
             <Button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
               style={{
-                background: designSystem.colors.surface,
-                color: designSystem.colors.text.primary,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.sm,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                background: '#FFFFFF',
+                color: '#1A1A1A',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `4px 16px`,
+                fontSize: '14px',
+                fontWeight: 600,
                 cursor: safePage === 1 ? 'not-allowed' : 'pointer',
                 opacity: safePage === 1 ? 0.5 : 1,
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
               ←
@@ -641,17 +629,15 @@ export const ClientList: React.FC<ClientListProps> = ({
                   key={n}
                   onClick={() => setPage(n)}
                   style={{
-                    background: active
-                      ? designSystem.colors.primary[500]
-                      : designSystem.colors.surface,
-                    color: active ? designSystem.colors.surface : designSystem.colors.text.primary,
-                    border: `1px solid ${active ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                    borderRadius: designSystem.borderRadius.md,
-                    padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                    fontSize: designSystem.typography.fontSizes.sm,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
+                    background: active ? '#0D66CC' : '#FFFFFF',
+                    color: active ? '#FFFFFF' : '#1A1A1A',
+                    border: `1px solid ${active ? '#0D66CC' : '#E0E0E0'}`,
+                    borderRadius: '8px',
+                    padding: `4px 16px`,
+                    fontSize: '14px',
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    fontFamily: designSystem.typography.fontFamily,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     minWidth: 36,
                   }}
                 >
@@ -663,16 +649,16 @@ export const ClientList: React.FC<ClientListProps> = ({
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
               style={{
-                background: designSystem.colors.surface,
-                color: designSystem.colors.text.primary,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.sm,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                background: '#FFFFFF',
+                color: '#1A1A1A',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `4px 16px`,
+                fontSize: '14px',
+                fontWeight: 600,
                 cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
                 opacity: safePage === totalPages ? 0.5 : 1,
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
               →

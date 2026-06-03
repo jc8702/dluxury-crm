@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 
-
 export async function runInitDB() {
   const safeSql = async (query: any) => {
     try {
@@ -29,7 +28,9 @@ export async function runInitDB() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
     )
   `);
-  await safeSql(sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS dominio_personalizado VARCHAR(255) UNIQUE`);
+  await safeSql(
+    sql`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS dominio_personalizado VARCHAR(255) UNIQUE`,
+  );
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS tenant_configs (
@@ -84,8 +85,12 @@ export async function runInitDB() {
   // Unique indexes tenant-scoped (global UNIQUE constraints removidas para isolar tenants)
   await safeSql(sql`DROP INDEX IF EXISTS clients_cnpj_idx`);
   await safeSql(sql`DROP INDEX IF EXISTS clients_cpf_idx`);
-  await safeSql(sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cnpj_idx ON clients (tenant_id, cnpj) WHERE cnpj IS NOT NULL`);
-  await safeSql(sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cpf_idx ON clients (tenant_id, cpf) WHERE cpf IS NOT NULL`);
+  await safeSql(
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cnpj_idx ON clients (tenant_id, cnpj) WHERE cnpj IS NOT NULL`,
+  );
+  await safeSql(
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS clients_tenant_cpf_idx ON clients (tenant_id, cpf) WHERE cpf IS NOT NULL`,
+  );
 
   // 2. Projects Table
   await safeSql(sql`
@@ -118,7 +123,9 @@ export async function runInitDB() {
   `);
 
   // 6. Migrations (safe)
-  await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`);
+  await safeSql(
+    sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`,
+  );
   await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS quotation_id TEXT`);
@@ -129,10 +136,14 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS projeto_id TEXT`);
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS quotation_id TEXT`);
   await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS ordem_producao_id TEXT`);
-  await safeSql(sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
+  await safeSql(
+    sql`ALTER TABLE planos_de_corte ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`,
+  );
   // Migrações Plano de Corte / Industrial
   await safeSql(sql`ALTER TABLE erp_chapas ADD COLUMN IF NOT EXISTS estoque INTEGER DEFAULT 0`);
-  await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`);
+  await safeSql(
+    sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE`,
+  );
   await safeSql(sql`ALTER TABLE retalhos_estoque ADD COLUMN IF NOT EXISTS sku VARCHAR(20) UNIQUE`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS quotation_id TEXT`);
@@ -143,47 +154,113 @@ export async function runInitDB() {
 
   // Migrações de padronização de nomes de colunas (criado_em -> created_at)
   await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamento_ambientes RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamento_moveis RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamento_pecas RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamento_ferragens RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamento_custos_extras RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE notificacoes RENAME COLUMN criado_em TO created_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE orcamento_ambientes RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE orcamento_moveis RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE orcamento_pecas RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE orcamento_ferragens RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(
+    sql`ALTER TABLE orcamento_custos_extras RENAME COLUMN criado_em TO created_at`,
+  ).catch(() => {});
+  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE notificacoes RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
   await safeSql(sql`ALTER TABLE eventos RENAME COLUMN criado_em TO created_at`).catch(() => {});
   await safeSql(sql`ALTER TABLE eventos RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_por TO created_by`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS projeto_id UUID`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS quotation_id UUID`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS preco_unitario NUMERIC(12,2)`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS valor_total NUMERIC(12,2)`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_antes NUMERIC(12,4)`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_depois NUMERIC(12,4)`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo DROP NOT NULL`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo SET DEFAULT 'material'`).catch(() => {});
-  await safeSql(sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS nota_fiscal TEXT`).catch(() => {});
-  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE planos_de_corte RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque RENAME COLUMN criado_por TO created_by`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS projeto_id UUID`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS quotation_id UUID`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS preco_unitario NUMERIC(12,2)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS valor_total NUMERIC(12,2)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_antes NUMERIC(12,4)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS estoque_depois NUMERIC(12,4)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`,
+  ).catch(() => {});
+  await safeSql(sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo DROP NOT NULL`).catch(
+    () => {},
+  );
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ALTER COLUMN item_tipo SET DEFAULT 'material'`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE movimentacoes_estoque ADD COLUMN IF NOT EXISTS nota_fiscal TEXT`,
+  ).catch(() => {});
+  await safeSql(sql`ALTER TABLE retalhos_estoque RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
   await safeSql(sql`ALTER TABLE projects RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
+  await safeSql(sql`ALTER TABLE projects RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
   await safeSql(sql`ALTER TABLE materiais RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE materiais RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE erp_product_bom RENAME COLUMN atualizado_em TO updated_at`).catch(() => {});
-  
+  await safeSql(sql`ALTER TABLE materiais RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
+  await safeSql(sql`ALTER TABLE erp_product_bom RENAME COLUMN atualizado_em TO updated_at`).catch(
+    () => {},
+  );
+
   // Migrações e padronizações da tabela fornecedores
-  await safeSql(sql`ALTER TABLE fornecedores RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
-  await safeSql(sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
-  
+  await safeSql(sql`ALTER TABLE fornecedores RENAME COLUMN criado_em TO created_at`).catch(
+    () => {},
+  );
+  await safeSql(
+    sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
+  ).catch(() => {});
+
   // Garantir que updated_at exista se não existir
-  await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
+  ).catch(() => {});
 
   // 7. Users Table
   await safeSql(sql`
@@ -210,7 +287,9 @@ export async function runInitDB() {
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(defaultPassword, salt);
       await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin')`;
-      console.log(`[SEED] Admin padrao criado com email 'admin@dluxury.com' e senha: ${defaultPassword}`);
+      console.warn(
+        `[SEED] Admin padrao criado com email 'admin@dluxury.com' e senha: ${defaultPassword}`,
+      );
     }
   } catch (err: any) {
     console.error('Erro no Seed do Admin:', err.message);
@@ -258,7 +337,9 @@ export async function runInitDB() {
   `);
 
   // Seed categoria Retalho
-  await safeSql(sql`INSERT INTO erp_categories (id, nome) VALUES ('RET', 'RETALHO') ON CONFLICT (id) DO NOTHING`);
+  await safeSql(
+    sql`INSERT INTO erp_categories (id, nome) VALUES ('RET', 'RETALHO') ON CONFLICT (id) DO NOTHING`,
+  );
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS erp_subfamilies (
@@ -528,13 +609,13 @@ export async function runInitDB() {
     await sql`ALTER TABLE eventos ALTER COLUMN projeto_id TYPE TEXT USING projeto_id::TEXT`;
     await sql`ALTER TABLE eventos ALTER COLUMN criado_por TYPE TEXT USING criado_por::TEXT`;
     await sql`ALTER TABLE eventos ALTER COLUMN responsavel_id TYPE TEXT USING responsavel_id::TEXT`;
-    
+
     await sql`ALTER TABLE eventos_historico ALTER COLUMN evento_id TYPE TEXT USING evento_id::TEXT`;
     await sql`ALTER TABLE eventos_historico ALTER COLUMN alterado_por TYPE TEXT USING alterado_por::TEXT`;
   } catch (err: any) {
     console.error('Erro Crítico na Migração de Tipos:', err.message);
   }
-  
+
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS eventos_agenda (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -556,7 +637,7 @@ export async function runInitDB() {
     )
   `);
 
-// 19. Industrial Cutting Plan
+  // 19. Industrial Cutting Plan
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS planos_de_corte (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1028,40 +1109,92 @@ export async function runInitDB() {
 
   // Migração de tenant_id em lote para suporte retroativo
   const tabelasComTenant = [
-    'clients', 'projects', 'billings', 'kanban_items', 'monthly_goals',
-    'orcamentos', 'itens_orcamento', 'orcamento_ambientes', 'orcamento_moveis',
-    'orcamento_pecas', 'orcamento_ferragens', 'orcamento_custos_extras',
-    'ordens_producao', 'erp_product_bom', 'chamados_garantia', 'notificacoes',
-    'eventos', 'planos_de_corte', 'erp_chapas', 'erp_skus_engenharia',
-    'retalhos_estoque', 'materiais', 'movimentacoes_estoque', 'fornecedores',
+    'clients',
+    'projects',
+    'billings',
+    'kanban_items',
+    'monthly_goals',
+    'orcamentos',
+    'itens_orcamento',
+    'orcamento_ambientes',
+    'orcamento_moveis',
+    'orcamento_pecas',
+    'orcamento_ferragens',
+    'orcamento_custos_extras',
+    'ordens_producao',
+    'erp_product_bom',
+    'chamados_garantia',
+    'notificacoes',
+    'eventos',
+    'planos_de_corte',
+    'erp_chapas',
+    'erp_skus_engenharia',
+    'retalhos_estoque',
+    'materiais',
+    'movimentacoes_estoque',
+    'fornecedores',
     'users',
-    'classes_financeiras', 'contas_internas', 'titulos_receber', 'titulos_pagar',
-    'formas_pagamento', 'condicoes_pagamento', 'contas_recorrentes',
-    'fechamentos_financeiros', 'baixas', 'movimentacoes_tesouraria', 'counters',
-    'erp_categories', 'erp_simulations',
-    'pedidos_compra', 'pedido_compra_itens', 'recebimentos_compra',
-    'subscriptions', 'usage_logs',
-    'ordens_prod', 'etapas_prod_kanban', 'movimento_kanban', 'eventos_calendario', 'notificacoes_calendario',
-    'custos_reais_op', 'rentabilidade_cliente', 'tendencias_preco', 'conversas_whatsapp', 'mensagens_whatsapp', 'modelos_msg_whatsapp',
-    'estoque_materiais_detalhado', 'movimento_estoque_granular', 'alertas_estoque', 'planejamento_reposicao', 'ordens_compra_granular', 'itens_oc_granular', 'contrato_digital', 'historico_assinatura_digital', 'mapeamento_sku', 'historico_sku_matching', 'erp_movimentacoes_industrial'
+    'classes_financeiras',
+    'contas_internas',
+    'titulos_receber',
+    'titulos_pagar',
+    'formas_pagamento',
+    'condicoes_pagamento',
+    'contas_recorrentes',
+    'fechamentos_financeiros',
+    'baixas',
+    'movimentacoes_tesouraria',
+    'counters',
+    'erp_categories',
+    'erp_simulations',
+    'pedidos_compra',
+    'pedido_compra_itens',
+    'recebimentos_compra',
+    'subscriptions',
+    'usage_logs',
+    'ordens_prod',
+    'etapas_prod_kanban',
+    'movimento_kanban',
+    'eventos_calendario',
+    'notificacoes_calendario',
+    'custos_reais_op',
+    'rentabilidade_cliente',
+    'tendencias_preco',
+    'conversas_whatsapp',
+    'mensagens_whatsapp',
+    'modelos_msg_whatsapp',
+    'estoque_materiais_detalhado',
+    'movimento_estoque_granular',
+    'alertas_estoque',
+    'planejamento_reposicao',
+    'ordens_compra_granular',
+    'itens_oc_granular',
+    'contrato_digital',
+    'historico_assinatura_digital',
+    'mapeamento_sku',
+    'historico_sku_matching',
+    'erp_movimentacoes_industrial',
   ];
 
-
   for (const tabela of tabelasComTenant) {
-    await safeSql(sql(`ALTER TABLE ${tabela} ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE` as any));
+    await safeSql(
+      sql(
+        `ALTER TABLE ${tabela} ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE` as any,
+      ),
+    );
   }
 
   // Criar Tenant Default e migrar dados nulos
   try {
     const defaultTenantId = '00000000-0000-0000-0000-000000000000';
-    
+
     // 1. Criar o tenant default se não existir
     await sql`
       INSERT INTO tenants (id, nome, subdominio, plano_tier, status)
       VALUES (${defaultTenantId}, 'MARCENARIA DEFAULT', 'default', 'pro', 'ativo')
       ON CONFLICT (id) DO UPDATE SET subdominio = 'default'
     `;
-    
+
     // 2. Criar a config padrão do tenant se não existir
     await sql`
       INSERT INTO tenant_configs (tenant_id, espessura_padrao_mdf, largura_maxima_sem_travessa, folga_gaveta_telescopica, markup_padrao)
@@ -1071,14 +1204,74 @@ export async function runInitDB() {
 
     // 2.5 Criar Plano de Contas padrão do tenant default se não existir
     await garantirSeedsFinanceiros(defaultTenantId);
-    
+
     // 3. Atualizar registros nulos para o tenant default
     for (const tabela of tabelasComTenant) {
-      await safeSql(sql(`UPDATE ${tabela} SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL` as any));
+      await safeSql(
+        sql(`UPDATE ${tabela} SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL` as any),
+      );
     }
   } catch (err: any) {
     console.error('Erro na migração de dados do Tenant:', err.message);
   }
+
+  // MÓDULO 9 — Prospecção Marcenaria
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS prospeccoes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+      nome VARCHAR(255) NOT NULL,
+      telefone VARCHAR(30),
+      email VARCHAR(255),
+      cidade VARCHAR(100),
+      uf VARCHAR(2),
+      status VARCHAR(50) NOT NULL DEFAULT 'novo_contato',
+      temperatura VARCHAR(20) DEFAULT 'frio',
+      origem VARCHAR(50) DEFAULT 'outro',
+      interesse TEXT,
+      orcamento_estimado NUMERIC(12,2),
+      prazo_desejado_dias INTEGER,
+      responsavel_id VARCHAR(100),
+      responsavel_nome VARCHAR(255),
+      cliente_id UUID,
+      projeto_id UUID,
+      budget BOOLEAN DEFAULT FALSE,
+      authority BOOLEAN DEFAULT FALSE,
+      need BOOLEAN DEFAULT FALSE,
+      timeline BOOLEAN DEFAULT FALSE,
+      motivo_perda TEXT,
+      concorrente_perdeu VARCHAR(255),
+      observacoes TEXT,
+      convertido_em TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      deleted_at TIMESTAMP WITH TIME ZONE
+    )
+  `);
+
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS interacoes_prospeccao (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      prospeccao_id UUID NOT NULL REFERENCES prospeccoes(id) ON DELETE CASCADE,
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+      tipo VARCHAR(50) NOT NULL,
+      titulo VARCHAR(255),
+      descricao TEXT,
+      status_anterior VARCHAR(50),
+      status_novo VARCHAR(50),
+      realizado_por VARCHAR(255),
+      data_interacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await safeSql(sql`CREATE INDEX IF NOT EXISTS prospeccoes_tenant_idx ON prospeccoes (tenant_id)`);
+  await safeSql(
+    sql`CREATE INDEX IF NOT EXISTS prospeccoes_status_idx ON prospeccoes (tenant_id, status)`,
+  );
+  await safeSql(
+    sql`CREATE INDEX IF NOT EXISTS interacoes_prosp_idx ON interacoes_prospeccao (prospeccao_id)`,
+  );
 
   /* console.log('--- Sincronização Concluída ---'); */
 

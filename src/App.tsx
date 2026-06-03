@@ -44,6 +44,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const NotificacoesPage = lazy(() => import('./pages/NotificacoesPage'));
 const ComprasPage = lazy(() => import('./pages/ComprasPage'));
 const AprovacaoPage = lazy(() => import('./pages/AprovacaoPage'));
+const ProspeccaoPage = lazy(() => import('./pages/ProspeccaoPage'));
 const PlanoCorteDemoPage = lazy(() => import('./pages/PlanoCorteDemo'));
 const RetalhosPage = lazy(() => import('./pages/RetalhosPage'));
 const SaaSAdminPage = lazy(() => import('./pages/SaaSAdminPage'));
@@ -238,6 +239,7 @@ export default function App() {
                       <Route path="painel" element={<DashboardPage />} />
                       <Route path="clientes" element={<ClientsPage />} />
                       <Route path="orcamentos" element={<QuotationForm />} />
+                      <Route path="prospeccao" element={<ProspeccaoPage />} />
                       <Route path="projetos" element={<ProjectsPage />} />
                       <Route path="visitas" element={<VisitsPage />} />
                       <Route path="calendario" element={<CalendarioPage />} />

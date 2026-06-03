@@ -11,7 +11,6 @@ import {
   Layers,
   DollarSign,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 
 import { useQuotation } from '../../modules/quotations/hooks/useQuotation';
 import type { Quotation, QuotationStatus } from './QuotationList';
@@ -48,9 +47,7 @@ interface QuotationFormProps {
   onSaved: (q: Quotation) => void;
   onCancel: () => void;
   onLoadClients?: () => Promise<Array<{ id: string; nome: string }>>;
-  onLoadSkus?: (
-    q?: string,
-  ) => Promise<
+  onLoadSkus?: (q?: string) => Promise<
     Array<{
       id: string;
       nome?: string;
@@ -295,33 +292,33 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
 
   const fieldLabel: React.CSSProperties = {
     display: 'block',
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing.xs,
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#1A1A1A',
+    marginBottom: '4px',
   };
 
-  const requiredMark: React.CSSProperties = { color: designSystem.colors.error, marginLeft: 2 };
+  const requiredMark: React.CSSProperties = { color: '#DC3545', marginLeft: 2 };
 
   const errorText: React.CSSProperties = {
-    fontSize: designSystem.typography.fontSizes.xs,
-    color: designSystem.colors.error,
-    marginTop: designSystem.spacing.xs,
+    fontSize: '12px',
+    color: '#DC3545',
+    marginTop: '4px',
     display: 'flex',
     alignItems: 'center',
-    gap: designSystem.spacing.xs,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    gap: '4px',
+    fontWeight: 600,
   };
 
   const fieldInput = (hasError: boolean, extra: React.CSSProperties = {}): React.CSSProperties => ({
     width: '100%',
-    background: designSystem.colors.surface,
-    border: `1px solid ${hasError ? designSystem.colors.error : designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontFamily: designSystem.typography.fontFamily,
-    color: designSystem.colors.text.primary,
+    background: '#FFFFFF',
+    border: `1px solid ${hasError ? '#DC3545' : '#E0E0E0'}`,
+    borderRadius: '8px',
+    padding: `8px 16px`,
+    fontSize: '14px',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A1A1A',
     outline: 'none',
     transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
     boxSizing: 'border-box',
@@ -333,18 +330,16 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: designSystem.spacing.sm,
-        fontSize: designSystem.typography.fontSizes.lg,
-        fontWeight: designSystem.typography.fontWeights.bold,
-        color: designSystem.colors.text.primary,
-        paddingBottom: designSystem.spacing.sm,
-        marginBottom: designSystem.spacing.lg,
-        borderBottom: `2px solid ${designSystem.colors.primary[500]}`,
+        gap: '8px',
+        fontSize: '18px',
+        fontWeight: 700,
+        color: '#1A1A1A',
+        paddingBottom: '8px',
+        marginBottom: '24px',
+        borderBottom: `2px solid #0D66CC`,
       }}
     >
-      <span style={{ color: designSystem.colors.primary[500], display: 'inline-flex' }}>
-        {icon}
-      </span>
+      <span style={{ color: '#0D66CC', display: 'inline-flex' }}>{icon}</span>
       <span>{text}</span>
     </div>
   );
@@ -353,9 +348,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
     return (
       <div
         style={{
-          padding: designSystem.spacing['2xl'],
+          padding: '48px',
           textAlign: 'center',
-          color: designSystem.colors.text.secondary,
+          color: '#666666',
         }}
       >
         Carregando orçamento...
@@ -367,13 +362,13 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
     return (
       <div
         style={{
-          padding: designSystem.spacing['2xl'],
+          padding: '48px',
           textAlign: 'center',
-          color: designSystem.colors.error,
+          color: '#DC3545',
         }}
       >
         <AlertCircle size={32} style={{ display: 'block', margin: '0 auto' }} />
-        <p style={{ marginTop: designSystem.spacing.sm }}>{error}</p>
+        <p style={{ marginTop: '8px' }}>{error}</p>
       </div>
     );
   }
@@ -388,20 +383,20 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.xl,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '32px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
       noValidate
     >
       <style>{`
         .ds-quotation-form input:focus, .ds-quotation-form select:focus, .ds-quotation-form textarea:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-quotation-form input[aria-invalid="true"], .ds-quotation-form select[aria-invalid="true"] {
-          border-color: ${designSystem.colors.error};
+          border-color: #DC3545;
         }
       `}</style>
 
@@ -411,17 +406,17 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: designSystem.typography.fontSizes['3xl'],
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1A1A1A',
               margin: 0,
-              lineHeight: designSystem.typography.lineHeights.tight,
+              lineHeight: 1.2,
             }}
           >
             {orcamentoId
@@ -430,31 +425,31 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
           </h1>
           <p
             style={{
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              margin: `${designSystem.spacing.xs} 0 0 0`,
+              color: '#666666',
+              fontSize: '14px',
+              margin: `4px 0 0 0`,
             }}
           >
             Preencha as 3 seções para gerar a proposta industrial
           </p>
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type="button"
             onClick={onCancel}
             style={{
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.primary,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              background: '#FFFFFF',
+              color: '#1A1A1A',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               cursor: 'pointer',
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <X size={16} /> Cancelar
@@ -463,20 +458,20 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             type="submit"
             disabled={saving}
             style={{
-              background: designSystem.colors.primary[500],
-              color: designSystem.colors.surface,
+              background: '#0D66CC',
+              color: '#FFFFFF',
               border: 'none',
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
-              boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+              gap: '8px',
+              boxShadow: `0 4px 12px #0D66CC40`,
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.6 : 1,
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <Save size={16} /> {saving ? 'Salvando...' : 'Salvar Proposta'}
@@ -487,10 +482,10 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       {/* ─── SEÇÃO 1: Dados Principais ─── */}
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         {sectionTitle(<FileText size={20} />, '1. Dados Principais')}
@@ -499,7 +494,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: designSystem.spacing.md,
+            gap: '16px',
           }}
         >
           <div>
@@ -537,8 +532,8 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
               value={orcamento?.numeroOrcamento || 'Gerado automaticamente ao salvar'}
               disabled
               style={fieldInput(false, {
-                background: designSystem.colors.background,
-                color: designSystem.colors.text.secondary,
+                background: '#FAFAFA',
+                color: '#666666',
                 cursor: 'not-allowed',
               })}
             />
@@ -566,9 +561,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             ) : (
               <p
                 style={{
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  color: designSystem.colors.text.secondary,
-                  marginTop: designSystem.spacing.xs,
+                  fontSize: '12px',
+                  color: '#666666',
+                  marginTop: '4px',
                 }}
               >
                 Valor entre 0% e 100%
@@ -641,23 +636,23 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       {/* ─── SEÇÃO 2: Itens ─── */}
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         {sectionTitle(<Layers size={20} />, '2. Itens do Projeto')}
 
-        <div style={{ position: 'relative', marginBottom: designSystem.spacing.lg }}>
+        <div style={{ position: 'relative', marginBottom: '24px' }}>
           <Search
             size={16}
             style={{
               position: 'absolute',
-              left: designSystem.spacing.md,
+              left: '16px',
               top: '50%',
               transform: 'translateY(-50%)',
-              color: designSystem.colors.text.secondary,
+              color: '#666666',
               pointerEvents: 'none',
             }}
           />
@@ -666,7 +661,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             placeholder="Buscar SKU de engenharia para adicionar…"
             value={skuSearch}
             onChange={(e) => setSkuSearch(e.target.value)}
-            style={{ ...fieldInput(false), paddingLeft: designSystem.spacing['2xl'] }}
+            style={{ ...fieldInput(false), paddingLeft: '48px' }}
           />
           {skuSearch && skus.length > 0 && (
             <div
@@ -677,10 +672,10 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                 right: 0,
                 maxHeight: 320,
                 overflowY: 'auto',
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                boxShadow: designSystem.shadows.lg,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
                 zIndex: 100,
               }}
             >
@@ -692,21 +687,20 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                   style={{
                     width: '100%',
                     textAlign: 'left',
-                    padding: designSystem.spacing.md,
+                    padding: '16px',
                     background: 'transparent',
                     border: 'none',
-                    borderBottom: `1px solid ${designSystem.colors.border}`,
+                    borderBottom: `1px solid #E0E0E0`,
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: designSystem.spacing.md,
-                    fontFamily: designSystem.typography.fontFamily,
+                    gap: '16px',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     transition: 'background-color 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background =
-                      designSystem.colors.primary[50];
+                    (e.currentTarget as HTMLElement).style.background = '#F0F7FF';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.background = 'transparent';
@@ -715,9 +709,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                   <div>
                     <div
                       style={{
-                        fontWeight: designSystem.typography.fontWeights.semibold,
-                        color: designSystem.colors.text.primary,
-                        fontSize: designSystem.typography.fontSizes.sm,
+                        fontWeight: 600,
+                        color: '#1A1A1A',
+                        fontSize: '14px',
                       }}
                     >
                       {sku.nome}
@@ -725,8 +719,8 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                     {sku.codigo && (
                       <div
                         style={{
-                          fontSize: designSystem.typography.fontSizes.xs,
-                          color: designSystem.colors.text.secondary,
+                          fontSize: '12px',
+                          color: '#666666',
                           fontFamily: 'monospace',
                           marginTop: 2,
                         }}
@@ -735,18 +729,16 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                       </div>
                     )}
                   </div>
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.sm }}
-                  >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span
                       style={{
-                        color: designSystem.colors.text.secondary,
-                        fontSize: designSystem.typography.fontSizes.xs,
+                        color: '#666666',
+                        fontSize: '12px',
                       }}
                     >
                       {formatCurrency(sku.precoUnitario)}
                     </span>
-                    <Plus size={16} color={designSystem.colors.primary[500]} />
+                    <Plus size={16} color={'#0D66CC'} />
                   </div>
                 </button>
               ))}
@@ -755,7 +747,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
         </div>
 
         {errors.itens && (
-          <p style={{ ...errorText, marginBottom: designSystem.spacing.md }} role="alert">
+          <p style={{ ...errorText, marginBottom: '16px' }} role="alert">
             <AlertCircle size={12} /> {errors.itens}
           </p>
         )}
@@ -763,16 +755,16 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
         {itens.length === 0 ? (
           <div
             style={{
-              padding: designSystem.spacing['2xl'],
+              padding: '48px',
               textAlign: 'center',
-              color: designSystem.colors.text.secondary,
-              border: `2px dashed ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              background: designSystem.colors.background,
+              color: '#666666',
+              border: `2px dashed #E0E0E0`,
+              borderRadius: '8px',
+              background: '#FAFAFA',
             }}
           >
             <Layers size={32} style={{ opacity: 0.3, display: 'block', margin: '0 auto' }} />
-            <p style={{ margin: `${designSystem.spacing.sm} 0 0 0` }}>
+            <p style={{ margin: `8px 0 0 0` }}>
               Nenhum item adicionado. Use a busca acima para incluir SKUs de engenharia.
             </p>
           </div>
@@ -781,22 +773,22 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             style={{
               width: '100%',
               overflowX: 'auto',
-              borderRadius: designSystem.borderRadius.md,
-              border: `1px solid ${designSystem.colors.border}`,
+              borderRadius: '8px',
+              border: `1px solid #E0E0E0`,
             }}
           >
             <table
               style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontSize: designSystem.typography.fontSizes.sm,
+                fontSize: '14px',
               }}
             >
               <thead>
                 <tr
                   style={{
-                    background: designSystem.colors.background,
-                    borderBottom: `2px solid ${designSystem.colors.border}`,
+                    background: '#FAFAFA',
+                    borderBottom: `2px solid #E0E0E0`,
                   }}
                 >
                   <th style={thStyle}>SKU / Item</th>
@@ -825,15 +817,15 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                     <tr
                       key={item.id}
                       style={{
-                        borderBottom: `1px solid ${designSystem.colors.border}`,
+                        borderBottom: `1px solid #E0E0E0`,
                         verticalAlign: 'top',
                       }}
                     >
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {item.skuDescricao || item.nomeCustomizado || '—'}
@@ -841,8 +833,8 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                         {item.skuCodigo && (
                           <div
                             style={{
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              color: designSystem.colors.text.secondary,
+                              fontSize: '12px',
+                              color: '#666666',
                               fontFamily: 'monospace',
                               marginTop: 2,
                             }}
@@ -851,7 +843,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'center' }}>
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
                         <input
                           type="number"
                           min={0}
@@ -864,15 +856,15 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                         />
                         <div
                           style={{
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            color: designSystem.colors.text.secondary,
+                            fontSize: '12px',
+                            color: '#666666',
                             marginTop: 2,
                           }}
                         >
                           {item.unidadeMedida || 'UN'}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <input
                           type="number"
                           min={0}
@@ -890,20 +882,20 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
+                          padding: '16px',
                           textAlign: 'right',
-                          fontWeight: designSystem.typography.fontWeights.bold,
-                          color: designSystem.colors.text.primary,
+                          fontWeight: 700,
+                          color: '#1A1A1A',
                         }}
                       >
                         {formatCurrency(totalItem)}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: designSystem.spacing.xs,
+                            gap: '4px',
                           }}
                         >
                           <input
@@ -913,15 +905,15 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                             onChange={(e) => handleFitaBordaSku(item.id, e.target.value)}
                             style={{
                               ...fieldInput(false),
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
+                              fontSize: '12px',
+                              padding: `4px 8px`,
                             }}
                           />
                           <div
                             style={{
                               display: 'flex',
                               flexWrap: 'wrap',
-                              gap: designSystem.spacing.xs,
+                              gap: '4px',
                             }}
                           >
                             {LADOS_FITA.map((lado) => {
@@ -933,17 +925,13 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: 4,
-                                    padding: `2px ${designSystem.spacing.sm}`,
-                                    background: checked
-                                      ? designSystem.colors.primary[50]
-                                      : designSystem.colors.background,
-                                    color: checked
-                                      ? designSystem.colors.primary[600]
-                                      : designSystem.colors.text.secondary,
-                                    border: `1px solid ${checked ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                                    borderRadius: designSystem.borderRadius.full,
-                                    fontSize: designSystem.typography.fontSizes.xs,
-                                    fontWeight: designSystem.typography.fontWeights.semibold,
+                                    padding: `2px 8px`,
+                                    background: checked ? '#F0F7FF' : '#FAFAFA',
+                                    color: checked ? '#0D5FB8' : '#666666',
+                                    border: `1px solid ${checked ? '#0D66CC' : '#E0E0E0'}`,
+                                    borderRadius: '9999px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
                                     cursor: 'pointer',
                                     userSelect: 'none',
                                   }}
@@ -969,9 +957,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                           {fitaAtiva && (
                             <div
                               style={{
-                                fontSize: designSystem.typography.fontSizes.xs,
-                                color: designSystem.colors.success,
-                                fontWeight: designSystem.typography.fontWeights.semibold,
+                                fontSize: '12px',
+                                color: '#28A745',
+                                fontWeight: 600,
                               }}
                             >
                               Fita configurada
@@ -979,7 +967,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'center' }}>
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
@@ -991,9 +979,9 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
                             width: 32,
                             height: 32,
                             background: 'transparent',
-                            color: designSystem.colors.error,
+                            color: '#DC3545',
                             border: `1px solid #F0A8AE`,
-                            borderRadius: designSystem.borderRadius.md,
+                            borderRadius: '8px',
                             cursor: 'pointer',
                             transition: 'background-color 0.15s ease',
                           }}
@@ -1019,10 +1007,10 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       {/* ─── SEÇÃO 3: Resumo ─── */}
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         {sectionTitle(<DollarSign size={20} />, '3. Resumo Financeiro')}
@@ -1031,51 +1019,51 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: designSystem.spacing.md,
+            gap: '16px',
           }}
         >
           <SummaryCard
             label="Subtotal"
             value={formatCurrency(subtotal)}
-            color={designSystem.colors.text.secondary}
-            bg={designSystem.colors.background}
+            color={'#666666'}
+            bg={'#FAFAFA'}
           />
           <SummaryCard
             label={`Margem (${margem}%)`}
             value={formatCurrency(valorMargem)}
-            color={designSystem.colors.accent}
-            bg={designSystem.colors.accent + '15'}
+            color={'#E2AC00'}
+            bg={'#E2AC00' + '15'}
           />
           <SummaryCard
             label={`Taxa Financeira (${taxaFinanceira}%)`}
             value={formatCurrency(valorTaxa)}
-            color={designSystem.colors.info}
-            bg={designSystem.colors.info + '15'}
+            color={'#17A2B8'}
+            bg={'#17A2B8' + '15'}
           />
           <SummaryCard
             label="Total Geral"
             value={formatCurrency(total)}
-            color={designSystem.colors.primary[600]}
-            bg={designSystem.colors.primary[50]}
+            color={'#0D5FB8'}
+            bg={'#F0F7FF'}
             highlight
           />
         </div>
 
         <div
           style={{
-            marginTop: designSystem.spacing.lg,
-            padding: designSystem.spacing.md,
-            background: designSystem.colors.background,
-            borderRadius: designSystem.borderRadius.md,
-            fontSize: designSystem.typography.fontSizes.sm,
-            color: designSystem.colors.text.secondary,
+            marginTop: '24px',
+            padding: '16px',
+            background: '#FAFAFA',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: '#666666',
           }}
         >
-          <strong style={{ color: designSystem.colors.text.primary }}>Validade da proposta:</strong>{' '}
-          {validadeDias} dias &nbsp;·&nbsp;
-          <strong style={{ color: designSystem.colors.text.primary }}>Itens:</strong> {itens.length}
+          <strong style={{ color: '#1A1A1A' }}>Validade da proposta:</strong> {validadeDias} dias
           &nbsp;·&nbsp;
-          <strong style={{ color: designSystem.colors.text.primary }}>Cliente:</strong>{' '}
+          <strong style={{ color: '#1A1A1A' }}>Itens:</strong> {itens.length}
+          &nbsp;·&nbsp;
+          <strong style={{ color: '#1A1A1A' }}>Cliente:</strong>{' '}
           {clients.find((c) => c.id === clienteId)?.nome || '—'}
         </div>
       </section>
@@ -1084,10 +1072,10 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
 };
 
 const thStyle: React.CSSProperties = {
-  padding: designSystem.spacing.md,
-  fontSize: designSystem.typography.fontSizes.xs,
-  fontWeight: designSystem.typography.fontWeights.semibold,
-  color: designSystem.colors.text.secondary,
+  padding: '16px',
+  fontSize: '12px',
+  fontWeight: 600,
+  color: '#666666',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   textAlign: 'left',
@@ -1104,19 +1092,19 @@ const SummaryCard: React.FC<{
   <div
     style={{
       background: bg,
-      border: `1px solid ${highlight ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-      borderRadius: designSystem.borderRadius.md,
-      padding: designSystem.spacing.lg,
+      border: `1px solid ${highlight ? '#0D66CC' : '#E0E0E0'}`,
+      borderRadius: '8px',
+      padding: '24px',
       display: 'flex',
       flexDirection: 'column',
-      gap: designSystem.spacing.xs,
+      gap: '4px',
     }}
   >
     <div
       style={{
-        fontSize: designSystem.typography.fontSizes.xs,
-        fontWeight: designSystem.typography.fontWeights.semibold,
-        color: designSystem.colors.text.secondary,
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#666666',
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
       }}
@@ -1125,10 +1113,8 @@ const SummaryCard: React.FC<{
     </div>
     <div
       style={{
-        fontSize: highlight
-          ? designSystem.typography.fontSizes['2xl']
-          : designSystem.typography.fontSizes.xl,
-        fontWeight: designSystem.typography.fontWeights.bold,
+        fontSize: highlight ? '24px' : '20px',
+        fontWeight: 700,
         color,
       }}
     >

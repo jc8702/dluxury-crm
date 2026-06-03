@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
-import { Client, Project, Orcamento } from '../types';
+import type { Client, Project, Orcamento } from '../types';
 
 interface CrmState {
   clients: Client[];

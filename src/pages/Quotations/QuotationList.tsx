@@ -12,7 +12,6 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button } from '../../components/common';
 
 export type QuotationStatus =
@@ -199,10 +198,10 @@ export const QuotationList: React.FC<QuotationListProps> = ({
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
         onClick={() => toggleSort(k)}
         style={{
-          padding: designSystem.spacing.md,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.semibold,
-          color: active ? designSystem.colors.primary[600] : designSystem.colors.text.secondary,
+          padding: '16px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: active ? '#0D5FB8' : '#666666',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -211,9 +210,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
           textAlign: align,
         }}
       >
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: designSystem.spacing.xs }}
-        >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {label}
           {active ? (
             sortDir === 'asc' ? (
@@ -237,19 +234,19 @@ export const QuotationList: React.FC<QuotationListProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.xl,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '32px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
         .ds-quotation-list input:focus, .ds-quotation-list select:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-quotation-list table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-quotation-list table tbody tr:hover { background: ${designSystem.colors.background}; box-shadow: ${designSystem.shadows.sm}; }
+        .ds-quotation-list table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .ds-quotation-list .ds-row-actions { opacity: 0.7; transition: opacity 0.15s ease; }
         .ds-quotation-list table tbody tr:hover .ds-row-actions { opacity: 1; }
       `}</style>
@@ -260,26 +257,26 @@ export const QuotationList: React.FC<QuotationListProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: designSystem.typography.fontSizes['3xl'],
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1A1A1A',
               margin: 0,
-              lineHeight: designSystem.typography.lineHeights.tight,
+              lineHeight: 1.2,
             }}
           >
             Orçamentos
           </h1>
           <p
             style={{
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              margin: `${designSystem.spacing.xs} 0 0 0`,
+              color: '#666666',
+              fontSize: '14px',
+              margin: `4px 0 0 0`,
             }}
           >
             Gestão de propostas industriais e cálculos de engenharia
@@ -288,17 +285,17 @@ export const QuotationList: React.FC<QuotationListProps> = ({
         <Button
           onClick={onCreate}
           style={{
-            background: designSystem.colors.primary[500],
-            color: designSystem.colors.surface,
+            background: '#0D66CC',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: designSystem.borderRadius.md,
-            padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-            fontSize: designSystem.typography.fontSizes.sm,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            borderRadius: '8px',
+            padding: `8px 24px`,
+            fontSize: '14px',
+            fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
-            boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+            gap: '8px',
+            boxShadow: `0 4px 12px #0D66CC40`,
             cursor: 'pointer',
           }}
         >
@@ -308,18 +305,18 @@ export const QuotationList: React.FC<QuotationListProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -327,10 +324,10 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                left: designSystem.spacing.md,
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -345,14 +342,14 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               aria-label="Buscar orçamentos"
               style={{
                 width: '100%',
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                paddingLeft: designSystem.spacing['2xl'],
-                fontSize: designSystem.typography.fontSizes.sm,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                paddingLeft: '48px',
+                fontSize: '14px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                 boxSizing: 'border-box',
@@ -368,13 +365,13 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             }}
             aria-label="Filtrar por status"
             style={{
-              background: designSystem.colors.surface,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontFamily: designSystem.typography.fontFamily,
-              color: designSystem.colors.text.primary,
+              background: '#FFFFFF',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 16px`,
+              fontSize: '14px',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: '#1A1A1A',
               cursor: 'pointer',
               outline: 'none',
             }}
@@ -395,13 +392,13 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             }}
             aria-label="Filtrar por cliente"
             style={{
-              background: designSystem.colors.surface,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontFamily: designSystem.typography.fontFamily,
-              color: designSystem.colors.text.primary,
+              background: '#FFFFFF',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 16px`,
+              fontSize: '14px',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: '#1A1A1A',
               cursor: 'pointer',
               outline: 'none',
             }}
@@ -414,8 +411,8 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             ))}
           </select>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.xs }}>
-            <Calendar size={14} color={designSystem.colors.text.secondary} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={14} color={'#666666'} />
             <input
               type="date"
               value={dateFrom}
@@ -426,21 +423,21 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               aria-label="Data inicial"
               style={{
                 flex: 1,
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
             />
             <span
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.xs,
+                color: '#666666',
+                fontSize: '12px',
               }}
             >
               até
@@ -455,13 +452,13 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               aria-label="Data final"
               style={{
                 flex: 1,
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -474,18 +471,18 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: designSystem.colors.error,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#DC3545',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: designSystem.spacing.xs,
+                gap: '4px',
               }}
             >
               <X size={12} /> Limpar filtros
@@ -497,15 +494,15 @@ export const QuotationList: React.FC<QuotationListProps> = ({
           style={{
             width: '100%',
             overflowX: 'auto',
-            borderRadius: designSystem.borderRadius.md,
-            border: `1px solid ${designSystem.colors.border}`,
+            borderRadius: '8px',
+            border: `1px solid #E0E0E0`,
           }}
         >
           <table
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontSize: designSystem.typography.fontSizes.sm,
+              fontSize: '14px',
             }}
             role="table"
             aria-label="Lista de orçamentos"
@@ -513,8 +510,8 @@ export const QuotationList: React.FC<QuotationListProps> = ({
             <thead>
               <tr
                 style={{
-                  background: designSystem.colors.background,
-                  borderBottom: `2px solid ${designSystem.colors.border}`,
+                  background: '#FAFAFA',
+                  borderBottom: `2px solid #E0E0E0`,
                 }}
               >
                 <SortHeader k="numero" label="Número" />
@@ -524,10 +521,10 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                 <SortHeader k="data" label="Data" />
                 <th
                   style={{
-                    padding: designSystem.spacing.md,
-                    fontSize: designSystem.typography.fontSizes.xs,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
-                    color: designSystem.colors.text.secondary,
+                    padding: '16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#666666',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     textAlign: 'right',
@@ -543,9 +540,9 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                   <td
                     colSpan={6}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     Carregando orçamentos...
@@ -556,16 +553,16 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                   <td
                     colSpan={6}
                     style={{
-                      padding: designSystem.spacing['2xl'],
+                      padding: '48px',
                       textAlign: 'center',
-                      color: designSystem.colors.text.secondary,
+                      color: '#666666',
                     }}
                   >
                     <FileText
                       size={32}
                       style={{ opacity: 0.3, margin: '0 auto', display: 'block' }}
                     />
-                    <p style={{ margin: `${designSystem.spacing.sm} 0 0 0` }}>
+                    <p style={{ margin: `8px 0 0 0` }}>
                       {hasActiveFilter
                         ? 'Nenhum orçamento encontrado com os filtros atuais.'
                         : 'Nenhum orçamento cadastrado.'}
@@ -577,39 +574,36 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                   const meta = STATUS_META[q.status] || STATUS_META.RASCUNHO;
                   const clientName = q.cliente?.nome || q.clienteNome || '—';
                   return (
-                    <tr
-                      key={q.id}
-                      style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                    >
-                      <td style={{ padding: designSystem.spacing.md }}>
+                    <tr key={q.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.bold,
-                            color: designSystem.colors.primary[600],
+                            fontWeight: 700,
+                            color: '#0D5FB8',
                             fontFamily: 'monospace',
                           }}
                         >
                           #{q.numeroOrcamento}
                         </div>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: designSystem.spacing.xs,
-                            color: designSystem.colors.text.primary,
-                            fontWeight: designSystem.typography.fontWeights.semibold,
+                            gap: '4px',
+                            color: '#1A1A1A',
+                            fontWeight: 600,
                           }}
                         >
-                          <User size={12} color={designSystem.colors.text.secondary} />
+                          <User size={12} color={'#666666'} />
                           {clientName}
                         </div>
                         {q.cliente?.cidade && (
                           <div
                             style={{
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              color: designSystem.colors.text.secondary,
+                              fontSize: '12px',
+                              color: '#666666',
                               marginTop: 2,
                             }}
                           >
@@ -619,22 +613,22 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
+                          padding: '16px',
                           textAlign: 'right',
-                          fontWeight: designSystem.typography.fontWeights.bold,
-                          color: designSystem.colors.text.primary,
+                          fontWeight: 700,
+                          color: '#1A1A1A',
                         }}
                       >
                         {formatCurrency(q.valorTotalVenda)}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <span
                           style={{
                             display: 'inline-block',
-                            padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                            borderRadius: designSystem.borderRadius.full,
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            fontWeight: designSystem.typography.fontWeights.bold,
+                            padding: `4px 8px`,
+                            borderRadius: '9999px',
+                            fontSize: '12px',
+                            fontWeight: 700,
                             background: meta.bg,
                             color: meta.fg,
                             border: `1px solid ${meta.border}`,
@@ -646,24 +640,24 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
-                          fontSize: designSystem.typography.fontSizes.sm,
+                          padding: '16px',
+                          color: '#666666',
+                          fontSize: '14px',
                         }}
                       >
                         {formatDate(q.createdAt)}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div
                           className="ds-row-actions"
-                          style={{ display: 'inline-flex', gap: designSystem.spacing.xs }}
+                          style={{ display: 'inline-flex', gap: '4px' }}
                         >
                           <button
                             type="button"
                             onClick={() => onView(q)}
                             aria-label={`Visualizar ${q.numeroOrcamento}`}
                             title="Visualizar"
-                            style={iconBtn(designSystem.colors.info, '#D1ECF1', '#7FC5D9')}
+                            style={iconBtn('#17A2B8', '#D1ECF1', '#7FC5D9')}
                           >
                             <Eye size={12} />
                           </button>
@@ -672,11 +666,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                             onClick={() => onEdit(q)}
                             aria-label={`Editar ${q.numeroOrcamento}`}
                             title="Editar"
-                            style={iconBtn(
-                              designSystem.colors.primary[600],
-                              designSystem.colors.primary[50],
-                              designSystem.colors.primary[100],
-                            )}
+                            style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
                           >
                             <Edit3 size={12} />
                           </button>
@@ -685,7 +675,7 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                             onClick={() => onDelete(q)}
                             aria-label={`Excluir ${q.numeroOrcamento}`}
                             title="Excluir"
-                            style={iconBtn(designSystem.colors.error, '#FBE9EB', '#F0A8AE')}
+                            style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
                           >
                             <Trash2 size={12} />
                           </button>
@@ -705,8 +695,8 @@ export const QuotationList: React.FC<QuotationListProps> = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              marginTop: designSystem.spacing.lg,
+              gap: '4px',
+              marginTop: '24px',
             }}
           >
             <Button
@@ -721,17 +711,15 @@ export const QuotationList: React.FC<QuotationListProps> = ({
                 key={n}
                 onClick={() => setPage(n)}
                 style={{
-                  background:
-                    n === safePage ? designSystem.colors.primary[500] : designSystem.colors.surface,
-                  color:
-                    n === safePage ? designSystem.colors.surface : designSystem.colors.text.primary,
-                  border: `1px solid ${n === safePage ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                  borderRadius: designSystem.borderRadius.md,
-                  padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                  fontSize: designSystem.typography.fontSizes.sm,
-                  fontWeight: designSystem.typography.fontWeights.semibold,
+                  background: n === safePage ? '#0D66CC' : '#FFFFFF',
+                  color: n === safePage ? '#FFFFFF' : '#1A1A1A',
+                  border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                  borderRadius: '8px',
+                  padding: `4px 16px`,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: designSystem.typography.fontFamily,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   minWidth: 36,
                 }}
               >
@@ -749,18 +737,18 @@ export const QuotationList: React.FC<QuotationListProps> = ({
         )}
 
         {onRefresh && (
-          <div style={{ marginTop: designSystem.spacing.md, textAlign: 'right' }}>
+          <div style={{ marginTop: '16px', textAlign: 'right' }}>
             <button
               type="button"
               onClick={onRefresh}
               style={{
                 background: 'transparent',
-                color: designSystem.colors.primary[600],
+                color: '#0D5FB8',
                 border: 'none',
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
               }}
@@ -784,25 +772,25 @@ function iconBtn(color: string, bgHover: string, border: string): React.CSSPrope
     background: 'transparent',
     color,
     border: `1px solid ${border}`,
-    borderRadius: designSystem.borderRadius.md,
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'background-color 0.15s ease',
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: designSystem.colors.surface,
-    color: designSystem.colors.text.primary,
-    border: `1px solid ${designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    background: '#FFFFFF',
+    color: '#1A1A1A',
+    border: `1px solid #E0E0E0`,
+    borderRadius: '8px',
+    padding: `4px 16px`,
+    fontSize: '14px',
+    fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 

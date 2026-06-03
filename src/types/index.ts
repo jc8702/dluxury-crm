@@ -1,2 +1,2 @@
-export * from './entities';
-export * from './api';
+export type * from './entities';
+export type * from './api';

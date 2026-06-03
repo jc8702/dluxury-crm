@@ -28,6 +28,7 @@ import {
   Clock3,
   ChevronDown,
   ChevronRight,
+  Target,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,7 +36,7 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onCloseMobile }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -75,6 +76,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
       roles: ['admin', 'vendedor'],
       group: 'COMERCIAL',
       feature: 'orcamentos',
+    },
+    {
+      id: 'prospeccao',
+      path: 'prospeccao',
+      label: 'Prospecção',
+      icon: <Target size={18} />,
+      roles: ['admin', 'vendedor'],
+      group: 'COMERCIAL',
+      feature: 'crm',
     },
     {
       id: 'visits',
@@ -271,7 +281,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile }) => {
 
   const groups = ['COMERCIAL', 'OPERAÇÕES', 'FINANCEIRO', 'SISTEMA'];
 
-  const renderMenuItem = (item: any, isSubItem = false) => {
+  const renderMenuItem = (item: any, _isSubItem = false) => {
     const isActive =
       currentPath === item.path || (item.id === 'finance' && currentPath.startsWith('financeiro'));
     const isExpanded = openMenus[item.id];

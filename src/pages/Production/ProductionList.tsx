@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button } from '../../components/common';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
@@ -386,10 +385,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
         aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
         onClick={() => toggleSort(k)}
         style={{
-          padding: designSystem.spacing.md,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.semibold,
-          color: active ? designSystem.colors.primary[600] : designSystem.colors.text.secondary,
+          padding: '16px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: active ? '#0D5FB8' : '#666666',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -398,9 +397,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           textAlign: align,
         }}
       >
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: designSystem.spacing.xs }}
-        >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           {label}
           {active ? (
             sortDir === 'asc' ? (
@@ -426,10 +423,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 4,
-          padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-          borderRadius: designSystem.borderRadius.full,
-          fontSize: designSystem.typography.fontSizes.xs,
-          fontWeight: designSystem.typography.fontWeights.bold,
+          padding: `4px 8px`,
+          borderRadius: '9999px',
+          fontSize: '12px',
+          fontWeight: 700,
           background: meta.bg,
           color: meta.fg,
           border: `1px solid ${meta.border}`,
@@ -450,10 +447,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 4,
-          padding: `2px ${designSystem.spacing.sm}`,
-          borderRadius: designSystem.borderRadius.full,
+          padding: `2px 8px`,
+          borderRadius: '9999px',
           fontSize: '11px',
-          fontWeight: designSystem.typography.fontWeights.semibold,
+          fontWeight: 600,
           background: meta.bg,
           color: meta.fg,
           border: `1px solid ${meta.border}`,
@@ -471,23 +468,23 @@ export const ProductionList: React.FC<ProductionListProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.xl,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '32px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
         .ds-production-list input:focus, .ds-production-list select:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-production-list table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-production-list table tbody tr:hover { background: ${designSystem.colors.background}; box-shadow: ${designSystem.shadows.sm}; }
+        .ds-production-list table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .ds-production-list .ds-row-actions { opacity: 0.7; transition: opacity 0.15s ease; }
         .ds-production-list table tbody tr:hover .ds-row-actions { opacity: 1; }
         .ds-production-list .ds-kanban-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .ds-production-list .ds-kanban-card:hover { transform: translateY(-2px); box-shadow: ${designSystem.shadows.md}; }
+        .ds-production-list .ds-kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
       `}</style>
 
       <header
@@ -496,52 +493,52 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: designSystem.typography.fontSizes['3xl'],
-              fontWeight: designSystem.typography.fontWeights.bold,
-              color: designSystem.colors.text.primary,
+              fontSize: '32px',
+              fontWeight: 700,
+              color: '#1A1A1A',
               margin: 0,
-              lineHeight: designSystem.typography.lineHeights.tight,
+              lineHeight: 1.2,
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
             }}
           >
-            <Hammer size={28} color={designSystem.colors.primary[600]} />
+            <Hammer size={28} color={'#0D5FB8'} />
             Ordens de Produção
           </h1>
           <p
             style={{
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              margin: `${designSystem.spacing.xs} 0 0 0`,
+              color: '#666666',
+              fontSize: '14px',
+              margin: `4px 0 0 0`,
             }}
           >
             Acompanhe o fluxo fabril,Cutting Plan e status das OPs em tempo real.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Button
             onClick={() => {
               fetchOrders();
               onRefresh?.();
             }}
             style={{
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.primary,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              background: '#FFFFFF',
+              color: '#1A1A1A',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               cursor: 'pointer',
             }}
             aria-label="Atualizar lista"
@@ -552,17 +549,17 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             <Button
               onClick={onCreate}
               style={{
-                background: designSystem.colors.primary[500],
-                color: designSystem.colors.surface,
+                background: '#0D66CC',
+                color: '#FFFFFF',
                 border: 'none',
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-                fontSize: designSystem.typography.fontSizes.sm,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                borderRadius: '8px',
+                padding: `8px 24px`,
+                fontSize: '14px',
+                fontWeight: 600,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: designSystem.spacing.sm,
-                boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+                gap: '8px',
+                boxShadow: `0 4px 12px #0D66CC40`,
                 cursor: 'pointer',
               }}
             >
@@ -576,7 +573,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         {(['PENDING', 'IN_PROGRESS', 'PAUSED', 'COMPLETED'] as ProductionBucket[]).map((b) => {
@@ -588,17 +585,17 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               type="button"
               onClick={() => setBucketFilter(active ? 'all' : b)}
               style={{
-                background: active ? meta.bg : designSystem.colors.surface,
-                border: `1px solid ${active ? meta.border : designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.lg,
-                padding: designSystem.spacing.md,
+                background: active ? meta.bg : '#FFFFFF',
+                border: `1px solid ${active ? meta.border : '#E0E0E0'}`,
+                borderRadius: '12px',
+                padding: '16px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 display: 'flex',
                 alignItems: 'center',
-                gap: designSystem.spacing.sm,
-                boxShadow: active ? designSystem.shadows.sm : 'none',
-                fontFamily: designSystem.typography.fontFamily,
+                gap: '8px',
+                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 transition: 'all 0.15s ease',
               }}
               aria-pressed={active}
@@ -610,7 +607,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                   justifyContent: 'center',
                   width: 32,
                   height: 32,
-                  borderRadius: designSystem.borderRadius.md,
+                  borderRadius: '8px',
                   background: meta.bg,
                   color: meta.fg,
                 }}
@@ -622,7 +619,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                   style={{
                     fontSize: '11px',
                     color: meta.fg,
-                    fontWeight: designSystem.typography.fontWeights.semibold,
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                   }}
@@ -631,9 +628,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 </div>
                 <div
                   style={{
-                    fontSize: designSystem.typography.fontSizes['2xl'],
-                    fontWeight: designSystem.typography.fontWeights.bold,
-                    color: designSystem.colors.text.primary,
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    color: '#1A1A1A',
                     lineHeight: 1.1,
                   }}
                 >
@@ -645,13 +642,13 @@ export const ProductionList: React.FC<ProductionListProps> = ({
         })}
         <div
           style={{
-            background: metrics.late > 0 ? '#FBE9EB' : designSystem.colors.surface,
-            border: `1px solid ${metrics.late > 0 ? '#F0A8AE' : designSystem.colors.border}`,
-            borderRadius: designSystem.borderRadius.lg,
-            padding: designSystem.spacing.md,
+            background: metrics.late > 0 ? '#FBE9EB' : '#FFFFFF',
+            border: `1px solid ${metrics.late > 0 ? '#F0A8AE' : '#E0E0E0'}`,
+            borderRadius: '12px',
+            padding: '16px',
             display: 'flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
+            gap: '8px',
           }}
         >
           <span
@@ -661,9 +658,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               justifyContent: 'center',
               width: 32,
               height: 32,
-              borderRadius: designSystem.borderRadius.md,
+              borderRadius: '8px',
               background: '#FBE9EB',
-              color: designSystem.colors.error,
+              color: '#DC3545',
             }}
           >
             <AlertTriangle size={16} />
@@ -672,8 +669,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             <div
               style={{
                 fontSize: '11px',
-                color: designSystem.colors.error,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#DC3545',
+                fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
               }}
@@ -682,9 +679,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             </div>
             <div
               style={{
-                fontSize: designSystem.typography.fontSizes['2xl'],
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#1A1A1A',
                 lineHeight: 1.1,
               }}
             >
@@ -696,10 +693,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <div
@@ -708,18 +705,18 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: designSystem.spacing.xs,
-              color: designSystem.colors.text.secondary,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              gap: '4px',
+              color: '#666666',
+              fontSize: '14px',
+              fontWeight: 600,
             }}
           >
             <Filter size={14} /> Filtros
@@ -727,10 +724,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           <div
             style={{
               display: 'inline-flex',
-              background: designSystem.colors.background,
-              borderRadius: designSystem.borderRadius.md,
+              background: '#FAFAFA',
+              borderRadius: '8px',
               padding: 2,
-              border: `1px solid ${designSystem.colors.border}`,
+              border: `1px solid #E0E0E0`,
             }}
           >
             <button
@@ -741,18 +738,15 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                background: view === 'table' ? designSystem.colors.surface : 'transparent',
-                color:
-                  view === 'table'
-                    ? designSystem.colors.primary[600]
-                    : designSystem.colors.text.secondary,
+                padding: `4px 16px`,
+                background: view === 'table' ? '#FFFFFF' : 'transparent',
+                color: view === 'table' ? '#0D5FB8' : '#666666',
                 border: 'none',
-                borderRadius: designSystem.borderRadius.sm,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: view === 'table' ? designSystem.shadows.sm : 'none',
+                boxShadow: view === 'table' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
               }}
             >
               <TableIcon size={14} /> Tabela
@@ -765,18 +759,15 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                background: view === 'kanban' ? designSystem.colors.surface : 'transparent',
-                color:
-                  view === 'kanban'
-                    ? designSystem.colors.primary[600]
-                    : designSystem.colors.text.secondary,
+                padding: `4px 16px`,
+                background: view === 'kanban' ? '#FFFFFF' : 'transparent',
+                color: view === 'kanban' ? '#0D5FB8' : '#666666',
                 border: 'none',
-                borderRadius: designSystem.borderRadius.sm,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: view === 'kanban' ? designSystem.shadows.sm : 'none',
+                boxShadow: view === 'kanban' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
               }}
             >
               <LayoutGrid size={14} /> Kanban
@@ -788,8 +779,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: designSystem.spacing.md,
-            marginBottom: designSystem.spacing.lg,
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -797,10 +788,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               size={16}
               style={{
                 position: 'absolute',
-                left: designSystem.spacing.md,
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 pointerEvents: 'none',
               }}
             />
@@ -815,14 +806,14 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               aria-label="Buscar ordens"
               style={{
                 width: '100%',
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                paddingLeft: designSystem.spacing['2xl'],
-                fontSize: designSystem.typography.fontSizes.sm,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                paddingLeft: '48px',
+                fontSize: '14px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -837,13 +828,13 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             }}
             aria-label="Filtrar por status"
             style={{
-              background: designSystem.colors.surface,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontFamily: designSystem.typography.fontFamily,
-              color: designSystem.colors.text.primary,
+              background: '#FFFFFF',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 16px`,
+              fontSize: '14px',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: '#1A1A1A',
               cursor: 'pointer',
               outline: 'none',
             }}
@@ -856,8 +847,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
             ))}
           </select>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.xs }}>
-            <Calendar size={14} color={designSystem.colors.text.secondary} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={14} color={'#666666'} />
             <input
               type="date"
               value={dateFrom}
@@ -868,21 +859,21 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               aria-label="Data inicial"
               style={{
                 flex: 1,
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
             />
             <span
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.xs,
+                color: '#666666',
+                fontSize: '12px',
               }}
             >
               até
@@ -897,13 +888,13 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               aria-label="Data final"
               style={{
                 flex: 1,
-                background: designSystem.colors.surface,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontFamily: designSystem.typography.fontFamily,
-                color: designSystem.colors.text.primary,
+                background: '#FFFFFF',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                color: '#1A1A1A',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -916,18 +907,18 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: designSystem.colors.error,
-                border: `1px solid ${designSystem.colors.border}`,
-                borderRadius: designSystem.borderRadius.md,
-                padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-                fontSize: designSystem.typography.fontSizes.xs,
-                fontWeight: designSystem.typography.fontWeights.semibold,
+                color: '#DC3545',
+                border: `1px solid #E0E0E0`,
+                borderRadius: '8px',
+                padding: `8px 16px`,
+                fontSize: '12px',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: designSystem.typography.fontFamily,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: designSystem.spacing.xs,
+                gap: '4px',
               }}
             >
               <X size={12} /> Limpar filtros
@@ -941,15 +932,15 @@ export const ProductionList: React.FC<ProductionListProps> = ({
               style={{
                 width: '100%',
                 overflowX: 'auto',
-                borderRadius: designSystem.borderRadius.md,
-                border: `1px solid ${designSystem.colors.border}`,
+                borderRadius: '8px',
+                border: `1px solid #E0E0E0`,
               }}
             >
               <table
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: designSystem.typography.fontSizes.sm,
+                  fontSize: '14px',
                 }}
                 role="table"
                 aria-label="Lista de ordens de produção"
@@ -957,8 +948,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                 <thead>
                   <tr
                     style={{
-                      background: designSystem.colors.background,
-                      borderBottom: `2px solid ${designSystem.colors.border}`,
+                      background: '#FAFAFA',
+                      borderBottom: `2px solid #E0E0E0`,
                     }}
                   >
                     <SortHeader k="op" label="Ordem #" />
@@ -968,10 +959,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                     <SortHeader k="data" label="Data" />
                     <th
                       style={{
-                        padding: designSystem.spacing.md,
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontWeight: designSystem.typography.fontWeights.semibold,
-                        color: designSystem.colors.text.secondary,
+                        padding: '16px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#666666',
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em',
                         textAlign: 'right',
@@ -987,9 +978,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                       <td
                         colSpan={6}
                         style={{
-                          padding: designSystem.spacing['2xl'],
+                          padding: '48px',
                           textAlign: 'center',
-                          color: designSystem.colors.text.secondary,
+                          color: '#666666',
                         }}
                       >
                         Carregando ordens…
@@ -1000,16 +991,16 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                       <td
                         colSpan={6}
                         style={{
-                          padding: designSystem.spacing['2xl'],
+                          padding: '48px',
                           textAlign: 'center',
-                          color: designSystem.colors.text.secondary,
+                          color: '#666666',
                         }}
                       >
                         <ClipboardList
                           size={32}
                           style={{ opacity: 0.3, margin: '0 auto', display: 'block' }}
                         />
-                        <p style={{ margin: `${designSystem.spacing.sm} 0 0 0` }}>
+                        <p style={{ margin: `8px 0 0 0` }}>
                           {hasActiveFilter
                             ? 'Nenhuma ordem encontrada com os filtros atuais.'
                             : 'Nenhuma ordem cadastrada.'}
@@ -1021,15 +1012,12 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                       const late =
                         isLate(op.data_prevista_entrega) && toBucket(op.status) !== 'COMPLETED';
                       return (
-                        <tr
-                          key={op.op_id}
-                          style={{ borderBottom: `1px solid ${designSystem.colors.border}` }}
-                        >
-                          <td style={{ padding: designSystem.spacing.md }}>
+                        <tr key={op.op_id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                          <td style={{ padding: '16px' }}>
                             <div
                               style={{
-                                fontWeight: designSystem.typography.fontWeights.bold,
-                                color: designSystem.colors.primary[600],
+                                fontWeight: 700,
+                                color: '#0D5FB8',
                                 fontFamily: 'monospace',
                               }}
                             >
@@ -1037,20 +1025,20 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                             </div>
                             <div
                               style={{
-                                fontSize: designSystem.typography.fontSizes.xs,
-                                color: designSystem.colors.text.secondary,
+                                fontSize: '12px',
+                                color: '#666666',
                                 marginTop: 2,
                               }}
                             >
                               {op.pecas} {op.pecas === 1 ? 'peça' : 'peças'}
                             </div>
                           </td>
-                          <td style={{ padding: designSystem.spacing.md }}>
+                          <td style={{ padding: '16px' }}>
                             {op.quotation_numero ? (
                               <div
                                 style={{
-                                  fontWeight: designSystem.typography.fontWeights.semibold,
-                                  color: designSystem.colors.text.primary,
+                                  fontWeight: 600,
+                                  color: '#1A1A1A',
                                 }}
                               >
                                 #{op.quotation_numero}
@@ -1058,8 +1046,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                             ) : (
                               <span
                                 style={{
-                                  color: designSystem.colors.text.disabled,
-                                  fontSize: designSystem.typography.fontSizes.xs,
+                                  color: '#CCCCCC',
+                                  fontSize: '12px',
                                 }}
                               >
                                 Sem orçamento
@@ -1067,8 +1055,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                             )}
                             <div
                               style={{
-                                fontSize: designSystem.typography.fontSizes.xs,
-                                color: designSystem.colors.text.secondary,
+                                fontSize: '12px',
+                                color: '#666666',
                                 marginTop: 2,
                               }}
                             >
@@ -1077,14 +1065,14 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                           </td>
                           <td
                             style={{
-                              padding: designSystem.spacing.md,
-                              color: designSystem.colors.text.secondary,
-                              fontSize: designSystem.typography.fontSizes.sm,
+                              padding: '16px',
+                              color: '#666666',
+                              fontSize: '14px',
                             }}
                           >
                             {op.cliente || '—'}
                           </td>
-                          <td style={{ padding: designSystem.spacing.md }}>
+                          <td style={{ padding: '16px' }}>
                             <div
                               style={{
                                 display: 'flex',
@@ -1099,11 +1087,9 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                           </td>
                           <td
                             style={{
-                              padding: designSystem.spacing.md,
-                              color: late
-                                ? designSystem.colors.error
-                                : designSystem.colors.text.secondary,
-                              fontSize: designSystem.typography.fontSizes.sm,
+                              padding: '16px',
+                              color: late ? '#DC3545' : '#666666',
+                              fontSize: '14px',
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1116,7 +1102,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                               <div
                                 style={{
                                   fontSize: '11px',
-                                  color: designSystem.colors.text.secondary,
+                                  color: '#666666',
                                   marginTop: 2,
                                 }}
                               >
@@ -1124,10 +1110,10 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                               </div>
                             )}
                           </td>
-                          <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                          <td style={{ padding: '16px', textAlign: 'right' }}>
                             <div
                               className="ds-row-actions"
-                              style={{ display: 'inline-flex', gap: designSystem.spacing.xs }}
+                              style={{ display: 'inline-flex', gap: '4px' }}
                             >
                               {onView && (
                                 <button
@@ -1135,7 +1121,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   onClick={() => onView(op)}
                                   aria-label={`Visualizar ${op.op_id}`}
                                   title="Visualizar"
-                                  style={iconBtn(designSystem.colors.info, '#D1ECF1', '#7FC5D9')}
+                                  style={iconBtn('#17A2B8', '#D1ECF1', '#7FC5D9')}
                                 >
                                   <Eye size={12} />
                                 </button>
@@ -1146,11 +1132,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   onClick={() => onEdit(op)}
                                   aria-label={`Editar ${op.op_id}`}
                                   title="Editar"
-                                  style={iconBtn(
-                                    designSystem.colors.primary[600],
-                                    designSystem.colors.primary[50],
-                                    designSystem.colors.primary[100],
-                                  )}
+                                  style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
                                 >
                                   <Edit3 size={12} />
                                 </button>
@@ -1161,7 +1143,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                                   onClick={() => (onDelete ? onDelete(op) : handleDelete(op))}
                                   aria-label={`Excluir ${op.op_id}`}
                                   title="Excluir"
-                                  style={iconBtn(designSystem.colors.error, '#FBE9EB', '#F0A8AE')}
+                                  style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -1182,8 +1164,8 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  gap: designSystem.spacing.xs,
-                  marginTop: designSystem.spacing.lg,
+                  gap: '4px',
+                  marginTop: '24px',
                 }}
               >
                 <Button
@@ -1198,21 +1180,15 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                     key={n}
                     onClick={() => setPage(n)}
                     style={{
-                      background:
-                        n === safePage
-                          ? designSystem.colors.primary[500]
-                          : designSystem.colors.surface,
-                      color:
-                        n === safePage
-                          ? designSystem.colors.surface
-                          : designSystem.colors.text.primary,
-                      border: `1px solid ${n === safePage ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-                      borderRadius: designSystem.borderRadius.md,
-                      padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                      fontSize: designSystem.typography.fontSizes.sm,
-                      fontWeight: designSystem.typography.fontWeights.semibold,
+                      background: n === safePage ? '#0D66CC' : '#FFFFFF',
+                      color: n === safePage ? '#FFFFFF' : '#1A1A1A',
+                      border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                      borderRadius: '8px',
+                      padding: `4px 16px`,
+                      fontSize: '14px',
+                      fontWeight: 600,
                       cursor: 'pointer',
-                      fontFamily: designSystem.typography.fontFamily,
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       minWidth: 36,
                     }}
                   >
@@ -1255,7 +1231,7 @@ const KanbanView: React.FC<{
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: designSystem.spacing.md,
+        gap: '16px',
       }}
     >
       {KANBAN_COLUMNS.map((col) => {
@@ -1264,10 +1240,10 @@ const KanbanView: React.FC<{
           <div
             key={col.bucket}
             style={{
-              background: designSystem.colors.background,
-              borderRadius: designSystem.borderRadius.lg,
-              border: `1px solid ${designSystem.colors.border}`,
-              padding: designSystem.spacing.md,
+              background: '#FAFAFA',
+              borderRadius: '12px',
+              border: `1px solid #E0E0E0`,
+              padding: '16px',
               minHeight: 200,
             }}
           >
@@ -1276,8 +1252,8 @@ const KanbanView: React.FC<{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: designSystem.spacing.md,
-                paddingBottom: designSystem.spacing.sm,
+                marginBottom: '16px',
+                paddingBottom: '8px',
                 borderBottom: `2px solid ${col.color}`,
               }}
             >
@@ -1285,10 +1261,10 @@ const KanbanView: React.FC<{
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: designSystem.spacing.xs,
+                  gap: '4px',
                   color: col.color,
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  fontWeight: designSystem.typography.fontWeights.bold,
+                  fontSize: '12px',
+                  fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                 }}
@@ -1298,24 +1274,24 @@ const KanbanView: React.FC<{
               <span
                 style={{
                   background: col.color,
-                  color: designSystem.colors.surface,
-                  borderRadius: designSystem.borderRadius.full,
+                  color: '#FFFFFF',
+                  borderRadius: '9999px',
                   padding: '2px 8px',
                   fontSize: '11px',
-                  fontWeight: designSystem.typography.fontWeights.bold,
+                  fontWeight: 700,
                 }}
               >
                 {items.length}
               </span>
             </header>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.sm }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {items.length === 0 && (
                 <div
                   style={{
-                    color: designSystem.colors.text.secondary,
-                    fontSize: designSystem.typography.fontSizes.xs,
+                    color: '#666666',
+                    fontSize: '12px',
                     textAlign: 'center',
-                    padding: designSystem.spacing.lg,
+                    padding: '24px',
                   }}
                 >
                   Nenhuma ordem
@@ -1326,11 +1302,11 @@ const KanbanView: React.FC<{
                   key={op.op_id}
                   className="ds-kanban-card"
                   style={{
-                    background: designSystem.colors.surface,
-                    border: `1px solid ${designSystem.colors.border}`,
+                    background: '#FFFFFF',
+                    border: `1px solid #E0E0E0`,
                     borderLeft: `3px solid ${col.color}`,
-                    borderRadius: designSystem.borderRadius.md,
-                    padding: designSystem.spacing.sm,
+                    borderRadius: '8px',
+                    padding: '8px',
                     cursor: 'pointer',
                   }}
                   onClick={() => onView?.(op)}
@@ -1347,21 +1323,21 @@ const KanbanView: React.FC<{
                       style={{
                         fontFamily: 'monospace',
                         fontSize: '11px',
-                        color: designSystem.colors.primary[600],
-                        fontWeight: designSystem.typography.fontWeights.bold,
+                        color: '#0D5FB8',
+                        fontWeight: 700,
                       }}
                     >
                       #{op.op_id}
                     </span>
-                    <span style={{ fontSize: '11px', color: designSystem.colors.text.secondary }}>
+                    <span style={{ fontSize: '11px', color: '#666666' }}>
                       {op.pecas} {op.pecas === 1 ? 'peça' : 'peças'}
                     </span>
                   </div>
                   <div
                     style={{
-                      fontSize: designSystem.typography.fontSizes.sm,
-                      color: designSystem.colors.text.primary,
-                      fontWeight: designSystem.typography.fontWeights.semibold,
+                      fontSize: '14px',
+                      color: '#1A1A1A',
+                      fontWeight: 600,
                       marginBottom: 4,
                     }}
                   >
@@ -1371,7 +1347,7 @@ const KanbanView: React.FC<{
                     <div
                       style={{
                         fontSize: '11px',
-                        color: designSystem.colors.text.secondary,
+                        color: '#666666',
                         marginBottom: 6,
                       }}
                     >
@@ -1386,7 +1362,7 @@ const KanbanView: React.FC<{
                       gap: 4,
                     }}
                   >
-                    <span style={{ fontSize: '11px', color: designSystem.colors.text.secondary }}>
+                    <span style={{ fontSize: '11px', color: '#666666' }}>
                       {formatDate(op.data_prevista_entrega || op.data_inicio || op.created_at)}
                     </span>
                     <div style={{ display: 'flex', gap: 2 }} onClick={(e) => e.stopPropagation()}>
@@ -1395,12 +1371,7 @@ const KanbanView: React.FC<{
                           type="button"
                           onClick={() => onEdit(op)}
                           aria-label={`Editar ${op.op_id}`}
-                          style={iconBtn(
-                            designSystem.colors.primary[600],
-                            designSystem.colors.primary[50],
-                            designSystem.colors.primary[100],
-                            24,
-                          )}
+                          style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF', 24)}
                         >
                           <Edit3 size={10} />
                         </button>
@@ -1409,7 +1380,7 @@ const KanbanView: React.FC<{
                         type="button"
                         onClick={() => (onDelete ? onDelete(op) : fallbackDelete(op))}
                         aria-label={`Excluir ${op.op_id}`}
-                        style={iconBtn(designSystem.colors.error, '#FBE9EB', '#F0A8AE', 24)}
+                        style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE', 24)}
                       >
                         <Trash2 size={10} />
                       </button>
@@ -1435,25 +1406,25 @@ function iconBtn(color: string, bgHover: string, border: string, size = 32): Rea
     background: 'transparent',
     color,
     border: `1px solid ${border}`,
-    borderRadius: designSystem.borderRadius.md,
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'background-color 0.15s ease',
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: designSystem.colors.surface,
-    color: designSystem.colors.text.primary,
-    border: `1px solid ${designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    background: '#FFFFFF',
+    color: '#1A1A1A',
+    border: `1px solid #E0E0E0`,
+    borderRadius: '8px',
+    padding: `4px 16px`,
+    fontSize: '14px',
+    fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: designSystem.typography.fontFamily,
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 }
 

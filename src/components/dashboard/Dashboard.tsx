@@ -24,8 +24,6 @@ import {
   SelectItem,
 } from '../common';
 
-import { designSystem } from '@/styles/design-system';
-
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import type { Project, ProjectStatus } from '../../context/CRMContext';
@@ -85,12 +83,12 @@ const Dashboard: React.FC = () => {
   }, [clients]);
 
   const origemLabels: Record<string, { label: string; color: string }> = {
-    indicacao: { label: 'Indicação', color: designSystem.colors.secondary[500] },
+    indicacao: { label: 'Indicação', color: '#00A99D' },
     instagram: { label: 'Instagram', color: '#e1306c' },
-    google: { label: 'Google', color: designSystem.colors.primary[500] },
-    feira: { label: 'Feira', color: designSystem.colors.accent },
+    google: { label: 'Google', color: '#0D66CC' },
+    feira: { label: 'Feira', color: '#E2AC00' },
     passante: { label: 'Passante', color: '#8b5cf6' },
-    outro: { label: 'Outro', color: designSystem.colors.text.secondary },
+    outro: { label: 'Outro', color: '#666666' },
   };
 
   const percentualMeta =
@@ -108,131 +106,131 @@ const Dashboard: React.FC = () => {
     page: {
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: designSystem.spacing.xl,
-      padding: designSystem.spacing.lg,
-      color: designSystem.colors.text.primary,
-      fontFamily: designSystem.typography.fontFamily,
+      gap: '32px',
+      padding: '24px',
+      color: '#1A1A1A',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
     },
     headerRow: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       flexWrap: 'wrap' as const,
-      gap: designSystem.spacing.md,
+      gap: '16px',
     },
     h1: {
-      fontSize: designSystem.typography.fontSizes['3xl'],
-      fontWeight: designSystem.typography.fontWeights.bold,
-      lineHeight: designSystem.typography.lineHeights.tight,
-      color: designSystem.colors.text.primary,
+      fontSize: '32px',
+      fontWeight: 700,
+      lineHeight: 1.2,
+      color: '#1A1A1A',
       margin: 0,
     },
     h2: {
-      fontSize: designSystem.typography.fontSizes.xl,
-      fontWeight: designSystem.typography.fontWeights.semibold,
-      lineHeight: designSystem.typography.lineHeights.tight,
-      color: designSystem.colors.text.primary,
+      fontSize: '20px',
+      fontWeight: 600,
+      lineHeight: 1.2,
+      color: '#1A1A1A',
       margin: 0,
     },
     subtitle: {
-      fontSize: designSystem.typography.fontSizes.sm,
-      color: designSystem.colors.text.secondary,
-      margin: `${designSystem.spacing.xs} 0 0 0`,
+      fontSize: '14px',
+      color: '#666666',
+      margin: `4px 0 0 0`,
     },
     sectionTitle: {
-      fontSize: designSystem.typography.fontSizes.lg,
-      fontWeight: designSystem.typography.fontWeights.semibold,
-      color: designSystem.colors.text.primary,
+      fontSize: '18px',
+      fontWeight: 600,
+      color: '#1A1A1A',
       textTransform: 'uppercase' as const,
       letterSpacing: '0.06em',
-      marginBottom: designSystem.spacing.md,
+      marginBottom: '16px',
     },
     kpiLabel: {
-      fontSize: designSystem.typography.fontSizes.xs,
-      fontWeight: designSystem.typography.fontWeights.semibold,
-      color: designSystem.colors.text.secondary,
+      fontSize: '12px',
+      fontWeight: 600,
+      color: '#666666',
       textTransform: 'uppercase' as const,
       letterSpacing: '0.06em',
-      marginBottom: designSystem.spacing.xs,
+      marginBottom: '4px',
     },
     kpiValue: {
-      fontSize: designSystem.typography.fontSizes['2xl'],
-      fontWeight: designSystem.typography.fontWeights.bold,
-      lineHeight: designSystem.typography.lineHeights.tight,
-      color: designSystem.colors.text.primary,
+      fontSize: '24px',
+      fontWeight: 700,
+      lineHeight: 1.2,
+      color: '#1A1A1A',
       margin: 0,
     },
     kpiGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: designSystem.spacing.lg,
+      gap: '24px',
     },
     kpiCard: (accentColor: string) => ({
-      background: designSystem.colors.surface,
-      padding: designSystem.spacing.lg,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.md,
+      background: '#FFFFFF',
+      padding: '24px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
       borderLeft: `4px solid ${accentColor}`,
       transition: 'box-shadow 0.2s ease, transform 0.2s ease',
     }),
     splitGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-      gap: designSystem.spacing.lg,
+      gap: '24px',
     },
     card: {
-      background: designSystem.colors.surface,
-      padding: designSystem.spacing.lg,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.md,
+      background: '#FFFFFF',
+      padding: '24px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
     },
     quickActionsGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      gap: designSystem.spacing.md,
+      gap: '16px',
     },
     quickAction: {
       display: 'flex',
       flexDirection: 'column' as const,
       alignItems: 'center',
       justifyContent: 'center',
-      gap: designSystem.spacing.sm,
+      gap: '8px',
       height: 96,
-      padding: designSystem.spacing.md,
-      background: designSystem.colors.surface,
-      border: `1px solid ${designSystem.colors.border}`,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.sm,
-      color: designSystem.colors.text.primary,
-      fontFamily: designSystem.typography.fontFamily,
-      fontSize: designSystem.typography.fontSizes.sm,
-      fontWeight: designSystem.typography.fontWeights.semibold,
+      padding: '16px',
+      background: '#FFFFFF',
+      border: `1px solid #E0E0E0`,
+      borderRadius: '12px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      color: '#1A1A1A',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontSize: '14px',
+      fontWeight: 600,
       textDecoration: 'none',
       transition: 'box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
     },
     copilotCard: {
-      background: designSystem.colors.surface,
-      padding: designSystem.spacing.lg,
-      borderRadius: designSystem.borderRadius.lg,
-      boxShadow: designSystem.shadows.md,
-      border: `1px solid ${designSystem.colors.primary[100]}`,
+      background: '#FFFFFF',
+      padding: '24px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+      border: `1px solid #E0EFFF`,
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: designSystem.spacing.md,
+      gap: '16px',
     },
     copilotChip: {
       display: 'inline-flex',
       alignItems: 'center',
-      gap: designSystem.spacing.xs,
-      padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-      background: designSystem.colors.primary[50],
-      color: designSystem.colors.primary[600],
-      border: `1px solid ${designSystem.colors.primary[100]}`,
-      borderRadius: designSystem.borderRadius.full,
-      fontSize: designSystem.typography.fontSizes.xs,
-      fontWeight: designSystem.typography.fontWeights.semibold,
+      gap: '4px',
+      padding: `4px 8px`,
+      background: '#F0F7FF',
+      color: '#0D5FB8',
+      border: `1px solid #E0EFFF`,
+      borderRadius: '9999px',
+      fontSize: '12px',
+      fontWeight: 600,
       cursor: 'pointer',
-      fontFamily: designSystem.typography.fontFamily,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
     },
   } as const;
 
@@ -241,14 +239,14 @@ const Dashboard: React.FC = () => {
       <style>{`
         .ds-dashboard * { box-sizing: border-box; }
         .ds-dashboard .ds-kpi-card:hover { box-shadow: 0 10px 15px rgba(0,0,0,0.1); transform: translateY(-1px); }
-        .ds-dashboard .ds-quick-action:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: ${designSystem.colors.primary[500]}; }
+        .ds-dashboard .ds-quick-action:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #0D66CC; }
         @media (max-width: 768px) {
           .ds-dashboard .ds-header-row { flex-direction: column; align-items: stretch; }
           .ds-dashboard .ds-chart-box { height: 220px !important; }
         }
         @media (max-width: 480px) {
-          .ds-dashboard { padding: ${designSystem.spacing.md} !important; }
-          .ds-dashboard .ds-kpi-value { font-size: ${designSystem.typography.fontSizes.xl} !important; }
+          .ds-dashboard { padding: 16px !important; }
+          .ds-dashboard .ds-kpi-value { font-size: 20px !important; }
         }
       `}</style>
 
@@ -261,11 +259,11 @@ const Dashboard: React.FC = () => {
           <SelectTrigger
             style={{
               width: 160,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-              background: designSystem.colors.surface,
-              fontFamily: designSystem.typography.fontFamily,
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `4px 16px`,
+              background: '#FFFFFF',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <SelectValue placeholder="Período..." />
@@ -283,33 +281,27 @@ const Dashboard: React.FC = () => {
       {/* KPIs principais */}
       <section aria-label="Indicadores principais">
         <div style={styles.kpiGrid}>
-          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.primary[500])}>
+          <div className="ds-kpi-card" style={styles.kpiCard('#0D66CC')}>
             <p style={styles.kpiLabel}>Total Clientes</p>
-            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.primary[600] }}>
-              {clients.length}
-            </h3>
+            <h3 style={{ ...styles.kpiValue, color: '#0D5FB8' }}>{clients.length}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.info)}>
+          <div className="ds-kpi-card" style={styles.kpiCard('#17A2B8')}>
             <p style={styles.kpiLabel}>Projetos Ativos</p>
-            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.info }}>
+            <h3 style={{ ...styles.kpiValue, color: '#17A2B8' }}>
               {projects.filter((p) => p.status !== 'concluido').length}
             </h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.accent)}>
+          <div className="ds-kpi-card" style={styles.kpiCard('#E2AC00')}>
             <p style={styles.kpiLabel}>Em Produção</p>
-            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.accent }}>
-              {inProduction}
-            </h3>
+            <h3 style={{ ...styles.kpiValue, color: '#E2AC00' }}>{inProduction}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.success)}>
+          <div className="ds-kpi-card" style={styles.kpiCard('#28A745')}>
             <p style={styles.kpiLabel}>Concluídos</p>
-            <h3 style={{ ...styles.kpiValue, color: designSystem.colors.success }}>{concluidos}</h3>
+            <h3 style={{ ...styles.kpiValue, color: '#28A745' }}>{concluidos}</h3>
           </div>
-          <div className="ds-kpi-card" style={styles.kpiCard(designSystem.colors.text.primary)}>
+          <div className="ds-kpi-card" style={styles.kpiCard('#1A1A1A')}>
             <p style={styles.kpiLabel}>Ticket Médio</p>
-            <h3 style={{ ...styles.kpiValue, fontSize: designSystem.typography.fontSizes.xl }}>
-              {formatCurrency(ticketMedio)}
-            </h3>
+            <h3 style={{ ...styles.kpiValue, fontSize: '20px' }}>{formatCurrency(ticketMedio)}</h3>
           </div>
         </div>
       </section>
@@ -323,7 +315,7 @@ const Dashboard: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: designSystem.spacing.md,
+            gap: '16px',
           }}
         >
           <h3 style={styles.sectionTitle}>Meta do Período</h3>
@@ -331,38 +323,38 @@ const Dashboard: React.FC = () => {
             style={{
               width: 140,
               height: 140,
-              borderRadius: designSystem.borderRadius.full,
+              borderRadius: '9999px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: `conic-gradient(${designSystem.colors.accent} ${percentualMeta * 3.6}deg, ${designSystem.colors.border} 0deg)`,
+              background: `conic-gradient(#E2AC00 ${percentualMeta * 3.6}deg, #E0E0E0 0deg)`,
             }}
           >
             <div
               style={{
                 width: 110,
                 height: 110,
-                borderRadius: designSystem.borderRadius.full,
-                background: designSystem.colors.surface,
+                borderRadius: '9999px',
+                background: '#FFFFFF',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: 'inset 0 0 0 1px ' + designSystem.colors.border,
+                boxShadow: 'inset 0 0 0 1px ' + '#E0E0E0',
               }}
             >
               <span
                 style={{
-                  fontSize: designSystem.typography.fontSizes['2xl'],
-                  fontWeight: designSystem.typography.fontWeights.bold,
+                  fontSize: '24px',
+                  fontWeight: 700,
                 }}
               >
                 {percentualMeta}%
               </span>
               <span
                 style={{
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  color: designSystem.colors.text.secondary,
+                  fontSize: '12px',
+                  color: '#666666',
                   textTransform: 'uppercase',
                 }}
               >
@@ -372,15 +364,13 @@ const Dashboard: React.FC = () => {
           </div>
           <p
             style={{
-              fontSize: designSystem.typography.fontSizes.md,
-              color: designSystem.colors.text.primary,
+              fontSize: '16px',
+              color: '#1A1A1A',
               margin: 0,
             }}
           >
             <strong>{formatCurrency(totalPeriodo)}</strong>{' '}
-            <span style={{ color: designSystem.colors.text.secondary }}>
-              / {formatCurrency(currentMeta)}
-            </span>
+            <span style={{ color: '#666666' }}>/ {formatCurrency(currentMeta)}</span>
           </p>
           <Button
             onClick={() => {
@@ -389,11 +379,11 @@ const Dashboard: React.FC = () => {
             }}
             style={{
               background: 'transparent',
-              color: designSystem.colors.primary[600],
-              border: `1px solid ${designSystem.colors.primary[500]}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.xs} ${designSystem.spacing.lg}`,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              color: '#0D5FB8',
+              border: `1px solid #0D66CC`,
+              borderRadius: '8px',
+              padding: `4px 24px`,
+              fontWeight: 600,
             }}
           >
             Editar Meta
@@ -423,45 +413,35 @@ const Dashboard: React.FC = () => {
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke={designSystem.colors.border}
+                  stroke={'#E0E0E0'}
                   opacity={0.5}
                 />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: designSystem.colors.text.secondary }}
+                  tick={{ fontSize: 12, fill: '#666666' }}
                   dy={10}
                 />
                 <YAxis
                   tickFormatter={(val) => `R$${val / 1000}k`}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: designSystem.colors.text.secondary }}
+                  tick={{ fontSize: 12, fill: '#666666' }}
                 />
                 <Tooltip
-                  cursor={{ fill: designSystem.colors.background, opacity: 0.5 }}
+                  cursor={{ fill: '#FAFAFA', opacity: 0.5 }}
                   contentStyle={{
-                    backgroundColor: designSystem.colors.surface,
-                    borderColor: designSystem.colors.border,
-                    borderRadius: designSystem.borderRadius.md,
-                    boxShadow: designSystem.shadows.md,
+                    backgroundColor: '#FFFFFF',
+                    borderColor: '#E0E0E0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                   }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                <Bar
-                  dataKey="Entradas"
-                  fill={designSystem.colors.success}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
-                <Bar
-                  dataKey="Saidas"
-                  fill={designSystem.colors.primary[500]}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
+                <Bar dataKey="Entradas" fill={'#28A745'} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="Saidas" fill={'#0D66CC'} radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -473,19 +453,19 @@ const Dashboard: React.FC = () => {
         <h3 style={styles.sectionTitle}>Ações Rápidas</h3>
         <div style={styles.quickActionsGrid}>
           <Link to="/clientes" className="ds-quick-action" style={styles.quickAction}>
-            <UserPlus size={24} color={designSystem.colors.success} />
+            <UserPlus size={24} color={'#28A745'} />
             <span>Novo Cliente</span>
           </Link>
           <Link to="/orcamentos" className="ds-quick-action" style={styles.quickAction}>
-            <FileText size={24} color={designSystem.colors.primary[500]} />
+            <FileText size={24} color={'#0D66CC'} />
             <span>Novo Orçamento</span>
           </Link>
           <Link to="/plano-corte" className="ds-quick-action" style={styles.quickAction}>
-            <Wrench size={24} color={designSystem.colors.info} />
+            <Wrench size={24} color={'#17A2B8'} />
             <span>Plano de Corte</span>
           </Link>
           <Link to="/financeiro/contas" className="ds-quick-action" style={styles.quickAction}>
-            <PlusCircle size={24} color={designSystem.colors.accent} />
+            <PlusCircle size={24} color={'#E2AC00'} />
             <span>Nova Despesa</span>
           </Link>
         </div>
@@ -498,27 +478,24 @@ const Dashboard: React.FC = () => {
           {origemCounts.length === 0 ? (
             <div
               style={{
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 textAlign: 'center',
-                padding: designSystem.spacing.xl,
+                padding: '32px',
               }}
             >
               Nenhum cliente cadastrado.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.md }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {origemCounts.map((o) => {
                 const info = origemLabels[o.key] || origemLabels.outro;
                 const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
                 return (
-                  <div
-                    key={o.key}
-                    style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.md }}
-                  >
+                  <div key={o.key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <span
                       style={{
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        color: designSystem.colors.text.secondary,
+                        fontSize: '12px',
+                        color: '#666666',
                         width: 120,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -530,8 +507,8 @@ const Dashboard: React.FC = () => {
                     <div
                       style={{
                         flex: 1,
-                        background: designSystem.colors.background,
-                        borderRadius: designSystem.borderRadius.full,
+                        background: '#FAFAFA',
+                        borderRadius: '9999px',
                         height: 16,
                         overflow: 'hidden',
                       }}
@@ -542,16 +519,16 @@ const Dashboard: React.FC = () => {
                           minWidth: pct > 0 ? 16 : 0,
                           height: '100%',
                           backgroundColor: info.color,
-                          borderRadius: designSystem.borderRadius.full,
+                          borderRadius: '9999px',
                           transition: 'width 0.5s ease',
                         }}
                       />
                     </div>
                     <span
                       style={{
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontWeight: designSystem.typography.fontWeights.semibold,
-                        color: designSystem.colors.text.secondary,
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#666666',
                         width: 40,
                         textAlign: 'right',
                       }}
@@ -570,9 +547,9 @@ const Dashboard: React.FC = () => {
           {recentProjects.length === 0 ? (
             <div
               style={{
-                color: designSystem.colors.text.secondary,
+                color: '#666666',
                 textAlign: 'center',
-                padding: designSystem.spacing.xl,
+                padding: '32px',
               }}
             >
               Nenhum projeto cadastrado.
@@ -585,43 +562,43 @@ const Dashboard: React.FC = () => {
                 <>
                   <td
                     style={{
-                      padding: designSystem.spacing.md,
-                      fontSize: designSystem.typography.fontSizes.sm,
-                      fontWeight: designSystem.typography.fontWeights.semibold,
+                      padding: '16px',
+                      fontSize: '14px',
+                      fontWeight: 600,
                     }}
                   >
                     {p.ambiente}
                   </td>
                   <td
                     style={{
-                      padding: designSystem.spacing.md,
-                      fontSize: designSystem.typography.fontSizes.sm,
-                      color: designSystem.colors.text.secondary,
+                      padding: '16px',
+                      fontSize: '14px',
+                      color: '#666666',
                     }}
                   >
                     {p.clientName || '-'}
                   </td>
                   <td
                     style={{
-                      padding: designSystem.spacing.md,
-                      fontSize: designSystem.typography.fontSizes.sm,
-                      fontWeight: designSystem.typography.fontWeights.bold,
-                      color: designSystem.colors.primary[600],
+                      padding: '16px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#0D5FB8',
                     }}
                   >
                     {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
                   </td>
-                  <td style={{ padding: designSystem.spacing.md }}>
+                  <td style={{ padding: '16px' }}>
                     <span
                       style={{
                         display: 'inline-block',
-                        padding: `${designSystem.spacing.xs} ${designSystem.spacing.sm}`,
-                        fontSize: designSystem.typography.fontSizes.xs,
-                        fontWeight: designSystem.typography.fontWeights.semibold,
-                        background: designSystem.colors.primary[50],
-                        color: designSystem.colors.primary[600],
-                        border: `1px solid ${designSystem.colors.primary[100]}`,
-                        borderRadius: designSystem.borderRadius.full,
+                        padding: `4px 8px`,
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        background: '#F0F7FF',
+                        color: '#0D5FB8',
+                        border: `1px solid #E0EFFF`,
+                        borderRadius: '9999px',
                         textTransform: 'uppercase',
                       }}
                     >
@@ -637,21 +614,21 @@ const Dashboard: React.FC = () => {
 
       {/* Dlux Copilot - Insights Rápidos */}
       <section style={styles.copilotCard}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.sm }}>
-          <span style={{ fontSize: designSystem.typography.fontSizes.xl }}>💡</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '20px' }}>💡</span>
           <h3 style={styles.h2}>Dlux Copilot — Consultoria Técnica &amp; Insights</h3>
         </div>
         <p
           style={{
-            color: designSystem.colors.text.secondary,
-            fontSize: designSystem.typography.fontSizes.sm,
+            color: '#666666',
+            fontSize: '14px',
             margin: 0,
           }}
         >
           Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a
           nossa IA especialista.
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: designSystem.spacing.sm }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {[
             { label: 'Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
             {
@@ -712,11 +689,11 @@ const Dashboard: React.FC = () => {
         title="Definir Meta Mensal"
         size="sm"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: designSystem.spacing.md }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <label
             style={{
-              fontSize: designSystem.typography.fontSizes.sm,
-              color: designSystem.colors.text.secondary,
+              fontSize: '14px',
+              color: '#666666',
             }}
           >
             Valor da meta para {selectedPeriod}:
@@ -726,12 +703,12 @@ const Dashboard: React.FC = () => {
             value={goalValue}
             onChange={(e) => setGoalValue(e.target.value)}
             style={{
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: designSystem.spacing.sm,
-              fontSize: designSystem.typography.fontSizes.lg,
-              fontWeight: designSystem.typography.fontWeights.semibold,
-              fontFamily: designSystem.typography.fontFamily,
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: '8px',
+              fontSize: '18px',
+              fontWeight: 600,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           />
           <Button
@@ -741,13 +718,13 @@ const Dashboard: React.FC = () => {
             }}
             style={{
               width: '100%',
-              background: designSystem.colors.primary[500],
-              color: designSystem.colors.surface,
+              background: '#0D66CC',
+              color: '#FFFFFF',
               border: 'none',
-              borderRadius: designSystem.borderRadius.md,
-              padding: designSystem.spacing.md,
-              fontWeight: designSystem.typography.fontWeights.bold,
-              boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+              borderRadius: '8px',
+              padding: '16px',
+              fontWeight: 700,
+              boxShadow: `0 4px 12px #0D66CC40`,
             }}
           >
             Salvar Meta

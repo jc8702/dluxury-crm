@@ -11,7 +11,6 @@ import {
   Tag,
   AlertCircle,
 } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { exportBudgetToPDF } from '../../modules/quotations/services/export-pdf';
 import type { Quotation, QuotationStatus } from './QuotationList';
 
@@ -123,29 +122,25 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
     label,
     value,
   }) => (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: designSystem.spacing.sm }}>
-      <span
-        style={{ color: designSystem.colors.primary[500], display: 'inline-flex', marginTop: 2 }}
-      >
-        {icon}
-      </span>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+      <span style={{ color: '#0D66CC', display: 'inline-flex', marginTop: 2 }}>{icon}</span>
       <div>
         <div
           style={{
-            fontSize: designSystem.typography.fontSizes.xs,
-            color: designSystem.colors.text.secondary,
+            fontSize: '12px',
+            color: '#666666',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            fontWeight: 600,
           }}
         >
           {label}
         </div>
         <div
           style={{
-            fontSize: designSystem.typography.fontSizes.md,
-            color: designSystem.colors.text.primary,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            fontSize: '16px',
+            color: '#1A1A1A',
+            fontWeight: 600,
             marginTop: 2,
           }}
         >
@@ -161,10 +156,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.lg,
-        padding: designSystem.spacing.lg,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '24px',
+        padding: '24px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
     >
       <style>{`
@@ -173,7 +168,7 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           .ds-quotation-detail { padding: 0 !important; gap: 16px !important; }
           .ds-quotation-detail section { box-shadow: none !important; border: 1px solid #ccc !important; }
         }
-        .ds-quotation-detail .ds-item-row:hover { background: ${designSystem.colors.background}; }
+        .ds-quotation-detail .ds-item-row:hover { background: #FAFAFA; }
       `}</style>
 
       <header
@@ -183,10 +178,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: designSystem.spacing.md }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             type="button"
             onClick={onBack}
@@ -197,12 +192,12 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
               justifyContent: 'center',
               width: 40,
               height: 40,
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.primary,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
+              background: '#FFFFFF',
+              color: '#1A1A1A',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
               cursor: 'pointer',
-              boxShadow: designSystem.shadows.sm,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
             }}
           >
             <ArrowLeft size={16} />
@@ -210,23 +205,23 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           <div>
             <h1
               style={{
-                fontSize: designSystem.typography.fontSizes['2xl'],
-                fontWeight: designSystem.typography.fontWeights.bold,
-                color: designSystem.colors.text.primary,
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#1A1A1A',
                 margin: 0,
-                lineHeight: designSystem.typography.lineHeights.tight,
+                lineHeight: 1.2,
               }}
             >
               Orçamento{' '}
-              <span style={{ color: designSystem.colors.primary[600], fontFamily: 'monospace' }}>
+              <span style={{ color: '#0D5FB8', fontFamily: 'monospace' }}>
                 #{quotation.numeroOrcamento}
               </span>
             </h1>
             <p
               style={{
-                color: designSystem.colors.text.secondary,
-                fontSize: designSystem.typography.fontSizes.sm,
-                margin: `${designSystem.spacing.xs} 0 0 0`,
+                color: '#666666',
+                fontSize: '14px',
+                margin: `4px 0 0 0`,
               }}
             >
               Visualização completa da proposta
@@ -235,10 +230,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           <span
             style={{
               display: 'inline-block',
-              padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-              borderRadius: designSystem.borderRadius.full,
-              fontSize: designSystem.typography.fontSizes.xs,
-              fontWeight: designSystem.typography.fontWeights.bold,
+              padding: `4px 16px`,
+              borderRadius: '9999px',
+              fontSize: '12px',
+              fontWeight: 700,
               background: statusMeta.bg,
               color: statusMeta.fg,
               border: `1px solid ${statusMeta.border}`,
@@ -249,23 +244,23 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: designSystem.spacing.sm, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onEdit}
             style={{
-              background: designSystem.colors.surface,
-              color: designSystem.colors.primary[600],
-              border: `1px solid ${designSystem.colors.primary[100]}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              background: '#FFFFFF',
+              color: '#0D5FB8',
+              border: `1px solid #E0EFFF`,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               cursor: 'pointer',
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <Edit3 size={16} /> Editar
@@ -274,18 +269,18 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             type="button"
             onClick={handlePrint}
             style={{
-              background: designSystem.colors.surface,
-              color: designSystem.colors.text.primary,
-              border: `1px solid ${designSystem.colors.border}`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              background: '#FFFFFF',
+              color: '#1A1A1A',
+              border: `1px solid #E0E0E0`,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               cursor: 'pointer',
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <Printer size={16} /> Imprimir
@@ -294,19 +289,19 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             type="button"
             onClick={handleExportPDF}
             style={{
-              background: designSystem.colors.primary[500],
-              color: designSystem.colors.surface,
+              background: '#0D66CC',
+              color: '#FFFFFF',
               border: 'none',
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
-              boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+              gap: '8px',
+              boxShadow: `0 4px 12px #0D66CC40`,
               cursor: 'pointer',
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <FileDown size={16} /> Exportar PDF
@@ -316,17 +311,17 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
             onClick={handleDelete}
             style={{
               background: 'transparent',
-              color: designSystem.colors.error,
+              color: '#DC3545',
               border: `1px solid #F0A8AE`,
-              borderRadius: designSystem.borderRadius.md,
-              padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-              fontSize: designSystem.typography.fontSizes.sm,
-              fontWeight: designSystem.typography.fontWeights.semibold,
+              borderRadius: '8px',
+              padding: `8px 24px`,
+              fontSize: '14px',
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: designSystem.spacing.sm,
+              gap: '8px',
               cursor: 'pointer',
-              fontFamily: designSystem.typography.fontFamily,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
               transition: 'background-color 0.15s ease',
             }}
             onMouseEnter={(e) => {
@@ -343,17 +338,17 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: designSystem.spacing.lg,
+            gap: '24px',
           }}
         >
           <InfoItem
@@ -387,21 +382,21 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <h2
           style={{
-            fontSize: designSystem.typography.fontSizes.lg,
-            fontWeight: designSystem.typography.fontWeights.bold,
-            color: designSystem.colors.text.primary,
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#1A1A1A',
             margin: 0,
-            marginBottom: designSystem.spacing.lg,
-            borderBottom: `2px solid ${designSystem.colors.primary[500]}`,
-            paddingBottom: designSystem.spacing.sm,
+            marginBottom: '24px',
+            borderBottom: `2px solid #0D66CC`,
+            paddingBottom: '8px',
           }}
         >
           Itens ({items.length})
@@ -410,13 +405,13 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
         {items.length === 0 ? (
           <div
             style={{
-              padding: designSystem.spacing['2xl'],
+              padding: '48px',
               textAlign: 'center',
-              color: designSystem.colors.text.secondary,
+              color: '#666666',
             }}
           >
             <AlertCircle size={32} style={{ display: 'block', margin: '0 auto', opacity: 0.4 }} />
-            <p style={{ marginTop: designSystem.spacing.sm }}>Nenhum item neste orçamento.</p>
+            <p style={{ marginTop: '8px' }}>Nenhum item neste orçamento.</p>
           </div>
         ) : (
           <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -424,14 +419,14 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
               style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontSize: designSystem.typography.fontSizes.sm,
+                fontSize: '14px',
               }}
             >
               <thead>
                 <tr
                   style={{
-                    background: designSystem.colors.background,
-                    borderBottom: `2px solid ${designSystem.colors.border}`,
+                    background: '#FAFAFA',
+                    borderBottom: `2px solid #E0E0E0`,
                   }}
                 >
                   <th style={thStyle}>#</th>
@@ -458,24 +453,24 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
                       key={item.id}
                       className="ds-item-row"
                       style={{
-                        borderBottom: `1px solid ${designSystem.colors.border}`,
+                        borderBottom: `1px solid #E0E0E0`,
                         transition: 'background-color 0.15s ease',
                       }}
                     >
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
-                          color: designSystem.colors.text.secondary,
+                          padding: '16px',
+                          color: '#666666',
                           fontFamily: 'monospace',
                         }}
                       >
                         {String(idx + 1).padStart(2, '0')}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         <div
                           style={{
-                            fontWeight: designSystem.typography.fontWeights.semibold,
-                            color: designSystem.colors.text.primary,
+                            fontWeight: 600,
+                            color: '#1A1A1A',
                           }}
                         >
                           {item.skuDescricao || item.nomeCustomizado || '—'}
@@ -483,8 +478,8 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
                         {item.skuCodigo && (
                           <div
                             style={{
-                              fontSize: designSystem.typography.fontSizes.xs,
-                              color: designSystem.colors.text.secondary,
+                              fontSize: '12px',
+                              color: '#666666',
                               fontFamily: 'monospace',
                               marginTop: 2,
                             }}
@@ -493,38 +488,38 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'center' }}>
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
                         {qtd}{' '}
                         <span
                           style={{
-                            fontSize: designSystem.typography.fontSizes.xs,
-                            color: designSystem.colors.text.secondary,
+                            fontSize: '12px',
+                            color: '#666666',
                           }}
                         >
                           {item.unidadeMedida || 'UN'}
                         </span>
                       </td>
-                      <td style={{ padding: designSystem.spacing.md, textAlign: 'right' }}>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
                         {formatCurrency(preco)}
                       </td>
                       <td
                         style={{
-                          padding: designSystem.spacing.md,
+                          padding: '16px',
                           textAlign: 'right',
-                          fontWeight: designSystem.typography.fontWeights.bold,
-                          color: designSystem.colors.text.primary,
+                          fontWeight: 700,
+                          color: '#1A1A1A',
                         }}
                       >
                         {formatCurrency(totalItem)}
                       </td>
-                      <td style={{ padding: designSystem.spacing.md }}>
+                      <td style={{ padding: '16px' }}>
                         {fitaSku ? (
                           <div>
                             <div
                               style={{
                                 fontFamily: 'monospace',
-                                fontSize: designSystem.typography.fontSizes.xs,
-                                color: designSystem.colors.text.primary,
+                                fontSize: '12px',
+                                color: '#1A1A1A',
                               }}
                             >
                               {fitaSku}
@@ -532,8 +527,8 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
                             {ladosAtivos.length > 0 && (
                               <div
                                 style={{
-                                  fontSize: designSystem.typography.fontSizes.xs,
-                                  color: designSystem.colors.text.secondary,
+                                  fontSize: '12px',
+                                  color: '#666666',
                                   marginTop: 2,
                                 }}
                               >
@@ -542,7 +537,7 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
                             )}
                           </div>
                         ) : (
-                          <span style={{ color: designSystem.colors.text.disabled }}>—</span>
+                          <span style={{ color: '#CCCCCC' }}>—</span>
                         )}
                       </td>
                     </tr>
@@ -556,21 +551,21 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
 
       <section
         style={{
-          background: designSystem.colors.surface,
-          borderRadius: designSystem.borderRadius.lg,
-          boxShadow: designSystem.shadows.md,
-          padding: designSystem.spacing.lg,
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          padding: '24px',
         }}
       >
         <h2
           style={{
-            fontSize: designSystem.typography.fontSizes.lg,
-            fontWeight: designSystem.typography.fontWeights.bold,
-            color: designSystem.colors.text.primary,
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#1A1A1A',
             margin: 0,
-            marginBottom: designSystem.spacing.lg,
-            borderBottom: `2px solid ${designSystem.colors.primary[500]}`,
-            paddingBottom: designSystem.spacing.sm,
+            marginBottom: '24px',
+            borderBottom: `2px solid #0D66CC`,
+            paddingBottom: '8px',
           }}
         >
           Resumo Financeiro
@@ -579,19 +574,19 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: designSystem.spacing.md,
+            gap: '16px',
           }}
         >
           <SummaryRow label="Subtotal" value={formatCurrency(subtotal)} />
           <SummaryRow
             label={`Margem (${margemPct}%)`}
             value={formatCurrency(valorMargem)}
-            color={designSystem.colors.accent}
+            color={'#E2AC00'}
           />
           <SummaryRow
             label={`Taxa Financeira (${taxaPct}%)`}
             value={formatCurrency(valorTaxa)}
-            color={designSystem.colors.info}
+            color={'#17A2B8'}
           />
           <SummaryRow label="Total Geral" value={formatCurrency(total)} highlight />
         </div>
@@ -601,10 +596,10 @@ export const QuotationDetail: React.FC<QuotationDetailProps> = ({
 };
 
 const thStyle: React.CSSProperties = {
-  padding: designSystem.spacing.md,
-  fontSize: designSystem.typography.fontSizes.xs,
-  fontWeight: designSystem.typography.fontWeights.semibold,
-  color: designSystem.colors.text.secondary,
+  padding: '16px',
+  fontSize: '12px',
+  fontWeight: 600,
+  color: '#666666',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   textAlign: 'left',
@@ -619,20 +614,20 @@ const SummaryRow: React.FC<{
 }> = ({ label, value, color, highlight }) => (
   <div
     style={{
-      background: highlight ? designSystem.colors.primary[50] : designSystem.colors.background,
-      border: `1px solid ${highlight ? designSystem.colors.primary[500] : designSystem.colors.border}`,
-      borderRadius: designSystem.borderRadius.md,
-      padding: designSystem.spacing.md,
+      background: highlight ? '#F0F7FF' : '#FAFAFA',
+      border: `1px solid ${highlight ? '#0D66CC' : '#E0E0E0'}`,
+      borderRadius: '8px',
+      padding: '16px',
       display: 'flex',
       flexDirection: 'column',
-      gap: designSystem.spacing.xs,
+      gap: '4px',
     }}
   >
     <div
       style={{
-        fontSize: designSystem.typography.fontSizes.xs,
-        fontWeight: designSystem.typography.fontWeights.semibold,
-        color: designSystem.colors.text.secondary,
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#666666',
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
       }}
@@ -641,11 +636,9 @@ const SummaryRow: React.FC<{
     </div>
     <div
       style={{
-        fontSize: highlight
-          ? designSystem.typography.fontSizes['2xl']
-          : designSystem.typography.fontSizes.lg,
-        fontWeight: designSystem.typography.fontWeights.bold,
-        color: color || designSystem.colors.text.primary,
+        fontSize: highlight ? '24px' : '18px',
+        fontWeight: 700,
+        color: color || '#1A1A1A',
       }}
     >
       {value}

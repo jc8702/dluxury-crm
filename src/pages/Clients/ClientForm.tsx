@@ -2,7 +2,6 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, AlertCircle, Save, X } from 'lucide-react';
-import { designSystem } from '@/styles/design-system';
 import { Button } from '../../components/common';
 import { clientSchema, type ClientFormData } from '../../validators';
 import type { Client } from '../../types/entities';
@@ -102,42 +101,42 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
   // Style helpers (all consuming design-system tokens)
   const fieldLabel: React.CSSProperties = {
     display: 'block',
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontWeight: designSystem.typography.fontWeights.semibold,
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing.xs,
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#1A1A1A',
+    marginBottom: '4px',
   };
 
   const requiredMark: React.CSSProperties = {
-    color: designSystem.colors.error,
+    color: '#DC3545',
     marginLeft: 2,
   };
 
   const hintStyle: React.CSSProperties = {
-    fontSize: designSystem.typography.fontSizes.xs,
-    color: designSystem.colors.text.secondary,
-    marginTop: designSystem.spacing.xs,
+    fontSize: '12px',
+    color: '#666666',
+    marginTop: '4px',
   };
 
   const errorStyle: React.CSSProperties = {
-    fontSize: designSystem.typography.fontSizes.xs,
-    color: designSystem.colors.error,
-    marginTop: designSystem.spacing.xs,
+    fontSize: '12px',
+    color: '#DC3545',
+    marginTop: '4px',
     display: 'flex',
     alignItems: 'center',
-    gap: designSystem.spacing.xs,
-    fontWeight: designSystem.typography.fontWeights.semibold,
+    gap: '4px',
+    fontWeight: 600,
   };
 
   const fieldInput = (hasError: boolean, extra: React.CSSProperties = {}): React.CSSProperties => ({
     width: '100%',
-    background: designSystem.colors.surface,
-    border: `1px solid ${hasError ? designSystem.colors.error : designSystem.colors.border}`,
-    borderRadius: designSystem.borderRadius.md,
-    padding: `${designSystem.spacing.sm} ${designSystem.spacing.md}`,
-    fontSize: designSystem.typography.fontSizes.sm,
-    fontFamily: designSystem.typography.fontFamily,
-    color: designSystem.colors.text.primary,
+    background: '#FFFFFF',
+    border: `1px solid ${hasError ? '#DC3545' : '#E0E0E0'}`,
+    borderRadius: '8px',
+    padding: `8px 16px`,
+    fontSize: '14px',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A1A1A',
     outline: 'none',
     transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
     boxSizing: 'border-box',
@@ -147,15 +146,15 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
   const sectionTitle = (text: string) => (
     <div
       style={{
-        fontSize: designSystem.typography.fontSizes.xs,
-        fontWeight: designSystem.typography.fontWeights.bold,
-        color: designSystem.colors.primary[600],
+        fontSize: '12px',
+        fontWeight: 700,
+        color: '#0D5FB8',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
-        borderBottom: `1px solid ${designSystem.colors.border}`,
-        paddingBottom: designSystem.spacing.xs,
-        marginTop: designSystem.spacing.lg,
-        marginBottom: designSystem.spacing.md,
+        borderBottom: `1px solid #E0E0E0`,
+        paddingBottom: '4px',
+        marginTop: '24px',
+        marginBottom: '16px',
       }}
     >
       {text}
@@ -169,9 +168,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: designSystem.spacing.md,
-        fontFamily: designSystem.typography.fontFamily,
-        color: designSystem.colors.text.primary,
+        gap: '16px',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        color: '#1A1A1A',
       }}
       noValidate
     >
@@ -179,14 +178,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         .ds-client-form input:focus,
         .ds-client-form select:focus,
         .ds-client-form textarea:focus {
-          border-color: ${designSystem.colors.primary[500]} !important;
-          box-shadow: 0 0 0 3px ${designSystem.colors.primary[100]};
+          border-color: #0D66CC !important;
+          box-shadow: 0 0 0 3px #E0EFFF;
         }
         .ds-client-form input[aria-invalid="true"],
         .ds-client-form textarea[aria-invalid="true"] {
-          border-color: ${designSystem.colors.error};
+          border-color: #DC3545;
         }
-        .ds-client-form .ds-comodo-chip:hover { border-color: ${designSystem.colors.primary[500]}; }
+        .ds-client-form .ds-comodo-chip:hover { border-color: #0D66CC; }
       `}</style>
 
       {sectionTitle('Dados Pessoais')}
@@ -194,7 +193,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
@@ -244,7 +243,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
@@ -309,7 +308,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
@@ -352,7 +351,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: designSystem.spacing.md,
+          gap: '16px',
         }}
       >
         <div>
@@ -409,8 +408,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: designSystem.spacing.xs,
-            marginTop: designSystem.spacing.xs,
+            gap: '4px',
+            marginTop: '4px',
           }}
         >
           {comodos.map((c) => {
@@ -422,22 +421,18 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
                 className="ds-comodo-chip"
                 onClick={() => toggleComodo(c)}
                 style={{
-                  padding: `${designSystem.spacing.xs} ${designSystem.spacing.md}`,
-                  borderRadius: designSystem.borderRadius.full,
-                  fontSize: designSystem.typography.fontSizes.xs,
-                  fontWeight: designSystem.typography.fontWeights.semibold,
+                  padding: `4px 16px`,
+                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: designSystem.typography.fontFamily,
-                  background: isSelected
-                    ? designSystem.colors.primary[500]
-                    : designSystem.colors.surface,
-                  color: isSelected
-                    ? designSystem.colors.surface
-                    : designSystem.colors.text.primary,
-                  border: `1px solid ${isSelected ? designSystem.colors.primary[500] : designSystem.colors.border}`,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  background: isSelected ? '#0D66CC' : '#FFFFFF',
+                  color: isSelected ? '#FFFFFF' : '#1A1A1A',
+                  border: `1px solid ${isSelected ? '#0D66CC' : '#E0E0E0'}`,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: designSystem.spacing.xs,
+                  gap: '4px',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -460,7 +455,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             ...fieldInput(false),
             minHeight: 96,
             resize: 'vertical',
-            fontFamily: designSystem.typography.fontFamily,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
           {...register('observacoes')}
         />
@@ -470,20 +465,19 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: designSystem.spacing.xs,
-          padding: designSystem.spacing.md,
-          borderRadius: designSystem.borderRadius.md,
+          gap: '4px',
+          padding: '16px',
+          borderRadius: '8px',
           border: `1px solid ${watchStatus === 'ativo' ? '#A8D5B6' : '#F0A8AE'}`,
           background: watchStatus === 'ativo' ? '#E6F4EA' : '#FBE9EB',
-          marginTop: designSystem.spacing.sm,
+          marginTop: '8px',
         }}
       >
         <label
           htmlFor="status"
           style={{
             ...fieldLabel,
-            color:
-              watchStatus === 'ativo' ? designSystem.colors.success : designSystem.colors.error,
+            color: watchStatus === 'ativo' ? '#28A745' : '#DC3545',
             marginBottom: 0,
           }}
         >
@@ -500,8 +494,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
               style={{
                 ...fieldInput(false, { cursor: 'pointer' }),
                 border: `1px solid ${watchStatus === 'ativo' ? '#A8D5B6' : '#F0A8AE'}`,
-                background: designSystem.colors.surface,
-                fontWeight: designSystem.typography.fontWeights.bold,
+                background: '#FFFFFF',
+                fontWeight: 700,
               }}
             >
               {statusOptions.map((o) => (
@@ -519,28 +513,28 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          gap: designSystem.spacing.md,
-          marginTop: designSystem.spacing.lg,
-          paddingTop: designSystem.spacing.md,
-          borderTop: `1px solid ${designSystem.colors.border}`,
+          gap: '16px',
+          marginTop: '24px',
+          paddingTop: '16px',
+          borderTop: `1px solid #E0E0E0`,
         }}
       >
         <Button
           type="button"
           onClick={onCancel}
           style={{
-            background: designSystem.colors.surface,
-            color: designSystem.colors.text.primary,
-            border: `1px solid ${designSystem.colors.border}`,
-            borderRadius: designSystem.borderRadius.md,
-            padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-            fontSize: designSystem.typography.fontSizes.sm,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            background: '#FFFFFF',
+            color: '#1A1A1A',
+            border: `1px solid #E0E0E0`,
+            borderRadius: '8px',
+            padding: `8px 24px`,
+            fontSize: '14px',
+            fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
+            gap: '8px',
             cursor: 'pointer',
-            fontFamily: designSystem.typography.fontFamily,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
           <X size={16} />
@@ -550,20 +544,20 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
           type="submit"
           disabled={isSubmitting || !isDirty}
           style={{
-            background: designSystem.colors.primary[500],
-            color: designSystem.colors.surface,
+            background: '#0D66CC',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: designSystem.borderRadius.md,
-            padding: `${designSystem.spacing.sm} ${designSystem.spacing.lg}`,
-            fontSize: designSystem.typography.fontSizes.sm,
-            fontWeight: designSystem.typography.fontWeights.semibold,
+            borderRadius: '8px',
+            padding: `8px 24px`,
+            fontSize: '14px',
+            fontWeight: 600,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: designSystem.spacing.sm,
-            boxShadow: `0 4px 12px ${designSystem.colors.primary[500]}40`,
+            gap: '8px',
+            boxShadow: `0 4px 12px #0D66CC40`,
             cursor: isSubmitting || !isDirty ? 'not-allowed' : 'pointer',
             opacity: isSubmitting || !isDirty ? 0.6 : 1,
-            fontFamily: designSystem.typography.fontFamily,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
           <Save size={16} />
