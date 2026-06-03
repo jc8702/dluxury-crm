@@ -36,14 +36,14 @@ const ProjectKanban: React.FC = () => {
   const visitas = events?.filter((e: any) => e.tipo === 'visita') || [];
 
   const columns = [
-    { id: 'lead', title: 'ðŸ“¥ Lead' },
-    { id: 'visita_tecnica', title: 'ðŸ“ Visita Técnica' },
-    { id: 'orcamento_enviado', title: 'ðŸ“„ Orçamento Enviado' },
-    { id: 'aprovado', title: 'âœ… Aprovado' },
-    { id: 'em_producao', title: 'ðŸ”¨ Em Produção' },
-    { id: 'pronto_entrega', title: 'ðŸ“¦ Pronto p/ Entrega' },
-    { id: 'instalado', title: 'ðŸ  Instalado' },
-    { id: 'concluido', title: 'ðŸ Concluído' },
+    { id: 'lead', title: '🎯 Lead' },
+    { id: 'visita_tecnica', title: '📋 Visita Técnica' },
+    { id: 'orcamento_enviado', title: '💰 Orçamento Enviado' },
+    { id: 'aprovado', title: '✅ Aprovado' },
+    { id: 'em_producao', title: '🏭 Em Produção' },
+    { id: 'pronto_entrega', title: '📦 Pronto p/ Entrega' },
+    { id: 'instalado', title: '🛠️ Instalado' },
+    { id: 'concluido', title: '🎉 Concluído' },
   ];
 
   const ambientes = [
@@ -55,7 +55,7 @@ const ProjectKanban: React.FC = () => {
     'Lavanderia',
     'Closet',
     'Home Office',
-    'Ãrea Gourmet',
+    'ÃÁrea Gourmet',
     'Varanda',
     'Sala de Jantar',
     'Outro',

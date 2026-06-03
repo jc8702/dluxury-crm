@@ -226,7 +226,7 @@ export default function QuotationForm() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Deseja realmente excluir este orçamento?')) return;
+    if (!confirm('Deseja realmente excluir estáe orçamento?')) return;
     try {
       const success = await deletarOrcamento(id);
       if (success) {
@@ -238,7 +238,7 @@ export default function QuotationForm() {
     }
   };
 
-  // Renderizar lista de orçamentos (utilizado tanto no estado limpo quanto no rodapé)
+  // Renderizar lista de orçamentos (utilizado tanto no estáado limpo quanto no rodapé)
   const renderListaRecentes = () => (
     <Card className="bg-card border-border shadow-2xl overflow-hidden mt-12">
       <CardHeader className="bg-muted/40 border-b border-border py-4 px-6 flex flex-row items-center justify-between">
@@ -385,7 +385,7 @@ export default function QuotationForm() {
                 ORÃ‡AMENTOS <span className="text-primary">PRO</span>
               </h1>
               <p className="text-muted-foreground mt-2 font-medium">
-                Gestão de orçamentos industriais e cálculos de engenharia.
+                Gestáão de orçamentos industriais e cálculos de engenharia.
               </p>
             </div>
             <div className="flex gap-4">
@@ -407,7 +407,7 @@ export default function QuotationForm() {
 
           <div className="grid grid-cols-3 gap-6">
             <Card className="bg-card border-border p-6">
-              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">
+              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widestá mb-2">
                 Total de Orçamentos
               </div>
               <div className="text-4xl font-black italic text-foreground">
@@ -415,7 +415,7 @@ export default function QuotationForm() {
               </div>
             </Card>
             <Card className="bg-card border-border p-6 border-l-primary border-l-4">
-              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">
+              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widestá mb-2">
                 Aguardando Aprovação
               </div>
               <div className="text-4xl font-black italic text-primary">
@@ -427,8 +427,8 @@ export default function QuotationForm() {
               </div>
             </Card>
             <Card className="bg-card border-border p-6 border-l-green-500 border-l-4">
-              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2">
-                Aprovados este Mês
+              <div className="text-muted-foreground text-[10px] font-black uppercase tracking-widestá mb-2">
+                Aprovados estáe Mês
               </div>
               <div className="text-4xl font-black italic text-green-500">
                 {orcamentosRecentes.filter((o) => o.status === 'APROVADO').length}
@@ -725,8 +725,8 @@ export default function QuotationForm() {
               <div className="bg-muted w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12">
                 <Layers className="w-10 h-10 text-muted-foreground -rotate-12" />
               </div>
-              <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">
-                O orçamento está vazio
+              <p className="text-muted-foreground font-bold uppercase tracking-widestá text-sm">
+                O orçamento estáá vazio
               </p>
               <p className="text-muted-foreground/80 text-xs mt-2">
                 Utilize a busca acima para adicionar módulos de engenharia.

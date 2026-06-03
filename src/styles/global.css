@@ -1,13 +1,13 @@
-/* ═══════════════════════════════════════════════════════════════
+/* ─────────────────────────────────────────────────────────────────────────────
    DESIGN SYSTEM — Camada de tokens canônicos (CSS Custom Properties)
-   ═══════════════════════════════════════════════════════════════
+   ─────────────────────────────────────────────────────────────────────────────
    Este arquivo complementa `src/index.css` (Tailwind v4 theme) sem
    sobrescrevê-lo. Os tokens aqui usam o prefixo `--ds-*` para evitar
    colisão com as vars do tema Tailwind (`--primary`, `--secondary`,
    `--accent`, etc.) e mantêm coexistência segura.
 
-   Fonte de valores: src/styles/design-system.ts
-   ═══════════════════════════════════════════════════════════════ */
+   Fonte de valores: src/index.css (Tailwind v4 theme)
+   ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
   /* ─── Cores: Primary ─── */
@@ -81,12 +81,12 @@
   --ds-radius-full: 9999px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ─────────────────────────────────────────────────────────────────────────────
    DARK MODE — Override das CSS vars canônicas (`--ds-*`)
-   Espelha `designSystemDark` de `src/styles/design-system.ts`.
+   Espelha o dark mode definido no Tailwind v4 (src/index.css).
    Aplicado automaticamente via `class="dark"` no <html>,
    controlado por `ThemeContext` (localStorage key: `dluxury-theme`).
-   ═══════════════════════════════════════════════════════════════ */
+   ───────────────────────────────────────────────────────────────────────────── */
 .dark,
 [data-theme='dark'] {
   --ds-color-primary-50: #001a33;

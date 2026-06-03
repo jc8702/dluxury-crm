@@ -1,9 +1,11 @@
 # D'LUXURY ERP - Documentação de Arquitetura
 
 ## Visão Geral
+
 ERP Industrial para gestão de vendas, produção e finanças da D'LUXURY.
 
 ## Stack Tecnológica
+
 - **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: API Node.js (Next.js API Routes ou Vercel Serverless)
 - **Database**: PostgreSQL (Neon)
@@ -16,12 +18,8 @@ ERP Industrial para gestão de vendas, produção e finanças da D'LUXURY.
 src/
 ├── api-lib/           # Handlers de API (Backend)
 ├── components/        # Componentes React reutilizáveis
-│   ├── ui/            # Componentes base (Botões, Inputs, etc)
+│   ├── common/        # Componentes base do Design System (Button, Modal, Card, etc)
 │   └── ...
-├── design-system/     # Sistema de Design oficializado
-│   ├── components/    # Componentes base (Button, Modal, etc)
-│   ├── tokens.ts      # Definição de tokens de design
-│   └── utils.ts       # Utilitários (cn - className merge)
 ├── hooks/             # Custom Hooks
 │   └── useEscClose.ts # Hook para fechar modais com ESC
 ├── lib/               # Configurações e utilitários
@@ -32,33 +30,37 @@ src/
 
 ## Design System
 
-O projeto utiliza um Design System centralizado em `src/design-system/`.
+O projeto utiliza um Design System centralizado em `src/components/common/`.
 
 ### Componentes
-- **Button**: `import { Button } from '@/design-system'`
-- **Modal**: `import { Modal } from '@/design-system'`
-- **Input**: `import { Input } from '@/design-system'`
-- **Card**: `import { Card } from '@/design-system'`
+
+- **Button**: `import { Button } from '@/components/common'`
+- **Modal**: `import { Modal } from '@/components/common'`
+- **Input**: `import { Input } from '@/components/common'`
+- **Card**: `import { Card } from '@/components/common'`
 
 ### Tokens
-Disponíveis em `src/design-system/tokens.ts`.
+
+Os tokens de estilo estão integrados no tema Tailwind v4 em `src/index.css`.
 
 ## Testes
 
 Executar testes unitários:
+
 ```bash
 npm test
 ```
 
 Executar com coverage:
+
 ```bash
 npm run test:coverage
 ```
 
 ## Fluxo de Desenvolvimento
 
-1. Criar componente no `design-system` se for base.
-2. Usar tokens do design system (evitar cores hardcoded).
+1. Criar componente no `components/common` se for base.
+2. Usar classes e utilitários do Tailwind v4 definidos em `src/index.css` (evitar cores hardcoded arbitrárias).
 3. Sempre usar `useEscClose` para modais.
 4. Escrever testes para novos componentes.
 

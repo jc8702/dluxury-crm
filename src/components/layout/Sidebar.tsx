@@ -28,6 +28,7 @@ import {
   Clock3,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Target,
 } from 'lucide-react';
 
@@ -42,6 +43,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     engineering: true,
   });
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const isSidebarExpanded = !isCollapsed || isHovered;
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const newVal = !prev;
+      localStorage.setItem('sidebar-collapsed', String(newVal));
+      return newVal;
+    });
+  };
 
   const currentPath = location.pathname.replace('/', '') || 'painel';
 
@@ -312,17 +327,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
               >
                 {item.icon}
               </span>
-              <span className="sidebar-label flex-1 truncate text-left text-sm font-medium">
+              <span
+                className={`sidebar-label flex-1 truncate text-left text-sm font-medium transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+              >
                 {item.label}
               </span>
             </div>
-            <span className="sidebar-label text-sidebar-foreground">
+            <span
+              className={`sidebar-label text-sidebar-foreground transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+            >
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
           </button>
 
           <div
-            className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}
+            className={`overflow-hidden transition-all duration-200 ease-out ${isExpanded && isSidebarExpanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}
           >
             <div className="pl-4 pr-1 flex flex-col gap-1 border-l border-sidebar-border ml-5 my-1">
               {visibleSubItems.map((subItem: any) => {
@@ -349,7 +368,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
                     >
                       {subItem.icon}
                     </span>
-                    <span className="sidebar-label flex-1 truncate">{subItem.label}</span>
+                    <span
+                      className={`sidebar-label flex-1 truncate transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+                    >
+                      {subItem.label}
+                    </span>
                   </Link>
                 );
               })}
@@ -377,7 +400,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
         >
           {item.icon}
         </span>
-        <span className="sidebar-label flex-1 truncate text-sm font-medium">{item.label}</span>
+        <span
+          className={`sidebar-label flex-1 truncate text-sm font-medium transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+        >
+          {item.label}
+        </span>
         {item.id === 'notifications' && <NotificacoesBadge />}
       </Link>
     );
@@ -385,14 +412,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
 
   return (
     <aside
-      className={`w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col fixed lg:sticky top-0 transition-transform duration-200 z-50 overflow-y-auto ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} select-none`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border px-3 py-4 flex flex-col fixed lg:sticky top-0 transition-all duration-300 z-50 overflow-y-auto ${isSidebarExpanded ? 'w-60' : 'w-[72px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} select-none`}
     >
+      {/* Botão de Toggle Manual de Colapso (Desktop apenas) */}
+      <button
+        type="button"
+        onClick={toggleCollapse}
+        className="hidden lg:flex absolute right-[-12px] top-6 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border items-center justify-center text-sidebar-primary hover:text-sidebar-accent-foreground shadow-md z-[60] hover:scale-110 transition-all"
+        title={isCollapsed ? 'Expandir Menu' : 'Recolher Menu'}
+      >
+        {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+      </button>
+
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-3 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground text-base shadow-primary">
+        <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground text-base shadow-primary shrink-0">
           DL
         </div>
-        <div className="flex flex-col sidebar-label">
+        <div
+          className={`flex flex-col sidebar-label transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+        >
           <span className="text-sm font-black text-sidebar-accent-foreground leading-tight tracking-wider font-display">
             D'LUXURY CRM
           </span>
@@ -410,7 +451,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
 
           return (
             <div key={group} className="flex flex-col gap-1.5">
-              <span className="text-[0.6rem] font-bold text-sidebar-primary mb-1 px-3 tracking-[0.2em] uppercase sidebar-label font-display opacity-80">
+              <span
+                className={`text-[0.6rem] font-bold text-sidebar-primary mb-1 px-3 tracking-[0.2em] uppercase sidebar-label font-display opacity-80 transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+              >
                 {group}
               </span>
               {groupItems.map((item) => renderMenuItem(item))}
@@ -420,8 +463,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
       </nav>
 
       {/* User footer */}
-      <div className="mt-4 pt-4 border-t border-sidebar-border flex flex-col gap-2">
-        {user?.subdominio && (
+      <div className="mt-4 pt-4 border-t border-sidebar-border flex flex-col gap-2 shrink-0">
+        {user?.subdominio && isSidebarExpanded && (
           <div className="px-3 mb-1">
             <div className="text-[0.65rem] font-bold text-sidebar-primary tracking-wider uppercase mb-0.5">
               Seu Workspace
@@ -442,7 +485,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
           <div className="w-8 h-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center font-bold text-xs shrink-0 font-display">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
-          <div className="sidebar-label flex-1 min-w-0">
+          <div
+            className={`sidebar-label flex-1 min-w-0 transition-opacity duration-200 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 h-0 overflow-hidden'}`}
+          >
             <p className="text-sm font-semibold truncate text-sidebar-accent-foreground">
               {user?.name}
             </p>
@@ -460,11 +505,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
 
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 p-2.5 bg-sidebar-accent hover:bg-primary/20 text-sidebar-foreground hover:text-sidebar-accent-foreground rounded-xl text-sm font-semibold border border-sidebar-border hover:border-primary/30 transition-all duration-150 sidebar-label"
+          className={`flex items-center justify-center bg-sidebar-accent hover:bg-primary/20 text-sidebar-foreground hover:text-sidebar-accent-foreground rounded-xl border border-sidebar-border hover:border-primary/30 transition-all duration-150 ${isSidebarExpanded ? 'w-full gap-2 p-2.5 text-sm font-semibold' : 'w-10 h-10 p-0 mx-auto'}`}
           aria-label="Sair do sistema"
+          title="Sair"
         >
           <LogOut size={15} />
-          <span>Sair</span>
+          {isSidebarExpanded && <span>Sair</span>}
         </button>
       </div>
 

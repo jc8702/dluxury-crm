@@ -98,65 +98,13 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
     }
   };
 
-  // Style helpers (all consuming design-system tokens)
-  const fieldLabel: React.CSSProperties = {
-    display: 'block',
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#1A1A1A',
-    marginBottom: '4px',
+  // Classes utilitárias do Tailwind para formulário premium
+  const getInputClass = (hasError: boolean, extra: string = '') => {
+    return `w-full bg-card border ${hasError ? 'border-destructive focus:ring-destructive/15' : 'border-border focus:border-primary focus:ring-primary/15'} rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:ring-4 box-border ${extra}`;
   };
-
-  const requiredMark: React.CSSProperties = {
-    color: '#DC3545',
-    marginLeft: 2,
-  };
-
-  const hintStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: '#666666',
-    marginTop: '4px',
-  };
-
-  const errorStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: '#DC3545',
-    marginTop: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    fontWeight: 600,
-  };
-
-  const fieldInput = (hasError: boolean, extra: React.CSSProperties = {}): React.CSSProperties => ({
-    width: '100%',
-    background: '#FFFFFF',
-    border: `1px solid ${hasError ? '#DC3545' : '#E0E0E0'}`,
-    borderRadius: '8px',
-    padding: `8px 16px`,
-    fontSize: '14px',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    color: '#1A1A1A',
-    outline: 'none',
-    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-    boxSizing: 'border-box',
-    ...extra,
-  });
 
   const sectionTitle = (text: string) => (
-    <div
-      style={{
-        fontSize: '12px',
-        fontWeight: 700,
-        color: '#0D5FB8',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        borderBottom: `1px solid #E0E0E0`,
-        paddingBottom: '4px',
-        marginTop: '24px',
-        marginBottom: '16px',
-      }}
-    >
+    <div className="text-xs font-bold text-primary uppercase tracking-wider border-b border-border pb-1 mt-6 mb-4">
       {text}
     </div>
   );
@@ -164,41 +112,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
   return (
     <form
       onSubmit={handleSubmit(handleFormSubmit)}
-      className="ds-client-form"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        color: '#1A1A1A',
-      }}
+      className="flex flex-col gap-4 text-foreground"
       noValidate
     >
-      <style>{`
-        .ds-client-form input:focus,
-        .ds-client-form select:focus,
-        .ds-client-form textarea:focus {
-          border-color: #0D66CC !important;
-          box-shadow: 0 0 0 3px #E0EFFF;
-        }
-        .ds-client-form input[aria-invalid="true"],
-        .ds-client-form textarea[aria-invalid="true"] {
-          border-color: #DC3545;
-        }
-        .ds-client-form .ds-comodo-chip:hover { border-color: #0D66CC; }
-      `}</style>
-
       {sectionTitle('Dados Pessoais')}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="nome" style={fieldLabel}>
-            Nome Completo<span style={requiredMark}>*</span>
+          <label htmlFor="nome" className="block text-sm font-semibold text-foreground mb-1">
+            Nome Completo<span className="text-destructive ml-0.5">*</span>
           </label>
           <input
             id="nome"
@@ -206,20 +127,24 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             placeholder="Ex: Maria da Silva"
             aria-invalid={!!errors.nome}
             aria-describedby={errors.nome ? 'nome-error' : undefined}
-            style={fieldInput(!!errors.nome)}
+            className={getInputClass(!!errors.nome)}
             {...register('nome')}
           />
           {errors.nome ? (
-            <p id="nome-error" style={errorStyle} role="alert">
+            <p
+              id="nome-error"
+              className="text-xs text-destructive mt-1 flex items-center gap-1 font-semibold"
+              role="alert"
+            >
               <AlertCircle size={12} /> {errors.nome.message}
             </p>
           ) : (
-            <p style={hintStyle}>Mínimo 3 caracteres</p>
+            <p className="text-xs text-muted-foreground mt-1">Mínimo 3 caracteres</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="cpf" style={fieldLabel}>
+          <label htmlFor="cpf" className="block text-sm font-semibold text-foreground mb-1">
             CPF (opcional)
           </label>
           <input
@@ -227,11 +152,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             type="text"
             placeholder="000.000.000-00"
             aria-invalid={!!errors.cpf}
-            style={fieldInput(!!errors.cpf)}
+            className={getInputClass(!!errors.cpf)}
             {...register('cpf')}
           />
           {errors.cpf && (
-            <p style={errorStyle} role="alert">
+            <p
+              className="text-xs text-destructive mt-1 flex items-center gap-1 font-semibold"
+              role="alert"
+            >
               <AlertCircle size={12} /> {errors.cpf.message}
             </p>
           )}
@@ -239,16 +167,10 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       {sectionTitle('Contato')}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="telefone" style={fieldLabel}>
-            WhatsApp<span style={requiredMark}>*</span>
+          <label htmlFor="telefone" className="block text-sm font-semibold text-foreground mb-1">
+            WhatsApp<span className="text-destructive ml-0.5">*</span>
           </label>
           <input
             id="telefone"
@@ -256,20 +178,26 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             placeholder="(47) 99789-6229"
             aria-invalid={!!errors.telefone}
             aria-describedby={errors.telefone ? 'telefone-error' : undefined}
-            style={fieldInput(!!errors.telefone)}
+            className={getInputClass(!!errors.telefone)}
             {...register('telefone')}
           />
           {errors.telefone ? (
-            <p id="telefone-error" style={errorStyle} role="alert">
+            <p
+              id="telefone-error"
+              className="text-xs text-destructive mt-1 flex items-center gap-1 font-semibold"
+              role="alert"
+            >
               <AlertCircle size={12} /> {errors.telefone.message}
             </p>
           ) : (
-            <p style={hintStyle}>Com DDD — apenas números ou formatado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Com DDD — apenas números ou formatado
+            </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="email" style={fieldLabel}>
+          <label htmlFor="email" className="block text-sm font-semibold text-foreground mb-1">
             E-mail
           </label>
           <input
@@ -278,53 +206,51 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             placeholder="email@exemplo.com"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? 'email-error' : undefined}
-            style={fieldInput(!!errors.email)}
+            className={getInputClass(!!errors.email)}
             {...register('email')}
           />
           {errors.email ? (
-            <p id="email-error" style={errorStyle} role="alert">
+            <p
+              id="email-error"
+              className="text-xs text-destructive mt-1 flex items-center gap-1 font-semibold"
+              role="alert"
+            >
               <AlertCircle size={12} /> {errors.email.message}
             </p>
           ) : (
-            <p style={hintStyle}>Formato: nome@dominio.com</p>
+            <p className="text-xs text-muted-foreground mt-1">Formato: nome@dominio.com</p>
           )}
         </div>
       </div>
 
       {sectionTitle('Endereço')}
       <div>
-        <label htmlFor="endereco" style={fieldLabel}>
+        <label htmlFor="endereco" className="block text-sm font-semibold text-foreground mb-1">
           Endereço
         </label>
         <input
           id="endereco"
           type="text"
           placeholder="Rua, número"
-          style={fieldInput(false)}
+          className={getInputClass(false)}
           {...register('endereco')}
         />
       </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label htmlFor="bairro" style={fieldLabel}>
+          <label htmlFor="bairro" className="block text-sm font-semibold text-foreground mb-1">
             Bairro
           </label>
-          <input id="bairro" type="text" style={fieldInput(false)} {...register('bairro')} />
+          <input id="bairro" type="text" className={getInputClass(false)} {...register('bairro')} />
         </div>
         <div>
-          <label htmlFor="cidade" style={fieldLabel}>
+          <label htmlFor="cidade" className="block text-sm font-semibold text-foreground mb-1">
             Cidade
           </label>
-          <input id="cidade" type="text" style={fieldInput(false)} {...register('cidade')} />
+          <input id="cidade" type="text" className={getInputClass(false)} {...register('cidade')} />
         </div>
         <div>
-          <label htmlFor="uf" style={fieldLabel}>
+          <label htmlFor="uf" className="block text-sm font-semibold text-foreground mb-1">
             UF
           </label>
           <input
@@ -333,13 +259,16 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
             maxLength={2}
             placeholder="SC"
             aria-invalid={!!errors.uf}
-            style={{ ...fieldInput(!!errors.uf), textTransform: 'uppercase' }}
+            className={getInputClass(!!errors.uf, 'uppercase')}
             {...register('uf', {
               setValueAs: (v) => (typeof v === 'string' ? v.toUpperCase() : v),
             })}
           />
           {errors.uf && (
-            <p style={errorStyle} role="alert">
+            <p
+              className="text-xs text-destructive mt-1 flex items-center gap-1 font-semibold"
+              role="alert"
+            >
               <AlertCircle size={12} /> {errors.uf.message}
             </p>
           )}
@@ -347,15 +276,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       {sectionTitle('Perfil do Lead')}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="tipoImovel" style={fieldLabel}>
+          <label htmlFor="tipoImovel" className="block text-sm font-semibold text-foreground mb-1">
             Tipo de Imóvel
           </label>
           <Controller
@@ -366,7 +289,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
                 id="tipoImovel"
                 value={field.value}
                 onChange={field.onChange}
-                style={fieldInput(false, { cursor: 'pointer' })}
+                className={getInputClass(false, 'cursor-pointer')}
               >
                 {tipoImovelOptions.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -378,7 +301,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
           />
         </div>
         <div>
-          <label htmlFor="origem" style={fieldLabel}>
+          <label htmlFor="origem" className="block text-sm font-semibold text-foreground mb-1">
             Como chegou
           </label>
           <Controller
@@ -389,7 +312,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
                 id="origem"
                 value={field.value}
                 onChange={field.onChange}
-                style={fieldInput(false, { cursor: 'pointer' })}
+                className={getInputClass(false, 'cursor-pointer')}
               >
                 {origemOptions.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -403,38 +326,22 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       <div>
-        <label style={fieldLabel}>Cômodos de Interesse</label>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '4px',
-            marginTop: '4px',
-          }}
-        >
+        <label className="block text-sm font-semibold text-foreground mb-1">
+          Cômodos de Interesse
+        </label>
+        <div className="flex flex-wrap gap-2 mt-1">
           {comodos.map((c) => {
             const isSelected = watchComodos.includes(c);
             return (
               <button
                 key={c}
                 type="button"
-                className="ds-comodo-chip"
                 onClick={() => toggleComodo(c)}
-                style={{
-                  padding: `4px 16px`,
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  background: isSelected ? '#0D66CC' : '#FFFFFF',
-                  color: isSelected ? '#FFFFFF' : '#1A1A1A',
-                  border: `1px solid ${isSelected ? '#0D66CC' : '#E0E0E0'}`,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-150 inline-flex items-center gap-1 border ${
+                  isSelected
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card text-foreground border-border hover:border-primary'
+                }`}
               >
                 {isSelected && <Check size={12} />}
                 {c}
@@ -445,43 +352,31 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       <div>
-        <label htmlFor="observacoes" style={fieldLabel}>
+        <label htmlFor="observacoes" className="block text-sm font-semibold text-foreground mb-1">
           Observações
         </label>
         <textarea
           id="observacoes"
           placeholder="Notas sobre o cliente, referências, preferências..."
-          style={{
-            ...fieldInput(false),
-            minHeight: 96,
-            resize: 'vertical',
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
+          className={getInputClass(false, 'min-h-[96px] resize-vertical')}
           {...register('observacoes')}
         />
       </div>
 
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          padding: '16px',
-          borderRadius: '8px',
-          border: `1px solid ${watchStatus === 'ativo' ? '#A8D5B6' : '#F0A8AE'}`,
-          background: watchStatus === 'ativo' ? '#E6F4EA' : '#FBE9EB',
-          marginTop: '8px',
-        }}
+        className={`flex flex-col gap-1.5 p-4 rounded-xl border ${
+          watchStatus === 'ativo'
+            ? 'border-success/30 bg-success/5'
+            : 'border-destructive/30 bg-destructive/5'
+        } mt-2`}
       >
         <label
           htmlFor="status"
-          style={{
-            ...fieldLabel,
-            color: watchStatus === 'ativo' ? '#28A745' : '#DC3545',
-            marginBottom: 0,
-          }}
+          className={`block text-xs font-bold uppercase tracking-wider ${
+            watchStatus === 'ativo' ? 'text-success' : 'text-destructive'
+          }`}
         >
-          Status
+          Status do Cliente
         </label>
         <Controller
           name="status"
@@ -491,12 +386,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
               id="status"
               value={field.value}
               onChange={field.onChange}
-              style={{
-                ...fieldInput(false, { cursor: 'pointer' }),
-                border: `1px solid ${watchStatus === 'ativo' ? '#A8D5B6' : '#F0A8AE'}`,
-                background: '#FFFFFF',
-                fontWeight: 700,
-              }}
+              className={`w-full bg-card border rounded-xl px-4 py-2.5 text-sm text-foreground font-bold outline-none focus:ring-4 ${
+                watchStatus === 'ativo'
+                  ? 'border-success/30 focus:border-success focus:ring-success/15'
+                  : 'border-destructive/30 focus:border-destructive focus:ring-destructive/15'
+              }`}
             >
               {statusOptions.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -509,33 +403,12 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
       </div>
 
       {/* Ações */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '16px',
-          marginTop: '24px',
-          paddingTop: '16px',
-          borderTop: `1px solid #E0E0E0`,
-        }}
-      >
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
         <Button
           type="button"
           onClick={onCancel}
-          style={{
-            background: '#FFFFFF',
-            color: '#1A1A1A',
-            border: `1px solid #E0E0E0`,
-            borderRadius: '8px',
-            padding: `8px 24px`,
-            fontSize: '14px',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
+          variant="outline"
+          className="px-6 py-2.5 rounded-xl font-semibold inline-flex items-center gap-2 hover:bg-muted"
         >
           <X size={16} />
           Cancelar
@@ -543,22 +416,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
         <Button
           type="submit"
           disabled={isSubmitting || !isDirty}
-          style={{
-            background: '#0D66CC',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '8px',
-            padding: `8px 24px`,
-            fontSize: '14px',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: `0 4px 12px #0D66CC40`,
-            cursor: isSubmitting || !isDirty ? 'not-allowed' : 'pointer',
-            opacity: isSubmitting || !isDirty ? 0.6 : 1,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
+          className="btn-primary px-6 py-2.5 rounded-xl font-semibold inline-flex items-center gap-2 shadow-md"
         >
           <Save size={16} />
           {isSubmitting ? 'Salvando...' : initialData ? 'Salvar Alterações' : 'Cadastrar Cliente'}

@@ -170,64 +170,38 @@ function ProspeccaoModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
+      className="fixed inset-0 bg-black/35 backdrop-blur-[1px] flex justify-end items-center z-[9999] animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        style={{
-          background: 'var(--color-card, #fff)',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.18)',
-        }}
+        className="bg-card border border-border shadow-2xl rounded-2xl h-[calc(100vh-2rem)] m-4 w-full max-w-[550px] flex flex-col overflow-hidden animate-slide-in"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            padding: '24px 28px 0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '20px',
-          }}
-        >
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
+        {/* Header do Drawer */}
+        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary/5">
+          <h2 className="text-lg font-bold text-foreground">
             {initial ? 'Editar Prospecção' : 'Nova Prospecção'}
           </h2>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '1.4rem',
-              lineHeight: 1,
-              color: '#94a3b8',
-            }}
+            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors text-xl font-bold"
           >
-            ×
+            &times;
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '0 28px 28px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div style={{ gridColumn: '1/-1' }}>
-              <label style={labelStyle}>Nome *</label>
+        {/* Formulário com Scroll */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-4 text-foreground"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1">Nome *</label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 required
                 value={form.nome}
                 onChange={(e) => set('nome', e.target.value)}
@@ -235,18 +209,20 @@ function ProspeccaoModal({
               />
             </div>
             <div>
-              <label style={labelStyle}>Telefone / WhatsApp</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Telefone / WhatsApp
+              </label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.telefone}
                 onChange={(e) => set('telefone', e.target.value)}
                 placeholder="(11) 99999-0000"
               />
             </div>
             <div>
-              <label style={labelStyle}>E-mail</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">E-mail</label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
@@ -254,18 +230,18 @@ function ProspeccaoModal({
               />
             </div>
             <div>
-              <label style={labelStyle}>Cidade</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Cidade</label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.cidade}
                 onChange={(e) => set('cidade', e.target.value)}
                 placeholder="São Paulo"
               />
             </div>
             <div>
-              <label style={labelStyle}>UF</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">UF</label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 value={form.uf}
                 onChange={(e) => set('uf', e.target.value.toUpperCase())}
                 maxLength={2}
@@ -273,9 +249,9 @@ function ProspeccaoModal({
               />
             </div>
             <div>
-              <label style={labelStyle}>Status</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
               <select
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.status}
                 onChange={(e) => set('status', e.target.value)}
               >
@@ -287,9 +263,11 @@ function ProspeccaoModal({
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Temperatura</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Temperatura
+              </label>
               <select
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.temperatura}
                 onChange={(e) => set('temperatura', e.target.value)}
               >
@@ -299,9 +277,9 @@ function ProspeccaoModal({
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Origem</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">Origem</label>
               <select
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border cursor-pointer"
                 value={form.origem}
                 onChange={(e) => set('origem', e.target.value)}
               >
@@ -313,9 +291,11 @@ function ProspeccaoModal({
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Orçamento Estimado (R$)</label>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Orçamento Estimado (R$)
+              </label>
               <input
-                style={inputStyle}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
                 type="number"
                 min="0"
                 step="100"
@@ -324,10 +304,12 @@ function ProspeccaoModal({
                 placeholder="15000"
               />
             </div>
-            <div style={{ gridColumn: '1/-1' }}>
-              <label style={labelStyle}>Interesse / Necessidade</label>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Interesse / Necessidade
+              </label>
               <textarea
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '68px' }}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border min-h-[68px] resize-vertical"
                 value={form.interesse}
                 onChange={(e) => set('interesse', e.target.value)}
                 placeholder="Ex: Cozinha planejada + home office, metragem 22m²"
@@ -335,68 +317,65 @@ function ProspeccaoModal({
             </div>
 
             {/* BANT */}
-            <div style={{ gridColumn: '1/-1' }}>
-              <p
-                style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: '#64748b',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  margin: '4px 0 8px',
-                }}
-              >
+            <div className="sm:col-span-2">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest my-2">
                 Qualificação BANT
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px' }}>
-                {(['budget', 'authority', 'need', 'timeline'] as const).map((k) => (
+              <div className="grid grid-cols-2 gap-3 p-4 bg-muted/40 border border-border rounded-2xl">
+                {[
+                  { key: 'budget', label: 'Budget (Tem Orçamento?)' },
+                  { key: 'authority', label: 'Authority (É o decisor?)' },
+                  { key: 'need', label: 'Need (Possui a necessidade?)' },
+                  { key: 'timeline', label: 'Timeline (Prazo definido?)' },
+                ].map((item) => (
                   <label
-                    key={k}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      cursor: 'pointer',
-                      background: form[k] ? '#f0fdf4' : '#f8fafc',
-                      border: `1px solid ${form[k] ? '#86efac' : '#e2e8f0'}`,
-                      borderRadius: '8px',
-                      padding: '8px 10px',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      color: form[k] ? '#16a34a' : '#475569',
-                      transition: 'all 0.15s',
-                    }}
+                    key={item.key}
+                    className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer select-none"
                   >
                     <input
                       type="checkbox"
-                      checked={form[k]}
-                      onChange={(e) => set(k, e.target.checked)}
-                      style={{ accentColor: '#16a34a' }}
+                      checked={!!(form as any)[item.key]}
+                      onChange={(e) => set(item.key, e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-primary focus:ring-offset-background w-4 h-4"
                     />
-                    {k.charAt(0).toUpperCase() + k.slice(1)}
+                    {item.label}
                   </label>
                 ))}
               </div>
             </div>
 
-            <div style={{ gridColumn: '1/-1' }}>
-              <label style={labelStyle}>Observações</label>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Prazo Desejado (Dias)
+              </label>
+              <input
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border"
+                type="number"
+                min="1"
+                value={form.prazo_desejado_dias}
+                onChange={(e) => set('prazo_desejado_dias', e.target.value)}
+                placeholder="Ex: 45"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Observações Internas
+              </label>
               <textarea
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '60px' }}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 box-border min-h-[80px] resize-vertical"
                 value={form.observacoes}
                 onChange={(e) => set('observacoes', e.target.value)}
-                placeholder="Detalhes adicionais..."
+                placeholder="Observações de negociação, concorrência, etc."
               />
             </div>
           </div>
 
-          <div
-            style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}
-          >
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              style={{ ...btnBase, background: '#f1f5f9', color: '#475569' }}
+              className="px-6 py-2.5 bg-card hover:bg-muted text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
             >
               Cancelar
             </button>
@@ -414,8 +393,6 @@ function ProspeccaoModal({
   );
 }
 
-// ─── CARD DO LEAD ─────────────────────────────────────────────────────────────
-
 function LeadCard({
   lead,
   onEdit,
@@ -425,93 +402,46 @@ function LeadCard({
   lead: Prospeccao;
   onEdit: () => void;
   onDelete: () => void;
-  onStatusChange: (newStatus: string) => void;
+  onStatusChange: (status: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const sc = STATUS_CONFIG[lead.status] || STATUS_CONFIG.novo_contato;
+
+  // Cálculo de BANT
   const bantScore = [lead.budget, lead.authority, lead.need, lead.timeline].filter(Boolean).length;
 
   return (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        padding: '16px',
-        transition: 'box-shadow 0.2s',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-        position: 'relative',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)')}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)')}
-    >
+    <div className="bg-card text-card-foreground border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:scale-[1.015] transition-all duration-200 relative">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          marginBottom: '10px',
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+      <div className="flex items-start justify-between mb-2.5">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
             <TemperaturaIcon t={lead.temperatura} />
-            <h3
-              style={{
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                margin: 0,
-                color: '#1e293b',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <h3 className="text-sm font-bold text-foreground truncate" title={lead.nome}>
               {lead.nome}
             </h3>
           </div>
           <span
+            className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border"
             style={{
-              display: 'inline-block',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: '99px',
               color: sc.color,
-              background: sc.bg,
+              backgroundColor: `${sc.color}15`,
+              borderColor: `${sc.color}25`,
             }}
           >
             {sc.label}
           </span>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div className="relative">
           <button
             onClick={() => setMenuOpen((m) => !m)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              color: '#94a3b8',
-              borderRadius: '6px',
-            }}
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           >
             <MoreVertical size={16} />
           </button>
           {menuOpen && (
             <div
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: '100%',
-                background: '#fff',
-                borderRadius: '10px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                border: '1px solid #e2e8f0',
-                zIndex: 100,
-                minWidth: '160px',
-              }}
+              className="absolute right-0 top-full mt-1 bg-card border border-border shadow-lg rounded-xl z-[100] min-w-[160px] py-1 animate-fade-in"
               onMouseLeave={() => setMenuOpen(false)}
             >
               <button
@@ -519,9 +449,9 @@ function LeadCard({
                   onEdit();
                   setMenuOpen(false);
                 }}
-                style={menuItemStyle}
+                className="w-full text-left px-3.5 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 transition-colors"
               >
-                <Edit2 size={14} /> Editar
+                <Edit2 size={13} /> Editar
               </button>
               {['ganho', 'perdido'].map((s) => (
                 <button
@@ -530,12 +460,12 @@ function LeadCard({
                     onStatusChange(s);
                     setMenuOpen(false);
                   }}
-                  style={menuItemStyle}
+                  className="w-full text-left px-3.5 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 transition-colors"
                 >
                   {s === 'ganho' ? (
-                    <CheckCircle size={14} color="#22c55e" />
+                    <CheckCircle size={13} className="text-success" />
                   ) : (
-                    <XCircle size={14} color="#ef4444" />
+                    <XCircle size={13} className="text-destructive" />
                   )}
                   Marcar como {STATUS_CONFIG[s].label}
                 </button>
@@ -545,9 +475,9 @@ function LeadCard({
                   onDelete();
                   setMenuOpen(false);
                 }}
-                style={{ ...menuItemStyle, color: '#ef4444' }}
+                className="w-full text-left px-3.5 py-2 text-xs text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors border-t border-border mt-1 pt-2"
               >
-                <Trash2 size={14} /> Excluir
+                <Trash2 size={13} /> Excluir
               </button>
             </div>
           )}
@@ -555,104 +485,73 @@ function LeadCard({
       </div>
 
       {/* Info */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
+      <div className="flex flex-col gap-1.5 my-3 text-xs text-muted-foreground">
         {lead.telefone && (
-          <div style={infoRowStyle}>
-            <Phone size={12} color="#94a3b8" /> <span>{lead.telefone}</span>
+          <div className="flex items-center gap-1.5">
+            <Phone size={12} className="text-muted-foreground/60" /> <span>{lead.telefone}</span>
           </div>
         )}
         {lead.cidade && (
-          <div style={infoRowStyle}>
-            <MapPin size={12} color="#94a3b8" />{' '}
-            <span>
+          <div className="flex items-center gap-1.5">
+            <MapPin size={12} className="text-muted-foreground/60" />{' '}
+            <span className="truncate">
               {lead.cidade}
               {lead.uf ? ` / ${lead.uf}` : ''}
             </span>
           </div>
         )}
         {lead.orcamento_estimado && (
-          <div style={infoRowStyle}>
-            <ArrowUpRight size={12} color="#94a3b8" />{' '}
-            <span style={{ fontWeight: 700, color: '#16a34a' }}>
-              {fmtCurrency(lead.orcamento_estimado)}
-            </span>
+          <div className="flex items-center gap-1.5 font-bold text-success">
+            <ArrowUpRight size={12} className="text-success/70" />{' '}
+            <span>{fmtCurrency(lead.orcamento_estimado)}</span>
           </div>
         )}
       </div>
 
       {/* BANT + Origem */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+        <div className="flex items-center gap-1">
           {(['B', 'A', 'N', 'T'] as const).map((l, i) => {
             const k = ['budget', 'authority', 'need', 'timeline'][i] as keyof Prospeccao;
             return (
               <span
                 key={l}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '4px',
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: lead[k] ? '#dcfce7' : '#f1f5f9',
-                  color: lead[k] ? '#16a34a' : '#94a3b8',
-                }}
+                className={`w-5 h-5 rounded text-[10px] font-extrabold flex items-center justify-center border ${
+                  lead[k]
+                    ? 'bg-success/15 text-success border-success/20'
+                    : 'bg-muted text-muted-foreground border-border/40'
+                }`}
+                title={
+                  l === 'B' ? 'Budget' : l === 'A' ? 'Authority' : l === 'N' ? 'Need' : 'Timeline'
+                }
               >
                 {l}
               </span>
             );
           })}
-          <span
-            style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '4px', alignSelf: 'center' }}
-          >
-            {bantScore}/4
-          </span>
+          <span className="text-[10px] text-muted-foreground ml-1.5">{bantScore}/4</span>
         </div>
-        <span
-          style={{
-            fontSize: '0.7rem',
-            color: '#94a3b8',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            padding: '2px 7px',
-            borderRadius: '99px',
-          }}
-        >
+        <span className="text-[10px] text-muted-foreground bg-muted border border-border/40 px-2.5 py-0.5 rounded-full font-medium capitalize truncate max-w-[80px]">
           {lead.origem?.replace(/_/g, ' ')}
         </span>
       </div>
 
       {/* Data */}
-      <div
-        style={{
-          marginTop: '10px',
-          paddingTop: '10px',
-          borderTop: '1px solid #f1f5f9',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={infoRowStyle}>
-          <Clock size={11} color="#cbd5e1" />{' '}
-          <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>{fmtDate(lead.created_at)}</span>
+      <div className="mt-2.5 pt-2.5 border-t border-border/20 flex justify-between items-center text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Clock size={11} className="text-muted-foreground/60" />{' '}
+          <span>{fmtDate(lead.created_at)}</span>
         </div>
         {lead.ultimas_interacoes?.length ? (
-          <div style={infoRowStyle}>
-            <MessageSquare size={11} color="#cbd5e1" />{' '}
-            <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-              {lead.ultimas_interacoes.length} interact.
-            </span>
+          <div className="flex items-center gap-1">
+            <MessageSquare size={11} className="text-muted-foreground/60" />{' '}
+            <span>{lead.ultimas_interacoes.length} interac.</span>
           </div>
         ) : null}
       </div>
     </div>
   );
 }
-
 // ─── PÁGINA PRINCIPAL ─────────────────────────────────────────────────────────
 
 export default function ProspeccaoPage() {
@@ -769,61 +668,30 @@ export default function ProspeccaoPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100%' }}>
+    <div className="min-h-full">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Target size={18} color="#fff" />
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center shadow-lg shadow-primary/20">
+              <Target size={18} className="text-primary-foreground" />
             </div>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#1e293b' }}>
-              Prospecção
-            </h1>
+            <h1 className="text-xl font-extrabold text-foreground">Prospecção</h1>
           </div>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Funil de leads e oportunidades de vendas
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setView((v) => (v === 'kanban' ? 'lista' : 'kanban'))}
-            style={{
-              ...btnBase,
-              background: '#f8fafc',
-              color: '#475569',
-              border: '1px solid #e2e8f0',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
           >
             <BarChart2 size={15} /> {view === 'kanban' ? 'Ver Lista' : 'Ver Kanban'}
           </button>
           <button
             onClick={fetchAll}
-            style={{
-              ...btnBase,
-              background: '#f8fafc',
-              color: '#475569',
-              border: '1px solid #e2e8f0',
-            }}
+            className="inline-flex items-center gap-2 p-2.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-xl text-sm font-semibold transition-colors"
           >
             <RefreshCw size={15} />
           </button>
@@ -832,11 +700,7 @@ export default function ProspeccaoPage() {
               setEditTarget(null);
               setShowModal(true);
             }}
-            style={{
-              ...btnBase,
-              background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-              color: '#fff',
-            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/95 text-primary-foreground rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-primary/10"
           >
             <Plus size={16} /> Novo Lead
           </button>
@@ -845,124 +709,79 @@ export default function ProspeccaoPage() {
 
       {/* KPI Cards */}
       {metrics && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))',
-            gap: '12px',
-            marginBottom: '24px',
-          }}
-        >
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-8">
           {[
             {
               label: 'Total Leads',
               value: metrics.resumo.total,
               icon: <Users size={18} />,
               color: '#6366f1',
-              bg: '#eef2ff',
             },
             {
               label: 'Ativos',
               value: metrics.resumo.ativos,
               icon: <Target size={18} />,
               color: '#0ea5e9',
-              bg: '#e0f2fe',
             },
             {
               label: 'Ganhos',
               value: metrics.resumo.ganhos,
               icon: <CheckCircle size={18} />,
               color: '#22c55e',
-              bg: '#f0fdf4',
             },
             {
               label: 'Taxa Conv.',
               value: `${metrics.resumo.taxaConversao}%`,
               icon: <TrendingUp size={18} />,
               color: '#f59e0b',
-              bg: '#fef3c7',
             },
             {
               label: 'Ticket Médio',
               value: fmtCurrency(metrics.resumo.ticketMedio),
               icon: <ArrowUpRight size={18} />,
               color: '#8b5cf6',
-              bg: '#f5f3ff',
             },
           ].map((kpi) => (
             <div
               key={kpi.label}
-              style={{
-                background: '#fff',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                padding: '16px',
-              }}
+              className="bg-card text-card-foreground rounded-2xl border border-border/60 p-4 shadow-sm transition-all duration-200"
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
-                }}
-              >
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                   {kpi.label}
                 </span>
                 <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: kpi.bg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     color: kpi.color,
+                    backgroundColor: `${kpi.color}15`,
                   }}
                 >
                   {kpi.icon}
                 </div>
               </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>
-                {kpi.value}
-              </div>
+              <div className="text-xl font-extrabold text-foreground mt-2">{kpi.value}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Filtros */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '10px',
-          marginBottom: '20px',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ position: 'relative', flex: 1, minWidth: '200px', maxWidth: '320px' }}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center">
+        <div className="relative flex-1 max-w-sm">
           <Search
             size={14}
-            style={{
-              position: 'absolute',
-              left: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#94a3b8',
-            }}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60"
           />
           <input
-            style={{ ...inputStyle, paddingLeft: '32px', height: '38px' }}
+            className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15"
             placeholder="Buscar lead..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <select
-          style={{ ...inputStyle, width: 'auto', height: '38px' }}
+          className="bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 cursor-pointer min-w-[150px]"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >
@@ -974,7 +793,7 @@ export default function ProspeccaoPage() {
           ))}
         </select>
         <select
-          style={{ ...inputStyle, width: 'auto', height: '38px' }}
+          className="bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/15 cursor-pointer min-w-[150px]"
           value={filterTemp}
           onChange={(e) => setFilterTemp(e.target.value)}
         >
@@ -986,68 +805,39 @@ export default function ProspeccaoPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              border: '3px solid #e2e8f0',
-              borderTopColor: '#6366f1',
-              borderRadius: '50%',
-              animation: 'spin 0.7s linear infinite',
-              margin: '0 auto 12px',
-            }}
-          />
+        <div className="text-center py-16 text-muted-foreground">
+          <div className="w-9 h-9 border-3 border-border border-t-primary rounded-full animate-spin mx-auto mb-3" />
           Carregando prospecções...
         </div>
       ) : view === 'kanban' ? (
         // KANBAN VIEW
-        <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '16px' }}>
+        <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin">
           {KANBAN_COLS.map((status) => {
             const colLeads = leads.filter((l) => l.status === status);
             const sc = STATUS_CONFIG[status];
             return (
-              <div key={status} style={{ minWidth: '260px', maxWidth: '280px', flexShrink: 0 }}>
+              <div key={status} className="w-[280px] shrink-0">
                 <div
+                  className="flex items-center justify-between p-3.5 rounded-2xl mb-3 border"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    background: sc.bg,
-                    marginBottom: '10px',
-                    border: `1px solid ${sc.color}22`,
+                    color: sc.color,
+                    backgroundColor: `${sc.color}10`,
+                    borderColor: `${sc.color}20`,
                   }}
                 >
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: sc.color }}>
-                    {sc.label}
-                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider">{sc.label}</span>
                   <span
+                    className="text-xs font-extrabold px-2 py-0.5 rounded-full"
                     style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      color: sc.color,
-                      background: `${sc.color}18`,
-                      padding: '2px 8px',
-                      borderRadius: '99px',
+                      backgroundColor: `${sc.color}18`,
                     }}
                   >
                     {colLeads.length}
                   </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="flex flex-col gap-3 min-h-[300px]">
                   {colLeads.length === 0 ? (
-                    <div
-                      style={{
-                        padding: '24px',
-                        textAlign: 'center',
-                        color: '#cbd5e1',
-                        fontSize: '0.8rem',
-                        border: '1px dashed #e2e8f0',
-                        borderRadius: '10px',
-                      }}
-                    >
+                    <div className="py-8 text-center text-muted-foreground/50 text-xs border border-dashed border-border rounded-2xl bg-card/30">
                       Sem leads
                     </div>
                   ) : (
@@ -1071,18 +861,10 @@ export default function ProspeccaoPage() {
         </div>
       ) : (
         // LIST VIEW
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-3">
           {leads.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '60px',
-                color: '#94a3b8',
-                border: '1px dashed #e2e8f0',
-                borderRadius: '12px',
-              }}
-            >
-              <Target size={40} color="#e2e8f0" style={{ marginBottom: '12px' }} />
+            <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl bg-card">
+              <Target size={40} className="text-muted-foreground/40 mx-auto mb-3" />
               <p>Nenhum lead encontrado. Crie o primeiro!</p>
             </div>
           ) : (
@@ -1091,69 +873,43 @@ export default function ProspeccaoPage() {
               return (
                 <div
                   key={lead.id}
-                  style={{
-                    background: '#fff',
-                    borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    padding: '14px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    flexWrap: 'wrap',
-                  }}
+                  className="bg-card text-card-foreground border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:scale-[1.005] transition-all duration-200 flex items-center gap-4 flex-wrap"
                 >
                   <TemperaturaIcon t={lead.temperatura} />
-                  <div style={{ flex: 1, minWidth: '160px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>
-                      {lead.nome}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                  <div className="flex-1 min-w-[160px]">
+                    <div className="font-bold text-sm text-foreground">{lead.nome}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {lead.telefone || lead.email || '—'}
                     </div>
                   </div>
                   <span
+                    className="text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap"
                     style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '3px 10px',
-                      borderRadius: '99px',
                       color: sc.color,
-                      background: sc.bg,
-                      whiteSpace: 'nowrap',
+                      backgroundColor: `${sc.color}15`,
+                      borderColor: `${sc.color}25`,
                     }}
                   >
                     {sc.label}
                   </span>
                   {lead.orcamento_estimado && (
-                    <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.85rem' }}>
+                    <span className="font-extrabold text-sm text-success">
                       {fmtCurrency(lead.orcamento_estimado)}
                     </span>
                   )}
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         setEditTarget(lead);
                         setShowModal(true);
                       }}
-                      style={{
-                        ...btnBase,
-                        background: '#f8fafc',
-                        color: '#475569',
-                        padding: '6px 10px',
-                        border: '1px solid #e2e8f0',
-                      }}
+                      className="p-2 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg transition-colors"
                     >
                       <Edit2 size={13} />
                     </button>
                     <button
                       onClick={() => handleDelete(lead.id)}
-                      style={{
-                        ...btnBase,
-                        background: '#fef2f2',
-                        color: '#ef4444',
-                        padding: '6px 10px',
-                        border: '1px solid #fecaca',
-                      }}
+                      className="p-2 bg-destructive/10 hover:bg-destructive/15 text-destructive border border-destructive/20 rounded-lg transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -1176,12 +932,9 @@ export default function ProspeccaoPage() {
           onSave={handleSave}
         />
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
-
 // ─── ESTILOS ─────────────────────────────────────────────────────────────────
 
 const labelStyle: React.CSSProperties = {

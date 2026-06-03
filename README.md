@@ -93,70 +93,53 @@ O sistema está otimizado e configurado para o Vercel.
 
 ## 📖 Documentação de Negócio (Quickstart e Onboarding)
 
-Verifique o arquivo `docs/quickstart.md` para o guia de uso e onboarding do usuário final (treinamento do sistema).
+Verifique o arquivo `docs/quickstart.md` Tokens de UI integrados ao tema do Tailwind v4 (`src/index.css`) e componentes comuns do Design System em `src/components/common/`:
 
-## 🎨 Design System
-
-Tokens canônicos de UI centralizados em dois arquivos, consumidos por todo o app:
-
-| Camada        | Arquivo                       | Responsabilidade                                                                                                |
-| ------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **TS Tokens** | `src/styles/design-system.ts` | Fonte única de valores tipados (paleta, espaçamento, tipografia, sombras, raio). Importável em código React/TS. |
-| **CSS Layer** | `src/styles/global.css`       | Espelha os tokens em CSS Custom Properties (`--ds-*`) + reset global. Importado em `src/main.tsx`.              |
+| Camada          | Arquivo                  | Responsabilidade                                                                                              |
+| --------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| **Tailwind**    | `src/index.css`          | Fonte única de design de tokens da paleta terrosa D'Luxury (Espresso Brown, Moss Green, Rosy Beige) + fontes. |
+| **Componentes** | `src/components/common/` | Componentes canônicos de UI (Button, Modal, Input, Card, etc.).                                               |
+| **CSS Layer**   | `src/styles/global.css`  | Espelha os tokens em CSS Custom Properties (`--ds-*`) + reset global. Importado em `src/main.tsx`.            |
 
 ### Estrutura
 
 ```
 Design System:
-├─ Colors        → colors.primary.{50,100,500,600,900} / secondary.* / accent / semantic
-├─ Typography    → fontFamily, fontSizes.{xs..3xl}, fontWeights, lineHeights
-├─ Spacing       → escala 4px (xs=4, sm=8, md=16, lg=24, xl=32, 2xl=48)
-├─ Shadows       → sm, md, lg (rgba 5-10%)
-└─ Border radius → sm=4, md=8, lg=12, full=9999
+┌─ Colors        -> cores do Tailwind v4 (primary, secondary, accent, base, dark/light mode)
+├─ Typography    -> DM Sans, Source Sans 3, Outfit e Plus Jakarta Sans
+├─ Spacing       -> Escala padrão do Tailwind v4
+└─ Componentes   -> Button, Modal, Card, Select, Badge, Skeleton, DataTable, etc.
 ```
 
-### Paleta (resumo)
+### Paleta D'Luxury (resumo)
 
 | Token                                    | Hex                                           | Uso                                      |
 | ---------------------------------------- | --------------------------------------------- | ---------------------------------------- |
-| `primary.500`                            | `#0D66CC`                                     | Ação primária (links, botões principais) |
-| `primary.600`                            | `#0D5FB8`                                     | Hover de ação primária                   |
-| `primary.900`                            | `#003D82`                                     | Texto/realce de alta hierarquia          |
-| `secondary.500`                          | `#00A99D`                                     | Ação secundária / destaque complementar  |
+| `primary`                                | `#0D66CC`                                     | Ação primária (links, botões principais) |
+| `secondary`                              | `#00A99D`                                     | Ação secundária / destaque complementar  |
 | `accent`                                 | `#E2AC00`                                     | Acento decorativo (badges, ícones)       |
 | `background`                             | `#FAFAFA`                                     | Fundo de página                          |
 | `surface`                                | `#FFFFFF`                                     | Cards, modais, superfícies elevadas      |
 | `text.primary`                           | `#1A1A1A`                                     | Texto principal                          |
-| `text.secondary`                         | `#666666`                                     | Texto secundário/labels                  |
 | `error` / `success` / `warning` / `info` | `#DC3545` / `#28A745` / `#FFC107` / `#17A2B8` | Semânticas                               |
-
-### Convenção de coexistência
-
-Os tokens deste design system usam prefixo `--ds-*` (CSS) e `designSystem.*` (TS) para conviver sem colisão com o tema Tailwind v4 legado em `src/index.css` (`--primary`, `--secondary`, etc.). Isso permite migração gradual e uso combinado.
 
 ### Como usar
 
-```ts
-import { designSystem } from '@/styles/design-system';
+```tsx
+import { Button, Card, CardContent } from '@/components/common';
 
-const cardStyle = {
-  background: designSystem.colors.surface,
-  padding: designSystem.spacing.md,
-  borderRadius: designSystem.borderRadius.md,
-  boxShadow: designSystem.shadows.md,
-  fontFamily: designSystem.typography.fontFamily,
+const ExemploComponent = () => {
+  return (
+    <Card className="p-4 shadow-md bg-card">
+      <CardContent>
+        <Button variant="primary">Ação</Button>
+      </CardContent>
+    </Card>
+  );
 };
-```
-
-```css
-.my-button {
-  background: var(--ds-color-primary-500);
-  padding: var(--ds-spacing-sm) var(--ds-spacing-md);
-  border-radius: var(--ds-radius-md);
-}
 ```
 
 ### Próximos passos
 
-- **FASE 6.2** — Redesenhar Dashboard usando os tokens.
-- Migrar gradualmente o tema Tailwind em `src/index.css` para os tokens `--ds-*`.
+- Manter a consistência de novos componentes base e comuns centralizados em `src/components/common/`.
+- Garantir a compatibilidade com o Dark Mode de forma transparente usando classes nativas do Tailwind v4.
