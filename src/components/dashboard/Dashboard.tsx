@@ -19,7 +19,7 @@ import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import type { Project, ProjectStatus } from '../../context/CRMContext';
 import { formatCurrency } from '../../utils/calculations';
-import { Card, CardStat, Button, Badge } from '../ui';
+import { Card, CardStat, CardTitle, Button, Badge } from '../ui';
 
 const Dashboard: React.FC = () => {
   const { projects, clients } = useCRM();
