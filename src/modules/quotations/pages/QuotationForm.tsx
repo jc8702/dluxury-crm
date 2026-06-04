@@ -206,7 +206,9 @@ export default function QuotationForm() {
   };
 
   const handleDelete = async (orc: any) => {
+    console.log('[DEBUG] handleDelete called', orc?.id);
     setPendingDelete(orc);
+    console.log('[DEBUG] pendingDelete set');
   };
 
   const confirmDelete = async () => {
