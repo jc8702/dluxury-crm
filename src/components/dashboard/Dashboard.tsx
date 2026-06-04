@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, FileText, Wrench, UserPlus } from 'lucide-react';
+import { PlusCircle, FileText, Wrench, UserPlus, TrendingUp, Target, BarChart3, Sparkles } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,21 +13,13 @@ import {
 } from 'recharts';
 
 import DataTable from '../common/DataTable';
-import {
-  Button,
-  Input,
-  Modal,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '../common';
+import { Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../common';
 
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import type { Project, ProjectStatus } from '../../context/CRMContext';
 import { formatCurrency } from '../../utils/calculations';
+import { Card, CardStat, Button, Badge } from '../ui';
 
 const Dashboard: React.FC = () => {
   const { projects, clients } = useCRM();
@@ -62,6 +54,17 @@ const Dashboard: React.FC = () => {
     concluido: 'Concluído',
   };
 
+  const statusTone: Record<ProjectStatus, 'primary' | 'info' | 'warning' | 'success' | 'danger' | 'accent' | 'neutral'> = {
+    lead: 'neutral',
+    visita_tecnica: 'info',
+    orcamento_enviado: 'warning',
+    aprovado: 'accent',
+    em_producao: 'warning',
+    pronto_entrega: 'info',
+    instalado: 'success',
+    concluido: 'success',
+  };
+
   const inProduction = projects.filter((p) => p.status === 'em_producao').length;
   const concluidos = projects.filter((p) => p.status === 'concluido').length;
   const ticketMedio =
@@ -83,12 +86,12 @@ const Dashboard: React.FC = () => {
   }, [clients]);
 
   const origemLabels: Record<string, { label: string; color: string }> = {
-    indicacao: { label: 'Indicação', color: '#00A99D' },
+    indicacao: { label: 'Indicação', color: 'var(--ui-color-teal-500)' },
     instagram: { label: 'Instagram', color: '#e1306c' },
-    google: { label: 'Google', color: '#0D66CC' },
-    feira: { label: 'Feira', color: '#E2AC00' },
+    google: { label: 'Google', color: 'var(--ui-color-info)' },
+    feira: { label: 'Feira', color: 'var(--ui-color-gold-400)' },
     passante: { label: 'Passante', color: '#8b5cf6' },
-    outro: { label: 'Outro', color: '#666666' },
+    outro: { label: 'Outro', color: 'var(--ui-text-muted)' },
   };
 
   const percentualMeta =
@@ -103,111 +106,107 @@ const Dashboard: React.FC = () => {
     .slice(0, 6);
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pb-4 border-b border-border">
+    <div className="ui-stack ui-gap-4 p-4 md:p-6 max-w-[1400px] ui-mx-auto">
+      {/* ── Header ── */}
+      <div className="ui-row-between flex-wrap ui-gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Painel Geral</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Visão executiva — D'Luxury CRM (Fatto OS)
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)]">
+            Painel Geral
+          </h1>
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
+            Visão executiva — D'Luxury CRM
           </p>
         </div>
-        <div className="flex gap-3">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-40 border border-border/80 rounded-xl px-4 py-2 bg-card text-foreground font-semibold text-sm">
-              <SelectValue placeholder="Período..." />
-            </SelectTrigger>
-            <SelectContent className="bg-card border border-border/80 rounded-xl shadow-lg">
-              {periods.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </header>
+        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <SelectTrigger className="w-40 border border-border rounded-[var(--ui-radius-md)] px-3 py-2 bg-card text-foreground font-semibold text-sm">
+            <SelectValue placeholder="Período..." />
+          </SelectTrigger>
+          <SelectContent className="bg-card border border-border rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-2)]">
+            {periods.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* KPIs principais */}
+      {/* ── KPIs principais (5 stats) ── */}
       <section aria-label="Indicadores principais">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-primary transition-all hover:scale-[1.015] hover:shadow-md">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              Total Clientes
-            </p>
-            <h3 className="text-2xl font-black text-primary">{clients.length}</h3>
-          </div>
-          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-info transition-all hover:scale-[1.015] hover:shadow-md">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              Projetos Ativos
-            </p>
-            <h3 className="text-2xl font-black text-info">
-              {projects.filter((p) => p.status !== 'concluido').length}
-            </h3>
-          </div>
-          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-warning transition-all hover:scale-[1.015] hover:shadow-md">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              Em Produção
-            </p>
-            <h3 className="text-2xl font-black text-warning">{inProduction}</h3>
-          </div>
-          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-success transition-all hover:scale-[1.015] hover:shadow-md">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              Concluídos
-            </p>
-            <h3 className="text-2xl font-black text-success">{concluidos}</h3>
-          </div>
-          <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-accent transition-all hover:scale-[1.015] hover:shadow-md">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              Ticket Médio
-            </p>
-            <h3 className="text-xl font-black text-foreground truncate">
-              {formatCurrency(ticketMedio)}
-            </h3>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 ui-gap-3 auto-rows-fr">
+          <CardStat
+            label="Total Clientes"
+            value={clients.length}
+            icon={<UserPlus className="h-4 w-4" />}
+            tone="info"
+          />
+          <CardStat
+            label="Projetos Ativos"
+            value={projects.filter((p) => p.status !== 'concluido').length}
+            icon={<TrendingUp className="h-4 w-4" />}
+            tone="default"
+          />
+          <CardStat
+            label="Em Produção"
+            value={inProduction}
+            icon={<Wrench className="h-4 w-4" />}
+            tone="warning"
+          />
+          <CardStat
+            label="Concluídos"
+            value={concluidos}
+            icon={<Target className="h-4 w-4" />}
+            tone="success"
+          />
+          <CardStat
+            label="Ticket Médio"
+            value={formatCurrency(ticketMedio)}
+            icon={<BarChart3 className="h-4 w-4" />}
+            tone="accent"
+          />
         </div>
       </section>
 
-      {/* Meta + Pipeline por etapa */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col items-center justify-center gap-6">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-            Meta do Período
-          </h3>
+      {/* ── Meta do Período + Evolução Financeira ── */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 ui-gap-3">
+        <Card variant="default" padding="lg" className="flex flex-col items-center justify-center ui-gap-4">
+          <CardTitle>Meta do Período</CardTitle>
           <div
-            className="relative w-36 h-36 rounded-full flex items-center justify-center shadow-inner"
+            className="relative w-36 h-36 rounded-full flex items-center justify-center"
             style={{
-              background: `conic-gradient(hsl(var(--primary)) ${percentualMeta * 3.6}deg, hsl(var(--border)) 0deg)`,
+              background: `conic-gradient(var(--ui-color-teal-500) ${percentualMeta * 3.6}deg, var(--ui-bg-subtle) 0deg)`,
+              boxShadow: 'var(--ui-shadow-2)',
             }}
           >
-            <div className="w-28 h-28 rounded-full bg-card flex flex-col items-center justify-center border border-border/30 shadow-sm">
-              <span className="text-2xl font-black text-foreground">{percentualMeta}%</span>
-              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="w-28 h-28 rounded-full bg-[var(--ui-surface)] flex flex-col items-center justify-center border border-[var(--ui-border)]">
+              <span className="text-[var(--ui-text-2xl)] font-semibold text-[var(--ui-text-primary)]">
+                {percentualMeta}%
+              </span>
+              <span className="text-[10px] font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">
                 atingido
               </span>
             </div>
           </div>
-          <p className="text-sm text-foreground text-center">
-            <strong className="text-base font-bold text-primary">
+          <p className="text-sm text-center">
+            <strong className="text-base font-semibold text-[var(--ui-action-secondary)]">
               {formatCurrency(totalPeriodo)}
             </strong>{' '}
-            <span className="text-muted-foreground">/ {formatCurrency(currentMeta)}</span>
+            <span className="text-[var(--ui-text-muted)]">/ {formatCurrency(currentMeta)}</span>
           </p>
           <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               setEditGoal(true);
               setGoalValue(currentMeta.toString());
             }}
-            variant="outline"
-            className="px-6 py-2 rounded-xl text-xs"
           >
             Editar Meta
           </Button>
-        </div>
+        </Card>
 
-        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm lg:col-span-2 flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
-            Evolução Financeira (6 meses)
-          </h3>
+        <Card variant="default" padding="lg" className="lg:col-span-2 flex flex-col">
+          <CardTitle className="mb-4">Evolução Financeira (6 meses)</CardTitle>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -229,29 +228,29 @@ const Dashboard: React.FC = () => {
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="hsl(var(--border))"
-                  opacity={0.3}
+                  stroke="var(--ui-border)"
+                  opacity={0.4}
                 />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                  tick={{ fill: 'var(--ui-text-muted)', fontSize: 11 }}
                   dy={10}
                 />
                 <YAxis
                   tickFormatter={(val) => `R$${val / 1000}k`}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                  tick={{ fill: 'var(--ui-text-muted)', fontSize: 11 }}
                 />
                 <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.15 }}
+                  cursor={{ fill: 'var(--ui-bg-subtle)', opacity: 0.4 }}
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '12px',
-                    color: 'hsl(var(--foreground))',
+                    backgroundColor: 'var(--ui-surface)',
+                    borderColor: 'var(--ui-border)',
+                    borderRadius: 'var(--ui-radius-md)',
+                    color: 'var(--ui-text-primary)',
                     fontSize: 12,
                   }}
                   formatter={(value: number) => formatCurrency(value)}
@@ -259,78 +258,96 @@ const Dashboard: React.FC = () => {
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
                 <Bar
                   dataKey="Entradas"
-                  fill="hsl(var(--success))"
+                  fill="var(--ui-color-success)"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={32}
                 />
                 <Bar
                   dataKey="Saidas"
-                  fill="hsl(var(--primary))"
+                  fill="var(--ui-color-navy-700)"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={32}
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Card>
       </section>
 
-      {/* Ações Rápidas */}
+      {/* ── Ações Rápidas ── */}
       <section aria-label="Ações rápidas">
-        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
+        <h3 className="text-sm font-semibold text-[var(--ui-text-primary)] uppercase tracking-wider mb-3">
           Ações Rápidas
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 ui-gap-3">
           <Link
             to="/clientes"
-            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-success/50 hover:shadow-success/5 hover:scale-[1.02] transition-all duration-200"
+            className="group flex items-center ui-gap-3 h-20 p-4 bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] hover:border-[var(--ui-color-teal-300)] hover:-translate-y-px transition-all duration-[var(--ui-duration-base)]"
           >
-            <UserPlus size={24} className="text-success" />
-            <span className="text-sm font-semibold">Novo Cliente</span>
+            <div className="h-10 w-10 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)] shrink-0">
+              <UserPlus size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Novo Cliente</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Cadastrar lead</p>
+            </div>
           </Link>
           <Link
             to="/orcamentos"
-            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-primary/50 hover:shadow-primary/5 hover:scale-[1.02] transition-all duration-200"
+            className="group flex items-center ui-gap-3 h-20 p-4 bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] hover:border-[var(--ui-color-navy-400)] hover:-translate-y-px transition-all duration-[var(--ui-duration-base)]"
           >
-            <FileText size={24} className="text-primary" />
-            <span className="text-sm font-semibold">Novo Orçamento</span>
+            <div className="h-10 w-10 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-navy-50)] text-[var(--ui-color-navy-700)] shrink-0">
+              <FileText size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Novo Orçamento</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Criar proposta</p>
+            </div>
           </Link>
           <Link
             to="/plano-de-corte"
-            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-info/50 hover:shadow-info/5 hover:scale-[1.02] transition-all duration-200"
+            className="group flex items-center ui-gap-3 h-20 p-4 bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] hover:border-[var(--ui-color-info)] hover:-translate-y-px transition-all duration-[var(--ui-duration-base)]"
           >
-            <Wrench size={24} className="text-info" />
-            <span className="text-sm font-semibold">Plano de Corte</span>
+            <div className="h-10 w-10 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-info-soft)] text-[var(--ui-color-info)] shrink-0">
+              <Wrench size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Plano de Corte</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Otimizar material</p>
+            </div>
           </Link>
           <Link
             to="/financeiro/contas"
-            className="flex flex-col items-center justify-center gap-2 h-24 p-4 bg-card text-card-foreground border border-border/50 rounded-2xl shadow-sm hover:border-accent/50 hover:shadow-accent/5 hover:scale-[1.02] transition-all duration-200"
+            className="group flex items-center ui-gap-3 h-20 p-4 bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] hover:border-[var(--ui-color-gold-400)] hover:-translate-y-px transition-all duration-[var(--ui-duration-base)]"
           >
-            <PlusCircle size={24} className="text-accent" />
-            <span className="text-sm font-semibold">Nova Despesa</span>
+            <div className="h-10 w-10 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-gold-50)] text-[var(--ui-color-gold-500)] shrink-0">
+              <PlusCircle size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Nova Despesa</p>
+              <p className="text-[11px] text-[var(--ui-text-muted)]">Lançar saída</p>
+            </div>
           </Link>
         </div>
       </section>
 
-      {/* Origem de leads + Projetos recentes */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
-            Origem dos Leads
-          </h3>
+      {/* ── Origem dos Leads + Projetos Recentes ── */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 ui-gap-3">
+        <Card variant="default" padding="lg" className="flex flex-col">
+          <CardTitle className="mb-4">Origem dos Leads</CardTitle>
           {origemCounts.length === 0 ? (
-            <div className="text-muted-foreground text-center py-8">Nenhum cliente cadastrado.</div>
+            <div className="text-[var(--ui-text-muted)] text-center py-8">Nenhum cliente cadastrado.</div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col ui-gap-3">
               {origemCounts.map((o) => {
                 const info = origemLabels[o.key] || origemLabels.outro;
                 const pct = clients.length > 0 ? Math.round((o.count / clients.length) * 100) : 0;
                 return (
-                  <div key={o.key} className="flex items-center gap-4">
-                    <span className="text-xs text-muted-foreground w-24 truncate">
+                  <div key={o.key} className="flex items-center ui-gap-3">
+                    <span className="text-xs text-[var(--ui-text-secondary)] w-24 truncate">
                       {info.label}
                     </span>
-                    <div className="flex-1 bg-muted rounded-full h-3.5 overflow-hidden">
+                    <div className="flex-1 bg-[var(--ui-bg-subtle)] rounded-full h-3.5 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -339,7 +356,7 @@ const Dashboard: React.FC = () => {
                         }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-muted-foreground w-10 text-right">
+                    <span className="text-xs font-semibold text-[var(--ui-text-secondary)] w-10 text-right tabular-nums">
                       {o.count}
                     </span>
                   </div>
@@ -347,58 +364,61 @@ const Dashboard: React.FC = () => {
               })}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm flex flex-col">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
-            Projetos Recentes
-          </h3>
+        <Card variant="default" padding="lg" className="flex flex-col">
+          <CardTitle className="mb-4">Projetos Recentes</CardTitle>
           {recentProjects.length === 0 ? (
-            <div className="text-muted-foreground text-center py-8">Nenhum projeto cadastrado.</div>
+            <div className="text-[var(--ui-text-muted)] text-center py-8">Nenhum projeto cadastrado.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-2">
               <DataTable
                 headers={['Ambiente', 'Cliente', 'Valor', 'Etapa']}
                 data={recentProjects}
                 renderRow={(p: Project) => (
                   <>
-                    <td className="px-4 py-3.5 font-bold text-foreground text-sm">{p.ambiente}</td>
-                    <td className="px-4 py-3.5 text-muted-foreground text-sm">
+                    <td className="px-3 py-3 font-semibold text-[var(--ui-text-primary)] text-sm">
+                      {p.ambiente}
+                    </td>
+                    <td className="px-3 py-3 text-[var(--ui-text-secondary)] text-sm">
                       {p.clientName || '-'}
                     </td>
-                    <td className="px-4 py-3.5 font-extrabold text-primary text-sm">
+                    <td className="px-3 py-3 font-semibold text-[var(--ui-text-primary)] text-sm tabular-nums">
                       {p.valorEstimado ? formatCurrency(p.valorEstimado) : '-'}
                     </td>
-                    <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider border border-primary/20">
+                    <td className="px-3 py-3">
+                      <Badge tone={statusTone[p.status]} size="sm">
                         {statusLabels[p.status] || p.status}
-                      </span>
+                      </Badge>
                     </td>
                   </>
                 )}
               />
             </div>
           )}
-        </div>
+        </Card>
       </section>
 
-      {/* Dlux Copilot - Insights Rápidos */}
-      <section className="bg-card text-card-foreground p-6 rounded-2xl border border-border/50 shadow-sm border-l-4 border-l-primary/60 flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">💡</span>
-          <h3 className="text-lg font-bold text-foreground">
-            Dlux Copilot — Consultoria Técnica &amp; Insights
-          </h3>
+      {/* ── Dlux Copilot — Insights Rápidos ── */}
+      <Card variant="accent" padding="lg" className="flex flex-col ui-gap-3">
+        <div className="flex items-center ui-gap-2">
+          <div className="h-9 w-9 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-gold-100)] text-[var(--ui-color-gold-500)]">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-[var(--ui-text-primary)]">
+              Dlux Copilot — Consultoria &amp; Insights
+            </h3>
+            <p className="text-xs text-[var(--ui-text-secondary)]">
+              Acesse insights operacionais e tire dúvidas de engenharia moveleira em tempo real.
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Acesse insights operacionais e resolva dúvidas de engenharia moveleira em tempo real com a
-          nossa IA especialista.
-        </p>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap ui-gap-2">
           {[
-            { label: 'Saúde Financeira Geral', query: 'Como está a saúde financeira da empresa?' },
+            { label: 'Saúde Financeira', query: 'Como está a saúde financeira da empresa?' },
             {
-              label: 'Ambientes Mais Lucrativos',
+              label: 'Ambientes Lucrativos',
               query: 'Quais os produtos/ambientes mais lucrativos este mês?',
             },
             {
@@ -406,70 +426,72 @@ const Dashboard: React.FC = () => {
               query: 'Previsão de faturamento baseada nos projetos ativos',
             },
             {
-              label: 'Análise PUR vs Hotmelt',
+              label: 'PUR vs Hotmelt',
               query:
-                'Qual a diferença prática na colagem de bordas com PUR vs Hotmelt tradicional e onde usar cada um?',
+                'Qual a diferença prática na colagem de bordas com PUR vs Hotmelt tradicional?',
             },
             {
-              label: 'Altura Ergonômica de Bancadas',
+              label: 'Altura de Bancadas',
               query:
-                'Quais as medidas de altura recomendadas para bancadas de pia de cozinha e como calcular o rodapé?',
+                'Quais as medidas de altura recomendadas para bancadas de pia de cozinha?',
             },
             {
-              label: 'MDF vs MDP na Estrutura',
+              label: 'MDF vs MDP',
               query:
-                'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário planejado?',
+                'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário?',
             },
             {
-              label: 'Regras de Dobradiça 165°',
+              label: 'Dobradiça 165°',
               query:
-                'Em quais situações em armários de cozinha a dobradiça de 165 graus de abertura é obrigatória?',
+                'Em quais situações a dobradiça de 165 graus de abertura é obrigatória?',
             },
             {
-              label: 'Evitar Flambagem em Prateleiras',
+              label: 'Flambagem em Prateleiras',
               query:
-                'Qual é o vão livre máximo recomendado para uma prateleira em MDF de 15mm para mantimentos sem que ela curve?',
+                'Qual o vão livre máximo recomendado para prateleira em MDF 15mm sem curvar?',
             },
           ].map((item) => (
             <button
               key={item.label}
               type="button"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-muted hover:bg-muted-hover text-muted-foreground hover:text-foreground rounded-full text-xs font-semibold transition-colors duration-150 border border-border/50"
               onClick={() => {
                 window.dispatchEvent(
                   new CustomEvent('dlux-open-chat', { detail: { query: item.query } }),
                 );
               }}
+              className="inline-flex items-center ui-gap-1 px-3 py-1.5 bg-[var(--ui-surface)] hover:bg-[var(--ui-bg-subtle)] text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)] rounded-[var(--ui-radius-full)] text-xs font-medium transition-colors duration-[var(--ui-duration-fast)] border border-[var(--ui-border)]"
             >
-              ✨ {item.label}
+              {item.label}
             </button>
           ))}
         </div>
-      </section>
+      </Card>
 
-      {/* Modal editar meta */}
+      {/* ── Modal: editar meta ── */}
       <Modal
         isOpen={editGoal}
         onClose={() => setEditGoal(false)}
         title="Definir Meta Mensal"
         size="sm"
       >
-        <div className="flex flex-col gap-4 p-2">
-          <label className="text-sm text-muted-foreground">
+        <div className="flex flex-col ui-gap-3 p-2">
+          <label className="text-sm text-[var(--ui-text-secondary)]">
             Valor da meta para {selectedPeriod}:
           </label>
           <Input
             type="number"
             value={goalValue}
             onChange={(e) => setGoalValue(e.target.value)}
-            className="w-full border border-border rounded-xl p-3 text-lg font-bold bg-card text-foreground"
+            className="w-full border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] p-3 text-lg font-semibold bg-[var(--ui-surface)] text-[var(--ui-text-primary)]"
           />
           <Button
+            variant="primary"
+            size="md"
             onClick={() => {
               setMonthlyGoal(selectedPeriod, parseFloat(goalValue) || 0);
               setEditGoal(false);
             }}
-            className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold p-3.5 rounded-xl shadow-md transition-all"
+            className="w-full"
           >
             Salvar Meta
           </Button>

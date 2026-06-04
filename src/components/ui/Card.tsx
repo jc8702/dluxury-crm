@@ -117,7 +117,7 @@ export interface CardStatProps extends HTMLAttributes<HTMLDivElement> {
   value: ReactNode;
   delta?: ReactNode;
   icon?: ReactNode;
-  tone?: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  tone?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'accent';
 }
 
 const toneClasses: Record<NonNullable<CardStatProps['tone']>, string> = {
@@ -126,6 +126,7 @@ const toneClasses: Record<NonNullable<CardStatProps['tone']>, string> = {
   warning: 'bg-[var(--ui-color-warning-soft)] text-[var(--ui-color-warning)]',
   danger: 'bg-[var(--ui-color-danger-soft)] text-[var(--ui-color-danger)]',
   info: 'bg-[var(--ui-color-info-soft)] text-[var(--ui-color-info)]',
+  accent: 'bg-[var(--ui-color-gold-50)] text-[var(--ui-color-gold-500)]',
 };
 
 export const CardStat = forwardRef<HTMLDivElement, CardStatProps>(
