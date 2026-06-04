@@ -7,7 +7,6 @@ const cardVariants = cva(
   cn(
     'bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)]',
     'transition-shadow duration-[var(--ui-duration-base)] ease-[var(--ui-ease-out)]',
-    'overflow-hidden',
   ),
   {
     variants: {
@@ -131,17 +130,17 @@ const toneClasses: Record<NonNullable<CardStatProps['tone']>, string> = {
 
 export const CardStat = forwardRef<HTMLDivElement, CardStatProps>(
   ({ label, value, delta, icon, tone = 'default', className, ...props }, ref) => (
-    <Card ref={ref} className={cn('p-4', className)} {...props}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[var(--ui-text-xs)] font-medium uppercase tracking-[var(--ui-tracking-wide)] text-[var(--ui-text-secondary)]">
+    <Card ref={ref} className={cn('p-4 h-full', className)} {...props}>
+      <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+        <div className="min-w-0 flex flex-col">
+          <p className="text-[var(--ui-text-xs)] font-medium uppercase tracking-[var(--ui-tracking-wide)] text-[var(--ui-text-secondary)] leading-tight">
             {label}
           </p>
-          <p className="mt-1 text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)]">
+          <p className="mt-1 text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] leading-tight">
             {value}
           </p>
           {delta && (
-            <p className="mt-1 text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)]">{delta}</p>
+            <p className="mt-1 text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)] leading-tight">{delta}</p>
           )}
         </div>
         {icon && (

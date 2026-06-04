@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useCrmStore } from './stores/useCrmStore';
 
 import LandingPage from './pages/landing/Landing';
 
@@ -81,6 +82,12 @@ import { hasFeature } from './lib/features';
 
 function AuthGuard() {
   const { user, authLoading } = useAuth();
+  React.useEffect(() => {
+    if (user) {
+      // Carrega dados globais (clients, projects, orcamentos, events) no store compartilhado
+      void useCrmStore.getState().reloadCRMData();
+    }
+  }, [user]);
 
   if (authLoading) return <LoadingScreen />;
   if (!user) return <LoginPage />;

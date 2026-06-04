@@ -281,14 +281,24 @@ export async function runInitDB() {
 
   // 9. Admin Seed
   try {
+    const defaultTenantId = '00000000-0000-0000-0000-000000000000';
+    // Garante que a coluna tenant_id existe antes de inserir/atualizar
+    await safeSql(
+      sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`,
+    );
     const uc = await sql`SELECT count(*) as count FROM users`;
     if (uc.length && parseInt(uc[0].count, 10) === 0) {
       const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || crypto.randomUUID();
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(defaultPassword, salt);
-      await sql`INSERT INTO users (name, email, password_hash, role) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin')`;
+      await sql`INSERT INTO users (name, email, password_hash, role, tenant_id) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin', ${defaultTenantId})`;
       console.warn(
         `[SEED] Admin padrao criado com email 'admin@dluxury.com' e senha: ${defaultPassword}`,
+      );
+    } else {
+      // Idempotente: garante que o admin existente tenha tenant_id (corrige DBs legados)
+      await safeSql(
+        sql`UPDATE users SET tenant_id = ${defaultTenantId} WHERE email = 'admin@dluxury.com' AND tenant_id IS NULL`,
       );
     }
   } catch (err: any) {

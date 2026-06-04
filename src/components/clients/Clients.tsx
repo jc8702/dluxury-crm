@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Users, UserCheck, UserX, Building2 } from 'lucide-react';
+import { Users, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useToast } from '../../context/ToastContext';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
@@ -7,7 +7,7 @@ import type { Client } from '../../types/entities';
 import type { ClientFormData } from '../../validators';
 import { ClientList } from '../../pages/Clients/ClientList';
 import { ClientForm } from '../../pages/Clients/ClientForm';
-import { Button, Modal, Card, CardStat } from '../ui';
+import { Button, Modal, CardStat } from '../ui';
 import { ConfirmDialog } from '../ui/Modal';
 
 const Clients: React.FC = () => {
@@ -102,26 +102,8 @@ const Clients: React.FC = () => {
 
   return (
     <div className="ui-stack ui-gap-4 p-4 md:p-6 max-w-[1400px] ui-mx-auto">
-      {/* ── Header ── */}
-      <div className="ui-row-between flex-wrap ui-gap-3">
-        <div>
-          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight">Clientes</h1>
-          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
-            Gerencie sua base de clientes e acompanhe o relacionamento.
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          size="md"
-          leftIcon={<Plus className="h-4 w-4" />}
-          onClick={handleCreate}
-        >
-          Novo cliente
-        </Button>
-      </div>
-
-      {/* ── Stats (4 cards) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 ui-gap-3">
+      {/* ── Stats (4 cards) — renderizado antes para o ClientList ter seu próprio header abaixo ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 ui-gap-3 auto-rows-fr">
         <CardStat
           label="Total"
           value={stats.total}
@@ -148,16 +130,14 @@ const Clients: React.FC = () => {
         />
       </div>
 
-      {/* ── Lista ── */}
-      <Card variant="default" padding="none">
-        <ClientList
-          clients={clients}
-          projectCountByName={projectCountByName}
-          onCreate={handleCreate}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </Card>
+      {/* ── Lista — ClientList já inclui seu próprio header com título e botão "Novo Cliente" ── */}
+      <ClientList
+        clients={clients}
+        projectCountByName={projectCountByName}
+        onCreate={handleCreate}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
       {/* ── Modal de edição/criação ── */}
       <Modal
