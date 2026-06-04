@@ -10,7 +10,6 @@ import {
   Select,
   Badge,
   Table,
-  ConfirmDialog,
 } from '@/components/ui';
 import type { Column } from '@/components/ui/Table';
 import {
@@ -39,7 +38,10 @@ import { useToast } from '@/context/ToastContext';
 import { ItemCard } from '../components/ItemCard';
 import ContratoDigitalModal from '@/components/contrato/ContratoDigitalModal';
 
-const STATUS_TONE: Record<string, 'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
+const STATUS_TONE: Record<
+  string,
+  'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+> = {
   RASCUNHO: 'neutral',
   ENVIADO: 'info',
   NEGOCIACAO: 'warning',
@@ -97,7 +99,6 @@ export default function QuotationForm() {
   const [clients, setClients] = useState<any[]>([]);
   const [skus, setSkus] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [pendingDelete, setPendingDelete] = useState<any | null>(null);
   const [orcamentosRecentes, setOrcamentosRecentes] = useState<any[]>([]);
 
   const [localComercial, setLocalComercial] = useState({
@@ -206,23 +207,18 @@ export default function QuotationForm() {
   };
 
   const handleDelete = async (orc: any) => {
-    console.log('[DEBUG] handleDelete called', orc?.id);
-    setPendingDelete(orc);
-    console.log('[DEBUG] pendingDelete set');
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDelete) return;
+    const ok = window.confirm(
+      `Tem certeza que deseja excluir o orçamento #${orc?.numeroOrcamento}? Esta ação não pode ser desfeita.`,
+    );
+    if (!ok) return;
     try {
-      const success = await deletarOrcamento(pendingDelete.id);
+      const success = await deletarOrcamento(orc.id);
       if (success) {
         toastSuccess('Orçamento excluído com sucesso');
         fetchRecentes();
       }
     } catch (_err) {
       toastError('Erro ao excluir orçamento');
-    } finally {
-      setPendingDelete(null);
     }
   };
 
@@ -284,7 +280,9 @@ export default function QuotationForm() {
       key: 'createdAt',
       header: 'Data de Criação',
       render: (o) => (
-        <span className="text-[var(--ui-text-secondary)]">{formatDate(o.createdAt || o.dataOrcamento)}</span>
+        <span className="text-[var(--ui-text-secondary)]">
+          {formatDate(o.createdAt || o.dataOrcamento)}
+        </span>
       ),
     },
     {
@@ -372,7 +370,12 @@ export default function QuotationForm() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" size="lg" leftIcon={<Plus size={18} />} onClick={handleCreateDraft}>
+              <Button
+                variant="outline"
+                size="lg"
+                leftIcon={<Plus size={18} />}
+                onClick={handleCreateDraft}
+              >
                 Novo Orçamento
               </Button>
               <Button
@@ -693,7 +696,10 @@ export default function QuotationForm() {
                           <span className="text-[10px] font-medium text-[var(--ui-text-secondary)] group-hover:text-white/80 uppercase">
                             {sku.tipo}
                           </span>
-                          <Plus size={14} className="text-[var(--ui-color-teal-500)] group-hover:text-white" />
+                          <Plus
+                            size={14}
+                            className="text-[var(--ui-color-teal-500)] group-hover:text-white"
+                          />
                         </div>
                       </button>
                     ))
@@ -788,20 +794,6 @@ export default function QuotationForm() {
           }}
         />
       )}
-
-      <ConfirmDialog
-        open={!!pendingDelete}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={confirmDelete}
-        title="Excluir orçamento"
-        description={
-          pendingDelete
-            ? `Tem certeza que deseja excluir o orçamento #${pendingDelete.numeroOrcamento}? Esta ação não pode ser desfeita.`
-            : ''
-        }
-        confirmText="Excluir"
-        tone="danger"
-      />
     </div>
   );
 }
