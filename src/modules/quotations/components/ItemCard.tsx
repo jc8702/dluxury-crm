@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Pencil, Trash2, DollarSign, Loader2 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { SKUAutocomplete } from './SKUAutocomplete';
-import { Input } from '@/components/common';
+import { Card, Input, Textarea, Button, Badge } from '@/components/ui';
 import { recalculateTotalMaterialCost, recalculatePrices } from '@/utils/calculations';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -184,73 +184,84 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
   const temSKU = !!watchAll.skuId || !!watchAll.skuCodigo;
 
   return (
-    <div
-      className={`bg-card rounded-2xl border ${isEditing ? 'border-primary shadow-2xl shadow-primary/10' : 'border-border'} p-5 transition-all group/card relative overflow-hidden`}
+    <Card
+      padding="none"
+      variant={isEditing ? 'default' : 'default'}
+      className={`relative overflow-hidden group/card transition-all ${
+        isEditing
+          ? 'border-[var(--ui-color-teal-500)] shadow-[var(--ui-shadow-2)]'
+          : 'border-[var(--ui-border)]'
+      }`}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover/card:bg-primary/10 transition-colors" />
-
-      <div className="flex justify-between items-start gap-4 mb-6">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${temSKU ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            >
-              <Package className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3">
-                <h3 className="text-foreground font-black text-xl italic tracking-tight truncate leading-none uppercase">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--ui-color-teal-500)]/5 blur-3xl -z-10 group-hover/card:bg-[var(--ui-color-teal-500)]/10 transition-colors pointer-events-none" />
+      <div className="p-5">
+        <div className="flex justify-between items-start gap-4 mb-6">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className={`w-10 h-10 rounded-[var(--ui-radius-md)] flex items-center justify-center ${
+                  temSKU
+                    ? 'bg-[var(--ui-color-teal-500)] text-white'
+                    : 'bg-[var(--ui-bg-subtle)] text-[var(--ui-text-secondary)]'
+                }`}
+              >
+                <Package size={20} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[var(--ui-text-primary)] font-semibold text-xl tracking-tight truncate leading-none">
                   {tituloExibicao}
                 </h3>
+                {subtituloExibicao && (
+                  <div className="mt-2">
+                    <span className="text-[10px] text-[var(--ui-color-teal-700)] font-medium uppercase tracking-wide bg-[var(--ui-color-teal-50)] px-2 py-1 rounded border border-[var(--ui-color-teal-200)]">
+                      {subtituloExibicao}
+                    </span>
+                  </div>
+                )}
               </div>
-              {subtituloExibicao && (
-                <div className="mt-2">
-                  <span className="text-[10px] text-primary font-black uppercase tracking-widest bg-primary/5 px-2 py-1 rounded border border-primary/15">
-                    {subtituloExibicao}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
-        </div>
 
-        <div className="flex gap-2 shrink-0">
-          {!isEditing ? (
-            <>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() =>
-                  onDelete && confirm('Deseja remover este item?') && onDelete(item.id)
-                }
-                className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/50 text-muted-foreground hover:text-red-500 transition-all cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={handleCancel}
-                className="px-3 h-10 rounded-xl bg-muted border border-border flex items-center justify-center hover:bg-muted/80 text-muted-foreground text-[10px] font-black uppercase cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSubmit(onSubmit)}
-                disabled={isSaving}
-                className="px-6 h-10 rounded-xl bg-primary border border-primary flex items-center justify-center hover:bg-primary-hover text-primary-foreground text-[10px] font-black uppercase shadow-lg cursor-pointer"
-              >
-                {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar'}
-              </button>
-            </div>
-          )}
+          <div className="flex gap-2 shrink-0">
+            {!isEditing ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditing(true)}
+                  aria-label="Editar"
+                >
+                  <Pencil size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    onDelete && confirm('Deseja remover este item?') && onDelete(item.id)
+                  }
+                  aria-label="Remover"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" size="md" onClick={handleCancel}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleSubmit(onSubmit)}
+                  isLoading={isSaving}
+                  leftIcon={isSaving ? undefined : undefined}
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-7 space-y-4">
@@ -291,7 +302,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     render={({ field }) => (
                       <Input
                         type="text"
-                        className={`w-full text-sm font-bold h-10 px-3 ${errors.nomeCustomizado ? 'border-red-500' : ''}`}
+                        size="md"
+                        className="w-full font-medium"
+                        invalid={!!errors.nomeCustomizado}
                         {...field}
                       />
                     )}
@@ -331,7 +344,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                   render={({ field }) => (
                     <Input
                       type="number"
-                      className={`w-full h-8 text-foreground font-bold px-2 py-1 ${errors.quantidade ? 'border-red-500' : ''}`}
+                      size="sm"
+                      className="w-full"
+                      invalid={!!errors.quantidade}
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
@@ -465,11 +480,9 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                   )}
                 />
               ) : (
-                <div
-                  className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${Number(item.margemLucro) >= 30 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}
-                >
+                <Badge tone={Number(item.margemLucro) >= 30 ? 'success' : 'danger'}>
                   {Number(item.margemLucro || 0).toFixed(1)}%
-                </div>
+                </Badge>
               )}
             </div>
           </div>
@@ -492,60 +505,57 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
         (item.metadata.chapa ||
           item.metadata.fitaBorda?.sku ||
           item.metadata.ferragens?.length > 0) && (
-          <div className="mt-4 pt-4 border-t border-border flex flex-col gap-2">
-            <span className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1">
-              <Package className="w-3 h-3" /> Composição Dinâmica Ativa
+          <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex flex-col gap-2">
+            <span className="text-[9px] font-medium text-[var(--ui-color-teal-700)] uppercase tracking-wide flex items-center gap-1">
+              <Package size={12} /> Composição Dinâmica Ativa
             </span>
             <div className="flex flex-wrap gap-2">
               {item.metadata.chapa && (
-                <span className="bg-muted border border-border text-[10px] text-muted-foreground px-2 py-1 rounded">
-                  Chapa: <b className="text-foreground">{item.metadata.chapa.codigo}</b>
-                </span>
+                <Badge tone="neutral">
+                  Chapa: <span className="font-semibold text-[var(--ui-text-primary)]">{item.metadata.chapa.codigo}</span>
+                </Badge>
               )}
               {item.metadata.fitaBorda?.sku && (
-                <span className="bg-muted border border-border text-[10px] text-muted-foreground px-2 py-1 rounded">
-                  Fita: <b className="text-foreground">{item.metadata.fitaBorda.sku.codigo}</b> (
+                <Badge tone="neutral">
+                  Fita: <span className="font-semibold text-[var(--ui-text-primary)]">{item.metadata.fitaBorda.sku.codigo}</span> (
                   {Object.entries(item.metadata.fitaBorda.lados || {})
                     .filter(([_, v]) => v)
                     .map(([k]) => k[0].toUpperCase())
                     .join(',')}
                   )
-                </span>
+                </Badge>
               )}
               {item.metadata.ferragens?.map((f: any, i: number) => (
-                <span
-                  key={i}
-                  className="bg-muted border border-border text-[10px] text-muted-foreground px-2 py-1 rounded"
-                >
-                  {f.quantidade}x <b className="text-foreground">{f.sku.codigo}</b>
-                </span>
+                <Badge key={i} tone="neutral">
+                  {f.quantidade}x <span className="font-semibold text-[var(--ui-text-primary)]">{f.sku.codigo}</span>
+                </Badge>
               ))}
             </div>
           </div>
         )}
 
       {item.observacoes && !isEditing && (
-        <div className="mt-4 pt-4 border-t border-border flex gap-2">
-          <div className="w-1 h-full bg-primary/50 rounded-full" />
-          <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+        <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex gap-2">
+          <div className="w-1 h-full bg-[var(--ui-color-teal-500)]/50 rounded-full" />
+          <p className="text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)] italic leading-relaxed">
             {item.observacoes}
           </p>
         </div>
       )}
 
       {isEditing && (
-        <div className="mt-4 pt-4 border-t border-border space-y-4">
-          <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-            <Package className="w-3 h-3 text-primary" /> Composição Avançada de Materiais
+        <div className="mt-4 pt-4 border-t border-[var(--ui-border)] space-y-4">
+          <h4 className="text-[10px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex items-center gap-2">
+            <Package size={12} className="text-[var(--ui-color-teal-500)]" /> Composição Avançada de Materiais
           </h4>
 
-          <div className="bg-background rounded-xl p-4 border border-border space-y-4">
+          <div className="bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-md)] p-4 border border-[var(--ui-border)] space-y-4">
             {/* CHAPA */}
             <div className="space-y-2">
-              <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex justify-between">
+              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Chapa / Material Base</span>
                 {watchAll.metadata?.chapa && (
-                  <span className="text-primary font-mono">
+                  <span className="text-[var(--ui-color-teal-700)] font-mono">
                     R$ {Number(watchAll.metadata.chapa.precoUnitario).toFixed(2)} / m²
                   </span>
                 )}
@@ -567,11 +577,11 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
             </div>
 
             {/* FITA DE BORDA */}
-            <div className="space-y-2 border-t border-border pt-4">
-              <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex justify-between">
+            <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
+              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Fita de Borda</span>
                 {watchAll.metadata?.fitaBorda?.sku && (
-                  <span className="text-primary font-mono">
+                  <span className="text-[var(--ui-color-teal-700)] font-mono">
                     R$ {Number(watchAll.metadata.fitaBorda.sku.precoUnitario).toFixed(2)} / ML
                   </span>
                 )}
@@ -616,8 +626,10 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                       />
                     </div>
                     {field.value && (
-                      <button
+                      <Button
                         type="button"
+                        variant="danger"
+                        size="icon"
                         onClick={() => {
                           field.onChange(null);
                           const metadata = getValues('metadata') || {};
@@ -629,11 +641,11 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                             },
                           });
                         }}
-                        className="w-8 h-10 flex items-center justify-center bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl border border-red-500/20 cursor-pointer"
+                        aria-label="Remover fita de borda"
                         title="Remover fita de borda"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        <Trash2 size={14} />
+                      </Button>
                     )}
                   </div>
                 )}
@@ -648,7 +660,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                       render={({ field }) => (
                         <input
                           type="checkbox"
-                          className="w-3 h-3 accent-primary"
+                          className="w-3 h-3 accent-[var(--ui-color-teal-500)]"
                           checked={!!field.value}
                           onChange={(e) => {
                             field.onChange(e.target.checked);
@@ -666,7 +678,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                         />
                       )}
                     />
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground group-hover:text-foreground">
+                    <span className="text-[10px] uppercase font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-text-primary)]">
                       {lado}
                     </span>
                   </label>
@@ -675,18 +687,18 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
             </div>
 
             {/* FERRAGENS E ACESSÓRIOS */}
-            <div className="space-y-2 border-t border-border pt-4">
-              <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest flex justify-between">
+            <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
+              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Ferragens e Acessórios</span>
               </label>
               {watchAll.metadata?.ferragens?.map((f: any, i: number) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 mb-2 bg-muted p-2 rounded-lg border border-border"
+                  className="flex items-center gap-2 mb-2 bg-[var(--ui-bg-subtle)] p-2 rounded-[var(--ui-radius-sm)] border border-[var(--ui-border)]"
                 >
-                  <span className="flex-1 text-xs text-foreground truncate font-bold">
+                  <span className="flex-1 text-xs text-[var(--ui-text-primary)] truncate font-medium">
                     {f.sku?.nome || f.sku?.codigo}{' '}
-                    <span className="text-muted-foreground font-mono ml-2">
+                    <span className="text-[var(--ui-text-secondary)] font-mono ml-2">
                       R$ {Number(f.sku?.precoUnitario).toFixed(2)} un
                     </span>
                   </span>
@@ -696,8 +708,8 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                     render={({ field }) => (
                       <Input
                         type="number"
-                        min="1"
-                        className="w-16 h-8 text-xs font-mono text-center px-2 py-1 bg-background border-border"
+                        size="sm"
+                        className="w-16 text-center font-mono"
                         value={field.value}
                         onChange={(e: any) => {
                           field.onChange(Number(e.target.value));
@@ -706,17 +718,19 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                       />
                     )}
                   />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       const newF = [...(watchAll.metadata?.ferragens || [])].filter(
                         (_, idx) => idx !== i,
                       );
                       triggerCostRecalculation({ ...getValues('metadata'), ferragens: newF });
                     }}
-                    className="w-7 h-7 flex items-center justify-center bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded cursor-pointer"
+                    aria-label="Remover"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                    <Trash2 size={12} />
+                  </Button>
                 </div>
               ))}
 
@@ -739,22 +753,24 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
       {isEditing && (
         <div className="mt-4">
-          <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block mb-1">
+          <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide block mb-1">
             Observações Internas
           </label>
           <Controller
             name="observacoes"
             control={control}
             render={({ field }) => (
-              <textarea
-                className="w-full bg-background border border-border rounded-xl p-3 text-xs text-muted-foreground outline-none focus:border-primary h-16 resize-none"
+              <Textarea
+                rows={3}
                 placeholder="Notas sobre este item..."
+                className="min-h-[64px]"
                 {...field}
               />
             )}
           />
         </div>
       )}
-    </div>
+      </div>
+    </Card>
   );
 }

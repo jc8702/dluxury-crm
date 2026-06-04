@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Modal, Button } from '@/components/common';
+import { Modal, Button, Card } from '@/components/ui';
 import { Save, Send, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
@@ -35,7 +35,6 @@ export function ModalEnviarCliente({
   const handleSend = async () => {
     setLoading(true);
     try {
-      // Gerar token e URL de aprovação no backend (muda o status para 'enviado' e retorna a url)
       const linkData = await api.aprovacao.gerarLink(orcamento.id);
       const urlAprovacao =
         linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
@@ -49,7 +48,6 @@ export function ModalEnviarCliente({
           '_blank',
         );
       } else {
-        // Simulação de envio de email
         toastSuccess('E-mail em homologação', `Link de aprovação gerado: ${urlAprovacao}`);
       }
 
@@ -63,88 +61,108 @@ export function ModalEnviarCliente({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Enviar para Cliente" size="md">
-      <div className="py-6">
-        {step === 'save' ? (
-          <div className="text-center space-y-6">
-            <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Save className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-xl font-black text-foreground mb-2 italic">
-                SALVAR E PROSSEGUIR?
-              </h3>
-              <p className="text-muted-foreground">
-                Recomendamos salvar o estado atual do orçamento para que o cliente receba a versão
-                mais recente.
-              </p>
-            </div>
-            <Button
-              className="w-full bg-primary hover:bg-primary-hover h-14 font-black text-primary-foreground"
-              onClick={handleSaveAndContinue}
-              disabled={loading}
-            >
-              {loading ? 'Sincronizando...' : 'SALVAR E CONTINUAR'}
-            </Button>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title="Enviar para Cliente"
+      size="md"
+    >
+      {step === 'save' ? (
+        <div className="text-center py-2 space-y-6">
+          <div className="w-16 h-16 bg-[var(--ui-color-teal-50)] rounded-[var(--ui-radius-lg)] flex items-center justify-center mx-auto">
+            <Save size={32} className="text-[var(--ui-color-teal-500)]" />
           </div>
-        ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setMethod('whatsapp')}
-                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 cursor-pointer ${method === 'whatsapp' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-muted/30 hover:border-primary/50 text-muted-foreground hover:text-foreground'}`}
-              >
-                <MessageSquare
-                  className={`w-8 h-8 ${method === 'whatsapp' ? 'text-primary' : 'text-muted-foreground'}`}
-                />
-                <span className="font-black text-xs uppercase tracking-widest">WhatsApp</span>
-              </button>
-              <button
-                onClick={() => setMethod('email')}
-                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 cursor-pointer ${method === 'email' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-muted/30 hover:border-primary/50 text-muted-foreground hover:text-foreground'}`}
-              >
-                <Mail
-                  className={`w-8 h-8 ${method === 'email' ? 'text-primary' : 'text-muted-foreground'}`}
-                />
-                <span className="font-black text-xs uppercase tracking-widest">E-mail</span>
-              </button>
-            </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--ui-text-primary)] mb-2">
+              Salvar e prosseguir?
+            </h3>
+            <p className="text-[var(--ui-text-secondary)] text-sm">
+              Recomendamos salvar o estado atual do orçamento para que o cliente receba a versão
+              mais recente.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="lg"
+            block
+            onClick={handleSaveAndContinue}
+            isLoading={loading}
+          >
+            SALVAR E CONTINUAR
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setMethod('whatsapp')}
+              className={`p-5 rounded-[var(--ui-radius-lg)] border-2 transition-colors flex flex-col items-center gap-3 ${
+                method === 'whatsapp'
+                  ? 'border-[var(--ui-color-teal-500)] bg-[var(--ui-color-teal-50)] text-[var(--ui-color-teal-700)]'
+                  : 'border-[var(--ui-border)] bg-[var(--ui-surface)] text-[var(--ui-text-secondary)] hover:border-[var(--ui-color-teal-500)]/50'
+              }`}
+            >
+              <MessageSquare
+                size={28}
+                className={method === 'whatsapp' ? 'text-[var(--ui-color-teal-500)]' : ''}
+              />
+              <span className="font-semibold text-xs uppercase tracking-wide">WhatsApp</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMethod('email')}
+              className={`p-5 rounded-[var(--ui-radius-lg)] border-2 transition-colors flex flex-col items-center gap-3 ${
+                method === 'email'
+                  ? 'border-[var(--ui-color-teal-500)] bg-[var(--ui-color-teal-50)] text-[var(--ui-color-teal-700)]'
+                  : 'border-[var(--ui-border)] bg-[var(--ui-surface)] text-[var(--ui-text-secondary)] hover:border-[var(--ui-color-teal-500)]/50'
+              }`}
+            >
+              <Mail
+                size={28}
+                className={method === 'email' ? 'text-[var(--ui-color-teal-500)]' : ''}
+              />
+              <span className="font-semibold text-xs uppercase tracking-wide">E-mail</span>
+            </button>
+          </div>
 
-            <div className="bg-muted/20 p-6 rounded-3xl border border-border">
-              <div className="flex items-center gap-4 mb-4">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-                <span className="font-black text-xs uppercase tracking-widest text-muted-foreground">
-                  Resumo do Envio
+          <Card padding="md" variant="outlined">
+            <div className="flex items-center gap-3 mb-3">
+              <CheckCircle2 size={18} className="text-[var(--ui-color-teal-500)]" />
+              <span className="font-semibold text-xs uppercase tracking-wide text-[var(--ui-text-secondary)]">
+                Resumo do Envio
+              </span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-secondary)]">Cliente:</span>
+                <span className="text-[var(--ui-text-primary)] font-semibold">
+                  {orcamento.cliente?.nome || 'N/A'}
                 </span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Cliente:</span>
-                  <span className="text-foreground font-bold">
-                    {orcamento.cliente?.nome || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Valor Final:</span>
-                  <span className="text-primary font-black">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      orcamento.valorTotalVenda,
-                    )}
-                  </span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--ui-text-secondary)]">Valor Final:</span>
+                <span className="text-[var(--ui-color-teal-700)] font-semibold">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                    orcamento.valorTotalVenda,
+                  )}
+                </span>
               </div>
             </div>
+          </Card>
 
-            <Button
-              className="w-full bg-primary hover:bg-primary-hover h-14 font-black text-primary-foreground"
-              onClick={handleSend}
-              disabled={loading}
-            >
-              <Send className="w-5 h-5 mr-2" /> {loading ? 'ENVIANDO...' : 'CONFIRMAR ENVIO'}
-            </Button>
-          </div>
-        )}
-      </div>
+          <Button
+            variant="primary"
+            size="lg"
+            block
+            leftIcon={<Send size={18} />}
+            onClick={handleSend}
+            isLoading={loading}
+          >
+            CONFIRMAR ENVIO
+          </Button>
+        </div>
+      )}
     </Modal>
   );
 }
