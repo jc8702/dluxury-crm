@@ -1,4 +1,23 @@
 import { ALLOWED_ORIGINS } from '../src/api-lib/config.js';
+import * as Sentry from '@sentry/node';
+
+if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+    tracesSampleRate: 0.1,
+    beforeSend(event) {
+      if (event.request?.cookies) {
+        delete event.request.cookies;
+      }
+      if (event.user) {
+        delete event.user.ip_address;
+        delete event.user.email;
+      }
+      return event;
+    },
+  });
+}
 
 export const config = {
   api: {
@@ -501,6 +520,13 @@ export default async function handler(req: any, res: any) {
       .json({ success: false, error: 'Rota da API não encontrada', path: cleanUrl });
   } catch (err: any) {
     console.error('API Router Error:', err);
+    if (process.env.SENTRY_DSN) {
+      Sentry.withScope((scope) => {
+        scope.setTag('api.endpoint', req.url);
+        scope.setExtra('method', req.method);
+        Sentry.captureException(err);
+      });
+    }
     return res.status(500).json({
       success: false,
       error: err.message || 'Erro interno no servidor da API',

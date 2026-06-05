@@ -1,4 +1,4 @@
-# RESUMO DE PROJETO: D'Luxury CRM
+/# RESUMO DE PROJETO: D'Luxury CRM
 
 ## Informações Gerais
 - **Status Atual:** Cobertura de testes unitários aumentada com sucesso para 80.31% de Statements, com todos os 603 testes passando e build de produção intacto.

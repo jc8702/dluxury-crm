@@ -167,4 +167,61 @@ describe('handleProduction', () => {
       expect(res._s()).toBe(405);
     });
   });
+
+  describe('Auth e error handling', () => {
+    it('deve retornar 401 sem auth', async () => {
+      vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Sem token' });
+      const req = { method: 'GET', url: '/api/production', query: {} };
+      const res = mockRes();
+      await handleProduction(req, res);
+      expect(res._s()).toBe(401);
+    });
+
+    it('deve usar tenantId default quando user sem tenantId', async () => {
+      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+      vi.mocked(sql).mockResolvedValue([]);
+      const req = { method: 'GET', url: '/api/production', query: { id: 'list' } };
+      const res = mockRes();
+      await handleProduction(req, res);
+      expect(res._s()).toBe(200);
+    });
+
+    it('deve retornar 500 em erro de banco', async () => {
+      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+      vi.mocked(sql).mockImplementation(async () => { throw new Error('DB down'); });
+      const req = { method: 'GET', url: '/api/production', query: { id: 'list' } };
+      const res = mockRes();
+      await handleProduction(req, res);
+      expect(res._s()).toBe(500);
+    });
+  });
+
+  describe('Auto-sync de previsões', () => {
+    it('deve auto-sincronizar quando há OPs ativas sem data_prevista_entrega', async () => {
+      vi.mocked(sql)
+        .mockResolvedValueOnce([
+          { id: '1', op_id: 'OP-001', status: 'AGUARDANDO', data_prevista_entrega: null, pecas: 5 },
+        ])
+        .mockResolvedValueOnce([]);
+      const req = { method: 'GET', url: '/api/production', query: { id: 'list' } };
+      const res = mockRes();
+      await handleProduction(req, res);
+      expect(res._s()).toBe(200);
+    });
+  });
+
+  describe('POST detalhes extras', () => {
+    it('deve criar OP com data_inicio customizada', async () => {
+      vi.mocked(sql).mockResolvedValue([{ id: '1', op_id: 'OP-NEW', produto: 'Mesa' }]);
+      const req = {
+        method: 'POST',
+        url: '/api/production',
+        query: {},
+        body: { op_id: 'OP-NEW', produto: 'Mesa', data_inicio: '2026-06-10T08:00:00Z' },
+      };
+      const res = mockRes();
+      await handleProduction(req, res);
+      expect(res._s()).toBe(201);
+    });
+  });
 });

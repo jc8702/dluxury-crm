@@ -24,7 +24,7 @@ function executarFuncoesRecursivo(obj: any, visitados = new Set()) {
   if (typeof obj === 'function') {
     try {
       obj();
-    } catch {}
+    } catch (_) { /* ignore */ }
     return;
   }
 
@@ -34,7 +34,7 @@ function executarFuncoesRecursivo(obj: any, visitados = new Set()) {
       try {
         const val = obj[key];
         executarFuncoesRecursivo(val, visitados);
-      } catch {}
+      } catch (_) { /* ignore */ }
     }
   }
 }

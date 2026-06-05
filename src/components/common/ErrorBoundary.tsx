@@ -1,5 +1,6 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { logger } from '../../utils/logger';
+import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -28,6 +29,11 @@ export class ErrorBoundary extends Component<Props, State> {
       error,
       { errorInfo },
     );
+    Sentry.withScope((scope) => {
+      scope.setTag('errorBoundary.module', this.props.moduleName || 'Global');
+      scope.setExtra('componentStack', errorInfo.componentStack);
+      Sentry.captureException(error);
+    });
   }
 
   handleReset = () => {

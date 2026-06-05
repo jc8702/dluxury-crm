@@ -6,14 +6,33 @@ import '@/styles/global.css';
 import '@/styles/tokens.css';
 import '@/styles/globals.css';
 import '@/styles/utilities.css';
+import * as Sentry from '@sentry/react';
+
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN as string,
+    environment: import.meta.env.MODE,
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 0.1,
+    beforeSend(event) {
+      if (event.user) {
+        delete event.user.ip_address;
+        delete event.user.email;
+      }
+      return event;
+    },
+  });
+}
 
 // Capturar erros não tratados em produção para diagnóstico
 window.addEventListener('error', (event) => {
   console.error('[Global Error]', event.error);
+  Sentry.captureException(event.error);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   console.error('[Unhandled Promise]', event.reason);
+  Sentry.captureException(event.reason);
 });
 
 const rootElement = document.getElementById('root');

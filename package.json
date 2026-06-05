@@ -35,6 +35,8 @@
     "@radix-ui/react-select": "^2.2.6",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@sentry/node": "^10.56.0",
+    "@sentry/react": "^10.56.0",
     "@types/react-big-calendar": "^1.16.3",
     "ai": "^6.0.167",
     "bcryptjs": "^3.0.3",

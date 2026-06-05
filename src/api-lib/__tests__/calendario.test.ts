@@ -199,6 +199,85 @@ describe('handleCalendario', () => {
     });
   });
 
+  describe('POST /criar-evento', () => {
+    it('deve criar evento e retornar 201', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([{ id: 'novo-1' }]);
+      const req = {
+        method: 'POST',
+        url: '/criar-evento',
+        body: {
+          titulo: 'Reunião',
+          data_evento: '2026-06-15',
+          tipo_evento: 'reuniao',
+        },
+      };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(201);
+      expect(res._d().success).toBe(true);
+    });
+
+    it('deve retornar 400 se dados obrigatórios ausentes', async () => {
+      const req = {
+        method: 'POST',
+        url: '/criar-evento',
+        body: { titulo: 'Sem data' },
+      };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(400);
+    });
+  });
+
+  describe('POST /gerar-automatico', () => {
+    it('deve gerar eventos automáticos com sucesso', async () => {
+      vi.mocked(sql)
+        .mockResolvedValueOnce([
+          { id: 'q1', numero_orcamento: 'PRO-001', cliente_nome: 'João', data_orcamento: '2026-06-01', prazo_entrega_dias: '15' },
+        ])
+        .mockResolvedValueOnce([{ id: 'u1' }])
+        .mockResolvedValueOnce([{ id: 'auto-1' }]);
+      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'q1' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect([200, 201]).toContain(res._s());
+    });
+
+    it('deve retornar 400 se quotation_id ausente', async () => {
+      const req = { method: 'POST', url: '/gerar-automatico', body: {} };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(400);
+    });
+
+    it('deve retornar 404 se quotation não encontrada', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([]);
+      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'inexistente' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(404);
+    });
+  });
+
+  describe('Auth e edge cases', () => {
+    it('deve retornar 401 sem auth', async () => {
+      vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Sem token' });
+      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(401);
+    });
+
+    it('deve usar tenantId default quando user sem tenantId', async () => {
+      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+      vi.mocked(sql).mockResolvedValue([]);
+      const req = { method: 'GET', url: '/eventos', query: { mes: '6', ano: '2026' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(200);
+    });
+  });
+
   describe('Erros e Métodos não permitidos', () => {
     it('deve retornar 405 se método for inválido', async () => {
       const req = { method: 'OPTIONS' };
