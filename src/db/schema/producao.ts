@@ -1,4 +1,15 @@
-import { pgTable, uuid, varchar, integer, text, timestamp, boolean, date, time, serial } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  text,
+  timestamp,
+  boolean,
+  date,
+  time,
+  serial,
+} from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
 import { quotations } from './quotations.js';
 
@@ -6,7 +17,9 @@ import { quotations } from './quotations.js';
 export const ordensProd = pgTable('ordens_prod', {
   id: uuid('id').defaultRandom().primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }).notNull(),
+  orcamentoId: uuid('orcamento_id')
+    .references(() => quotations.id, { onDelete: 'cascade' })
+    .notNull(),
   numeroOp: varchar('numero_op', { length: 50 }).unique().notNull(),
   status: varchar('status', { length: 50 }).default('planejamento').notNull(), // planejamento, medição, projeto, produção, montagem, entrega, concluído
   prioridade: integer('prioridade').default(5), // 1=urgente, 5=normal, 9=baixa
@@ -24,7 +37,9 @@ export const ordensProd = pgTable('ordens_prod', {
 export const etapasProdKanban = pgTable('etapas_prod_kanban', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'cascade' }).notNull(),
+  operacaoProdId: uuid('operacao_prod_id')
+    .references(() => ordensProd.id, { onDelete: 'cascade' })
+    .notNull(),
   etapaNumero: integer('etapa_numero').notNull(),
   etapaNome: varchar('etapa_nome', { length: 100 }).notNull(),
   statusKanban: varchar('status_kanban', { length: 50 }).default('a_fazer').notNull(), // a_fazer, em_progresso, bloqueado, concluído
@@ -40,7 +55,9 @@ export const etapasProdKanban = pgTable('etapas_prod_kanban', {
 export const movimentoKanban = pgTable('movimento_kanban', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  etapaKanbanId: integer('etapa_kanban_id').references(() => etapasProdKanban.id, { onDelete: 'cascade' }).notNull(),
+  etapaKanbanId: integer('etapa_kanban_id')
+    .references(() => etapasProdKanban.id, { onDelete: 'cascade' })
+    .notNull(),
   statusAnterior: varchar('status_anterior', { length: 50 }),
   statusNovo: varchar('status_novo', { length: 50 }),
   usuarioId: uuid('usuario_id'),
@@ -53,13 +70,15 @@ export const eventosCalendario = pgTable('eventos_calendario', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   usuarioId: uuid('usuario_id').notNull(),
-  tipoEvento: varchar('tipo_evento', { length: 50 }).notNull(), // 'orcamento', 'prazo_entrega', 'lembrete_compra', 'tarefa', 'reuniao'
+  tipoEvento: varchar('tipo_evento', { length: 50 }).notNull(), // 'quotation', 'prazo_entrega', 'lembrete_compra', 'tarefa', 'reuniao'
   titulo: varchar('titulo', { length: 255 }).notNull(),
   descricao: text('descricao'),
   dataEvento: date('data_evento').notNull(),
   horaEvento: time('hora_evento'),
   quotationId: uuid('quotation_id').references(() => quotations.id, { onDelete: 'set null' }),
-  operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'set null' }),
+  operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, {
+    onDelete: 'set null',
+  }),
   corCategoria: varchar('cor_categoria', { length: 20 }).default('#3B82F6'),
   concluido: boolean('concluido').default(false),
   notificacaoDiasAntes: integer('notificacao_dias_antes').default(0),
@@ -72,7 +91,9 @@ export const eventosCalendario = pgTable('eventos_calendario', {
 export const notificacoesCalendario = pgTable('notificacoes_calendario', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  eventoCalendarioId: integer('evento_calendario_id').references(() => eventosCalendario.id, { onDelete: 'cascade' }).notNull(),
+  eventoCalendarioId: integer('evento_calendario_id')
+    .references(() => eventosCalendario.id, { onDelete: 'cascade' })
+    .notNull(),
   tipoNotificacao: varchar('tipo_notificacao', { length: 50 }), // 'push', 'email', 'sms'
   mensagem: text('mensagem'),
   enviadoEm: timestamp('enviado_em', { withTimezone: true }).defaultNow(),

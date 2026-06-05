@@ -6,7 +6,7 @@ import { createQuotationSchema } from '@/schemas/quotation.schema';
 
 export function useQuotation(orcamentoId?: string) {
   const { error: toastError } = useToast();
-  const [orcamento, setOrcamento] = useState<any>(null);
+  const [quotation, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -338,7 +338,7 @@ export function useQuotation(orcamentoId?: string) {
   }, [orcamentoId, carregar]);
 
   return {
-    orcamento,
+    quotation,
     loading,
     error,
     inicializar,

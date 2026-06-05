@@ -123,7 +123,7 @@ export async function runInitDB() {
   `);
 
   // 6. Migrations (safe)
-  // [PROMPT 2 - 2026-06-04] ALTER TABLE orcamentos* REMOVIDOS: tabelas orcamentos, itens_orcamento,
+  // [PROMPT 2 - 2026-06-04] ALTER TABLE quotations* REMOVIDOS: tabelas quotations, itens_orcamento,
   //   orcamento_ambientes, orcamento_moveis, orcamento_pecas, orcamento_ferragens, orcamento_custos_extras
   //   foram DROPPADAS em PROMPT 1. Schema canonico agora e `quotations` (Drizzle).
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS visita_id TEXT`);
@@ -152,7 +152,7 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`);
 
   // Migrações de padronização de nomes de colunas (criado_em -> created_at)
-  // [PROMPT 2 - 2026-06-04] RENAME COLUMN em orcamentos* REMOVIDOS: tabelas legadas não existem mais.
+  // [PROMPT 2 - 2026-06-04] RENAME COLUMN em quotations* REMOVIDOS: tabelas legadas não existem mais.
   await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN criado_em TO created_at`).catch(
     () => {},
   );
@@ -239,7 +239,7 @@ export async function runInitDB() {
   await safeSql(
     sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
   ).catch(() => {});
-  // [PROMPT 2 - 2026-06-04] ALTER TABLE orcamentos ADD COLUMN updated_at REMOVIDO: tabela deletada.
+  // [PROMPT 2 - 2026-06-04] ALTER TABLE quotations ADD COLUMN updated_at REMOVIDO: tabela deletada.
 
   // 7. Users Table
   await safeSql(sql`
@@ -341,7 +341,7 @@ export async function runInitDB() {
   `);
 
   // 13. Budgeting Tables
-  // [PROMPT 2 - 2026-06-04] 7 CREATE TABLE IF NOT EXISTS (orcamentos, itens_orcamento,
+  // [PROMPT 2 - 2026-06-04] 7 CREATE TABLE IF NOT EXISTS (quotations, itens_orcamento,
   //   orcamento_ambientes, orcamento_moveis, orcamento_pecas, orcamento_ferragens,
   //   orcamento_custos_extras) REMOVIDOS: tabelas foram DROPPADAS em PROMPT 1.
   //   Schema canonico agora e `quotations` + `quotation_items` (Drizzle ORM em src/db/schema/quotations.ts).
@@ -970,8 +970,8 @@ export async function runInitDB() {
     // Ignore error
   }
 
-  // Hardening Migration (DESATIVADA em 2026-06-04 — PROMPT 1/PROMPT 2: tabelas legadas orcamentos* removidas; indices legacy não se aplicam mais)
-  // Arquivo renomeado para .disabled; reabilitar somente apos refatoracao das queries orcamentos em contrato-digital.ts, aprovacao.ts, projects.ts, etc.
+  // Hardening Migration (DESATIVADA em 2026-06-04 — PROMPT 1/PROMPT 2: tabelas legadas quotations* removidas; indices legacy não se aplicam mais)
+  // Arquivo renomeado para .disabled; reabilitar somente apos refatoracao das queries quotations em contrato-digital.ts, aprovacao.ts, projects.ts, etc.
   // try {
   //   const { runHardeningMigration } = await import('./queries/hardening_migration.js.disabled');
   //   await runHardeningMigration();

@@ -1,9 +1,9 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export async function gerarPropostaPDF(orcamento: any, cliente: any): Promise<void> {
+export async function gerarPropostaPDF(quotation: any, cliente: any): Promise<void> {
   const element = document.getElementById('proposta-pdf-template');
-  
+
   if (!element) {
     console.error('Template da proposta não encontrado no DOM');
     return;
@@ -19,7 +19,7 @@ export async function gerarPropostaPDF(orcamento: any, cliente: any): Promise<vo
       scale: 2, // Aumentar resolução
       logging: false,
       useCORS: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
     });
 
     // Restaurar estado oculto
@@ -30,7 +30,7 @@ export async function gerarPropostaPDF(orcamento: any, cliente: any): Promise<vo
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
     });
 
     const imgProps = pdf.getImageProperties(imgData);
@@ -38,22 +38,21 @@ export async function gerarPropostaPDF(orcamento: any, cliente: any): Promise<vo
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    
+
     const fileName = `Proposta_DLuxury_${cliente.nome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     pdf.save(fileName);
-
   } catch (error) {
     console.error('Falha ao gerar PDF:', error);
     console.error('Erro ao gerar PDF. Verifique o console para mais detalhes.');
   }
 }
 
-export function enviarWhatsAppProposta(orcamento: any, cliente: any): void {
+export function enviarWhatsAppProposta(quotation: any, cliente: any): void {
   const telefone = cliente.telefone.replace(/\D/g, '');
   const mensagem = encodeURIComponent(
-    `Olá ${cliente.nome}! 👋\n\nSegue a proposta D'Luxury para o seu projeto: *${orcamento.numero}*.\n\nFicamos à disposição para qualquer dúvida! ✨`
+    `Olá ${cliente.nome}! 👋\n\nSegue a proposta D'Luxury para o seu projeto: *${quotation.numero}*.\n\nFicamos à disposição para qualquer dúvida! ✨`,
   );
-  
+
   const url = `https://wa.me/55${telefone}?text=${mensagem}`;
   window.open(url, '_blank');
 }

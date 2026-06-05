@@ -46,22 +46,24 @@ Executei `scripts/inspect-db-readonly.mjs` contra `DATABASE_URL` real:
 
 A consolidação foi feita **nas tabelas principais** mas deixou **colunas órfãs** em tabelas relacionadas:
 
-| Tabela | Colunas presentes | FK constraint? |
-|---|---|---|
-| `planos_de_corte` | `orcamento_id` + `quotation_id` | Nenhuma (sem FK morta) |
-| `movimentacoes_estoque` | `orcamento_id` + `quotation_id` | Nenhuma |
-| `eventos` | `orcamento_id` + `quotation_id` | Nenhuma |
-| `ordens_producao` | `orcamento_id` + `quotation_id` | Nenhuma |
-| `conversas_whatsapp` | apenas `orcamento_id` | Nenhuma |
-| `contrato_digital` | apenas `orcamento_id` | Nenhuma |
+| Tabela                  | Colunas presentes               | FK constraint?         |
+| ----------------------- | ------------------------------- | ---------------------- |
+| `planos_de_corte`       | `orcamento_id` + `quotation_id` | Nenhuma (sem FK morta) |
+| `movimentacoes_estoque` | `orcamento_id` + `quotation_id` | Nenhuma                |
+| `eventos`               | `orcamento_id` + `quotation_id` | Nenhuma                |
+| `ordens_producao`       | `orcamento_id` + `quotation_id` | Nenhuma                |
+| `conversas_whatsapp`    | apenas `orcamento_id`           | Nenhuma                |
+| `contrato_digital`      | apenas `orcamento_id`           | Nenhuma                |
 
 **Risco:** essas colunas contêm dados órfãos (IDs que não existem mais) sem integridade referencial. Não bloqueiam produção, mas são **dívida técnica**:
+
 - 4 tabelas: dupla coluna → candidate para **migration de dados** `orcamento_id` → `quotation_id` + drop
 - 2 tabelas: precisa **adicionar** `quotation_id` e migrar dados
 
 ### ⚠️ `drizzle/schema.ts` — snapshot desatualizado
 
 `drizzle/schema.ts` (2273 linhas) é um **snapshot gerado** que ainda contém:
+
 - 6 tabelas `orcamento_*` mortas (linhas 2057–2217) com FKs cruzadas para `orcamentos.id`
 - Tabela `quotation_bom` (linha 1997) — fantasma, nunca criada no banco
 - Colunas `orcamento_id` órfãs em 6+ tabelas
@@ -74,16 +76,17 @@ A consolidação foi feita **nas tabelas principais** mas deixou **colunas órf�
 
 ### PROMPT 1: Reverter BD + Remover Tabelas Vazias
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `SELECT COUNT(*) FROM orcamentos` > 0 | **0** — tabela **não existe** no banco | ❌ Premissa errada |
-| `SELECT COUNT(*) FROM quotations` ≈ 0 | **16** registros reais | ❌ Premissa errada |
-| `DROP TABLE quotation_* CASCADE` | **NÃO APLICÁVEL** — essas são o schema ATIVO com 16+217 registros | ❌ Destruiria dados de produção |
-| `rm db/schema/quotation*.ts` | **NÃO APLICÁVEL** — `src/db/schema/quotations.ts` é o schema ativo (verificado em `drizzle-db.ts:4`) | ❌ Quebraria runtime |
-| `npm run build` passa | ✅ Sim, em 21.76s | ✅ |
-| Estado: schema antigo preservado | ❌ Estado: **schema novo ativo e populado** | ❌ Invertido |
+| Item do Plano                         | Estado Real                                                                                          | Verdict                         |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `SELECT COUNT(*) FROM orcamentos` > 0 | **0** — tabela **não existe** no banco                                                               | ❌ Premissa errada              |
+| `SELECT COUNT(*) FROM quotations` ≈ 0 | **16** registros reais                                                                               | ❌ Premissa errada              |
+| `DROP TABLE quotation_* CASCADE`      | **NÃO APLICÁVEL** — essas são o schema ATIVO com 16+217 registros                                    | ❌ Destruiria dados de produção |
+| `rm db/schema/quotation*.ts`          | **NÃO APLICÁVEL** — `src/db/schema/quotations.ts` é o schema ativo (verificado em `drizzle-db.ts:4`) | ❌ Quebraria runtime            |
+| `npm run build` passa                 | ✅ Sim, em 21.76s                                                                                    | ✅                              |
+| Estado: schema antigo preservado      | ❌ Estado: **schema novo ativo e populado**                                                          | ❌ Invertido                    |
 
 **Ação sugerida (NÃO seguir o plano):**
+
 - ✅ **Pular o DROP** — banco já está limpo.
 - 🟡 (Opcional, **NÃO bloqueante**) Limpar colunas órfãs em 6 tabelas:
   - Migration: `UPDATE planos_de_corte SET quotation_id = orcamento_id WHERE quotation_id IS NULL AND orcamento_id IS NOT NULL;` (e similares para as outras 5 tabelas)
@@ -97,13 +100,13 @@ A consolidação foi feita **nas tabelas principais** mas deixou **colunas órf�
 
 ### PROMPT 2: Refatorar Código para Schema Antigo
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `grep -r "quotation" src/` | Centenas de matches (esperado, schema ativo) | ✅ Existe |
-| `quotations → orcamentos` rename | **NÃO APLICÁVEL** — direção errada | ❌ Plano invertido |
-| `QuotationService → OrcamentoService` | **NÃO APLICÁVEL** — quebraria `src/api-lib/quotations.ts` | ❌ Plano invertido |
-| `npm run build` passa após refactor | ✅ Já passa (sem essa refactor) | ✅ |
-| Imports atualizados | ✅ Já atualizados para o schema novo | ✅ (direção oposta) |
+| Item do Plano                         | Estado Real                                               | Verdict             |
+| ------------------------------------- | --------------------------------------------------------- | ------------------- |
+| `grep -r "quotation" src/`            | Centenas de matches (esperado, schema ativo)              | ✅ Existe           |
+| `quotations → orcamentos` rename      | **NÃO APLICÁVEL** — direção errada                        | ❌ Plano invertido  |
+| `QuotationService → OrcamentoService` | **NÃO APLICÁVEL** — quebraria `src/api-lib/quotations.ts` | ❌ Plano invertido  |
+| `npm run build` passa após refactor   | ✅ Já passa (sem essa refactor)                           | ✅                  |
+| Imports atualizados                   | ✅ Já atualizados para o schema novo                      | ✅ (direção oposta) |
 
 **Ação sugerida:** **Pular este prompt integralmente.** Já está feito na direção correta.
 
@@ -111,36 +114,39 @@ A consolidação foi feita **nas tabelas principais** mas deixou **colunas órf�
 
 ### PROMPT 3: Aumentar Cobertura de Testes para 80%
 
-| Métrica | Plano (meta) | Estado Real | Verdict |
-|---|---|---|---|
-| Statements | ≥ 80% | **80.31%** | ✅ ATINGIDO |
-| Branches | ≥ 80% | **65.84%** | ❌ **FALTA 14.16 pp** |
-| Functions | ≥ 80% | **76.26%** | ❌ **FALTA 3.74 pp** |
-| Lines | ≥ 80% | **81.68%** | ✅ ATINGIDO |
-| Total tests | crescente | 603/604 (99.8%) | ✅ |
+| Métrica     | Plano (meta) | Estado Real     | Verdict               |
+| ----------- | ------------ | --------------- | --------------------- |
+| Statements  | ≥ 80%        | **80.31%**      | ✅ ATINGIDO           |
+| Branches    | ≥ 80%        | **65.84%**      | ❌ **FALTA 14.16 pp** |
+| Functions   | ≥ 80%        | **76.26%**      | ❌ **FALTA 3.74 pp**  |
+| Lines       | ≥ 80%        | **81.68%**      | ✅ ATINGIDO           |
+| Total tests | crescente    | 603/604 (99.8%) | ✅                    |
 
 **Gap real:** 2 das 4 métricas abaixo da meta.
 
 **Arquivos com branches baixas (sugestão de priorização):**
+
 - Procure no relatório de cobertura (`coverage/coverage-summary.json` ou saída do `vitest run --coverage`) os arquivos com `< 65%` em Branches.
 - Áreas suspeitas: `src/api-lib/financeiro.ts` (cálculos condicionais), `src/api-lib/quotations.ts` (workflows de aprovação), `src/utils/pricingEngine.ts` (regras de desconto).
 
 **Correção sugerida:**
+
 ```bash
 # Ver top-10 com Branches < 65%
 npm test -- --run --coverage 2>&1 | grep -E "Branches" | awk -F'|' '$3 ~ /^[0-9]+\.[0-9]+$/ && $3+0 < 65' | head -10
 ```
+
 Depois adicionar testes para os branches descobertos (ex.: `if/else` em validações de margem, fallback de moeda, edge cases de cálculo).
 
 ---
 
 ### PROMPT 4: Resolver E2E Specs (12 falhando)
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| 47/59 → 59/59 E2E | **60/60 passando** | ✅ SUPERADO |
-| Fix outdated selectors | ✅ `tests/e2e/helpers/auth.ts` mock `**/api/auth**`, `mockApiCrud` paginado, landing selectors atualizados | ✅ |
-| `npx playwright test` | ✅ 60 passed | ✅ |
+| Item do Plano          | Estado Real                                                                                                | Verdict     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- | ----------- |
+| 47/59 → 59/59 E2E      | **60/60 passando**                                                                                         | ✅ SUPERADO |
+| Fix outdated selectors | ✅ `tests/e2e/helpers/auth.ts` mock `**/api/auth**`, `mockApiCrud` paginado, landing selectors atualizados | ✅          |
+| `npx playwright test`  | ✅ 60 passed                                                                                               | ✅          |
 
 **Verdict:** Prompt 4 está **100% concluído com bônus**.
 
@@ -148,17 +154,18 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 
 ### PROMPT 5: CVE HIGH + Rate-Limit
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `npm audit` mostra CVE HIGH | ✅ Detectado: react-router turbo-stream RCE | ✅ |
-| `npm audit fix` | ✅ react-router 7.0.0–7.14.2 → **7.17.0** | ✅ |
-| Vulnerabilidades HIGH após fix | ✅ 0 | ✅ |
-| `RATE_LIMITS` 100 → 300 | ✅ `api/index.ts:14-19` (default 300, auth 30, ai/chat 10/10s) | ✅ |
-| Teste de carga 150 reqs | ⚠️ Não executado em staging (limitação do ambiente) | ⚠️ Verificação manual pendente |
+| Item do Plano                  | Estado Real                                                    | Verdict                        |
+| ------------------------------ | -------------------------------------------------------------- | ------------------------------ |
+| `npm audit` mostra CVE HIGH    | ✅ Detectado: react-router turbo-stream RCE                    | ✅                             |
+| `npm audit fix`                | ✅ react-router 7.0.0–7.14.2 → **7.17.0**                      | ✅                             |
+| Vulnerabilidades HIGH após fix | ✅ 0                                                           | ✅                             |
+| `RATE_LIMITS` 100 → 300        | ✅ `api/index.ts:14-19` (default 300, auth 30, ai/chat 10/10s) | ✅                             |
+| Teste de carga 150 reqs        | ⚠️ Não executado em staging (limitação do ambiente)            | ⚠️ Verificação manual pendente |
 
 **Verdict:** Prompt 5 está **95% concluído**. Falta só teste de carga real (recomendado em pre-prod).
 
 **Bug/encontrado fraco:**
+
 - `src/api-lib/quotations.ts:413` tem `MAX_REQUESTS_PER_WINDOW = 100` (limiter **interno**, separado do middleware). Pode mascarar testes e comportamento de produção.
 - **Sugestão:** extrair para `src/config/rateLimits.ts` e referenciar do middleware E do limiter interno, ou remover o duplicado.
 
@@ -166,13 +173,13 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 
 ### PROMPT 6: Corrigir URLs Malformadas + API
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `api.get()` em FluxoCaixa não existe | ✅ Identificado em `src/pages/FinanceiroFluxoCaixaPage.tsx:47-60` | ✅ |
-| Correção aplicada | ✅ `api.get(...)` → `api.financeiro.fluxoCaixa.get({...})` | ✅ |
-| Resposta `res.data.data.X` (duplo unwrap) | ✅ Corrigido para `res.X` (já que `apiCall` desembrulha uma vez) | ✅ |
-| URL malformada `"tree"ation_id=` em `src/services/api.ts:210` | ⚠️ **Path errado no plano** — arquivo real é `src/lib/api.ts:210`, e a string é uma template literal com `&quot;` (entidade HTML), não typo de aspa | ⚠️ Plano impreciso |
-| URL precisa de correção | ❌ Não precisa — `?type=tree&quotation_id=${id}` é intencional em template literal JSX/TSX | ❌ Falso positivo no plano |
+| Item do Plano                                                 | Estado Real                                                                                                                                         | Verdict                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `api.get()` em FluxoCaixa não existe                          | ✅ Identificado em `src/pages/FinanceiroFluxoCaixaPage.tsx:47-60`                                                                                   | ✅                         |
+| Correção aplicada                                             | ✅ `api.get(...)` → `api.financeiro.fluxoCaixa.get({...})`                                                                                          | ✅                         |
+| Resposta `res.data.data.X` (duplo unwrap)                     | ✅ Corrigido para `res.X` (já que `apiCall` desembrulha uma vez)                                                                                    | ✅                         |
+| URL malformada `"tree"ation_id=` em `src/services/api.ts:210` | ⚠️ **Path errado no plano** — arquivo real é `src/lib/api.ts:210`, e a string é uma template literal com `&quot;` (entidade HTML), não typo de aspa | ⚠️ Plano impreciso         |
+| URL precisa de correção                                       | ❌ Não precisa — `?type=tree&quotation_id=${id}` é intencional em template literal JSX/TSX                                                          | ❌ Falso positivo no plano |
 
 **Verdict:** Prompt 6 está **100% concluído**. A "URL malformada" do plano era um mal-entendido.
 
@@ -180,21 +187,22 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 
 ### PROMPT 7: Validação Final
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `npm run build` | ✅ 21.76s, bundle main 257 kB / 80 kB gz | ✅ |
-| `npm run lint` | ❌ **164 erros pré-existentes** (`'document' is not defined` em `*.test.ts`); foi **bypassado com `--no-verify`** no commit | ❌ **NÃO RESOLVIDO** |
-| `npm test` | ✅ 603/604 (99.8%) | ✅ |
-| Coverage | ⚠️ 80.31% Stmts OK, mas Branches 65.84% e Funcs 76.26% abaixo | ⚠️ Parcial |
-| `npx playwright test` | ✅ 60/60 | ✅ |
-| `npm audit` HIGH | ✅ 0 | ✅ |
-| Conexão BD | ✅ Neon conectado | ✅ |
-| Performance: bundle < 300 KB | ⚠️ EngineeringPage lazy = **678 kB / 196 kB gz** (acima do alvo) | ⚠️ |
-| TS errors | ❌ **2 erros não bloqueantes** mas preocupantes | ❌ |
+| Item do Plano                | Estado Real                                                                                                                 | Verdict              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `npm run build`              | ✅ 21.76s, bundle main 257 kB / 80 kB gz                                                                                    | ✅                   |
+| `npm run lint`               | ❌ **164 erros pré-existentes** (`'document' is not defined` em `*.test.ts`); foi **bypassado com `--no-verify`** no commit | ❌ **NÃO RESOLVIDO** |
+| `npm test`                   | ✅ 603/604 (99.8%)                                                                                                          | ✅                   |
+| Coverage                     | ⚠️ 80.31% Stmts OK, mas Branches 65.84% e Funcs 76.26% abaixo                                                               | ⚠️ Parcial           |
+| `npx playwright test`        | ✅ 60/60                                                                                                                    | ✅                   |
+| `npm audit` HIGH             | ✅ 0                                                                                                                        | ✅                   |
+| Conexão BD                   | ✅ Neon conectado                                                                                                           | ✅                   |
+| Performance: bundle < 300 KB | ⚠️ EngineeringPage lazy = **678 kB / 196 kB gz** (acima do alvo)                                                            | ⚠️                   |
+| TS errors                    | ❌ **2 erros não bloqueantes** mas preocupantes                                                                             | ❌                   |
 
 **Verdict:** ~75% do prompt concluído. **Lint e 2 erros TS são os bloqueadores remanescentes.**
 
 **Bugs/erros TS a corrigir:**
+
 1. `api/orcamentos/exportar-pdf.ts(1,52): error TS2307: Cannot find module '@vercel/node'`
    - **Causa:** import tipo `import type { VercelRequest, VercelResponse } from '@vercel/node'` mas pacote não está em `dependencies`.
    - **Correção:** `npm install --save-dev @vercel/node` (types só precisam em dev/build).
@@ -204,6 +212,7 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
    - **Correção:** adicionar `import { orcamentos } from './quotations'` (ou similar) no topo do arquivo, ou remover a referência se for dead code.
 
 **Lint 164 erros:**
+
 - **Causa raiz:** `eslint.config.js` não adiciona `globals: { ...browser, ...node }` (jsdom) para arquivos `**/*.test.ts`.
 - **Correção sugerida (5 min):**
   ```js
@@ -218,6 +227,7 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 - **Impacto se não corrigir:** Pre-commit hook bloqueia todo commit, força `--no-verify` (anti-pattern).
 
 **Bundle 678 kB EngineeringPage:**
+
 - **Causa:** import estático de biblioteca de CAD/SVG pesada + tabelas grandes inline.
 - **Correção sugerida:** lazy-load + dynamic import já existe (`React.lazy`), mas o **vendor chunk está sendo puxado pelo main**. Verificar se `lucide-react` icons são tree-shakeable (já foi verificado) e se há lib de gráficos sendo importada.
 
@@ -225,18 +235,19 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 
 ### PROMPT 8: Deploy Staging + Validação 48h
 
-| Item do Plano | Estado Real | Verdict |
-|---|---|---|
-| `vercel deploy` | ✅ `https://dluxury-xq3s23prs-jc8702s-projects.vercel.app` | ✅ |
-| Build OK em staging | ✅ 2 min, build OK | ✅ |
+| Item do Plano          | Estado Real                                                                                                                                                                     | Verdict                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `vercel deploy`        | ✅ `https://dluxury-xq3s23prs-jc8702s-projects.vercel.app`                                                                                                                      | ✅                       |
+| Build OK em staging    | ✅ 2 min, build OK                                                                                                                                                              | ✅                       |
 | Smoke tests 7 críticos | ⚠️ **5 automatizados via CLI** (HTML 200, `/api/orcamentos` 200 deprecation, `/api/auth?action=me` 401, `/api/financeiro/fluxo-caixa` 401, `/.well-known/vercel-user-meta` 204) | ⚠️ 2/7 manuais pendentes |
-| 48h staging validation | ❌ **NÃO EXECUTADO** (limitação: chat síncrono) | ❌ **BLOQUEIO** |
-| Sentry / observability | ❌ **NÃO CONFIGURADO** | ❌ Falta crítica |
-| Relatório final | ✅ `STAGING_VALIDATION_REPORT.md` | ✅ |
+| 48h staging validation | ❌ **NÃO EXECUTADO** (limitação: chat síncrono)                                                                                                                                 | ❌ **BLOQUEIO**          |
+| Sentry / observability | ❌ **NÃO CONFIGURADO**                                                                                                                                                          | ❌ Falta crítica         |
+| Relatório final        | ✅ `STAGING_VALIDATION_REPORT.md`                                                                                                                                               | ✅                       |
 
 **Verdict:** ~50% do prompt concluído. **48h manual e Sentry são bloqueios reais para produção.**
 
 **Testes smoke NÃO cobertos (requerem humano):**
+
 1. Login real com credenciais + dashboard
 2. Criar orçamento end-to-end (cliente + items + fita de borda)
 3. Mobile responsive (DevTools 375px)
@@ -324,23 +335,24 @@ Depois adicionar testes para os branches descobertos (ex.: `if/else` em validaç
 
 ### Pesos por categoria
 
-| Categoria | Peso | Score (0-100) | Contribuição |
-|---|---|---|---|
-| **Compilação & tipos** | 10% | 80 (build OK, 2 TS errors) | 8.0 |
-| **Testes (unit + E2E)** | 15% | 90 (603/604, 60/60 E2E) | 13.5 |
-| **Cobertura de testes** | 10% | 65 (2/4 métricas abaixo) | 6.5 |
-| **Qualidade de código (lint)** | 10% | 30 (164 erros bypassados) | 3.0 |
-| **Segurança** | 15% | 95 (0 CVE HIGH, headers OK, rate-limit OK) | 14.25 |
-| **Banco de dados** | 10% | 60 (dual schema, migrations não testadas) | 6.0 |
-| **Deploy & infra** | 10% | 50 (deploy OK, mas sem Sentry, sem CI/CD) | 5.0 |
-| **Validação 48h em staging** | 10% | 0 (não executada) | 0.0 |
-| **Observability & monitoring** | 5% | 0 (Sentry não configurado) | 0.0 |
-| **Documentação** | 5% | 70 (relatório OK, sem README/setup) | 3.5 |
-| **TOTAL** | **100%** | — | **59.75%** |
+| Categoria                      | Peso     | Score (0-100)                              | Contribuição |
+| ------------------------------ | -------- | ------------------------------------------ | ------------ |
+| **Compilação & tipos**         | 10%      | 80 (build OK, 2 TS errors)                 | 8.0          |
+| **Testes (unit + E2E)**        | 15%      | 90 (603/604, 60/60 E2E)                    | 13.5         |
+| **Cobertura de testes**        | 10%      | 65 (2/4 métricas abaixo)                   | 6.5          |
+| **Qualidade de código (lint)** | 10%      | 30 (164 erros bypassados)                  | 3.0          |
+| **Segurança**                  | 15%      | 95 (0 CVE HIGH, headers OK, rate-limit OK) | 14.25        |
+| **Banco de dados**             | 10%      | 60 (dual schema, migrations não testadas)  | 6.0          |
+| **Deploy & infra**             | 10%      | 50 (deploy OK, mas sem Sentry, sem CI/CD)  | 5.0          |
+| **Validação 48h em staging**   | 10%      | 0 (não executada)                          | 0.0          |
+| **Observability & monitoring** | 5%       | 0 (Sentry não configurado)                 | 0.0          |
+| **Documentação**               | 5%       | 70 (relatório OK, sem README/setup)        | 3.5          |
+| **TOTAL**                      | **100%** | —                                          | **59.75%**   |
 
 ### 🟡 Score Final: **~60% production-ready**
 
 **Interpretação honesta:**
+
 - ✅ **Para staging/preview interno:** SIM, 100% seguro. Pode ser usado por devs e testers.
 - ⚠️ **Para beta fechado (5-20 usuários reais):** SIM, com os 5 itens críticos monitorados.
 - ❌ **Para produção aberta (clientes pagantes):** NÃO, faltam 40 pp de robustez.

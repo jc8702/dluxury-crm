@@ -1,4 +1,5 @@
 # 🔍 AUDITORIA E PLANO DE INTEGRAÇÃO - MÓDULO DE ORÇAMENTOS PRO
+
 **Data:** 26 de maio de 2026  
 **Status:** Módulo funcional de forma isolada, necessitando de integrações automáticas críticas de fluxo de processo (PCP, Financeiro e Estoque) para ser comercializável.
 
@@ -9,8 +10,9 @@
 Durante a auditoria profunda do código-fonte, identificamos uma redundância crítica no módulo de orçamentos:
 
 ### ⚠️ Duplicação e Código Órfão no Codebase
-* **Interface Comercial Antiga (Inativa):** O diretório `src/components/orcamentos/` (`Orcamentos.tsx`, `PropostaTemplate.tsx` e `technical/CompositorOrcamento.tsx`) está órfão. Ele utiliza a tabela de banco de dados legada `orcamentos` e a rota legada `/api/orcamentos`.
-* **Interface Industrial PRO (Ativa):** A rota principal no `src/App.tsx` aponta `/orcamentos` para `src/modules/orcamentos/pages/OrcamentoForm.tsx`, que opera inteiramente sobre a nova arquitetura do `orcamentos_pro.ts` no backend, utilizando Drizzle ORM e as tabelas `orcamentos_pro`, `orcamento_itens` e `orcamento_lista_explodida`.
+
+- **Interface Comercial Antiga (Inativa):** O diretório `src/components/orcamentos/` (`Orcamentos.tsx`, `PropostaTemplate.tsx` e `technical/CompositorOrcamento.tsx`) está órfão. Ele utiliza a tabela de banco de dados legada `orcamentos` e a rota legada `/api/orcamentos`.
+- **Interface Industrial PRO (Ativa):** A rota principal no `src/App.tsx` aponta `/orcamentos` para `src/modules/orcamentos/pages/OrcamentoForm.tsx`, que opera inteiramente sobre a nova arquitetura do `orcamentos_pro.ts` no backend, utilizando Drizzle ORM e as tabelas `orcamentos_pro`, `orcamento_itens` e `orcamento_lista_explodida`.
 
 > [!WARNING]  
 > **Recomendação Imediata:** Excluir fisicamente a pasta legada `src/components/orcamentos/` para evitar confusões de manutenção e reduzir o peso do codebase.
@@ -21,12 +23,12 @@ Durante a auditoria profunda do código-fonte, identificamos uma redundância cr
 
 Atualmente, o fluxo comercial do Orçamento PRO está isolado dos demais módulos. A tabela abaixo detalha o que ocorre hoje e qual seria o comportamento ideal de um ERP integrado:
 
-| Fluxo de Integração | Estado Atual | Comportamento Ideal (Integrado) | Gravidade |
-|--------------------|--------------|---------------------------------|-----------|
-| **Sincronização Financeira** | A alteração de status para `APROVADO` no orçamento PRO apenas altera o campo no banco. **Nenhum título financeiro é gerado.** | Ao aprovar, o sistema deve ler a condição de pagamento e gerar automaticamente parcelas na tabela `titulos_receber` integradas ao faturamento. | 🔴 **Crítico** |
-| **Explosão no PCP (Produção)** | Ao aprovar, o orçamento PRO permanece comercial. **Nenhuma ordem de produção é criada.** | O PCP deve gerar automaticamente uma Ordem de Produção (`ordens_producao`) para cada móvel do orçamento, listando as peças e operações. | 🔴 **Crítico** |
-| **Baixa e Reserva de Estoque** | Nenhum insumo (chapas de MDF, dobradiças, puxadores) é reservado ou debitado do estoque. | O sistema deve ler a tabela `orcamento_lista_explodida` e lançar reservas de estoque (`movimentacoes_estoque`) vinculadas à Ordem de Produção. | 🔴 **Crítico** |
-| **Cálculo de Precificação** | Usa markup simples: $Preço = Custo \times (1 + Margem/100)$. | Deve ler a tabela `configuracoes_precificacao` e incorporar impostos, perdas estruturais e taxas financeiras sobre a base de custo real. | ⚠️ **Média** |
+| Fluxo de Integração            | Estado Atual                                                                                                                  | Comportamento Ideal (Integrado)                                                                                                                | Gravidade      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Sincronização Financeira**   | A alteração de status para `APROVADO` no orçamento PRO apenas altera o campo no banco. **Nenhum título financeiro é gerado.** | Ao aprovar, o sistema deve ler a condição de pagamento e gerar automaticamente parcelas na tabela `titulos_receber` integradas ao faturamento. | 🔴 **Crítico** |
+| **Explosão no PCP (Produção)** | Ao aprovar, o orçamento PRO permanece comercial. **Nenhuma ordem de produção é criada.**                                      | O PCP deve gerar automaticamente uma Ordem de Produção (`ordens_producao`) para cada móvel do orçamento, listando as peças e operações.        | 🔴 **Crítico** |
+| **Baixa e Reserva de Estoque** | Nenhum insumo (chapas de MDF, dobradiças, puxadores) é reservado ou debitado do estoque.                                      | O sistema deve ler a tabela `orcamento_lista_explodida` e lançar reservas de estoque (`movimentacoes_estoque`) vinculadas à Ordem de Produção. | 🔴 **Crítico** |
+| **Cálculo de Precificação**    | Usa markup simples: $Preço = Custo \times (1 + Margem/100)$.                                                                  | Deve ler a tabela `configuracoes_precificacao` e incorporar impostos, perdas estruturais e taxas financeiras sobre a base de custo real.       | ⚠️ **Média**   |
 
 ---
 
@@ -38,25 +40,25 @@ Abaixo, ilustramos o ciclo de vida ideal de um orçamento PRO aprovado dentro do
 graph TD
     A[Orçamento Rascunho / Enviado] -->|Aprovação do Cliente| B(PATCH /api/orcamentos-pro?action=aprovar)
     B --> C{Transação Atômica DB}
-    
+
     C -->|Passo 1| D[Atualiza Status para APROVADO]
-    
+
     C -->|Passo 2| E[Financeiro: Cria Parcelas em titulos_receber]
     E -->|Associa| E1[condicao_pagamento_id]
-    
+
     C -->|Passo 3| F[Produção PCP: Cria OPs em ordens_producao]
     F -->|Exporta Peças| F1[orcamento_lista_explodida]
-    
+
     C -->|Passo 4| G[Estoque: Lança Reservas em movimentacoes_estoque]
     G -->|Debita Insumos| G1[materiais / erp_chapas]
-    
+
     C -->|Passo 5| H[Auditoria: Loga APROVAÇÃO do Orçamento]
-    
+
     classDef success fill:#4ade80,stroke:#166534,color:#000;
     classDef warning fill:#facc15,stroke:#854d0e,color:#000;
     classDef error fill:#f87171,stroke:#991b1b,color:#fff;
     classDef info fill:#60a5fa,stroke:#1e40af,color:#fff;
-    
+
     class A,B warning;
     class C info;
     Def success class D,E,F,G,H;
@@ -67,28 +69,32 @@ graph TD
 ## 🛠️ 4. PLANO DE EXECUÇÃO TÉCNICO (ROADMAP)
 
 ### Fase 1: Integração Financeira & Condições de Pagamento (P0)
-* **Objetivo:** Garantir que orçamentos PRO aprovados alimentem o fluxo de caixa do módulo financeiro.
-* **Ações:**
+
+- **Objetivo:** Garantir que orçamentos PRO aprovados alimentem o fluxo de caixa do módulo financeiro.
+- **Ações:**
   1. Adicionar lógica no endpoint `PUT /api/orcamentos-pro` (ação `aprovar`) para ler a condição de pagamento associada no cabeçalho do orçamento.
   2. Gerar parcelas proporcionais de contas a receber (`titulos_receber`) associando o `cliente_id`, `orcamento_id` e gerando as datas de vencimento com saltos mensais de 30 dias.
   3. Lançar o custo financeiro e taxas com base nas variáveis do faturamento.
 
 ### Fase 2: Integração com PCP (Produção) & Listas Explodidas (P0)
-* **Objetivo:** Enviar os dados de engenharia do orçamento diretamente para a linha de produção fabril.
-* **Ações:**
+
+- **Objetivo:** Enviar os dados de engenharia do orçamento diretamente para a linha de produção fabril.
+- **Ações:**
   1. Ler todos os itens em `orcamento_itens` que possuem um `skuEngenhariaId` associado.
   2. Criar uma Ordem de Produção (`ordens_producao`) para cada item aprovado.
   3. Mapear as dimensões (largura, altura, espessura) e a lista explodida de componentes cadastrados em `orcamento_lista_explodida` e injetar no campo `pecas` (JSONB) da OP, permitindo que o operador da fábrica veja as peças no painel de produção.
 
 ### Fase 3: Reserva Inteligente de Estoque (P0)
-* **Objetivo:** Evitar furos de estoque reservando fisicamente as chapas e ferragens do orçamento aprovado.
-* **Ações:**
+
+- **Objetivo:** Evitar furos de estoque reservando fisicamente as chapas e ferragens do orçamento aprovado.
+- **Ações:**
   1. Ler a lista de peças em `orcamento_lista_explodida` (que contêm o `skuComponenteId` e a quantidade calculada).
   2. Inserir registros na tabela `movimentacoes_estoque` com tipo `'saida_reserva'`, vinculando ao `orcamento_id` e reduzindo temporariamente a quantidade disponível para impedir que os mesmos materiais sejam vendidos ou otimizados em outros planos de corte.
 
 ### Fase 4: Otimização de Precificação por Variáveis de Engenharia (P1)
-* **Objetivo:** Adicionar os custos operacionais implícitos da empresa à precificação do orçamento.
-* **Ações:**
+
+- **Objetivo:** Adicionar os custos operacionais implícitos da empresa à precificação do orçamento.
+- **Ações:**
   1. Alterar a rotina `recalcularOrcamento` no backend para buscar as configurações da tabela `configuracoes_precificacao` (alíquota de imposto, fator de perda padrão, percentual de mão de obra de produção e de instalação).
   2. Ajustar a fórmula do custo base de fabricação para:
      $$CustoFabricacao = CustoComponentes \times (1 + FatorPerda/100) \times (1 + MãoDeObraProdução/100)$$
@@ -102,7 +108,11 @@ Aqui está um rascunho de como seria o método de aprovação no arquivo [orcame
 
 ```typescript
 import { db } from './drizzle-db.js';
-import { orcamentos, orcamentoItens, orcamentoListaExplodida } from '../db/schema/engenharia-orcamentos.js';
+import {
+  orcamentos,
+  orcamentoItens,
+  orcamentoListaExplodida,
+} from '../db/schema/engenharia-orcamentos.js';
 import { titulosReceber, condicoesPagamento } from '../db/schema/financeiro.js';
 import { eq, and } from 'drizzle-orm';
 import { sql } from './_db.js';
@@ -110,7 +120,8 @@ import { sql } from './_db.js';
 export async function aprovarOrcamentoPro(orcId: string, tenantId: string, userId: string) {
   return await db.transaction(async (tx) => {
     // 1. Atualizar o status do orçamento
-    const [orc] = await tx.update(orcamentos)
+    const [orc] = await tx
+      .update(orcamentos)
       .set({ status: 'APROVADO', updatedAt: new Date() })
       .where(and(eq(orcamentos.id, orcId), eq(orcamentos.tenantId, tenantId)))
       .returning();
@@ -120,7 +131,10 @@ export async function aprovarOrcamentoPro(orcId: string, tenantId: string, userI
     // 2. FASE 1: Gerar Títulos a Receber (Financeiro)
     if (orc.condicaoPagamentoId) {
       const cond = await tx.query.condicoesPagamento.findFirst({
-        where: and(eq(condicoesPagamento.id, orc.condicaoPagamentoId), eq(condicoesPagamento.tenantId, tenantId))
+        where: and(
+          eq(condicoesPagamento.id, orc.condicaoPagamentoId),
+          eq(condicoesPagamento.tenantId, tenantId),
+        ),
       });
 
       if (cond) {
@@ -160,19 +174,19 @@ export async function aprovarOrcamentoPro(orcId: string, tenantId: string, userI
     const itens = await tx.query.orcamentoItens.findMany({
       where: eq(orcamentoItens.orcamentoId, orcId),
       with: {
-        listaExplodida: true
-      }
+        listaExplodida: true,
+      },
     });
 
     for (const item of itens) {
       if (item.skuEngenhariaId) {
         const opId = `OP-${orc.numeroOrcamento}-${Math.floor(100 + Math.random() * 900)}`;
-        
+
         // Mapear peças explodidas para JSON
         const pecas = item.listaExplodida.map((l: any) => ({
           skuComponenteId: l.skuComponenteId,
           quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
-          custoUnitario: l.custoUnitario
+          custoUnitario: l.custoUnitario,
         }));
 
         // Inserir OP na tabela ordens_producao

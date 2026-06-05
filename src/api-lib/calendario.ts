@@ -146,8 +146,8 @@ export async function handleCalendario(req: any, res: any) {
         });
       }
 
-      // 3. Adicionar prazos de orçamentos se não houver filtro ou se for filtro = 'orcamento'
-      if (!filtro_tipo || filtro_tipo === 'orcamento') {
+      // 3. Adicionar prazos de orçamentos se não houver filtro ou se for filtro = 'quotation'
+      if (!filtro_tipo || filtro_tipo === 'quotation') {
         const budgets = await sql`
           SELECT 
             o.id::text,
@@ -174,11 +174,11 @@ export async function handleCalendario(req: any, res: any) {
           if (eventMonth === mesNum && eventYear === anoNum) {
             const formattedDate = dateObj.toISOString().split('T')[0];
             eventosList.push({
-              id: `orcamento-${b.id}`,
+              id: `quotation-${b.id}`,
               titulo: `Entrega Proposta: ${b.numero_orcamento} (${b.cliente_nome || 'Cliente avulso'})`,
               descricao: `Prazo contratual calculado de entrega do pedido`,
               data_evento: formattedDate,
-              tipo_evento: 'orcamento',
+              tipo_evento: 'quotation',
               cor_categoria: '#3B82F6', // Azul
               concluido: false,
               quotation_id: b.id,
@@ -236,14 +236,14 @@ export async function handleCalendario(req: any, res: any) {
         return res.status(400).json({ success: false, error: 'ID do orçamento é obrigatório' });
       }
 
-      const [orcamento] = await sql`
+      const [quotation] = await sql`
         SELECT o.*, c.nome as cliente_nome
         FROM quotations o
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE o.id = ${quotation_id}::uuid AND o.tenant_id = ${tenantId}::uuid
       `;
 
-      if (!orcamento) {
+      if (!quotation) {
         return res
           .status(404)
           .json({ success: false, error: 'Orçamento não encontrado no tenant' });
@@ -254,9 +254,9 @@ export async function handleCalendario(req: any, res: any) {
         WHERE tenant_id = ${tenantId}::uuid
       `;
 
-      const dataEvento = new Date(orcamento.data_orcamento || new Date());
-      if (orcamento.prazo_entrega_dias) {
-        dataEvento.setDate(dataEvento.getDate() + parseInt(orcamento.prazo_entrega_dias));
+      const dataEvento = new Date(quotation.data_orcamento || new Date());
+      if (quotation.prazo_entrega_dias) {
+        dataEvento.setDate(dataEvento.getDate() + parseInt(quotation.prazo_entrega_dias));
       }
 
       const formattedDate = dataEvento.toISOString().split('T')[0];
@@ -266,8 +266,8 @@ export async function handleCalendario(req: any, res: any) {
           INSERT INTO eventos_calendario (
             usuario_id, tipo_evento, titulo, descricao, data_evento, quotation_id, cor_categoria, notificacao_dias_antes, tenant_id
           ) VALUES (
-            ${u.id}::uuid, 'orcamento', ${`Entrega Pedido: ${orcamento.numero_orcamento}`}, 
-            ${`Prazo contratual de entrega para o cliente ${orcamento.cliente_nome || ''}`}, 
+            ${u.id}::uuid, 'quotation', ${`Entrega Pedido: ${quotation.numero_orcamento}`}, 
+            ${`Prazo contratual de entrega para o cliente ${quotation.cliente_nome || ''}`}, 
             ${formattedDate}, ${quotation_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid
           )
         `;

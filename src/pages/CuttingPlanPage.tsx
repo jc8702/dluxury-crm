@@ -370,7 +370,7 @@ const CuttingPlanPage: React.FC = () => {
   const handleImportProjeto = async (prj: ProjetoImport) => {
     setLoading(true);
     try {
-      const orcRes = await api.orcamentos.list();
+      const orcRes = await api.quotations.list();
       const approvedOrcs = (orcRes || []).filter(
         (o: any) => String(o.projeto_id) === String(prj.id) && o.status === 'aprovado',
       );
@@ -403,7 +403,7 @@ const CuttingPlanPage: React.FC = () => {
             });
           });
         } else {
-          const fullOrc = await api.orcamentos.get(orc.id);
+          const fullOrc = await api.quotations.get(orc.id);
           const itens = fullOrc.itens || [];
           itens.forEach((itm: any) => {
             if (itm.largura_cm > 0 && itm.altura_cm > 0) {

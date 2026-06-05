@@ -5,7 +5,7 @@ import { cn } from '../../utils/cn';
 
 const badgeVariants = cva(
   cn(
-    'inline-flex items-center gap-1 rounded-[var(--ui-radius-full)]',
+    'inline-flex items-center capitalize gap-1 rounded-[var(--ui-radius-full)]',
     'border px-2 py-0.5 text-[var(--ui-text-xs)] font-medium',
     'whitespace-nowrap',
     'transition-colors duration-[var(--ui-duration-fast)]',
@@ -94,7 +94,7 @@ const dotTone: Record<StatusDotProps['tone'], string> = {
 
 export function StatusDot({ tone, pulse, label, className }: StatusDotProps) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5', className)}>
+    <span className={cn('inline-flex items-center capitalize gap-1.5', className)}>
       <span className="relative inline-flex h-2 w-2">
         {pulse && (
           <span
@@ -124,7 +124,7 @@ export function Chip({ active, className, children, ...props }: ChipProps) {
     <button
       type="button"
       className={cn(
-        'inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--ui-radius-full)]',
+        'inline-flex items-center capitalize gap-1.5 h-7 px-3 rounded-[var(--ui-radius-full)]',
         'text-[var(--ui-text-xs)] font-medium border transition-colors',
         active
           ? 'bg-[var(--ui-color-teal-500)] text-white border-[var(--ui-color-teal-500)]'

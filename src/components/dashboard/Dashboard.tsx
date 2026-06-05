@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
             </div>
           </Link>
           <Link
-            to="/orcamentos"
+            to="/quotations"
             className="group flex items-center ui-gap-3 h-20 p-4 bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] hover:border-[var(--ui-color-navy-400)] hover:-translate-y-px transition-all duration-[var(--ui-duration-base)]"
           >
             <div className="h-10 w-10 rounded-[var(--ui-radius-md)] flex items-center justify-center bg-[var(--ui-color-navy-50)] text-[var(--ui-color-navy-700)] shrink-0">

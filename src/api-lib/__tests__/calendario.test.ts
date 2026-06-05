@@ -9,12 +9,24 @@ vi.mock('../_db.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null, ended = false;
+  let sc = 200,
+    jd: any = null,
+    ended = false;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => { ended = true; return self; }),
-    _s: () => sc, _d: () => jd,
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
+    end: vi.fn(() => {
+      ended = true;
+      return self;
+    }),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
@@ -23,7 +35,11 @@ describe('handleCalendario', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
   });
 
   describe('GET /eventos', () => {
@@ -41,32 +57,72 @@ describe('handleCalendario', () => {
         // 1. Eventos manuais
         if (qStr.includes('FROM eventos_calendario')) {
           return [
-            { id: '1', titulo: 'Ev manual', descricao: '', data_evento: '2026-05-27', tipo_evento: 'reuniao', cor_categoria: 'purple', concluido: false }
+            {
+              id: '1',
+              titulo: 'Ev manual',
+              descricao: '',
+              data_evento: '2026-05-27',
+              tipo_evento: 'reuniao',
+              cor_categoria: 'purple',
+              concluido: false,
+            },
           ];
         }
         // 2. Eventos agenda
         if (qStr.includes('FROM eventos e')) {
           return [
-            { id: '2', titulo: 'Visita Cliente A', descricao: 'Medição', data_inicio: '2026-05-28 14:00:00', tipo: 'visita', cor: 'red', cliente_id: 'c1', cliente_nome: 'Roberto' },
-            { id: '3', titulo: 'Tarefa Interna', descricao: '', data_inicio: '2026-05-29T10:00:00.000Z', tipo: 'tarefa', cor: 'blue' }
+            {
+              id: '2',
+              titulo: 'Visita Cliente A',
+              descricao: 'Medição',
+              data_inicio: '2026-05-28 14:00:00',
+              tipo: 'visita',
+              cor: 'red',
+              cliente_id: 'c1',
+              cliente_nome: 'Roberto',
+            },
+            {
+              id: '3',
+              titulo: 'Tarefa Interna',
+              descricao: '',
+              data_inicio: '2026-05-29T10:00:00.000Z',
+              tipo: 'tarefa',
+              cor: 'blue',
+            },
           ];
         }
         // 3. Ordem prod
         if (qStr.includes('FROM ordens_prod')) {
           return [
-            { id: '4', numero_op: 'OP-123', data_prazo: '2026-05-30', status: 'concluído', cliente_nome: 'Marcos' }
+            {
+              id: '4',
+              numero_op: 'OP-123',
+              data_prazo: '2026-05-30',
+              status: 'concluído',
+              cliente_nome: 'Marcos',
+            },
           ];
         }
         // 4. Quotations
         if (qStr.includes('FROM quotations')) {
           return [
-            { id: '5', numero_orcamento: 'ORC-002', data_orcamento: '2026-05-10', prazo_entrega_dias: 20, cliente_nome: 'Julio' }
+            {
+              id: '5',
+              numero_orcamento: 'ORC-002',
+              data_orcamento: '2026-05-10',
+              prazo_entrega_dias: 20,
+              cliente_nome: 'Julio',
+            },
           ];
         }
         return [];
       });
 
-      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026', filtro_tipo: 'reuniao' } };
+      const req = {
+        method: 'GET',
+        url: '/eventos',
+        query: { mes: '5', ano: '2026', filtro_tipo: 'reuniao' },
+      };
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -100,8 +156,8 @@ describe('handleCalendario', () => {
           titulo: 'Reunião Técnica',
           data_evento: '2026-06-04',
           tipo_evento: 'reuniao',
-          notificacao_dias_antes: 2
-        }
+          notificacao_dias_antes: 2,
+        },
       };
       const res = mockRes();
       await handleCalendario(req, res);
@@ -120,8 +176,12 @@ describe('handleCalendario', () => {
     });
 
     it('deve retornar 404 se orçamento não for encontrado', async () => {
-      vi.mocked(sql).mockResolvedValueOnce([]); // orcamento inexistente
-      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: '00000000-0000-0000-0000-000000000005' } };
+      vi.mocked(sql).mockResolvedValueOnce([]); // quotation inexistente
+      const req = {
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: '00000000-0000-0000-0000-000000000005' },
+      };
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(404);
@@ -129,7 +189,15 @@ describe('handleCalendario', () => {
 
     it('deve criar eventos de entrega automáticos para todos os usuários do tenant', async () => {
       vi.mocked(sql)
-        .mockResolvedValueOnce([{ id: 'orc-1', numero_orcamento: 'ORC-100', data_orcamento: '2026-06-01', prazo_entrega_dias: '10', cliente_nome: 'Marcela' }]) // SELECT orcamento
+        .mockResolvedValueOnce([
+          {
+            id: 'orc-1',
+            numero_orcamento: 'ORC-100',
+            data_orcamento: '2026-06-01',
+            prazo_entrega_dias: '10',
+            cliente_nome: 'Marcela',
+          },
+        ]) // SELECT quotation
         .mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]) // SELECT usuarios
         .mockResolvedValue([]); // INSERT eventos
 
@@ -146,7 +214,12 @@ describe('handleCalendario', () => {
     it('deve buscar eventos próximos que não foram notificados e criar as notificações de lembrete', async () => {
       vi.mocked(sql)
         .mockResolvedValueOnce([
-          { id: 10, titulo: 'Medição Importante', notificacao_dias_antes: 3, data_evento: '2026-06-07' }
+          {
+            id: 10,
+            titulo: 'Medição Importante',
+            notificacao_dias_antes: 3,
+            data_evento: '2026-06-07',
+          },
         ]) // SELECT eventosProximos
         .mockResolvedValueOnce([]) // INSERT notificacao
         .mockResolvedValueOnce([]); // UPDATE evento enviado
@@ -166,7 +239,7 @@ describe('handleCalendario', () => {
       const req = {
         method: 'PATCH',
         query: { id: '1' },
-        body: { concluido: true }
+        body: { concluido: true },
       };
       const res = mockRes();
       await handleCalendario(req, res);
@@ -180,7 +253,7 @@ describe('handleCalendario', () => {
       const req = {
         method: 'PATCH',
         query: { id: '999' },
-        body: { concluido: true }
+        body: { concluido: true },
       };
       const res = mockRes();
       await handleCalendario(req, res);
@@ -233,7 +306,13 @@ describe('handleCalendario', () => {
     it('deve gerar eventos automáticos com sucesso', async () => {
       vi.mocked(sql)
         .mockResolvedValueOnce([
-          { id: 'q1', numero_orcamento: 'PRO-001', cliente_nome: 'João', data_orcamento: '2026-06-01', prazo_entrega_dias: '15' },
+          {
+            id: 'q1',
+            numero_orcamento: 'PRO-001',
+            cliente_nome: 'João',
+            data_orcamento: '2026-06-01',
+            prazo_entrega_dias: '15',
+          },
         ])
         .mockResolvedValueOnce([{ id: 'u1' }])
         .mockResolvedValueOnce([{ id: 'auto-1' }]);
@@ -252,7 +331,11 @@ describe('handleCalendario', () => {
 
     it('deve retornar 404 se quotation não encontrada', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'inexistente' } };
+      const req = {
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: 'inexistente' },
+      };
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(404);
@@ -261,7 +344,11 @@ describe('handleCalendario', () => {
 
   describe('Auth e edge cases', () => {
     it('deve retornar 401 sem auth', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Sem token' });
+      vi.mocked(validateAuth).mockReturnValue({
+        authorized: false,
+        user: null,
+        error: 'Sem token',
+      });
       const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } };
       const res = mockRes();
       await handleCalendario(req, res);
@@ -269,7 +356,11 @@ describe('handleCalendario', () => {
     });
 
     it('deve usar tenantId default quando user sem tenantId', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+      vi.mocked(validateAuth).mockReturnValue({
+        authorized: true,
+        user: { id: 'u1' },
+        error: null,
+      });
       vi.mocked(sql).mockResolvedValue([]);
       const req = { method: 'GET', url: '/eventos', query: { mes: '6', ano: '2026' } };
       const res = mockRes();

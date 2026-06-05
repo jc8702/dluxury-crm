@@ -215,7 +215,7 @@ export function ConfirmDialog({
             onClick={onClose}
             disabled={isLoading}
             className={cn(
-              'h-9 px-3 rounded-[var(--ui-radius-md)] text-[var(--ui-text-sm)]',
+              'h-9 px-3 rounded-[var(--ui-radius-md)] text-[var(--ui-text-sm)] capitalize',
               'text-[var(--ui-text-secondary)] hover:bg-[var(--ui-surface-hover)]',
               'hover:text-[var(--ui-text-primary)]',
             )}
@@ -227,7 +227,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
             className={cn(
-              'h-9 px-4 rounded-[var(--ui-radius-md)] text-[var(--ui-text-sm)] font-medium',
+              'h-9 px-4 rounded-[var(--ui-radius-md)] text-[var(--ui-text-sm)] font-medium capitalize',
               tone === 'danger'
                 ? 'bg-[var(--ui-action-danger)] text-[var(--ui-action-danger-fg)] hover:bg-[var(--ui-action-danger-hover)]'
                 : 'bg-[var(--ui-action-primary)] text-[var(--ui-action-primary-fg)] hover:bg-[var(--ui-action-primary-hover)]',

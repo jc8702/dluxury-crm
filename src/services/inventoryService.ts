@@ -106,7 +106,7 @@ export const inventoryService = {
     }>,
   ): Promise<SKUMatchingLoteResult> {
     try {
-      return await apiCall<SKUMatchingLoteResult>('orcamentos/sku-matching', 'POST', {
+      return await apiCall<SKUMatchingLoteResult>('quotations/sku-matching', 'POST', {
         quotation_id,
         itens_csv,
       });

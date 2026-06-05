@@ -129,7 +129,6 @@ export interface TituloPagar {
   updated_at?: string;
 }
 
-
 export interface Material {
   id: string;
   sku: string;
@@ -149,12 +148,19 @@ export interface Material {
   updated_at?: string;
 }
 
-export interface Orcamento {
+export interface Quotation {
   id: string;
   cliente_id: string;
   projeto_id?: string;
   numero: string;
-  status: 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'em_producao' | 'concluido' | 'revisao_solicitada';
+  status:
+    | 'rascunho'
+    | 'enviado'
+    | 'aprovado'
+    | 'recusado'
+    | 'em_producao'
+    | 'concluido'
+    | 'revisao_solicitada';
   valor_base: number;
   taxa_mensal: number;
   condicao_pagamento_id?: string;
@@ -184,7 +190,16 @@ export interface Project {
   valor_estimado: number;
   valor_final: number;
   prazo_entrega?: string;
-  status: 'lead' | 'briefing' | 'measure' | 'design' | 'budget' | 'contract' | 'production' | 'installation' | 'concluded';
+  status:
+    | 'lead'
+    | 'briefing'
+    | 'measure'
+    | 'design'
+    | 'budget'
+    | 'contract'
+    | 'production'
+    | 'installation'
+    | 'concluded';
   etapa_producao?: string;
   responsavel?: string;
   observacoes?: string;
@@ -239,7 +254,13 @@ export interface PedidoCompra {
   id: string;
   numero: string;
   fornecedor_id: string;
-  status: 'rascunho' | 'enviado' | 'confirmado' | 'parcialmente_recebido' | 'recebido' | 'cancelado';
+  status:
+    | 'rascunho'
+    | 'enviado'
+    | 'confirmado'
+    | 'parcialmente_recebido'
+    | 'recebido'
+    | 'cancelado';
   data_pedido: string;
   data_previsao_entrega?: string;
   data_recebimento?: string;
@@ -278,7 +299,14 @@ export interface RecebimentoCompra {
 export interface EventoAgenda {
   id: string;
   titulo: string;
-  tipo: 'visita_comercial' | 'medicao' | 'entrega' | 'instalacao' | 'garantia' | 'reuniao' | 'outro';
+  tipo:
+    | 'visita_comercial'
+    | 'medicao'
+    | 'entrega'
+    | 'instalacao'
+    | 'garantia'
+    | 'reuniao'
+    | 'outro';
   data_inicio: string;
   data_fim?: string;
   dia_inteiro: boolean;
@@ -296,13 +324,19 @@ export interface EventoAgenda {
 
 export interface Notificacao {
   id: string;
-  tipo: 'estoque_critico' | 'prazo_projeto' | 'orcamento_sem_resposta' | 'garantia_pendente' | 'compra_atrasada' | 'meta_mensal';
+  tipo:
+    | 'estoque_critico'
+    | 'prazo_projeto'
+    | 'orcamento_sem_resposta'
+    | 'garantia_pendente'
+    | 'compra_atrasada'
+    | 'meta_mensal';
   titulo: string;
   mensagem: string;
   prioridade: 'info' | 'normal' | 'alta' | 'critica';
   lida: boolean;
   data_leitura?: string;
-  referencia_tipo?: 'orcamento' | 'projeto' | 'material' | 'chamado';
+  referencia_tipo?: 'quotation' | 'projeto' | 'material' | 'chamado';
   referencia_id?: string;
   url_destino?: string;
   created_at?: string;

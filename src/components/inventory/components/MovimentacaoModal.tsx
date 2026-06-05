@@ -14,7 +14,7 @@ interface MovimentacaoModalProps {
 
 const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose, onSuccess }) => {
   const { registrarMovimentacao } = useInventory();
-  const { projects, orcamentos } = useCRM();
+  const { projects, quotations } = useCRM();
   const [tipo, setTipo] = useState<'entrada' | 'saida' | 'ajuste'>('entrada');
   const [quantidade, setQuantidade] = useState<number>(0);
   const [motivo, setMotivo] = useState('');
@@ -250,7 +250,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
                 onChange={(e) => setOrcamentoId(e.target.value)}
               >
                 <option value="">Selecione...</option>
-                {orcamentos.map((o) => (
+                {quotations.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.numero}
                   </option>

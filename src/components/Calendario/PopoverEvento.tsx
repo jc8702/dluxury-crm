@@ -23,7 +23,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
 
   const obterNomeTipo = (tipo: string) => {
     switch (tipo) {
-      case 'orcamento':
+      case 'quotation':
         return 'Proposta / Orçamento';
       case 'prazo_entrega':
         return 'Prazo de Entrega OP';
@@ -186,9 +186,9 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 </a>
               )}
 
-              {evento.tipo_evento === 'orcamento' && evento.quotation_id && (
+              {evento.tipo_evento === 'quotation' && evento.quotation_id && (
                 <a
-                  href={`/#/orcamentos-pro?id=${evento.quotation_id}`}
+                  href={`/#/quotations-pro?id=${evento.quotation_id}`}
                   className="flex items-center gap-1 text-primary hover:underline font-semibold"
                   onClick={onClose}
                 >

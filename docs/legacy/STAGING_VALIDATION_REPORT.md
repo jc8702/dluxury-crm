@@ -1,4 +1,5 @@
 # STAGING VALIDATION REPORT
+
 **Data:** 2026-06-05
 **Deployment:** https://dluxury-xq3s23prs-jc8702s-projects.vercel.app
 **Commit:** d6c102f - `chore: stabilization phase fixes`
@@ -9,6 +10,7 @@
 ## VALIDAÇÕES AUTOMATIZADAS EXECUTADAS
 
 ### Build Remoto
+
 - Status: ✅ Ready
 - Módulos transformados: 5748
 - Tempo: 25.11s (build) + 25s (install) + 9s (upload) ≈ 2 min total
@@ -17,22 +19,26 @@
 - Maior chunk lazy: EngineeringPage 678 kB / 196 kB gzipped (code-splitting OK)
 
 ### Health Check (via `vercel curl` com bypass de SSO)
-| Endpoint | Status | Resposta |
-|---|---|---|
-| `GET /` | ✅ 200 | HTML 1668 bytes, título "D'Luxury CRM — ERP para Marcenarias de Alto Padrão", bundle `/assets/index-DsTURUl7.js` |
-| `GET /api/orcamentos` | ✅ 200 JSON | `{"success":false,"error":"Esta rota foi desativada...","replacement":"/api/quotations"}` — middleware ativo, redirect correto |
-| `GET /api/auth?action=me` | ✅ 401 JSON | `{"success":false,"error":"Token não fornecido ou inválido"}` — auth guard funcionando |
-| `GET /api/financeiro/fluxo-caixa` | ✅ 401 JSON | `{"success":false,"error":"Token não fornecido ou inválido"}` — endpoint registrado e respondendo |
-| `GET /.well-known/vercel-user-meta` | ✅ 204 | Confirma deployment atrás de SSO protection (esperado) |
+
+| Endpoint                            | Status      | Resposta                                                                                                                       |
+| ----------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /`                             | ✅ 200      | HTML 1668 bytes, título "D'Luxury CRM — ERP para Marcenarias de Alto Padrão", bundle `/assets/index-DsTURUl7.js`               |
+| `GET /api/orcamentos`               | ✅ 200 JSON | `{"success":false,"error":"Esta rota foi desativada...","replacement":"/api/quotations"}` — middleware ativo, redirect correto |
+| `GET /api/auth?action=me`           | ✅ 401 JSON | `{"success":false,"error":"Token não fornecido ou inválido"}` — auth guard funcionando                                         |
+| `GET /api/financeiro/fluxo-caixa`   | ✅ 401 JSON | `{"success":false,"error":"Token não fornecido ou inválido"}` — endpoint registrado e respondendo                              |
+| `GET /.well-known/vercel-user-meta` | ✅ 204      | Confirma deployment atrás de SSO protection (esperado)                                                                         |
 
 ### API Endpoints Validados
+
 - `api/index.ts` (middleware de auth + rate limit) ✅
 - `api/orcamentos` (deprecation message) ✅
 - `api/financeiro/fluxo-caixa` (404 → 401) ✅
 - `api/auth` (401 sem token) ✅
 
 ### Headers de Segurança
+
 Verificados via `vercel.json` config (declarados no `api/index.ts:80-93`):
+
 - X-Content-Type-Options: nosniff
 - X-Frame-Options: DENY
 - X-XSS-Protection: 1; mode=block
@@ -42,6 +48,7 @@ Verificados via `vercel.json` config (declarados no `api/index.ts:80-93`):
 - Strict-Transport-Security: aplicado em HTTPS
 
 ### Latência
+
 - 5 requests sequenciais via `vercel curl`: 12.66s total (média 2.53s/req)
 - **Atenção:** overhead majoritariamente do handshake de SSO bypass do Vercel CLI, não do app. Em produção com Vercel CDN + usuário real, a latência deve ser < 200ms (TTFB).
 
@@ -50,6 +57,7 @@ Verificados via `vercel.json` config (declarados no `api/index.ts:80-93`):
 ## VALIDAÇÕES MANUAIS PENDENTES (REQUER HUMANO)
 
 ### Bloqueadores 0-12h
+
 - [ ] **Login com credenciais reais** — confirmar dashboard renderiza
 - [ ] **CRUD Cliente** — criar/editar/excluir persistindo no Postgres
 - [ ] **CRUD Orçamento** — criar com item, salvar, recarregar, ver item ainda lá
@@ -59,12 +67,14 @@ Verificados via `vercel.json` config (declarados no `api/index.ts:80-93`):
 - [ ] **Fita de borda em item de orçamento** — feature flag Pro
 
 ### Validações 12-24h
+
 - [ ] Sessão de 2h sem timeout inesperado
 - [ ] Recarregar página em /orcamentos/:id mantém estado
 - [ ] Navegação back/forward browser (hash router) preserva rota
 - [ ] Teste offline → online (PWA? se habilitado)
 
 ### Validações 24-48h
+
 - [ ] Carga real com 5-10 usuários simultâneos (K6 / Artillery / ab)
 - [ ] Memory leak check (heap snapshot antes/depois de sessão)
 - [ ] Sentry dashboard limpo (se instrumentado)

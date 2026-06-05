@@ -11,7 +11,7 @@ interface ImportarOrcamentoModalProps {
 }
 
 export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamentoModalProps) {
-  const [orcamentos, setOrcamentos] = useState<any[]>([]);
+  const [quotations, setOrcamentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -19,7 +19,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
   useEffect(() => {
     async function carregarOrcamentos() {
       try {
-        const list = await api.orcamentos.list();
+        const list = await api.quotations.list();
         // Filtrar orçamentos que possuem itens ou estão fechados/aprovados
         setOrcamentos(list || []);
       } catch (err) {
@@ -43,7 +43,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
   const handleSelecionarOrcamento = async (orcamentoId: string, numeroOrcamento: string) => {
     setImporting(true);
     try {
-      const orcDet = await api.orcamentos.get(orcamentoId);
+      const orcDet = await api.quotations.get(orcamentoId);
       if (!orcDet || !orcDet.itens || orcDet.itens.length === 0) {
         alert('Este orçamento não contém itens ou peças cadastradas.');
         setImporting(false);
@@ -144,7 +144,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
     }
   };
 
-  const orcamentosFiltrados = orcamentos.filter((o) => {
+  const orcamentosFiltrados = quotations.filter((o) => {
     const num = String(o.numeroOrcamento || o.numero || '').toLowerCase();
     const cli = String(o.clienteNome || o.cliente?.nome || '').toLowerCase();
     const texto = filtroTexto.toLowerCase();

@@ -1,10 +1,9 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
 
-// TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM orcamentos)
-// Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela orcamentos foi dropada em 2026-06-04.
+// TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM quotations)
+// Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela quotations foi dropada em 2026-06-04.
 // Rota afetada: GET /api/projects (campo valor_orcamento_atual sempre null).
-
 
 export async function handleProjects(req: any, res: any) {
   try {
@@ -42,10 +41,14 @@ export async function handleProjects(req: any, res: any) {
         )
       `;
       // Garantir colunas novas em tabelas existentes
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(
+        () => {},
+      );
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS tag TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS quotation_id TEXT`.catch(() => {});
-      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
+      await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(
+        () => {},
+      );
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_name TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS cliente_nome TEXT`.catch(() => {});
       await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS title TEXT`.catch(() => {});
@@ -56,9 +59,13 @@ export async function handleProjects(req: any, res: any) {
       // Migração de emergência: Se projects estiver vazio ou com poucos dados, tenta puxar do kanban_items (tabela antiga)
       const countResult = await sql`SELECT count(*) FROM projects WHERE tenant_id = ${tenantId}`;
       const projectsCount = countResult && countResult[0] ? parseInt(countResult[0].count) : 0;
-      
-      const kanbanItemsCountResult = await sql`SELECT count(*) FROM kanban_items WHERE (type = 'project' OR type IS NULL) AND tenant_id = ${tenantId}`;
-      const kanbanItemsCount = kanbanItemsCountResult && kanbanItemsCountResult[0] ? parseInt(kanbanItemsCountResult[0].count) : 0;
+
+      const kanbanItemsCountResult =
+        await sql`SELECT count(*) FROM kanban_items WHERE (type = 'project' OR type IS NULL) AND tenant_id = ${tenantId}`;
+      const kanbanItemsCount =
+        kanbanItemsCountResult && kanbanItemsCountResult[0]
+          ? parseInt(kanbanItemsCountResult[0].count)
+          : 0;
 
       if (projectsCount < kanbanItemsCount) {
         try {
@@ -97,7 +104,7 @@ export async function handleProjects(req: any, res: any) {
     }
     if (req.method === 'GET') {
       const { client_id, status, q } = req.query;
-      
+
       let query;
       if (q) {
         // Busca por TAG ou Nome (PRJ- autocomplete)
@@ -194,13 +201,13 @@ export async function handleProjects(req: any, res: any) {
           ${tag},
           ${tenantId}::uuid
         ) RETURNING *`;
-      
+
       await auditLog('projects', result[0].id, 'CREATE', user?.id, null, result[0]);
-      
+
       if (result[0].status === 'em_producao') {
         await triggerOpCreationForProject(result[0].id, tenantId, result[0]);
       }
-      
+
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
@@ -208,9 +215,10 @@ export async function handleProjects(req: any, res: any) {
       const { id } = req.query;
       if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
       const f = req.body;
-      
+
       const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
-      if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
+      if (!before.length)
+        return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
 
       const r = await sql`
         UPDATE projects SET 
@@ -239,7 +247,8 @@ export async function handleProjects(req: any, res: any) {
       }
 
       if (r.length && f.status === 'concluido') {
-        const itms = await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} AND tenant_id = ${tenantId}`;
+        const itms =
+          await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} AND tenant_id = ${tenantId}`;
         for (const itm of itms) await writeOffStockForProject(itm.id, tenantId);
       }
       return res.status(200).json({ success: true, data: r[0] });
@@ -248,19 +257,22 @@ export async function handleProjects(req: any, res: any) {
       const { user } = validateAuth(req);
       const { id } = req.query;
       if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
-      
+
       const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
-      if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
+      if (!before.length)
+        return res.status(404).json({ success: false, error: 'Projeto não encontrado' });
 
       // Soft Delete: Marcar como deletado e registrar auditoria
       await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
-      
+
       // Limpar ordens de produção vinculadas (Hard delete ou Soft delete conforme política)
       // Aqui usamos Soft Delete também nas OPs se houver a coluna
       await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE (projeto_id = ${id} OR metadata->>'projeto_id' = ${id}) AND tenant_id = ${tenantId}`;
-      
-      await auditLog('projects', id, 'DELETE', user?.id, before[0], { deleted_at: new Date().toISOString() });
-      
+
+      await auditLog('projects', id, 'DELETE', user?.id, before[0], {
+        deleted_at: new Date().toISOString(),
+      });
+
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -324,24 +336,48 @@ export async function handleEngineering(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
-    
+
     // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
     await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(
+      () => {},
+    );
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS nome TEXT`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(() => {});
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS codigo_modelo TEXT`.catch(
+      () => {},
+    );
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS descricao TEXT`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS largura_padrao NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS altura_padrao NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS profundidade_padrao NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS horas_mo_padrao NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao NUMERIC DEFAULT 150`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_total NUMERIC DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
-    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(() => {});
-    
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS regras_calculo JSONB DEFAULT '[]'`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS largura_padrao NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS altura_padrao NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS profundidade_padrao NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS horas_mo_padrao NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_hora_padrao NUMERIC DEFAULT 150`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS preco_material_m3_padrao NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS valor_total NUMERIC DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`.catch(
+      () => {},
+    );
+
     // Force Null em colunas legadas (hotfix industrial v6)
     try {
       await sql`
@@ -393,13 +429,19 @@ export async function handleEngineering(req: any, res: any) {
       }
       return res.status(200).json({ success: true, data: result });
     }
-    
+
     if (req.method === 'POST') {
-      let { 
-        nome, codigo_modelo, descricao,
-        largura_padrao, altura_padrao, profundidade_padrao,
-        horas_mo_padrao, valor_hora_padrao, valor_total,
-        regras_calculo
+      let {
+        nome,
+        codigo_modelo,
+        descricao,
+        largura_padrao,
+        altura_padrao,
+        profundidade_padrao,
+        horas_mo_padrao,
+        valor_hora_padrao,
+        valor_total,
+        regras_calculo,
       } = req.body;
 
       if (!nome) {
@@ -414,9 +456,7 @@ export async function handleEngineering(req: any, res: any) {
           ORDER BY codigo_modelo DESC
           LIMIT 1
         `;
-        const nextNum = last
-          ? Number(last.codigo_modelo.replace('MOD-', '')) + 1
-          : 1;
+        const nextNum = last ? Number(last.codigo_modelo.replace('MOD-', '')) + 1 : 1;
         codigo_modelo = `MOD-${String(nextNum).padStart(3, '0')}`;
       }
 
@@ -494,7 +534,7 @@ export async function handleEngineering(req: any, res: any) {
       await sql`DELETE FROM erp_product_bom WHERE id = ${id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
-    
+
     return res.status(405).end();
   } catch (err: any) {
     console.error('ENGINEERING_PERSISTENCE_ERROR:', err);
@@ -506,42 +546,44 @@ export async function handleSKUs(req: any, res: any) {
   try {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || "00000000-0000-0000-0000-000000000000";
-    
-    if (req.method === "GET") {
-      if (req.query.action === "next-code") {
-        const prefix = req.query.prefix || "SKU";
+    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+
+    if (req.method === 'GET') {
+      if (req.query.action === 'next-code') {
+        const prefix = req.query.prefix || 'SKU';
         const [last] = await sql`
           SELECT sku_codigo as sku FROM estoque_materiais_detalhado
-          WHERE sku_codigo LIKE ${prefix + "-%"} AND tenant_id = ${tenantId}
+          WHERE sku_codigo LIKE ${prefix + '-%'} AND tenant_id = ${tenantId}
           ORDER BY sku_codigo DESC
           LIMIT 1
         `;
         let nextNum = 1;
         if (last && last.sku) {
-          const numPart = last.sku.split("-")[1];
+          const numPart = last.sku.split('-')[1];
           if (numPart && !isNaN(Number(numPart))) {
             nextNum = Number(numPart) + 1;
           }
         }
-        const nextCode = `${prefix}-${String(nextNum).padStart(4, "0")}`;
+        const nextCode = `${prefix}-${String(nextNum).padStart(4, '0')}`;
         return res.status(200).json({ success: true, data: { nextCode } });
       }
 
-      const result = await sql`SELECT id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, null as largura_mm, null as altura_mm, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM estoque_materiais_detalhado WHERE tenant_id = ${tenantId} ORDER BY descricao ASC`;
+      const result =
+        await sql`SELECT id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, null as largura_mm, null as altura_mm, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM estoque_materiais_detalhado WHERE tenant_id = ${tenantId} ORDER BY descricao ASC`;
       return res.status(200).json({ success: true, data: result });
     }
-    
-    if (req.method === "POST") {
+
+    if (req.method === 'POST') {
       const f = req.body;
-      const r = await sql`INSERT INTO estoque_materiais_detalhado (sku_codigo, descricao, preco_custo_unitario, preco_custo, unidade_medida, unidade_uso, ativo, quantidade_disponivel, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, ${f.fabricante || null}, ${f.fornecedor_principal || null}, ${f.lead_time_dias || null}, ${f.categoria_taxonomia || null}, ${tenantId}::uuid) RETURNING id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
+      const r =
+        await sql`INSERT INTO estoque_materiais_detalhado (sku_codigo, descricao, preco_custo_unitario, preco_custo, unidade_medida, unidade_uso, ativo, quantidade_disponivel, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, ${f.fabricante || null}, ${f.fornecedor_principal || null}, ${f.lead_time_dias || null}, ${f.categoria_taxonomia || null}, ${tenantId}::uuid) RETURNING id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
       return res.status(201).json({ success: true, data: r[0] });
     }
 
-    if (req.method === "PATCH" || req.method === "PUT") {
+    if (req.method === 'PATCH' || req.method === 'PUT') {
       const f = req.body;
       const { id } = req.query;
-      if (!id) return res.status(400).json({ success: false, error: "ID do SKU n�o fornecido" });
+      if (!id) return res.status(400).json({ success: false, error: 'ID do SKU n�o fornecido' });
       const r = await sql`UPDATE estoque_materiais_detalhado SET 
         descricao = COALESCE(${f.nome}, descricao),
         preco_custo_unitario = COALESCE(${f.preco_base}, preco_custo_unitario),
@@ -557,7 +599,7 @@ export async function handleSKUs(req: any, res: any) {
       return res.status(200).json({ success: true, data: r[0] });
     }
 
-    if (req.method === "DELETE") {
+    if (req.method === 'DELETE') {
       await sql`UPDATE estoque_materiais_detalhado SET ativo = false WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
@@ -574,10 +616,18 @@ export async function handleSimulations(req: any, res: any) {
     const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
 
     // Migração: garantir colunas adicionais para cenários de produção
-    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(() => {});
-    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS nome TEXT NOT NULL DEFAULT 'Simulação'`.catch(() => {});
-    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'generico'`.catch(() => {});
-    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE`.catch(() => {});
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS nome TEXT NOT NULL DEFAULT 'Simulação'`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tipo TEXT DEFAULT 'generico'`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE`.catch(
+      () => {},
+    );
 
     const method = req.method;
     const url = req.url || '';
@@ -591,20 +641,31 @@ export async function handleSimulations(req: any, res: any) {
 
     if (method === 'GET') {
       if (recordId) {
-        const [row] = await sql`SELECT * FROM erp_simulations WHERE id = ${recordId} AND tenant_id = ${tenantId}`;
-        if (!row) return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
+        const [row] =
+          await sql`SELECT * FROM erp_simulations WHERE id = ${recordId} AND tenant_id = ${tenantId}`;
+        if (!row)
+          return res.status(404).json({ success: false, error: 'Simulação não encontrada' });
         return res.status(200).json({ success: true, data: row });
       }
       if (tipo) {
-        const rows = await sql`SELECT * FROM erp_simulations WHERE tipo = ${tipo} AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
+        const rows =
+          await sql`SELECT * FROM erp_simulations WHERE tipo = ${tipo} AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
         return res.status(200).json({ success: true, data: rows });
       }
-      const rows = await sql`SELECT * FROM erp_simulations WHERE tenant_id = ${tenantId} ORDER BY created_at DESC`;
+      const rows =
+        await sql`SELECT * FROM erp_simulations WHERE tenant_id = ${tenantId} ORDER BY created_at DESC`;
       return res.status(200).json({ success: true, data: rows });
     }
 
     if (method === 'POST') {
-      const { nome, tipo: tipoBody, dados_simulacao, dados_input, cliente_id, cliente_nome } = req.body;
+      const {
+        nome,
+        tipo: tipoBody,
+        dados_simulacao,
+        dados_input,
+        cliente_id,
+        cliente_nome,
+      } = req.body;
       const [row] = await sql`
         INSERT INTO erp_simulations (nome, tipo, dados_simulacao, dados_input, cliente_id, cliente_nome, tenant_id)
         VALUES (${nome || 'Simulação'}, ${tipoBody || 'generico'}, ${JSON.stringify(dados_simulacao || {})}, ${JSON.stringify(dados_input || {})}, ${cliente_id || null}, ${cliente_nome || null}, ${tenantId}::uuid)
@@ -644,13 +705,18 @@ export async function handleSimulations(req: any, res: any) {
 
 async function triggerOpCreationForProject(projectId: string, tenantId: string, projectData: any) {
   try {
-    const existingOp = await sql`SELECT id FROM ordens_producao WHERE projeto_id = ${projectId} AND tenant_id = ${tenantId}`;
+    const existingOp =
+      await sql`SELECT id FROM ordens_producao WHERE projeto_id = ${projectId} AND tenant_id = ${tenantId}`;
     if (existingOp.length === 0) {
       const rawTag = projectData.tag || `PRJ-${projectId.substring(0, 6).toUpperCase()}`;
       const numeroOp = `OP-PRJ-${rawTag.replace('PRJ-', '')}-${Math.floor(1000 + Math.random() * 9000)}`;
-      
+
       let orcId = null;
-      if (projectData.quotation_id && projectData.quotation_id !== 'none' && projectData.quotation_id !== '') {
+      if (
+        projectData.quotation_id &&
+        projectData.quotation_id !== 'none' &&
+        projectData.quotation_id !== ''
+      ) {
         orcId = projectData.quotation_id;
       }
 
@@ -686,5 +752,3 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
     console.error('Error creating OP for project:', err);
   }
 }
-
-

@@ -5,7 +5,7 @@ export type {
   Project,
   Billing,
   QuotationItem,
-  Orcamento,
+  Quotation,
   CondicaoPagamento,
   KanbanItem,
   Role,

@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
-import type { Client, Project, Orcamento } from '../types';
+import type { Client, Project, Quotation } from '../types';
 
 interface CrmState {
   clients: Client[];
   projects: Project[];
-  orcamentos: Orcamento[];
+  quotations: Quotation[];
   events: any[];
   visits: any[];
 
@@ -32,7 +32,7 @@ interface CrmState {
 export const useCrmStore = create<CrmState>((set, get) => ({
   clients: [],
   projects: [],
-  orcamentos: [],
+  quotations: [],
   events: [],
   visits: [],
 
@@ -42,7 +42,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         api.clients.list().catch(() => []),
         api.agenda.list().catch(() => []),
         api.projects.list().catch(() => []),
-        api.orcamentos.list().catch(() => []),
+        api.quotations.list().catch(() => []),
       ]);
 
       const clients = clientsData.map((c: any) => ({
@@ -106,7 +106,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         visitaId: p.visita_id || p.visitaId || '',
       }));
 
-      const orcamentos = Array.isArray(orcamentosData)
+      const quotations = Array.isArray(orcamentosData)
         ? orcamentosData.map((o: any) => ({
             ...o,
             id: String(o.id || ''),
@@ -127,7 +127,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
           status: v.status_visita || 'agendado',
         }));
 
-      set({ clients, events, projects, orcamentos, visits });
+      set({ clients, events, projects, quotations, visits });
     } catch (error) {
       console.error('Falha ao carregar dados do CRM:', error);
     }
@@ -172,12 +172,27 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
   updateProject: async (id: string, data: Partial<Project>) => {
     const payload: any = {};
-    if (data.ambiente) { payload.title = data.ambiente; payload.ambiente = data.ambiente; }
-    if (data.clientName) { payload.subtitle = data.clientName; payload.client_name = data.clientName; }
+    if (data.ambiente) {
+      payload.title = data.ambiente;
+      payload.ambiente = data.ambiente;
+    }
+    if (data.clientName) {
+      payload.subtitle = data.clientName;
+      payload.client_name = data.clientName;
+    }
     if (data.status) payload.status = data.status;
-    if (data.valorEstimado !== undefined) { payload.value = data.valorEstimado; payload.valor_estimado = data.valorEstimado; }
-    if (data.observacoes) { payload.observations = data.observacoes; payload.observacoes = data.observacoes; }
-    if (data.descricao) { payload.description = data.descricao; payload.descricao = data.descricao; }
+    if (data.valorEstimado !== undefined) {
+      payload.value = data.valorEstimado;
+      payload.valor_estimado = data.valorEstimado;
+    }
+    if (data.observacoes) {
+      payload.observations = data.observacoes;
+      payload.observacoes = data.observacoes;
+    }
+    if (data.descricao) {
+      payload.description = data.descricao;
+      payload.descricao = data.descricao;
+    }
     if (data.prazoEntrega) payload.prazo_entrega = data.prazoEntrega;
     if (data.responsavel) payload.responsavel = data.responsavel;
     if (data.clientId !== undefined) payload.client_id = data.clientId;
@@ -194,16 +209,16 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
 
   addOrcamento: async (data: any) => {
-    await api.orcamentos.create(data);
+    await api.quotations.create(data);
     await get().reloadCRMData();
   },
   updateOrcamento: async (id: string, data: any) => {
-    await api.orcamentos.update(id, data);
+    await api.quotations.update(id, data);
     await get().reloadCRMData();
   },
   removeOrcamento: async (id: string) => {
-    await api.orcamentos.delete(id);
-    set((state) => ({ orcamentos: state.orcamentos.filter((o) => o.id !== id) }));
+    await api.quotations.delete(id);
+    set((state) => ({ quotations: state.quotations.filter((o) => o.id !== id) }));
   },
 
   removeVisit: async (id: string) => {

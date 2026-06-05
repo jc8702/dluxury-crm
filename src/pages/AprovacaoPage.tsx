@@ -24,24 +24,24 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
   const { token: urlToken, numero } = useParams();
   const token = propToken || urlToken || numero || '';
 
-  const [orcamento, setOrcamento] = useState<any>(null);
+  const [quotation, setOrcamento] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const handleDownloadPDF = () => {
-    if (!orcamento) return;
+    if (!quotation) return;
 
     const orcMapeado = {
-      numeroOrcamento: orcamento.numero,
-      valorTotalVenda: orcamento.valor_final,
+      numeroOrcamento: quotation.numero,
+      valorTotalVenda: quotation.valor_final,
       cliente: {
-        nome: orcamento.cliente_nome,
+        nome: quotation.cliente_nome,
         cidade: '',
         uf: '',
-        telefone: orcamento.cliente_telefone,
+        telefone: quotation.cliente_telefone,
       },
-      validadeDias: orcamento.validade_dias || 15,
-      taxaFinanceiraPercentual: orcamento.taxa_mensal || 0,
-      itens: (orcamento.itens || []).map((item: any) => ({
+      validadeDias: quotation.validade_dias || 15,
+      taxaFinanceiraPercentual: quotation.taxa_mensal || 0,
+      itens: (quotation.itens || []).map((item: any) => ({
         nomeCustomizado: item.descricao,
         unidadeMedida: 'UN',
         precoVendaUnitario: item.valor_unitario,
@@ -186,7 +186,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 }}
               >
                 Obrigado, <strong>{formName}</strong>. Recebemos sua aprovação formal do orçamento{' '}
-                <strong>{orcamento.numero}</strong>.
+                <strong>{quotation.numero}</strong>.
               </p>
               <div
                 style={{
@@ -212,7 +212,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     color: 'hsl(var(--primary))',
                   }}
                 >
-                  ID: {orcamento.id}
+                  ID: {quotation.id}
                   <br />
                   IP: REGISTRADO
                   <br />
@@ -311,7 +311,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   textTransform: 'uppercase',
                 }}
               >
-                Orçamento {orcamento.numero}
+                Orçamento {quotation.numero}
               </span>
               <h1 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '1rem 0 0.5rem 0' }}>
                 Proposta Comercial
@@ -326,7 +326,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 }}
               >
                 <Clock size={16} /> Emitido em{' '}
-                {new Date(orcamento.created_at || orcamento.criado_em).toLocaleDateString('pt-BR')}
+                {new Date(quotation.created_at || quotation.criado_em).toLocaleDateString('pt-BR')}
               </p>
               <button
                 onClick={handleDownloadPDF}
@@ -347,7 +347,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>
-                {orcamento.cliente_nome}
+                {quotation.cliente_nome}
               </p>
               <div
                 style={{
@@ -367,7 +367,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     justifyContent: 'flex-end',
                   }}
                 >
-                  <Phone size={14} /> {orcamento.cliente_telefone}
+                  <Phone size={14} /> {quotation.cliente_telefone}
                 </span>
                 <span
                   style={{
@@ -377,7 +377,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     justifyContent: 'flex-end',
                   }}
                 >
-                  <Mail size={14} /> {orcamento.cliente_email}
+                  <Mail size={14} /> {quotation.cliente_email}
                 </span>
               </div>
             </div>
@@ -422,7 +422,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orcamento.itens?.map((item: any) => (
+                  {quotation.itens?.map((item: any) => (
                     <tr key={item.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                       <td style={{ padding: '1.2rem 1.5rem' }}>
                         <div style={{ fontWeight: '700', fontSize: '1rem', color: '#1E293B' }}>
@@ -473,17 +473,17 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     <span>Subtotal</span>
                     <span>
                       R${' '}
-                      {Number(orcamento.valor_base).toLocaleString('pt-BR', {
+                      {Number(quotation.valor_base).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                       })}
                     </span>
                   </div>
-                  {orcamento.adicional_urgencia_pct > 0 && (
+                  {quotation.adicional_urgencia_pct > 0 && (
                     <div
                       style={{ display: 'flex', justifyContent: 'space-between', color: '#EF4444' }}
                     >
                       <span>Adicional Urgência</span>
-                      <span>+{orcamento.adicional_urgencia_pct}%</span>
+                      <span>+{quotation.adicional_urgencia_pct}%</span>
                     </div>
                   )}
                   <div
@@ -501,7 +501,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     <span>T O T A L</span>
                     <span style={{ color: '#E2AC00' }}>
                       R${' '}
-                      {Number(orcamento.valor_final).toLocaleString('pt-BR', {
+                      {Number(quotation.valor_final).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                       })}
                     </span>
@@ -535,7 +535,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 }}
               >
                 <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>
-                  {orcamento.condicao?.nome || 'A combinar'}
+                  {quotation.condicao?.nome || 'A combinar'}
                 </p>
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>
                   Prazos sujeitos a aprovação de crédito.
@@ -564,7 +564,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 }}
               >
                 <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>
-                  {orcamento.prazo_entrega_dias || 45} dias úteis
+                  {quotation.prazo_entrega_dias || 45} dias úteis
                 </p>
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>
                   Após a medição final e aprovação técnica.
@@ -573,7 +573,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
             </section>
           </div>
 
-          {orcamento.observacoes && (
+          {quotation.observacoes && (
             <section>
               <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1rem' }}>
                 Observações Adicionais
@@ -589,7 +589,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   lineHeight: '1.6',
                 }}
               >
-                {orcamento.observacoes}
+                {quotation.observacoes}
               </div>
             </section>
           )}

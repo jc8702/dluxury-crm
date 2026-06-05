@@ -16,16 +16,17 @@ export async function handleNotificacoes(req: any, res: any) {
       if (req.url.includes('contar')) {
         // Gera notificações antes de contar (centralizado no server)
         await gerarNotificacoesAutomaticas(tenantId).catch(console.error);
-        const count = await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
+        const count =
+          await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true, data: parseInt(count[0].count) });
       }
       // Listar todas ou apenas não lidas
       const limit = req.query.limit || 50;
       const unreadOnly = req.query.unread === 'true';
-      const query = unreadOnly 
+      const query = unreadOnly
         ? sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId} ORDER BY created_at DESC LIMIT ${limit}`
         : sql`SELECT id, tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, lida, data_leitura, created_at, updated_at FROM notificacoes WHERE tenant_id = ${tenantId} ORDER BY created_at DESC LIMIT ${limit}`;
-      
+
       const result = await query;
       return res.status(200).json({ success: true, data: result });
     }
@@ -73,7 +74,9 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
         criadas++;
       }
     }
-  } catch (e) { console.error('Erro ao gerar notificações de estoque:', e); }
+  } catch (e) {
+    console.error('Erro ao gerar notificações de estoque:', e);
+  }
 
   // 2. Projetos com entrega próxima (3 dias)
   try {
@@ -98,16 +101,18 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
         criadas++;
       }
     }
-  } catch (e) { console.error('Erro ao gerar notificações de projetos:', e); }
+  } catch (e) {
+    console.error('Erro ao gerar notificações de projetos:', e);
+  }
 
   // 3. Orçamentos sem resposta (7 dias)
   try {
     const limitDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const orcamentos = await db
+    const quotations = await db
       .select({
         id: quotations.id,
         numero: quotations.numeroOrcamento,
-        cliente: clientes.nome
+        cliente: clientes.nome,
       })
       .from(quotations)
       .innerJoin(clientes, eq(quotations.clienteId, clientes.id))
@@ -115,10 +120,10 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
         and(
           eq(quotations.status, 'enviado'),
           eq(quotations.tenantId, tenantId),
-          lt(quotations.updatedAt, limitDate)
-        )
+          lt(quotations.updatedAt, limitDate),
+        ),
       );
-    for (const o of orcamentos) {
+    for (const o of quotations) {
       const exists = await sql`
         SELECT id FROM notificacoes 
         WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id} AND tenant_id = ${tenantId}
@@ -126,12 +131,14 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       if (!exists.length) {
         await sql`
           INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'orcamento', ${o.id}, '/orcamentos', ${tenantId})
+          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'quotation', ${o.id}, '/quotations', ${tenantId})
         `;
         criadas++;
       }
     }
-  } catch (e) { console.error('Erro ao gerar notificações de orçamentos:', e); }
+  } catch (e) {
+    console.error('Erro ao gerar notificações de orçamentos:', e);
+  }
 
   // 4. Garantias pendentes (3 dias)
   try {
@@ -154,7 +161,9 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
         criadas++;
       }
     }
-  } catch (e) { console.error('Erro ao gerar notificações de garantia:', e); }
+  } catch (e) {
+    console.error('Erro ao gerar notificações de garantia:', e);
+  }
 
   // 5. Cobranças vencidas
   try {
@@ -177,7 +186,9 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
         criadas++;
       }
     }
-  } catch (e) { console.error('Erro ao gerar notificações de cobrança:', e); }
+  } catch (e) {
+    console.error('Erro ao gerar notificações de cobrança:', e);
+  }
 
   return { criadas };
 }

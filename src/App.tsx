@@ -84,7 +84,7 @@ function AuthGuard() {
   const { user, authLoading } = useAuth();
   React.useEffect(() => {
     if (user) {
-      // Carrega dados globais (clients, projects, orcamentos, events) no store compartilhado
+      // Carrega dados globais (clients, projects, quotations, events) no store compartilhado
       void useCrmStore.getState().reloadCRMData();
     }
   }, [user]);
@@ -237,7 +237,7 @@ export default function App() {
                       {/* Rotas Comuns do Plano Basic (e superiores) */}
                       <Route path="painel" element={<DashboardPage />} />
                       <Route path="clientes" element={<ClientsPage />} />
-                      <Route path="orcamentos" element={<QuotationForm />} />
+                      <Route path="quotations" element={<QuotationForm />} />
                       <Route path="prospeccao" element={<ProspeccaoPage />} />
                       <Route path="projetos" element={<ProjectsPage />} />
                       <Route path="visitas" element={<VisitsPage />} />

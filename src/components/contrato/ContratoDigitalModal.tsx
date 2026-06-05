@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Signature, 
-  Send, 
-  CheckCircle, 
-  X, 
-  RefreshCw, 
-  Clock, 
-  ShieldCheck, 
+import {
+  FileText,
+  Signature,
+  Send,
+  CheckCircle,
+  X,
+  RefreshCw,
+  Clock,
+  ShieldCheck,
   ExternalLink,
-  History
+  History,
 } from 'lucide-react';
 import { contratoDigitalService } from '../../services/contratoDigitalService';
 import type { ContratoDigital, HistoricoAssinatura } from '../../services/contratoDigitalService';
@@ -22,7 +22,12 @@ interface Props {
   onStatusChanged?: (novoStatus: string) => void;
 }
 
-export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, numeroOrcamento: propNumeroOrcamento, onClose, onStatusChanged }: Props) {
+export default function ContratoDigitalModal({
+  orcamentoId: propOrcamentoId,
+  numeroOrcamento: propNumeroOrcamento,
+  onClose,
+  onStatusChanged,
+}: Props) {
   const [selectedOrcamentoId, setSelectedOrcamentoId] = useState(propOrcamentoId);
   const [selectedNumeroOrcamento, setSelectedNumeroOrcamento] = useState(propNumeroOrcamento);
   const [orcamentosList, setOrcamentosList] = useState<any[]>([]);
@@ -39,7 +44,8 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   const normalizarOrcamento = (orc: any) => {
     if (!orc) return null;
     const clienteId = orc.clienteId || orc.cliente_id;
-    const cliente = orc.cliente || clientsList.find(c => String(c.id) === String(clienteId)) || null;
+    const cliente =
+      orc.cliente || clientsList.find((c) => String(c.id) === String(clienteId)) || null;
     return {
       ...orc,
       id: orc.id,
@@ -60,15 +66,14 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   }, [selectedOrcamentoId]);
 
   useEffect(() => {
-    Promise.all([
-      api.orcamentos.list().catch(() => []),
-      api.clients.list().catch(() => [])
-    ]).then(([orcamentos, clientes]) => {
-      setClientsList(clientes || []);
-      setOrcamentosList(orcamentos || []);
-    }).catch(err => {
-      console.error('Erro ao carregar dados do modal de contrato:', err);
-    });
+    Promise.all([api.quotations.list().catch(() => []), api.clients.list().catch(() => [])])
+      .then(([quotations, clientes]) => {
+        setClientsList(clientes || []);
+        setOrcamentosList(quotations || []);
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar dados do modal de contrato:', err);
+      });
   }, []);
 
   const carregarContrato = async (id: string) => {
@@ -80,9 +85,9 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
       if (res.success) {
         setContrato(res.contrato);
         setHistorico(res.historico || []);
-        
+
         if (!res.contrato) {
-          const orcDet = await api.orcamentos.get(id).catch(() => null);
+          const orcDet = await api.quotations.get(id).catch(() => null);
           setSelectedOrcamentoDet(orcDet);
         }
       }
@@ -96,7 +101,7 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
 
   const handleOrcamentoChange = (id: string) => {
     setSelectedOrcamentoId(id);
-    const selected = orcamentosList.find(o => o.id === id);
+    const selected = orcamentosList.find((o) => o.id === id);
     if (selected) {
       setSelectedNumeroOrcamento(selected.numeroOrcamento || selected.numero || '');
     }
@@ -105,10 +110,13 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
   const handleGerarContrato = async () => {
     if (!selectedOrcamentoId) return setError('Selecione um orçamento de referência.');
 
-    const orcRaw = selectedOrcamentoDet || (await api.orcamentos.get(selectedOrcamentoId).catch(() => null));
+    const orcRaw =
+      selectedOrcamentoDet || (await api.quotations.get(selectedOrcamentoId).catch(() => null));
     const orcVal = normalizarOrcamento(orcRaw);
     if (!orcVal || !orcVal.clienteId) {
-      setError('O orçamento selecionado não possui cliente associado. Por favor, associe um cliente ao orçamento antes de gerar o contrato.');
+      setError(
+        'O orçamento selecionado não possui cliente associado. Por favor, associe um cliente ao orçamento antes de gerar o contrato.',
+      );
       return;
     }
 
@@ -133,7 +141,10 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
     setSimulating(true);
     setError('');
     try {
-      const res = await contratoDigitalService.webhookAssinaturaMock(contrato.idAssinaturaExterna, 'completed');
+      const res = await contratoDigitalService.webhookAssinaturaMock(
+        contrato.idAssinaturaExterna,
+        'completed',
+      );
       if (res.success) {
         await carregarContrato(selectedOrcamentoId);
         if (onStatusChanged) onStatusChanged('APROVADO');
@@ -148,10 +159,10 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
 
   const formatarAcaoHistorico = (acao: string) => {
     const map: Record<string, string> = {
-      'contrato_gerado': 'Contrato Gerado',
-      'enviado_para_assinatura': 'Enviado para Assinatura',
-      'assinado': 'Assinado Eletronicamente',
-      'rejeitado': 'Assinatura Rejeitada'
+      contrato_gerado: 'Contrato Gerado',
+      enviado_para_assinatura: 'Enviado para Assinatura',
+      assinado: 'Assinado Eletronicamente',
+      rejeitado: 'Assinatura Rejeitada',
     };
     return map[acao] || acao;
   };
@@ -160,7 +171,7 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
       <div className="bg-card border border-border rounded-xl p-6 max-w-xl w-full relative">
         {/* Fechar */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition cursor-pointer"
         >
@@ -174,7 +185,9 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">Assinatura Digital de Contrato</h2>
-            <p className="text-muted-foreground text-xs">Orçamento Ref: <strong className="text-foreground">{selectedNumeroOrcamento}</strong></p>
+            <p className="text-muted-foreground text-xs">
+              Orçamento Ref: <strong className="text-foreground">{selectedNumeroOrcamento}</strong>
+            </p>
           </div>
         </div>
 
@@ -193,22 +206,29 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
           /* Estado 1: Contrato Não Gerado */
           <div className="text-center py-6 space-y-4">
             <FileText size={44} className="text-muted-foreground mx-auto" />
-            
+
             {/* Seletor de Orçamento */}
             <div className="text-left max-w-sm mx-auto space-y-1.5">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Selecione o Orçamento de Referência</label>
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">
+                Selecione o Orçamento de Referência
+              </label>
               <select
                 className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all cursor-pointer font-bold"
                 value={selectedOrcamentoId}
                 onChange={(e) => handleOrcamentoChange(e.target.value)}
               >
                 <option value="">Selecione...</option>
-                {orcamentosList.map(o => {
+                {orcamentosList.map((o) => {
                   const oNorm = normalizarOrcamento(o);
                   if (!oNorm) return null;
                   return (
                     <option key={oNorm.id} value={oNorm.id}>
-                      {oNorm.numeroOrcamento} - {oNorm.cliente?.nome || 'Sem Cliente'} ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(oNorm.valorTotalVenda)})
+                      {oNorm.numeroOrcamento} - {oNorm.cliente?.nome || 'Sem Cliente'} (
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(oNorm.valorTotalVenda)}
+                      )
                     </option>
                   );
                 })}
@@ -220,27 +240,35 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cliente Signatário:</span>
                   <span className="font-bold text-foreground">
-                    {orcDetNorm.cliente?.nome || <span className="text-red-500 font-bold">⚠️ Sem Cliente Vinculado</span>}
+                    {orcDetNorm.cliente?.nome || (
+                      <span className="text-red-500 font-bold">⚠️ Sem Cliente Vinculado</span>
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Valor Total do Contrato:</span>
                   <span className="font-black text-primary">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcDetNorm.valorTotalVenda)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      orcDetNorm.valorTotalVenda,
+                    )}
                   </span>
                 </div>
                 {!orcDetNorm.clienteId && (
                   <p className="text-red-500 text-[10px] mt-2 font-bold leading-normal">
-                    * Vincule um cliente a este orçamento comercial nas configurações comerciais antes de gerar o contrato digital.
+                    * Vincule um cliente a este orçamento comercial nas configurações comerciais
+                    antes de gerar o contrato digital.
                   </p>
                 )}
               </div>
             )}
 
             <div className="pt-2">
-              <h3 className="text-foreground font-bold mb-1">Nenhum contrato ativo para este orçamento</h3>
+              <h3 className="text-foreground font-bold mb-1">
+                Nenhum contrato ativo para este orçamento
+              </h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
-                Você pode gerar o contrato de prestação de serviços com os itens e valores preenchidos automaticamente.
+                Você pode gerar o contrato de prestação de serviços com os itens e valores
+                preenchidos automaticamente.
               </p>
             </div>
 
@@ -266,11 +294,13 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
           /* Estado 2: Contrato Gerado e Pendente ou Assinado */
           <div className="space-y-6">
             {/* Box de Status do Contrato */}
-            <div className={`p-4 rounded-xl border flex items-center justify-between ${
-              contrato.statusAssinatura === 'assinado'
-                ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
-                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400'
-            }`}>
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between ${
+                contrato.statusAssinatura === 'assinado'
+                  ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
+                  : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400'
+              }`}
+            >
               <div className="flex items-center gap-3">
                 {contrato.statusAssinatura === 'assinado' ? (
                   <CheckCircle size={24} />
@@ -278,9 +308,13 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
                   <Clock size={24} className="animate-pulse" />
                 )}
                 <div>
-                  <span className="text-xs uppercase font-semibold block text-muted-foreground">Status da Assinatura</span>
+                  <span className="text-xs uppercase font-semibold block text-muted-foreground">
+                    Status da Assinatura
+                  </span>
                   <strong className="text-foreground text-sm">
-                    {contrato.statusAssinatura === 'assinado' ? 'Totalmente Assinado' : 'Aguardando Assinatura'}
+                    {contrato.statusAssinatura === 'assinado'
+                      ? 'Totalmente Assinado'
+                      : 'Aguardando Assinatura'}
                   </strong>
                 </div>
               </div>
@@ -298,26 +332,38 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Documento do Cliente:</span>
-                <span className="font-mono text-muted-foreground">{contrato.clienteCpfCnpj || 'Não cadastrado'}</span>
+                <span className="font-mono text-muted-foreground">
+                  {contrato.clienteCpfCnpj || 'Não cadastrado'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Data de Envio:</span>
-                <span className="text-muted-foreground">{new Date(contrato.dataSolicitacaoAssinatura).toLocaleString('pt-BR')}</span>
+                <span className="text-muted-foreground">
+                  {new Date(contrato.dataSolicitacaoAssinatura).toLocaleString('pt-BR')}
+                </span>
               </div>
 
               {contrato.statusAssinatura === 'assinado' && (
                 <div className="border-t border-border pt-3 mt-2 space-y-3">
                   <div className="flex justify-between text-green-600 dark:text-green-400">
-                    <span className="flex items-center gap-1"><ShieldCheck size={16} /> Validade Jurídica:</span>
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck size={16} /> Validade Jurídica:
+                    </span>
                     <span className="font-semibold">ICP-Brasil / MP 2200-2</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Hash de Integridade:</span>
-                    <span className="font-mono text-muted-foreground select-all">{contrato.hashDocumento?.substring(0,24)}...</span>
+                    <span className="font-mono text-muted-foreground select-all">
+                      {contrato.hashDocumento?.substring(0, 24)}...
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Validade do Certificado:</span>
-                    <span>{contrato.certificadoValidade ? new Date(contrato.certificadoValidade).toLocaleDateString('pt-BR') : '-'}</span>
+                    <span>
+                      {contrato.certificadoValidade
+                        ? new Date(contrato.certificadoValidade).toLocaleDateString('pt-BR')
+                        : '-'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -346,7 +392,8 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
                   </button>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center">
-                  * A simulação dispara o webhook de aprovação, gerando a OP e atualizando o orçamento.
+                  * A simulação dispara o webhook de aprovação, gerando a OP e atualizando o
+                  orçamento.
                 </p>
               </div>
             )}
@@ -375,13 +422,22 @@ export default function ContratoDigitalModal({ orcamentoId: propOrcamentoId, num
                   LOGS DE AUDITORIA DO CONTRATO
                 </h3>
                 <div className="bg-muted/50 border border-border rounded-lg p-3 max-h-32 overflow-y-auto space-y-2 text-xs">
-                  {historico.map(log => (
-                    <div key={log.id} className="flex justify-between items-start text-muted-foreground pb-1 border-b border-border last:border-0">
+                  {historico.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex justify-between items-start text-muted-foreground pb-1 border-b border-border last:border-0"
+                    >
                       <div>
-                        <strong className="text-foreground">{formatarAcaoHistorico(log.acao)}</strong>
-                        <span className="block text-[10px] text-muted-foreground/80">{log.detalhes}</span>
+                        <strong className="text-foreground">
+                          {formatarAcaoHistorico(log.acao)}
+                        </strong>
+                        <span className="block text-[10px] text-muted-foreground/80">
+                          {log.detalhes}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{new Date(log.timestampAcao).toLocaleString('pt-BR')}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(log.timestampAcao).toLocaleString('pt-BR')}
+                      </span>
                     </div>
                   ))}
                 </div>

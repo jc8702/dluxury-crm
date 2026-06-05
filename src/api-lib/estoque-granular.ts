@@ -113,7 +113,7 @@ export async function handleEstoqueGranular(req: any, res: any) {
         FROM estoque_materiais_detalhado e
         WHERE e.tenant_id = $1::uuid
       `;
-      
+
       const params: any[] = [tenantId];
       let paramCount = 1;
 
@@ -157,15 +157,24 @@ export async function handleEstoqueGranular(req: any, res: any) {
     // POST /api/estoque/registrar-movimento
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/registrar-movimento')) {
-      const { sku_codigo, tipo_movimento, quantidade, status_alvo, operacao_prod_id, motivo } = req.body;
+      const { sku_codigo, tipo_movimento, quantidade, status_alvo, operacao_prod_id, motivo } =
+        req.body;
 
       if (!sku_codigo || !tipo_movimento || quantidade === undefined || !status_alvo) {
-        return res.status(400).json({ success: false, error: 'Parâmetros sku_codigo, tipo_movimento, quantidade e status_alvo são obrigatórios' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error:
+              'Parâmetros sku_codigo, tipo_movimento, quantidade e status_alvo são obrigatórios',
+          });
       }
 
       const qtdMov = Number(quantidade);
       if (isNaN(qtdMov) || qtdMov <= 0) {
-        return res.status(400).json({ success: false, error: 'Quantidade de movimentação deve ser maior que zero' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Quantidade de movimentação deve ser maior que zero' });
       }
 
       // 1. Buscar item no estoque granular
@@ -175,36 +184,61 @@ export async function handleEstoqueGranular(req: any, res: any) {
       `;
 
       if (!item) {
-        return res.status(404).json({ success: false, error: `SKU '${sku_codigo}' não encontrado no estoque detalhado` });
+        return res
+          .status(404)
+          .json({
+            success: false,
+            error: `SKU '${sku_codigo}' não encontrado no estoque detalhado`,
+          });
       }
 
       // Mapear status_alvo para a coluna física correspondente
       const colunaMapeada: Record<string, string> = {
-        'disponivel': 'quantidade_disponivel',
-        'em_transito': 'quantidade_em_transito',
-        'provisionado': 'quantidade_provisionado',
-        'defeituoso': 'quantidade_defeituoso',
-        'vencido': 'quantidade_vencido'
+        disponivel: 'quantidade_disponivel',
+        em_transito: 'quantidade_em_transito',
+        provisionado: 'quantidade_provisionado',
+        defeituoso: 'quantidade_defeituoso',
+        vencido: 'quantidade_vencido',
       };
 
       const colunaFisica = colunaMapeada[status_alvo];
       if (!colunaFisica) {
-        return res.status(400).json({ success: false, error: 'Status alvo inválido. Deve ser: disponivel, em_transito, provisionado, defeituoso ou vencido' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error:
+              'Status alvo inválido. Deve ser: disponivel, em_transito, provisionado, defeituoso ou vencido',
+          });
       }
 
       const saldoAnterior = Number(item[colunaFisica] || 0);
       let saldoNovo = saldoAnterior;
 
-      if (tipo_movimento === 'entrada_compra' || tipo_movimento === 'devolucao' || tipo_movimento === 'ajuste_entrada') {
+      if (
+        tipo_movimento === 'entrada_compra' ||
+        tipo_movimento === 'devolucao' ||
+        tipo_movimento === 'ajuste_entrada'
+      ) {
         saldoNovo += qtdMov;
-      } else if (tipo_movimento === 'saida_producao' || tipo_movimento === 'descarte' || tipo_movimento === 'rejeicao_qc' || tipo_movimento === 'ajuste_saida') {
+      } else if (
+        tipo_movimento === 'saida_producao' ||
+        tipo_movimento === 'descarte' ||
+        tipo_movimento === 'rejeicao_qc' ||
+        tipo_movimento === 'ajuste_saida'
+      ) {
         saldoNovo -= qtdMov;
       } else {
         return res.status(400).json({ success: false, error: 'Tipo de movimento inválido' });
       }
 
       if (saldoNovo < 0) {
-        return res.status(400).json({ success: false, error: `Estoque insuficiente para a coluna ${status_alvo} (Saldo atual: ${saldoAnterior}, Tentativa de saída: ${qtdMov})` });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: `Estoque insuficiente para a coluna ${status_alvo} (Saldo atual: ${saldoAnterior}, Tentativa de saída: ${qtdMov})`,
+          });
       }
 
       // 2. Registrar na tabela movimento_estoque_granular
@@ -217,8 +251,8 @@ export async function handleEstoqueGranular(req: any, res: any) {
 
       // 3. Atualizar estoque na tabela
       const custoUnitario = Number(item.preco_custo_unitario || 0);
-      
-      let updateQuery = `
+
+      const updateQuery = `
         UPDATE estoque_materiais_detalhado 
         SET ${colunaFisica} = $1,
             updated_at = NOW()
@@ -244,7 +278,14 @@ export async function handleEstoqueGranular(req: any, res: any) {
       // 4. Verificar alertas (mínimo atingido, falta)
       await verificarAlertas(sku_codigo, tenantId);
 
-      return res.status(200).json({ success: true, saldo_novo: saldoNovo, quantidade_total: novoTotal, valor_total_estoque: novoValorTotal });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          saldo_novo: saldoNovo,
+          quantidade_total: novoTotal,
+          valor_total_estoque: novoValorTotal,
+        });
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -254,7 +295,9 @@ export async function handleEstoqueGranular(req: any, res: any) {
       const { operacao_prod_id } = req.body;
 
       if (!operacao_prod_id) {
-        return res.status(400).json({ success: false, error: 'Parâmetro operacao_prod_id é obrigatório' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Parâmetro operacao_prod_id é obrigatório' });
       }
 
       // 1. Buscar a OP e os materiais do orçamento associado
@@ -269,20 +312,17 @@ export async function handleEstoqueGranular(req: any, res: any) {
       // 2. Buscar itens consumidos do orçamento com Drizzle
       const [orc] = await db
         .select({
-          materiais_consumidos: quotations.materiaisConsumidos
+          materiais_consumidos: quotations.materiaisConsumidos,
         })
         .from(quotations)
-        .where(
-          and(
-            eq(quotations.id, op.quotation_id),
-            eq(quotations.tenantId, tenantId)
-          )
-        )
+        .where(and(eq(quotations.id, op.quotation_id), eq(quotations.tenantId, tenantId)))
         .limit(1);
 
       const materiais = orc?.materiais_consumidos || [];
       if (!Array.isArray(materiais) || materiais.length === 0) {
-        return res.status(200).json({ success: true, message: 'Nenhum material provisionado encontrado para consumo' });
+        return res
+          .status(200)
+          .json({ success: true, message: 'Nenhum material provisionado encontrado para consumo' });
       }
 
       // 3. Para cada material consumido, deduzir do provisionado e dar saída de produção
@@ -322,17 +362,21 @@ export async function handleEstoqueGranular(req: any, res: any) {
         resultados.push({ sku, quantidade_consumida: qtd, novo_provisionado: novoProvisionado });
       }
 
-      return res.status(200).json({ success: true, message: 'Reservas de estoque consumidas com sucesso', resultados });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Reservas de estoque consumidas com sucesso', resultados });
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
-    // POST /api/orcamentos/sku-matching
+    // POST /api/quotations/sku-matching
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/sku-matching')) {
       const { quotation_id, itens_csv } = req.body;
 
       if (!itens_csv || !Array.isArray(itens_csv)) {
-        return res.status(400).json({ success: false, error: 'Parâmetro itens_csv deve ser uma lista válida' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Parâmetro itens_csv deve ser uma lista válida' });
       }
 
       // Buscar todo o estoque detalhado do tenant para matching fuzzy
@@ -377,7 +421,9 @@ export async function handleEstoqueGranular(req: any, res: any) {
         }
 
         if (!matchEncontrado) {
-          const estItem = estoqueItems.find((e: any) => e.sku_codigo.toLowerCase() === skuProcurado.toLowerCase());
+          const estItem = estoqueItems.find(
+            (e: any) => e.sku_codigo.toLowerCase() === skuProcurado.toLowerCase(),
+          );
           if (estItem) {
             matchEncontrado = estItem;
             tipoMatch = 'exato';
@@ -395,7 +441,7 @@ export async function handleEstoqueGranular(req: any, res: any) {
             const similaritySku = stringSimilarity(skuProcurado, estItem.sku_codigo);
             // Testar similaridade por Descrição
             const similarityDesc = stringSimilarity(descricaoProcurada, estItem.descricao);
-            
+
             const maxScore = Math.max(similaritySku, similarityDesc);
             if (maxScore > melhorScore) {
               melhorScore = maxScore;
@@ -412,11 +458,13 @@ export async function handleEstoqueGranular(req: any, res: any) {
 
         // 3. BUSCA POR CATEGORIA/DESCRITIVA (SUGESTÕES)
         if (!matchEncontrado) {
-          const primeiraPalavra = descricaoProcurada.split(' ')[0] || skuProcurado.split('-')[0] || '';
+          const primeiraPalavra =
+            descricaoProcurada.split(' ')[0] || skuProcurado.split('-')[0] || '';
           if (primeiraPalavra.length > 2) {
-            const matchesCategoria = estoqueItems.filter((e: any) => 
-              e.descricao.toLowerCase().includes(primeiraPalavra.toLowerCase()) ||
-              e.sku_codigo.toLowerCase().includes(primeiraPalavra.toLowerCase())
+            const matchesCategoria = estoqueItems.filter(
+              (e: any) =>
+                e.descricao.toLowerCase().includes(primeiraPalavra.toLowerCase()) ||
+                e.sku_codigo.toLowerCase().includes(primeiraPalavra.toLowerCase()),
             );
 
             sugestoes = matchesCategoria.slice(0, 3).map((e: any) => ({
@@ -425,20 +473,25 @@ export async function handleEstoqueGranular(req: any, res: any) {
               confianca: 50,
               tipo_match: 'descricao',
               quantidade_disponivel: Number(e.quantidade_disponivel || 0),
-              preco_custo: Number(e.preco_custo_unitario || 0)
+              preco_custo: Number(e.preco_custo_unitario || 0),
             }));
           }
         }
 
         // Montar a resposta desse item
-        const listSugestoes = matchEncontrado ? [{
-          sku_interno: matchEncontrado.sku_codigo,
-          nome: matchEncontrado.descricao,
-          confianca,
-          tipo_match: tipoMatch,
-          quantidade_disponivel: Number(matchEncontrado.quantidade_disponivel || 0),
-          preco_custo: Number(matchEncontrado.preco_custo_unitario || 0)
-        }, ...sugestoes] : sugestoes;
+        const listSugestoes = matchEncontrado
+          ? [
+              {
+                sku_interno: matchEncontrado.sku_codigo,
+                nome: matchEncontrado.descricao,
+                confianca,
+                tipo_match: tipoMatch,
+                quantidade_disponivel: Number(matchEncontrado.quantidade_disponivel || 0),
+                preco_custo: Number(matchEncontrado.preco_custo_unitario || 0),
+              },
+              ...sugestoes,
+            ]
+          : sugestoes;
 
         const melhorMatch = listSugestoes[0] || null;
 
@@ -456,7 +509,7 @@ export async function handleEstoqueGranular(req: any, res: any) {
           quantidade,
           skus_encontrados: listSugestoes,
           sku_selecionado: melhorMatch?.sku_interno || '',
-          requer_validacao_manual: !matchEncontrado || confianca < 100
+          requer_validacao_manual: !matchEncontrado || confianca < 100,
         });
       }
 
@@ -464,15 +517,17 @@ export async function handleEstoqueGranular(req: any, res: any) {
       return res.status(200).json({
         success: true,
         total_itens: itens_csv.length,
-        itens_com_match_exato: resultados.filter(r => !r.requer_validacao_manual).length,
-        itens_requer_validacao: resultados.filter(r => r.requer_validacao_manual).length,
-        resultados
+        itens_com_match_exato: resultados.filter((r) => !r.requer_validacao_manual).length,
+        itens_requer_validacao: resultados.filter((r) => r.requer_validacao_manual).length,
+        resultados,
       });
     }
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
     console.error('Erro na API de estoque granular:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Erro interno do servidor' });
+    return res
+      .status(500)
+      .json({ success: false, error: err.message || 'Erro interno do servidor' });
   }
 }

@@ -7,8 +7,10 @@ import { eq, and } from 'drizzle-orm';
 // Rotas afetadas: /api/contratos/{status,gerar-e-enviar,webhook-assinatura}.
 
 // Função para gerar o HTML do contrato com base no orçamento e cliente
-function gerarHTMLContrato(orcamento: any, cliente: any, itens: any[]): string {
-  const itensHtml = itens.map((item: any) => `
+function gerarHTMLContrato(quotation: any, cliente: any, itens: any[]): string {
+  const itensHtml = itens
+    .map(
+      (item: any) => `
     <tr>
       <td style="padding: 8px; border: 1px solid #ddd;">${item.sku_codigo || 'N/A'}</td>
       <td style="padding: 8px; border: 1px solid #ddd;">${item.nome_customizado || item.sku_descricao || 'Item de Engenharia'}</td>
@@ -16,9 +18,11 @@ function gerarHTMLContrato(orcamento: any, cliente: any, itens: any[]): string {
       <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${Number(item.preco_venda_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
       <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${Number(item.preco_venda_unitario * item.quantidade || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 
-  const valorTotal = Number(orcamento.valor_total_venda || 0);
+  const valorTotal = Number(quotation.valor_total_venda || 0);
 
   return `
     <!DOCTYPE html>
@@ -48,8 +52,8 @@ function gerarHTMLContrato(orcamento: any, cliente: any, itens: any[]): string {
       <div class="section">
         <h2>CONTRATO DE PRESTAÇÃO DE SERVIÇOS E FABRICAÇÃO DE MÓVEIS</h2>
         <p>Por este instrumento particular, as partes qualificadas acordam com a fabricação, entrega e montagem dos móveis planejados sob medida, conforme especificações descritas no orçamento técnico de referência.</p>
-        <p><strong>Contrato Nº:</strong> CONT-${orcamento.numero_orcamento || orcamento.id.substring(0,8).toUpperCase()}</p>
-        <p><strong>Orçamento Ref:</strong> ${orcamento.numero_orcamento}</p>
+        <p><strong>Contrato Nº:</strong> CONT-${quotation.numero_orcamento || quotation.id.substring(0, 8).toUpperCase()}</p>
+        <p><strong>Orçamento Ref:</strong> ${quotation.numero_orcamento}</p>
         <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
       </div>
 
@@ -85,7 +89,7 @@ function gerarHTMLContrato(orcamento: any, cliente: any, itens: any[]): string {
 
       <div class="section">
         <h2>CLÁUSULA PRIMEIRA - DO OBJETO E PRAZOS</h2>
-        <p>O prazo de entrega e montagem final dos produtos é de até <strong>${orcamento.prazo_entrega_dias || 45} dias úteis</strong>, contados a partir da data de assinatura deste contrato e validação das medidas técnicas pelo engenheiro responsável.</p>
+        <p>O prazo de entrega e montagem final dos produtos é de até <strong>${quotation.prazo_entrega_dias || 45} dias úteis</strong>, contados a partir da data de assinatura deste contrato e validação das medidas técnicas pelo engenheiro responsável.</p>
       </div>
 
       <div class="section">
@@ -123,7 +127,9 @@ export async function handleContratoDigital(req: any, res: any) {
       const { quotation_id } = req.query;
 
       if (!quotation_id) {
-        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
       }
 
       const [contrato] = await sql`
@@ -151,19 +157,16 @@ export async function handleContratoDigital(req: any, res: any) {
       const { quotation_id } = req.body;
 
       if (!quotation_id) {
-        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
       }
 
       // 1. Buscar orçamento com Drizzle
       const [orc] = await db
         .select()
         .from(quotations)
-        .where(
-          and(
-            eq(quotations.id, quotation_id),
-            eq(quotations.tenantId, tenantId)
-          )
-        )
+        .where(and(eq(quotations.id, quotation_id), eq(quotations.tenantId, tenantId)))
         .limit(1);
 
       if (!orc) {
@@ -178,7 +181,7 @@ export async function handleContratoDigital(req: any, res: any) {
         projeto_id: orc.projetoId,
         valor_total_venda: orc.valorTotalVenda ? parseFloat(orc.valorTotalVenda) : 0,
         prazo_entrega_dias: orc.prazoEntregaDias || 45,
-        status: orc.status
+        status: orc.status,
       };
 
       // 2. Buscar cliente associado
@@ -196,13 +199,10 @@ export async function handleContratoDigital(req: any, res: any) {
         .select()
         .from(quotationItems)
         .where(
-          and(
-            eq(quotationItems.quotationId, quotation_id),
-            eq(quotationItems.tenantId, tenantId)
-          )
+          and(eq(quotationItems.quotationId, quotation_id), eq(quotationItems.tenantId, tenantId)),
         );
 
-      const mappedItens = itens.map(item => ({
+      const mappedItens = itens.map((item) => ({
         id: item.id,
         quotation_id: item.quotationId,
         sku_codigo: item.skuCodigo || '',
@@ -270,7 +270,7 @@ export async function handleContratoDigital(req: any, res: any) {
         contrato_id: contratoId,
         numero_contrato: numeroContrato,
         url_assinatura: urlAssinaturaSimulada,
-        status: 'pendente'
+        status: 'pendente',
       });
     }
 
@@ -281,7 +281,9 @@ export async function handleContratoDigital(req: any, res: any) {
       const { envelope_id, status } = req.body;
 
       if (!envelope_id || !status) {
-        return res.status(400).json({ success: false, error: 'Parâmetros envelope_id e status são obrigatórios' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Parâmetros envelope_id e status são obrigatórios' });
       }
 
       // 1. Buscar contrato associado ao envelope externo
@@ -291,7 +293,9 @@ export async function handleContratoDigital(req: any, res: any) {
       `;
 
       if (!contrato) {
-        return res.status(404).json({ success: false, error: 'Contrato não localizado para este envelope' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Contrato não localizado para este envelope' });
       }
 
       if (contrato.status_assinatura === 'assinado') {
@@ -325,20 +329,17 @@ export async function handleContratoDigital(req: any, res: any) {
         const [orc] = await db
           .select()
           .from(quotations)
-          .where(
-            and(
-              eq(quotations.id, contrato.quotation_id),
-              eq(quotations.tenantId, tenantId)
-            )
-          )
+          .where(and(eq(quotations.id, contrato.quotation_id), eq(quotations.tenantId, tenantId)))
           .limit(1);
 
-        const mappedOrc = orc ? {
-          id: orc.id,
-          numero: orc.numeroOrcamento,
-          status: orc.status,
-          prazoEntregaDias: orc.prazoEntregaDias
-        } : null;
+        const mappedOrc = orc
+          ? {
+              id: orc.id,
+              numero: orc.numeroOrcamento,
+              status: orc.status,
+              prazoEntregaDias: orc.prazoEntregaDias,
+            }
+          : null;
 
         if (mappedOrc && mappedOrc.status !== 'fechada') {
           // 4.1 Atualizar status do orçamento na tabela física
@@ -346,17 +347,14 @@ export async function handleContratoDigital(req: any, res: any) {
             .update(quotations)
             .set({
               status: 'fechada',
-              updatedAt: new Date()
+              updatedAt: new Date(),
             })
             .where(
-              and(
-                eq(quotations.id, contrato.quotation_id),
-                eq(quotations.tenantId, tenantId)
-              )
+              and(eq(quotations.id, contrato.quotation_id), eq(quotations.tenantId, tenantId)),
             );
 
           // 4.2 Gerar OP no Kanban de Produção (Fase 1)
-          const numeroOp = `OP-${mappedOrc.numero || mappedOrc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const numeroOp = `OP-${mappedOrc.numero || mappedOrc.id.substring(0, 8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
           const dataPrazo = new Date();
           dataPrazo.setDate(dataPrazo.getDate() + Number(mappedOrc.prazoEntregaDias || 45));
 
@@ -372,7 +370,7 @@ export async function handleContratoDigital(req: any, res: any) {
               { numero: 2, nome: 'PROJETO' },
               { numero: 3, nome: 'PRODUÇÃO' },
               { numero: 4, nome: 'MONTAGEM' },
-              { numero: 5, nome: 'ENTREGA' }
+              { numero: 5, nome: 'ENTREGA' },
             ];
 
             for (const et of etapasPadrao) {
@@ -390,11 +388,11 @@ export async function handleContratoDigital(req: any, res: any) {
             .where(
               and(
                 eq(quotationItems.quotationId, contrato.quotation_id),
-                eq(quotationItems.tenantId, tenantId)
-              )
+                eq(quotationItems.tenantId, tenantId),
+              ),
             );
 
-          const mappedItensOrcamento = itensOrcamento.map(item => ({
+          const mappedItensOrcamento = itensOrcamento.map((item) => ({
             id: item.id,
             sku_codigo: item.skuCodigo || '',
             quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,
@@ -440,17 +438,22 @@ export async function handleContratoDigital(req: any, res: any) {
 
         return res.status(200).json({
           success: true,
-          message: 'Contrato assinado eletronicamente. OP criada e estoque provisionado com sucesso.',
-          status: 'assinado'
+          message:
+            'Contrato assinado eletronicamente. OP criada e estoque provisionado com sucesso.',
+          status: 'assinado',
         });
       }
 
-      return res.status(200).json({ success: true, message: 'Status do webhook recebido e logado.' });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Status do webhook recebido e logado.' });
     }
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
     console.error('Erro na API de contratos:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Erro interno do servidor' });
+    return res
+      .status(500)
+      .json({ success: false, error: err.message || 'Erro interno do servidor' });
   }
 }

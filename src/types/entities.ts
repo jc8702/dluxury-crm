@@ -89,7 +89,7 @@ export type QuotationItem = {
   origem?: number;
 };
 
-export type Orcamento = {
+export type Quotation = {
   id: string;
   cliente_id: string;
   cliente_nome?: string;

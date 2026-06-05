@@ -83,7 +83,7 @@ describe('Módulo de Orçamentos PRO', () => {
 
       const req = {
         method: 'GET',
-        url: '/api/orcamentos?id=some-id',
+        url: '/api/quotations?id=some-id',
       };
 
       let responseStatus = 200;
@@ -116,12 +116,12 @@ describe('Módulo de Orçamentos PRO', () => {
     });
   });
 
-  describe('Validação de Payloads de Entrada (POST / Orcamentos)', () => {
+  describe('Validação de Payloads de Entrada (POST / Quotations)', () => {
     it('deve retornar 400 ao enviar um payload vazio ou inválido', async () => {
       const req = {
         method: 'POST',
         body: null,
-        url: '/api/orcamentos',
+        url: '/api/quotations',
       };
 
       let responseStatus = 200;
@@ -148,7 +148,7 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve retornar 400 ao enviar itens sem skuEngenhariaId ou que não sejam UUID', async () => {
       const req = {
         method: 'POST',
-        url: '/api/orcamentos',
+        url: '/api/quotations',
         body: {
           header: { clienteId: '1' },
           itens: [{ skuEngenhariaId: 'invalid-uuid-format', quantidade: 5 }],
@@ -179,7 +179,7 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve retornar 400 ao enviar itens com quantidade negativa ou zero', async () => {
       const req = {
         method: 'POST',
-        url: '/api/orcamentos',
+        url: '/api/quotations',
         body: {
           header: { clienteId: '1' },
           itens: [{ skuEngenhariaId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidade: -2 }],
@@ -264,25 +264,23 @@ describe('Módulo de Orçamentos PRO', () => {
     });
   });
 
-  describe('Recalculo de Orcamento (recalcularOrcamento)', () => {
+  describe('Recalculo de Quotation (recalcularOrcamento)', () => {
     it('deve falhar se o ID de orçamento for inválido', async () => {
       await expect(recalcularOrcamento('not-uuid')).rejects.toThrow('ID de orçamento inválido');
     });
 
     it('deve falhar se o orçamento não for encontrado', async () => {
       const mockTx = {
-        execute: vi
-          .fn()
-          .mockResolvedValue({
-            rows: [
-              {
-                fator_perda_padrao: 0,
-                mo_producao_pct_padrao: 0,
-                mo_instalacao_pct_padrao: 0,
-                aliquota_imposto: 0,
-              },
-            ],
-          }),
+        execute: vi.fn().mockResolvedValue({
+          rows: [
+            {
+              fator_perda_padrao: 0,
+              mo_producao_pct_padrao: 0,
+              mo_instalacao_pct_padrao: 0,
+              aliquota_imposto: 0,
+            },
+          ],
+        }),
         query: {
           quotations: {
             findFirst: vi.fn().mockResolvedValue(null),
@@ -453,7 +451,7 @@ describe('Módulo de Orçamentos PRO', () => {
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
         body: { status: 'APROVADO', condicaoPagamentoId: 'cond-123' },
       };
 
@@ -485,12 +483,20 @@ describe('Módulo de Orçamentos PRO', () => {
 
   describe('Fluxos Avançados de GET, PUT e DELETE', () => {
     function mockRes() {
-      let sc = 200, jd: any = null;
+      let sc = 200,
+        jd: any = null;
       const self: any = {
-        status: (c: number) => { sc = c; return self; },
-        json: (d: any) => { jd = d; return self; },
+        status: (c: number) => {
+          sc = c;
+          return self;
+        },
+        json: (d: any) => {
+          jd = d;
+          return self;
+        },
         end: () => self,
-        _s: () => sc, _d: () => jd,
+        _s: () => sc,
+        _d: () => jd,
       };
       return self;
     }
@@ -523,22 +529,22 @@ describe('Módulo de Orçamentos PRO', () => {
                   custoUnitarioCalculado: '100.00',
                   possuiOverride: false,
                   bom: [],
-                }
-              ]
-            })
+                },
+              ],
+            }),
           },
           quotationItems: {
             findFirst: vi.fn().mockResolvedValue({
-              id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'
-            })
+              id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+            }),
           },
           skuComponente: {
             findFirst: vi.fn().mockResolvedValue({
               id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
-              precoUnitario: '10.00'
-            })
-          }
-        }
+              precoUnitario: '10.00',
+            }),
+          },
+        },
       };
 
       vi.mocked(db.transaction).mockImplementation(async (cb) => cb(mockTxPadrao));
@@ -563,7 +569,7 @@ describe('Módulo de Orçamentos PRO', () => {
 
       const req = {
         method: 'GET',
-        url: '/api/orcamentos?action=explode&skuId=3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2&qtd=2',
+        url: '/api/quotations?action=explode&skuId=3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2&qtd=2',
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -575,11 +581,18 @@ describe('Módulo de Orçamentos PRO', () => {
       vi.mocked(db.select).mockReturnValue(db as any);
       vi.mocked(db.from).mockReturnValue(db as any);
       vi.mocked(db.where).mockReturnValue(db as any);
-      vi.mocked(db.limit).mockResolvedValue([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', codigo: 'COMP001', nome: 'Comp', precoUnitario: '10.00' }]);
+      vi.mocked(db.limit).mockResolvedValue([
+        {
+          id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+          codigo: 'COMP001',
+          nome: 'Comp',
+          precoUnitario: '10.00',
+        },
+      ]);
 
       const req = {
         method: 'GET',
-        url: '/api/orcamentos?action=search-skus&q=MDF&limit=5',
+        url: '/api/quotations?action=search-skus&q=MDF&limit=5',
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -595,17 +608,21 @@ describe('Módulo de Orçamentos PRO', () => {
       });
       vi.mocked(db.orderBy).mockReturnValue(db as any);
       vi.mocked(db.limit).mockReturnValue(db as any);
-      vi.mocked(db.offset).mockResolvedValueOnce([{ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', numeroOrcamento: 'PRO-1' }]);
+      vi.mocked(db.offset).mockResolvedValueOnce([
+        { id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', numeroOrcamento: 'PRO-1' },
+      ]);
 
-      vi.mocked(db.select).mockReturnValueOnce(db as any).mockReturnValueOnce({
-        from: () => ({
-          where: () => Promise.resolve([{ count: '1' }])
-        })
-      } as any);
+      vi.mocked(db.select)
+        .mockReturnValueOnce(db as any)
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => Promise.resolve([{ count: '1' }]),
+          }),
+        } as any);
 
       const req = {
         method: 'GET',
-        url: '/api/orcamentos?page=1&limit=10',
+        url: '/api/quotations?page=1&limit=10',
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -621,19 +638,19 @@ describe('Módulo de Orçamentos PRO', () => {
       vi.mocked(db.select).mockReturnValue({
         from: () => ({
           join: () => ({
-            where: () => Promise.resolve([{ id: 'item-123' }])
-          })
-        })
+            where: () => Promise.resolve([{ id: 'item-123' }]),
+          }),
+        }),
       } as any);
       vi.mocked(db.update).mockReturnValue({
         set: () => ({
-          where: () => Promise.resolve([])
-        })
+          where: () => Promise.resolve([]),
+        }),
       } as any);
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-bom',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-bom',
         body: { bomId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidadeAjustada: 5 },
       };
       const res = mockRes();
@@ -642,16 +659,18 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve redefinir para margem global no PUT (?action=reset-to-global-margin)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
       vi.mocked(db.update).mockReturnValue({
         set: () => ({
-          where: () => Promise.resolve([])
-        })
+          where: () => Promise.resolve([]),
+        }),
       } as any);
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=reset-to-global-margin',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=reset-to-global-margin',
         body: { itemIds: ['3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'] },
       };
       const res = mockRes();
@@ -660,16 +679,18 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve aplicar margem global no PUT (?action=apply-global-margin)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
       vi.mocked(db.select).mockReturnValue({
         from: () => ({
-          where: () => Promise.resolve([{ count: '1' }])
-        })
+          where: () => Promise.resolve([{ count: '1' }]),
+        }),
       } as any);
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=apply-global-margin',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=apply-global-margin',
         body: { margem: 35 },
       };
       const res = mockRes();
@@ -678,17 +699,25 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve atualizar itens em lote no PUT (?action=bulk-update-items)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
       mockTxPadrao.select = () => ({
         from: () => ({
-          where: () => Promise.resolve([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', precoVendaUnitario: '100' }])
-        })
+          where: () =>
+            Promise.resolve([
+              { id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', precoVendaUnitario: '100' },
+            ]),
+        }),
       });
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=bulk-update-items',
-        body: { itemIds: ['3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'], updates: { percentualPreco: 10, percentualCusto: 5 } },
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=bulk-update-items',
+        body: {
+          itemIds: ['3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'],
+          updates: { percentualPreco: 10, percentualCusto: 5 },
+        },
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -696,12 +725,18 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve atualizar SKU de engenharia no PUT (?action=update-sku)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-sku',
-        body: { itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', skuId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', tipo: 'ENGENHARIA' },
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-sku',
+        body: {
+          itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+          skuId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+          tipo: 'ENGENHARIA',
+        },
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -709,12 +744,19 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve atualizar item no PUT (?action=update-item)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-item',
-        body: { itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', skuId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', skuTipo: 'ENGENHARIA', quantidade: 3 },
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-item',
+        body: {
+          itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+          skuId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+          skuTipo: 'ENGENHARIA',
+          quantidade: 3,
+        },
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -722,14 +764,16 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve deletar item no PUT (?action=delete-item)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
       vi.mocked(db.delete).mockReturnValue({
-        where: () => Promise.resolve([])
+        where: () => Promise.resolve([]),
       } as any);
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=delete-item',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=delete-item',
         body: { itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2' },
       };
       const res = mockRes();
@@ -740,7 +784,7 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve retornar 400 no PUT sem ID', async () => {
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos',
+        url: '/api/quotations',
         body: {},
       };
       const res = mockRes();
@@ -753,7 +797,7 @@ describe('Módulo de Orçamentos PRO', () => {
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
         body: {},
       };
       const res = mockRes();
@@ -763,12 +807,12 @@ describe('Módulo de Orçamentos PRO', () => {
 
     it('deve deletar orçamento (DELETE)', async () => {
       vi.mocked(db.delete).mockReturnValue({
-        where: () => Promise.resolve([])
+        where: () => Promise.resolve([]),
       } as any);
 
       const req = {
         method: 'DELETE',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -778,7 +822,7 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve retornar 400 no DELETE sem ID', async () => {
       const req = {
         method: 'DELETE',
-        url: '/api/orcamentos',
+        url: '/api/quotations',
       };
       const res = mockRes();
       await handleQuotations(req, res);
@@ -786,23 +830,44 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve importar itens via CSV no PUT (?action=import-items)', async () => {
-      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' });
-      
+      vi.mocked(db.query.quotations.findFirst).mockResolvedValue({
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      });
+
       vi.mocked(db.select).mockReturnValue({
         from: () => ({
-          where: () => Promise.resolve([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', codigo: 'COMP001', nome: 'Comp', precoUnitario: '10.00' }])
-        })
+          where: () =>
+            Promise.resolve([
+              {
+                id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+                codigo: 'COMP001',
+                nome: 'Comp',
+                precoUnitario: '10.00',
+              },
+            ]),
+        }),
       } as any);
 
-      vi.mocked(db.execute).mockResolvedValue({ rows: [{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', codigo: 'MAT001', nome: 'Mat', precoUnitario: '15.00' }] } as any);
+      vi.mocked(db.execute).mockResolvedValue({
+        rows: [
+          {
+            id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+            codigo: 'MAT001',
+            nome: 'Mat',
+            precoUnitario: '15.00',
+          },
+        ],
+      } as any);
 
       mockTxPadrao.insert = vi.fn().mockReturnThis();
       mockTxPadrao.values = vi.fn().mockReturnThis();
-      mockTxPadrao.returning = vi.fn().mockResolvedValue([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidade: '2' }]);
+      mockTxPadrao.returning = vi
+        .fn()
+        .mockResolvedValue([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidade: '2' }]);
 
       const req = {
         method: 'PUT',
-        url: '/api/orcamentos?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=import-items',
+        url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=import-items',
         body: {
           items: [
             {
@@ -810,8 +875,8 @@ describe('Módulo de Orçamentos PRO', () => {
               quantidade: 2,
               sku_id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
               custoUnitario: 10,
-            }
-          ]
+            },
+          ],
         },
       };
       const res = mockRes();

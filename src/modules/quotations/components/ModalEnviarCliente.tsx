@@ -7,12 +7,12 @@ import { useToast } from '@/context/ToastContext';
 export function ModalEnviarCliente({
   isOpen,
   onClose,
-  orcamento,
+  quotation,
   onSave,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  orcamento: any;
+  quotation: any;
   onSave: () => Promise<void>;
 }) {
   const { error: toastError, success: toastSuccess } = useToast();
@@ -35,14 +35,14 @@ export function ModalEnviarCliente({
   const handleSend = async () => {
     setLoading(true);
     try {
-      const linkData = await api.aprovacao.gerarLink(orcamento.id);
+      const linkData = await api.aprovacao.gerarLink(quotation.id);
       const urlAprovacao =
         linkData.url_aprovacao || `${window.location.origin}/#/aprovar/${linkData.token_aprovacao}`;
 
       if (method === 'whatsapp') {
-        const urlPdf = `${window.location.origin}/api/orcamentos/export-pdf?id=${orcamento.id}`;
-        const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${orcamento.numeroOrcamento || orcamento.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(orcamento.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
-        const phone = orcamento.cliente?.telefone || '';
+        const urlPdf = `${window.location.origin}/api/quotations/export-pdf?id=${quotation.id}`;
+        const text = `Olá! Segue a proposta comercial D'Luxury para o seu projeto: ${quotation.numeroOrcamento || quotation.numero}\n\nValor Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quotation.valorTotalVenda)}\n\nBaixar PDF da Proposta: ${urlPdf}\n\nVisualizar e Assinar Proposta: ${urlAprovacao}`;
+        const phone = quotation.cliente?.telefone || '';
         window.open(
           `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`,
           '_blank',
@@ -61,12 +61,7 @@ export function ModalEnviarCliente({
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onClose={onClose}
-      title="Enviar para Cliente"
-      size="md"
-    >
+    <Modal open={isOpen} onClose={onClose} title="Enviar para Cliente" size="md">
       {step === 'save' ? (
         <div className="text-center py-2 space-y-6">
           <div className="w-16 h-16 bg-[var(--ui-color-teal-50)] rounded-[var(--ui-radius-lg)] flex items-center justify-center mx-auto">
@@ -137,14 +132,14 @@ export function ModalEnviarCliente({
               <div className="flex justify-between">
                 <span className="text-[var(--ui-text-secondary)]">Cliente:</span>
                 <span className="text-[var(--ui-text-primary)] font-semibold">
-                  {orcamento.cliente?.nome || 'N/A'}
+                  {quotation.cliente?.nome || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--ui-text-secondary)]">Valor Final:</span>
                 <span className="text-[var(--ui-color-teal-700)] font-semibold">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                    orcamento.valorTotalVenda,
+                    quotation.valorTotalVenda,
                   )}
                 </span>
               </div>

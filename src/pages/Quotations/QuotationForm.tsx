@@ -86,7 +86,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
   onCancel,
   onLoadSkus,
 }) => {
-  const { orcamento, loading, error, setHeader, addItem, removerItem, applyGlobalMargin } =
+  const { quotation, loading, error, setHeader, addItem, removerItem, applyGlobalMargin } =
     useQuotation(orcamentoId);
 
   // Local form state
@@ -103,17 +103,17 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  // Hydrate from loaded orcamento
+  // Hydrate from loaded quotation
   useEffect(() => {
-    if (orcamento) {
-      setClienteId(orcamento.clienteId || '');
-      setMargem(Number(orcamento.margemLucroPercentual) || 0);
-      setTaxaFinanceira(Number(orcamento.taxaFinanceiraPercentual) || 0);
-      setValidadeDias(Number(orcamento.validadeDias) || 0);
-      setStatus(orcamento.status || 'RASCUNHO');
-      setItens(Array.isArray(orcamento.itens) ? orcamento.itens : []);
+    if (quotation) {
+      setClienteId(quotation.clienteId || '');
+      setMargem(Number(quotation.margemLucroPercentual) || 0);
+      setTaxaFinanceira(Number(quotation.taxaFinanceiraPercentual) || 0);
+      setValidadeDias(Number(quotation.validadeDias) || 0);
+      setStatus(quotation.status || 'RASCUNHO');
+      setItens(Array.isArray(quotation.itens) ? quotation.itens : []);
     }
-  }, [orcamento]);
+  }, [quotation]);
 
   // Load SKUs (debounced)
   useEffect(() => {
@@ -275,7 +275,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
       }
       onSaved({
         id: orcamentoId || 'draft',
-        numeroOrcamento: orcamento?.numeroOrcamento || '—',
+        numeroOrcamento: quotation?.numeroOrcamento || '—',
         clienteId,
         clienteNome: clients.find((c) => c.id === clienteId)?.nome,
         margemLucroPercentual: margem,
@@ -344,7 +344,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
     </div>
   );
 
-  if (loading && !orcamento) {
+  if (loading && !quotation) {
     return (
       <div
         style={{
@@ -420,7 +420,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             }}
           >
             {orcamentoId
-              ? `Editar Orçamento #${orcamento?.numeroOrcamento || ''}`
+              ? `Editar Orçamento #${quotation?.numeroOrcamento || ''}`
               : 'Novo Orçamento'}
           </h1>
           <p
@@ -529,7 +529,7 @@ export const QuotationForm: React.FC<QuotationFormProps> = ({
             <input
               id="numero"
               type="text"
-              value={orcamento?.numeroOrcamento || 'Gerado automaticamente ao salvar'}
+              value={quotation?.numeroOrcamento || 'Gerado automaticamente ao salvar'}
               disabled
               style={fieldInput(false, {
                 background: '#FAFAFA',

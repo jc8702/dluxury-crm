@@ -85,12 +85,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
     },
     {
       id: 'estimates',
-      path: 'orcamentos',
+      path: 'quotations',
       label: 'Orçamentos',
       icon: <FileText size={18} />,
       roles: ['admin', 'vendedor'],
       group: 'COMERCIAL',
-      feature: 'orcamentos',
+      feature: 'quotations',
     },
     {
       id: 'prospeccao',

@@ -78,7 +78,7 @@ export default function QuotationForm() {
   const orcamentoId = urlParams.get('id');
 
   const {
-    orcamento,
+    quotation,
     loading,
     inicializar,
     setHeader,
@@ -117,15 +117,15 @@ export default function QuotationForm() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (orcamento) {
+    if (quotation) {
       setLocalComercial({
-        margemLucroPercentual: Number(orcamento.margemLucroPercentual) || 0,
-        taxaFinanceiraPercentual: Number(orcamento.taxaFinanceiraPercentual) || 0,
-        validadeDias: Number(orcamento.validadeDias) || 0,
-        clienteId: orcamento.clienteId || '',
+        margemLucroPercentual: Number(quotation.margemLucroPercentual) || 0,
+        taxaFinanceiraPercentual: Number(quotation.taxaFinanceiraPercentual) || 0,
+        validadeDias: Number(quotation.validadeDias) || 0,
+        clienteId: quotation.clienteId || '',
       });
     }
-  }, [orcamento]);
+  }, [quotation]);
 
   const fetchRecentes = useCallback(async () => {
     try {
@@ -187,7 +187,7 @@ export default function QuotationForm() {
         margemLucroPercentual: 30,
         validadeDias: 15,
       });
-      window.location.href = `?id=${res.id}#/orcamentos`;
+      window.location.href = `?id=${res.id}#/quotations`;
     } catch (_err) {
       toastError('Erro ao criar rascunho');
     }
@@ -200,9 +200,9 @@ export default function QuotationForm() {
         margemLucroPercentual: 30,
         validadeDias: 15,
       });
-      window.location.href = `?id=${res.id}&import=true#/orcamentos`;
+      window.location.href = `?id=${res.id}&import=true#/quotations`;
     } catch (_err) {
-      window.location.href = `?id=${res.id}&import=true#/orcamentos`;
+      window.location.href = `?id=${res.id}&import=true#/quotations`;
     }
   };
 
@@ -235,7 +235,7 @@ export default function QuotationForm() {
     { total: 0, aguardando: 0, aprovados: 0, rejeitados: 0 },
   );
 
-  if (loading && !orcamento) {
+  if (loading && !quotation) {
     return (
       <div className="min-h-screen bg-[var(--ui-bg-app)] flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-[var(--ui-color-teal-500)]/20 border-t-[var(--ui-color-teal-500)] rounded-full animate-spin" />
@@ -246,7 +246,7 @@ export default function QuotationForm() {
     );
   }
 
-  if (error && !orcamento) {
+  if (error && !quotation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
         <div className="bg-[var(--ui-color-danger-soft)] p-6 rounded-[var(--ui-radius-lg)] mb-6">
@@ -256,7 +256,7 @@ export default function QuotationForm() {
           </h2>
           <p className="text-[var(--ui-text-secondary)] mb-8 max-w-md">{error}</p>
           <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => (window.location.href = '#/orcamentos')}>
+            <Button variant="outline" onClick={() => (window.location.href = '#/quotations')}>
               Voltar para Lista
             </Button>
             <Button variant="primary" onClick={() => window.location.reload()}>
@@ -323,7 +323,7 @@ export default function QuotationForm() {
             variant="ghost"
             onClick={(e) => {
               e.stopPropagation();
-              window.open(`/api/orcamentos/export-pdf?id=${o.id}`, '_blank');
+              window.open(`/api/quotations/export-pdf?id=${o.id}`, '_blank');
             }}
             aria-label="Visualizar PDF"
             title="Visualizar PDF"
@@ -346,7 +346,7 @@ export default function QuotationForm() {
             size="sm"
             variant="outline"
             onClick={() => {
-              window.location.href = `?id=${o.id}#/orcamentos`;
+              window.location.href = `?id=${o.id}#/quotations`;
             }}
           >
             Editar
@@ -356,7 +356,7 @@ export default function QuotationForm() {
     },
   ];
 
-  if (!orcamentoId && !orcamento) {
+  if (!orcamentoId && !quotation) {
     return (
       <div className="min-h-screen bg-[var(--ui-bg-app)] text-[var(--ui-text-primary)] p-6 lg:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -466,7 +466,7 @@ export default function QuotationForm() {
             variant="ghost"
             size="icon"
             onClick={() => {
-              window.location.href = `#/orcamentos`;
+              window.location.href = `#/quotations`;
             }}
             aria-label="Voltar"
           >
@@ -476,14 +476,14 @@ export default function QuotationForm() {
             <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-[var(--ui-text-primary)] flex flex-wrap items-center gap-2">
               <span>Orçamento</span>
               <span className="text-[var(--ui-color-teal-500)]">
-                {orcamento?.numeroOrcamento || '...'}
+                {quotation?.numeroOrcamento || '...'}
               </span>
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[var(--ui-text-secondary)] text-sm">Status:</span>
               <Select
                 size="sm"
-                value={(orcamento?.status || 'RASCUNHO').toLowerCase()}
+                value={(quotation?.status || 'RASCUNHO').toLowerCase()}
                 onChange={(e) => handleUpdateHeader({ status: e.target.value.toUpperCase() })}
                 options={[
                   { value: 'rascunho', label: 'Rascunho' },
@@ -501,7 +501,7 @@ export default function QuotationForm() {
           <Button
             variant="outline"
             leftIcon={<FileDown size={16} />}
-            onClick={() => window.open(`/api/orcamentos/export-pdf?id=${orcamento.id}`, '_blank')}
+            onClick={() => window.open(`/api/quotations/export-pdf?id=${quotation.id}`, '_blank')}
           >
             Exportar PDF
           </Button>
@@ -629,7 +629,7 @@ export default function QuotationForm() {
                 <Layers size={18} className="text-[var(--ui-color-warning)]" />
                 Itens do Projeto
               </h2>
-              {orcamento?.itens && orcamento.itens.length > 0 && (
+              {quotation?.itens && quotation.itens.length > 0 && (
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -709,7 +709,7 @@ export default function QuotationForm() {
             </div>
           </div>
 
-          {!orcamento?.itens || orcamento.itens.length === 0 ? (
+          {!quotation?.itens || quotation.itens.length === 0 ? (
             <div className="border-2 border-dashed border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-16 text-center bg-[var(--ui-bg-subtle)]/50">
               <div className="bg-[var(--ui-bg-subtle)] w-16 h-16 rounded-[var(--ui-radius-lg)] flex items-center justify-center mx-auto mb-4">
                 <Layers size={32} className="text-[var(--ui-text-muted)]" />
@@ -723,7 +723,7 @@ export default function QuotationForm() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {orcamento.itens.map((item: any) => (
+              {quotation.itens.map((item: any) => (
                 <ItemCard
                   key={item.id}
                   item={item}
@@ -778,7 +778,7 @@ export default function QuotationForm() {
       <ModalEnviarCliente
         isOpen={isSendModalOpen}
         onClose={() => setIsSendModalOpen(false)}
-        orcamento={orcamento}
+        quotation={quotation}
         onSave={async () => {
           await handleUpdateHeader(localComercial);
         }}
@@ -787,7 +787,7 @@ export default function QuotationForm() {
       {isContractModalOpen && orcamentoId && (
         <ContratoDigitalModal
           orcamentoId={orcamentoId}
-          numeroOrcamento={orcamento?.numeroOrcamento || ''}
+          numeroOrcamento={quotation?.numeroOrcamento || ''}
           onClose={() => setIsContractModalOpen(false)}
           onStatusChanged={() => {
             carregar();

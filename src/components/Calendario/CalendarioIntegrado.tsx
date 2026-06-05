@@ -221,7 +221,7 @@ export default function CalendarioIntegrado() {
             className="px-3 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
           >
             <option value="">Todas as Categorias</option>
-            <option value="orcamento">Orçamentos Aprovados</option>
+            <option value="quotation">Orçamentos Aprovados</option>
             <option value="prazo_entrega">Prazos de Entrega OP</option>
             <option value="lembrete_compra">Lembretes de Compra</option>
             <option value="tarefa">Tarefas Customizadas</option>

@@ -1,14 +1,14 @@
 import { apiCall } from '../lib/api.js';
 
 export type TipoEventoType =
-  | 'orcamento'
+  | 'quotation'
   | 'prazo_entrega'
   | 'lembrete_compra'
   | 'tarefa'
   | 'reuniao';
 
 export interface EventoCalendarioType {
-  id: string; // Ex: 'manual-1', 'op-uuid', 'orcamento-uuid'
+  id: string; // Ex: 'manual-1', 'op-uuid', 'quotation-uuid'
   titulo: string;
   descricao: string;
   data_evento: string; // formato YYYY-MM-DD

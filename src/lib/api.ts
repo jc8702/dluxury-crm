@@ -9,11 +9,11 @@ const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
 export async function apiCall<T>(
   action: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
-  body?: unknown
+  body?: unknown,
 ): Promise<T> {
   const url = action.startsWith('/') ? action : `${API_BASE}/${action}`;
   const token = getToken();
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -24,7 +24,10 @@ export async function apiCall<T>(
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const isDev = typeof process !== 'undefined' ? process.env.NODE_ENV === 'development' : (import.meta as any).env?.DEV;
+  const isDev =
+    typeof process !== 'undefined'
+      ? process.env.NODE_ENV === 'development'
+      : (import.meta as any).env?.DEV;
 
   if (isDev) {
     // DEV mode check
@@ -40,15 +43,17 @@ export async function apiCall<T>(
     const json = await res.json().catch(() => ({}));
     console.error(`[API ERROR] ${method} ${url}:`, json);
     if (res.status === 402) {
-      window.dispatchEvent(new CustomEvent('billing-blocked', { 
-        detail: { error: json.error || 'Sua assinatura está suspensa por falta de pagamento.' } 
-      }));
+      window.dispatchEvent(
+        new CustomEvent('billing-blocked', {
+          detail: { error: json.error || 'Sua assinatura está suspensa por falta de pagamento.' },
+        }),
+      );
     }
     throw new Error(json.error || json.message || `HTTP ${res.status}`);
   }
 
   const json: any = await res.json();
-  
+
   // Log de auditoria para ambiente dev
   if (isDev) {
     // Audit logger placeholder
@@ -90,21 +95,23 @@ export const api = {
     create: (data: any) => apiCall<any>('estoque', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`estoque?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`estoque?id=${id}`, 'DELETE'),
-    getMovimentacoes: (materialId?: string) => apiCall<any[]>(`estoque?type=movimentacoes${materialId ? `&material_id=${materialId}` : ''}`),
+    getMovimentacoes: (materialId?: string) =>
+      apiCall<any[]>(`estoque?type=movimentacoes${materialId ? `&material_id=${materialId}` : ''}`),
     addMovimentacao: (data: any) => apiCall<any>('estoque?type=movimentacoes', 'POST', data),
     fornecedores: {
-        list: () => apiCall<any[]>('estoque?type=fornecedores'),
-        create: (data: any) => apiCall<any>('estoque?type=fornecedores', 'POST', data),
-        update: (id: string, data: any) => apiCall<any>(`estoque?type=fornecedores&id=${id}`, 'PATCH', data),
-        delete: (id: string) => apiCall<any>(`estoque?type=fornecedores&id=${id}`, 'DELETE'),
-    }
+      list: () => apiCall<any[]>('estoque?type=fornecedores'),
+      create: (data: any) => apiCall<any>('estoque?type=fornecedores', 'POST', data),
+      update: (id: string, data: any) =>
+        apiCall<any>(`estoque?type=fornecedores&id=${id}`, 'PATCH', data),
+      delete: (id: string) => apiCall<any>(`estoque?type=fornecedores&id=${id}`, 'DELETE'),
+    },
   },
-  orcamentos: {
-    list: () => apiCall<any[]>('orcamentos'),
-    get: (id: string) => apiCall<any>(`orcamentos?id=${id}`),
-    create: (data: any) => apiCall<any>('orcamentos', 'POST', data),
-    update: (id: string, data: any) => apiCall<any>(`orcamentos?id=${id}`, 'PATCH', data),
-    delete: (id: string) => apiCall<any>(`orcamentos?id=${id}`, 'DELETE'),
+  quotations: {
+    list: () => apiCall<any[]>('quotations'),
+    get: (id: string) => apiCall<any>(`quotations?id=${id}`),
+    create: (data: any) => apiCall<any>('quotations', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`quotations?id=${id}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`quotations?id=${id}`, 'DELETE'),
   },
   projects: {
     list: () => apiCall<any[]>('projects'),
@@ -115,26 +122,33 @@ export const api = {
   retalhos: {
     list: (params?: string) => apiCall<any[]>(`retalhos${params ? `?${params}` : ''}`),
     create: (data: any) => apiCall<any>('retalhos', 'POST', data),
-    update: (id: string, data: any, action?: string) => apiCall<any>(`retalhos?id=${id}${action ? `&action=${action}` : ''}`, 'PATCH', data),
+    update: (id: string, data: any, action?: string) =>
+      apiCall<any>(`retalhos?id=${id}${action ? `&action=${action}` : ''}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`retalhos?id=${id}`, 'DELETE'),
   },
   compras: {
     listPedidos: () => apiCall<any[]>('compras?type=pedidos'),
-    listBySupplier: (fornecedorId: string) => apiCall<any[]>(`compras?type=pedidos&fornecedor_id=${fornecedorId}`),
+    listBySupplier: (fornecedorId: string) =>
+      apiCall<any[]>(`compras?type=pedidos&fornecedor_id=${fornecedorId}`),
     getPedido: (id: string) => apiCall<any>(`compras?type=pedidos&id=${id}`),
     createPedido: (data: any) => apiCall<any>('compras?type=pedidos', 'POST', data),
-    updatePedido: (id: string, data: any) => apiCall<any>(`compras?type=pedidos&id=${id}`, 'PATCH', data),
+    updatePedido: (id: string, data: any) =>
+      apiCall<any>(`compras?type=pedidos&id=${id}`, 'PATCH', data),
     addItem: (data: any) => apiCall<any>('compras?type=itens', 'POST', data),
     removeItem: (id: string) => apiCall<any>(`compras?type=itens&id=${id}`, 'DELETE'),
     registrarRecebimento: (data: any) => apiCall<any>('compras?type=recebimento', 'POST', data),
     getSugestoes: () => apiCall<any[]>('compras?type=sugestao'),
-    getHistoricoPrecos: (materialId: string) => apiCall<any[]>(`compras?type=historico_precos&material_id=${materialId}`),
+    getHistoricoPrecos: (materialId: string) =>
+      apiCall<any[]>(`compras?type=historico_precos&material_id=${materialId}`),
   },
   aprovacao: {
-    gerarLink: (orcamentoId: string) => apiCall<any>('aprovacao?action=gerar', 'POST', { quotation_id: orcamentoId }),
+    gerarLink: (orcamentoId: string) =>
+      apiCall<any>('aprovacao?action=gerar', 'POST', { quotation_id: orcamentoId }),
     getPublico: (token: string) => apiCall<any>(`aprovacao?token=${token}`),
-    aprovar: (token: string, data: { nome: string }) => apiCall<any>(`aprovacao?token=${token}&action=aprovar`, 'POST', data),
-    recusar: (token: string, data: { motivo: string }) => apiCall<any>(`aprovacao?token=${token}&action=recusar`, 'POST', data),
+    aprovar: (token: string, data: { nome: string }) =>
+      apiCall<any>(`aprovacao?token=${token}&action=aprovar`, 'POST', data),
+    recusar: (token: string, data: { motivo: string }) =>
+      apiCall<any>(`aprovacao?token=${token}&action=recusar`, 'POST', data),
   },
   agenda: {
     list: (params: any = {}) => {
@@ -144,8 +158,10 @@ export const api = {
     listKanban: () => apiCall<any>('agenda?action=kanban'),
     create: (data: any) => apiCall<any>('agenda', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`agenda?id=${id}`, 'PATCH', data),
-    move: (id: string, status: string) => apiCall<any>(`agenda?id=${id}&action=mover`, 'PATCH', { status_visita: status }),
-    realize: (id: string, resultado: string) => apiCall<any>(`agenda?id=${id}&action=realizar`, 'PATCH', { resultado_visita: resultado }),
+    move: (id: string, status: string) =>
+      apiCall<any>(`agenda?id=${id}&action=mover`, 'PATCH', { status_visita: status }),
+    realize: (id: string, resultado: string) =>
+      apiCall<any>(`agenda?id=${id}&action=realizar`, 'PATCH', { resultado_visita: resultado }),
     delete: (id: string) => apiCall<any>(`agenda?id=${id}`, 'DELETE'),
     syncVisitas: () => apiCall<any>('agenda?action=sincronizar', 'POST'),
   },
@@ -157,7 +173,8 @@ export const api = {
     generate: () => apiCall<any>('notificacoes?action=gerar', 'POST'),
   },
   engineering: {
-    list: (params?: { q?: string }) => apiCall<any[]>('engineering' + (params?.q ? `?q=${params.q}` : '')),
+    list: (params?: { q?: string }) =>
+      apiCall<any[]>('engineering' + (params?.q ? `?q=${params.q}` : '')),
     create: (data: any) => apiCall<any>('engineering', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`engineering?id=${id}`, 'PATCH', data),
     delete: (id: string) => apiCall<any>(`engineering?id=${id}`, 'DELETE'),
@@ -171,13 +188,16 @@ export const api = {
   production: {
     list: () => apiCall<any[]>('production'),
     create: (data: any) => apiCall<any>('production', 'POST', data),
-    updateStatus: (op_id: string, status: string) => apiCall<any>('production', 'PATCH', { op_id, status }),
+    updateStatus: (op_id: string, status: string) =>
+      apiCall<any>('production', 'PATCH', { op_id, status }),
     updateDetails: (data: any) => apiCall<any>('production?id=details', 'PATCH', data),
     getMetrics: () => apiCall<any>('production/metrics'),
-    delete: (op_id: string) => apiCall<any>(`production?op_id=${encodeURIComponent(op_id)}`, 'DELETE'),
+    delete: (op_id: string) =>
+      apiCall<any>(`production?op_id=${encodeURIComponent(op_id)}`, 'DELETE'),
   },
   reports: {
-    get: (type: string, projectId?: string) => apiCall<any[]>(`reports?type=${type}${projectId ? `&projectId=${projectId}` : ''}`),
+    get: (type: string, projectId?: string) =>
+      apiCall<any[]>(`reports?type=${type}${projectId ? `&projectId=${projectId}` : ''}`),
   },
   billings: {
     list: () => apiCall<any[]>('billings'),
@@ -188,7 +208,8 @@ export const api = {
   kanban: {
     list: () => apiCall<any[]>('kanban'),
     create: (data: any) => apiCall<any>('kanban', 'POST', data),
-    updateStatus: (id: string, status: string, extra: any = {}) => apiCall<any>(`kanban?id=${id}`, 'PATCH', { status, ...extra }),
+    updateStatus: (id: string, status: string, extra: any = {}) =>
+      apiCall<any>(`kanban?id=${id}`, 'PATCH', { status, ...extra }),
     delete: (id: string) => apiCall<any>(`kanban?id=${id}`, 'DELETE'),
   },
   goals: {
@@ -207,12 +228,16 @@ export const api = {
     delete: (id: string) => apiCall<any>(`users?id=${id}`, 'DELETE'),
   },
   orcamentoTecnico: {
-    getTree: (orcamentoId: string) => apiCall<any>(`orcamento-tecnico?type=tree&quotation_id=${orcamentoId}`),
-    getConfig: () => apiCall<any>('orcamento-tecnico?type=config'),
-    updateConfig: (data: any) => apiCall<any>('orcamento-tecnico?type=config', 'PATCH', data),
-    addEntity: (type: string, parentIdKey: string, parentId: string, data: any) => apiCall<any>(`orcamento-tecnico?type=${type}&${parentIdKey}=${parentId}`, 'POST', data),
-    updateEntity: (type: string, id: string, data: any) => apiCall<any>(`orcamento-tecnico?type=${type}&id=${id}`, 'PATCH', data),
-    deleteEntity: (type: string, id: string) => apiCall<any>(`orcamento-tecnico?type=${type}&id=${id}`, 'DELETE'),
+    getTree: (orcamentoId: string) =>
+      apiCall<any>(`quotation-tecnico?type=tree&quotation_id=${orcamentoId}`),
+    getConfig: () => apiCall<any>('quotation-tecnico?type=config'),
+    updateConfig: (data: any) => apiCall<any>('quotation-tecnico?type=config', 'PATCH', data),
+    addEntity: (type: string, parentIdKey: string, parentId: string, data: any) =>
+      apiCall<any>(`quotation-tecnico?type=${type}&${parentIdKey}=${parentId}`, 'POST', data),
+    updateEntity: (type: string, id: string, data: any) =>
+      apiCall<any>(`quotation-tecnico?type=${type}&id=${id}`, 'PATCH', data),
+    deleteEntity: (type: string, id: string) =>
+      apiCall<any>(`quotation-tecnico?type=${type}&id=${id}`, 'DELETE'),
   },
   suppliers: {
     list: () => apiCall<any[]>('estoque?type=fornecedores'),
@@ -224,7 +249,7 @@ export const api = {
       update: (data: any) => apiCall<any>('financeiro/classes', 'PUT', data),
       delete: (id: string) => apiCall<any>(`financeiro/classes?id=${id}`, 'DELETE'),
     },
-    classes: { 
+    classes: {
       list: () => apiCall<any[]>('financeiro/classes'), // Mantido para retrocompatibilidade
     },
     contasInternas: {
@@ -250,11 +275,18 @@ export const api = {
         return apiCall<any>(`financeiro/titulos-receber${qs ? `?${qs}` : ''}`);
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-receber', 'POST', data),
-      preview: (data: any) => apiCall<any>('financeiro/titulos-receber?action=preview', 'POST', data),
-      update: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'PATCH', data),
+      preview: (data: any) =>
+        apiCall<any>('financeiro/titulos-receber?action=preview', 'POST', data),
+      update: (id: string, data: any) =>
+        apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'PATCH', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-receber?id=${id}`, 'DELETE'),
-      deleteBatch: (cliente_id: string) => apiCall<any>(`financeiro/titulos-receber?action=delete_group&cliente_id=${cliente_id}`, 'DELETE'),
-      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-receber/${id}/baixar`, 'POST', data),
+      deleteBatch: (cliente_id: string) =>
+        apiCall<any>(
+          `financeiro/titulos-receber?action=delete_group&cliente_id=${cliente_id}`,
+          'DELETE',
+        ),
+      baixar: (id: string, data: any) =>
+        apiCall<any>(`financeiro/titulos-receber/${id}/baixar`, 'POST', data),
     },
     titulosPagar: {
       list: (params: any = {}) => {
@@ -263,10 +295,16 @@ export const api = {
       },
       create: (data: any) => apiCall<any>('financeiro/titulos-pagar', 'POST', data),
       preview: (data: any) => apiCall<any>('financeiro/titulos-pagar?action=preview', 'POST', data),
-      update: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'PATCH', data),
+      update: (id: string, data: any) =>
+        apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'PATCH', data),
       delete: (id: string) => apiCall<any>(`financeiro/titulos-pagar?id=${id}`, 'DELETE'),
-      deleteBatch: (fornecedor_id: string) => apiCall<any>(`financeiro/titulos-pagar?action=delete_group&fornecedor_id=${fornecedor_id}`, 'DELETE'),
-      baixar: (id: string, data: any) => apiCall<any>(`financeiro/titulos-pagar?id=${id}&action=baixar`, 'POST', data),
+      deleteBatch: (fornecedor_id: string) =>
+        apiCall<any>(
+          `financeiro/titulos-pagar?action=delete_group&fornecedor_id=${fornecedor_id}`,
+          'DELETE',
+        ),
+      baixar: (id: string, data: any) =>
+        apiCall<any>(`financeiro/titulos-pagar?id=${id}&action=baixar`, 'POST', data),
     },
     conferencia: {
       toggle: (data: any) => apiCall<any>('financeiro/conferencia', 'POST', data),
@@ -277,14 +315,15 @@ export const api = {
     },
     tesouraria: {
       list: () => apiCall<any[]>('financeiro/tesouraria'),
-      transferencia: (data: any) => apiCall<any>('financeiro/tesouraria/transferencia', 'POST', data),
+      transferencia: (data: any) =>
+        apiCall<any>('financeiro/tesouraria/transferencia', 'POST', data),
       movimento: (data: any) => apiCall<any>('financeiro/tesouraria/movimento', 'POST', data),
     },
     fluxoCaixa: {
       get: (params: any = {}) => {
         const qs = new URLSearchParams(params).toString();
         return apiCall<any>(`financeiro/fluxo-caixa${qs ? `?${qs}` : ''}`);
-      }
+      },
     },
     relatorios: {
       dre: (params: any = {}) => {
@@ -308,9 +347,9 @@ export const api = {
       create: (data: any) => apiCall<any>('financeiro/contas-recorrentes', 'POST', data),
       update: (data: any) => apiCall<any>('financeiro/contas-recorrentes', 'PUT', data),
       delete: (id: string) => apiCall<any>(`financeiro/contas-recorrentes?id=${id}`, 'DELETE'),
-      gerarMes: (mes: number, ano: number) => apiCall<any>(`financeiro/contas-recorrentes/gerar-mes?mes=${mes}&ano=${ano}`, 'POST'),
+      gerarMes: (mes: number, ano: number) =>
+        apiCall<any>(`financeiro/contas-recorrentes/gerar-mes?mes=${mes}&ano=${ano}`, 'POST'),
     },
-
   },
   estoqueCategorias: {
     list: () => apiCall<any[]>('estoque?type=categories'),
@@ -355,37 +394,47 @@ export const api = {
         throw error;
       }
     },
-    generateBOM: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-bom', payload }),
+    generateBOM: (payload: any) =>
+      apiCall<any>('ai-copilot', 'POST', { skill: 'generate-bom', payload }),
     auditSKU: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'audit-sku', payload }),
     purchaseSuggestion: () => apiCall<any>('ai-copilot', 'POST', { skill: 'purchase-suggestion' }),
     detectAnomalies: () => apiCall<any>('ai-copilot', 'POST', { skill: 'detect-anomalies' }),
-    analyzeProposal: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'analyze-proposal', payload }),
-    translate: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'translate', payload }),
-    generatePDF: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'generate-pdf', payload }),
-    forecastDemand: (payload: any) => apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
+    analyzeProposal: (payload: any) =>
+      apiCall<any>('ai-copilot', 'POST', { skill: 'analyze-proposal', payload }),
+    translate: (payload: any) =>
+      apiCall<any>('ai-copilot', 'POST', { skill: 'translate', payload }),
+    generatePDF: (payload: any) =>
+      apiCall<any>('ai-copilot', 'POST', { skill: 'generate-pdf', payload }),
+    forecastDemand: (payload: any) =>
+      apiCall<any>('ai-copilot', 'POST', { skill: 'forecast-demand', payload }),
   },
   orcamentosPro: {
     list: (params?: any) => {
       const qs = new URLSearchParams(params).toString();
-      return apiCall<any>(`orcamentos-pro${qs ? `?${qs}` : ''}`);
+      return apiCall<any>(`quotations-pro${qs ? `?${qs}` : ''}`);
     },
-    create: (data: any) => apiCall<any>('orcamentos-pro', 'POST', data),
-    get: (id: string) => apiCall<any>(`orcamentos-pro?id=${id}`),
-    update: (id: string, data: any) => apiCall<any>(`orcamentos-pro?id=${id}`, 'PUT', data),
-    addItem: (id: string, skuId: string, quantidade: number) => 
-      apiCall<any>(`orcamentos-pro?id=${id}&action=add-item`, 'PUT', { skuId, quantidade }),
-    updateBOM: (id: string, bomId: string, quantidadeAjustada: number) => 
-      apiCall<any>(`orcamentos-pro?id=${id}&action=update-bom`, 'PUT', { bomId, quantidadeAjustada }),
-    importItems: (id: string, items: any[]) => 
-      apiCall<any>(`orcamentos-pro?id=${id}&action=import-items`, 'PUT', { items }),
+    create: (data: any) => apiCall<any>('quotations-pro', 'POST', data),
+    get: (id: string) => apiCall<any>(`quotations-pro?id=${id}`),
+    update: (id: string, data: any) => apiCall<any>(`quotations-pro?id=${id}`, 'PUT', data),
+    addItem: (id: string, skuId: string, quantidade: number) =>
+      apiCall<any>(`quotations-pro?id=${id}&action=add-item`, 'PUT', { skuId, quantidade }),
+    updateBOM: (id: string, bomId: string, quantidadeAjustada: number) =>
+      apiCall<any>(`quotations-pro?id=${id}&action=update-bom`, 'PUT', {
+        bomId,
+        quantidadeAjustada,
+      }),
+    importItems: (id: string, items: any[]) =>
+      apiCall<any>(`quotations-pro?id=${id}&action=import-items`, 'PUT', { items }),
     updateItem: (id: string, itemId: string, updates: any) =>
-      apiCall<any>(`orcamentos-pro?id=${id}&action=update-item`, 'PUT', { itemId, ...updates }),
+      apiCall<any>(`quotations-pro?id=${id}&action=update-item`, 'PUT', { itemId, ...updates }),
     deleteItem: (id: string, itemId: string) =>
-      apiCall<any>(`orcamentos-pro?id=${id}&action=delete-item`, 'PUT', { itemId }),
-    explode: (skuId: string, qtd: number) => apiCall<any[]>(`orcamentos-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
+      apiCall<any>(`quotations-pro?id=${id}&action=delete-item`, 'PUT', { itemId }),
+    explode: (skuId: string, qtd: number) =>
+      apiCall<any[]>(`quotations-pro?action=explode&skuId=${skuId}&qtd=${qtd}`),
   },
   importador: {
-    importar: (type: 'PDF' | 'SKETCHUP' | 'PDF_JSON', payload: any) => apiCall<any>('importar-projeto', 'POST', { type, ...payload }),
+    importar: (type: 'PDF' | 'SKETCHUP' | 'PDF_JSON', payload: any) =>
+      apiCall<any>('importar-projeto', 'POST', { type, ...payload }),
   },
   planoCorte: {
     list: () => apiCall<any[]>('plano-corte'),
@@ -393,11 +442,19 @@ export const api = {
     create: (data: any) => apiCall<any>('plano-corte?action=criar_plano', 'POST', data),
     save: (data: any) => apiCall<any>('plano-corte?action=salvar_resultado_corte', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`plano-corte?id=${id}`, 'PUT', data),
-    aprovarProducao: (materiais_consumidos: any[], retalhos_gerados: any[] = [], meta: any = {}) => 
-      apiCall<any>('plano-corte?action=aprovar_producao', 'POST', { materiais_consumidos, retalhos_gerados, ...meta }),
+    aprovarProducao: (materiais_consumidos: any[], retalhos_gerados: any[] = [], meta: any = {}) =>
+      apiCall<any>('plano-corte?action=aprovar_producao', 'POST', {
+        materiais_consumidos,
+        retalhos_gerados,
+        ...meta,
+      }),
     verificarRetalhosDuplicados: (plano_id: string, retalhos_gerados: any[]) =>
-      apiCall<any>('plano-corte?action=verificar_retalhos_duplicados', 'POST', { plano_id, retalhos_gerados }),
-    importarDesenho: (fileBase64: string, fileName: string) => apiCall<any>('plano-corte/importar-desenho', 'POST', { fileBase64, fileName }),
+      apiCall<any>('plano-corte?action=verificar_retalhos_duplicados', 'POST', {
+        plano_id,
+        retalhos_gerados,
+      }),
+    importarDesenho: (fileBase64: string, fileName: string) =>
+      apiCall<any>('plano-corte/importar-desenho', 'POST', { fileBase64, fileName }),
   },
   cuttingPlan: {
     list: () => apiCall<any[]>('production?type=cutting_plan_list'),
@@ -415,5 +472,5 @@ export const api = {
     create: (data: any) => apiCall<any>('simulations', 'POST', data),
     update: (id: string, data: any) => apiCall<any>(`simulations?id=${id}`, 'PUT', data),
     delete: (id: string) => apiCall<any>(`simulations?id=${id}`, 'DELETE'),
-  }
+  },
 };

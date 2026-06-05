@@ -1,16 +1,18 @@
 # RESUMO DE PROJETO: D'Luxury CRM
-## InformaÁıes Gerais
-- **Status Atual:** CorreÁıes de banco de dados e UI para Projetos, Estoque, SKUs, e Calend·rio concluÌdas.
-- **Objetivo Central:** Garantir que o sistema de Gest„o de Estoque Granular funcione, os formul·rios salvem e bugs sejam resolvidos de vez.
-- **⁄ltima AtualizaÁ„o:** 05/06/2026 - 16:59
 
-## HistÛrico de AlteraÁıes
-- **05/06/2026 - 16:59:** ResoluÁ„o de bugs relatados pelo usu·rio
-  - Arquivos modificados: 
-    - src/api-lib/projects.ts (Payload de save consertado)
-    - src/components/projects/ProjectKanban.tsx (Encoding e campos arrumados)
-    - src/components/skus/SKUPage.tsx (Encoding arrumado)
-    - src/components/inventory/Inventory.tsx (Aba de Cat·logo de SKUs incluÌda no Invent·rio local)
-    - create-user.ts (CriaÁ„o de usu·rio Admin)
-  - Banco de Dados (Neon): Migration realizada para unificar SKUs em estoque_materiais_detalhado e criaÁ„o de usu·rio admin@admin.com (senha: 123456)
+## Informa√ß√µes Gerais
 
+- **Status Atual:** Corre√ß√µes de banco de dados e UI para Projetos, Estoque, SKUs, e Calend√°rio conclu√≠das.
+- **Objetivo Central:** Garantir que o sistema de Gest√£o de Estoque Granular funcione, os formul√°rios salvem e bugs sejam resolvidos de vez.
+- **√öltima Atualiza√ß√£o:** 05/06/2026 - 17:15
+
+## Hist√≥rico de Altera√ß√µes
+
+- **[05/06/2026 - 17:15]:** Executada Auditoria Global de Sistema.
+  - Arquivos modificados: `RELATORIO_AUDITORIA.md` (criado), `src/components/ui/Modal.tsx` (capitaliza√ß√£o corrigida).
+  - A√ß√µes realizadas: Varredura no banco Neon para checar tabelas √≥rf√£s. Verificou-se que `quotations`, `fornecedores` e `eventos_calendario` com `quotation_id` **existem** fisicamente. Os erros de "relation does not exist" prov√™m de cache/ORM ou queries em backend legadas buscando pelos nomes velhos. O sistema CSS/Tokens foi auditado com 100% de obedi√™ncia nas UIs gen√©ricas (bot√µes, modais, tabelas, inputs). Elaborado plano de acoplamento do M√≥dulo de SKUs para dentro de Estoque.
+- **[05/06/2026 - 16:30]:** Padroniza√ß√£o visual da UI e ajustes de bot√µes em min√∫sculo.)
+  - src/components/skus/SKUPage.tsx (Encoding arrumado)
+  - src/components/inventory/Inventory.tsx (Aba de Cat√°logo de SKUs inclu√≠da no Invent√°rio local)
+  - create-user.ts (Cria√ß√£o de usu√°rio Admin)
+  - Banco de Dados (Neon): Migration realizada para unificar SKUs em estoque_materiais_detalhado e cria√ß√£o de usu√°rio admin@admin.com (senha: 123456)

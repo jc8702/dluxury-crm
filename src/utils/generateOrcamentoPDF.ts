@@ -1,9 +1,9 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import type { Orcamento, CondicaoPagamento, Client, Project } from '../types/entities';
+import type { Quotation, CondicaoPagamento, Client, Project } from '../types/entities';
 
 export const generateOrcamentoPDF = (
-  orcamento: Orcamento,
+  quotation: Quotation,
   cliente?: Client,
   projeto?: Project,
   condicaoPagamento?: CondicaoPagamento,
@@ -30,7 +30,7 @@ export const generateOrcamentoPDF = (
   doc.text('PROPOSTA COMERCIAL', 120, 20);
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text(`Nº: ${orcamento.numero}`, 120, 28);
+  doc.text(`Nº: ${quotation.numero}`, 120, 28);
   doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 160, 28);
 
   // DADOS DO CLIENTE E PROJETO
@@ -61,7 +61,7 @@ export const generateOrcamentoPDF = (
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const tableData =
-    orcamento.itens?.map((item) => [
+    quotation.itens?.map((item) => [
       item.ambiente,
       item.descricao,
       `${item.largura_cm}x${item.altura_cm}x${item.profundidade_cm}cm`,
@@ -92,12 +92,12 @@ export const generateOrcamentoPDF = (
   const lineSpacing = 7;
 
   doc.text('Valor Base dos Móveis:', 15, startY);
-  doc.text(formatCurrency(orcamento.valor_base), 80, startY);
+  doc.text(formatCurrency(quotation.valor_base), 80, startY);
 
-  if (orcamento.adicional_urgencia_pct > 0 && orcamento.prazo_tipo === 'urgente') {
+  if (quotation.adicional_urgencia_pct > 0 && quotation.prazo_tipo === 'urgente') {
     doc.text('Adicional de Urgência (+15%):', 15, startY + lineSpacing);
     doc.text(
-      formatCurrency(orcamento.valor_base * orcamento.adicional_urgencia_pct),
+      formatCurrency(quotation.valor_base * quotation.adicional_urgencia_pct),
       80,
       startY + lineSpacing,
     );
@@ -108,7 +108,7 @@ export const generateOrcamentoPDF = (
   const totalY = startY + lineSpacing * 2.5;
   doc.text('VALOR TOTAL FINAL:', 15, totalY);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(formatCurrency(orcamento.valor_final), 80, totalY);
+  doc.text(formatCurrency(quotation.valor_final), 80, totalY);
 
   // CONDIÇÃO DE PAGAMENTO E PRAZO
   doc.setFont('helvetica', 'normal');
@@ -121,16 +121,16 @@ export const generateOrcamentoPDF = (
 
   doc.text(`Prazo de Entrega:`, 120, startY + lineSpacing);
   doc.text(
-    `${orcamento.prazo_entrega_dias} dias úteis (${orcamento.prazo_tipo})`,
+    `${quotation.prazo_entrega_dias} dias úteis (${quotation.prazo_tipo})`,
     165,
     startY + lineSpacing,
   );
 
-  if (orcamento.observacoes) {
+  if (quotation.observacoes) {
     doc.text('Observações:', 15, totalY + 15);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
-    const splitObs = doc.splitTextToSize(orcamento.observacoes, 180);
+    const splitObs = doc.splitTextToSize(quotation.observacoes, 180);
     doc.text(splitObs, 15, totalY + 22);
   }
 
@@ -145,5 +145,5 @@ export const generateOrcamentoPDF = (
   doc.text("D'LUXURY AMBIENTES", 35, pageHeight - 25);
   doc.text('CLIENTE / CONTRATANTE', 135, pageHeight - 25);
 
-  doc.save(`Proposta_${orcamento.numero}_DLuxury.pdf`);
+  doc.save(`Proposta_${quotation.numero}_DLuxury.pdf`);
 };

@@ -10,7 +10,8 @@ Tabela `orcamentos` foi deletada em PROMPT 1, causando 500 errors. PROMPT 4 refa
 
 ## Queries por Arquivo e Status
 
-### 1. /api/aprovacao/* (5 queries)
+### 1. /api/aprovacao/\* (5 queries)
+
 - [x] Query "aprovar por token" ✅ REFATORADA
 - [x] Query "listar aprovações pendentes" ✅ REFATORADA
 - [x] Query "aprovar documento" ✅ REFATORADA
@@ -19,7 +20,8 @@ Tabela `orcamentos` foi deletada em PROMPT 1, causando 500 errors. PROMPT 4 refa
 
 Status: ✅ COMPLETO (5/5 refatoradas)
 
-### 2. /api/contratos/* (5 queries)
+### 2. /api/contratos/\* (5 queries)
+
 - [x] Query "gerar contrato" ✅ REFATORADA
 - [x] Query "webhook assinatura" ✅ REFATORADA
 - [x] Query "listar contratos por status" ✅ REFATORADA
@@ -29,21 +31,25 @@ Status: ✅ COMPLETO (5/5 refatoradas)
 Status: ✅ COMPLETO (5/5 refatoradas)
 
 ### 3. DELETE /api/clients/:id (1 query)
+
 - [x] Query "soft-delete orçamentos de cliente" ✅ REFATORADA
 
 Status: ✅ COMPLETO (1/1 refatorada)
 
 ### 4. POST /api/estoque/finalizar-op (1 query)
+
 - [x] Query "obter orçamento para finalizar OP" ✅ REFATORADA
 
 Status: ✅ COMPLETO (1/1 refatorada)
 
 ### 5. POST /api/notificacoes/gerar (1 query)
+
 - [x] Query "orçamentos sem resposta por 7 dias" ✅ REFATORADA
 
 Status: ✅ COMPLETO (1/1 refatorada)
 
 ### 6. GET /api/projects (3 queries)
+
 - [x] Query "SUM valor_orcamento" ✅ REFATORADA
 - [x] Query "SELECT orçamentos do projeto" ✅ REFATORADA
 - [x] Query "UPDATE valor_orcamento_atual" ✅ REFATORADA
@@ -51,6 +57,7 @@ Status: ✅ COMPLETO (1/1 refatorada)
 Status: ✅ COMPLETO (3/3 refatoradas)
 
 ### 7. Função migrarOrcamentoLegadoParaPro (1 query)
+
 - [x] Dead code ✅ DELETADO
 
 Status: ✅ DELETADO (1/1)

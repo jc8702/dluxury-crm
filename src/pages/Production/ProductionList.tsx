@@ -197,7 +197,7 @@ const toBucket = (raw: string | undefined | null): ProductionBucket => {
   return meta?.bucket || 'PENDING';
 };
 
-type SortKey = 'op' | 'orcamento' | 'status' | 'data' | 'cliente';
+type SortKey = 'op' | 'quotation' | 'status' | 'data' | 'cliente';
 type SortDir = 'asc' | 'desc';
 type ViewMode = 'table' | 'kanban';
 
@@ -299,7 +299,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
           va = a.op_id || '';
           vb = b.op_id || '';
           break;
-        case 'orcamento':
+        case 'quotation':
           va = a.quotation_numero || '';
           vb = b.quotation_numero || '';
           break;
@@ -953,7 +953,7 @@ export const ProductionList: React.FC<ProductionListProps> = ({
                     }}
                   >
                     <SortHeader k="op" label="Ordem #" />
-                    <SortHeader k="orcamento" label="Orçamento" />
+                    <SortHeader k="quotation" label="Orçamento" />
                     <SortHeader k="cliente" label="Cliente" />
                     <SortHeader k="status" label="Status" />
                     <SortHeader k="data" label="Data" />
