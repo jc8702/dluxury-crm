@@ -47,13 +47,11 @@ export default function FinanceiroFluxoCaixaPage() {
   const loadFluxo = async (gran: Granularity, reg: Regime) => {
     setLoading(true);
     try {
-      const res = await api.get(`/financeiro/fluxo-caixa?granularity=${gran}&regime=${reg}`);
-      if (res.data.success) {
-        setPeriodos(res.data.data.periodos || []);
-        setSaldoAtual(res.data.data.saldo_atual || 0);
-        if (res.data.data.periodos?.length > 0) {
-          setSelectedPeriod(res.data.data.periodos[0]);
-        }
+      const res = await api.financeiro.fluxoCaixa.get({ granularity: gran, regime: reg });
+      setPeriodos(res?.periodos || []);
+      setSaldoAtual(res?.saldo_atual || 0);
+      if (res?.periodos?.length > 0) {
+        setSelectedPeriod(res.periodos[0]);
       }
     } finally {
       setLoading(false);

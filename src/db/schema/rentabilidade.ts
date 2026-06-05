@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, integer, decimal, timestamp, date, serial, text } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
-import { orcamentos } from './engenharia-orcamentos.js';
+import { quotations } from './quotations.js';
 import { ordensProd } from './producao.js';
 
 // NOVA TABELA: Custos Reais de Produção (custos_reais_op)
@@ -8,7 +8,7 @@ export const custosReaisOp = pgTable('custos_reais_op', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
   operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'cascade' }).notNull(),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'cascade' }).notNull(),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }).notNull(),
   
   // Custos estimados (do orçamento)
   custoMaterialEstimado: decimal('custo_material_estimado', { precision: 10, scale: 2 }),

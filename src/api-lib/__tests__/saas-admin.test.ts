@@ -145,4 +145,169 @@ describe('SaaS Admin API', () => {
     expect(res._d().data.name).toBe('NOVO COLABORADOR');
     expect(res._d().data.email).toBe('colab@target.com');
   });
+
+  it('deve retornar 400 no PATCH sem tenantId', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    const req = { method: 'PATCH', url: '/api/saas-admin/tenants', body: {} };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 404 no PATCH se tenant não encontrado', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql).mockResolvedValueOnce([]); // Tenant check empty
+    const req = { method: 'PATCH', url: '/api/saas-admin/tenants', body: { tenantId: 'inexistente-uuid' } };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(404);
+  });
+
+  it('deve criar uma nova assinatura se subExists for vazio no PATCH', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql)
+      .mockResolvedValueOnce([{ id: 'tenant-uuid' }]) // check tenant
+      .mockResolvedValueOnce([]) // update tenant
+      .mockResolvedValueOnce([]) // subExists is empty
+      .mockResolvedValueOnce([]); // insert sub
+
+    const req = {
+      method: 'PATCH',
+      url: '/api/saas-admin/tenants',
+      body: {
+        tenantId: 'tenant-uuid',
+        planoTier: 'basic',
+        status: 'active'
+      }
+    };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(200);
+  });
+
+  it('deve retornar 400 no POST de usuário com campos faltando', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    const req = { method: 'POST', url: '/api/saas-admin/users', body: { name: 'Só Nome' } };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 404 no POST de usuário com tenant inexistente', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql).mockResolvedValueOnce([]); // Tenant check empty
+    const req = {
+      method: 'POST',
+      url: '/api/saas-admin/users',
+      body: {
+        tenantId: 'tenant-uuid',
+        name: 'Nome',
+        email: 'test@test.com',
+        role: 'user',
+        password: 'pwd'
+      }
+    };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(404);
+  });
+
+  it('deve retornar 400 no POST se e-mail já existe', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql)
+      .mockResolvedValueOnce([{ id: 'tenant-uuid' }]) // check tenant
+      .mockResolvedValueOnce([{ id: 'existing-user' }]); // email check exists
+
+    const req = {
+      method: 'POST',
+      url: '/api/saas-admin/users',
+      body: {
+        tenantId: 'tenant-uuid',
+        name: 'Nome',
+        email: 'exists@test.com',
+        role: 'user',
+        password: 'pwd'
+      }
+    };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve listar usuários (GET /api/saas-admin/users)', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql).mockResolvedValueOnce([{ id: 'u1', name: 'User 1' }]);
+
+    const req = { method: 'GET', url: '/api/saas-admin/users', query: { tenantId: 'target-tenant-uuid' } };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(200);
+    expect(res._d().data).toHaveLength(1);
+  });
+
+  it('deve retornar 400 se tenantId ausente no GET de usuários', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    const req = { method: 'GET', url: '/api/saas-admin/users', query: {} };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 405 para método/rota não suportada', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    const req = { method: 'PUT', url: '/api/saas-admin/unsupported', body: {} };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(405);
+  });
+
+  it('deve retornar 500 em caso de erro fatal de banco', async () => {
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null
+    });
+    vi.mocked(sql).mockRejectedValue(new Error('Crash'));
+
+    const req = { method: 'GET', url: '/api/saas-admin/tenants' };
+    const res = mockRes();
+    await handleSaaSAdmin(req, res);
+    expect(res._s()).toBe(500);
+  });
 });

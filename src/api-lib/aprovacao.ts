@@ -1,4 +1,10 @@
-import { sql, validateAuth } from './_db.js';
+import { validateAuth } from './_db.js';
+import { db } from './drizzle-db.js';
+import { quotations, quotationItems, clientes } from '../db/schema/index.js';
+import { eq, and } from 'drizzle-orm';
+
+// Refatorado para usar quotations via Drizzle ORM
+// Features afetadas: /aprovar/[token] (rota publica).
 
 export async function handleAprovacao(req: any, res: any) {
   try {
@@ -7,16 +13,76 @@ export async function handleAprovacao(req: any, res: any) {
 
     // Rota pública para buscar orçamento pelo token
     if (method === 'GET' && token) {
-      const orc = (await sql`
-        SELECT o.id, o.cliente_id, o.projeto_id, o.numero, o.status, o.valor_base, o.taxa_mensal, o.condicao_pagamento_id, o.valor_final, o.prazo_entrega_dias, o.prazo_tipo, o.adicional_urgencia_pct, o.observacoes, o.materiais_consumidos, o.created_at, o.updated_at, o.token_aprovacao, o.url_aprovacao, o.aprovado_em, o.aprovado_ip, o.aprovado_nome, o.recusado_em, o.motivo_recusa, o.tenant_id, c.nome as cliente_nome, c.email as cliente_email, c.telefone as cliente_telefone
-        FROM orcamentos o
-        JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-        WHERE o.token_aprovacao = ${token}      `)[0];
+      const orcList = await db
+        .select({
+          id: quotations.id,
+          cliente_id: quotations.clienteId,
+          projeto_id: quotations.projetoId,
+          numero: quotations.numeroOrcamento,
+          status: quotations.status,
+          valor_base: quotations.valorTotalCusto,
+          taxa_mensal: quotations.taxaFinanceiraPercentual,
+          condicao_pagamento_id: quotations.descritivoPagamento,
+          valor_final: quotations.valorTotalVenda,
+          prazo_entrega_dias: quotations.prazoEntregaDias,
+          prazo_tipo: quotations.validadeDias,
+          adicional_urgencia_pct: quotations.descontoPercentual,
+          observacoes: quotations.condicoesComerciais,
+          materiais_consumidos: quotations.materiaisConsumidos,
+          created_at: quotations.createdAt,
+          updated_at: quotations.updatedAt,
+          token_aprovacao: quotations.tokenAprovacao,
+          url_aprovacao: quotations.urlAprovacao,
+          aprovado_em: quotations.aprovadoEm,
+          aprovado_ip: quotations.aprovadoIp,
+          aprovado_nome: quotations.aprovadoNome,
+          recusado_em: quotations.recusadoEm,
+          motivo_recusa: quotations.motivoRecusa,
+          tenant_id: quotations.tenantId,
+          cliente_nome: clientes.nome,
+          cliente_email: clientes.email,
+          cliente_telefone: clientes.telefone,
+        })
+        .from(quotations)
+        .leftJoin(clientes, eq(quotations.clienteId, clientes.id))
+        .where(eq(quotations.tokenAprovacao, token))
+        .limit(1);
 
+      const orc = orcList[0];
       if (!orc) return res.status(404).json({ success: false, error: 'Proposta não encontrada ou link expirado' });
 
-      const itms = await sql`SELECT id, quotation_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, erp_product_id, erp_parametros, created_at, updated_at FROM itens_orcamento WHERE quotation_id = ${orc.id} AND tenant_id = ${orc.tenant_id} ORDER BY id ASC`;
-      const condicao = orc.condicao_pagamento_id ? (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${orc.condicao_pagamento_id} AND tenant_id = ${orc.tenant_id}`)[0] : null;
+      // Buscar itens do orçamento usando Drizzle
+      const itmsRows = await db
+        .select()
+        .from(quotationItems)
+        .where(
+          and(
+            eq(quotationItems.quotationId, orc.id),
+            eq(quotationItems.tenantId, orc.tenant_id)
+          )
+        )
+        .orderBy(quotationItems.createdAt);
+
+      const itms = itmsRows.map(item => ({
+        id: item.id,
+        quotation_id: item.quotationId,
+        descricao: item.skuDescricao || item.nomeCustomizado || 'Item',
+        ambiente: item.nomeCustomizado || 'Geral',
+        largura_cm: item.largura ? parseFloat(item.largura) : 0,
+        altura_cm: item.altura ? parseFloat(item.altura) : 0,
+        profundidade_cm: item.espessura ? parseFloat(item.espessura) : 0,
+        material: item.material || '',
+        acabamento: item.skuDescricao || '',
+        quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,
+        valor_unitario: item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0,
+        valor_total: (item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0) * (item.quantidade ? parseFloat(item.quantidade) : 0),
+        erp_product_id: item.skuEngenhariaId || '',
+        erp_parametros: item.metadata || {},
+        created_at: item.createdAt,
+        updated_at: item.updatedAt
+      }));
+
+      const condicao = null; // Mapeado para null por compatibilidade (condições comeciais vêm em observações)
 
       return res.status(200).json({ success: true, data: { ...orc, itens: itms, condicao } });
     }
@@ -32,15 +98,28 @@ export async function handleAprovacao(req: any, res: any) {
       const origin = req.headers.origin || 'https://dluxury-crm.vercel.app';
       const url = `${origin}/aprovar/${newToken}`;
 
-      const result = await sql`
-        UPDATE orcamentos SET
-          token_aprovacao = ${newToken},
-          url_aprovacao = ${url},
-          status = 'enviado',
-          updated_at = NOW()
-        WHERE id = ${quotation_id} AND tenant_id = ${tenantId}
-        RETURNING id, numero, token_aprovacao, url_aprovacao, status, updated_at
-      `;
+      const result = await db
+        .update(quotations)
+        .set({
+          tokenAprovacao: newToken,
+          urlAprovacao: url,
+          status: 'enviado',
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(quotations.id, quotation_id),
+            eq(quotations.tenantId, tenantId)
+          )
+        )
+        .returning({
+          id: quotations.id,
+          numero: quotations.numeroOrcamento,
+          token_aprovacao: quotations.tokenAprovacao,
+          url_aprovacao: quotations.urlAprovacao,
+          status: quotations.status,
+          updated_at: quotations.updatedAt
+        });
 
       return res.status(200).json({ success: true, data: result[0] });
     }
@@ -50,16 +129,20 @@ export async function handleAprovacao(req: any, res: any) {
       const { nome } = req.body;
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-      const result = await sql`
-        UPDATE orcamentos SET
-          status = 'aprovado',
-          aprovado_em = NOW(),
-          aprovado_ip = ${ip},
-          aprovado_nome = ${nome},
-          updated_at = NOW()
-        WHERE token_aprovacao = ${token}
-        RETURNING id, numero
-      `;
+      const result = await db
+        .update(quotations)
+        .set({
+          status: 'aprovado',
+          aprovadoEm: new Date(),
+          aprovadoIp: typeof ip === 'string' ? ip : String(ip || ''),
+          aprovadoNome: nome,
+          updatedAt: new Date()
+        })
+        .where(eq(quotations.tokenAprovacao, token))
+        .returning({
+          id: quotations.id,
+          numero: quotations.numeroOrcamento
+        });
 
       if (result.length === 0) return res.status(404).json({ success: false, error: 'Erro ao aprovar proposta' });
 
@@ -69,14 +152,16 @@ export async function handleAprovacao(req: any, res: any) {
     // Recusar (Público)
     if (method === 'POST' && req.url.includes('recusar')) {
       const { motivo } = req.body;
-      await sql`
-        UPDATE orcamentos SET
-          status = 'revisao_solicitada',
-          recusado_em = NOW(),
-          motivo_recusa = ${motivo},
-          updated_at = NOW()
-        WHERE token_aprovacao = ${token}
-      `;
+      await db
+        .update(quotations)
+        .set({
+          status: 'revisao_solicitada',
+          recusadoEm: new Date(),
+          motivoRecusa: motivo,
+          updatedAt: new Date()
+        })
+        .where(eq(quotations.tokenAprovacao, token));
+      
       return res.status(200).json({ success: true });
     }
 

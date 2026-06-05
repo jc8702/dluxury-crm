@@ -3,7 +3,7 @@ import { tenants } from './tenants.js';
 import { relations } from 'drizzle-orm';
 import { clientes } from './crm.js';
 import { planosDeCorte } from './planos-de-corte.js';
-import { skuEngenharia, skuComponente } from './engenharia-orcamentos.js';
+import { skuEngenharia, skuComponente } from './skus.js';
 
 export const quotations = pgTable('quotations', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -23,6 +23,15 @@ export const quotations = pgTable('quotations', {
     valorTotalVenda: decimal('valor_total_venda', { precision: 12, scale: 2 }),
     status: varchar('status', { length: 20 }).default('RASCUNHO'),
     arquivoSketchupUrl: text('arquivo_sketchup_url'),
+    tokenAprovacao: varchar('token_aprovacao', { length: 255 }),
+    urlAprovacao: text('url_aprovacao'),
+    aprovadoEm: timestamp('aprovado_em'),
+    aprovadoIp: varchar('aprovado_ip', { length: 45 }),
+    aprovadoNome: varchar('aprovado_nome', { length: 255 }),
+    recusadoEm: timestamp('recusado_em'),
+    motivoRecusa: text('motivo_recusa'),
+    deletedAt: timestamp('deleted_at'),
+    materiaisConsumidos: jsonb('materiais_consumidos'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => {

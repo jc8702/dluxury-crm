@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
-import { skuEngenharia } from '../db/schema/engenharia-orcamentos.js';
+import { skuEngenharia } from '../db/schema/skus.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql, validateAuth } from './_db.js';
 

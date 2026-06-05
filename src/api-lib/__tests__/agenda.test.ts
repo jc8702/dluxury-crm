@@ -85,6 +85,61 @@ describe('handleAgenda', () => {
     expect(res._s()).toBe(200);
   });
 
+  it('deve realizar visita (PATCH ?action=realizar)', async () => {
+    mockAgendaService.realizarVisita.mockResolvedValue({ id: '1', resultado_visita: 'contratado' });
+    const req = { method: 'PATCH', query: { id: '1', action: 'realizar' }, body: { resultado_visita: 'contratado' } };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(200);
+    expect(mockAgendaService.realizarVisita).toHaveBeenCalledWith('1', 'contratado', '00000000-0000-0000-0000-000000000000');
+  });
+
+  it('deve atualizar evento de forma genérica (PUT)', async () => {
+    mockAgendaService.atualizarEvento.mockResolvedValue({ id: '1', title: 'Editado' });
+    const req = { method: 'PUT', query: { id: '1' }, body: { title: 'Editado' } };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(200);
+  });
+
+  it('deve retornar 400 no PATCH sem id', async () => {
+    const req = { method: 'PATCH', query: {}, body: {} };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve remover evento (DELETE)', async () => {
+    mockAgendaService.removerEvento.mockResolvedValue(true);
+    const req = { method: 'DELETE', query: { id: '1' } };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(200);
+    expect(mockAgendaService.removerEvento).toHaveBeenCalledWith('1', '00000000-0000-0000-0000-000000000000');
+  });
+
+  it('deve retornar 400 no DELETE sem id', async () => {
+    const req = { method: 'DELETE', query: {} };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 405 para método não suportado', async () => {
+    const req = { method: 'OPTIONS', query: {} };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(405);
+  });
+
+  it('deve retornar 500 caso ocorra erro interno no serviço', async () => {
+    mockAgendaService.getCalendario.mockRejectedValue(new Error('Fatal DB Error'));
+    const req = { method: 'GET', query: {} };
+    const res = mockRes();
+    await handleAgenda(req, res);
+    expect(res._s()).toBe(500);
+  });
+
   it('deve retornar 401 sem autorização', async () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'No auth' });
     const req = { method: 'GET', query: {}, body: {} };

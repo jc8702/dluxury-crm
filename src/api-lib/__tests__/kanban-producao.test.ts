@@ -165,4 +165,98 @@ describe('handleKanbanProducao', () => {
     expect(res._d().success).toBe(true);
     expect(res._d().data).toHaveLength(1);
   });
+
+  it('deve carregar o board aplicando filtros (GET /board)', async () => {
+    vi.mocked(sql).mockResolvedValue([]);
+    const req = { 
+      method: 'GET', 
+      url: '/board', 
+      query: { 
+        filtro_responsavel: '00000000-0000-0000-0000-000000000001', 
+        filtro_prioridade: '1', 
+        filtro_ambiente: 'Cozinha', 
+        busca: 'OP-123' 
+      }, 
+      body: {} 
+    };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(200);
+  });
+
+  it('deve retornar 400 no /move-card se status for inválido', async () => {
+    const req = { method: 'POST', url: '/move-card', body: { etapa_kanban_id: 10, novo_status: 'invalido' } };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 404 no /move-card se a etapa não for encontrada', async () => {
+    vi.mocked(sql).mockResolvedValueOnce([]); // Retorna vazio no update da etapa
+    const req = { method: 'POST', url: '/move-card', body: { etapa_kanban_id: 999, novo_status: 'em_progresso' } };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(404);
+  });
+
+  it('deve finalizar OP no /move-card se todas as etapas estiverem concluídas', async () => {
+    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
+      let qStr = (Array.isArray(query) ? query.join('?') : String(query)).replace(/\s+/g, ' ');
+      if (qStr.includes('UPDATE etapas_prod_kanban')) {
+        return [{ id: 10, operacao_prod_id: 'op-123', status_kanban: 'concluido' }];
+      }
+      if (qStr.includes('INSERT INTO movimento_kanban')) {
+        return [];
+      }
+      if (qStr.includes('SELECT COUNT(*)')) {
+        return [{ count: '3', concluidas: '3' }]; // Concluiu todas!
+      }
+      if (qStr.includes('UPDATE ordens_prod')) {
+        return [];
+      }
+      return [];
+    });
+
+    const req = { method: 'POST', url: '/move-card', body: { etapa_kanban_id: 10, novo_status: 'concluido' } };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(200);
+  });
+
+  it('deve retornar 400 no PATCH /card-details sem ID', async () => {
+    const req = { method: 'PATCH', url: '/card-details', body: {} };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 404 no PATCH /card-details se etapa não encontrada', async () => {
+    vi.mocked(sql).mockResolvedValueOnce([]); // select existing empty
+    const req = { method: 'PATCH', url: '/card-details', body: { etapa_kanban_id: 999 } };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(404);
+  });
+
+  it('deve retornar 400 no GET /card-history sem ID', async () => {
+    const req = { method: 'GET', url: '/card-history', query: {} };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(400);
+  });
+
+  it('deve retornar 405 para método/rota não suportada', async () => {
+    const req = { method: 'DELETE', url: '/board' };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(405);
+  });
+
+  it('deve retornar 500 em caso de erro interno de banco', async () => {
+    vi.mocked(sql).mockRejectedValue(new Error('Fatal DB crash'));
+    const req = { method: 'GET', url: '/board', query: {} };
+    const res = mockRes();
+    await handleKanbanProducao(req, res);
+    expect(res._s()).toBe(500);
+  });
 });

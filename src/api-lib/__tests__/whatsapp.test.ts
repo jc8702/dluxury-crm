@@ -9,20 +9,20 @@ vi.mock('../_db.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200, jd: any = null, ended = false;
   const self: any = {
     status: vi.fn((c: number) => { sc = c; return self; }),
     json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => self),
-    _s: () => sc,
-    _d: () => jd,
+    end: vi.fn(() => { ended = true; return self; }),
+    _s: () => sc, _d: () => jd,
   };
   return self;
 }
 
 describe('handleWhatsApp', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.mocked(sql).mockReset();
+    vi.mocked(validateAuth).mockReset();
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
     vi.mocked(sql).mockResolvedValue([{ count: '1' }] as any);
   });
@@ -35,154 +35,266 @@ describe('handleWhatsApp', () => {
     expect(res._s()).toBe(401);
   });
 
-  it('deve carregar mensagens de uma conversa (GET /mensagens)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-
-      if (qStr.includes('SELECT count(*)') || qStr.includes('modelos_msg_whatsapp')) {
-        return [{ count: '1' }];
-      }
-      if (qStr.includes('mensagens_whatsapp')) {
-        return [
-          { id: 1, tipo_msg: 'saida', conteudo_msg: 'Olá cliente!', timestamp_msg: new Date().toISOString(), status_entrega: 'lido', arquivo_url: null, usuario_nome: 'Admin' }
-        ];
-      }
-      if (qStr.includes('conversas_whatsapp')) {
-        return [{ id: 5, tags: 'orçamento,atendimento', numero_telefone: '+5547999999999', contato_nome: 'Cliente Teste' }];
-      }
-      return [];
+  describe('GET /mensagens', () => {
+    it('deve retornar 400 se quotation_id e operacao_prod_id forem ausentes', async () => {
+      const req = { method: 'GET', url: '/mensagens', query: {}, body: {} };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(400);
+      expect(res._d().error).toBe('Parâmetro quotation_id ou operacao_prod_id é obrigatório');
     });
 
-    const req = { method: 'GET', url: '/mensagens', query: { quotation_id: 'o-uuid' }, body: {} };
-    const res = mockRes();
-    await handleWhatsApp(req, res);
+    it('deve carregar mensagens filtrando por quotation_id', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('mensagens_whatsapp') && qStr.includes('c.quotation_id')) {
+          return [{ id: 1, tipo_msg: 'saida', conteudo_msg: 'Olá!', timestamp_msg: '2026-06-04' }];
+        }
+        if (qStr.includes('FROM conversas_whatsapp') && qStr.includes('quotation_id')) {
+          return [{ tags: 'tag1', numero_telefone: '123', contato_nome: 'Roberto' }];
+        }
+        return [];
+      });
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().mensagens).toHaveLength(1);
-    expect(res._d().tags).toContain('orçamento');
-    expect(res._d().contato_nome).toBe('Cliente Teste');
+      const req = { method: 'GET', url: '/mensagens', query: { quotation_id: '00000000-0000-0000-0000-000000000001' } };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().contato_nome).toBe('Roberto');
+      expect(res._d().tags).toEqual(['tag1']);
+    });
+
+    it('deve carregar mensagens filtrando por operacao_prod_id', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('mensagens_whatsapp') && qStr.includes('c.operacao_prod_id')) {
+          return [{ id: 1, tipo_msg: 'entrada', conteudo_msg: 'Ok!' }];
+        }
+        if (qStr.includes('FROM conversas_whatsapp') && qStr.includes('operacao_prod_id')) {
+          return [{ tags: '', numero_telefone: '321', contato_nome: 'Marcos' }];
+        }
+        return [];
+      });
+
+      const req = { method: 'GET', url: '/mensagens', query: { operacao_prod_id: '00000000-0000-0000-0000-000000000002' } };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().contato_nome).toBe('Marcos');
+      expect(res._d().tags).toEqual([]);
+    });
   });
 
-  it('deve enviar mensagem no WhatsApp (POST /enviar-mensagem)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-
-      if (qStr.includes('SELECT count(*)')) {
-        return [{ count: '1' }];
-      }
-      if (qStr.includes('SELECT id FROM conversas_whatsapp')) {
-        return [{ id: 5 }];
-      }
-      if (qStr.includes('INSERT INTO mensagens_whatsapp')) {
-        return [{ id: 42 }];
-      }
-      return [];
+  describe('POST /enviar-mensagem', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
     });
 
-    const req = {
-      method: 'POST',
-      url: '/enviar-mensagem',
-      query: {},
-      body: {
-        quotation_id: 'o-uuid',
-        numero_telefone: '+5547999999999',
-        conteudo_msg: 'Olá, seu projeto foi aprovado!',
-        tags: ['orçamento', 'aprovado']
-      }
-    };
-    const res = mockRes();
-    await handleWhatsApp(req, res);
+    it('deve retornar 400 se conteudo_msg ou numero_telefone estiverem ausentes', async () => {
+      const req = { method: 'POST', url: '/enviar-mensagem', body: { conteudo_msg: '' } };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(400);
+    });
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().id).toBe(42);
-    expect(res._d().status_entrega).toBe('enviado');
+    it('deve enviar e criar conversa associada a quotation_id obtendo nome do cliente', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT id FROM conversas_whatsapp')) return []; // não existe conversa
+        if (qStr.includes('SELECT c.nome FROM quotations')) return [{ nome: 'Cliente Q' }]; // nome do cliente
+        if (qStr.includes('INSERT INTO conversas_whatsapp')) return [{ id: 10 }]; // nova conversa
+        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 100 }]; // nova mensagem
+        return [];
+      });
+
+      const req = {
+        method: 'POST',
+        url: '/enviar-mensagem',
+        body: {
+          quotation_id: '00000000-0000-0000-0000-000000000001',
+          numero_telefone: '12345',
+          conteudo_msg: 'Mensagem de teste',
+          tags: ['tag1']
+        }
+      };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().id).toBe(100);
+
+      // Avança os timers para rodar a simulação assíncrona
+      await vi.runAllTimersAsync();
+    });
+
+    it('deve enviar e criar conversa associada a operacao_prod_id', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT id FROM conversas_whatsapp')) return []; // não existe conversa
+        if (qStr.includes('SELECT c.nome FROM ordens_prod')) return [{ nome: 'Cliente OP' }];
+        if (qStr.includes('INSERT INTO conversas_whatsapp')) return [{ id: 11 }];
+        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 101 }];
+        return [];
+      });
+
+      const req = {
+        method: 'POST',
+        url: '/enviar-mensagem',
+        body: {
+          operacao_prod_id: '00000000-0000-0000-0000-000000000002',
+          numero_telefone: '12345',
+          conteudo_msg: 'Mensagem OP',
+          tags: 'string_tag' // teste tags não sendo array
+        }
+      };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().id).toBe(101);
+      await vi.runAllTimersAsync();
+    });
+
+    it('deve enviar usando conversa existente e atualizando-a', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT id FROM conversas_whatsapp')) return [{ id: 5 }]; // conversa existe
+        if (qStr.includes('UPDATE conversas_whatsapp')) return [];
+        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 102 }];
+        return [];
+      });
+
+      const req = {
+        method: 'POST',
+        url: '/enviar-mensagem',
+        body: {
+          numero_telefone: '12345',
+          conteudo_msg: 'Mensagem em conversa existente'
+        }
+      };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().id).toBe(102);
+      await vi.runAllTimersAsync();
+    });
   });
 
-  it('deve carregar modelos de mensagem rápidos (GET /modelos)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
+  describe('GET /modelos', () => {
+    it('deve listar modelos cadastrados no banco', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT * FROM modelos_msg_whatsapp')) {
+          return [{ id: 'm1', titulo: 'Mod 1', conteudo_template: 'Olá', tipo_acionador: 'medicao' }];
+        }
+        return [];
+      });
 
-      if (qStr.includes('SELECT count(*)')) {
-        return [{ count: '1' }];
-      }
-      if (qStr.includes('SELECT * FROM modelos_msg_whatsapp')) {
-        return [
-          { id: 1, titulo: 'Modelo Teste', conteudo_template: 'Olá {cliente}', tipo_acionador: 'teste' }
-        ];
-      }
-      return [];
+      const req = { method: 'GET', url: '/modelos' };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().modelos).toHaveLength(1);
     });
-
-    const req = { method: 'GET', url: '/modelos', query: {}, body: {} };
-    const res = mockRes();
-    await handleWhatsApp(req, res);
-
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().modelos).toHaveLength(1);
-    expect(res._d().modelos[0].titulo).toBe('Modelo Teste');
   });
 
-  it('deve receber resposta simulada do cliente via webhook (POST /webhook)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-
-      if (qStr.includes('SELECT count(*)')) {
-        return [{ count: '1' }];
-      }
-      if (qStr.includes('SELECT id FROM conversas_whatsapp')) {
-        return [{ id: 5 }];
-      }
-      if (qStr.includes('INSERT INTO mensagens_whatsapp')) {
-        return [{ id: 43 }];
-      }
-      return [];
+  describe('POST /webhook', () => {
+    it('deve retornar 400 se from_number ou message_text estiverem ausentes', async () => {
+      const req = { method: 'POST', url: '/webhook', body: { message_text: 'Olá' } };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(400);
     });
 
-    const req = {
-      method: 'POST',
-      url: '/webhook',
-      query: {},
-      body: {
-        from_number: '+5547999999999',
-        message_text: 'Tudo bem! Pode dar andamento.',
-        quotation_id: 'o-uuid'
-      }
-    };
-    const res = mockRes();
-    await handleWhatsApp(req, res);
+    it('deve processar webhook simulando resposta e criar nova conversa caso não exista', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT id FROM conversas_whatsapp')) return []; // sem conversa
+        if (qStr.includes('INSERT INTO conversas_whatsapp')) return [{ id: 20 }];
+        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 200, conteudo_msg: 'Msg' }];
+        return [];
+      });
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
+      const req = {
+        method: 'POST',
+        url: '/webhook',
+        body: {
+          from_number: '12345',
+          message_text: 'Simulação cliente respondendo',
+          quotation_id: '00000000-0000-0000-0000-000000000001'
+        }
+      };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().data.id).toBe(200);
+    });
+
+    it('deve processar webhook simulando resposta em conversa existente', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
+        if (qStr.includes('SELECT id FROM conversas_whatsapp')) return [{ id: 20 }]; // conversa existe
+        if (qStr.includes('UPDATE conversas_whatsapp')) return [];
+        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 201 }];
+        return [];
+      });
+
+      const req = {
+        method: 'POST',
+        url: '/webhook',
+        body: {
+          from_number: '12345',
+          message_text: 'Simulação em conversa existente'
+        }
+      };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+
+      expect(res._s()).toBe(200);
+    });
+  });
+
+  describe('Modelos Seed & Erros', () => {
+    it('deve tolerar falhas no seedDefaultModelos e não quebrar', async () => {
+      // 1. SELECT count(*) falha no seed
+      vi.mocked(sql).mockRejectedValueOnce(new Error('Tabela modelos_msg_whatsapp não existe'));
+
+      const req = { method: 'GET', url: '/modelos' };
+      const res = mockRes();
+
+      // Executa. Não deve dar erro porque o seedDefaultModelos faz try-catch silenciando erro
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(200);
+    });
+
+    it('deve retornar 405 para métodos não permitidos', async () => {
+      const req = { method: 'DELETE', url: '/gerar', query: {} };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(405);
+    });
+
+    it('deve retornar 500 em caso de erro fatal inesperado', async () => {
+      vi.mocked(validateAuth).mockImplementation(() => {
+        throw new Error('Falha catastrófica');
+      });
+      const req = { method: 'GET', url: '/mensagens' };
+      const res = mockRes();
+      await handleWhatsApp(req, res);
+      expect(res._s()).toBe(500);
+    });
   });
 });

@@ -1,4 +1,7 @@
 import { sql, validateAuth } from './_db.js';
+import { db } from './drizzle-db.js';
+import { quotations } from '../db/schema/index.js';
+import { eq, and } from 'drizzle-orm';
 
 // Função para calcular a similaridade de strings (Sorensen-Dice Coefficient)
 function stringSimilarity(s1: string, s2: string): number {
@@ -263,10 +266,19 @@ export async function handleEstoqueGranular(req: any, res: any) {
         return res.status(404).json({ success: false, error: 'Ordem de Produção não encontrada' });
       }
 
-      // 2. Buscar itens consumidos do orçamento
-      const [orc] = await sql`
-        SELECT materiais_consumidos FROM orcamentos WHERE id = ${op.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-      `;
+      // 2. Buscar itens consumidos do orçamento com Drizzle
+      const [orc] = await db
+        .select({
+          materiais_consumidos: quotations.materiaisConsumidos
+        })
+        .from(quotations)
+        .where(
+          and(
+            eq(quotations.id, op.quotation_id),
+            eq(quotations.tenantId, tenantId)
+          )
+        )
+        .limit(1);
 
       const materiais = orc?.materiais_consumidos || [];
       if (!Array.isArray(materiais) || materiais.length === 0) {

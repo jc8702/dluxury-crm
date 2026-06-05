@@ -123,10 +123,9 @@ export async function runInitDB() {
   `);
 
   // 6. Migrations (safe)
-  await safeSql(
-    sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS materiais_consumidos JSONB DEFAULT '[]'`,
-  );
-  await safeSql(sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS visita_id TEXT`);
+  // [PROMPT 2 - 2026-06-04] ALTER TABLE orcamentos* REMOVIDOS: tabelas orcamentos, itens_orcamento,
+  //   orcamento_ambientes, orcamento_moveis, orcamento_pecas, orcamento_ferragens, orcamento_custos_extras
+  //   foram DROPPADAS em PROMPT 1. Schema canonico agora e `quotations` (Drizzle).
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS visita_id TEXT`);
   await safeSql(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS quotation_id TEXT`);
   await safeSql(sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`);
@@ -153,25 +152,7 @@ export async function runInitDB() {
   await safeSql(sql`ALTER TABLE materiais ADD COLUMN IF NOT EXISTS margem_lucro NUMERIC`);
 
   // Migrações de padronização de nomes de colunas (criado_em -> created_at)
-  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN criado_em TO created_at`).catch(() => {});
-  await safeSql(sql`ALTER TABLE orcamentos RENAME COLUMN atualizado_em TO updated_at`).catch(
-    () => {},
-  );
-  await safeSql(sql`ALTER TABLE orcamento_ambientes RENAME COLUMN criado_em TO created_at`).catch(
-    () => {},
-  );
-  await safeSql(sql`ALTER TABLE orcamento_moveis RENAME COLUMN criado_em TO created_at`).catch(
-    () => {},
-  );
-  await safeSql(sql`ALTER TABLE orcamento_pecas RENAME COLUMN criado_em TO created_at`).catch(
-    () => {},
-  );
-  await safeSql(sql`ALTER TABLE orcamento_ferragens RENAME COLUMN criado_em TO created_at`).catch(
-    () => {},
-  );
-  await safeSql(
-    sql`ALTER TABLE orcamento_custos_extras RENAME COLUMN criado_em TO created_at`,
-  ).catch(() => {});
+  // [PROMPT 2 - 2026-06-04] RENAME COLUMN em orcamentos* REMOVIDOS: tabelas legadas não existem mais.
   await safeSql(sql`ALTER TABLE chamados_garantia RENAME COLUMN criado_em TO created_at`).catch(
     () => {},
   );
@@ -258,9 +239,7 @@ export async function runInitDB() {
   await safeSql(
     sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
   ).catch(() => {});
-  await safeSql(
-    sql`ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
-  ).catch(() => {});
+  // [PROMPT 2 - 2026-06-04] ALTER TABLE orcamentos ADD COLUMN updated_at REMOVIDO: tabela deletada.
 
   // 7. Users Table
   await safeSql(sql`
@@ -362,128 +341,10 @@ export async function runInitDB() {
   `);
 
   // 13. Budgeting Tables
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamentos (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      cliente_id TEXT, -- Flexível (TEXT ou UUID)
-      projeto_id TEXT, -- Flexível (TEXT ou UUID)
-      visita_id TEXT, -- Flexível (TEXT ou UUID)
-      numero TEXT UNIQUE,
-      status TEXT DEFAULT 'rascunho',
-      valor_base DECIMAL(12,2),
-      taxa_mensal DECIMAL(12,2),
-      condicao_pagamento_id UUID,
-      valor_final DECIMAL(12,2),
-      prazo_entrega_dias INTEGER,
-      prazo_tipo TEXT DEFAULT 'padrao',
-      adicional_urgencia_pct DECIMAL(5,2) DEFAULT 0,
-      observacoes TEXT,
-      materiais_consumidos JSONB DEFAULT '[]',
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS itens_orcamento (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
-      descricao TEXT,
-      ambiente TEXT,
-      largura_cm DECIMAL(10,2),
-      altura_cm DECIMAL(10,2),
-      profundidade_cm DECIMAL(10,2),
-      material TEXT,
-      acabamento TEXT,
-      quantidade INTEGER DEFAULT 1,
-      valor_unitario DECIMAL(12,2),
-      valor_total DECIMAL(12,2),
-      erp_product_id UUID,
-      erp_parametros JSONB DEFAULT '{}',
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  // 13.1 Technical Budget Tables
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamento_ambientes (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
-      nome TEXT NOT NULL,
-      ordem INTEGER DEFAULT 0,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamento_moveis (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      ambiente_id UUID REFERENCES orcamento_ambientes(id) ON DELETE CASCADE,
-      nome TEXT NOT NULL,
-      tipo_movel TEXT,
-      largura_total_cm DECIMAL(10,2),
-      altura_total_cm DECIMAL(10,2),
-      profundidade_total_cm DECIMAL(10,2),
-      erp_product_id UUID,
-      observacoes TEXT,
-      ordem INTEGER DEFAULT 0,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamento_pecas (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
-      material_id TEXT,
-      sku TEXT,
-      descricao_peca TEXT,
-      largura_cm DECIMAL(10,2),
-      altura_cm DECIMAL(10,2),
-      espessura_mm DECIMAL(10,2) DEFAULT 15,
-      quantidade INTEGER DEFAULT 1,
-      m2_unitario DECIMAL(12,4),
-      m2_total DECIMAL(12,4),
-      fator_perda_pct DECIMAL(5,2),
-      m2_com_perda DECIMAL(12,4),
-      preco_custo_m2 DECIMAL(12,2),
-      custo_total_peca DECIMAL(12,2),
-      metros_fita_borda DECIMAL(12,2),
-      fita_material_id TEXT,
-      sentido_veio TEXT DEFAULT 'longitudinal',
-      desconto_fita_mm DECIMAL(5,2) DEFAULT 0,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamento_ferragens (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      movel_id UUID REFERENCES orcamento_moveis(id) ON DELETE CASCADE,
-      material_id TEXT,
-      sku TEXT,
-      descricao TEXT,
-      quantidade DECIMAL(12,2) DEFAULT 1,
-      unidade TEXT DEFAULT 'UN',
-      preco_custo_unitario DECIMAL(12,2),
-      custo_total DECIMAL(12,2),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await safeSql(sql`
-    CREATE TABLE IF NOT EXISTS orcamento_custos_extras (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
-      descricao TEXT NOT NULL,
-      tipo TEXT,
-      forma_calculo TEXT,
-      percentual_ou_valor DECIMAL(12,2),
-      m2_total_referencia DECIMAL(12,4),
-      valor_calculado DECIMAL(12,2),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  // [PROMPT 2 - 2026-06-04] 7 CREATE TABLE IF NOT EXISTS (orcamentos, itens_orcamento,
+  //   orcamento_ambientes, orcamento_moveis, orcamento_pecas, orcamento_ferragens,
+  //   orcamento_custos_extras) REMOVIDOS: tabelas foram DROPPADAS em PROMPT 1.
+  //   Schema canonico agora e `quotations` + `quotation_items` (Drizzle ORM em src/db/schema/quotations.ts).
 
   // 14. Production Orders Table
   await safeSql(sql`
@@ -807,7 +668,7 @@ export async function runInitDB() {
     CREATE TABLE IF NOT EXISTS custos_reais_op (
       id SERIAL PRIMARY KEY,
       operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE CASCADE NOT NULL,
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE NOT NULL,
+      quotation_id UUID REFERENCES quotations(id) ON DELETE CASCADE NOT NULL,
       custo_material_estimado DECIMAL(10, 2),
       custo_mao_obra_estimada DECIMAL(10, 2),
       tempo_horas_estimado DECIMAL(10, 2),
@@ -872,7 +733,7 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS conversas_whatsapp (
       id SERIAL PRIMARY KEY,
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      quotation_id UUID REFERENCES quotations(id) ON DELETE CASCADE,
       operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE CASCADE,
       numero_telefone VARCHAR(20) NOT NULL,
       contato_nome VARCHAR(255),
@@ -945,7 +806,7 @@ export async function runInitDB() {
       id SERIAL PRIMARY KEY,
       sku_codigo VARCHAR(50) REFERENCES estoque_materiais_detalhado(sku_codigo),
       operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE SET NULL,
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE SET NULL,
+      quotation_id UUID REFERENCES quotations(id) ON DELETE SET NULL,
       tipo_movimento VARCHAR(50) NOT NULL,
       quantidade_movimento INTEGER NOT NULL,
       status_anterior VARCHAR(50),
@@ -1017,7 +878,7 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS contrato_digital (
       id SERIAL PRIMARY KEY,
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE UNIQUE,
+      quotation_id UUID REFERENCES quotations(id) ON DELETE CASCADE UNIQUE,
       numero_contrato VARCHAR(50) UNIQUE,
       data_criacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       data_documento TIMESTAMP WITH TIME ZONE,
@@ -1070,7 +931,7 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS historico_sku_matching (
       id SERIAL PRIMARY KEY,
-      quotation_id UUID REFERENCES orcamentos(id) ON DELETE CASCADE,
+      quotation_id UUID REFERENCES quotations(id) ON DELETE CASCADE,
       sku_procurado VARCHAR(100) NOT NULL,
       skus_sugeridos VARCHAR(500),
       sku_selecionado VARCHAR(50),
@@ -1109,13 +970,14 @@ export async function runInitDB() {
     // Ignore error
   }
 
-  // Hardening Migration (soft deletes, índices)
-  try {
-    const { runHardeningMigration } = await import('./queries/hardening_migration.js');
-    await runHardeningMigration();
-  } catch {
-    // Ignore se falhar
-  }
+  // Hardening Migration (DESATIVADA em 2026-06-04 — PROMPT 1/PROMPT 2: tabelas legadas orcamentos* removidas; indices legacy não se aplicam mais)
+  // Arquivo renomeado para .disabled; reabilitar somente apos refatoracao das queries orcamentos em contrato-digital.ts, aprovacao.ts, projects.ts, etc.
+  // try {
+  //   const { runHardeningMigration } = await import('./queries/hardening_migration.js.disabled');
+  //   await runHardeningMigration();
+  // } catch {
+  //   // Ignore se falhar
+  // }
 
   // Migração de tenant_id em lote para suporte retroativo
   const tabelasComTenant = [
@@ -1124,13 +986,6 @@ export async function runInitDB() {
     'billings',
     'kanban_items',
     'monthly_goals',
-    'orcamentos',
-    'itens_orcamento',
-    'orcamento_ambientes',
-    'orcamento_moveis',
-    'orcamento_pecas',
-    'orcamento_ferragens',
-    'orcamento_custos_extras',
     'ordens_producao',
     'erp_product_bom',
     'chamados_garantia',

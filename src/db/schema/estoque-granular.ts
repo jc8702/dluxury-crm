@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, text, timestamp, boolean, integer, serial, decimal } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
 import { ordensProd } from './producao.js';
-import { orcamentos } from './engenharia-orcamentos.js';
+import { quotations } from './quotations.js';
 
 // EstoqueMateriaisDetalhado (estoque_materiais_detalhado)
 export const estoqueMateriaisDetalhado = pgTable('estoque_materiais_detalhado', {
@@ -128,7 +128,7 @@ export const mapeamentoSku = pgTable('mapeamento_sku', {
 export const historicoSkuMatching = pgTable('historico_sku_matching', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }).notNull(),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'cascade' }),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }),
   skuProcurado: varchar('sku_procurado', { length: 100 }).notNull(),
   skusSugeridos: varchar('skus_sugeridos', { length: 500 }),
   skuSelecionado: varchar('sku_selecionado', { length: 50 }),

@@ -9,172 +9,212 @@ vi.mock('../_db.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200, jd: any = null, ended = false;
   const self: any = {
     status: vi.fn((c: number) => { sc = c; return self; }),
     json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => self),
-    _s: () => sc,
-    _d: () => jd,
+    end: vi.fn(() => { ended = true; return self; }),
+    _s: () => sc, _d: () => jd,
   };
   return self;
 }
 
 describe('handleCalendario', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.mocked(sql).mockReset();
+    vi.mocked(validateAuth).mockReset();
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
   });
 
-  it('deve carregar eventos do calendário de forma unificada (GET /eventos)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-      if (qStr.includes('eventos_calendario')) {
-        // Eventos manuais
-        return [{ id: 1, titulo: 'Reunião cliente', data_evento: '2026-05-27', tipo_evento: 'reuniao', cor_categoria: '#8B5CF6', concluido: false }];
-      }
-      if (qStr.includes('ordens_prod')) {
-        // Prazos de OP
-        return [{ id: 'op-1', numero_op: 'OP-001', data_prazo: '2026-05-28', status: 'produção', cliente_nome: 'João' }];
-      }
-      if (qStr.includes('quotations')) {
-        // Prazos de propostas aprovadas
-        return [{ id: 'orc-1', numero_orcamento: 'PRO-001', data_orcamento: '2026-05-15', prazo_entrega_dias: 15, cliente_nome: 'Maria' }];
-      }
-      return [];
+  describe('GET /eventos', () => {
+    it('deve retornar 400 se mes ou ano forem ausentes', async () => {
+      const req = { method: 'GET', url: '/eventos', query: { mes: '5' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(400);
+      expect(res._d().error).toBe('Mês e ano são obrigatórios');
     });
 
-    const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' }, body: {} };
-    const res = mockRes();
+    it('deve retornar eventos unificados aplicando filtro_tipo e testando parse de datas complexas da agenda', async () => {
+      vi.mocked(sql).mockImplementation(async (query: any) => {
+        const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
+        // 1. Eventos manuais
+        if (qStr.includes('FROM eventos_calendario')) {
+          return [
+            { id: '1', titulo: 'Ev manual', descricao: '', data_evento: '2026-05-27', tipo_evento: 'reuniao', cor_categoria: 'purple', concluido: false }
+          ];
+        }
+        // 2. Eventos agenda
+        if (qStr.includes('FROM eventos e')) {
+          return [
+            { id: '2', titulo: 'Visita Cliente A', descricao: 'Medição', data_inicio: '2026-05-28 14:00:00', tipo: 'visita', cor: 'red', cliente_id: 'c1', cliente_nome: 'Roberto' },
+            { id: '3', titulo: 'Tarefa Interna', descricao: '', data_inicio: '2026-05-29T10:00:00.000Z', tipo: 'tarefa', cor: 'blue' }
+          ];
+        }
+        // 3. Ordem prod
+        if (qStr.includes('FROM ordens_prod')) {
+          return [
+            { id: '4', numero_op: 'OP-123', data_prazo: '2026-05-30', status: 'concluído', cliente_nome: 'Marcos' }
+          ];
+        }
+        // 4. Quotations
+        if (qStr.includes('FROM quotations')) {
+          return [
+            { id: '5', numero_orcamento: 'ORC-002', data_orcamento: '2026-05-10', prazo_entrega_dias: 20, cliente_nome: 'Julio' }
+          ];
+        }
+        return [];
+      });
 
-    await handleCalendario(req, res);
+      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026', filtro_tipo: 'reuniao' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    // Deve conter os 3 tipos de eventos unificados na lista
-    expect(res._d().eventos).toHaveLength(3);
-    expect(res._d().eventos[0].id).toBe('manual-1');
-    expect(res._d().eventos[1].id).toBe('op-op-1');
-    expect(res._d().eventos[2].id).toBe('orcamento-orc-1');
+      expect(res._s()).toBe(200);
+      expect(res._d().success).toBe(true);
+      // Pela filtragem por 'reuniao', apenas o manual (tipo_evento='reuniao') e a visita (tipo='visita' mapped to 'reuniao') devem entrar
+      expect(res._d().eventos).toHaveLength(2);
+      expect(res._d().eventos[0].id).toBe('manual-1');
+      expect(res._d().eventos[1].id).toBe('agenda-2');
+      expect(res._d().eventos[1].hora_evento).toBe('14:00');
+    });
   });
 
-  it('deve criar um evento manual (POST /criar-evento)', async () => {
-    vi.mocked(sql).mockResolvedValue([{ id: 100, titulo: 'Nova Tarefa' }] as any);
-
-    const req = {
-      method: 'POST',
-      url: '/criar-evento',
-      query: {},
-      body: {
-        titulo: 'Nova Tarefa',
-        data_evento: '2026-05-27',
-        tipo_evento: 'tarefa',
-        notificacao_dias_antes: 3
-      }
-    };
-    const res = mockRes();
-
-    await handleCalendario(req, res);
-
-    expect(res._s()).toBe(201);
-    expect(res._d().success).toBe(true);
-    expect(res._d().evento.id).toBe(100);
-  });
-
-  it('deve gerar eventos automáticos na aprovação de orçamento (POST /gerar-automatico)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-      if (qStr.includes('FROM quotations')) {
-        return [{ id: 'orc-uuid', numero_orcamento: 'PRO-001', data_orcamento: '2026-05-27', prazo_entrega_dias: 10 }];
-      }
-      if (qStr.includes('FROM users')) {
-        return [{ id: 'u1' }, { id: 'u2' }]; // Dois usuários no tenant
-      }
-      return [];
+  describe('POST /criar-evento', () => {
+    it('deve retornar 400 se titulo, data_evento ou tipo_evento forem ausentes', async () => {
+      const req = { method: 'POST', url: '/criar-evento', body: { titulo: '' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(400);
     });
 
-    const req = {
-      method: 'POST',
-      url: '/gerar-automatico',
-      query: {},
-      body: { quotation_id: 'orc-uuid' }
-    };
-    const res = mockRes();
+    it('deve criar evento e sua notificação de calendário associada', async () => {
+      vi.mocked(sql)
+        .mockResolvedValueOnce([{ id: 100 }]) // INSERT evento
+        .mockResolvedValueOnce([]); // INSERT notificacao
 
-    await handleCalendario(req, res);
+      const req = {
+        method: 'POST',
+        url: '/criar-evento',
+        body: {
+          titulo: 'Reunião Técnica',
+          data_evento: '2026-06-04',
+          tipo_evento: 'reuniao',
+          notificacao_dias_antes: 2
+        }
+      };
+      const res = mockRes();
+      await handleCalendario(req, res);
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().eventos_criados).toBe(2);
+      expect(res._s()).toBe(201);
+      expect(res._d().evento.id).toBe(100);
+    });
   });
 
-  it('deve verificar lembretes próximos e enviar notificações (GET /verificar-lembretes)', async () => {
-    vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = '';
-      if (typeof query === 'string') {
-        qStr = query;
-      } else if (Array.isArray(query)) {
-        qStr = query.join('?');
-      } else if (query && typeof query === 'object' && 'strings' in query) {
-        qStr = (query.strings as string[]).join('?');
-      }
-      if (qStr.includes('FROM eventos_calendario')) {
-        return [{ id: 50, titulo: 'Lembrete vencendo', notificacao_dias_antes: 2, data_evento: '2026-05-29' }];
-      }
-      return [];
+  describe('POST /gerar-automatico', () => {
+    it('deve retornar 400 se quotation_id for ausente', async () => {
+      const req = { method: 'POST', url: '/gerar-automatico', body: {} };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(400);
     });
 
-    const req = { method: 'GET', url: '/verificar-lembretes', query: {}, body: {} };
-    const res = mockRes();
+    it('deve retornar 404 se orçamento não for encontrado', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([]); // orcamento inexistente
+      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: '00000000-0000-0000-0000-000000000005' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(404);
+    });
 
-    await handleCalendario(req, res);
+    it('deve criar eventos de entrega automáticos para todos os usuários do tenant', async () => {
+      vi.mocked(sql)
+        .mockResolvedValueOnce([{ id: 'orc-1', numero_orcamento: 'ORC-100', data_orcamento: '2026-06-01', prazo_entrega_dias: '10', cliente_nome: 'Marcela' }]) // SELECT orcamento
+        .mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]) // SELECT usuarios
+        .mockResolvedValue([]); // INSERT eventos
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().notificacoes_disparadas).toBe(1);
+      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'orc-uuid' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().eventos_criados).toBe(2);
+    });
   });
 
-  it('deve atualizar status de conclusão do evento (PATCH)', async () => {
-    vi.mocked(sql).mockResolvedValue([{ id: 1, concluido: true }] as any);
+  describe('GET /verificar-lembretes', () => {
+    it('deve buscar eventos próximos que não foram notificados e criar as notificações de lembrete', async () => {
+      vi.mocked(sql)
+        .mockResolvedValueOnce([
+          { id: 10, titulo: 'Medição Importante', notificacao_dias_antes: 3, data_evento: '2026-06-07' }
+        ]) // SELECT eventosProximos
+        .mockResolvedValueOnce([]) // INSERT notificacao
+        .mockResolvedValueOnce([]); // UPDATE evento enviado
 
-    const req = {
-      method: 'PATCH',
-      url: '',
-      query: { id: '1' },
-      body: { concluido: true }
-    };
-    const res = mockRes();
+      const req = { method: 'GET', url: '/verificar-lembretes' };
+      const res = mockRes();
+      await handleCalendario(req, res);
 
-    await handleCalendario(req, res);
-
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
-    expect(res._d().data.concluido).toBe(true);
+      expect(res._s()).toBe(200);
+      expect(res._d().notificacoes_disparadas).toBe(1);
+    });
   });
 
-  it('deve excluir um evento (DELETE)', async () => {
-    vi.mocked(sql).mockResolvedValue([] as any);
+  describe('PATCH / DELETE com ID', () => {
+    it('PATCH deve atualizar o evento concluído e retornar 200', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([{ id: 1, concluido: true }]);
+      const req = {
+        method: 'PATCH',
+        query: { id: '1' },
+        body: { concluido: true }
+      };
+      const res = mockRes();
+      await handleCalendario(req, res);
 
-    const req = { method: 'DELETE', url: '', query: { id: '1' }, body: {} };
-    const res = mockRes();
+      expect(res._s()).toBe(200);
+      expect(res._d().data.concluido).toBe(true);
+    });
 
-    await handleCalendario(req, res);
+    it('PATCH deve retornar 404 se evento não for encontrado', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([]); // não achou
+      const req = {
+        method: 'PATCH',
+        query: { id: '999' },
+        body: { concluido: true }
+      };
+      const res = mockRes();
+      await handleCalendario(req, res);
 
-    expect(res._s()).toBe(200);
-    expect(res._d().success).toBe(true);
+      expect(res._s()).toBe(404);
+    });
+
+    it('DELETE deve excluir o evento e retornar 200', async () => {
+      vi.mocked(sql).mockResolvedValueOnce([]);
+      const req = { method: 'DELETE', query: { id: '1' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+
+      expect(res._s()).toBe(200);
+      expect(res._d().success).toBe(true);
+    });
+  });
+
+  describe('Erros e Métodos não permitidos', () => {
+    it('deve retornar 405 se método for inválido', async () => {
+      const req = { method: 'OPTIONS' };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(405);
+    });
+
+    it('deve retornar 500 em caso de erro fatal de banco', async () => {
+      vi.mocked(validateAuth).mockImplementation(() => {
+        throw new Error('Database crash');
+      });
+      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } };
+      const res = mockRes();
+      await handleCalendario(req, res);
+      expect(res._s()).toBe(500);
+    });
   });
 });

@@ -1,4 +1,10 @@
 import { sql, validateAuth } from './_db.js';
+import { db } from './drizzle-db.js';
+import { quotations, quotationItems } from '../db/schema/index.js';
+import { eq, and } from 'drizzle-orm';
+
+// Refatorado para usar quotations via Drizzle ORM
+// Rotas afetadas: /api/contratos/{status,gerar-e-enviar,webhook-assinatura}.
 
 // Função para gerar o HTML do contrato com base no orçamento e cliente
 function gerarHTMLContrato(orcamento: any, cliente: any, itens: any[]): string {
@@ -148,37 +154,69 @@ export async function handleContratoDigital(req: any, res: any) {
         return res.status(400).json({ success: false, error: 'Parâmetro quotation_id é obrigatório' });
       }
 
-      // 1. Buscar orçamento
-      const [orc] = await sql`
-        SELECT * FROM orcamentos 
-        WHERE id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-      `;
+      // 1. Buscar orçamento com Drizzle
+      const [orc] = await db
+        .select()
+        .from(quotations)
+        .where(
+          and(
+            eq(quotations.id, quotation_id),
+            eq(quotations.tenantId, tenantId)
+          )
+        )
+        .limit(1);
 
       if (!orc) {
         return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
       }
 
+      const mappedOrc = {
+        id: orc.id,
+        numero: orc.numeroOrcamento,
+        numero_orcamento: orc.numeroOrcamento,
+        cliente_id: orc.clienteId,
+        projeto_id: orc.projetoId,
+        valor_total_venda: orc.valorTotalVenda ? parseFloat(orc.valorTotalVenda) : 0,
+        prazo_entrega_dias: orc.prazoEntregaDias || 45,
+        status: orc.status
+      };
+
       // 2. Buscar cliente associado
       let cliente = null;
-      if (orc.cliente_id) {
+      if (mappedOrc.cliente_id) {
         const [cliRow] = await sql`
           SELECT * FROM clients 
-          WHERE id::text = ${orc.cliente_id.toString()} AND tenant_id = ${tenantId}::uuid
+          WHERE id::text = ${mappedOrc.cliente_id.toString()} AND tenant_id = ${tenantId}::uuid
         `;
         cliente = cliRow;
       }
 
-      // 3. Buscar itens do orçamento
-      const itens = await sql`
-        SELECT * FROM itens_orcamento 
-        WHERE quotation_id = ${quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-      `;
+      // 3. Buscar itens do orçamento com Drizzle
+      const itens = await db
+        .select()
+        .from(quotationItems)
+        .where(
+          and(
+            eq(quotationItems.quotationId, quotation_id),
+            eq(quotationItems.tenantId, tenantId)
+          )
+        );
+
+      const mappedItens = itens.map(item => ({
+        id: item.id,
+        quotation_id: item.quotationId,
+        sku_codigo: item.skuCodigo || '',
+        nome_customizado: item.nomeCustomizado || '',
+        sku_descricao: item.skuDescricao || '',
+        quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,
+        preco_venda_unitario: item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0,
+      }));
 
       // 4. Gerar HTML do contrato
-      const htmlContrato = gerarHTMLContrato(orc, cliente, itens);
+      const htmlContrato = gerarHTMLContrato(mappedOrc, cliente, mappedItens);
 
       // 5. Simular PDF e Envelope DocuSign
-      const numeroContrato = `CONT-${orc.numero || orc.id.substring(0, 8).toUpperCase()}`;
+      const numeroContrato = `CONT-${mappedOrc.numero || mappedOrc.id.substring(0, 8).toUpperCase()}`;
       const envelopeId = 'docusign_env_' + Math.random().toString(36).substring(2, 15);
       const urlAssinaturaSimulada = `/assinar/${envelopeId}`;
 
@@ -284,24 +322,43 @@ export async function handleContratoDigital(req: any, res: any) {
         `;
 
         // 4. Buscar o orçamento para acionar o fluxo completo de aprovação
-        const [orc] = await sql`
-          SELECT * FROM orcamentos 
-          WHERE id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-        `;
+        const [orc] = await db
+          .select()
+          .from(quotations)
+          .where(
+            and(
+              eq(quotations.id, contrato.quotation_id),
+              eq(quotations.tenantId, tenantId)
+            )
+          )
+          .limit(1);
 
-        if (orc && orc.status !== 'fechada') {
+        const mappedOrc = orc ? {
+          id: orc.id,
+          numero: orc.numeroOrcamento,
+          status: orc.status,
+          prazoEntregaDias: orc.prazoEntregaDias
+        } : null;
+
+        if (mappedOrc && mappedOrc.status !== 'fechada') {
           // 4.1 Atualizar status do orçamento na tabela física
-          await sql`
-            UPDATE orcamentos
-            SET status = 'fechada',
-                updated_at = NOW()
-            WHERE id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-          `;
+          await db
+            .update(quotations)
+            .set({
+              status: 'fechada',
+              updatedAt: new Date()
+            })
+            .where(
+              and(
+                eq(quotations.id, contrato.quotation_id),
+                eq(quotations.tenantId, tenantId)
+              )
+            );
 
           // 4.2 Gerar OP no Kanban de Produção (Fase 1)
-          const numeroOp = `OP-${orc.numero || orc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const numeroOp = `OP-${mappedOrc.numero || mappedOrc.id.substring(0,8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
           const dataPrazo = new Date();
-          dataPrazo.setDate(dataPrazo.getDate() + Number(orc.prazoEntregaDias || 45));
+          dataPrazo.setDate(dataPrazo.getDate() + Number(mappedOrc.prazoEntregaDias || 45));
 
           const [newOp] = await sql`
             INSERT INTO ordens_prod (id, tenant_id, quotation_id, numero_op, status, prioridade, data_prazo, created_at, updated_at)
@@ -327,12 +384,23 @@ export async function handleContratoDigital(req: any, res: any) {
           }
 
           // 4.3 Provisionar materiais consumidos no estoque detalhado (Fase 3)
-          const itensOrcamento = await sql`
-            SELECT * FROM itens_orcamento 
-            WHERE quotation_id = ${contrato.quotation_id}::uuid AND tenant_id = ${tenantId}::uuid
-          `;
+          const itensOrcamento = await db
+            .select()
+            .from(quotationItems)
+            .where(
+              and(
+                eq(quotationItems.quotationId, contrato.quotation_id),
+                eq(quotationItems.tenantId, tenantId)
+              )
+            );
 
-          for (const item of itensOrcamento) {
+          const mappedItensOrcamento = itensOrcamento.map(item => ({
+            id: item.id,
+            sku_codigo: item.skuCodigo || '',
+            quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,
+          }));
+
+          for (const item of mappedItensOrcamento) {
             const sku = item.sku_codigo;
             const qtd = Number(item.quantidade || 0);
 

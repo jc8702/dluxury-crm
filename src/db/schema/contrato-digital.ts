@@ -1,12 +1,12 @@
 import { pgTable, uuid, varchar, text, timestamp, integer, serial } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
-import { orcamentos } from './engenharia-orcamentos.js';
+import { quotations } from './quotations.js';
 
 // ContratoDigital (contrato_digital)
 export const contratoDigital = pgTable('contrato_digital', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }).notNull(),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'cascade' }).unique(),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }).unique(),
   numeroContrato: varchar('numero_contrato', { length: 50 }).unique(),
   
   dataCriacao: timestamp('data_criacao', { withTimezone: true }).defaultNow(),

@@ -2,7 +2,7 @@ import { db } from '../src/api-lib/drizzle-db.js';
 import { 
     skuComponente, skuMontagem, skuEngenharia, 
     bomEngenhariaMontagem, bomMontagemComponente 
-} from '../src/db/schema/engenharia-orcamentos.js';
+} from '../src/db/schema/skus.js';
 import { clientes } from '../src/db/schema/crm.js';
 
 async function seed() {

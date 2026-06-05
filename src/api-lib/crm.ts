@@ -1,5 +1,7 @@
 import { sql, validateAuth, auditLog } from './_db.js';
-
+import { db } from './drizzle-db.js';
+import { quotations } from '../db/schema/index.js';
+import { eq, and } from 'drizzle-orm';
 
 export async function handleClients(req: any, res: any) {
   try {
@@ -85,7 +87,19 @@ export async function handleClients(req: any, res: any) {
       if (!before.length) return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
       await sql`UPDATE clients SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
       await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE (client_id = ${id} OR client_id::text = ${id}) AND tenant_id = ${tenantId}`;
-      await sql`UPDATE orcamentos SET deleted_at = CURRENT_TIMESTAMP WHERE (cliente_id = ${id} OR cliente_id::text = ${id}) AND tenant_id = ${tenantId}`;
+      // Soft delete quotations do cliente usando Drizzle
+      const clienteIdNum = !isNaN(Number(id)) ? Number(id) : null;
+      if (clienteIdNum !== null) {
+        await db
+          .update(quotations)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(quotations.clienteId, clienteIdNum),
+              eq(quotations.tenantId, tenantId)
+            )
+          );
+      }
       await auditLog('clients', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
       return res.status(200).json({ success: true });
     }

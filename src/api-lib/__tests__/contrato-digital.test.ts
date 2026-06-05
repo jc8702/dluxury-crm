@@ -6,7 +6,27 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
+vi.mock('../drizzle-db.js', () => ({
+  db: {
+    select: vi.fn(),
+    update: vi.fn(),
+  }
+}));
+
 const { sql, validateAuth } = await import('../_db.js');
+const { db } = await import('../drizzle-db.js');
+
+function mockDrizzleChain(resolveValue: any = []) {
+  const chain: any = {};
+  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning'];
+  methods.forEach(method => {
+    chain[method] = vi.fn().mockImplementation(() => chain);
+  });
+  chain.then = vi.fn().mockImplementation((onFulfilled) => {
+    return Promise.resolve(resolveValue).then(onFulfilled);
+  });
+  return chain;
+}
 
 function mockRes() {
   let sc = 200, jd: any = null;
@@ -62,6 +82,10 @@ describe('handleContratoDigital', () => {
   });
 
   it('deve gerar e enviar novo contrato (POST /gerar-e-enviar)', async () => {
+    const orcChain = mockDrizzleChain([{ id: 'orc-1', numeroOrcamento: 'ORC-2026-001', clienteId: 5, valorTotalVenda: '25000.00', prazoEntregaDias: 45, status: 'RASCUNHO' }]);
+    const itensChain = mockDrizzleChain([{ id: 'item-1', quotationId: 'orc-1', skuCodigo: 'MDF-BRA-15', quantidade: '5', precoVendaUnitario: '5000.00' }]);
+    vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itensChain);
+
     vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
       let qStr = '';
       if (typeof query === 'string') {
@@ -72,14 +96,8 @@ describe('handleContratoDigital', () => {
         qStr = (query.strings as string[]).join('?');
       }
 
-      if (qStr.includes('FROM orcamentos')) {
-        return [{ id: 'orc-1', numero: 'ORC-2026-001', numero_orcamento: 'ORC-2026-001', cliente_id: 5, valor_total_venda: '25000.00', prazo_entrega_dias: 45 }];
-      }
       if (qStr.includes('FROM clients')) {
         return [{ id: 5, nome: 'Cliente Teste CPF', cpf: '123.456.789-00' }];
-      }
-      if (qStr.includes('FROM itens_orcamento')) {
-        return [{ id: 'item-1', sku_codigo: 'MDF-BRA-15', quantidade: '5' }];
       }
       if (qStr.includes('SELECT id FROM contrato_digital')) {
         return [];
@@ -109,6 +127,13 @@ describe('handleContratoDigital', () => {
   it('deve processar assinatura concluída via webhook e provisionar estoque (POST /webhook-assinatura)', async () => {
     let sqlQueries: string[] = [];
 
+    const orcChain = mockDrizzleChain([{ id: 'orc-1', numeroOrcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }]);
+    const updateOrcChain = mockDrizzleChain([]);
+    const itensChain = mockDrizzleChain([{ id: 'item-1', skuCodigo: 'MDF-BRA-15', quantidade: '5' }]);
+    
+    vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itensChain);
+    vi.mocked(db.update).mockReturnValueOnce(updateOrcChain);
+
     vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
       let qStr = '';
       if (typeof query === 'string') {
@@ -124,14 +149,8 @@ describe('handleContratoDigital', () => {
       if (qStr.includes('FROM contrato_digital')) {
         return [{ id: 1, quotation_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente', id_assinatura_externa: 'env-1' }];
       }
-      if (qStr.includes('FROM orcamentos')) {
-        return [{ id: 'orc-1', numero: 'ORC-2026-001', numero_orcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }];
-      }
       if (qStr.includes('INSERT INTO ordens_prod')) {
         return [{ id: 'new-op-uuid' }];
-      }
-      if (qStr.includes('FROM itens_orcamento')) {
-        return [{ sku_codigo: 'MDF-BRA-15', quantidade: '5' }];
       }
       if (qStr.includes('FROM estoque_materiais_detalhado')) {
         return [{ quantidade_disponivel: 45, quantidade_provisionado: 5 }];
@@ -153,7 +172,7 @@ describe('handleContratoDigital', () => {
     
     // Validar atualizações do banco
     expect(sqlQueries.some(q => q.includes('UPDATE contrato_digital'))).toBe(true);
-    expect(sqlQueries.some(q => q.includes('UPDATE orcamentos'))).toBe(true);
+    expect(db.update).toHaveBeenCalled();
     expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_prod'))).toBe(true);
     expect(sqlQueries.some(q => q.includes('INSERT INTO etapas_prod_kanban'))).toBe(true);
     expect(sqlQueries.some(q => q.includes('UPDATE estoque_materiais_detalhado'))).toBe(true);

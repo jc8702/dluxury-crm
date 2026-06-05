@@ -1,6 +1,6 @@
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems, quotationBom } from '../db/schema/quotations.js';
-import { skuEngenharia, skuComponente } from '../db/schema/engenharia-orcamentos.js';
+import { skuEngenharia, skuComponente } from '../db/schema/skus.js';
 import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
 import { auditLog, validateAuth, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
@@ -426,83 +426,13 @@ function checkRateLimit(userId: string): boolean {
     return false;
   }
 
-record.count++;
+  record.count++;
   return true;
 }
 
 /** Reset rate limiter (para testes) */
 export function _resetRateLimit() {
   rateLimitMap.clear();
-}
-
-export async function migrarOrcamentoLegadoParaPro(id: string, tenantId: string = '00000000-0000-0000-0000-000000000000') {
-    return await db.transaction(async (tx) => {
-        // 1. Verificar se já existe na tabela PRO
-        const proExists = await tx.query.quotations.findFirst({
-            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId))
-        });
-        if (proExists) return proExists;
-
-        // 2. Buscar orçamento legado
-        const oldOrcs = await tx.execute(dsql`
-            SELECT id, numero, cliente_id, projeto_id, created_at, status, valor_final, valor_base 
-            FROM quotations 
-            WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid AND deleted_at IS NULL 
-            LIMIT 1
-        `);
-        const oldOrc = oldOrcs.rows[0] as any;
-        if (!oldOrc) return null;
-
-        // 3. Buscar itens legados
-        const oldItensRes = await tx.execute(dsql`
-            SELECT id, quotation_id, descricao, ambiente, largura_cm, altura_cm, profundidade_cm, material, acabamento, quantidade, valor_unitario, valor_total, created_at
-            FROM itens_orcamento 
-            WHERE quotation_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
-            ORDER BY created_at ASC, id ASC
-        `);
-        const oldItens = oldItensRes.rows as any[];
-
-        // 4. Inserir cabeçalho no PRO (quotations)
-        const [newPro] = await tx.insert(quotations).values({
-            id: oldOrc.id,
-            numeroOrcamento: oldOrc.numero || `MIG-${oldOrc.id.substring(0,8)}`,
-            clienteId: oldOrc.cliente_id,
-            projetoId: oldOrc.projeto_id,
-            dataOrcamento: oldOrc.created_at ? new Date(oldOrc.created_at) : new Date(),
-            status: (oldOrc.status || 'RASCUNHO').toUpperCase(),
-            valorTotalVenda: (oldOrc.valor_final || 0).toString(),
-            valorTotalCusto: (oldOrc.valor_base || 0).toString(),
-            margemLucroPercentual: '30',
-            taxaFinanceiraPercentual: '0',
-            descontoPercentual: '0',
-            validadeDias: 15,
-            tenantId: tenantId
-        }).returning();
-
-        // 5. Inserir itens no PRO (orcamento_itens)
-        if (oldItens.length > 0) {
-            await tx.insert(quotationItems).values(
-                oldItens.map((it: any) => ({
-                    id: it.id,
-                    quotationId: newPro.id,
-                    nomeCustomizado: it.descricao || 'Item Legado',
-                    quantidade: (it.quantidade || 1).toString(),
-                    largura: it.largura_cm?.toString() || null,
-                    altura: it.altura_cm?.toString() || null,
-                    material: it.material || null,
-                    precoVendaUnitario: (it.valor_unitario || 0).toString(),
-                    custoUnitarioCalculado: '0',
-                    custoBaseEstoque: '0',
-                    origemDados: 'LEGACY',
-                    createdAt: it.created_at ? new Date(it.created_at) : new Date(),
-                    updatedAt: new Date()
-                }))
-            );
-        }
-
-        logger.info(`✅ Orçamento ${id} e seus ${oldItens.length} itens migrados com sucesso para a tabela PRO.`);
-        return newPro;
-    });
 }
 
 export async function handleQuotations(req: any, res: any) {
@@ -665,31 +595,7 @@ export async function handleQuotations(req: any, res: any) {
                     }
                 }
 
-                // FALLBACK: Se não encontrou na tabela PRO, busca na tabela comercial legada e migra completamente
-                if (!result) {
-                    logger.info(`🔍 ID ${id} não encontrado na tabela PRO. Executando migração automática...`);
-                    const migrated = await migrarOrcamentoLegadoParaPro(id, tenantId);
-                    if (migrated) {
-                        // Buscar novamente com relations para retornar tudo pronto e ordenado
-                        result = await db.query.quotations.findFirst({
-                            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
-                            with: {
-                                itens: {
-                                    orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
-                                    with: {
-                                        skuEngenharia: true,
-                                        skuComponente: true,
-                                        bom: {
-                                            with: {
-                                                componente: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
+
 
                 if (!result) {
                     logger.warn(`⚠️ Orçamento ${id} não encontrado em nenhuma tabela.`);
@@ -831,11 +737,7 @@ export async function handleQuotations(req: any, res: any) {
                     // Verificar se o orçamento existe antes de qualquer PUT
                     let exists = await db.query.quotations.findFirst({ where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)) });
                     
-                    // FALLBACK DE MIGRAÇÃO: Se não existe na PRO, mas existe na legada, migramos agora com todos os itens.
-                    if (!exists) {
-                        logger.info(`🚀 Migrando orçamento ${id} da tabela legada para a PRO durante atualização...`);
-                        exists = await migrarOrcamentoLegadoParaPro(id, tenantId);
-                    }
+
 
                     if (!exists) {
                         return res.status(404).json({ success: false, error: 'Orçamento não encontrado para atualização.' });

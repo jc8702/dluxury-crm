@@ -1,10 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { mockAuthenticatedSession, mockApiCrud } from './helpers/auth';
+import { mockAuthenticatedSession, mockApiCrud, mockApiGet } from './helpers/auth';
 
 test.describe('Modulo Producao', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedSession(page);
     await mockApiCrud(page, '**/api/producao**');
+    await mockApiGet(page, '**/api/kanban-producao/board**', {
+      a_fazer: [],
+      em_progresso: [],
+      bloqueado: [],
+      concluido: []
+    });
   });
 
   test('carrega pagina de producao', async ({ page }) => {
@@ -14,6 +20,7 @@ test.describe('Modulo Producao', () => {
 
   test('exibe controles de fase de producao', async ({ page }) => {
     await page.goto('/#/producao');
+    await expect(page.locator('button').first()).toBeVisible({ timeout: 10000 });
     const bodyText = await page.locator('body').innerText();
     expect(bodyText.length).toBeGreaterThan(50);
   });

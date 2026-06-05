@@ -1,12 +1,12 @@
 import { pgTable, uuid, varchar, integer, text, timestamp, boolean, date, time, serial } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
-import { orcamentos } from './engenharia-orcamentos.js'; // Tabela orcamentos_pro
+import { quotations } from './quotations.js';
 
 // 1. Ordens de Produção (ordens_prod)
 export const ordensProd = pgTable('ordens_prod', {
   id: uuid('id').defaultRandom().primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'cascade' }).notNull(),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }).notNull(),
   numeroOp: varchar('numero_op', { length: 50 }).unique().notNull(),
   status: varchar('status', { length: 50 }).default('planejamento').notNull(), // planejamento, medição, projeto, produção, montagem, entrega, concluído
   prioridade: integer('prioridade').default(5), // 1=urgente, 5=normal, 9=baixa
@@ -58,7 +58,7 @@ export const eventosCalendario = pgTable('eventos_calendario', {
   descricao: text('descricao'),
   dataEvento: date('data_evento').notNull(),
   horaEvento: time('hora_evento'),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'set null' }),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'set null' }),
   operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'set null' }),
   corCategoria: varchar('cor_categoria', { length: 20 }).default('#3B82F6'),
   concluido: boolean('concluido').default(false),

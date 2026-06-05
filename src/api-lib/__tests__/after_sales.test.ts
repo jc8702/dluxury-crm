@@ -58,6 +58,46 @@ describe('handleAfterSales', () => {
     expect(res._s()).toBe(200);
   });
 
+  it('deve criar chamado e cadastrar visita no kanban se tiver data_agendamento (POST)', async () => {
+    vi.mocked(sql)
+      .mockResolvedValueOnce([{ count: '1' }]) // count chamados
+      .mockResolvedValueOnce([{ id: '1', numero: 'GAR-2026-002' }]) // insert chamado
+      .mockResolvedValueOnce([]); // insert kanban_items
+
+    const req = { 
+      method: 'POST', 
+      headers: { host: 'localhost' }, 
+      url: '/api/pos-venda', 
+      body: { 
+        cliente_id: '1', 
+        titulo: 'Visita Técnica', 
+        descricao: 'Ajuste geral', 
+        tipo: 'assistência', 
+        prioridade: 'média',
+        data_agendamento: '2026-06-10T14:30:00.000Z'
+      } 
+    };
+    const res = mockRes();
+    await handleAfterSales(req, res);
+    expect(res._s()).toBe(201);
+  });
+
+  it('deve retornar 401 se não autorizado', async () => {
+    vi.mocked(validateAuth).mockReturnValueOnce({ authorized: false, user: null, error: 'Sem token' });
+    const req = { method: 'GET', headers: { host: 'localhost' }, url: '/api/pos-venda' };
+    const res = mockRes();
+    await handleAfterSales(req, res);
+    expect(res._s()).toBe(401);
+  });
+
+  it('deve retornar 500 caso ocorra erro fatal de banco', async () => {
+    vi.mocked(sql).mockRejectedValue(new Error('DB Crash'));
+    const req = { method: 'GET', headers: { host: 'localhost' }, url: '/api/pos-venda' };
+    const res = mockRes();
+    await handleAfterSales(req, res);
+    expect(res._s()).toBe(500);
+  });
+
   it('deve retornar 405 para método não suportado', async () => {
     const req = { method: 'DELETE', headers: { host: 'localhost' }, url: '/api/pos-venda' };
     const res = mockRes();

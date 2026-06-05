@@ -1,5 +1,5 @@
 import { db } from '../../src/api-lib/drizzle-db.js';
-import { skuComponente } from '../../src/db/schema/engenharia-orcamentos.js';
+import { skuComponente } from '../../src/db/schema/skus.js';
 import { recalcularOrcamento } from '../../src/api-lib/quotations.js';
 import { eq, sql } from 'drizzle-orm';
 

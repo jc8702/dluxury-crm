@@ -12,10 +12,10 @@ export const config = {
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  '/api/auth': { max: 10, windowMs: 60_000 }, // 10 req/min para auth
+  '/api/auth': { max: 30, windowMs: 60_000 }, // 30 req/min para auth
   '/api/init-db': { max: 3, windowMs: 300_000 }, // 3 req/5min para init
-  '/api/ai/chat': { max: 5, windowMs: 10_000 }, // 5 req/10s para chat de IA
-  default: { max: 100, windowMs: 60_000 }, // 100 req/min default
+  '/api/ai/chat': { max: 10, windowMs: 10_000 }, // 10 req/10s para chat de IA
+  default: { max: 300, windowMs: 60_000 }, // 300 req/min default
 };
 
 function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfter?: number } {
@@ -192,13 +192,13 @@ export default async function handler(req: any, res: any) {
       const { default: handler } = await import('./orcamentos/exportar-pdf.js');
       return await handler(req, res);
     }
-    if (cleanUrl.startsWith('/api/orcamentos')) {
-      const { handleOrcamentos } = await import('../src/api-lib/orcamentos.js');
-      return await handleOrcamentos(req, res);
-    }
-    if (cleanUrl.startsWith('/api/orcamento-tecnico')) {
-      const { handleOrcamentoTecnico } = await import('../src/api-lib/orcamentos.js');
-      return await handleOrcamentoTecnico(req, res);
+    if (cleanUrl.startsWith('/api/orcamentos') || cleanUrl.startsWith('/api/orcamento-tecnico')) {
+      return res.status(410).json({
+        success: false,
+        error: 'Esta rota foi desativada. Use /api/quotations (tabela `quotations` consolidada em PROMPT 1).',
+        deprecated_at: '2026-06-04',
+        replacement: '/api/quotations',
+      });
     }
     if (cleanUrl.startsWith('/api/ai/chat')) {
       if (req.method !== 'POST') {

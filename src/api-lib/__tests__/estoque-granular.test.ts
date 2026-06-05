@@ -6,7 +6,27 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
+vi.mock('../drizzle-db.js', () => ({
+  db: {
+    select: vi.fn(),
+    update: vi.fn(),
+  }
+}));
+
 const { sql, validateAuth } = await import('../_db.js');
+const { db } = await import('../drizzle-db.js');
+
+function mockDrizzleChain(resolveValue: any = []) {
+  const chain: any = {};
+  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning'];
+  methods.forEach(method => {
+    chain[method] = vi.fn().mockImplementation(() => chain);
+  });
+  chain.then = vi.fn().mockImplementation((onFulfilled) => {
+    return Promise.resolve(resolveValue).then(onFulfilled);
+  });
+  return chain;
+}
 
 function mockRes() {
   let sc = 200, jd: any = null;
@@ -111,6 +131,9 @@ describe('handleEstoqueGranular', () => {
   });
 
   it('deve consumir provisionados ao concluir OP (POST /finalizar-op)', async () => {
+    const orcChain = mockDrizzleChain([{ materiais_consumidos: [{ sku: 'MDF-BRA-15', quantidade: 5 }] }]);
+    vi.mocked(db.select).mockReturnValueOnce(orcChain);
+
     vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
       let qStr = '';
       if (typeof query === 'string') {
@@ -123,9 +146,6 @@ describe('handleEstoqueGranular', () => {
 
       if (qStr.includes('FROM ordens_prod')) {
         return [{ id: 'op-1', quotation_id: 'orc-1' }];
-      }
-      if (qStr.includes('FROM orcamentos')) {
-        return [{ materiais_consumidos: [{ sku: 'MDF-BRA-15', quantidade: 5 }] }];
       }
       if (qStr.includes('FROM estoque_materiais_detalhado')) {
         return [{ quantidade_provisionado: 5, quantidade_disponivel: 45 }];

@@ -1,6 +1,10 @@
 import { sql, validateAuth, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
 
+// TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM orcamentos)
+// Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela orcamentos foi dropada em 2026-06-04.
+// Rota afetada: GET /api/projects (campo valor_orcamento_atual sempre null).
+
 
 export async function handleProjects(req: any, res: any) {
   try {
@@ -115,8 +119,8 @@ export async function handleProjects(req: any, res: any) {
                  o.valor_final as valor_orcamento_atual
           FROM projects p
           LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-            FROM orcamentos
+            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
+            FROM quotations
             WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
@@ -130,8 +134,8 @@ export async function handleProjects(req: any, res: any) {
                  o.valor_final as valor_orcamento_atual
           FROM projects p
           LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-            FROM orcamentos
+            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
+            FROM quotations
             WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
@@ -151,8 +155,8 @@ export async function handleProjects(req: any, res: any) {
           FROM projects p
           LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
           LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_final, projeto_id
-            FROM orcamentos
+            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
+            FROM quotations
             WHERE tenant_id = ${tenantId}
             ORDER BY projeto_id, created_at DESC
           ) o ON p.id::text = o.projeto_id::text
@@ -202,6 +206,7 @@ export async function handleProjects(req: any, res: any) {
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const { user } = validateAuth(req);
       const { id } = req.query;
+      if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
       const f = req.body;
       
       const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
@@ -241,6 +246,7 @@ export async function handleProjects(req: any, res: any) {
     if (req.method === 'DELETE') {
       const { user } = validateAuth(req);
       const { id } = req.query;
+      if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
       
       const before = await sql`SELECT * FROM projects WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length) return res.status(404).json({ success: false, error: 'Projeto não encontrado' });

@@ -1,13 +1,13 @@
 import { pgTable, uuid, varchar, text, timestamp, boolean, integer, serial } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
-import { orcamentos } from './engenharia-orcamentos.js';
+import { quotations } from './quotations.js';
 import { ordensProd } from './producao.js';
 
 // NOVA TABELA: Histórico de Conversas WhatsApp (conversas_whatsapp)
 export const conversasWhatsApp = pgTable('conversas_whatsapp', {
   id: serial('id').primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
-  orcamentoId: uuid('orcamento_id').references(() => orcamentos.id, { onDelete: 'cascade' }),
+  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'cascade' }),
   operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'cascade' }),
   numeroTelefone: varchar('numero_telefone', { length: 20 }).notNull(),
   contatoNome: varchar('contato_nome', { length: 255 }),

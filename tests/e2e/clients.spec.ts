@@ -4,7 +4,7 @@ import { mockAuthenticatedSession, mockApiCrud } from './helpers/auth';
 test.describe('Modulo Clientes', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticatedSession(page);
-    await mockApiCrud(page, '**/api/clientes**');
+    await mockApiCrud(page, '**/api/clients**');
   });
 
   test('carrega pagina de clientes', async ({ page }) => {

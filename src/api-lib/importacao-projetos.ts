@@ -1,5 +1,5 @@
 import { db } from './drizzle-db.js';
-import { skuComponente } from '../db/schema/engenharia-orcamentos.js';
+import { skuComponente } from '../db/schema/skus.js';
 import { ilike, or } from 'drizzle-orm';
 import { validateAuth } from './_db.js';
 

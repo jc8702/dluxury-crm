@@ -1,4 +1,7 @@
 import { sql, validateAuth } from './_db.js';
+import { db } from './drizzle-db.js';
+import { quotations, clientes } from '../db/schema/index.js';
+import { eq, and, lt } from 'drizzle-orm';
 
 export async function handleNotificacoes(req: any, res: any) {
   try {
@@ -99,13 +102,22 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
 
   // 3. Orçamentos sem resposta (7 dias)
   try {
-    const orcamentos = await sql`
-      SELECT o.id, o.numero, c.nome as cliente
-      FROM orcamentos o
-      JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-      WHERE o.status = 'enviado' AND o.tenant_id = ${tenantId}
-      AND o.updated_at < NOW() - INTERVAL '7 days'
-    `;
+    const limitDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const orcamentos = await db
+      .select({
+        id: quotations.id,
+        numero: quotations.numeroOrcamento,
+        cliente: clientes.nome
+      })
+      .from(quotations)
+      .innerJoin(clientes, eq(quotations.clienteId, clientes.id))
+      .where(
+        and(
+          eq(quotations.status, 'enviado'),
+          eq(quotations.tenantId, tenantId),
+          lt(quotations.updatedAt, limitDate)
+        )
+      );
     for (const o of orcamentos) {
       const exists = await sql`
         SELECT id FROM notificacoes 

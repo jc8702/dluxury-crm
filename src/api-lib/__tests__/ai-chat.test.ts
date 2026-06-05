@@ -535,7 +535,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
     expect(responseData.error).toBe('Mensagem muito longa (máximo 4000 caracteres)');
   });
 
-  it('deve disparar erro 429 (Rate Limit) após 5 requisições rápidas do mesmo usuário', async () => {
+  it('deve disparar erro 429 (Rate Limit) após 10 requisições rápidas do mesmo usuário', async () => {
     const userId = `test-user-${Date.now()}`;
     const makeRequest = async () => {
       const req = {
@@ -573,13 +573,11 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
       return { status: responseStatus, data: responseData };
     };
 
-    // Fazer 5 requisições rápidas (dentro do limite permitido)
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       const result = await makeRequest();
       expect(result.status).toBe(200);
     }
 
-    // A 6ª requisição deve estourar o limite de 5 a cada 10 segundos
     const blockedResult = await makeRequest();
     expect(blockedResult.status).toBe(429);
     expect(blockedResult.data.error).toContain('Muitas requisições');

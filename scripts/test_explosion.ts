@@ -1,6 +1,6 @@
 import { db } from '../src/api-lib/drizzle-db.js';
-import { skuEngenharia } from '../src/db/schema/engenharia-orcamentos.js';
-import { handleOrcamentosPro } from '../src/api-lib/orcamentos_pro.js';
+import { skuEngenharia } from '../src/db/schema/skus.js';
+// handleOrcamentosPro removido - modulo nao existe; este script esta desativado (PROMPT 1)
 import { eq } from 'drizzle-orm';
 
 async function testExplosion() {
