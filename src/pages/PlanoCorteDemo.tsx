@@ -8,7 +8,7 @@ import {
 } from '@/modules/plano-corte/domain/services';
 import type { ResultadoOtimizacaoSimples as ResultadoOtimizacao } from '@/modules/plano-corte/domain/services/MaxRectsOptimizer';
 import type { Peca as PecaDominio } from '@/modules/plano-corte/domain/types';
-import { Button, Card, Badge } from '../../components/ui';
+import { Button, Card, Badge } from '@/components/ui';
 
 type AlgoritmoTipo = 'maxrects' | 'guillotine' | 'hybrid';
 
