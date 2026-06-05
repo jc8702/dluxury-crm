@@ -163,6 +163,20 @@
   --sidebar-border: 153 20% 20%;
   --sidebar-ring: 45 67% 52%;
 
+  /* ─── UI Variables Compatibility (Globals & Tokens) ─── */
+  --ui-bg: hsl(var(--background));
+  --ui-surface: hsl(var(--surface));
+  --ui-surface-hover: hsl(var(--surface-hover));
+  --ui-text-primary: hsl(var(--foreground));
+  --ui-text-secondary: hsl(var(--muted-foreground));
+  --ui-text-muted: hsl(var(--muted-foreground));
+  --ui-border: hsl(var(--border));
+  --ui-color-primary: hsl(var(--primary));
+  --ui-color-success: hsl(var(--success));
+  --ui-bg-subtle: hsl(var(--surface-hover));
+  --ui-border-strong: hsl(var(--border));
+  --ui-color-danger: hsl(var(--destructive));
+
   /* ─── Decorative ─── */
   --gradient-primary: linear-gradient(135deg, hsl(24 55% 36%), hsl(45 67% 52%));
   --gradient-surface: linear-gradient(180deg, hsl(40 15% 97%), hsl(40 10% 94%));
@@ -227,6 +241,20 @@
   --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-border: 240 5% 12%;
   --sidebar-ring: 45 93% 47%;
+
+  /* ─── UI Variables Compatibility (Globals & Tokens) ─── */
+  --ui-bg: hsl(var(--background));
+  --ui-surface: hsl(var(--surface));
+  --ui-surface-hover: hsl(var(--surface-hover));
+  --ui-text-primary: hsl(var(--foreground));
+  --ui-text-secondary: hsl(var(--muted-foreground));
+  --ui-text-muted: hsl(var(--muted-foreground));
+  --ui-border: hsl(var(--border));
+  --ui-color-primary: hsl(var(--primary));
+  --ui-color-success: hsl(var(--success));
+  --ui-bg-subtle: hsl(var(--surface-hover));
+  --ui-border-strong: hsl(var(--border));
+  --ui-color-danger: hsl(var(--destructive));
 
   /* ─── Decorative ─── */
   --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 93% 40%));
