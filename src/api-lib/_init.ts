@@ -224,6 +224,24 @@ export async function runInitDB() {
     () => {},
   );
 
+  // Tabela Fornecedores (criação idempotente)
+  await safeSql(sql`
+    CREATE TABLE IF NOT EXISTS fornecedores (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      cnpj TEXT,
+      contato TEXT,
+      telefone TEXT,
+      email TEXT,
+      cidade TEXT,
+      estado TEXT,
+      observacoes TEXT,
+      ativo BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Migrações e padronizações da tabela fornecedores
   await safeSql(sql`ALTER TABLE fornecedores RENAME COLUMN criado_em TO created_at`).catch(
     () => {},
@@ -651,6 +669,26 @@ export async function runInitDB() {
     )
   `);
 
+  // Migrações de eventos_calendario (garantir colunas mesmo se tabela foi criada antes)
+  await safeSql(
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS quotation_id UUID`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS operacao_prod_id UUID`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS cor_categoria VARCHAR(20) DEFAULT '#3B82F6'`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS notificacao_dias_antes INTEGER DEFAULT 0`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS notificacao_enviada BOOLEAN DEFAULT FALSE`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE notificacoes_calendario ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`,
+  ).catch(() => {});
+
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS notificacoes_calendario (
 
@@ -800,6 +838,26 @@ export async function runInitDB() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Migrações de colunas extras em estoque_materiais_detalhado (SKUs)
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS preco_custo DECIMAL(10,2)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS unidade_uso VARCHAR(20)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS fabricante VARCHAR(100)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS fornecedor_principal VARCHAR(100)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS categoria_taxonomia VARCHAR(50)`,
+  ).catch(() => {});
+  await safeSql(
+    sql`ALTER TABLE estoque_materiais_detalhado ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT true`,
+  ).catch(() => {});
 
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS movimento_estoque_granular (
@@ -993,6 +1051,7 @@ export async function runInitDB() {
     'eventos',
     'planos_de_corte',
     'erp_chapas',
+    'erp_skus',
     'erp_skus_engenharia',
     'retalhos_estoque',
     'materiais',
