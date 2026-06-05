@@ -198,6 +198,7 @@ export async function handleProjects(req: any, res: any) {
           ${f.responsavel}, 
           ${f.observacoes || f.observations}, 
           ${f.visita_id || f.visitaId}, 
+          ${f.quotation_id || f.orcamentoId || null},
           ${tag},
           ${tenantId}::uuid
         ) RETURNING *`;
@@ -234,7 +235,6 @@ export async function handleProjects(req: any, res: any) {
           responsavel = COALESCE(${f.responsavel}, responsavel), 
           observacoes = COALESCE(${f.observacoes || f.observations}, observacoes), 
           visita_id = COALESCE(${f.visita_id || f.visitaId}, visita_id),
-            quotation_id = COALESCE(${f.orcamentoId || f.quotation_id}, quotation_id), 
           quotation_id = COALESCE(${f.quotation_id || f.orcamentoId}, quotation_id), 
           tag = COALESCE(${f.tag}, tag), 
           updated_at = CURRENT_TIMESTAMP 
