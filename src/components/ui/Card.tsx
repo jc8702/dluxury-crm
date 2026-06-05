@@ -5,8 +5,8 @@ import { cn } from '../../utils/cn';
 
 const cardVariants = cva(
   cn(
-    'bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)]',
-    'transition-shadow duration-[var(--ui-duration-base)] ease-[var(--ui-ease-out)]',
+    'bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)]',
+    'transition-all duration-[var(--ui-duration-base)] ease-[var(--ui-ease-out)]',
   ),
   {
     variants: {
@@ -141,7 +141,9 @@ export const CardStat = forwardRef<HTMLDivElement, CardStatProps>(
             {value}
           </p>
           {delta && (
-            <p className="mt-1 text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)] leading-tight">{delta}</p>
+            <p className="mt-1 text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)] leading-tight">
+              {delta}
+            </p>
           )}
         </div>
         {icon && (

@@ -183,23 +183,30 @@
 /* ─── DARK MODE ─── */
 [data-theme='dark'],
 .dark {
-  --ui-bg: var(--ui-color-navy-800);
-  --ui-bg-elevated: var(--ui-color-navy-700);
-  --ui-bg-subtle: var(--ui-color-navy-600);
-  --ui-surface: var(--ui-color-navy-700);
-  --ui-surface-hover: var(--ui-color-navy-600);
-  --ui-border: var(--ui-color-navy-600);
-  --ui-border-strong: var(--ui-color-navy-500);
-  --ui-text-primary: var(--ui-color-neutral-50);
-  --ui-text-secondary: var(--ui-color-neutral-300);
-  --ui-text-muted: var(--ui-color-neutral-400);
-  --ui-text-inverse: var(--ui-color-navy-800);
+  /* Fundo Diamante Escuro (Zinc tones) */
+  --ui-bg: #09090b; /* zinc-950 */
+  --ui-bg-elevated: #18181b; /* zinc-900 */
+  --ui-bg-subtle: #27272a; /* zinc-800 */
+  --ui-surface: #09090b;
+  --ui-surface-hover: #18181b;
+  --ui-border: #27272a;
+  --ui-border-strong: #3f3f46;
 
-  --ui-action-primary: var(--ui-color-teal-500);
-  --ui-action-primary-hover: var(--ui-color-teal-400);
-  --ui-action-primary-fg: var(--ui-color-navy-800);
+  --ui-text-primary: #fafafa;
+  --ui-text-secondary: #a1a1aa;
+  --ui-text-muted: #71717a;
+  --ui-text-inverse: #09090b;
 
-  --ui-shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --ui-shadow-2: 0 4px 8px -2px rgb(0 0 0 / 0.5);
-  --ui-shadow-3: 0 12px 24px -4px rgb(0 0 0 / 0.6);
+  /* Primary Action para o Dourado D'Luxury (Premium) */
+  --ui-action-primary: var(--ui-color-gold-400);
+  --ui-action-primary-hover: var(--ui-color-gold-500);
+  --ui-action-primary-fg: #09090b;
+
+  --ui-action-secondary: #27272a;
+  --ui-action-secondary-hover: #3f3f46;
+  --ui-action-secondary-fg: #fafafa;
+
+  --ui-shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.6);
+  --ui-shadow-2: 0 4px 12px -2px rgb(0 0 0 / 0.7);
+  --ui-shadow-3: 0 12px 30px -4px rgb(0 0 0 / 0.8);
 }

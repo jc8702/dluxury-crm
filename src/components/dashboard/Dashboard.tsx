@@ -1,6 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, FileText, Wrench, UserPlus, TrendingUp, Target, BarChart3, Sparkles } from 'lucide-react';
+import {
+  PlusCircle,
+  FileText,
+  Wrench,
+  UserPlus,
+  TrendingUp,
+  Target,
+  BarChart3,
+  Sparkles,
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,7 +22,15 @@ import {
 } from 'recharts';
 
 import DataTable from '../common/DataTable';
-import { Input, Modal, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../common';
+import {
+  Input,
+  Modal,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../common';
 
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
@@ -54,7 +71,10 @@ const Dashboard: React.FC = () => {
     concluido: 'Concluído',
   };
 
-  const statusTone: Record<ProjectStatus, 'primary' | 'info' | 'warning' | 'success' | 'danger' | 'accent' | 'neutral'> = {
+  const statusTone: Record<
+    ProjectStatus,
+    'primary' | 'info' | 'warning' | 'success' | 'danger' | 'accent' | 'neutral'
+  > = {
     lead: 'neutral',
     visita_tecnica: 'info',
     orcamento_enviado: 'warning',
@@ -118,10 +138,10 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-40 border border-border rounded-[var(--ui-radius-md)] px-3 py-2 bg-card text-foreground font-semibold text-sm">
+          <SelectTrigger className="w-40 border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-3 py-2 bg-[var(--ui-surface)] text-[var(--ui-text-primary)] font-semibold text-sm">
             <SelectValue placeholder="Período..." />
           </SelectTrigger>
-          <SelectContent className="bg-card border border-border rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-2)]">
+          <SelectContent className="bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-2)]">
             {periods.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.label}
@@ -169,7 +189,11 @@ const Dashboard: React.FC = () => {
 
       {/* ── Meta do Período + Evolução Financeira ── */}
       <section className="grid grid-cols-1 lg:grid-cols-3 ui-gap-3">
-        <Card variant="default" padding="lg" className="flex flex-col items-center justify-center ui-gap-4">
+        <Card
+          variant="default"
+          padding="lg"
+          className="flex flex-col items-center justify-center ui-gap-4"
+        >
           <CardTitle>Meta do Período</CardTitle>
           <div
             className="relative w-36 h-36 rounded-full flex items-center justify-center"
@@ -258,13 +282,13 @@ const Dashboard: React.FC = () => {
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
                 <Bar
                   dataKey="Entradas"
-                  fill="var(--ui-color-success)"
+                  fill="var(--ui-color-gold-400)"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={32}
                 />
                 <Bar
                   dataKey="Saidas"
-                  fill="var(--ui-color-navy-700)"
+                  fill="var(--ui-border)"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={32}
                 />
@@ -288,7 +312,9 @@ const Dashboard: React.FC = () => {
               <UserPlus size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Novo Cliente</p>
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
+                Novo Cliente
+              </p>
               <p className="text-[11px] text-[var(--ui-text-muted)]">Cadastrar lead</p>
             </div>
           </Link>
@@ -300,7 +326,9 @@ const Dashboard: React.FC = () => {
               <FileText size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Novo Orçamento</p>
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
+                Novo Orçamento
+              </p>
               <p className="text-[11px] text-[var(--ui-text-muted)]">Criar proposta</p>
             </div>
           </Link>
@@ -312,7 +340,9 @@ const Dashboard: React.FC = () => {
               <Wrench size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Plano de Corte</p>
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
+                Plano de Corte
+              </p>
               <p className="text-[11px] text-[var(--ui-text-muted)]">Otimizar material</p>
             </div>
           </Link>
@@ -324,7 +354,9 @@ const Dashboard: React.FC = () => {
               <PlusCircle size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">Nova Despesa</p>
+              <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
+                Nova Despesa
+              </p>
               <p className="text-[11px] text-[var(--ui-text-muted)]">Lançar saída</p>
             </div>
           </Link>
@@ -336,7 +368,9 @@ const Dashboard: React.FC = () => {
         <Card variant="default" padding="lg" className="flex flex-col">
           <CardTitle className="mb-4">Origem dos Leads</CardTitle>
           {origemCounts.length === 0 ? (
-            <div className="text-[var(--ui-text-muted)] text-center py-8">Nenhum cliente cadastrado.</div>
+            <div className="text-[var(--ui-text-muted)] text-center py-8">
+              Nenhum cliente cadastrado.
+            </div>
           ) : (
             <div className="flex flex-col ui-gap-3">
               {origemCounts.map((o) => {
@@ -369,7 +403,9 @@ const Dashboard: React.FC = () => {
         <Card variant="default" padding="lg" className="flex flex-col">
           <CardTitle className="mb-4">Projetos Recentes</CardTitle>
           {recentProjects.length === 0 ? (
-            <div className="text-[var(--ui-text-muted)] text-center py-8">Nenhum projeto cadastrado.</div>
+            <div className="text-[var(--ui-text-muted)] text-center py-8">
+              Nenhum projeto cadastrado.
+            </div>
           ) : (
             <div className="overflow-x-auto -mx-2">
               <DataTable
@@ -432,23 +468,19 @@ const Dashboard: React.FC = () => {
             },
             {
               label: 'Altura de Bancadas',
-              query:
-                'Quais as medidas de altura recomendadas para bancadas de pia de cozinha?',
+              query: 'Quais as medidas de altura recomendadas para bancadas de pia de cozinha?',
             },
             {
               label: 'MDF vs MDP',
-              query:
-                'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário?',
+              query: 'Quando devo usar MDP em vez de MDF no projeto estrutural de um armário?',
             },
             {
               label: 'Dobradiça 165°',
-              query:
-                'Em quais situações a dobradiça de 165 graus de abertura é obrigatória?',
+              query: 'Em quais situações a dobradiça de 165 graus de abertura é obrigatória?',
             },
             {
               label: 'Flambagem em Prateleiras',
-              query:
-                'Qual o vão livre máximo recomendado para prateleira em MDF 15mm sem curvar?',
+              query: 'Qual o vão livre máximo recomendado para prateleira em MDF 15mm sem curvar?',
             },
           ].map((item) => (
             <button

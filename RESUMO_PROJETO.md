@@ -1,22 +1,23 @@
-/# RESUMO DE PROJETO: D'Luxury CRM
+# RESUMO DE PROJETO: D'Luxury CRM
 
 ## Informações Gerais
-- **Status Atual:** Cobertura de testes unitários aumentada com sucesso para 80.31% de Statements, com todos os 603 testes passando e build de produção intacto.
-- **Objetivo Central:** Garantir cobertura global de testes >= 80% (Statements e Lines) e corrigir mocks/testes unitários para `projects.ts`, `agenda.ts`, `saas-admin.ts`, `after_sales.ts`, `config.ts`, `aprovacao.ts`, `planocorte.ts` e `kanban-producao.ts`.
-- **Última Atualização:** 04/06/2026 - 19:15
+
+- **Status Atual:** Concluído Redesign Completo.
+- **Objetivo Central:** Aplicar Redesign Global UI/UX focado em estética "D'Luxury" (Dark Mode, tipografia limpa, hierarquia visual).
+- **Última Atualização:** 05/06/2026 - 15:08
 
 ## Histórico de Alterações
-- **04/06/2026 - 19:15:** Aumento da cobertura global de testes unitários para 80.31% de Statements e 81.68% de Lines. Correção dos 9 testes falhos em `projects.test.ts` relacionados aos handlers de Engenharia e Simulações, tratando a interceptação de queries de infraestrutura (CREATE/ALTER TABLE). Expansão de testes em `agenda.ts`, `saas-admin.ts`, `after_sales.ts`, `config.ts`, `aprovacao.ts`, `planocorte.ts` e `kanban-producao.ts`. Build do projeto realizado e finalizado com sucesso.
-  - Arquivos modificados: 
-    - [projects.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/projects.test.ts)
-    - [agenda.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/agenda.test.ts)
-    - [saas-admin.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/saas-admin.test.ts)
-    - [after_sales.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/after_sales.test.ts)
-    - [config.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/config.test.ts)
-    - [aprovacao.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/aprovacao.test.ts)
-    - [planocorte.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/planocorte.test.ts)
-    - [kanban-producao.test.ts](file:///c:/Users/jc-pr/.gemini/antigravity/scratch/dluxury-crm/src/api-lib/__tests__/kanban-producao.test.ts)
+
+- **[05/06/2026 - 15:08]:** Refatoração visual completa do Menu Lateral (Sidebar) com estilos Glassmorphism e glow states, conforme skill 00-andruia-consultant e flags goal de finalização rápida.
+  - Arquivos modificados: src/components/layout/Sidebar.tsx
+- **05/06/2026 - 14:38:** Implementação concluída do Redesign UI/UX ("Tema Diamante / Premium Dark Mode"). Configuração de variáveis de Glassmorphism, botões com hover/glow, refatoração de Cards, Kanban e Orçamentos. Criado walkthrough com relatório de mudanças.
+- **05/06/2026 - 14:35:** Criação do plano de redesign baseado nas capturas de tela e na skill `00-andruia-consultant` (Escenario B: Evolução). Definidas as skills necessárias (`ui-ux-pro-max`, `frontend-design`, `tailwind-patterns`, `react-ui-patterns`) e gerado o `implementation_plan.md` no workspace para aprovação do usuário.
+- **04/06/2026 - 19:15:** Aumento da cobertura global de testes unitários para 80.31% de Statements e 81.68% de Lines. Correção dos 9 testes falhos em `projects.test.ts` e expansão de testes nas APIs. Build finalizado.
 
 ## TODOs / Próximos Passos
-- [x] Aumentar cobertura de testes para 80% (PROMPT 3)
-- [ ] Resolver E2E Specs (PROMPT 4)
+
+- [x] Diagnóstico técnico e elaboração do Plano de Implementação
+- [x] Aguardar feedback/aprovação do plano pelo usuário
+- [x] Step 1: Fundação do Design System e Variáveis Tailwind (Dark Premium)
+- [x] Step 2: Core Components (Cards, Buttons com CTAs destacados, Limites/Bordas)
+- [x] Step 3: Refatorar Páginas Críticas (Painel Geral, Simulador, Plano de Corte, Produção, Orçamentos)

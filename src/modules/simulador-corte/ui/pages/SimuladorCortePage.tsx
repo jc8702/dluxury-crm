@@ -1,5 +1,28 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Scissors, Upload, FileText, RotateCw, Maximize2, Minimize2, ChevronLeft, ChevronRight, Plus, Trash2, Play, Zap, Grid3x3, Ruler, Box, PlayCircle, Cpu, ShieldAlert, CheckCircle, FileCheck, Settings, AlertTriangle } from 'lucide-react';
+import {
+  Scissors,
+  Upload,
+  FileText,
+  RotateCw,
+  Maximize2,
+  Minimize2,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Play,
+  Zap,
+  Grid3x3,
+  Ruler,
+  Box,
+  PlayCircle,
+  Cpu,
+  ShieldAlert,
+  CheckCircle,
+  FileCheck,
+  Settings,
+  AlertTriangle,
+} from 'lucide-react';
 import { listarPlanos } from '../../infrastructure/repositories/PlanoCorteRepository';
 import { MaxRectsOptimizer } from '../../../plano-corte/domain/services/MaxRectsOptimizer';
 import CanvasSimulador3D from '../components/CanvasSimulador3D';
@@ -7,7 +30,15 @@ import InfoCorte from '../components/InfoCorte';
 import PainelPecasRapido from '../components/PainelPecasRapido';
 import CncConfigPanel from '../components/CncConfigPanel';
 import SafetyAnalysisPanel from '../components/SafetyAnalysisPanel';
-import type { PlanoCorteCarregado, LayoutSimulacao, PecaSimulacao, CncConfig, IssueWithRecommendation, SetupDiff, CollisionPolicy } from '../../domain/types';
+import type {
+  PlanoCorteCarregado,
+  LayoutSimulacao,
+  PecaSimulacao,
+  CncConfig,
+  IssueWithRecommendation,
+  SetupDiff,
+  CollisionPolicy,
+} from '../../domain/types';
 import type { Peca } from '../../../plano-corte/domain/types';
 
 // NOVAS IMPORTAÇÕES DO MOTOR INDUSTRIAL CNC
@@ -26,7 +57,12 @@ import {
 import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
 
-import { DEFAULT_CNC_CONFIG, analyzeIssues, applySafeAdjustment, gerarFixtureSettings } from '../../domain/adjustmentEngine';
+import {
+  DEFAULT_CNC_CONFIG,
+  analyzeIssues,
+  applySafeAdjustment,
+  gerarFixtureSettings,
+} from '../../domain/adjustmentEngine';
 import { salvarConfigCNC, carregarConfigCNC } from '../../infrastructure/persistence';
 import type { GhostPreviewItem } from '../../domain/types';
 
@@ -80,13 +116,13 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
         const larg = l.largura_original_mm || (mat ? Number(mat.largura_mm) : 0) || 2750;
         const alt = l.altura_original_mm || (mat ? Number(mat.altura_mm) : 0) || 1830;
         const skuChapa = l.chapa_sku || mat?.sku_chapa || chapaId;
-        
+
         // Coleta os espaços vazios reais gerados no layout de nesting para exibir os retalhos
         const espacosLivres = (l.espacos_livres || []).map((e: any) => ({
           x: e.x || 0,
           y: e.y || 0,
           largura: e.largura || e.w || 0,
-          altura: e.altura || e.h || 0
+          altura: e.altura || e.h || 0,
         }));
 
         layouts.push({
@@ -141,11 +177,11 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
         const res = opt.otimizar(pecasParaProcessar);
 
         layouts.push({
-          chapa: { 
-            sku: `${(chapa.sku_chapa || 'CHAPA').toUpperCase()} - CHAPA ${chapaIndex}`, 
-            largura: larg, 
-            altura: alt, 
-            espessura: esp 
+          chapa: {
+            sku: `${(chapa.sku_chapa || 'CHAPA').toUpperCase()} - CHAPA ${chapaIndex}`,
+            largura: larg,
+            altura: alt,
+            espessura: esp,
           },
           pecas: res.pecas_posicionadas.map((p) => ({
             id: p.id,
@@ -160,7 +196,12 @@ function converterPlanoParaLayouts(plano: PlanoCorteCarregado): LayoutSimulacao[
           area_aproveitada_mm2: res.area_usada,
           area_total_mm2: res.area_total,
           aproveitamento_percentual: res.aproveitamento,
-          espacos_vazios: res.espacos_vazios.map(e => ({ x: e.x, y: e.y, largura: e.largura, altura: e.altura })),
+          espacos_vazios: res.espacos_vazios.map((e) => ({
+            x: e.x,
+            y: e.y,
+            largura: e.largura,
+            altura: e.altura,
+          })),
         });
 
         if (res.pecas_rejeitadas.length === 0) {
@@ -193,7 +234,7 @@ export default function SimuladorCortePage() {
   const [mostrarGrade, setMostrarGrade] = useState(true);
   const [mostrarCotas, setMostrarCotas] = useState(true);
   const [mostrarRetalhos, setMostrarRetalhos] = useState(true);
-  
+
   // Toggles industriais
   const [mostrarMaquina, setMostrarMaquina] = useState(true);
   const [mostrarStock, setMostrarStock] = useState(true);
@@ -251,9 +292,10 @@ export default function SimuladorCortePage() {
     const configWithFixtures: CncConfig = {
       ...cncConfig,
       fixture: {
-        clamps: cncConfig.fixture.clamps.length > 0
-          ? cncConfig.fixture.clamps
-          : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
+        clamps:
+          cncConfig.fixture.clamps.length > 0
+            ? cncConfig.fixture.clamps
+            : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
       },
     };
     return gerarSimulationProgram(layoutAtual, configWithFixtures);
@@ -274,9 +316,10 @@ export default function SimuladorCortePage() {
     const configWithFixtures: CncConfig = {
       ...cncConfig,
       fixture: {
-        clamps: cncConfig.fixture.clamps.length > 0
-          ? cncConfig.fixture.clamps
-          : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
+        clamps:
+          cncConfig.fixture.clamps.length > 0
+            ? cncConfig.fixture.clamps
+            : gerarFixtureSettings(layoutAtual.chapa.largura, layoutAtual.chapa.altura).clamps,
       },
     };
     const recs = analyzeIssues(program, configWithFixtures, layoutAtual);
@@ -308,17 +351,19 @@ export default function SimuladorCortePage() {
         // Se a política de colisão estiver configurada como 'stop'
         if (cncConfig.machine.collisionPolicy === 'stop') {
           const erroDetectado = program.issues.find(
-            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
+            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next,
           );
           if (erroDetectado) {
             setPlaying(false);
-            alert(`[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`);
+            alert(
+              `[SIMULAÇÃO CNC INTERROMPIDA]\n\nColisão ou anomalia mecânica detectada:\n${erroDetectado.mensagem}\nPosição: X:${erroDetectado.posicao.x.toFixed(1)} Y:${erroDetectado.posicao.y.toFixed(1)} Z:${erroDetectado.posicao.z.toFixed(1)}\n\nO cabeçote parou no ponto do impacto.\n\nConfigure a Política de Colisão para "Sugerir Ajuste" ou "Auto-ajustar" no painel CNC para obter recomendações.`,
+            );
             return erroDetectado.tempo; // para no instante exato da colisão
           }
         } else if (stopOnCollision && cncConfig.machine.collisionPolicy !== 'auto') {
           // Se for apenas a checkbox local do timeline mas sem o alert bloqueante da máquina
           const erroDetectado = program.issues.find(
-            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next
+            (issue) => issue.severidade === 'error' && issue.tempo > prev && issue.tempo <= next,
           );
           if (erroDetectado) {
             setPlaying(false);
@@ -374,11 +419,15 @@ export default function SimuladorCortePage() {
     if (modo !== 'carregar') return;
     setLoadingPlanos(true);
     listarPlanos()
-      .then((data) => setPlanos(data.filter((p) => {
-        if (p.resultado?.perChapa) return Object.keys(p.resultado.perChapa).length > 0;
-        if (p.materiais?.length > 0) return true;
-        return false;
-      })))
+      .then((data) =>
+        setPlanos(
+          data.filter((p) => {
+            if (p.resultado?.perChapa) return Object.keys(p.resultado.perChapa).length > 0;
+            if (p.materiais?.length > 0) return true;
+            return false;
+          }),
+        ),
+      )
       .catch(() => {})
       .finally(() => setLoadingPlanos(false));
   }, [modo]);
@@ -395,21 +444,34 @@ export default function SimuladorCortePage() {
   }, []);
 
   const handleAddPeca = useCallback(() => {
-    setPecasInput((prev) => [...prev, {
-      id: gerarId(), nome: '', comprimento: 300, largura: 300, espessura: chapaEspessura, quantidade: 1,
-    }]);
+    setPecasInput((prev) => [
+      ...prev,
+      {
+        id: gerarId(),
+        nome: '',
+        comprimento: 300,
+        largura: 300,
+        espessura: chapaEspessura,
+        quantidade: 1,
+      },
+    ]);
   }, [chapaEspessura]);
 
   const handleRemovePeca = useCallback((id: string) => {
     setPecasInput((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  const handleUpdatePeca = useCallback((id: string, field: keyof PecaInput, value: string | number) => {
-    setPecasInput((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
-  }, []);
+  const handleUpdatePeca = useCallback(
+    (id: string, field: keyof PecaInput, value: string | number) => {
+      setPecasInput((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+    },
+    [],
+  );
 
   const executarSimulacao = useCallback(() => {
-    const pecasValidas = pecasInput.filter((p) => p.nome.trim() && p.comprimento > 0 && p.largura > 0);
+    const pecasValidas = pecasInput.filter(
+      (p) => p.nome.trim() && p.comprimento > 0 && p.largura > 0,
+    );
     if (pecasValidas.length === 0 || chapaLargura <= 0 || chapaAltura <= 0) return;
 
     setProcessando(true);
@@ -462,7 +524,12 @@ export default function SimuladorCortePage() {
             area_aproveitada_mm2: resultado.area_usada,
             area_total_mm2: resultado.area_total,
             aproveitamento_percentual: resultado.aproveitamento,
-            espacos_vazios: resultado.espacos_vazios.map(e => ({ x: e.x, y: e.y, largura: e.largura, altura: e.altura })),
+            espacos_vazios: resultado.espacos_vazios.map((e) => ({
+              x: e.x,
+              y: e.y,
+              largura: e.largura,
+              altura: e.altura,
+            })),
           });
 
           if (resultado.pecas_rejeitadas.length === 0) {
@@ -499,15 +566,18 @@ export default function SimuladorCortePage() {
     setPecaSelecionada(peca);
   }, []);
 
-  const handleNavegarChapa = useCallback((dir: number) => {
-    setIndiceChapa((prev) => {
-      const next = prev + dir;
-      if (next < 0) return layouts.length - 1;
-      if (next >= layouts.length) return 0;
-      return next;
-    });
-    setPecaSelecionada(null);
-  }, [layouts.length]);
+  const handleNavegarChapa = useCallback(
+    (dir: number) => {
+      setIndiceChapa((prev) => {
+        const next = prev + dir;
+        if (next < 0) return layouts.length - 1;
+        if (next >= layouts.length) return 0;
+        return next;
+      });
+      setPecaSelecionada(null);
+    },
+    [layouts.length],
+  );
 
   const handleTrocarModo = useCallback((m: ModoSimulador) => {
     setModo(m);
@@ -515,17 +585,22 @@ export default function SimuladorCortePage() {
     setPecaSelecionada(null);
   }, []);
 
-  const handleJumpToIssue = useCallback((tempo: number, posicao: { x: number; y: number; z: number }) => {
-    setTempoAtual(tempo);
-    setPlaying(false);
-    setFocoPosicao(posicao);
-  }, []);
+  const handleJumpToIssue = useCallback(
+    (tempo: number, posicao: { x: number; y: number; z: number }) => {
+      setTempoAtual(tempo);
+      setPlaying(false);
+      setFocoPosicao(posicao);
+    },
+    [],
+  );
 
   // CLAMP DRAG NA CENA 3D
   const handleClampDragEnd = useCallback((clampId: string, newX: number, newY: number) => {
     setCncConfig((prev) => {
       const novosClamps = prev.fixture.clamps.map((c) =>
-        c.id === clampId ? { ...c, x: Math.max(0, Math.min(newX, 3000)), y: Math.max(0, Math.min(newY, 2000)) } : c
+        c.id === clampId
+          ? { ...c, x: Math.max(0, Math.min(newX, 3000)), y: Math.max(0, Math.min(newY, 2000)) }
+          : c,
       );
       const nova: CncConfig = { ...prev, fixture: { clamps: novosClamps } };
       salvarConfigCNC(nova);
@@ -534,89 +609,110 @@ export default function SimuladorCortePage() {
   }, []);
 
   // PREVIEW DE RECOMENDAÇÃO NA CENA 3D
-  const handlePreviewRecommendation = useCallback((iwr: IssueWithRecommendation | null) => {
-    if (!iwr || !iwr.bestRecommendation || !layoutAtual) {
-      setGhostPreview([]);
-      return;
-    }
-    const rec = iwr.bestRecommendation;
-    const items: GhostPreviewItem[] = [];
-
-    if (rec.type === 'REPOSITION_CLAMP' && rec.paramName.startsWith('clamp_')) {
-      const clampId = rec.paramName.replace('clamp_', '');
-      const oldVal = String(rec.oldValue);
-      const newVal = String(rec.newValue);
-      const matchOld = oldVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
-      const matchNew = newVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
-      if (matchOld && matchNew) {
-        items.push({
-          type: 'clamp', id: `${clampId}_old`,
-          x: parseFloat(matchOld[1]), y: parseFloat(matchOld[2]),
-          largura: 45, altura: 80, cor: '#EF4444', label: 'Atual',
-        });
-        items.push({
-          type: 'clamp', id: `${clampId}_new`,
-          x: parseFloat(matchNew[1]), y: parseFloat(matchNew[2]),
-          largura: 45, altura: 80, cor: '#10B981', label: 'Proposto',
-        });
-        setGhostPreview(items);
+  const handlePreviewRecommendation = useCallback(
+    (iwr: IssueWithRecommendation | null) => {
+      if (!iwr || !iwr.bestRecommendation || !layoutAtual) {
+        setGhostPreview([]);
         return;
       }
-    }
+      const rec = iwr.bestRecommendation;
+      const items: GhostPreviewItem[] = [];
 
-    if (rec.type === 'ADJUST_SAFE_Z') {
-      const novoZ = Number(rec.newValue);
-      if (!isNaN(novoZ) && layoutAtual) {
-        items.push({
-          type: 'safeZ_plane', id: 'safeZ_preview',
-          x: 0, y: 0,
-          largura: layoutAtual.chapa.largura,
-          altura: layoutAtual.chapa.altura,
-          zHeight: novoZ,
-          cor: '#10B981',
-        });
+      if (rec.type === 'REPOSITION_CLAMP' && rec.paramName.startsWith('clamp_')) {
+        const clampId = rec.paramName.replace('clamp_', '');
+        const oldVal = String(rec.oldValue);
+        const newVal = String(rec.newValue);
+        const matchOld = oldVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
+        const matchNew = newVal.match(/X:([\d.]+)\s+Y:([\d.]+)/);
+        if (matchOld && matchNew) {
+          items.push({
+            type: 'clamp',
+            id: `${clampId}_old`,
+            x: parseFloat(matchOld[1]),
+            y: parseFloat(matchOld[2]),
+            largura: 45,
+            altura: 80,
+            cor: '#EF4444',
+            label: 'Atual',
+          });
+          items.push({
+            type: 'clamp',
+            id: `${clampId}_new`,
+            x: parseFloat(matchNew[1]),
+            y: parseFloat(matchNew[2]),
+            largura: 45,
+            altura: 80,
+            cor: '#10B981',
+            label: 'Proposto',
+          });
+          setGhostPreview(items);
+          return;
+        }
       }
-    }
 
-    if (rec.type === 'ADJUST_CLAMP_MARGIN') {
-      const margem = Number(rec.newValue);
-      if (!isNaN(margem) && layoutAtual) {
+      if (rec.type === 'ADJUST_SAFE_Z') {
+        const novoZ = Number(rec.newValue);
+        if (!isNaN(novoZ) && layoutAtual) {
+          items.push({
+            type: 'safeZ_plane',
+            id: 'safeZ_preview',
+            x: 0,
+            y: 0,
+            largura: layoutAtual.chapa.largura,
+            altura: layoutAtual.chapa.altura,
+            zHeight: novoZ,
+            cor: '#10B981',
+          });
+        }
+      }
+
+      if (rec.type === 'ADJUST_CLAMP_MARGIN') {
+        const margem = Number(rec.newValue);
+        if (!isNaN(margem) && layoutAtual) {
+          items.push({
+            type: 'safeZ_plane',
+            id: 'margin_preview',
+            x: 0,
+            y: 0,
+            largura: layoutAtual.chapa.largura,
+            altura: layoutAtual.chapa.altura,
+            zHeight: margem,
+            cor: '#E2AC00',
+          });
+        }
+      }
+
+      // Fallback: show a visual marker at the issue position for any recommendation type
+      if (items.length === 0) {
         items.push({
-          type: 'safeZ_plane', id: 'margin_preview',
-          x: 0, y: 0,
-          largura: layoutAtual.chapa.largura,
-          altura: layoutAtual.chapa.altura,
-          zHeight: margem,
+          type: 'part',
+          id: 'rec_fallback',
+          x: iwr.issue.posicao.x,
+          y: iwr.issue.posicao.y,
+          largura: 60,
+          altura: 60,
           cor: '#E2AC00',
+          label: rec.paramName,
         });
       }
-    }
 
-    // Fallback: show a visual marker at the issue position for any recommendation type
-    if (items.length === 0) {
-      items.push({
-        type: 'part', id: 'rec_fallback',
-        x: iwr.issue.posicao.x,
-        y: iwr.issue.posicao.y,
-        largura: 60,
-        altura: 60,
-        cor: '#E2AC00',
-        label: rec.paramName,
-      });
-    }
-
-    setGhostPreview(items);
-  }, [layoutAtual]);
+      setGhostPreview(items);
+    },
+    [layoutAtual],
+  );
 
   // APLICA RECOMENDAÇÃO DE AJUSTE NA CONFIGURAÇÃO CNC
-  const handleApplyRecommendation = useCallback((iwr: IssueWithRecommendation) => {
-    if (!iwr.bestRecommendation || !layoutAtual) return;
-    const result = applySafeAdjustment(cncConfig, iwr.bestRecommendation, layoutAtual);
-    if (result.diffs.length > 0) {
-      setDiffsAplicados((prev) => [...prev, ...result.diffs]);
-      handleCncConfigChange(result.config);
-    }
-  }, [cncConfig, layoutAtual, handleCncConfigChange]);
+  const handleApplyRecommendation = useCallback(
+    (iwr: IssueWithRecommendation) => {
+      if (!iwr.bestRecommendation || !layoutAtual) return;
+      const result = applySafeAdjustment(cncConfig, iwr.bestRecommendation, layoutAtual);
+      if (result.diffs.length > 0) {
+        setDiffsAplicados((prev) => [...prev, ...result.diffs]);
+        handleCncConfigChange(result.config);
+      }
+    },
+    [cncConfig, layoutAtual, handleCncConfigChange],
+  );
 
   // REEXECUTA SIMULAÇÃO APÓS AJUSTES (rerun)
   const handleRerunSimulation = useCallback(() => {
@@ -646,10 +742,13 @@ export default function SimuladorCortePage() {
       config: cncConfig,
       diffs: diffsAplicados,
       issuesWithRecs,
-      totalErrors: issuesWithRecs.filter(i => i.issue.severidade === 'error').length,
-      totalWarnings: issuesWithRecs.filter(i => i.issue.severidade === 'warning').length,
-      totalResolved: issuesWithRecs.filter(i => i.bestRecommendation && i.bestRecommendation.action !== 'impossible').length,
-      totalBlocked: issuesWithRecs.filter(i => i.bestRecommendation?.action === 'impossible').length,
+      totalErrors: issuesWithRecs.filter((i) => i.issue.severidade === 'error').length,
+      totalWarnings: issuesWithRecs.filter((i) => i.issue.severidade === 'warning').length,
+      totalResolved: issuesWithRecs.filter(
+        (i) => i.bestRecommendation && i.bestRecommendation.action !== 'impossible',
+      ).length,
+      totalBlocked: issuesWithRecs.filter((i) => i.bestRecommendation?.action === 'impossible')
+        .length,
     };
     exportarRelatorioSeguranca(reportData, nomeRelatorio, {
       tempoTotal: metrics.tempoTotal,
@@ -663,30 +762,40 @@ export default function SimuladorCortePage() {
     exportarEtiquetasCNC(layoutAtual, nomeEtiqueta);
   }, [layoutAtual, modo, planoAtivo]);
 
-  const handleExportarEtiquetaIndividual = useCallback((peca: PecaSimulacao, index: number, total: number) => {
-    if (!layoutAtual) return;
-    const nomePlano = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
-    exportarEtiquetaIndividualCNC(peca, index, total, nomePlano, layoutAtual.chapa.sku);
-  }, [layoutAtual, modo, planoAtivo]);
+  const handleExportarEtiquetaIndividual = useCallback(
+    (peca: PecaSimulacao, index: number, total: number) => {
+      if (!layoutAtual) return;
+      const nomePlano = modo === 'rapida' ? 'Simulação Rápida' : planoAtivo?.nome || 'Plano';
+      exportarEtiquetaIndividualCNC(peca, index, total, nomePlano, layoutAtual.chapa.sku);
+    },
+    [layoutAtual, modo, planoAtivo],
+  );
 
-  const handleChangeCollisionPolicy = useCallback((policy: CollisionPolicy) => {
-    const newConfig = {
-      ...cncConfig,
-      machine: { ...cncConfig.machine, collisionPolicy: policy }
-    };
-    handleCncConfigChange(newConfig);
-  }, [cncConfig, handleCncConfigChange]);
+  const handleChangeCollisionPolicy = useCallback(
+    (policy: CollisionPolicy) => {
+      const newConfig = {
+        ...cncConfig,
+        machine: { ...cncConfig.machine, collisionPolicy: policy },
+      };
+      handleCncConfigChange(newConfig);
+    },
+    [cncConfig, handleCncConfigChange],
+  );
 
   return (
     <div className="page-container anim-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#E2AC00]/20 to-[#E2AC00]/5 border border-[#E2AC00]/20">
-            <Scissors className="text-[#E2AC00]" size={22} />
+            <Scissors className="text-[var(--ui-color-gold-400)]" size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-white tracking-tight">SIMULADOR INDUSTRIAL ROUTER CNC</h1>
-            <p className="text-[#6B7280] text-xs tracking-wider">MOTOR DE SIMULAÇÃO CAM, CINEMÁTICA DE MÁQUINA E VERIFICAÇÃO</p>
+            <h1 className="text-xl font-extrabold text-[var(--ui-text-primary)] tracking-tight">
+              Simulador Industrial Router CNC
+            </h1>
+            <p className="text-[var(--ui-text-secondary)] text-sm font-medium tracking-wide">
+              Motor de Simulação CAM, Cinemática de Máquina e Verificação
+            </p>
           </div>
         </div>
         <button
@@ -702,7 +811,9 @@ export default function SimuladorCortePage() {
         <button
           onClick={() => handleTrocarModo('rapida')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-            modo === 'rapida' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
+            modo === 'rapida'
+              ? 'bg-[#E2AC00] text-black'
+              : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
           }`}
         >
           <Zap size={14} />
@@ -711,7 +822,9 @@ export default function SimuladorCortePage() {
         <button
           onClick={() => handleTrocarModo('carregar')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-            modo === 'carregar' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
+            modo === 'carregar'
+              ? 'bg-[#E2AC00] text-black'
+              : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
           }`}
         >
           <Upload size={14} />
@@ -723,7 +836,7 @@ export default function SimuladorCortePage() {
       {modo === 'rapida' && (
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-96 space-y-4 shrink-0">
-            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+            <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
               <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider mb-3 flex items-center gap-2">
                 <Grid3x3 size={14} />
                 CONFIGURAÇÃO DA CHAPA
@@ -746,75 +859,126 @@ export default function SimuladorCortePage() {
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
                   <label className="text-[#6B7280] block mb-1">COMPR. (MM)</label>
-                  <input type="number" value={chapaLargura}
-                    onChange={(e) => { setChapaLargura(Number(e.target.value)); setChapaPredef(DEFAULT_CHAPAS.length - 1); }}
+                  <input
+                    type="number"
+                    value={chapaLargura}
+                    onChange={(e) => {
+                      setChapaLargura(Number(e.target.value));
+                      setChapaPredef(DEFAULT_CHAPAS.length - 1);
+                    }}
                     className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
                   />
                 </div>
                 <div>
                   <label className="text-[#6B7280] block mb-1">LARG. (MM)</label>
-                  <input type="number" value={chapaAltura}
-                    onChange={(e) => { setChapaAltura(Number(e.target.value)); setChapaPredef(DEFAULT_CHAPAS.length - 1); }}
+                  <input
+                    type="number"
+                    value={chapaAltura}
+                    onChange={(e) => {
+                      setChapaAltura(Number(e.target.value));
+                      setChapaPredef(DEFAULT_CHAPAS.length - 1);
+                    }}
                     className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
                   />
                 </div>
                 <div>
                   <label className="text-[#6B7280] block mb-1">ESP. (MM)</label>
-                  <input type="number" value={chapaEspessura}
-                    onChange={(e) => { setChapaEspessura(Number(e.target.value)); setChapaPredef(DEFAULT_CHAPAS.length - 1); }}
+                  <input
+                    type="number"
+                    value={chapaEspessura}
+                    onChange={(e) => {
+                      setChapaEspessura(Number(e.target.value));
+                      setChapaPredef(DEFAULT_CHAPAS.length - 1);
+                    }}
                     className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+            <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider">PEÇAS</h3>
-                <button onClick={handleAddPeca} className="flex items-center gap-1 text-[10px] text-[#E2AC00] hover:text-white transition-colors">
+                <button
+                  onClick={handleAddPeca}
+                  className="flex items-center gap-1 text-[10px] text-[#E2AC00] hover:text-white transition-colors"
+                >
                   <Plus size={12} /> ADICIONAR
                 </button>
               </div>
               <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                 {pecasInput.map((peca, idx) => (
-                  <div key={peca.id} className="bg-[#1F2937]/50 rounded-lg p-2.5 border border-[#1F2937]">
+                  <div
+                    key={peca.id}
+                    className="bg-[#1F2937]/50 rounded-lg p-2.5 border border-[#1F2937]"
+                  >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[#6B7280] text-[10px] font-semibold">PEÇA {idx + 1}</span>
-                      <button onClick={() => handleRemovePeca(peca.id)} className="text-[#6B7280] hover:text-red-400 transition-colors">
+                      <span className="text-[#6B7280] text-[10px] font-semibold">
+                        PEÇA {idx + 1}
+                      </span>
+                      <button
+                        onClick={() => handleRemovePeca(peca.id)}
+                        className="text-[#6B7280] hover:text-red-400 transition-colors"
+                      >
                         <Trash2 size={12} />
                       </button>
                     </div>
-                    <input type="text" value={peca.nome}
-                      onChange={(e) => handleUpdatePeca(peca.id, 'nome', e.target.value.toUpperCase())}
+                    <input
+                      type="text"
+                      value={peca.nome}
+                      onChange={(e) =>
+                        handleUpdatePeca(peca.id, 'nome', e.target.value.toUpperCase())
+                      }
                       placeholder="NOME DA PEÇA"
                       className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2.5 py-1.5 text-white text-[11px] outline-none mb-1.5 focus:border-[#E2AC00]"
                     />
                     <div className="grid grid-cols-4 gap-1.5">
                       <div>
                         <label className="text-[#6B7280] text-[9px] block">COMP.</label>
-                        <input type="number" value={peca.comprimento}
-                           onChange={(e) => handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))}
+                        <input
+                          type="number"
+                          value={peca.comprimento}
+                          onChange={(e) =>
+                            handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))
+                          }
                           className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
                         <label className="text-[#6B7280] text-[9px] block">LARG.</label>
-                        <input type="number" value={peca.largura}
-                          onChange={(e) => handleUpdatePeca(peca.id, 'largura', Number(e.target.value))}
+                        <input
+                          type="number"
+                          value={peca.largura}
+                          onChange={(e) =>
+                            handleUpdatePeca(peca.id, 'largura', Number(e.target.value))
+                          }
                           className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
                         <label className="text-[#6B7280] text-[9px] block">ESP.</label>
-                        <input type="number" value={peca.espessura}
-                          onChange={(e) => handleUpdatePeca(peca.id, 'espessura', Number(e.target.value))}
+                        <input
+                          type="number"
+                          value={peca.espessura}
+                          onChange={(e) =>
+                            handleUpdatePeca(peca.id, 'espessura', Number(e.target.value))
+                          }
                           className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
                         <label className="text-[#6B7280] text-[9px] block">QTD</label>
-                        <input type="number" min={1} value={peca.quantidade}
-                          onChange={(e) => handleUpdatePeca(peca.id, 'quantidade', Math.max(1, Number(e.target.value)))}
+                        <input
+                          type="number"
+                          min={1}
+                          value={peca.quantidade}
+                          onChange={(e) =>
+                            handleUpdatePeca(
+                              peca.id,
+                              'quantidade',
+                              Math.max(1, Number(e.target.value)),
+                            )
+                          }
                           className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
                         />
                       </div>
@@ -827,14 +991,24 @@ export default function SimuladorCortePage() {
                 disabled={processando}
                 className="w-full mt-3 flex items-center justify-center gap-2 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs py-2.5 rounded-lg transition-all disabled:opacity-50"
               >
-                {processando ? <><RotateCw size={14} className="animate-spin" /> OTIMIZANDO...</> : <><Play size={14} /> EXECUTAR NESTING</>}
+                {processando ? (
+                  <>
+                    <RotateCw size={14} className="animate-spin" /> OTIMIZANDO...
+                  </>
+                ) : (
+                  <>
+                    <Play size={14} /> EXECUTAR NESTING
+                  </>
+                )}
               </button>
             </div>
           </div>
 
           {layoutAtual && program && metrics ? (
             <div className="flex-1 flex flex-col gap-4 min-w-0">
-              <div className={`flex flex-col lg:flex-row gap-4 items-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
+              <div
+                className={`flex flex-col lg:flex-row gap-4 items-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}
+              >
                 <div className="flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start">
                   {/* CONFIGURAÇÃO E ABAS DE MODO (PREVIEW vs SIMULAÇÃO vs VERIFICAÇÃO) */}
                   <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
@@ -843,7 +1017,9 @@ export default function SimuladorCortePage() {
                         <button
                           onClick={() => setModoExibicao('layout')}
                           className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                            modoExibicao === 'layout' ? 'bg-[#1F2937] text-white' : 'text-[#6B7280] hover:text-white'
+                            modoExibicao === 'layout'
+                              ? 'bg-[#1F2937] text-white'
+                              : 'text-[#6B7280] hover:text-white'
                           }`}
                         >
                           PREVIEW LAYOUT
@@ -851,7 +1027,9 @@ export default function SimuladorCortePage() {
                         <button
                           onClick={() => setModoExibicao('simulacao')}
                           className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                            modoExibicao === 'simulacao' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white'
+                            modoExibicao === 'simulacao'
+                              ? 'bg-[#E2AC00] text-black'
+                              : 'text-[#6B7280] hover:text-white'
                           }`}
                         >
                           SIMULAÇÃO CNC
@@ -859,55 +1037,104 @@ export default function SimuladorCortePage() {
                         <button
                           onClick={() => setModoExibicao('verificacao')}
                           className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                            modoExibicao === 'verificacao' ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30' : 'text-[#6B7280] hover:text-white'
+                            modoExibicao === 'verificacao'
+                              ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30'
+                              : 'text-[#6B7280] hover:text-white'
                           }`}
                         >
                           VERIFICAÇÃO CAM
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronLeft size={16} /></button>
-                        <span className="text-white text-xs font-semibold min-w-[50px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                        <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronRight size={16} /></button>
+                        <button
+                          onClick={() => handleNavegarChapa(-1)}
+                          className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="text-white text-xs font-semibold min-w-[50px] text-center">
+                          {indiceChapa + 1}/{layouts.length}
+                        </span>
+                        <button
+                          onClick={() => handleNavegarChapa(1)}
+                          className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
                     </div>
 
                     {/* Toggles de Visualização 3D */}
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
-                      <button onClick={() => setMostrarGrade(!mostrarGrade)} className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GRADE</button>
-                      <button onClick={() => setMostrarCotas(!mostrarCotas)} className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>COTAS</button>
-                      <button onClick={() => setMostrarRetalhos(!mostrarRetalhos)} className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>SOBRAS</button>
-                      
+                      <button
+                        onClick={() => setMostrarGrade(!mostrarGrade)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        GRADE
+                      </button>
+                      <button
+                        onClick={() => setMostrarCotas(!mostrarCotas)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        COTAS
+                      </button>
+                      <button
+                        onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        SOBRAS
+                      </button>
+
                       <span className="text-[#374151] font-bold">|</span>
 
-                      <button onClick={() => setMostrarMaquina(!mostrarMaquina)} className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>MÁQUINA</button>
-                      <button onClick={() => setMostrarStock(!mostrarStock)} className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>USINAGEM (STOCK)</button>
-                      <button onClick={() => setMostrarClamps(!mostrarClamps)} className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GARRAS</button>
-                      <button onClick={() => setMostrarCaminho(!mostrarCaminho)} className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>TOOLPATH</button>
+                      <button
+                        onClick={() => setMostrarMaquina(!mostrarMaquina)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        MÁQUINA
+                      </button>
+                      <button
+                        onClick={() => setMostrarStock(!mostrarStock)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        USINAGEM (STOCK)
+                      </button>
+                      <button
+                        onClick={() => setMostrarClamps(!mostrarClamps)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        GARRAS
+                      </button>
+                      <button
+                        onClick={() => setMostrarCaminho(!mostrarCaminho)}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      >
+                        TOOLPATH
+                      </button>
                     </div>
                   </div>
 
-                {/* 3D CANVAS */}
-                <div className="h-[460px] rounded-xl overflow-hidden border border-[#1F2937]">
-                  <CanvasSimulador3D
-                    layout={layoutAtual}
-                    onSelecionarPeca={handleSelecionarPeca}
-                    habilitarGrade={mostrarGrade}
-                    habilitarCotas={mostrarCotas}
-                    habilitarRetalhos={mostrarRetalhos}
-                    mostrarMaquina={mostrarMaquina}
-                    mostrarStock={mostrarStock}
-                    mostrarClamps={mostrarClamps}
-                    mostrarCaminho={mostrarCaminho}
-                    program={program}
-                    tempoAtual={tempoAtual}
-                    cncConfig={cncConfig}
-                    focoPosicao={focoPosicao}
-                    mostrarRiscos={modoExibicao === 'verificacao'}
-                    ghostPreview={ghostPreview}
-                    onClampDragEnd={handleClampDragEnd}
-                  />
+                  {/* 3D CANVAS */}
+                  <div className="h-[460px] rounded-xl overflow-hidden border border-[#1F2937]">
+                    <CanvasSimulador3D
+                      layout={layoutAtual}
+                      onSelecionarPeca={handleSelecionarPeca}
+                      habilitarGrade={mostrarGrade}
+                      habilitarCotas={mostrarCotas}
+                      habilitarRetalhos={mostrarRetalhos}
+                      mostrarMaquina={mostrarMaquina}
+                      mostrarStock={mostrarStock}
+                      mostrarClamps={mostrarClamps}
+                      mostrarCaminho={mostrarCaminho}
+                      program={program}
+                      tempoAtual={tempoAtual}
+                      cncConfig={cncConfig}
+                      focoPosicao={focoPosicao}
+                      mostrarRiscos={modoExibicao === 'verificacao'}
+                      ghostPreview={ghostPreview}
+                      onClampDragEnd={handleClampDragEnd}
+                    />
                   </div>
 
                   {/* CONTROLES DE TIMELINE */}
@@ -929,17 +1156,26 @@ export default function SimuladorCortePage() {
                 {/* PAINEL DE INFORMAÇÕES E ANÁLISE DE SEGURANÇA */}
                 <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                   <div className="flex gap-2">
-                    <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <button
+                      onClick={handleExportRelatorio}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    >
                       <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
                     </button>
-                    <button onClick={handleExportRelatorioSeguranca} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <button
+                      onClick={handleExportRelatorioSeguranca}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    >
                       <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
                     </button>
-                    <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                    <button
+                      onClick={handleExportEtiquetas}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    >
                       <Box size={14} className="text-[#10B981]" /> ETIQUETAS
                     </button>
                   </div>
-                  
+
                   {/* TOGGLE CONFIGURAÇÃO CNC */}
                   <button
                     onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
@@ -976,13 +1212,30 @@ export default function SimuladorCortePage() {
                   {/* Legenda CAM Toolpath */}
                   {mostrarCaminho && (
                     <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
-                      <span className="text-white font-bold block mb-1.5 text-[10px]">LEGENDA DO PERCURSO DE CORTE:</span>
+                      <span className="text-white font-bold block mb-1.5 text-[10px]">
+                        LEGENDA DO PERCURSO DE CORTE:
+                      </span>
                       <div className="grid grid-cols-2 gap-1.5">
-                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00 Deslocamento Rápido</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho Vertical</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso de Corte</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In / Out</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem Concluída</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00
+                          Deslocamento Rápido
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho
+                          Vertical
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso
+                          de Corte
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In /
+                          Out
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem
+                          Concluída
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1010,8 +1263,12 @@ export default function SimuladorCortePage() {
             <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl flex items-center justify-center min-h-[500px]">
               <div className="text-center">
                 <Scissors size={48} className="text-[#374151] mx-auto mb-3" />
-                <p className="text-[#6B7280] text-sm font-medium">ADICIONE PEÇAS E CLIQUE EM "EXECUTAR NESTING"</p>
-                <p className="text-[#6B7280] text-[11px] mt-1">A SIMULAÇÃO DE ROUTER 3D APARECERÁ AQUI</p>
+                <p className="text-[#6B7280] text-sm font-medium">
+                  ADICIONE PEÇAS E CLIQUE EM "EXECUTAR NESTING"
+                </p>
+                <p className="text-[#6B7280] text-[11px] mt-1">
+                  A SIMULAÇÃO DE ROUTER 3D APARECERÁ AQUI
+                </p>
               </div>
             </div>
           )}
@@ -1031,25 +1288,40 @@ export default function SimuladorCortePage() {
           {!planoAtivo && !loadingPlanos && planos.length === 0 && (
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
               <FileText size={40} className="text-[#374151] mx-auto mb-3" />
-              <h2 className="text-white font-bold text-sm mb-2">NENHUM PLANO DE CORTE DISPONÍVEL</h2>
-              <p className="text-[#6B7280] text-xs">CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE A "SIMULAÇÃO RÁPIDA".</p>
+              <h2 className="text-white font-bold text-sm mb-2">
+                NENHUM PLANO DE CORTE DISPONÍVEL
+              </h2>
+              <p className="text-[#6B7280] text-xs">
+                CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE A "SIMULAÇÃO RÁPIDA".
+              </p>
             </div>
           )}
 
           {!planoAtivo && !loadingPlanos && planos.length > 0 && (
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-6 mb-6">
-              <h3 className="text-white font-bold text-sm mb-4 tracking-wider">SELECIONE UM PLANO DE CORTE PARA A CNC</h3>
+              <h3 className="text-white font-bold text-sm mb-4 tracking-wider">
+                SELECIONE UM PLANO DE CORTE PARA A CNC
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {planos.map((plano) => {
                   const chaps = converterPlanoParaLayouts(plano);
-                  const apv = chaps.length > 0 ? chaps.reduce((s, l) => s + l.aproveitamento_percentual, 0) / chaps.length : 0;
+                  const apv =
+                    chaps.length > 0
+                      ? chaps.reduce((s, l) => s + l.aproveitamento_percentual, 0) / chaps.length
+                      : 0;
                   return (
-                    <button key={plano.id} onClick={() => handleCarregarPlano(plano)}
+                    <button
+                      key={plano.id}
+                      onClick={() => handleCarregarPlano(plano)}
                       className="bg-[#1F2937]/50 hover:bg-[#1F2937] border border-[#374151] hover:border-[#E2AC00]/30 rounded-xl p-4 text-left transition-all duration-200 group"
                     >
-                      <p className="text-white font-semibold text-sm truncate group-hover:text-[#E2AC00] transition-colors">{plano.nome}</p>
+                      <p className="text-white font-semibold text-sm truncate group-hover:text-[#E2AC00] transition-colors">
+                        {plano.nome}
+                      </p>
                       <div className="flex items-center gap-4 mt-2 text-xs text-[#6B7280]">
-                        <span>{chaps.length} CHAPA{chaps.length > 1 ? 'S' : ''}</span>
+                        <span>
+                          {chaps.length} CHAPA{chaps.length > 1 ? 'S' : ''}
+                        </span>
                         <span className="text-[#10B981]">{apv.toFixed(1)}% APROV.</span>
                       </div>
                     </button>
@@ -1061,8 +1333,9 @@ export default function SimuladorCortePage() {
 
           {planoAtivo && layoutAtual && program && metrics && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
-              <div className={`flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}>
-                
+              <div
+                className={`flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}
+              >
                 {/* Cabeçalho de Navegação e Configurações */}
                 <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
                   <div className="flex items-center justify-between flex-wrap gap-2">
@@ -1070,7 +1343,9 @@ export default function SimuladorCortePage() {
                       <button
                         onClick={() => setModoExibicao('layout')}
                         className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                          modoExibicao === 'layout' ? 'bg-[#1F2937] text-white' : 'text-[#6B7280] hover:text-white'
+                          modoExibicao === 'layout'
+                            ? 'bg-[#1F2937] text-white'
+                            : 'text-[#6B7280] hover:text-white'
                         }`}
                       >
                         PREVIEW LAYOUT
@@ -1078,7 +1353,9 @@ export default function SimuladorCortePage() {
                       <button
                         onClick={() => setModoExibicao('simulacao')}
                         className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                          modoExibicao === 'simulacao' ? 'bg-[#E2AC00] text-black' : 'text-[#6B7280] hover:text-white'
+                          modoExibicao === 'simulacao'
+                            ? 'bg-[#E2AC00] text-black'
+                            : 'text-[#6B7280] hover:text-white'
                         }`}
                       >
                         SIMULAÇÃO CNC
@@ -1086,7 +1363,9 @@ export default function SimuladorCortePage() {
                       <button
                         onClick={() => setModoExibicao('verificacao')}
                         className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                          modoExibicao === 'verificacao' ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30' : 'text-[#6B7280] hover:text-white'
+                          modoExibicao === 'verificacao'
+                            ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30'
+                            : 'text-[#6B7280] hover:text-white'
                         }`}
                       >
                         VERIFICAÇÃO CAM
@@ -1094,29 +1373,80 @@ export default function SimuladorCortePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-[#6B7280] text-xs font-semibold truncate max-w-[200px]">{planoAtivo.nome}</span>
-                      <button onClick={() => handleNavegarChapa(-1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronLeft size={16} /></button>
-                      <span className="text-white text-xs font-semibold min-w-[55px] text-center">{indiceChapa + 1}/{layouts.length}</span>
-                      <button onClick={() => handleNavegarChapa(1)} className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"><ChevronRight size={16} /></button>
+                      <span className="text-[#6B7280] text-xs font-semibold truncate max-w-[200px]">
+                        {planoAtivo.nome}
+                      </span>
+                      <button
+                        onClick={() => handleNavegarChapa(-1)}
+                        className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <span className="text-white text-xs font-semibold min-w-[55px] text-center">
+                        {indiceChapa + 1}/{layouts.length}
+                      </span>
+                      <button
+                        onClick={() => handleNavegarChapa(1)}
+                        className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
-                    <button onClick={() => setMostrarGrade(!mostrarGrade)} className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GRADE</button>
-                    <button onClick={() => setMostrarCotas(!mostrarCotas)} className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>COTAS</button>
-                    <button onClick={() => setMostrarRetalhos(!mostrarRetalhos)} className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>SOBRAS</button>
-                    
+                    <button
+                      onClick={() => setMostrarGrade(!mostrarGrade)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      GRADE
+                    </button>
+                    <button
+                      onClick={() => setMostrarCotas(!mostrarCotas)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      COTAS
+                    </button>
+                    <button
+                      onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      SOBRAS
+                    </button>
+
                     <span className="text-[#374151] font-bold">|</span>
 
-                    <button onClick={() => setMostrarMaquina(!mostrarMaquina)} className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>MÁQUINA</button>
-                    <button onClick={() => setMostrarStock(!mostrarStock)} className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>USINAGEM (STOCK)</button>
-                    <button onClick={() => setMostrarClamps(!mostrarClamps)} className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>GARRAS</button>
-                    <button onClick={() => setMostrarCaminho(!mostrarCaminho)} className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}>TOOLPATH</button>
+                    <button
+                      onClick={() => setMostrarMaquina(!mostrarMaquina)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      MÁQUINA
+                    </button>
+                    <button
+                      onClick={() => setMostrarStock(!mostrarStock)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      USINAGEM (STOCK)
+                    </button>
+                    <button
+                      onClick={() => setMostrarClamps(!mostrarClamps)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      GARRAS
+                    </button>
+                    <button
+                      onClick={() => setMostrarCaminho(!mostrarCaminho)}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                    >
+                      TOOLPATH
+                    </button>
                   </div>
                 </div>
 
                 {/* 3D CANVAS */}
-                <div className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}>
+                <div
+                  className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}
+                >
                   <CanvasSimulador3D
                     layout={layoutAtual}
                     onSelecionarPeca={handleSelecionarPeca}
@@ -1156,13 +1486,22 @@ export default function SimuladorCortePage() {
               {/* PAINEL LATERAL DIREITO */}
               <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:sticky lg:top-4 custom-scrollbar">
                 <div className="flex gap-2">
-                  <button onClick={handleExportRelatorio} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                  <button
+                    onClick={handleExportRelatorio}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                  >
                     <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
                   </button>
-                  <button onClick={handleExportRelatorioSeguranca} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                  <button
+                    onClick={handleExportRelatorioSeguranca}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                  >
                     <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
                   </button>
-                  <button onClick={handleExportEtiquetas} className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all">
+                  <button
+                    onClick={handleExportEtiquetas}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                  >
                     <Box size={14} className="text-[#10B981]" /> ETIQUETAS
                   </button>
                 </div>
@@ -1202,13 +1541,30 @@ export default function SimuladorCortePage() {
 
                 {mostrarCaminho && (
                   <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
-                    <span className="text-white font-bold block mb-1.5 text-[10px]">LEGENDA DO PERCURSO DE CORTE:</span>
+                    <span className="text-white font-bold block mb-1.5 text-[10px]">
+                      LEGENDA DO PERCURSO DE CORTE:
+                    </span>
                     <div className="grid grid-cols-2 gap-1.5">
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00 Deslocamento Rápido</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho Vertical</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso de Corte</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In / Out</div>
-                      <div className="flex items-center gap-1.5"><span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem Concluída</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-1.5 bg-[#4B5563] rounded block" /> G00 Deslocamento
+                        Rápido
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-1.5 bg-[#F97316] rounded block" /> G01 Mergulho
+                        Vertical
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso de
+                        Corte
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In /
+                        Out
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem
+                        Concluída
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1231,7 +1587,10 @@ export default function SimuladorCortePage() {
                 />
 
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
-                  <button onClick={() => setPlanoAtivo(null)} className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold py-2.5 rounded-lg transition-all">
+                  <button
+                    onClick={() => setPlanoAtivo(null)}
+                    className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold py-2.5 rounded-lg transition-all"
+                  >
                     <Upload size={14} /> TROCAR PLANO
                   </button>
                 </div>
@@ -1241,7 +1600,9 @@ export default function SimuladorCortePage() {
         </>
       )}
 
-      {telaCheia && <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setTelaCheia(false)} />}
+      {telaCheia && (
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setTelaCheia(false)} />
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }

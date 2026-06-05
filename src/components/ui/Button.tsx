@@ -17,8 +17,9 @@ const buttonVariants = cva(
       variant: {
         primary: cn(
           'bg-[var(--ui-action-primary)] text-[var(--ui-action-primary-fg)]',
-          'hover:bg-[var(--ui-action-primary-hover)]',
-          'active:translate-y-px',
+          'shadow-[0_0_10px_rgba(234,179,8,0.2)]', // Glow estático sutil
+          'hover:bg-[var(--ui-action-primary-hover)] hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]',
+          'active:translate-y-px active:shadow-none',
         ),
         secondary: cn(
           'bg-[var(--ui-action-secondary)] text-[var(--ui-action-secondary-fg)]',

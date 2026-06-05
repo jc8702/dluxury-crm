@@ -16,7 +16,7 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
     const hoje = new Date();
     const diffTime = Math.abs(hoje.getTime() - dataUpdate.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return '⏱ < 24h';
     if (diffDays === 1) return '⏱ 1 dia aqui';
     return `⏱ ${diffDays} dias aqui`;
@@ -32,8 +32,13 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
   };
 
   const getPrioridadeBadge = (prioridade: number) => {
-    if (prioridade === 1) return { text: '🔥 URGENTE', class: 'bg-destructive/20 text-destructive border-destructive/25' };
-    if (prioridade === 9) return { text: '☘ BAIXA', class: 'bg-green-500/20 text-green-400 border-green-500/25' };
+    if (prioridade === 1)
+      return {
+        text: '🔥 URGENTE',
+        class: 'bg-destructive/20 text-destructive border-destructive/25',
+      };
+    if (prioridade === 9)
+      return { text: '☘ BAIXA', class: 'bg-green-500/20 text-green-400 border-green-500/25' };
     return { text: '⚡ NORMAL', class: 'bg-amber-500/20 text-amber-400 border-amber-500/25' };
   };
 
@@ -78,9 +83,9 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
       onDragEnd={handleDragEnd}
       onClick={onClick}
       className={`
-        p-4 rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all select-none group
-        ${isDragging ? 'opacity-40 border-primary border-dashed scale-95' : 'border-border'}
-        ${atrasado ? 'ring-1 ring-destructive/40 hover:ring-destructive' : 'hover:border-primary/50'}
+        p-4 rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 text-[var(--ui-text-primary)] shadow-[var(--ui-shadow-1)] hover:shadow-[var(--ui-shadow-2)] cursor-grab active:cursor-grabbing transition-all select-none group
+        ${isDragging ? 'opacity-40 border-primary border-dashed scale-95' : ''}
+        ${atrasado ? 'ring-1 ring-destructive/40 hover:ring-destructive' : 'hover:border-[var(--ui-color-gold-500)]/30'}
       `}
     >
       {/* Header do Card */}
@@ -88,7 +93,9 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
         <span className="text-xs font-mono font-bold text-foreground group-hover:text-primary transition-colors">
           {card.numero_op}
         </span>
-        <span className={`text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border ${pBadge.class}`}>
+        <span
+          className={`text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full border ${pBadge.class}`}
+        >
           {pBadge.text}
         </span>
       </div>
@@ -110,16 +117,16 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
       <div className="flex items-center justify-between border-t border-border/50 pt-2 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-2">
           {/* Prazo */}
-          <div className={`flex items-center gap-1 font-medium ${atrasado ? 'text-destructive font-semibold' : ''}`}>
+          <div
+            className={`flex items-center gap-1 font-medium ${atrasado ? 'text-destructive font-semibold' : ''}`}
+          >
             <Clock className="w-3 h-3" />
             <span>{formatarData(card.data_prazo)}</span>
             {atrasado && <AlertTriangle className="w-3 h-3 text-destructive animate-pulse" />}
           </div>
 
           {/* Tempo na Coluna */}
-          <span className="text-muted-foreground/60">
-            {obterTempoNaColuna()}
-          </span>
+          <span className="text-muted-foreground/60">{obterTempoNaColuna()}</span>
         </div>
 
         {/* Responsável Avatar */}

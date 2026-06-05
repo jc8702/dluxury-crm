@@ -1,5 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Plus, Trash2, Upload, Sparkles, ArrowRight, Factory, CheckCircle2, CircleDot, Layers3, Scissors, Tag, Save, FolderOpen, FileText, X } from 'lucide-react';
+import {
+  Check,
+  Plus,
+  Trash2,
+  Upload,
+  Sparkles,
+  ArrowRight,
+  Factory,
+  CheckCircle2,
+  CircleDot,
+  Layers3,
+  Scissors,
+  Tag,
+  Save,
+  FolderOpen,
+  FileText,
+  X,
+} from 'lucide-react';
 import { listarPlanos } from '../../../simulador-corte/infrastructure/repositories/PlanoCorteRepository';
 import type { PlanoCorteCarregado } from '../../../simulador-corte/domain/types';
 import type { FioDeFita } from '../../../plano-corte/domain/types';
@@ -10,7 +27,10 @@ import {
   simulateProductionScenario,
 } from '../../domain/productionEngine';
 import type { ProductionPieceInput, ProductionSimulationResult } from '../../domain/types';
-import { exportarEtiquetaProducao, exportarTodasEtiquetas } from '../components/LabelExporterProducao';
+import {
+  exportarEtiquetaProducao,
+  exportarTodasEtiquetas,
+} from '../components/LabelExporterProducao';
 import { exportarRelatorioProducao } from '../components/ExportarRelatorioProducao';
 import { ProductionScenarioRepository } from '../../infrastructure/repositories/ProductionScenarioRepository';
 import type { ProductionScenarioRecord } from '../../infrastructure/repositories/ProductionScenarioRepository';
@@ -23,10 +43,38 @@ interface PieceRow extends ProductionPieceInput {
 }
 
 const EXEMPLO: PieceRow[] = [
-  { id: 'laterais-1', nome: 'LATERAL GUARDA-ROUPA', largura: 2100, altura: 600, quantidade: 2, fio_de_fita: { topo: true, baixo: true, esquerda: true, direita: true } },
-  { id: 'tampo-1', nome: 'TAMPO SUPERIOR', largura: 1400, altura: 550, quantidade: 1, fio_de_fita: { topo: true, baixo: true, esquerda: true, direita: true } },
-  { id: 'prateleira-1', nome: 'PRATELEIRA INTERNA', largura: 800, altura: 350, quantidade: 4, fio_de_fita: { topo: true } },
-  { id: 'base-1', nome: 'BASE INFERIOR', largura: 1400, altura: 500, quantidade: 1, fio_de_fita: { topo: true, baixo: true } },
+  {
+    id: 'laterais-1',
+    nome: 'LATERAL GUARDA-ROUPA',
+    largura: 2100,
+    altura: 600,
+    quantidade: 2,
+    fio_de_fita: { topo: true, baixo: true, esquerda: true, direita: true },
+  },
+  {
+    id: 'tampo-1',
+    nome: 'TAMPO SUPERIOR',
+    largura: 1400,
+    altura: 550,
+    quantidade: 1,
+    fio_de_fita: { topo: true, baixo: true, esquerda: true, direita: true },
+  },
+  {
+    id: 'prateleira-1',
+    nome: 'PRATELEIRA INTERNA',
+    largura: 800,
+    altura: 350,
+    quantidade: 4,
+    fio_de_fita: { topo: true },
+  },
+  {
+    id: 'base-1',
+    nome: 'BASE INFERIOR',
+    largura: 1400,
+    altura: 500,
+    quantidade: 1,
+    fio_de_fita: { topo: true, baixo: true },
+  },
   { id: 'fundo-1', nome: 'FUNDO', largura: 2100, altura: 600, quantidade: 1, fio_de_fita: {} },
 ];
 
@@ -74,8 +122,15 @@ function extrairPecasDoPlano(plano: PlanoCorteCarregado): PieceRow[] {
     Object.values(plano.resultado.perChapa).forEach((res: any) => {
       const layouts = Array.isArray(res?.layouts) ? res.layouts : [];
       layouts.forEach((layout: any, layoutIndex: number) => {
-        const pecasLayout = Array.isArray(layout?.pecas_posicionadas) ? layout.pecas_posicionadas : [];
-        pecasLayout.forEach((p: any, pIndex: number) => pushPeca(p, `${layout?.chapa_sku || plano.nome || 'PLANO'}-${layoutIndex + 1}-${pIndex + 1}`));
+        const pecasLayout = Array.isArray(layout?.pecas_posicionadas)
+          ? layout.pecas_posicionadas
+          : [];
+        pecasLayout.forEach((p: any, pIndex: number) =>
+          pushPeca(
+            p,
+            `${layout?.chapa_sku || plano.nome || 'PLANO'}-${layoutIndex + 1}-${pIndex + 1}`,
+          ),
+        );
       });
     });
   }
@@ -83,14 +138,24 @@ function extrairPecasDoPlano(plano: PlanoCorteCarregado): PieceRow[] {
   if (pecas.length === 0 && Array.isArray(plano.materiais)) {
     plano.materiais.forEach((mat: any, matIndex: number) => {
       const pecasMat = Array.isArray(mat?.pecas) ? mat.pecas : [];
-      pecasMat.forEach((p: any, pIndex: number) => pushPeca(p, `${mat?.sku_chapa || plano.nome || 'MATERIAL'}-${matIndex + 1}-${pIndex + 1}`));
+      pecasMat.forEach((p: any, pIndex: number) =>
+        pushPeca(p, `${mat?.sku_chapa || plano.nome || 'MATERIAL'}-${matIndex + 1}-${pIndex + 1}`),
+      );
     });
   }
 
   return pecas;
 }
 
-function EdgeToggle({ active, label, onClick }: { active: boolean; label: string; onClick: () => void; }) {
+function EdgeToggle({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -147,7 +212,9 @@ export default function SimuladorProducaoPage() {
   };
 
   const updatePiece = (id: string, field: keyof PieceRow, value: string | number | FioDeFita) => {
-    setPieces((current) => current.map((piece) => (piece.id === id ? { ...piece, [field]: value } : piece)));
+    setPieces((current) =>
+      current.map((piece) => (piece.id === id ? { ...piece, [field]: value } : piece)),
+    );
     setResult(null);
   };
 
@@ -248,28 +315,35 @@ export default function SimuladorProducaoPage() {
       <div className="flex flex-col gap-3 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#E2AC00]/20 to-[#E2AC00]/5 border border-[#E2AC00]/20">
-            <Factory className="text-accent" size={22} />
+            <Factory className="text-[var(--ui-color-gold-400)]" size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-foreground tracking-tight">SIMULADOR DE PRODUÇÃO MANUAL</h1>
-            <p className="text-muted-foreground text-xs tracking-wider">ESQUADREJADEIRA DE PRECISÃO + COLADEIRA DE FITA DE BORDA</p>
+            <h1 className="text-xl font-extrabold text-[var(--ui-text-primary)] tracking-tight">
+              Simulador de Produção
+            </h1>
+            <p className="text-[var(--ui-text-secondary)] text-sm font-medium tracking-wide">
+              Esquadrejadeira de Precisão + Coladeira de Fita de Borda
+            </p>
           </div>
         </div>
         <p className="text-sm text-muted-foreground max-w-4xl">
           O CENÁRIO COMPARA FLUXO CONTÍNUO CONTRA LOTE SEPARADO PARA RESPONDER A PERGUNTA PRÁTICA:
-          POR ONDE COMEÇAR O CORTE MANUAL, COMO ALIMENTAR A COLADEIRA E QUAL SEQUÊNCIA REDUZ MAIS FILA, SETUP E ESPERA.
+          POR ONDE COMEÇAR O CORTE MANUAL, COMO ALIMENTAR A COLADEIRA E QUAL SEQUÊNCIA REDUZ MAIS
+          FILA, SETUP E ESPERA.
         </p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-accent font-bold text-xs tracking-wider flex items-center gap-2">
                 <Sparkles size={14} />
                 CENÁRIO
               </h2>
-              <span className="text-[10px] uppercase text-muted-foreground tracking-wider">{totalQtd} PEÇAS NO LOTE</span>
+              <span className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                {totalQtd} PEÇAS NO LOTE
+              </span>
             </div>
 
             <div className="flex gap-2 mb-3">
@@ -299,14 +373,18 @@ export default function SimuladorProducaoPage() {
 
             {sourceMode === 'plano' && (
               <div className="space-y-2">
-                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground">PLANO CARREGADO</label>
+                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                  PLANO CARREGADO
+                </label>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
                 >
                   {loadingPlans && <option>CARREGANDO PLANOS...</option>}
-                  {plans.length === 0 && !loadingPlans && <option value="">NENHUM PLANO DISPONÍVEL</option>}
+                  {plans.length === 0 && !loadingPlans && (
+                    <option value="">NENHUM PLANO DISPONÍVEL</option>
+                  )}
                   {plans.map((plan) => (
                     <option key={plan.id} value={plan.id}>
                       {plan.nome}
@@ -336,7 +414,10 @@ export default function SimuladorProducaoPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setPieces([]); setResult(null); }}
+                  onClick={() => {
+                    setPieces([]);
+                    setResult(null);
+                  }}
                   className="flex-1 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
                 >
                   LIMPAR
@@ -348,7 +429,10 @@ export default function SimuladorProducaoPage() {
               <div className="flex gap-2 mt-3">
                 <button
                   type="button"
-                  onClick={() => { setShowSaveModal(true); setScenarioName('SIMULADOR DE PRODUÇÃO - '); }}
+                  onClick={() => {
+                    setShowSaveModal(true);
+                    setScenarioName('SIMULADOR DE PRODUÇÃO - ');
+                  }}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-sm py-2 font-medium"
                 >
                   <Save size={14} />
@@ -385,90 +469,148 @@ export default function SimuladorProducaoPage() {
             <div className="space-y-3 max-h-[540px] overflow-y-auto pr-1 custom-scrollbar">
               {pieces.length === 0 ? (
                 <div className="text-center text-muted-foreground text-sm py-8">
-                  NENHUMA PEÇA ADICIONADA. USE <span className="text-accent font-semibold">ADICIONAR</span> ACIMA OU CARREGUE UM PLANO DE CORTE.
+                  NENHUMA PEÇA ADICIONADA. USE{' '}
+                  <span className="text-accent font-semibold">ADICIONAR</span> ACIMA OU CARREGUE UM
+                  PLANO DE CORTE.
                 </div>
-              ) : pieces.map((piece, index) => (
-                <div key={piece.id} className="rounded-xl border border-border bg-background p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">PEÇA {index + 1}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => exportarEtiquetaProducao(piece, index, pieces.length)}
-                        className="text-accent hover:text-foreground transition-colors"
-                        title="EXPORTAR ETIQUETA QR"
-                      >
-                        <Tag size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removePiece(piece.id)}
-                        className="text-muted-foreground hover:text-red-400 transition-colors"
-                        title="REMOVER PEÇA"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+              ) : (
+                pieces.map((piece, index) => (
+                  <div key={piece.id} className="rounded-xl border border-border bg-background p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                        PEÇA {index + 1}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => exportarEtiquetaProducao(piece, index, pieces.length)}
+                          className="text-accent hover:text-foreground transition-colors"
+                          title="EXPORTAR ETIQUETA QR"
+                        >
+                          <Tag size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removePiece(piece.id)}
+                          className="text-muted-foreground hover:text-red-400 transition-colors"
+                          title="REMOVER PEÇA"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <label className="space-y-1">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Nome
+                        </span>
+                        <input
+                          value={piece.nome}
+                          onChange={(e) => updatePiece(piece.id, 'nome', e.target.value)}
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                        />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Qtd
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={piece.quantidade}
+                          onChange={(e) =>
+                            updatePiece(piece.id, 'quantidade', Math.max(1, Number(e.target.value)))
+                          }
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <label className="space-y-1">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Largura mm
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={piece.largura}
+                          onChange={(e) => updatePiece(piece.id, 'largura', Number(e.target.value))}
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                        />
+                      </label>
+                      <label className="space-y-1">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Altura mm
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={piece.altura}
+                          onChange={(e) => updatePiece(piece.id, 'altura', Number(e.target.value))}
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                        />
+                      </label>
+                    </div>
+
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                        Fita de borda
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <EdgeToggle
+                          active={!!piece.fio_de_fita?.topo}
+                          label="T"
+                          onClick={() =>
+                            updatePiece(
+                              piece.id,
+                              'fio_de_fita',
+                              alternarFita(piece.fio_de_fita, 'topo'),
+                            )
+                          }
+                        />
+                        <EdgeToggle
+                          active={!!piece.fio_de_fita?.baixo}
+                          label="B"
+                          onClick={() =>
+                            updatePiece(
+                              piece.id,
+                              'fio_de_fita',
+                              alternarFita(piece.fio_de_fita, 'baixo'),
+                            )
+                          }
+                        />
+                        <EdgeToggle
+                          active={!!piece.fio_de_fita?.esquerda}
+                          label="E"
+                          onClick={() =>
+                            updatePiece(
+                              piece.id,
+                              'fio_de_fita',
+                              alternarFita(piece.fio_de_fita, 'esquerda'),
+                            )
+                          }
+                        />
+                        <EdgeToggle
+                          active={!!piece.fio_de_fita?.direita}
+                          label="D"
+                          onClick={() =>
+                            updatePiece(
+                              piece.id,
+                              'fio_de_fita',
+                              alternarFita(piece.fio_de_fita, 'direita'),
+                            )
+                          }
+                        />
+                      </div>
+                      <p className="mt-2 text-[10px] text-muted-foreground">
+                        {formatEdgePattern(piece.fio_de_fita)}
+                      </p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <label className="space-y-1">
-                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Nome</span>
-                      <input
-                        value={piece.nome}
-                        onChange={(e) => updatePiece(piece.id, 'nome', e.target.value)}
-                        className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
-                      />
-                    </label>
-                    <label className="space-y-1">
-                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Qtd</span>
-                      <input
-                        type="number"
-                        min={1}
-                        value={piece.quantidade}
-                        onChange={(e) => updatePiece(piece.id, 'quantidade', Math.max(1, Number(e.target.value)))}
-                        className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <label className="space-y-1">
-                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Largura mm</span>
-                      <input
-                        type="number"
-                        min={1}
-                        value={piece.largura}
-                        onChange={(e) => updatePiece(piece.id, 'largura', Number(e.target.value))}
-                        className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
-                      />
-                    </label>
-                    <label className="space-y-1">
-                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Altura mm</span>
-                      <input
-                        type="number"
-                        min={1}
-                        value={piece.altura}
-                        onChange={(e) => updatePiece(piece.id, 'altura', Number(e.target.value))}
-                        className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Fita de borda</span>
-                    <div className="flex flex-wrap gap-2">
-                      <EdgeToggle active={!!piece.fio_de_fita?.topo} label="T" onClick={() => updatePiece(piece.id, 'fio_de_fita', alternarFita(piece.fio_de_fita, 'topo'))} />
-                      <EdgeToggle active={!!piece.fio_de_fita?.baixo} label="B" onClick={() => updatePiece(piece.id, 'fio_de_fita', alternarFita(piece.fio_de_fita, 'baixo'))} />
-                      <EdgeToggle active={!!piece.fio_de_fita?.esquerda} label="E" onClick={() => updatePiece(piece.id, 'fio_de_fita', alternarFita(piece.fio_de_fita, 'esquerda'))} />
-                      <EdgeToggle active={!!piece.fio_de_fita?.direita} label="D" onClick={() => updatePiece(piece.id, 'fio_de_fita', alternarFita(piece.fio_de_fita, 'direita'))} />
-                    </div>
-                    <p className="mt-2 text-[10px] text-muted-foreground">
-                      {formatEdgePattern(piece.fio_de_fita)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -486,23 +628,47 @@ export default function SimuladorProducaoPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               label="ESTRATÉGIA"
-              value={result ? (result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO') : 'AGUARDANDO'}
-              hint={result ? 'COMPARAÇÃO AUTOMÁTICA ENTRE AS DUAS FORMAS DE TRABALHAR' : 'EXECUTE A SIMULAÇÃO PARA COMPARAR CENÁRIOS'}
+              value={
+                result
+                  ? result.recommended.id === 'fluxo_continuo'
+                    ? 'FLUXO CONTÍNUO'
+                    : 'LOTE SEPARADO'
+                  : 'AGUARDANDO'
+              }
+              hint={
+                result
+                  ? 'COMPARAÇÃO AUTOMÁTICA ENTRE AS DUAS FORMAS DE TRABALHAR'
+                  : 'EXECUTE A SIMULAÇÃO PARA COMPARAR CENÁRIOS'
+              }
             />
             <MetricCard
               label="GARGALO"
-              value={result ? (result.bottleneck === 'coladeira' ? 'COLADEIRA' : 'ESQUADREJADEIRA') : '-'}
-              hint={result ? `BUFFER SUGERIDO: ${result.bufferRecommendation} PEÇA(S)` : 'A MÁQUINA MAIS LENTA DITA O RITMO'}
+              value={
+                result ? (result.bottleneck === 'coladeira' ? 'COLADEIRA' : 'ESQUADREJADEIRA') : '-'
+              }
+              hint={
+                result
+                  ? `BUFFER SUGERIDO: ${result.bufferRecommendation} PEÇA(S)`
+                  : 'A MÁQUINA MAIS LENTA DITA O RITMO'
+              }
             />
             <MetricCard
               label="TEMPO TOTAL"
               value={result ? formatMinutes(result.recommended.makespanMinutes) : '-'}
-              hint={result ? `CORTE ${formatMinutes(result.recommended.cutMinutes)} | FITA ${formatMinutes(result.recommended.bandMinutes)}` : 'INCLUI SETUP E TROCA DE PADRÃO'}
+              hint={
+                result
+                  ? `CORTE ${formatMinutes(result.recommended.cutMinutes)} | FITA ${formatMinutes(result.recommended.bandMinutes)}`
+                  : 'INCLUI SETUP E TROCA DE PADRÃO'
+              }
             />
             <MetricCard
               label="PEÇAS"
               value={result ? `${result.totalPieces}` : `${totalQtd}`}
-              hint={result ? `${result.totalEdgeMeters.toFixed(2)} M DE FITA ESTIMADOS` : 'QUANTIDADE TOTAL NO LOTE'}
+              hint={
+                result
+                  ? `${result.totalEdgeMeters.toFixed(2)} M DE FITA ESTIMADOS`
+                  : 'QUANTIDADE TOTAL NO LOTE'
+              }
             />
           </div>
 
@@ -516,11 +682,15 @@ export default function SimuladorProducaoPage() {
                       RECOMENDAÇÃO
                     </h2>
                     <p className="text-foreground text-lg font-bold mt-1">
-                      {result.recommended.id === 'fluxo_continuo' ? 'COMECE EM FLUXO CONTÍNUO' : 'COMECE POR LOTE SEPARADO'}
+                      {result.recommended.id === 'fluxo_continuo'
+                        ? 'COMECE EM FLUXO CONTÍNUO'
+                        : 'COMECE POR LOTE SEPARADO'}
                     </p>
                   </div>
                   <div className="rounded-lg bg-background border border-border px-3 py-2 text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">MELHOR CENÁRIO</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      MELHOR CENÁRIO
+                    </div>
                     <div className="text-foreground font-bold">
                       {formatMinutes(result.recommended.makespanMinutes)}
                     </div>
@@ -529,7 +699,10 @@ export default function SimuladorProducaoPage() {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   {result.recommendations.map((item) => (
-                    <div key={item} className="rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">
+                    <div
+                      key={item}
+                      className="rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground"
+                    >
                       {item}
                     </div>
                   ))}
@@ -537,16 +710,8 @@ export default function SimuladorProducaoPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-2">
-                <StrategyCard
-                  title="FLUXO CONTÍNUO"
-                  result={result.flow}
-                  accent="text-[#10B981]"
-                />
-                <StrategyCard
-                  title="LOTE SEPARADO"
-                  result={result.batch}
-                  accent="text-accent"
-                />
+                <StrategyCard title="FLUXO CONTÍNUO" result={result.flow} accent="text-[#10B981]" />
+                <StrategyCard title="LOTE SEPARADO" result={result.batch} accent="text-accent" />
               </div>
 
               <div className="flex justify-end">
@@ -584,33 +749,32 @@ export default function SimuladorProducaoPage() {
                     </thead>
                     <tbody>
                       {result.recommended.cutOrder.slice(0, 12).map((job, index) => (
-                        <tr key={job.id} className="border-b border-border/70 text-muted-foreground">
+                        <tr
+                          key={job.id}
+                          className="border-b border-border/70 text-muted-foreground"
+                        >
                           <td className="py-2 pr-3 text-accent font-bold">{index + 1}</td>
                           <td className="py-2 pr-3 font-medium">{job.nome}</td>
                           <td className="py-2 pr-3 text-muted-foreground">
                             {job.largura}×{job.altura} mm
                           </td>
-                          <td className="py-2 pr-3">
-                            {formatMinutes(job.cutProcessMinutes)}
-                          </td>
-                          <td className="py-2 pr-3">
-                            {formatEdgePattern(job.fio_de_fita)}
-                          </td>
+                          <td className="py-2 pr-3">{formatMinutes(job.cutProcessMinutes)}</td>
+                          <td className="py-2 pr-3">{formatEdgePattern(job.fio_de_fita)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
-
             </>
           ) : (
             <div className="bg-card border border-dashed border-border rounded-xl p-8 text-center">
               <CircleDot className="mx-auto text-accent" size={32} />
               <h2 className="text-foreground font-bold text-lg mt-3">PRONTO PARA SIMULAR</h2>
               <p className="text-muted-foreground text-sm mt-2 max-w-2xl mx-auto">
-                AJUSTE AS PEÇAS, A QUANTIDADE DE FITA POR BORDA E CLIQUE EM SIMULAR. O MÓDULO VAI COMPARAR
-                FLUXO CONTÍNUO E LOTE SEPARADO PARA MOSTRAR QUAL CAMINHO TENDE A REDUZIR O TEMPO TOTAL.
+                AJUSTE AS PEÇAS, A QUANTIDADE DE FITA POR BORDA E CLIQUE EM SIMULAR. O MÓDULO VAI
+                COMPARAR FLUXO CONTÍNUO E LOTE SEPARADO PARA MOSTRAR QUAL CAMINHO TENDE A REDUZIR O
+                TEMPO TOTAL.
               </p>
             </div>
           )}
@@ -639,22 +803,35 @@ export default function SimuladorProducaoPage() {
 
       {/*** MODAL SALVAR ***/}
       {showSaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowSaveModal(false)}>
-          <div className="bg-card border border-border rounded-xl p-5 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setShowSaveModal(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl p-5 w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-accent font-bold text-sm flex items-center gap-2">
                 <Save size={16} />
                 SALVAR CENÁRIO
               </h3>
-              <button onClick={() => setShowSaveModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
-            <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">NOME DO CENÁRIO</label>
+            <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              NOME DO CENÁRIO
+            </label>
             <input
               value={scenarioName}
               onChange={(e) => setScenarioName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveScenario();
+              }}
               placeholder="EX: GUARDA-ROUPA CASAL 2P"
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00] mb-4"
               autoFocus
@@ -673,7 +850,13 @@ export default function SimuladorProducaoPage() {
                 disabled={!scenarioName.trim() || saving}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
               >
-                {saving ? 'SALVANDO...' : <><Check size={14} /> SALVAR</>}
+                {saving ? (
+                  'SALVANDO...'
+                ) : (
+                  <>
+                    <Check size={14} /> SALVAR
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -682,14 +865,23 @@ export default function SimuladorProducaoPage() {
 
       {/*** MODAL CARREGAR ***/}
       {showLoadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowLoadModal(false)}>
-          <div className="bg-card border border-border rounded-xl p-5 w-full max-w-lg mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setShowLoadModal(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl p-5 w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-accent font-bold text-sm flex items-center gap-2">
                 <FolderOpen size={16} />
                 CARREGAR CENÁRIO
               </h3>
-              <button onClick={() => setShowLoadModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => setShowLoadModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -697,22 +889,33 @@ export default function SimuladorProducaoPage() {
               {loadingScenarios ? (
                 <div className="text-center text-muted-foreground text-sm py-8">CARREGANDO...</div>
               ) : savedScenarios.length === 0 ? (
-                <div className="text-center text-muted-foreground text-sm py-8">NENHUM CENÁRIO SALVO AINDA.</div>
-              ) : savedScenarios.map((scenario) => (
-                <div key={scenario.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:border-[#E2AC00]/50 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-foreground font-semibold text-sm truncate">{scenario.nome}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {scenario.pieces.length} PEÇA(S) · {scenario.created_at ? new Date(scenario.created_at).toLocaleDateString('pt-BR') : '-'}
-                      {scenario.result ? ' · COM SIMULAÇÃO' : ''}
+                <div className="text-center text-muted-foreground text-sm py-8">
+                  NENHUM CENÁRIO SALVO AINDA.
+                </div>
+              ) : (
+                savedScenarios.map((scenario) => (
+                  <div
+                    key={scenario.id}
+                    className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:border-[#E2AC00]/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-foreground font-semibold text-sm truncate">
+                        {scenario.nome}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {scenario.pieces.length} PEÇA(S) ·{' '}
+                        {scenario.created_at
+                          ? new Date(scenario.created_at).toLocaleDateString('pt-BR')
+                          : '-'}
+                        {scenario.result ? ' · COM SIMULAÇÃO' : ''}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-3 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteScenario(scenario.id!)}
-                      className="rounded-lg bg-muted hover:bg-red-500/20 text-muted-foreground hover:text-red-400 p-2 transition-colors"
-                      title="EXCLUIR"
+                    <div className="flex items-center gap-2 ml-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteScenario(scenario.id!)}
+                        className="rounded-lg bg-muted hover:bg-red-500/20 text-muted-foreground hover:text-red-400 p-2 transition-colors"
+                        title="EXCLUIR"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -722,10 +925,11 @@ export default function SimuladorProducaoPage() {
                         className="rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-xs px-3 py-2"
                       >
                         CARREGAR
-                    </button>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -740,10 +944,12 @@ export default function SimuladorProducaoPage() {
   );
 }
 
-function MetricCard({ label, value, hint }: { label: string; value: string; hint: string; }) {
+function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 backdrop-blur-md p-4 shadow-[var(--ui-shadow-1)]">
+      <div className="text-[10px] uppercase tracking-wider text-[var(--ui-text-secondary)]">
+        {label}
+      </div>
       <div className="mt-2 text-xl font-extrabold text-foreground">{value}</div>
       <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">{hint}</p>
     </div>
@@ -760,10 +966,12 @@ function StrategyCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 backdrop-blur-md p-4 shadow-[var(--ui-shadow-1)]">
       <div className="flex items-center justify-between mb-3">
         <h3 className={`font-bold text-sm ${accent}`}>{title}</h3>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{result.id}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {result.id}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
@@ -785,12 +993,20 @@ function StrategyCard({
             <div key={job.id} className="rounded-lg bg-background border border-border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-accent font-bold text-xs">{index + 1}. {job.nome}</div>
-                  <div className="text-[11px] text-muted-foreground mt-1">{job.largura}×{job.altura} mm</div>
+                  <div className="text-accent font-bold text-xs">
+                    {index + 1}. {job.nome}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    {job.largura}×{job.altura} mm
+                  </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] text-foreground font-semibold">{formatMinutes(job.cutProcessMinutes)}</div>
-                  <div className="text-[10px] text-muted-foreground">{formatEdgePattern(job.fio_de_fita)}</div>
+                  <div className="text-[11px] text-foreground font-semibold">
+                    {formatMinutes(job.cutProcessMinutes)}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {formatEdgePattern(job.fio_de_fita)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -801,7 +1017,7 @@ function StrategyCard({
   );
 }
 
-function InfoChip({ label, value }: { label: string; value: string; }) {
+function InfoChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-background px-3 py-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>

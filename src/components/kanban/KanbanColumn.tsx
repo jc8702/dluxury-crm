@@ -7,24 +7,50 @@ interface KanbanColumnProps {
   titulo: string;
   status: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido';
   cards: KanbanCardType[];
-  onCardDrop: (cardId: number, novoStatus: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido', statusAnterior: string) => void;
+  onCardDrop: (
+    cardId: number,
+    novoStatus: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido',
+    statusAnterior: string,
+  ) => void;
   onCardClick: (card: KanbanCardType) => void;
 }
 
-export default function KanbanColumn({ titulo, status, cards, onCardDrop, onCardClick }: KanbanColumnProps) {
+export default function KanbanColumn({
+  titulo,
+  status,
+  cards,
+  onCardDrop,
+  onCardClick,
+}: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const getHeaderStyle = () => {
     switch (status) {
       case 'a_fazer':
-        return { icon: <HelpCircle className="w-5 h-5 text-muted-foreground" />, border: 'border-t-4 border-t-muted-foreground/60', bg: 'bg-muted/10' };
+        return {
+          icon: <HelpCircle className="w-5 h-5 text-muted-foreground" />,
+          border: 'border-t-4 border-t-muted-foreground/60',
+          bg: 'bg-muted/10',
+        };
       case 'em_progresso':
-        return { icon: <PlayCircle className="w-5 h-5 text-primary" />, border: 'border-t-4 border-t-primary', bg: 'bg-primary/5' };
+        return {
+          icon: <PlayCircle className="w-5 h-5 text-primary" />,
+          border: 'border-t-4 border-t-primary',
+          bg: 'bg-primary/5',
+        };
       case 'bloqueado':
-        return { icon: <Ban className="w-5 h-5 text-destructive" />, border: 'border-t-4 border-t-destructive', bg: 'bg-destructive/5' };
+        return {
+          icon: <Ban className="w-5 h-5 text-destructive" />,
+          border: 'border-t-4 border-t-destructive',
+          bg: 'bg-destructive/5',
+        };
       case 'concluido':
-        return { icon: <CheckCircle2 className="w-5 h-5 text-green-500" />, border: 'border-t-4 border-t-green-500', bg: 'bg-green-500/5' };
+        return {
+          icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
+          border: 'border-t-4 border-t-green-500',
+          bg: 'bg-green-500/5',
+        };
     }
   };
 
@@ -44,7 +70,7 @@ export default function KanbanColumn({ titulo, status, cards, onCardDrop, onCard
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     if (isCollapsed) return;
 
     const cardId = e.dataTransfer.getData('text/plain');
@@ -78,22 +104,20 @@ export default function KanbanColumn({ titulo, status, cards, onCardDrop, onCard
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        flex-1 min-w-[280px] flex flex-col rounded-2xl border bg-card/45 backdrop-blur-sm shadow-sm transition-all duration-200
+        flex-1 min-w-[280px] flex flex-col rounded-2xl border bg-[var(--ui-surface)]/90 backdrop-blur-md shadow-[var(--ui-shadow-1)] transition-all duration-200
         ${headerStyle.border}
         ${isDragOver ? 'border-primary/50 bg-primary/5 scale-[1.01] ring-1 ring-primary/20' : 'border-border'}
       `}
     >
       {/* Header da Coluna */}
-      <div 
+      <div
         className={`flex items-center justify-between p-4 border-b border-border/60 rounded-t-2xl cursor-pointer select-none ${headerStyle.bg}`}
         onClick={() => setIsCollapsed(true)}
         title="Clique para colapsar"
       >
         <div className="flex items-center gap-2">
           {headerStyle.icon}
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-            {titulo}
-          </h3>
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">{titulo}</h3>
           <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
             {cards.length}
           </span>
@@ -109,11 +133,7 @@ export default function KanbanColumn({ titulo, status, cards, onCardDrop, onCard
           </div>
         ) : (
           cards.map((card) => (
-            <KanbanCard
-              key={card.id}
-              card={card}
-              onClick={() => onCardClick(card)}
-            />
+            <KanbanCard key={card.id} card={card} onClick={() => onCardClick(card)} />
           ))
         )}
       </div>

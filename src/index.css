@@ -178,27 +178,27 @@
 
 .dark,
 [data-theme='dark'] {
-  /* ─── Surfaces (Slate) ─── */
-  --background: 222 47% 4%;
-  --foreground: 210 40% 98%;
-  --card: 222 47% 7%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222 47% 7%;
-  --popover-foreground: 210 40% 98%;
+  /* ─── Surfaces (Premium Zinc) ─── */
+  --background: 240 5% 3%;
+  --foreground: 0 0% 98%;
+  --card: 240 5% 6%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 5% 6%;
+  --popover-foreground: 0 0% 98%;
 
-  /* ─── Brand: Amber como ação primária ─── */
-  --primary: 38 92% 50%;
-  --primary-foreground: 222 47% 4%;
-  --primary-glow: 38 92% 55%;
-  --primary-hover: 32 95% 44%;
+  /* ─── Brand: Dourado D'Luxury ─── */
+  --primary: 45 93% 47%;
+  --primary-foreground: 240 5% 3%;
+  --primary-glow: 45 93% 52%;
+  --primary-hover: 45 93% 40%;
 
-  /* ─── Neutrals (Slate tones) ─── */
-  --secondary: 217 33% 10%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 33% 12%;
-  --muted-foreground: 215 16% 57%;
-  --accent: 32 95% 44%;
-  --accent-foreground: 210 40% 98%;
+  /* ─── Neutrals (Zinc tones) ─── */
+  --secondary: 240 5% 10%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 5% 12%;
+  --muted-foreground: 240 5% 60%;
+  --accent: 45 93% 40%;
+  --accent-foreground: 0 0% 98%;
 
   /* ─── Semantic ─── */
   --destructive: 0 72% 55%;
@@ -208,37 +208,37 @@
   --info: 210 80% 60%;
 
   /* ─── Borders & Inputs ─── */
-  --border: 217 33% 15%;
-  --input: 217 33% 15%;
-  --ring: 38 92% 50%;
-  --radius: 0.625rem;
+  --border: 240 5% 12%;
+  --input: 240 5% 14%;
+  --ring: 45 93% 47%;
+  --radius: 0.75rem; /* Mais arredondado */
 
   /* ─── Layered surfaces ─── */
-  --surface: 222 47% 7%;
-  --surface-elevated: 217 33% 10%;
-  --surface-hover: 217 33% 12%;
+  --surface: 240 5% 6%;
+  --surface-elevated: 240 5% 10%;
+  --surface-hover: 240 5% 14%;
 
-  /* ─── Sidebar (Slate 950) ─── */
-  --sidebar-background: 222 47% 4%;
-  --sidebar-foreground: 215 16% 57%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 222 47% 4%;
-  --sidebar-accent: 217 33% 10%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 12%;
-  --sidebar-ring: 38 92% 50%;
+  /* ─── Sidebar ─── */
+  --sidebar-background: 240 5% 3%;
+  --sidebar-foreground: 240 5% 60%;
+  --sidebar-primary: 45 93% 47%;
+  --sidebar-primary-foreground: 240 5% 3%;
+  --sidebar-accent: 240 5% 10%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 240 5% 12%;
+  --sidebar-ring: 45 93% 47%;
 
   /* ─── Decorative ─── */
-  --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%), hsl(32 95% 44%));
-  --gradient-surface: linear-gradient(180deg, hsl(222 47% 4%), hsl(222 47% 3%));
+  --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 93% 40%));
+  --gradient-surface: linear-gradient(180deg, hsl(240 5% 6%), hsl(240 5% 4%));
   --gradient-glow: none;
 
-  /* ─── Shadows (deep, cool) ─── */
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-primary: 0 4px 14px 0 rgb(245 158 11 / 0.2);
-  --shadow-glow: 0 0 0 3px rgb(245 158 11 / 0.12);
+  /* ─── Shadows (soft with slight glow) ─── */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 12px 30px -4px rgb(0 0 0 / 0.7), 0 6px 12px -4px rgb(0 0 0 / 0.5);
+  --shadow-primary: 0 4px 14px 0 rgb(234 179 8 / 0.15);
+  --shadow-glow: 0 0 0 2px rgb(234 179 8 / 0.1);
 }
 
 /* ═══════════════════════════════════════════════════════════════
