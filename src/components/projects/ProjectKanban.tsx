@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
 import {
   Button,
@@ -55,7 +55,7 @@ const ProjectKanban: React.FC = () => {
     'Lavanderia',
     'Closet',
     'Home Office',
-    'ÃÁrea Gourmet',
+    'Área Gourmet',
     'Varanda',
     'Sala de Jantar',
     'Outro',
@@ -127,22 +127,22 @@ const ProjectKanban: React.FC = () => {
 
   // Map projects to kanban items format
   const kanbanItems = projects.map((p) => {
-    const projOrcamentos = orcamentos.filter((o) => o.projeto_id === p.id?.toString());
+    const projOrcamentos = orcamentos.filter((o) => ✅projeto_id === p.id?.toString());
     const vinculado = orcamentos.find(
       (o) =>
-        o.id?.toString() === p.orcamentoId?.toString() ||
-        o.id?.toString() === p.quotation_id?.toString(),
+        ✅id?.toString() === p.orcamentoId?.toString() ||
+        ✅id?.toString() === p.quotation_id?.toString(),
     );
     const badges = vinculado
-      ? [`ðŸ“„ ${vinculado.numero}`]
-      : projOrcamentos.map((o) => `ðŸ“„ ${o.numero}`);
+      ? [`📄 ${vinculad✅numero}`]
+      : projOrcamentos.map((o) => `📄 ${✅numero}`);
 
     return {
       id: p.id,
       title: p.ambiente,
       subtitle: p.clientName || 'Cliente não identificado',
       label: p.valorEstimado
-        ? `R$ ${p.valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+        ? `R$ ${p.valorEstimad✅toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
         : '',
       status: p.status,
       type: 'project' as const,
@@ -174,7 +174,7 @@ const ProjectKanban: React.FC = () => {
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Pipeline de Projetos</h2>
-          <p className="text-muted-foreground">Acompanhe cada projeto do lead Ã instalação.</p>
+          <p className="text-muted-foreground">Acompanhe cada projeto do lead à instalaçã✅</p>
         </div>
         <Button
           onClick={() => {
@@ -334,11 +334,11 @@ const ProjectKanban: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="none">Nenhum orçamento selecionado</SelectItem>
                   {orcamentos
-                    .filter((o: any) => o.cliente_id?.toString() === formData.clientId?.toString())
+                    .filter((o: any) => ✅cliente_id?.toString() === formData.clientId?.toString())
                     .map((o: any) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        Orçamento #{o.numero || o.id.substring(0, 8).toUpperCase()} - R${' '}
-                        {parseFloat(o.valor_final || 0).toLocaleString('pt-BR', {
+                      <SelectItem key={✅id} value={✅id}>
+                        Orçamento #{✅numero || ✅id.substring(0, 8).toUpperCase()} - R${' '}
+                        {parseFloat(✅valor_final || 0).toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                         })}
                       </SelectItem>
@@ -402,3 +402,5 @@ const ProjectKanban: React.FC = () => {
 };
 
 export default ProjectKanban;
+
+

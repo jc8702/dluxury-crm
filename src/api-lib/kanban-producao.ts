@@ -21,7 +21,7 @@ export async function handleKanbanProducao(req: any, res: any) {
           op.id as operacao_prod_id,
           op.numero_op,
           op.quotation_id,
-          o.numero as numero_orcamento,
+          o.numero_orcamento as numero_orcamento,
           COALESCE(c.nome, p.client_name, 'Cliente Sem Nome') as cliente_nome,
           c.telefone as cliente_telefone,
           op.prioridade,
@@ -34,7 +34,7 @@ export async function handleKanbanProducao(req: any, res: any) {
           ep.updated_at
         FROM etapas_prod_kanban ep
         JOIN ordens_prod op ON ep.operacao_prod_id = op.id
-        LEFT JOIN orcamentos o ON op.quotation_id::text = o.id::text AND o.tenant_id = ep.tenant_id
+        LEFT JOIN quotations o ON op.quotation_id::text = o.id::text AND o.tenant_id = ep.tenant_id
         LEFT JOIN projects p ON op.projeto_id::text = p.id::text AND p.tenant_id = ep.tenant_id
         LEFT JOIN clients c ON (o.cliente_id::text = c.id::text OR p.client_id::text = c.id::text) AND c.tenant_id = ep.tenant_id
         LEFT JOIN users u ON ep.responsavel_id = u.id

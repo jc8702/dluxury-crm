@@ -176,7 +176,7 @@ export async function handleProjects(req: any, res: any) {
         INSERT INTO projects (
           client_id, client_name, ambiente, descricao, 
           valor_estimado, valor_final, prazo_entrega, status, 
-          etapa_producao, responsavel, observacoes, visita_id, tag,
+          etapa_producao, responsavel, observacoes, visita_id, quotation_id, tag,
           tenant_id
         ) VALUES (
           ${f.client_id || f.clientId}, 
@@ -225,7 +225,8 @@ export async function handleProjects(req: any, res: any) {
           etapa_producao = COALESCE(${f.etapa_producao || f.etapaProducao}, etapa_producao), 
           responsavel = COALESCE(${f.responsavel}, responsavel), 
           observacoes = COALESCE(${f.observacoes || f.observations}, observacoes), 
-          visita_id = COALESCE(${f.visita_id || f.visitaId}, visita_id), 
+          visita_id = COALESCE(${f.visita_id || f.visitaId}, visita_id),
+            quotation_id = COALESCE(${f.orcamentoId || f.quotation_id}, quotation_id), 
           quotation_id = COALESCE(${f.quotation_id || f.orcamentoId}, quotation_id), 
           tag = COALESCE(${f.tag}, tag), 
           updated_at = CURRENT_TIMESTAMP 
@@ -505,59 +506,59 @@ export async function handleSKUs(req: any, res: any) {
   try {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = user?.tenantId || "00000000-0000-0000-0000-000000000000";
     
-    if (req.method === 'GET') {
-      if (req.query.action === 'next-code') {
-        const prefix = req.query.prefix || 'SKU';
-        // Buscando o último código daquela categoria
+    if (req.method === "GET") {
+      if (req.query.action === "next-code") {
+        const prefix = req.query.prefix || "SKU";
         const [last] = await sql`
-          SELECT sku FROM materiais
-          WHERE sku LIKE ${prefix + '-%'} AND tenant_id = ${tenantId}
-          ORDER BY sku DESC
+          SELECT sku_codigo as sku FROM estoque_materiais_detalhado
+          WHERE sku_codigo LIKE ${prefix + "-%"} AND tenant_id = ${tenantId}
+          ORDER BY sku_codigo DESC
           LIMIT 1
         `;
         let nextNum = 1;
         if (last && last.sku) {
-          const numPart = last.sku.split('-')[1];
+          const numPart = last.sku.split("-")[1];
           if (numPart && !isNaN(Number(numPart))) {
             nextNum = Number(numPart) + 1;
           }
         }
-        const nextCode = `${prefix}-${String(nextNum).padStart(4, '0')}`;
+        const nextCode = `${prefix}-${String(nextNum).padStart(4, "0")}`;
         return res.status(200).json({ success: true, data: { nextCode } });
       }
 
-      const result = await sql`SELECT id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, largura_mm, altura_mm, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM materiais WHERE tenant_id = ${tenantId} ORDER BY nome ASC`;
+      const result = await sql`SELECT id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, null as largura_mm, null as altura_mm, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia FROM estoque_materiais_detalhado WHERE tenant_id = ${tenantId} ORDER BY descricao ASC`;
       return res.status(200).json({ success: true, data: result });
     }
     
-    if (req.method === 'POST') {
+    if (req.method === "POST") {
       const f = req.body;
-      const r = await sql`INSERT INTO materiais (sku, nome, preco_custo, unidade_uso, unidade_compra, ativo, estoque_atual, estoque_minimo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, 0, ${f.fabricante || null}, ${f.fornecedor_principal || null}, ${f.lead_time_dias || null}, ${f.categoria_taxonomia || null}, ${tenantId}::uuid) RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
+      const r = await sql`INSERT INTO estoque_materiais_detalhado (sku_codigo, descricao, preco_custo_unitario, preco_custo, unidade_medida, unidade_uso, ativo, quantidade_disponivel, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia, tenant_id) VALUES (${f.sku_code}, ${f.nome}, ${f.preco_base}, ${f.preco_base}, ${f.unidade_medida}, ${f.unidade_medida}, true, 0, ${f.fabricante || null}, ${f.fornecedor_principal || null}, ${f.lead_time_dias || null}, ${f.categoria_taxonomia || null}, ${tenantId}::uuid) RETURNING id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
       return res.status(201).json({ success: true, data: r[0] });
     }
 
-    if (req.method === 'PATCH' || req.method === 'PUT') {
+    if (req.method === "PATCH" || req.method === "PUT") {
       const f = req.body;
       const { id } = req.query;
-      if (!id) return res.status(400).json({ success: false, error: 'ID do SKU não fornecido' });
-      const r = await sql`UPDATE materiais SET 
-        nome = COALESCE(${f.nome}, nome),
+      if (!id) return res.status(400).json({ success: false, error: "ID do SKU n�o fornecido" });
+      const r = await sql`UPDATE estoque_materiais_detalhado SET 
+        descricao = COALESCE(${f.nome}, descricao),
+        preco_custo_unitario = COALESCE(${f.preco_base}, preco_custo_unitario),
         preco_custo = COALESCE(${f.preco_base}, preco_custo),
+        unidade_medida = COALESCE(${f.unidade_medida}, unidade_medida),
         unidade_uso = COALESCE(${f.unidade_medida}, unidade_uso),
-        unidade_compra = COALESCE(${f.unidade_medida}, unidade_compra),
         fabricante = COALESCE(${f.fabricante}, fabricante),
         fornecedor_principal = COALESCE(${f.fornecedor_principal}, fornecedor_principal),
         lead_time_dias = COALESCE(${f.lead_time_dias}, lead_time_dias),
         categoria_taxonomia = COALESCE(${f.categoria_taxonomia}, categoria_taxonomia)
         WHERE id = ${id} AND tenant_id = ${tenantId} 
-        RETURNING id, sku, categoria_id, nome, unidade_uso as unidade_medida, preco_custo as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
+        RETURNING id, sku_codigo as sku, null as categoria_id, descricao as nome, unidade_medida, preco_custo_unitario as preco_base, ativo, fabricante, fornecedor_principal, lead_time_dias, categoria_taxonomia`;
       return res.status(200).json({ success: true, data: r[0] });
     }
 
-    if (req.method === 'DELETE') {
-      await sql`UPDATE materiais SET ativo = false WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
+    if (req.method === "DELETE") {
+      await sql`UPDATE estoque_materiais_detalhado SET ativo = false WHERE id = ${req.query.id} AND tenant_id = ${tenantId}`;
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();
@@ -685,3 +686,5 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
     console.error('Error creating OP for project:', err);
   }
 }
+
+

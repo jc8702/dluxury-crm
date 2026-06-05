@@ -159,14 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
           roles: ['admin', 'marceneiro'],
           feature: 'simulador_cnc',
         },
-        {
-          id: 'skus',
-          path: 'pecas',
-          label: 'Catálogo de SKUs',
-          icon: <DraftingCompass size={16} />,
-          roles: ['admin'],
-          feature: 'plano_corte',
-        },
+
         {
           id: 'engineering_settings',
           path: 'engenharia',

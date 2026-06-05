@@ -58,7 +58,7 @@ export const eventosCalendario = pgTable('eventos_calendario', {
   descricao: text('descricao'),
   dataEvento: date('data_evento').notNull(),
   horaEvento: time('hora_evento'),
-  orcamentoId: uuid('orcamento_id').references(() => quotations.id, { onDelete: 'set null' }),
+  quotationId: uuid('quotation_id').references(() => quotations.id, { onDelete: 'set null' }),
   operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, { onDelete: 'set null' }),
   corCategoria: varchar('cor_categoria', { length: 20 }).default('#3B82F6'),
   concluido: boolean('concluido').default(false),

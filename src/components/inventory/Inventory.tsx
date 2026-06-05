@@ -9,8 +9,9 @@ import { useToast } from '../../context/ToastContext';
 import { Package, Plus, Search, History, LayoutGrid, List } from 'lucide-react';
 import { Button, Card, CardContent, Input, Badge } from '../../components/common';
 import EstoqueGranular from '../estoque/EstoqueGranular';
+import SKUPage from '../skus/SKUPage';
 
-type MainTab = 'materials' | 'history' | 'granular';
+type MainTab = 'materials' | 'history' | 'granular' | 'skus';
 
 const Inventory: React.FC = () => {
   const { error: toastError } = useToast();
@@ -468,3 +469,5 @@ const Inventory: React.FC = () => {
 };
 
 export default Inventory;
+
+

@@ -81,7 +81,7 @@ export async function handleRentabilidade(req: any, res: any) {
         SELECT 
           cr.id,
           cr.quotation_id,
-          op.numero_op,
+          op.op_id as numero_op,
           o.numero_orcamento,
           c.nome as cliente,
           cr.valor_venda,
@@ -106,7 +106,7 @@ export async function handleRentabilidade(req: any, res: any) {
             ELSE 'prejuizo'
           END as status
         FROM custos_reais_op cr
-        JOIN ordens_prod op ON cr.operacao_prod_id = op.id
+        JOIN ordens_producao op ON cr.operacao_prod_id = op.id
         JOIN quotations o ON cr.quotation_id = o.id
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE cr.tenant_id = $1::uuid

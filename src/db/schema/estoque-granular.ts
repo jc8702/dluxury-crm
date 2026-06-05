@@ -15,6 +15,31 @@ import { tenants } from './tenants.js';
 import { ordensProd } from './producao.js';
 import { quotations } from './quotations.js';
 
+// Fornecedores (fornecedores)
+export const fornecedores = pgTable(
+  'fornecedores',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: uuid('tenant_id')
+      .references(() => tenants.id, { onDelete: 'cascade' })
+      .notNull(),
+    nome: varchar('nome', { length: 255 }).notNull(),
+    cnpj: varchar('cnpj', { length: 20 }),
+    contato: varchar('contato', { length: 255 }),
+    telefone: varchar('telefone', { length: 50 }),
+    email: varchar('email', { length: 255 }),
+    cidade: varchar('cidade', { length: 255 }),
+    estado: varchar('estado', { length: 2 }),
+    observacoes: text('observacoes'),
+    ativo: boolean('ativo').default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    tenantIdx: index('fornecedores_tenant_idx').on(table.tenantId),
+  }),
+);
+
 // EstoqueMateriaisDetalhado (estoque_materiais_detalhado)
 export const estoqueMateriaisDetalhado = pgTable(
   'estoque_materiais_detalhado',
@@ -33,9 +58,9 @@ export const estoqueMateriaisDetalhado = pgTable(
     quantidadeDefeituoso: integer('quantidade_defeituoso').default(0),
     quantidadeVencido: integer('quantidade_vencido').default(0),
 
-    quantidadeMinima: integer('quantidade_minima').default(10),
-    quantidadeMaxima: integer('quantidade_maxima').default(500),
-    leadTimeDias: integer('lead_time_dias').default(7),
+    quantidadeMinima: integer('quantidade_minima').default(0),
+    quantidadeMaxima: integer('quantidade_maxima'),
+    leadTimeDias: integer('lead_time_dias').default(0),
 
     precoCustoUnitario: decimal('preco_custo_unitario', { precision: 10, scale: 2 }),
     valorTotalEstoque: decimal('valor_total_estoque', { precision: 12, scale: 2 }),
@@ -43,6 +68,14 @@ export const estoqueMateriaisDetalhado = pgTable(
     fornecedorId: integer('fornecedor_id'),
     dataUltimaCompra: timestamp('data_ultima_compra', { withTimezone: true }),
     dataProximaReposicao: timestamp('data_proxima_reposicao', { withTimezone: true }),
+
+    // Integration with SKU catalog
+    ativo: boolean('ativo').default(true),
+    fabricante: varchar('fabricante', { length: 255 }),
+    fornecedorPrincipal: varchar('fornecedor_principal', { length: 255 }),
+    categoriaTaxonomia: varchar('categoria_taxonomia', { length: 100 }),
+    precoCusto: decimal('preco_custo', { precision: 10, scale: 2 }),
+    unidadeUso: varchar('unidade_uso', { length: 50 }),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -150,7 +183,7 @@ export const ordensCompraGranular = pgTable(
       .references(() => tenants.id, { onDelete: 'cascade' })
       .notNull(),
     numeroOc: varchar('numero_oc', { length: 50 }).notNull(),
-    fornecedorId: integer('fornecedor_id'),
+    fornecedorId: integer('fornecedor_id').references(() => fornecedores.id),
     dataEmissao: timestamp('data_emissao', { withTimezone: true }),
     dataEntregaPrevista: timestamp('data_entrega_prevista', { withTimezone: true }),
     dataEntregaReal: timestamp('data_entrega_real', { withTimezone: true }),

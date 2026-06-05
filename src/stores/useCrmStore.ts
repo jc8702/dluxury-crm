@@ -149,12 +149,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   addProject: async (data: Omit<Project, 'id'>) => {
     const payload = {
       title: data.ambiente,
+      ambiente: data.ambiente,
       subtitle: data.clientName || '',
+      client_name: data.clientName || '',
       status: data.status || 'lead',
       type: 'project',
       value: data.valorEstimado,
+      valor_estimado: data.valorEstimado,
       observations: data.observacoes || data.descricao || '',
+      observacoes: data.observacoes,
       description: data.descricao || '',
+      descricao: data.descricao,
+      prazo_entrega: data.prazoEntrega,
+      responsavel: data.responsavel,
       tag: data.tag,
       client_id: data.clientId,
       quotation_id: data.orcamentoId === 'none' ? null : data.orcamentoId,
@@ -165,12 +172,14 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
   updateProject: async (id: string, data: Partial<Project>) => {
     const payload: any = {};
-    if (data.ambiente) payload.title = data.ambiente;
-    if (data.clientName) payload.subtitle = data.clientName;
+    if (data.ambiente) { payload.title = data.ambiente; payload.ambiente = data.ambiente; }
+    if (data.clientName) { payload.subtitle = data.clientName; payload.client_name = data.clientName; }
     if (data.status) payload.status = data.status;
-    if (data.valorEstimado !== undefined) payload.value = data.valorEstimado;
-    if (data.observacoes) payload.observations = data.observacoes;
-    if (data.descricao) payload.description = data.descricao;
+    if (data.valorEstimado !== undefined) { payload.value = data.valorEstimado; payload.valor_estimado = data.valorEstimado; }
+    if (data.observacoes) { payload.observations = data.observacoes; payload.observacoes = data.observacoes; }
+    if (data.descricao) { payload.description = data.descricao; payload.descricao = data.descricao; }
+    if (data.prazoEntrega) payload.prazo_entrega = data.prazoEntrega;
+    if (data.responsavel) payload.responsavel = data.responsavel;
     if (data.clientId !== undefined) payload.client_id = data.clientId;
     if (data.orcamentoId !== undefined)
       payload.quotation_id = data.orcamentoId === 'none' ? null : data.orcamentoId;
