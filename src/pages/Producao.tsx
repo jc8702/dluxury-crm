@@ -3,7 +3,7 @@ import PCPKanbanBoard from '../components/kanban/PCPKanbanBoard.tsx';
 
 export default function Producao() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in">
+    <div className="flex flex-col h-full bg-[var(--ui-bg)] p-6 animate-fade-in">
       <PCPKanbanBoard />
     </div>
   );

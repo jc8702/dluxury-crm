@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Scissors,
@@ -561,11 +561,11 @@ const CuttingPlanPage: React.FC = () => {
   const activeSuperficie = activeResultadoGrupo?.superficies[activeChapaIdx];
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0A0A] text-white overflow-hidden animate-fade-in">
+    <div className="flex flex-col h-screen bg-[var(--ui-bg)] text-[var(--ui-text-primary)] overflow-hidden animate-fade-in">
       <ConfirmDialogElement />
 
       {/* HEADER INDUSTRIAL */}
-      <header className="flex items-center justify-between p-6 bg-black/40 border-b border-white/5 backdrop-blur-md z-30">
+      <header className="flex items-center justify-between p-6 bg-[var(--ui-surface)] border-b border-[var(--ui-border)] backdrop-blur-md z-30">
         <div className="flex items-center gap-6">
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
             <Scissors className="text-primary w-6 h-6" />
@@ -590,9 +590,9 @@ const CuttingPlanPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="glass flex items-center gap-3 px-4 h-12 rounded-2xl border border-white/10 mr-4">
-            <Settings2 size={16} className="text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+          <div className="bg-[var(--ui-bg-subtle)]/50 flex items-center gap-3 px-4 h-12 rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] mr-4">
+            <Settings2 size={16} className="text-[var(--ui-color-primary)]" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--ui-text-muted)] italic">
               KERF:
             </span>
             <input

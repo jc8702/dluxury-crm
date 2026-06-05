@@ -8,6 +8,8 @@
 
 ## Histórico de Alterações
 
+- **[05/06/2026 - 15:38]:** Conclusão da Fase 6 do Redesign UI/UX ("Tema Diamante"). Foram refatorados os módulos de Clientes (`ClientList.tsx`, `ClientForm.tsx`), Plano de Corte (`PlanoCorteDemo.tsx`, `CuttingPlanPage.tsx`) e Produção (`Producao.tsx`), consolidando o uso de Glassmorphism, CSS vars e Dark Mode em todo o sistema.
+  - Arquivos modificados: src/pages/Clients/ClientList.tsx, src/pages/Clients/ClientForm.tsx, src/pages/PlanoCorteDemo.tsx, src/pages/CuttingPlanPage.tsx, src/pages/Producao.tsx
 - **[05/06/2026 - 15:08]:** Refatoração visual completa do Menu Lateral (Sidebar) com estilos Glassmorphism e glow states, conforme skill 00-andruia-consultant e flags goal de finalização rápida.
   - Arquivos modificados: src/components/layout/Sidebar.tsx
 - **05/06/2026 - 14:38:** Implementação concluída do Redesign UI/UX ("Tema Diamante / Premium Dark Mode"). Configuração de variáveis de Glassmorphism, botões com hover/glow, refatoração de Cards, Kanban e Orçamentos. Criado walkthrough com relatório de mudanças.
