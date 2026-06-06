@@ -44,6 +44,7 @@ ALTER TABLE counters                  ADD COLUMN IF NOT EXISTS tenant_id UUID;
 
 -- =====================================================================
 -- Backfill seguro: dados legados vão para o master tenant
+-- Pula tabelas ausentes via filtro to_regclass (sem EXCEPTION).
 -- =====================================================================
 
 DO $$
@@ -52,14 +53,16 @@ DECLARE
   rec RECORD;
 BEGIN
   FOR rec IN
-    SELECT unnest(ARRAY[
+    SELECT t.tbl
+    FROM unnest(ARRAY[
       'titulos_receber','titulos_pagar','baixas','contas_internas',
       'contas_recorrentes','classes_financeiras','condicoes_pagamento',
       'formas_pagamento','audit_logs','system_logs','eventos_historico',
       'eventos_agenda','tipos_evento_config','categorias_material',
       'configuracoes_precificacao','projeto_tipos','projeto_parametros',
       'retalhos_estoque','historico_chamado','counters'
-    ]) AS tbl
+    ]) AS t(tbl)
+    WHERE to_regclass('public.' || t.tbl) IS NOT NULL
   LOOP
     EXECUTE format(
       'UPDATE %I SET tenant_id = $1 WHERE tenant_id IS NULL', rec.tbl
@@ -102,14 +105,16 @@ DECLARE
   rec RECORD;
 BEGIN
   FOR rec IN
-    SELECT unnest(ARRAY[
+    SELECT t.tbl
+    FROM unnest(ARRAY[
       'titulos_receber','titulos_pagar','baixas','contas_internas',
       'contas_recorrentes','classes_financeiras','condicoes_pagamento',
       'formas_pagamento','eventos_historico','eventos_agenda',
       'tipos_evento_config','categorias_material',
       'configuracoes_precificacao','projeto_tipos','projeto_parametros',
       'retalhos_estoque','historico_chamado','counters'
-    ]) AS tbl
+    ]) AS t(tbl)
+    WHERE to_regclass('public.' || t.tbl) IS NOT NULL
   LOOP
     EXECUTE format(
       'ALTER TABLE %I ALTER COLUMN tenant_id SET NOT NULL', rec.tbl

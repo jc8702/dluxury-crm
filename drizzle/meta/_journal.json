@@ -50,6 +50,13 @@
       "when": 1749571200000,
       "tag": "0006_drop_orphans",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780540800000,
+      "tag": "0014_add_tenant_id_bom_knowledge",
+      "breakpoints": true
     }
   ]
 }
