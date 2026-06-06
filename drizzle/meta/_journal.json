@@ -8,6 +8,48 @@
       "when": 1776542008987,
       "tag": "0000_fast_whistler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1749139200000,
+      "tag": "0001_create_quotation_bom",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749225600000,
+      "tag": "0002_tenant_id_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749312000000,
+      "tag": "0003_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749398400000,
+      "tag": "0004_create_missing_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749484800000,
+      "tag": "0005_consolidate_ordens",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1749571200000,
+      "tag": "0006_drop_orphans",
+      "breakpoints": true
     }
   ]
 }
