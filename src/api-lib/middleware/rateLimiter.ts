@@ -1,5 +1,5 @@
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { RATE_LIMITS } from '../config/rateLimits';
+import { RATE_LIMITS } from '../config/rateLimits.js';
 
 const limiters = {
   login: new RateLimiterMemory(RATE_LIMITS.login),

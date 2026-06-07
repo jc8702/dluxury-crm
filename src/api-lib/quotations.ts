@@ -28,17 +28,6 @@ const CONFIG = {
   LOG_LEVEL: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
 };
 
-// Logger condicional para produção
-const logger = {
-  debug: (..._args: any[]) =>
-    CONFIG.LOG_LEVEL === 'debug' && /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
-  info: (..._args: any[]) =>
-    ['info', 'debug'].includes(CONFIG.LOG_LEVEL) &&
-    /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
-  warn: (...args: any[]) => logger.warn('[ORCAMENTOS_PRO]', ...args),
-  error: (...args: any[]) => logger.error('[ORCAMENTOS_PRO]', ...args),
-};
-
 // Validadores reutilizáveis
 const validators = {
   isValidUUID: (id: string): boolean => {

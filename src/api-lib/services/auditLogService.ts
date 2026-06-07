@@ -94,7 +94,7 @@ export async function getAuditTrail(params: {
   values.push(limit, offset);
 
   try {
-    const rows = await sql.query(query, values);
+    const rows = await (sql as any).query(query, values);
     return rows.rows || rows;
   } catch (error: any) {
     console.error('[auditLogService] Erro ao consultar auditoria:', error.message);
