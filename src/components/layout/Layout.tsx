@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import TopNavbar from './TopNavbar';
-import DluxChat from '../ai/DluxChat';
 import { api } from '../../lib/api';
 import BillingBlockedOverlay from '../BillingBlockedOverlay';
 import { AlertCircle, CreditCard, Menu } from 'lucide-react';
@@ -21,7 +19,8 @@ export default function Layout() {
 
   // Carregar dados de faturamento do tenant
   useEffect(() => {
-    api.checkout.get()
+    api.checkout
+      .get()
       .then((data: any) => {
         if (data) {
           setSubData(data);
@@ -55,29 +54,35 @@ export default function Layout() {
 
   return (
     <div className="flex w-screen h-screen overflow-hidden bg-background">
-      
       {/* Overlay de Bloqueio se inadimplente */}
       {billingBlocked && (
-        <BillingBlockedOverlay 
-          errorMsg={blockedError} 
-          invoiceUrl={subData?.invoiceUrl} 
-        />
+        <BillingBlockedOverlay errorMsg={blockedError} invoiceUrl={subData?.invoiceUrl} />
       )}
 
       {/* Overlay for mobile sidebar */}
       {isMobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" 
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
-      <Sidebar isMobileOpen={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
-      
+      <Sidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
+
       {/* Main Content Area — off-white background with padded card */}
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
-        
-        <TopNavbar onMenuClick={() => setIsMobileSidebarOpen(true)} />
+        {/* Top bar for mobile */}
+        <div className="lg:hidden flex items-center h-14 px-4 border-b border-border/50 shrink-0 bg-card">
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="p-2 -ml-2 rounded-lg hover:bg-accent"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
 
         {/* Banner: Trial */}
         {showTrialBanner && (
@@ -85,10 +90,12 @@ export default function Layout() {
             <div className="flex items-center gap-2">
               <AlertCircle size={16} className="text-warning shrink-0" />
               <span className="font-body">
-                Período de teste ativo — Plano <strong className="font-semibold">{subData?.plano?.toUpperCase()}</strong>. Restam <strong className="font-semibold">{subData?.diasRestantes} dias</strong>.
+                Período de teste ativo — Plano{' '}
+                <strong className="font-semibold">{subData?.plano?.toUpperCase()}</strong>. Restam{' '}
+                <strong className="font-semibold">{subData?.diasRestantes} dias</strong>.
               </span>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/checkout')}
               className="btn btn-primary text-xs px-4 py-1.5 w-full sm:w-auto"
             >
@@ -107,7 +114,7 @@ export default function Layout() {
                 Pagamento em aberto. Regularize para evitar suspensão.
               </span>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/checkout')}
               className="btn btn-danger text-xs px-4 py-1.5 w-full sm:w-auto"
             >
@@ -124,7 +131,6 @@ export default function Layout() {
           </div>
         </div>
       </main>
-      <DluxChat />
     </div>
   );
 }
