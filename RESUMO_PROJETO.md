@@ -8,6 +8,13 @@
 
 ## Histórico de Alterações
 
+- **[07/06/2026 - 22:58]:** Higienização de Repositório (`chore/repo-hygiene`)
+  - Removido lixo versionado da raiz que serviam apenas como scripts one-off de debug, relatórios, backups (.sql, logs, etc.) que não tem uso em runtime.
+  - Excluídos arquivos de teste órfãos ou testes isolados não utilizados (`migrate-db.ts`, `migrate-estoque.ts`, `create-user.ts`).
+  - `.gitignore` atualizado rigorosamente com padrões correspondentes, evitando que novos arquivos de log ou scripts `debug-*.mjs` e screenshots fiquem versionados.
+  - Criado o documento de decisão arquitetural `docs/decisions/migrations-gap.md` para clarificar a causa e intencionalidade do gap entre as migrations `0007` e `0013`, documentando que elas não devem ser renomeadas para proteger o histórico da `drizzle_migrations`.
+  - Executado build, lint e test sem efeitos colaterais. Push em `fix/repo-hygiene` (ou `chore/repo-hygiene`).
+
 - **[07/06/2026 - 22:45]:** Implementada semântica transacional real (BEGIN/COMMIT/ROLLBACK) para `sql.begin` no Neon serverless.
   - O utilitário `sql.begin` (`src/api-lib/_db.ts`) foi refatorado para usar o `db.transaction()` nativo do Drizzle via Pool (do `drizzle-db.ts`), garantindo atomicidade real para as operações críticas.
   - Foi desenvolvido um wrapper (`tx`) retrocompatível que repassa "tagged templates" cruas e queries string literais (com ou sem os parâmetros) diretamente para a nova transação do Drizzle, preservando totalmente a assinatura e a forma de consumo dos arquivos como `financeiro.ts`, sem necessidade de refatorar chamadas ao redor do app.
