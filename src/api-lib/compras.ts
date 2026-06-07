@@ -1,15 +1,14 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
-export async function handleCompras(req: any, res: any) {
+const handleComprasCore: TenantHandler = async (req, res) => {
   try {
     const { method } = req;
     const { id, type } = req.query;
 
-    const auth = validateAuth(req);
-    if (!auth.authorized) return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
-    const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
-    const { user } = auth;
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     if (type === 'pedidos') {
       if (method === 'GET') {
@@ -247,4 +246,6 @@ export async function handleCompras(req: any, res: any) {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleCompras = withTenant(handleComprasCore);

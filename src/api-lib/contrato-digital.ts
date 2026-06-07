@@ -1,4 +1,5 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems } from '../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
@@ -112,11 +113,10 @@ function gerarHTMLContrato(quotation: any, cliente: any, itens: any[]): string {
   `;
 }
 
-export async function handleContratoDigital(req: any, res: any) {
+const handleContratoDigitalCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const method = req.method;
     const url = req.url || '';
 
@@ -456,4 +456,6 @@ export async function handleContratoDigital(req: any, res: any) {
       .status(500)
       .json({ success: false, error: err.message || 'Erro interno do servidor' });
   }
-}
+};
+
+export const handleContratoDigital = withTenant(handleContratoDigitalCore);

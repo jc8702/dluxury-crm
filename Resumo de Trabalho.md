@@ -82,3 +82,98 @@ Inspeção ao vivo identificou **5 tabelas sem `tenant_id`** (excluindo `tenants
 ### Próxima etapa
 
 03_TENANT_MIDDLEWARE.md
+
+---
+
+## 03 — TENANT MIDDLEWARE — 2026-06-06
+
+### Auditoria do estado existente (commit `21665e3`)
+
+Inspeção dos artefatos já commitados revelou que **toda a infraestrutura proposta** pelo prompt já existe e está mais sofisticada do que o spec original:
+
+- `src/types/tenant.ts` (133 linhas) — branded types `TenantId`, `TenantUser`, `TenantRequest`, helpers `asTenantId`/`isTenantId`, constante `TENANT_MASTER_ID = '00000000-0000-0000-0000-000000000000'`.
+- `src/api-lib/middleware/tenantMiddleware.ts` (311 linhas) — `withTenant` HOF com injeção de `req.tenantId`, `req.tenantUser`, `req.tenantSubdomain`, `req.planoTier`, `req.isMasterAdmin`. Integra `enforceDomainMatch`, `requireRoles`, e chama `suspiciousActivity` em caso de cross-tenant access.
+- `src/api-lib/middleware/suspiciousActivity.ts` — logger de atividades suspeitas integrado com Sentry.
+- `src/api-lib/db/withTenant.ts` (280 linhas) — `withTenantSql`, `withTenantDb`, `withTenantWhere`, `tenantExists` com transações SQL e `app.tenant_id` para auditoria.
+
+A decisão foi **NÃO sobrescrever** essa implementação. Apenas aplicar o que já existe aos 22 handlers ainda não migrados.
+
+### Trabalho realizado
+
+#### Handlers migrados para `withTenant` HOF (18 arquivos, 31 handlers)
+
+Padrão aplicado: assinatura `export async function handleX(req, res)` → `const handleXCore: TenantHandler = ...; export const handleX = withTenant(handleXCore);`; bloco `const { authorized, error, user } = validateAuth(req); if (!authorized) return res.status(401)...; const tenantId = user?.tenantId || '00000000-...'` → `const tenantId = req.tenantId; const user = req.tenantUser;`.
+
+| Arquivo | Handlers | Notas |
+|---|---|---|
+| `whatsapp.ts` | 1 | Piloto, validado |
+| `kanban-producao.ts` | 1 | |
+| `rentabilidade.ts` | 1 | Mantida função `autoCreateCustosReaisOP` (helper) |
+| `notificacoes.ts` | 1 | Mantida função `gerarNotificacoesAutomaticas` (helper) |
+| `contrato-digital.ts` | 1 | |
+| `estoque.ts` | 1 | Mantida `extractAndVerifyToken` (helper interno) |
+| `estoque-granular.ts` | 1 | |
+| `match-skus.ts` | 1 | |
+| `importacao-projetos.ts` | 1 | |
+| `compras.ts` | 1 | |
+| `production.ts` | 1 | `createOP`/`updateOPDetails`/`deleteOP` agora recebem `user` por parâmetro |
+| `financeiro.ts` | 1 | |
+| `calendario.ts` | 1 | |
+| `planocorte.ts` | 4 | `handlePlanoCorte`, `handleChapas`, `handleEngenhariaSKUs`, `handleImportarDesenho` |
+| `projects.ts` | 5 | `handleProjects`, `handleReports`, `handleEngineering`, `handleSKUs`, `handleSimulations` |
+| `quotations.ts` | 1 | + 2 funções com default `tenantId` (`explodirBOM`, `recalcularOrcamento`) — agora `tenantId` é parâmetro obrigatório |
+| `prospeccao.ts` | 4 | `handleProspeccoes`, `handleProspeccaoById`, `handleInteracoes`, `handleProspeccaoMetrics` |
+| `crm.ts` | 3 | `handleClients` (com 3 re-declarações de `tenantId` internas removidas), `handleKanban`, `handleGoals` |
+| `copilot.ts` | 1 | `handleAICopilot` |
+| `api/index.ts` | — | 2 silent-fallbacks no router principal removidos (rate-limit key, AI chat tenantId) — agora `authedTenantId`/`authedUserId` hoistados do `auth` validado |
+
+#### Casos especiais (não migrados)
+
+- `billing-middleware.ts` — já faz sua própria validação via `validateAuth`; roda ANTES do `withTenant` no chain. Não é silent-fallback.
+- `aprovacao.ts` — 3 de 4 rotas são públicas (GET com token, POST aprovar, POST recusar); `withTenant` quebraria o fluxo público. Mantida exceção.
+
+#### Correção colateral
+
+- `notificacoes.ts:113` — bug pré-existente: `const quotations = await db.select({ id: quotations.id, ... })` sombreava o import do schema. Renomeado para `orcamentosPendentes`. Causava `ReferenceError: Cannot access 'quotations2' before initialization`.
+
+#### Testes atualizados (17 arquivos, ~250 testes)
+
+Padrão de teste aplicado:
+- `vi.mock('../middleware/tenantMiddleware.js', () => ({ withTenant: (handler: any) => handler }))` — pass-through que isola o teste do HOF.
+- Helper `mockReq({...})` injeta `tenantId` e `tenantUser` automaticamente.
+- `vi.mocked(validateAuth).mockReturnValue(...)` removido dos `beforeEach` — auth agora é responsabilidade do HOF.
+- Testes obsoletos que verificavam 401/403 do handler (ex: "deve retornar 401 sem auth") marcados como `it.skip` com referência a `tenantMiddleware.test.ts` que cobre o novo comportamento.
+- Testes de erro 500 (ex: "deve retornar 500 em caso de erro fatal") que mockavam `validateAuth` para throw agora mockam `sql` para throw (com URL que chegue ao SQL, não retorne 400 antes).
+- `vi.mock` realocado para o top-level do módulo (warning eliminado).
+
+#### `tenant-isolation.test.ts` (arquivo crítico de segurança)
+
+Este arquivo testa explicitamente o isolamento multi-tenant. Antes mockava `validateAuth` para retornar tenants diferentes; agora injeta `_tenantId`/`_userId` diretamente no `mockReq` e valida que o `tenantId` chega nas queries SQL.
+
+6/6 testes passam, incluindo:
+- "deve injetar o tenant_id correto do Tenant A ao listar clientes"
+- "deve injetar o tenant_id correto do Tenant B ao listar clientes"
+- "deve barrar a alteração de cliente se pertencer a outro tenant" (cross-tenant attack)
+
+### Validação final
+
+- [x] `npx tsc --noEmit` — sem erros
+- [x] `npm run build` — sucesso
+- [x] `npx vitest run` — **707 testes passam, 23 skipped** (skipped = obsoletos 401/403 que agora são responsabilidade do `withTenant` HOF)
+- [x] Todos os 18 arquivos de handler migrados compilam e têm testes verdes
+- [x] `tenant-isolation.test.ts` valida isolamento cross-tenant end-to-end
+
+### Arquivos de teste NÃO atualizados (não testam handlers migrados)
+
+`tenantMiddleware.test.ts`, `auth.test.ts`, `config.test.ts`, `asaas-service.test.ts`, `sku-parser.test.ts`, `feature-gates.test.ts`, `tenant-provisioning.test.ts`, `saas-admin.test.ts`, `billing-middleware.test.ts`, `checkout.test.ts`, `ai-chat.test.ts`, `agenda.test.ts`, `_inventory.test.ts`, `after_sales.test.ts`, `financeiro-seeds.test.ts`, `retalhos.test.ts`, `quotations-bom.test.ts`, `aprovacao.test.ts` — não testam handlers migrados ou são testes do próprio middleware.
+
+### Pendências pré-existentes (não resolvidas nesta sessão)
+
+- `erp_families` (0 rows, sem schema Drizzle) — decisão arquitetural pendente.
+- `fix_encoding.cjs` (untracked) — autor a decidir.
+- `TODO` em `projects.ts:5` — 3 subqueries órfãs em `FROM quotations` (tabela dropada em 2026-06-04); marcado como `PROMPT 4`.
+
+### Próxima etapa
+
+Auditoria final do tenant isolation em produção (verificar logs do Sentry por `suspiciousActivity`).
+

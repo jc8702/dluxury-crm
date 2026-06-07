@@ -6,6 +6,10 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
@@ -31,20 +35,29 @@ function mockRes() {
   return self;
 }
 
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('handleCalendario', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
-    vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({
-      authorized: true,
-      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null,
-    });
   });
 
   describe('GET /eventos', () => {
     it('deve retornar 400 se mes ou ano forem ausentes', async () => {
-      const req = { method: 'GET', url: '/eventos', query: { mes: '5' } };
+      const req = mockReq({ method: 'GET', url: '/eventos', query: { mes: '5' } });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(400);
@@ -118,11 +131,11 @@ describe('handleCalendario', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'GET',
         url: '/eventos',
         query: { mes: '5', ano: '2026', filtro_tipo: 'reuniao' },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -138,7 +151,7 @@ describe('handleCalendario', () => {
 
   describe('POST /criar-evento', () => {
     it('deve retornar 400 se titulo, data_evento ou tipo_evento forem ausentes', async () => {
-      const req = { method: 'POST', url: '/criar-evento', body: { titulo: '' } };
+      const req = mockReq({ method: 'POST', url: '/criar-evento', body: { titulo: '' } });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(400);
@@ -149,7 +162,7 @@ describe('handleCalendario', () => {
         .mockResolvedValueOnce([{ id: 100 }]) // INSERT evento
         .mockResolvedValueOnce([]); // INSERT notificacao
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/criar-evento',
         body: {
@@ -158,7 +171,7 @@ describe('handleCalendario', () => {
           tipo_evento: 'reuniao',
           notificacao_dias_antes: 2,
         },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -169,7 +182,7 @@ describe('handleCalendario', () => {
 
   describe('POST /gerar-automatico', () => {
     it('deve retornar 400 se quotation_id for ausente', async () => {
-      const req = { method: 'POST', url: '/gerar-automatico', body: {} };
+      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: {} });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(400);
@@ -177,11 +190,11 @@ describe('handleCalendario', () => {
 
     it('deve retornar 404 se orçamento não for encontrado', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]); // quotation inexistente
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/gerar-automatico',
         body: { quotation_id: '00000000-0000-0000-0000-000000000005' },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(404);
@@ -201,7 +214,7 @@ describe('handleCalendario', () => {
         .mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]) // SELECT usuarios
         .mockResolvedValue([]); // INSERT eventos
 
-      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'orc-uuid' } };
+      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'orc-uuid' } });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -224,7 +237,7 @@ describe('handleCalendario', () => {
         .mockResolvedValueOnce([]) // INSERT notificacao
         .mockResolvedValueOnce([]); // UPDATE evento enviado
 
-      const req = { method: 'GET', url: '/verificar-lembretes' };
+      const req = mockReq({ method: 'GET', url: '/verificar-lembretes' });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -236,11 +249,11 @@ describe('handleCalendario', () => {
   describe('PATCH / DELETE com ID', () => {
     it('PATCH deve atualizar o evento concluído e retornar 200', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 1, concluido: true }]);
-      const req = {
+      const req = mockReq({
         method: 'PATCH',
         query: { id: '1' },
         body: { concluido: true },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -250,11 +263,11 @@ describe('handleCalendario', () => {
 
     it('PATCH deve retornar 404 se evento não for encontrado', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]); // não achou
-      const req = {
+      const req = mockReq({
         method: 'PATCH',
         query: { id: '999' },
         body: { concluido: true },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -263,7 +276,7 @@ describe('handleCalendario', () => {
 
     it('DELETE deve excluir o evento e retornar 200', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = { method: 'DELETE', query: { id: '1' } };
+      const req = mockReq({ method: 'DELETE', query: { id: '1' } });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -275,7 +288,7 @@ describe('handleCalendario', () => {
   describe('POST /criar-evento', () => {
     it('deve criar evento e retornar 201', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'novo-1' }]);
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/criar-evento',
         body: {
@@ -283,7 +296,7 @@ describe('handleCalendario', () => {
           data_evento: '2026-06-15',
           tipo_evento: 'reuniao',
         },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(201);
@@ -291,11 +304,11 @@ describe('handleCalendario', () => {
     });
 
     it('deve retornar 400 se dados obrigatórios ausentes', async () => {
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/criar-evento',
         body: { titulo: 'Sem data' },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(400);
@@ -316,14 +329,14 @@ describe('handleCalendario', () => {
         ])
         .mockResolvedValueOnce([{ id: 'u1' }])
         .mockResolvedValueOnce([{ id: 'auto-1' }]);
-      const req = { method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'q1' } };
+      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'q1' } });
       const res = mockRes();
       await handleCalendario(req, res);
       expect([200, 201]).toContain(res._s());
     });
 
     it('deve retornar 400 se quotation_id ausente', async () => {
-      const req = { method: 'POST', url: '/gerar-automatico', body: {} };
+      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: {} });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(400);
@@ -331,11 +344,11 @@ describe('handleCalendario', () => {
 
     it('deve retornar 404 se quotation não encontrada', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/gerar-automatico',
         body: { quotation_id: 'inexistente' },
-      };
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(404);
@@ -343,45 +356,25 @@ describe('handleCalendario', () => {
   });
 
   describe('Auth e edge cases', () => {
-    it('deve retornar 401 sem auth', async () => {
-      vi.mocked(validateAuth).mockReturnValue({
-        authorized: false,
-        user: null,
-        error: 'Sem token',
-      });
-      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } };
-      const res = mockRes();
-      await handleCalendario(req, res);
-      expect(res._s()).toBe(401);
-    });
-
-    it('deve usar tenantId default quando user sem tenantId', async () => {
-      vi.mocked(validateAuth).mockReturnValue({
-        authorized: true,
-        user: { id: 'u1' },
-        error: null,
-      });
-      vi.mocked(sql).mockResolvedValue([]);
-      const req = { method: 'GET', url: '/eventos', query: { mes: '6', ano: '2026' } };
-      const res = mockRes();
-      await handleCalendario(req, res);
-      expect(res._s()).toBe(200);
-    });
+    // Auth is now handled by withTenant HOF (see tenantMiddleware.test.ts)
+    // The handler no longer performs its own auth checks.
+    it.skip('deve retornar 401 sem auth', () => {});
+    it.skip('deve usar tenantId default quando user sem tenantId', () => {});
   });
 
   describe('Erros e Métodos não permitidos', () => {
     it('deve retornar 405 se método for inválido', async () => {
-      const req = { method: 'OPTIONS' };
+      const req = mockReq({ method: 'OPTIONS' });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(405);
     });
 
     it('deve retornar 500 em caso de erro fatal de banco', async () => {
-      vi.mocked(validateAuth).mockImplementation(() => {
+      vi.mocked(sql).mockImplementation(async () => {
         throw new Error('Database crash');
       });
-      const req = { method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } };
+      const req = mockReq({ method: 'GET', url: '/eventos', query: { mes: '5', ano: '2026' } });
       const res = mockRes();
       await handleCalendario(req, res);
       expect(res._s()).toBe(500);

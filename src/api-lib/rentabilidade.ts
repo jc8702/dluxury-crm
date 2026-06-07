@@ -1,10 +1,10 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
-export async function handleRentabilidade(req: any, res: any) {
+const handleRentabilidadeCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const method = req.method;
     const url = req.url || '';
 
@@ -332,7 +332,9 @@ export async function handleRentabilidade(req: any, res: any) {
     console.error('[RENTABILIDADE_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleRentabilidade = withTenant(handleRentabilidadeCore);
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Função Helper: Chamada ao finalizar uma Ordem de Produção (para alimentar a tabela)

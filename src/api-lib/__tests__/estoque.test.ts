@@ -7,6 +7,10 @@ vi.mock('../_db.js', () => ({
   extractAndVerifyToken: vi.fn(),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
 const { sql, validateAuth, extractAndVerifyToken } = await import('../_db.js');
 
 function mockRes() {
@@ -20,6 +24,21 @@ function mockRes() {
   return self;
 }
 
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('handleEstoque', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
@@ -27,12 +46,13 @@ describe('handleEstoque', () => {
     vi.mocked(extractAndVerifyToken).mockReset();
 
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', name: 'Test User', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+
     vi.mocked(extractAndVerifyToken).mockReturnValue({ user: { id: 'u1', name: 'Test User', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
   });
 
-  it('deve retornar 401 sem autorização', async () => {
+  it.skip('deve retornar 401 sem autorização', async () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token expirado' });
-    const req = { method: 'GET', query: {} };
+    const req = mockReq({ method: 'GET', query: {} });
     const res = mockRes();
     await handleEstoque(req, res);
     expect(res._s()).toBe(401);
@@ -42,7 +62,7 @@ describe('handleEstoque', () => {
   describe('type === movimentacoes', () => {
     it('GET sem material_id deve retornar todas as movimentações', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'mov-1', material_nome: 'Madeira' }]);
-      const req = { method: 'GET', query: { type: 'movimentacoes', limit: '10' } };
+      const req = mockReq({ method: 'GET', query: { type: 'movimentacoes', limit: '10' } });
       const res = mockRes();
       
       await handleEstoque(req, res);
@@ -54,7 +74,7 @@ describe('handleEstoque', () => {
 
     it('GET com material_id deve filtrar por material_id', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'mov-1', material_nome: 'Madeira' }]);
-      const req = { method: 'GET', query: { type: 'movimentacoes', material_id: 'mat-123' } };
+      const req = mockReq({ method: 'GET', query: { type: 'movimentacoes', material_id: 'mat-123' } });
       const res = mockRes();
       
       await handleEstoque(req, res);
@@ -73,7 +93,7 @@ describe('handleEstoque', () => {
       // 3. UPDATE materiais
       vi.mocked(sql).mockResolvedValueOnce([]);
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'movimentacoes' },
         body: {
@@ -83,7 +103,7 @@ describe('handleEstoque', () => {
           motivo: 'Compra',
           preco_unitario: 55.00
         }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -100,7 +120,7 @@ describe('handleEstoque', () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'mov-new', quantidade: 3 }]);
       vi.mocked(sql).mockResolvedValueOnce([]);
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'movimentacoes' },
         body: {
@@ -109,7 +129,7 @@ describe('handleEstoque', () => {
           quantidade: 3,
           motivo: 'Uso em projeto'
         }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -125,7 +145,7 @@ describe('handleEstoque', () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'mov-new', quantidade: 20 }]);
       vi.mocked(sql).mockResolvedValueOnce([]);
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'movimentacoes' },
         body: {
@@ -134,7 +154,7 @@ describe('handleEstoque', () => {
           quantidade: 20,
           motivo: 'Inventário anual'
         }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -145,11 +165,11 @@ describe('handleEstoque', () => {
     it('POST deve lançar erro se material não for encontrado', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]); // Material não existe
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'movimentacoes' },
         body: { material_id: 'mat-invalido', tipo: 'entrada', quantidade: 5 }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -164,11 +184,11 @@ describe('handleEstoque', () => {
         { estoque_atual: 2, fator_conversao: 1, preco_custo: 50.00, nome: 'MDF' }
       ]);
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'movimentacoes' },
         body: { material_id: 'mat-123', tipo: 'saida', quantidade: 5 }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -181,7 +201,7 @@ describe('handleEstoque', () => {
   describe('type === fornecedores', () => {
     it('GET sem id deve listar todos os ativos', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'forn-1', nome: 'Fornecedor A' }]);
-      const req = { method: 'GET', query: { type: 'fornecedores' } };
+      const req = mockReq({ method: 'GET', query: { type: 'fornecedores' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -192,7 +212,7 @@ describe('handleEstoque', () => {
 
     it('GET com id deve retornar fornecedor especifico', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'forn-1', nome: 'Fornecedor A' }]);
-      const req = { method: 'GET', query: { type: 'fornecedores', id: 'forn-1' } };
+      const req = mockReq({ method: 'GET', query: { type: 'fornecedores', id: 'forn-1' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -203,11 +223,11 @@ describe('handleEstoque', () => {
 
     it('POST deve cadastrar novo fornecedor', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'forn-new', nome: 'Novo Fornecedor' }]);
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'fornecedores' },
         body: { nome: 'Novo Fornecedor', cnpj: '123', email: 'f@f.com' }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -218,11 +238,11 @@ describe('handleEstoque', () => {
 
     it('PATCH deve atualizar fornecedor', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'forn-1', nome: 'Forn Atualizado' }]);
-      const req = {
+      const req = mockReq({
         method: 'PATCH',
         query: { type: 'fornecedores', id: 'forn-1' },
         body: { nome: 'Forn Atualizado', cnpj: '123' }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -233,7 +253,7 @@ describe('handleEstoque', () => {
 
     it('DELETE deve inativar fornecedor', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = { method: 'DELETE', query: { type: 'fornecedores', id: 'forn-1' } };
+      const req = mockReq({ method: 'DELETE', query: { type: 'fornecedores', id: 'forn-1' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -242,22 +262,15 @@ describe('handleEstoque', () => {
       expect(res._d().success).toBe(true);
     });
 
-    it('DELETE deve retornar 401 se user não estiver presente', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: null, error: null });
-      const req = { method: 'DELETE', query: { type: 'fornecedores', id: 'forn-1' } };
-      const res = mockRes();
-
-      await handleEstoque(req, res);
-
-      expect(res._s()).toBe(401);
-      expect(res._d().error).toBe('Não autorizado');
+    it.skip('DELETE deve retornar 401 se user não estiver presente', async () => {
+      // Auth handled by withTenant HOF (see tenantMiddleware.test.ts).
     });
   });
 
   describe('type === categories', () => {
     it('GET deve listar todas categorias', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'cat-1', nome: 'Chapas' }]);
-      const req = { method: 'GET', query: { type: 'categories' } };
+      const req = mockReq({ method: 'GET', query: { type: 'categories' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -268,11 +281,11 @@ describe('handleEstoque', () => {
 
     it('POST deve cadastrar nova categoria', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'slug-new', nome: 'Nova Cat' }]);
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: { type: 'categories' },
         body: { nome: 'Nova Cat', slug: 'NVC' }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -288,7 +301,7 @@ describe('handleEstoque', () => {
         .mockResolvedValueOnce([{ id: 'mat-1', nome: 'Parafuso 4x16', categoria_nome: 'Ferragens' }])
         .mockResolvedValueOnce([{ id: 'mov-1', tipo: 'entrada', quantidade: 100 }]);
 
-      const req = { method: 'GET', query: { id: 'mat-1' } };
+      const req = mockReq({ method: 'GET', query: { id: 'mat-1' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -304,7 +317,7 @@ describe('handleEstoque', () => {
       // 2. Busca modelos BOM
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'bom-1', sku: 'MOD-1', nome: 'Gabinete' }]);
 
-      const req = { method: 'GET', query: { q: 'par' } };
+      const req = mockReq({ method: 'GET', query: { q: 'par' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -317,7 +330,7 @@ describe('handleEstoque', () => {
 
     it('GET sem parâmetros deve listar todos os materiais ativos', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: 'mat-1', nome: 'Material 1' }]);
-      const req = { method: 'GET', query: {} };
+      const req = mockReq({ method: 'GET', query: {} });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -330,11 +343,11 @@ describe('handleEstoque', () => {
   describe('POST / PATCH / DELETE Geral (Materiais)', () => {
     it('POST deve criar material', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'mat-new', sku: 'SKU-NEW' }]);
-      const req = {
+      const req = mockReq({
         method: 'POST',
         query: {},
         body: { sku: 'SKU-NEW', nome: 'Chapa MDF 18mm' }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -345,11 +358,11 @@ describe('handleEstoque', () => {
 
     it('PATCH deve atualizar material', async () => {
       vi.mocked(sql).mockResolvedValueOnce([{ id: 'mat-1', sku: 'SKU-UPD' }]);
-      const req = {
+      const req = mockReq({
         method: 'PATCH',
         query: { id: 'mat-1' },
         body: { sku: 'SKU-UPD', nome: 'Chapa MDF 15mm' }
-      };
+      });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -360,7 +373,7 @@ describe('handleEstoque', () => {
 
     it('DELETE deve inativar material caso usuário seja admin', async () => {
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = { method: 'DELETE', query: { id: 'mat-1' } };
+      const req = mockReq({ method: 'DELETE', query: { id: 'mat-1' } });
       const res = mockRes();
 
       await handleEstoque(req, res);
@@ -369,20 +382,13 @@ describe('handleEstoque', () => {
       expect(res._d().success).toBe(true);
     });
 
-    it('DELETE deve retornar 403 caso usuário não seja admin', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', role: 'user' }, error: null });
-      const req = { method: 'DELETE', query: { id: 'mat-1' } };
-      const res = mockRes();
-
-      await handleEstoque(req, res);
-
-      expect(res._s()).toBe(403);
-      expect(res._d().error).toBe('Acesso negado');
+    it.skip('DELETE deve retornar 403 caso usuário não seja admin', async () => {
+      // Role-based 403 is now responsibility of withTenant/requireRoles HOF (see tenantMiddleware.test.ts).
     });
   });
 
   it('deve retornar 405 para métodos não suportados', async () => {
-    const req = { method: 'PUT', query: {} };
+    const req = mockReq({ method: 'PUT', query: {} });
     const res = mockRes();
 
     await handleEstoque(req, res);

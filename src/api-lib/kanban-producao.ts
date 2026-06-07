@@ -1,10 +1,10 @@
-import { sql, validateAuth, auditLog } from './_db.js';
+import { sql, auditLog } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
-export async function handleKanbanProducao(req: any, res: any) {
+const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const method = req.method;
     const url = req.url || '';
 
@@ -252,9 +252,11 @@ export async function handleKanbanProducao(req: any, res: any) {
       return res.status(200).json({ success: true, data: historico });
     }
 
-    return res.status(405).json({ success: false, error: 'Método não permitido' });
+    return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
   } catch (err: any) {
     console.error('[KANBAN_PRODUCAO_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleKanbanProducao = withTenant(handleKanbanProducaoCore);

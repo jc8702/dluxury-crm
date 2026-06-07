@@ -1,4 +1,5 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, generateObject } from 'ai';
 import { z } from 'zod';
@@ -510,11 +511,10 @@ async function generateChatResponse(payload: any, tenantId: string) {
   return { content: response.message };
 }
 
-export async function handleAICopilot(req: any, res: any) {
+const handleAICopilotCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     if (req.method !== 'POST') return res.status(405).end();
     
     const { skill, payload } = req.body;
@@ -547,10 +547,12 @@ export async function handleAICopilot(req: any, res: any) {
       case 'forecast-demand': 
         result = await forecastDemand(payload, tenantId);
         return res.status(200).json({ success: true, data: result });
-      default: 
+      default:
         return res.status(400).json({ success: false, error: 'Skill de IA não reconhecida' });
     }
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleAICopilot = withTenant(handleAICopilotCore);

@@ -6,6 +6,10 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
 vi.mock('../drizzle-db.js', () => ({
   db: {
     select: vi.fn(),
@@ -22,6 +26,7 @@ function mockDrizzleChain(resolveValue: any = []) {
   methods.forEach(method => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
+
   chain.then = vi.fn().mockImplementation((onFulfilled) => {
     return Promise.resolve(resolveValue).then(onFulfilled);
   });
@@ -38,6 +43,21 @@ function mockRes() {
     _d: () => jd,
   };
   return self;
+}
+
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
 }
 
 describe('handleContratoDigital', () => {
@@ -70,7 +90,7 @@ describe('handleContratoDigital', () => {
       return [];
     });
 
-    const req = { method: 'GET', url: '/status', query: { quotation_id: 'orc-1' }, body: {} };
+    const req = mockReq({ method: 'GET', url: '/status', query: { quotation_id: 'orc-1' }, body: {} });
     const res = mockRes();
     await handleContratoDigital(req, res);
 
@@ -108,12 +128,12 @@ describe('handleContratoDigital', () => {
       return [];
     });
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       url: '/gerar-e-enviar',
       query: {},
       body: { quotation_id: 'orc-1' }
-    };
+    });
     const res = mockRes();
     await handleContratoDigital(req, res);
 
@@ -158,12 +178,12 @@ describe('handleContratoDigital', () => {
       return [];
     });
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       url: '/webhook-assinatura',
       query: {},
       body: { envelope_id: 'env-1', status: 'completed' }
-    };
+    });
     const res = mockRes();
     await handleContratoDigital(req, res);
 

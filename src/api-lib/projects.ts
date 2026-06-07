@@ -1,15 +1,15 @@
-import { sql, validateAuth, auditLog } from './_db.js';
+import { sql, auditLog } from './_db.js';
 import { writeOffStockForProject } from './_inventory.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 // TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM quotations)
 // Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela quotations foi dropada em 2026-06-04.
 // Rota afetada: GET /api/projects (campo valor_orcamento_atual sempre null).
 
-export async function handleProjects(req: any, res: any) {
+const handleProjectsCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     // Infraestrutura: garantir existência da tabela e colunas
     try {
@@ -176,7 +176,6 @@ export async function handleProjects(req: any, res: any) {
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
-      const { user } = validateAuth(req);
       const f = req.body;
       const tag = f.tag || `PRJ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       const result = await sql`
@@ -212,7 +211,6 @@ export async function handleProjects(req: any, res: any) {
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
-      const { user } = validateAuth(req);
       const { id } = req.query;
       if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
       const f = req.body;
@@ -254,7 +252,6 @@ export async function handleProjects(req: any, res: any) {
       return res.status(200).json({ success: true, data: r[0] });
     }
     if (req.method === 'DELETE') {
-      const { user } = validateAuth(req);
       const { id } = req.query;
       if (!id) return res.status(400).json({ success: false, error: 'ID é obrigatório' });
 
@@ -281,11 +278,10 @@ export async function handleProjects(req: any, res: any) {
   }
 }
 
-export async function handleReports(req: any, res: any) {
+const handleReportsCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const { type, projectId } = req.query || {};
     let result;
     if (type === 'fin-rentabilidade') {
@@ -331,11 +327,10 @@ export async function handleReports(req: any, res: any) {
   }
 }
 
-export async function handleEngineering(req: any, res: any) {
+const handleEngineeringCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
     await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
@@ -542,11 +537,10 @@ export async function handleEngineering(req: any, res: any) {
   }
 }
 
-export async function handleSKUs(req: any, res: any) {
+const handleSKUsCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     if (req.method === 'GET') {
       if (req.query.action === 'next-code') {
@@ -609,11 +603,10 @@ export async function handleSKUs(req: any, res: any) {
   }
 }
 
-export async function handleSimulations(req: any, res: any) {
+const handleSimulationsCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     // Migração: garantir colunas adicionais para cenários de produção
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(
@@ -752,3 +745,9 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
     console.error('Error creating OP for project:', err);
   }
 }
+
+export const handleProjects = withTenant(handleProjectsCore);
+export const handleReports = withTenant(handleReportsCore);
+export const handleEngineering = withTenant(handleEngineeringCore);
+export const handleSKUs = withTenant(handleSKUsCore);
+export const handleSimulations = withTenant(handleSimulationsCore);

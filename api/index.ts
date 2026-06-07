@@ -117,9 +117,12 @@ export default async function handler(req: any, res: any) {
   const { validateAuth } = await import('../src/api-lib/_db.js');
   const auth = validateAuth(req);
   const clientIP = getClientIP(req);
+  // Extraido uma vez do auth validado; sem fallback silencioso
+  const authedTenantId = auth.authorized && auth.user ? auth.user.tenantId : null;
+  const authedUserId = auth.authorized && auth.user ? auth.user.id : null;
   const rateKey =
-    auth.authorized && auth.user
-      ? `${auth.user.tenantId || '00000000-0000-0000-0000-000000000000'}:${auth.user.id}`
+    auth.authorized && auth.user && authedTenantId
+      ? `${authedTenantId}:${authedUserId}`
       : clientIP;
 
   // Rate limiting
@@ -260,8 +263,11 @@ export default async function handler(req: any, res: any) {
           }, 45000);
         });
 
-        const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
-        const usuarioId = auth.user?.id || '00000000-0000-0000-0000-000000000000';
+        if (!authedTenantId || !authedUserId) {
+          return res.status(401).json({ success: false, error: 'Autenticação requerida' });
+        }
+        const tenantId = authedTenantId;
+        const usuarioId = authedUserId;
 
         const chatPromise = processarChat({
           message: message.trim(),

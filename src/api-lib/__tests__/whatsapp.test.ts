@@ -6,7 +6,16 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
-const { sql, validateAuth } = await import('../_db.js');
+// Bypass tenant middleware for unit tests — these tests focus on handler logic, not auth.
+// Production auth is exercised in tenantMiddleware.test.ts.
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
+const { sql } = await import('../_db.js');
+
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', email: 'u1@x.com', role: 'admin' as const, name: 'Test' };
 
 function mockRes() {
   let sc = 200, jd: any = null, ended = false;
@@ -19,25 +28,27 @@ function mockRes() {
   return self;
 }
 
+function mockReq(overrides: any = {}) {
+  return {
+    method: 'GET',
+    url: '/',
+    query: {},
+    body: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('handleWhatsApp', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
-    vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
     vi.mocked(sql).mockResolvedValue([{ count: '1' }] as any);
-  });
-
-  it('deve retornar 401 se não estiver autorizado', async () => {
-    vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token inválido' });
-    const req = { method: 'GET', url: '/mensagens', query: {}, body: {} };
-    const res = mockRes();
-    await handleWhatsApp(req, res);
-    expect(res._s()).toBe(401);
   });
 
   describe('GET /mensagens', () => {
     it('deve retornar 400 se quotation_id e operacao_prod_id forem ausentes', async () => {
-      const req = { method: 'GET', url: '/mensagens', query: {}, body: {} };
+      const req = mockReq({ method: 'GET', url: '/mensagens', query: {}, body: {} });
       const res = mockRes();
       await handleWhatsApp(req, res);
       expect(res._s()).toBe(400);
@@ -57,7 +68,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = { method: 'GET', url: '/mensagens', query: { quotation_id: '00000000-0000-0000-0000-000000000001' } };
+      const req = mockReq({ method: 'GET', url: '/mensagens', query: { quotation_id: '00000000-0000-0000-0000-000000000001' } });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -79,7 +90,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = { method: 'GET', url: '/mensagens', query: { operacao_prod_id: '00000000-0000-0000-0000-000000000002' } };
+      const req = mockReq({ method: 'GET', url: '/mensagens', query: { operacao_prod_id: '00000000-0000-0000-0000-000000000002' } });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -95,7 +106,7 @@ describe('handleWhatsApp', () => {
     });
 
     it('deve retornar 400 se conteudo_msg ou numero_telefone estiverem ausentes', async () => {
-      const req = { method: 'POST', url: '/enviar-mensagem', body: { conteudo_msg: '' } };
+      const req = mockReq({ method: 'POST', url: '/enviar-mensagem', body: { conteudo_msg: '' } });
       const res = mockRes();
       await handleWhatsApp(req, res);
       expect(res._s()).toBe(400);
@@ -112,7 +123,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/enviar-mensagem',
         body: {
@@ -121,7 +132,7 @@ describe('handleWhatsApp', () => {
           conteudo_msg: 'Mensagem de teste',
           tags: ['tag1']
         }
-      };
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -143,7 +154,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/enviar-mensagem',
         body: {
@@ -152,7 +163,7 @@ describe('handleWhatsApp', () => {
           conteudo_msg: 'Mensagem OP',
           tags: 'string_tag' // teste tags não sendo array
         }
-      };
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -171,14 +182,14 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/enviar-mensagem',
         body: {
           numero_telefone: '12345',
           conteudo_msg: 'Mensagem em conversa existente'
         }
-      };
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -199,7 +210,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = { method: 'GET', url: '/modelos' };
+      const req = mockReq({ method: 'GET', url: '/modelos' });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -210,7 +221,7 @@ describe('handleWhatsApp', () => {
 
   describe('POST /webhook', () => {
     it('deve retornar 400 se from_number ou message_text estiverem ausentes', async () => {
-      const req = { method: 'POST', url: '/webhook', body: { message_text: 'Olá' } };
+      const req = mockReq({ method: 'POST', url: '/webhook', body: { message_text: 'Olá' } });
       const res = mockRes();
       await handleWhatsApp(req, res);
       expect(res._s()).toBe(400);
@@ -226,7 +237,7 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/webhook',
         body: {
@@ -234,7 +245,7 @@ describe('handleWhatsApp', () => {
           message_text: 'Simulação cliente respondendo',
           quotation_id: '00000000-0000-0000-0000-000000000001'
         }
-      };
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -252,14 +263,14 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/webhook',
         body: {
           from_number: '12345',
           message_text: 'Simulação em conversa existente'
         }
-      };
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -272,7 +283,7 @@ describe('handleWhatsApp', () => {
       // 1. SELECT count(*) falha no seed
       vi.mocked(sql).mockRejectedValueOnce(new Error('Tabela modelos_msg_whatsapp não existe'));
 
-      const req = { method: 'GET', url: '/modelos' };
+      const req = mockReq({ method: 'GET', url: '/modelos' });
       const res = mockRes();
 
       // Executa. Não deve dar erro porque o seedDefaultModelos faz try-catch silenciando erro
@@ -281,17 +292,21 @@ describe('handleWhatsApp', () => {
     });
 
     it('deve retornar 405 para métodos não permitidos', async () => {
-      const req = { method: 'DELETE', url: '/gerar', query: {} };
+      const req = mockReq({ method: 'DELETE', url: '/gerar', query: {} });
       const res = mockRes();
       await handleWhatsApp(req, res);
       expect(res._s()).toBe(405);
     });
 
     it('deve retornar 500 em caso de erro fatal inesperado', async () => {
-      vi.mocked(validateAuth).mockImplementation(() => {
+      vi.mocked(sql).mockImplementation(() => {
         throw new Error('Falha catastrófica');
       });
-      const req = { method: 'GET', url: '/mensagens' };
+      const req = mockReq({
+        method: 'GET',
+        url: '/mensagens',
+        query: { quotation_id: '00000000-0000-0000-0000-000000000001' },
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
       expect(res._s()).toBe(500);

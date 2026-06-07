@@ -58,6 +58,25 @@ vi.mock('../_db.js', () => ({
   }),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('Módulo de Orçamentos PRO', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,6 +89,7 @@ describe('Módulo de Orçamentos PRO', () => {
         user: { id: `test-user-${Math.random()}` },
       };
     });
+
   });
 
   describe('Validação de Rate Limiting', () => {
@@ -81,10 +101,10 @@ describe('Módulo de Orçamentos PRO', () => {
         user: { id: rateLimitUser },
       });
 
-      const req = {
+      const req = mockReq({
         method: 'GET',
         url: '/api/quotations?id=some-id',
-      };
+      });
 
       let responseStatus = 200;
       let responseData: any = null;
@@ -118,11 +138,11 @@ describe('Módulo de Orçamentos PRO', () => {
 
   describe('Validação de Payloads de Entrada (POST / Quotations)', () => {
     it('deve retornar 400 ao enviar um payload vazio ou inválido', async () => {
-      const req = {
+      const req = mockReq({
         method: 'POST',
         body: null,
         url: '/api/quotations',
-      };
+      });
 
       let responseStatus = 200;
       let responseData: any = null;
@@ -146,14 +166,14 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve retornar 400 ao enviar itens sem skuEngenhariaId ou que não sejam UUID', async () => {
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/api/quotations',
         body: {
           header: { clienteId: '1' },
           itens: [{ skuEngenhariaId: 'invalid-uuid-format', quantidade: 5 }],
         },
-      };
+      });
 
       let responseStatus = 200;
       let responseData: any = null;
@@ -177,14 +197,14 @@ describe('Módulo de Orçamentos PRO', () => {
     });
 
     it('deve retornar 400 ao enviar itens com quantidade negativa ou zero', async () => {
-      const req = {
+      const req = mockReq({
         method: 'POST',
         url: '/api/quotations',
         body: {
           header: { clienteId: '1' },
           itens: [{ skuEngenhariaId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidade: -2 }],
         },
-      };
+      });
 
       let responseStatus = 200;
       let responseData: any = null;
@@ -449,11 +469,11 @@ describe('Módulo de Orçamentos PRO', () => {
         valorTotalVenda: '300.00',
       });
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
         body: { status: 'APROVADO', condicaoPagamentoId: 'cond-123' },
-      };
+      });
 
       let responseStatus = 200;
       const res = {
@@ -567,10 +587,10 @@ describe('Módulo de Orçamentos PRO', () => {
         ],
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'GET',
         url: '/api/quotations?action=explode&skuId=3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2&qtd=2',
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -590,10 +610,10 @@ describe('Módulo de Orçamentos PRO', () => {
         },
       ]);
 
-      const req = {
+      const req = mockReq({
         method: 'GET',
         url: '/api/quotations?action=search-skus&q=MDF&limit=5',
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -620,10 +640,10 @@ describe('Módulo de Orçamentos PRO', () => {
           }),
         } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'GET',
         url: '/api/quotations?page=1&limit=10',
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -648,11 +668,11 @@ describe('Módulo de Orçamentos PRO', () => {
         }),
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-bom',
         body: { bomId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidadeAjustada: 5 },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -668,11 +688,11 @@ describe('Módulo de Orçamentos PRO', () => {
         }),
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=reset-to-global-margin',
         body: { itemIds: ['3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'] },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -688,11 +708,11 @@ describe('Módulo de Orçamentos PRO', () => {
         }),
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=apply-global-margin',
         body: { margem: 35 },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -711,14 +731,14 @@ describe('Módulo de Orçamentos PRO', () => {
         }),
       });
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=bulk-update-items',
         body: {
           itemIds: ['3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2'],
           updates: { percentualPreco: 10, percentualCusto: 5 },
         },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -729,7 +749,7 @@ describe('Módulo de Orçamentos PRO', () => {
         id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       });
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-sku',
         body: {
@@ -737,7 +757,7 @@ describe('Módulo de Orçamentos PRO', () => {
           skuId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
           tipo: 'ENGENHARIA',
         },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -748,7 +768,7 @@ describe('Módulo de Orçamentos PRO', () => {
         id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       });
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=update-item',
         body: {
@@ -757,7 +777,7 @@ describe('Módulo de Orçamentos PRO', () => {
           skuTipo: 'ENGENHARIA',
           quantidade: 3,
         },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
@@ -771,22 +791,22 @@ describe('Módulo de Orçamentos PRO', () => {
         where: () => Promise.resolve([]),
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=delete-item',
         body: { itemId: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2' },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
     });
 
     it('deve retornar 400 no PUT sem ID', async () => {
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations',
         body: {},
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(400);
@@ -795,11 +815,11 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve retornar 404 no PUT com ID inexistente', async () => {
       vi.mocked(db.query.quotations.findFirst).mockResolvedValue(null);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
         body: {},
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(404);
@@ -810,20 +830,20 @@ describe('Módulo de Orçamentos PRO', () => {
         where: () => Promise.resolve([]),
       } as any);
 
-      const req = {
+      const req = mockReq({
         method: 'DELETE',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);
     });
 
     it('deve retornar 400 no DELETE sem ID', async () => {
-      const req = {
+      const req = mockReq({
         method: 'DELETE',
         url: '/api/quotations',
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(400);
@@ -865,7 +885,7 @@ describe('Módulo de Orçamentos PRO', () => {
         .fn()
         .mockResolvedValue([{ id: '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', quantidade: '2' }]);
 
-      const req = {
+      const req = mockReq({
         method: 'PUT',
         url: '/api/quotations?id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11&action=import-items',
         body: {
@@ -878,7 +898,7 @@ describe('Módulo de Orçamentos PRO', () => {
             },
           ],
         },
-      };
+      });
       const res = mockRes();
       await handleQuotations(req, res);
       expect(res._s()).toBe(200);

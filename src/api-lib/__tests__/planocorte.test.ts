@@ -42,6 +42,10 @@ vi.mock('../_db.js', () => ({
   auditLog: vi.fn(),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
 const { sql: mockSql, validateAuth } = await import('../_db.js');
 const { db } = await import('../drizzle-db.js');
 
@@ -51,6 +55,7 @@ function mockDrizzleChain(resolveValue: any = []) {
   methods.forEach(method => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
+
   chain.then = vi.fn().mockImplementation((onFulfilled) => {
     return Promise.resolve(resolveValue).then(onFulfilled);
   });
@@ -68,6 +73,21 @@ function mockRes() {
   return self;
 }
 
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('handlePlanoCorte', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -79,7 +99,7 @@ describe('handlePlanoCorte', () => {
     const listChain = mockDrizzleChain([{ id: '1', nome: 'Plano A' }]);
     vi.mocked(db.select).mockReturnValueOnce(listChain);
 
-    const req = { method: 'GET', query: {} };
+    const req = mockReq({ method: 'GET', query: {} });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -89,7 +109,7 @@ describe('handlePlanoCorte', () => {
     const listChain = mockDrizzleChain([{ id: '1', nome: 'Plano A' }]);
     vi.mocked(db.select).mockReturnValueOnce(listChain);
 
-    const req = { method: 'GET', query: { id: '1' } };
+    const req = mockReq({ method: 'GET', query: { id: '1' } });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -99,7 +119,7 @@ describe('handlePlanoCorte', () => {
     const listChain = mockDrizzleChain([]);
     vi.mocked(db.select).mockReturnValueOnce(listChain);
 
-    const req = { method: 'GET', query: { id: '999' } };
+    const req = mockReq({ method: 'GET', query: { id: '999' } });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(404);
@@ -109,7 +129,7 @@ describe('handlePlanoCorte', () => {
     const insertChain = mockDrizzleChain([{ id: '1', nome: 'Novo Plano' }]);
     vi.mocked(db.insert).mockReturnValueOnce(insertChain);
 
-    const req = { method: 'POST', query: { action: 'criar_plano' }, body: { nome: 'Novo Plano' } };
+    const req = mockReq({ method: 'POST', query: { action: 'criar_plano' }, body: { nome: 'Novo Plano' } });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(201);
@@ -117,11 +137,11 @@ describe('handlePlanoCorte', () => {
 
   it('deve verificar retalhos duplicados (POST action=verificar_retalhos_duplicados)', async () => {
     vi.mocked(mockSql).mockResolvedValueOnce([{ id: 'ret-1' }]);
-    const req = {
+    const req = mockReq({
       method: 'POST',
       query: { action: 'verificar_retalhos_duplicados' },
       body: { plano_id: '123e4567-e89b-12d3-a456-426614174000', retalhos_gerados: [{ largura_mm: 500, altura_mm: 300 }] }
-    };
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -163,7 +183,7 @@ describe('handlePlanoCorte', () => {
     const selectChain = mockDrizzleChain([{ id: 'chapa-1' }]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       query: { action: 'aprovar_producao' },
       body: {
@@ -177,7 +197,7 @@ describe('handlePlanoCorte', () => {
           { plano_corte_id: '123e4567-e89b-12d3-a456-426614174002', largura_mm: 600, altura_mm: 400, espessura_mm: 15, sku_chapa: 'CHP-MDF-15', quantidade: 1 }
         ]
       }
-    };
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -192,11 +212,11 @@ describe('handlePlanoCorte', () => {
     const updateChain = mockDrizzleChain([{ id: 'plano-1', nome: 'Plano Existente', resultado: 'OK' }]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       query: {},
       body: { plano_id: '123e4567-e89b-12d3-a456-426614174000', materiais: [], resultado: 'OK' }
-    };
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -207,11 +227,11 @@ describe('handlePlanoCorte', () => {
     const updateChain = mockDrizzleChain([{ id: '123e4567-e89b-12d3-a456-426614174000', nome: 'Plano Alterado' }]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = {
+    const req = mockReq({
       method: 'PUT',
       query: { id: '123e4567-e89b-12d3-a456-426614174000' },
       body: { nome: 'Plano Alterado' }
-    };
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -225,10 +245,10 @@ describe('handlePlanoCorte', () => {
     const updateChain = mockDrizzleChain([]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = {
+    const req = mockReq({
       method: 'DELETE',
       query: { id: '123e4567-e89b-12d3-a456-426614174000' }
-    };
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(200);
@@ -236,7 +256,7 @@ describe('handlePlanoCorte', () => {
   });
 
   it('deve retornar 405 para método não suportado', async () => {
-    const req = { method: 'OPTIONS', query: {} };
+    const req = mockReq({ method: 'OPTIONS', query: {} });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(405);
@@ -256,7 +276,7 @@ describe('handleChapas', () => {
     const selectChain = mockDrizzleChain([{ id: 'e1', sku: 'MDF-BRA-15', nome: 'MDF Branco 15mm', largura_mm: 2750, altura_mm: 1830, espessura_mm: 15, preco_unitario: '280.00', ativo: true }]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
     
-    const req = { method: 'GET', query: { q: '0007' } };
+    const req = mockReq({ method: 'GET', query: { q: '0007' } });
     const res = mockRes();
     
     await handleChapas(req, res);
@@ -277,7 +297,7 @@ describe('handleEngenhariaSKUs', () => {
     const selectChain = mockDrizzleChain([{ id: 'sku-1', codigo: 'MDF-15', nome: 'MDF 15mm' }]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
 
-    const req = { method: 'GET', query: { q: 'MDF' } };
+    const req = mockReq({ method: 'GET', query: { q: 'MDF' } });
     const res = mockRes();
     await handleEngenhariaSKUs(req, res);
     expect(res._s()).toBe(200);
@@ -288,7 +308,7 @@ describe('handleEngenhariaSKUs', () => {
     const selectChain = mockDrizzleChain([{ id: 'sku-1', codigo: 'MDF-15', nome: 'MDF 15mm' }]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
 
-    const req = { method: 'GET', query: {} };
+    const req = mockReq({ method: 'GET', query: {} });
     const res = mockRes();
     await handleEngenhariaSKUs(req, res);
     expect(res._s()).toBe(200);
@@ -304,7 +324,7 @@ describe('handleImportarDesenho', () => {
   });
 
   it('deve retornar 400 se nenhum arquivo base64 for enviado', async () => {
-    const req = { method: 'POST', body: {} };
+    const req = mockReq({ method: 'POST', body: {} });
     const res = mockRes();
     await handleImportarDesenho(req, res);
     expect(res._s()).toBe(400);
@@ -335,10 +355,10 @@ Base de Armário
 ENDSEC
     `;
     const dxfBase64 = Buffer.from(dxfContent).toString('base64');
-    const req = {
+    const req = mockReq({
       method: 'POST',
       body: { fileBase64: dxfBase64, fileName: 'projeto.dxf' }
-    };
+    });
     const res = mockRes();
     await handleImportarDesenho(req, res);
     expect(res._s()).toBe(200);
@@ -351,10 +371,10 @@ ENDSEC
 
   it('deve extrair peças de um arquivo PDF simulado', async () => {
     const pdfBase64 = Buffer.from('PDF_DUMMY_DATA').toString('base64');
-    const req = {
+    const req = mockReq({
       method: 'POST',
       body: { fileBase64: pdfBase64, fileName: 'projeto.pdf' }
-    };
+    });
     const res = mockRes();
     await handleImportarDesenho(req, res);
     expect(res._s()).toBe(200);
@@ -381,10 +401,10 @@ Porta Armário
 ENDSEC
     `;
     const dxfBase64 = Buffer.from(dxfContent).toString('base64');
-    const req = {
+    const req = mockReq({
       method: 'POST',
       body: { fileBase64: dxfBase64, fileName: 'projeto_reverso.dxf' }
-    };
+    });
     const res = mockRes();
     await handleImportarDesenho(req, res);
     expect(res._s()).toBe(200);
@@ -394,10 +414,10 @@ ENDSEC
   });
 
   it('deve retornar 500 caso ocorra erro ao processar o desenho', async () => {
-    const req = {
+    const req = mockReq({
       method: 'POST',
       body: { fileBase64: Buffer.from('CORRUPT_DATA').toString('base64'), fileName: 'projeto.pdf' }
-    };
+    });
     const res = mockRes();
     await handleImportarDesenho(req, res);
     expect(res._s()).toBe(500);

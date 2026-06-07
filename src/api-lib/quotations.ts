@@ -2,8 +2,9 @@ import { db } from './drizzle-db.js';
 import { quotations, quotationItems, quotationBom } from '../db/schema/quotations.js';
 import { skuEngenharia, skuComponente } from '../db/schema/skus.js';
 import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
-import { auditLog, validateAuth, sql } from './_db.js';
+import { auditLog, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 // Classe de erro customizada para validação
 export class ValidationError extends Error {
@@ -98,7 +99,7 @@ interface ImportItemPayload {
  * Explode BOM com validação prévia e cache
  * @throws {Error} Se SKU não existir ou não tiver componentes
  */
-export async function explodirBOM(skuEngId: string, qtdItem: number = 1, tenantId: string = '00000000-0000-0000-0000-000000000000') {
+export async function explodirBOM(skuEngId: string, qtdItem: number = 1, tenantId: string) {
   if (!validators.isValidUUID(skuEngId)) {
     throw new Error(`SKU inválido: ${skuEngId}`);
   }
@@ -174,7 +175,7 @@ export async function explodirBOM(skuEngId: string, qtdItem: number = 1, tenantI
  * Recalcula TODOS os valores do orçamento em UMA transação atômica
  * PERFORMANCE: Reduz de N+1 queries para 1 query em batch
  */
-export async function recalcularOrcamento(orcId: string, tenantId: string = '00000000-0000-0000-0000-000000000000') {
+export async function recalcularOrcamento(orcId: string, tenantId: string) {
   if (!validators.isValidUUID(orcId)) {
     throw new Error(`ID de orçamento inválido: ${orcId}`);
   }
@@ -435,10 +436,9 @@ export function _resetRateLimit() {
   rateLimitMap.clear();
 }
 
-export async function handleQuotations(req: any, res: any) {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+const handleQuotationsCore: TenantHandler = async (req, res) => {
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     // Rate Limiting por usuário
     const userId = user?.id || 'anonymous';
@@ -1492,4 +1492,6 @@ export async function handleQuotations(req: any, res: any) {
         }
         return res.status(500).json({ success: false, error: err.message });
     }
-}
+};
+
+export const handleQuotations = withTenant(handleQuotationsCore);

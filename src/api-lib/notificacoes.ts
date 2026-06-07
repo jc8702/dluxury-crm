@@ -1,16 +1,16 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { db } from './drizzle-db.js';
 import { quotations, clientes } from '../db/schema/index.js';
 import { eq, and, lt } from 'drizzle-orm';
 
-export async function handleNotificacoes(req: any, res: any) {
+const handleNotificacoesCore: TenantHandler = async (req, res) => {
   try {
     const { method } = req;
     const { id } = req.query;
 
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     if (method === 'GET') {
       if (req.url.includes('contar')) {
@@ -49,7 +49,9 @@ export async function handleNotificacoes(req: any, res: any) {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleNotificacoes = withTenant(handleNotificacoesCore);
 
 export async function gerarNotificacoesAutomaticas(tenantId: string) {
   let criadas = 0;
@@ -108,7 +110,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
   // 3. Orçamentos sem resposta (7 dias)
   try {
     const limitDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const quotations = await db
+    const orcamentosPendentes = await db
       .select({
         id: quotations.id,
         numero: quotations.numeroOrcamento,
@@ -123,7 +125,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
           lt(quotations.updatedAt, limitDate),
         ),
       );
-    for (const o of quotations) {
+    for (const o of orcamentosPendentes) {
       const exists = await sql`
         SELECT id FROM notificacoes 
         WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id} AND tenant_id = ${tenantId}

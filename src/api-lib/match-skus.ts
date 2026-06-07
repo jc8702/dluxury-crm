@@ -1,18 +1,16 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/skus.js';
 import { ilike, or, eq, and, sql } from 'drizzle-orm';
-import { validateAuth } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 /**
  * Endpoint para buscar SKUs no banco baseado nos dados do CSV/PDF ou busca manual
  */
-export async function handleMatchSKUs(req: any, res: any) {
+const handleMatchSKUsCore: TenantHandler = async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
 
     // --- AÇÃO DE BUSCA (Autocomplete) ---
     if (req.method === 'GET') {
@@ -117,4 +115,6 @@ export async function handleMatchSKUs(req: any, res: any) {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleMatchSKUs = withTenant(handleMatchSKUsCore);

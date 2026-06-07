@@ -1,4 +1,5 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { z } from 'zod';
 
 const TituloSchema = z.object({
@@ -76,11 +77,10 @@ async function validateClassePermiteLancamento(tenantId: string, id: string) {
   return true;
 }
 
-export async function handleFinanceiro(req: any, res: any) {
+const handleFinanceiroCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     // Garantir infraestrutura do banco antes de processar
     await bootstrapFinanceiro();
@@ -143,7 +143,9 @@ export async function handleFinanceiro(req: any, res: any) {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleFinanceiro = withTenant(handleFinanceiroCore);
 
 async function handleClasses(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {

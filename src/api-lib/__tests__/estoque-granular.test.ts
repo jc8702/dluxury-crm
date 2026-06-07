@@ -6,6 +6,10 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
 }));
 
+vi.mock('../middleware/tenantMiddleware.js', () => ({
+  withTenant: (handler: any) => handler,
+}));
+
 vi.mock('../drizzle-db.js', () => ({
   db: {
     select: vi.fn(),
@@ -22,6 +26,7 @@ function mockDrizzleChain(resolveValue: any = []) {
   methods.forEach(method => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
+
   chain.then = vi.fn().mockImplementation((onFulfilled) => {
     return Promise.resolve(resolveValue).then(onFulfilled);
   });
@@ -40,6 +45,21 @@ function mockRes() {
   return self;
 }
 
+const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+
+function mockReq(overrides: any = {}): any {
+  return {
+    method: 'GET',
+    headers: {},
+    body: {},
+    query: {},
+    tenantId: TEST_TENANT_ID,
+    tenantUser: TEST_USER,
+    ...overrides,
+  };
+}
+
 describe('handleEstoqueGranular', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,12 +70,8 @@ describe('handleEstoqueGranular', () => {
     });
   });
 
-  it('deve retornar 401 se não estiver autenticado', async () => {
-    vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token inválido' });
-    const req = { method: 'GET', url: '/items', query: {}, body: {} };
-    const res = mockRes();
-    await handleEstoqueGranular(req, res);
-    expect(res._s()).toBe(401);
+  it.skip('deve retornar 401 se não estiver autenticado', async () => {
+    // Auth handled by withTenant HOF (see tenantMiddleware.test.ts).
   });
 
   it('deve listar itens de estoque granular (GET /items)', async () => {
@@ -65,7 +81,7 @@ describe('handleEstoqueGranular', () => {
       ];
     });
 
-    const req = { method: 'GET', url: '/items', query: { filtro: 'todos' }, body: {} };
+    const req = mockReq({ method: 'GET', url: '/items', query: { filtro: 'todos' }, body: {} });
     const res = mockRes();
     await handleEstoqueGranular(req, res);
 
@@ -80,7 +96,7 @@ describe('handleEstoqueGranular', () => {
       { id: 1, sku_codigo: 'MDF-BRA-18', tipo_alerta: 'minimo_atingido', quantidade_atual: 8, limite_alerta: 15, severidade: 'alerta', descricao: 'MDF BRANCO 18MM' }
     ] as any);
 
-    const req = { method: 'GET', url: '/alertas', query: {}, body: {} };
+    const req = mockReq({ method: 'GET', url: '/alertas', query: {}, body: {} });
     const res = mockRes();
     await handleEstoqueGranular(req, res);
 
@@ -110,7 +126,7 @@ describe('handleEstoqueGranular', () => {
       return [];
     });
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       url: '/registrar-movimento',
       query: {},
@@ -121,7 +137,7 @@ describe('handleEstoqueGranular', () => {
         status_alvo: 'disponivel',
         motivo: 'Recebimento de nota fiscal de compra'
       }
-    };
+    });
     const res = mockRes();
     await handleEstoqueGranular(req, res);
 
@@ -153,12 +169,12 @@ describe('handleEstoqueGranular', () => {
       return [];
     });
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       url: '/finalizar-op',
       query: {},
       body: { operacao_prod_id: 'op-1' }
-    };
+    });
     const res = mockRes();
     await handleEstoqueGranular(req, res);
 
@@ -190,7 +206,7 @@ describe('handleEstoqueGranular', () => {
       return [];
     });
 
-    const req = {
+    const req = mockReq({
       method: 'POST',
       url: '/sku-matching',
       query: {},
@@ -201,7 +217,7 @@ describe('handleEstoqueGranular', () => {
           { sku_promob: 'MDF-BRANCO-15', descricao: 'MDF BRANQUINHO 15MM', quantidade: 2 }
         ]
       }
-    };
+    });
     const res = mockRes();
     await handleEstoqueGranular(req, res);
 

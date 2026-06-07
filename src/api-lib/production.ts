@@ -1,28 +1,26 @@
-import { sql, auditLog, validateAuth } from './_db.js';
+import { sql, auditLog } from './_db.js';
 import { calcularPrevisaoEntrega } from './_productionForecasting.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 /**
- * MÓDULO MES (Manufacturing Execution System) - ARIA 4.0
- * Gestão de Produção em Tempo Real
+ * M�DULO MES (Manufacturing Execution System) - ARIA 4.0
+ * Gest�o de Produ��o em Tempo Real
  */
 
 // --- 1. ROTAS DE CONTROLE ---
 
-export async function handleProduction(req: any, res: any) {
+const handleProductionCore: TenantHandler = async (req, res) => {
   const method = req.method;
   const url = req.url || '';
-  
-  // Extração robusta de ID/Sub-rota (suporta ?id=X ou /api/production/metrics)
+
+  // Extra��o robusta de ID/Sub-rota (suporta ?id=X ou /api/production/metrics)
   let { id } = req.query || {};
   if (!id && url.includes('/production/')) {
     id = url.split('/production/')[1].split('?')[0];
   }
 
-  const auth = validateAuth(req);
-  if (!auth.authorized) {
-    return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
-  }
-  const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
+  const tenantId = req.tenantId;
+  const user = req.tenantUser;
 
   try {
     // Garantia de migração (v6 hotfix)
@@ -37,10 +35,10 @@ export async function handleProduction(req: any, res: any) {
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res, tenantId);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res, tenantId);
-    if (method === 'POST') return await createOP(req, res, tenantId);
-    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res, tenantId);
+    if (method === 'POST') return await createOP(req, res, tenantId, user);
+    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res, tenantId, user);
     if (method === 'PATCH') return await updateOPStatus(req, res, tenantId);
-    if (method === 'DELETE') return await deleteOP(req, res, tenantId);
+    if (method === 'DELETE') return await deleteOP(req, res, tenantId, user);
     
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
@@ -89,7 +87,7 @@ async function listOPs(res: any, tenantId: string) {
 /**
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
-async function createOP(req: any, res: any, tenantId: string) {
+async function createOP(req: any, res: any, tenantId: string, user: any) {
   const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, quotation_id } = req.body;
 
   /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, quotation_id }); */
@@ -116,7 +114,6 @@ async function createOP(req: any, res: any, tenantId: string) {
       RETURNING *
     `;
 
-    const { user } = validateAuth(req);
     await auditLog('ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
 
     /* console.log('[CREATE_OP] Created:', novaOP); */
@@ -129,12 +126,14 @@ async function createOP(req: any, res: any, tenantId: string) {
     console.error('[CREATE_OP] Error:', err.message);
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleProduction = withTenant(handleProductionCore);
 
 /**
  * Atualiza detalhes da OP (checklist, produto, pecas)
  */
-async function updateOPDetails(req: any, res: any, tenantId: string) {
+async function updateOPDetails(req: any, res: any, tenantId: string, user: any) {
   const { op_id, produto, pecas, checklist, metadata } = req.body;
 
   // Merge update: update fields that are provided. Keep existing otherwise.
@@ -157,7 +156,6 @@ async function updateOPDetails(req: any, res: any, tenantId: string) {
     RETURNING *
   `;
 
-  const { user } = validateAuth(req);
   await auditLog('ordens_producao', atualizada.id, 'UPDATE_DETAILS', user?.id, existing, atualizada);
 
   // If changed peças, recalcula previsões
@@ -173,8 +171,7 @@ async function updateOPDetails(req: any, res: any, tenantId: string) {
 /**
  * Exclui uma OP e remove o card do kanban se existir
  */
-async function deleteOP(req: any, res: any, tenantId: string) {
-  const { user } = validateAuth(req);
+async function deleteOP(req: any, res: any, tenantId: string, user: any) {
   const { op_id } = req.query || req.body || {};
   if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
 

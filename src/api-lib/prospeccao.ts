@@ -1,13 +1,12 @@
-import { sql, validateAuth, auditLog } from './_db.js';
+import { sql, auditLog } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 // ─── PROSPECÇÕES CRUD ────────────────────────────────────────────────────────
 
-export async function handleProspeccoes(req: any, res: any) {
+const handleProspeccoesCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     if (req.method === 'GET') {
       const { status, origem, temperatura, search, page = '1', limit = '30' } = req.query;
@@ -98,12 +97,10 @@ export async function handleProspeccoes(req: any, res: any) {
 
 // ─── PROSPECÇÃO INDIVIDUAL (GET / PATCH / DELETE) ────────────────────────────
 
-export async function handleProspeccaoById(req: any, res: any) {
+const handleProspeccaoByIdCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const { id } = req.query;
 
     if (req.method === 'GET') {
@@ -191,12 +188,10 @@ export async function handleProspeccaoById(req: any, res: any) {
 
 // ─── INTERAÇÕES ──────────────────────────────────────────────────────────────
 
-export async function handleInteracoes(req: any, res: any) {
+const handleInteracoesCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
     const { prospeccao_id } = req.query;
 
     if (req.method === 'GET') {
@@ -237,12 +232,10 @@ export async function handleInteracoes(req: any, res: any) {
 
 // ─── MÉTRICAS / FUNIL ────────────────────────────────────────────────────────
 
-export async function handleProspeccaoMetrics(req: any, res: any) {
+const handleProspeccaoMetricsCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error, user } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
-
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId;
+    const user = req.tenantUser;
 
     const [funil, taxas, origens] = await Promise.all([
       sql`
@@ -297,4 +290,9 @@ export async function handleProspeccaoMetrics(req: any, res: any) {
     console.error('[ProspeccaoMetrics] Erro:', err);
     return res.status(500).json({ success: false, error: err.message || 'Erro interno' });
   }
-}
+};
+
+export const handleProspeccoes = withTenant(handleProspeccoesCore);
+export const handleProspeccaoById = withTenant(handleProspeccaoByIdCore);
+export const handleInteracoes = withTenant(handleInteracoesCore);
+export const handleProspeccaoMetrics = withTenant(handleProspeccaoMetricsCore);

@@ -2,7 +2,8 @@ import { db } from './drizzle-db.js';
 import { planosDeCorte, erpChapas, retalhosEstoque, movimentacoesEstoque } from '../db/schema/planos-de-corte.js';
 import { skuEngenharia } from '../db/schema/skus.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
-import { auditLog, sql as rawSql, validateAuth } from './_db.js';
+import { auditLog, sql as rawSql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 function safeUuid(val: any): string | null {
   if (!val || typeof val !== 'string') return null;
@@ -26,10 +27,9 @@ async function proximoSkuRetalho(tenantId: string): Promise<string> {
  */
 
 // --- 1. Handler Principal (CRUD de Planos) ---
-export async function handlePlanoCorte(req: any, res: any) {
-  const { authorized, error, user } = validateAuth(req);
-  if (!authorized) return res.status(401).json({ success: false, error });
-  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+const handlePlanoCorteCore: TenantHandler = async (req, res) => {
+  const tenantId = req.tenantId;
+  const user = req.tenantUser;
 
   const method = req.method;
   const { id } = req.query || {};
@@ -346,10 +346,9 @@ export async function handlePlanoCorte(req: any, res: any) {
 }
 
 // --- 2. Handler de Chapas (Estoque) ---
-export async function handleChapas(req: any, res: any) {
-  const { authorized, error, user } = validateAuth(req);
-  if (!authorized) return res.status(401).json({ success: false, error });
-  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+const handleChapasCore: TenantHandler = async (req, res) => {
+  const tenantId = req.tenantId;
+  const user = req.tenantUser;
 
   const { q } = req.query || {};
   try {
@@ -446,10 +445,9 @@ export async function handleChapas(req: any, res: any) {
 }
 
 // --- 3. Handler de Engenharia (Integrado com Orçamentos Pro) ---
-export async function handleEngenhariaSKUs(req: any, res: any) {
-  const { authorized, error, user } = validateAuth(req);
-  if (!authorized) return res.status(401).json({ success: false, error });
-  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+const handleEngenhariaSKUsCore: TenantHandler = async (req, res) => {
+  const tenantId = req.tenantId;
+  const user = req.tenantUser;
 
   const { q } = req.query || {};
   try {
@@ -475,11 +473,9 @@ export async function handleEngenhariaSKUs(req: any, res: any) {
 /**
  * IMPORTAÇÃO DE DESENHO TÉCNICO (FASE 1 - EXTRAÇÃO DE TEXTO)
  */
-export async function handleImportarDesenho(req: any, res: any) {
+const handleImportarDesenhoCore: TenantHandler = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
-  const { authorized, error } = validateAuth(req);
-  if (!authorized) return res.status(401).json({ success: false, error });
-  
+
   try {
     const { fileBase64 } = req.body;
     if (!fileBase64) return res.status(400).json({ success: false, error: 'ARQUIVO NÃO FORNECIDO' });
@@ -660,7 +656,7 @@ export async function handleImportarDesenho(req: any, res: any) {
       });
     
     return res.status(200).json({ 
-      success: true, 
+      success: true,
       data: pecasValidas,
       count: pecasValidas.length,
       debug: { textLength: text.length, rawCount: pecas.length }
@@ -669,4 +665,9 @@ export async function handleImportarDesenho(req: any, res: any) {
     console.error('IMPORT_DESENHO_ERROR:', err);
     return res.status(500).json({ success: false, error: 'ERRO AO PROCESSAR PDF: ' + err.message });
   }
-}
+};
+
+export const handlePlanoCorte = withTenant(handlePlanoCorteCore);
+export const handleChapas = withTenant(handleChapasCore);
+export const handleEngenhariaSKUs = withTenant(handleEngenhariaSKUsCore);
+export const handleImportarDesenho = withTenant(handleImportarDesenhoCore);

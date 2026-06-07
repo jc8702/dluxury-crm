@@ -1,7 +1,7 @@
 import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/skus.js';
 import { ilike, or } from 'drizzle-orm';
-import { validateAuth } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 /**
  * SERVIÇO DE IMPORTAÇÃO DE PROJETOS - BACKEND (Vercel Serverless)
@@ -49,13 +49,11 @@ export class ImportadorProjeto {
     }
 }
 
-export async function handleImportarProjeto(req: any, res: any) {
-    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Método não permitido' });
+const handleImportarProjetoCore: TenantHandler = async (req, res) => {
+    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
 
     try {
-        const { authorized, error, user } = validateAuth(req);
-        if (!authorized) return res.status(401).json({ success: false, error });
-        const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+        const tenantId = req.tenantId;
 
         const { jsonData } = req.body;
         
@@ -76,9 +74,11 @@ export async function handleImportarProjeto(req: any, res: any) {
         });
     } catch (err: any) {
         console.error('[API IMPORTADOR] Falha:', err.message);
-        return res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({
+            success: false,
             error: err.message || 'Erro interno ao processar projeto'
         });
     }
-}
+};
+
+export const handleImportarProjeto = withTenant(handleImportarProjetoCore);
