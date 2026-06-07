@@ -214,3 +214,50 @@ Implementar trilha de auditoria LGPD com `auditLogService.ts` (logAudit, getAudi
 - Double-logging: `auditMiddleware` + `auditLog()` explícito nos handlers logam 2x. Remover chamadas explícitas em PROMPT futuro.
 - Testes específicos para `auditLogService` e `auditMiddleware` (fora do escopo do PROMPT 04).
 - Agendador de limpeza (cron job) para apagar registros com `retention_expires_at < NOW()`.
+
+## 05 — RATE LIMITING — 07/06/2026
+
+### Objetivo
+
+Implementar proteção contra brute force (login) e DoS (API geral, search, export) com `rate-limiter-flexible` in-memory store.
+
+### Arquivos criados
+
+- `src/api-lib/config/rateLimits.ts` — configuração centralizada dos limites.
+- `src/api-lib/middleware/rateLimiter.ts` — `applyRateLimit()`, `globalRateLimitMiddleware()`, `loginRateLimit()`.
+
+### Arquivos alterados
+
+- `src/api-lib/auth.ts:1,16` — import + `await loginRateLimit()` no início de `handleLogin`.
+- `api/index.ts:156-159` — `globalRateLimitMiddleware()` antes do audit middleware.
+- `src/api-lib/__tests__/auth.test.ts` — mockRes agora tem `setHeader`.
+- `package.json` — adicionado `rate-limiter-flexible`, `@upstash/redis`.
+
+### Limites
+
+- Login: 5 tentativas / 10 min (bloqueio 15 min)
+- API geral: 1000 req / min por tenant
+- Search: 10 / min por tenant
+- Export: 5 / hora por tenant
+- Password reset: 3 / hora por IP
+
+### Adaptações do prompt
+
+- `req.path` → `req.url` (Vercel raw req não tem `.path` do Express)
+- `req.ip` → `getClientIP(req)` helper (Vercel usa x-forwarded-for)
+- `app.use('/api', globalRateLimitMiddleware, ...)` → chamada direta no dispatcher
+
+### Testes
+
+- `npx tsc --noEmit` — 0 erros.
+- `npx vitest run` — 707 passed, 23 skipped (idêntico ao baseline).
+- `npm run build` — Vite build bem-sucedido.
+
+### Nota
+
+In-memory (`RateLimiterMemory`) é compatível com Vercel serverless sem estado persistente, mas cada cold start reinicia o contador. Para escala: migrar para `RateLimiterRedis` com Upstash.
+
+### Pendências
+
+- Implementar `RateLimiterRedis` com Upstash em produção.
+- Testes específicos para cada limiter (fora do escopo do PROMPT 05).
