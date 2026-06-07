@@ -523,6 +523,17 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ success: true, message: 'Domínio atualizado' });
     }
 
+    if (cleanUrl.startsWith('/api/features/check')) {
+      const { validateFeatureAccess } = await import('../src/api-lib/middleware/featureGate.js');
+      const auth = validateAuth(req);
+      if (!auth.authorized || !auth.user) {
+        return res.status(401).json({ success: false, error: 'Não autenticado' });
+      }
+      const feature = req.query.feature as string;
+      const result = await validateFeatureAccess(auth.user.tenantId, feature as any);
+      return res.status(200).json(result);
+    }
+
     if (cleanUrl.startsWith('/api/ping')) {
       return res.status(200).json({ success: true, message: 'pong' });
     }

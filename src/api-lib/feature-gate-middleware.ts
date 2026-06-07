@@ -12,7 +12,7 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
 
   // Ignorar rotas de infraestrutura básica, login, signup, checkout e webhooks
   if (
-    cleanUrl.startsWith('/api/auth') && req.query.action !== 'register' ||
+    (cleanUrl.startsWith('/api/auth') && req.query.action !== 'register') ||
     cleanUrl.startsWith('/api/signup') ||
     cleanUrl.startsWith('/api/checkout') ||
     cleanUrl.startsWith('/api/init-db') ||
@@ -41,7 +41,7 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
       WHERE id = ${tenantId}::uuid
       LIMIT 1
     `;
-    
+
     // Se não encontrar o tenant, assume plano básico
     const planoTier = (tenantRes[0]?.plano_tier || 'basic') as PlanTier;
 
@@ -53,32 +53,42 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
     } else if (cleanUrl.startsWith('/api/simulations')) {
       requiredFeature = 'simulador_cnc';
     } else if (
-      cleanUrl.startsWith('/api/plano-corte') || 
-      cleanUrl.startsWith('/api/chapas') || 
+      cleanUrl.startsWith('/api/plano-corte') ||
+      cleanUrl.startsWith('/api/chapas') ||
       cleanUrl.startsWith('/api/retalhos') ||
       cleanUrl.startsWith('/api/aprovacao')
     ) {
       requiredFeature = 'plano_corte';
     } else if (
-      cleanUrl.startsWith('/api/financeiro') || 
+      cleanUrl.startsWith('/api/financeiro') ||
       cleanUrl.startsWith('/api/condicoes-pagamento') ||
       cleanUrl.startsWith('/api/billings')
     ) {
       requiredFeature = 'financeiro';
+    } else if (cleanUrl.startsWith('/api/whatsapp')) {
+      requiredFeature = 'whatsapp';
+    } else if (
+      cleanUrl.startsWith('/api/orcamentos/export-xml') ||
+      cleanUrl.startsWith('/api/export-xml')
+    ) {
+      requiredFeature = 'export-xml';
+    } else if (cleanUrl.startsWith('/api/features')) {
+      requiredFeature = null; // always allowed (self-check)
     }
 
     // 3. Validação do Feature Gate
     if (requiredFeature && !hasFeature(planoTier, requiredFeature)) {
       res.status(403).json({
         success: false,
-        error: `Acesso negado. A funcionalidade '${requiredFeature}' não está inclusa no seu plano comercial atual (${planoTier.toUpperCase()}). Faça um upgrade para acessar.`
+        error: `Acesso negado. A funcionalidade '${requiredFeature}' não está inclusa no seu plano comercial atual (${planoTier.toUpperCase()}). Faça um upgrade para acessar.`,
       });
       return false;
     }
 
     // 4. Validação de Limites de Usuários no Cadastro
-    const isUserCreation = (cleanUrl.startsWith('/api/auth') && req.query.action === 'register') || 
-                          (cleanUrl.startsWith('/api/users') && method === 'POST');
+    const isUserCreation =
+      (cleanUrl.startsWith('/api/auth') && req.query.action === 'register') ||
+      (cleanUrl.startsWith('/api/users') && method === 'POST');
 
     if (isUserCreation) {
       const countRes = await sql`
@@ -92,7 +102,7 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
       if (currentUsers >= limit) {
         res.status(403).json({
           success: false,
-          error: `Limite de usuários excedido. Seu plano atual (${planoTier.toUpperCase()}) permite no máximo ${limit} usuários.`
+          error: `Limite de usuários excedido. Seu plano atual (${planoTier.toUpperCase()}) permite no máximo ${limit} usuários.`,
         });
         return false;
       }

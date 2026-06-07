@@ -1,9 +1,50 @@
 export type PlanTier = 'basic' | 'pro' | 'enterprise';
 
+export type Feature =
+  | 'crm'
+  | 'quotations'
+  | 'financeiro'
+  | 'ia'
+  | 'plano_corte'
+  | 'estoque'
+  | 'simulador_cnc'
+  | 'simulator'
+  | 'whatsapp'
+  | 'export-xml'
+  | 'api-integration'
+  | 'advanced-reports'
+  | 'digital-signature';
+
 export const FEATURES: Record<PlanTier, string[]> = {
   basic: ['crm', 'quotations'],
-  pro: ['crm', 'quotations', 'financeiro', 'ia', 'plano_corte', 'estoque'],
-  enterprise: ['crm', 'quotations', 'financeiro', 'ia', 'plano_corte', 'estoque', 'simulador_cnc'],
+  pro: [
+    'crm',
+    'quotations',
+    'financeiro',
+    'ia',
+    'plano_corte',
+    'estoque',
+    'simulador_cnc',
+    'simulator',
+    'whatsapp',
+    'advanced-reports',
+    'digital-signature',
+  ],
+  enterprise: [
+    'crm',
+    'quotations',
+    'financeiro',
+    'ia',
+    'plano_corte',
+    'estoque',
+    'simulador_cnc',
+    'simulator',
+    'whatsapp',
+    'advanced-reports',
+    'digital-signature',
+    'export-xml',
+    'api-integration',
+  ],
 };
 
 export const PLAN_LIMITS: Record<PlanTier, { maxUsers: number }> = {
