@@ -23,6 +23,7 @@ function makeBearer(payload: any) {
 function mockRes() {
   let sc = 200,
     jd: any = null;
+  const headers: Record<string, string> = {};
   const self: any = {
     status: vi.fn((c: number) => {
       sc = c;
@@ -30,6 +31,10 @@ function mockRes() {
     }),
     json: vi.fn((d: any) => {
       jd = d;
+      return self;
+    }),
+    setHeader: vi.fn((name: string, value: string) => {
+      headers[name] = value;
       return self;
     }),
     end: vi.fn(() => self),

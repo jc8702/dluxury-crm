@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { withTenantSql } from './db/withTenant.js';
+import { loginRateLimit } from './middleware/rateLimiter.js';
 
 const JWT_SECRET: string = process.env.APP_JWT_SECRET ?? '';
 if (!JWT_SECRET) {
@@ -14,6 +15,7 @@ if (!JWT_SECRET) {
 // =====================================================================
 
 async function handleLogin(req: any, res: any): Promise<any> {
+  await loginRateLimit(req, res, () => {});
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ success: false, error: 'Email e senha são obrigatórios' });
