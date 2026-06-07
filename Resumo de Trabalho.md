@@ -457,3 +457,30 @@ O feature gate centralizado (`feature-gate-middleware.ts`) já existia e fazia o
 - [x] `npx tsc --noEmit` — 0 erros
 - [x] `npm run build` — sucesso
 - Commit: `29beee7` — "Feat: Structured JSON logging (Vercel-compatible, replaces console.log)"
+
+---
+
+## 12 — E2E TESTS (PLAYWRIGHT) — 2026-06-07
+
+### Arquivos criados
+
+- `playwright.config.ts` — config (chromium, 30s timeout, trace on retry)
+- `tests/e2e/auth.spec.ts` — 3 testes: login, erro credenciais, logout
+- `tests/e2e/quotation.spec.ts` — 2 testes: navegação, carregamento sem erro
+- `tests/e2e/tenant-isolation.spec.ts` — 3 testes: sem token, token inválido, UUID fake
+- `.github/workflows/e2e.yml` — CI no GitHub Actions (push/PR para main)
+
+### Scripts adicionados
+
+- `npm run test:e2e` — playwright test (headless)
+- `npm run test:e2e:ui` — playwright test --ui (modo interativo)
+
+### Comportamento do CI
+
+- Build → dev server → wait-on → playwright test → upload report se falhar
+- Secrets necessários: DATABASE_URL, APP_JWT_SECRET
+
+### Validação
+
+- [x] `npm run build` — sucesso
+- Commit: `b3ff26e` — "Feat: E2E tests (Playwright) — auth, quotations, tenant isolation"
