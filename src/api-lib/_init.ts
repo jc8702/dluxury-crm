@@ -1,6 +1,7 @@
 import { sql } from './_db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { config } from './config/validateEnv.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 
 export async function runInitDB() {
@@ -288,14 +289,14 @@ export async function runInitDB() {
       const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || crypto.randomUUID();
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(defaultPassword, salt);
-      await sql`INSERT INTO users (name, email, password_hash, role, tenant_id) VALUES ('ADMINISTRADOR', 'admin@dluxury.com', ${hash}, 'admin', ${defaultTenantId})`;
+      await sql`INSERT INTO users (name, email, password_hash, role, tenant_id) VALUES ('ADMINISTRADOR', ${config.ADMIN_DEFAULT_EMAIL}, ${hash}, 'admin', ${defaultTenantId})`;
       console.warn(
-        `[SEED] Admin padrao criado com email 'admin@dluxury.com' e senha: ${defaultPassword}`,
+        `[SEED] Admin padrao criado com email '${config.ADMIN_DEFAULT_EMAIL}' e senha: ${defaultPassword}`,
       );
     } else {
       // Idempotente: garante que o admin existente tenha tenant_id (corrige DBs legados)
       await safeSql(
-        sql`UPDATE users SET tenant_id = ${defaultTenantId} WHERE email = 'admin@dluxury.com' AND tenant_id IS NULL`,
+        sql`UPDATE users SET tenant_id = ${defaultTenantId} WHERE email = ${config.ADMIN_DEFAULT_EMAIL} AND tenant_id IS NULL`,
       );
     }
   } catch (err: any) {

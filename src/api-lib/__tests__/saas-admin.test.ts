@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleSaaSAdmin } from '../saas-admin.js';
 
+vi.mock('../config/validateEnv.js', () => ({
+  config: {
+    DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+    APP_JWT_SECRET: 'a'.repeat(32),
+    ADMIN_DEFAULT_EMAIL: 'admin@dluxury.com',
+    NODE_ENV: 'test',
+  },
+}));
+
 vi.mock('../_db.js', () => ({
   sql: vi.fn(),
   validateAuth: vi.fn(),
@@ -9,12 +18,24 @@ vi.mock('../_db.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null, ended = false;
+  let sc = 200,
+    jd: any = null,
+    ended = false;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => { ended = true; return self; }),
-    _s: () => sc, _d: () => jd,
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
+    end: vi.fn(() => {
+      ended = true;
+      return self;
+    }),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
@@ -25,7 +46,11 @@ describe('SaaS Admin API', () => {
   });
 
   it('deve retornar 401 se usuário não autenticado', async () => {
-    vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token inválido' });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: false,
+      user: null,
+      error: 'Token inválido',
+    });
     const req = { method: 'GET', url: '/api/saas-admin/tenants' };
     const res = mockRes();
 
@@ -37,8 +62,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 403 se usuário autenticado mas não é do tenant master nem admin global', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'u-1', email: 'regular@tenant.com', role: 'admin', tenantId: 'some-other-tenant-uuid' },
-      error: null
+      user: {
+        id: 'u-1',
+        email: 'regular@tenant.com',
+        role: 'admin',
+        tenantId: 'some-other-tenant-uuid',
+      },
+      error: null,
     });
     const req = { method: 'GET', url: '/api/saas-admin/tenants' };
     const res = mockRes();
@@ -51,8 +81,13 @@ describe('SaaS Admin API', () => {
   it('deve permitir listar tenants se for o master tenant admin', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql).mockResolvedValue([
       {
@@ -68,8 +103,8 @@ describe('SaaS Admin API', () => {
         subscription_plano: 'pro',
         subscription_valor: '197.00',
         dia_vencimento: 5,
-        current_period_end: new Date().toISOString()
-      }
+        current_period_end: new Date().toISOString(),
+      },
     ]);
 
     const req = { method: 'GET', url: '/api/saas-admin/tenants' };
@@ -86,8 +121,13 @@ describe('SaaS Admin API', () => {
   it('deve permitir atualizar dados do tenant e assinatura via PATCH', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql)
       .mockResolvedValueOnce([{ id: 'tenant-uuid' }]) // Verifica se o tenant existe
@@ -103,8 +143,8 @@ describe('SaaS Admin API', () => {
         planoTier: 'enterprise',
         status: 'ativo',
         diaVencimento: 10,
-        valor: 397.00
-      }
+        valor: 397.0,
+      },
     };
     const res = mockRes();
 
@@ -117,8 +157,13 @@ describe('SaaS Admin API', () => {
   it('deve cadastrar novo usuário subordinado no tenant de destino', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql)
       .mockResolvedValueOnce([{ id: 'target-tenant-uuid' }]) // check tenant
@@ -133,8 +178,8 @@ describe('SaaS Admin API', () => {
         name: 'Novo Colaborador',
         email: 'colab@target.com',
         role: 'vendedor',
-        password: 'securePassword123'
-      }
+        password: 'securePassword123',
+      },
     };
     const res = mockRes();
 
@@ -149,8 +194,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 400 no PATCH sem tenantId', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     const req = { method: 'PATCH', url: '/api/saas-admin/tenants', body: {} };
     const res = mockRes();
@@ -161,11 +211,20 @@ describe('SaaS Admin API', () => {
   it('deve retornar 404 no PATCH se tenant não encontrado', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql).mockResolvedValueOnce([]); // Tenant check empty
-    const req = { method: 'PATCH', url: '/api/saas-admin/tenants', body: { tenantId: 'inexistente-uuid' } };
+    const req = {
+      method: 'PATCH',
+      url: '/api/saas-admin/tenants',
+      body: { tenantId: 'inexistente-uuid' },
+    };
     const res = mockRes();
     await handleSaaSAdmin(req, res);
     expect(res._s()).toBe(404);
@@ -174,8 +233,13 @@ describe('SaaS Admin API', () => {
   it('deve criar uma nova assinatura se subExists for vazio no PATCH', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql)
       .mockResolvedValueOnce([{ id: 'tenant-uuid' }]) // check tenant
@@ -189,8 +253,8 @@ describe('SaaS Admin API', () => {
       body: {
         tenantId: 'tenant-uuid',
         planoTier: 'basic',
-        status: 'active'
-      }
+        status: 'active',
+      },
     };
     const res = mockRes();
     await handleSaaSAdmin(req, res);
@@ -200,8 +264,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 400 no POST de usuário com campos faltando', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     const req = { method: 'POST', url: '/api/saas-admin/users', body: { name: 'Só Nome' } };
     const res = mockRes();
@@ -212,8 +281,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 404 no POST de usuário com tenant inexistente', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql).mockResolvedValueOnce([]); // Tenant check empty
     const req = {
@@ -224,8 +298,8 @@ describe('SaaS Admin API', () => {
         name: 'Nome',
         email: 'test@test.com',
         role: 'user',
-        password: 'pwd'
-      }
+        password: 'pwd',
+      },
     };
     const res = mockRes();
     await handleSaaSAdmin(req, res);
@@ -235,8 +309,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 400 no POST se e-mail já existe', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql)
       .mockResolvedValueOnce([{ id: 'tenant-uuid' }]) // check tenant
@@ -250,8 +329,8 @@ describe('SaaS Admin API', () => {
         name: 'Nome',
         email: 'exists@test.com',
         role: 'user',
-        password: 'pwd'
-      }
+        password: 'pwd',
+      },
     };
     const res = mockRes();
     await handleSaaSAdmin(req, res);
@@ -261,12 +340,21 @@ describe('SaaS Admin API', () => {
   it('deve listar usuários (GET /api/saas-admin/users)', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql).mockResolvedValueOnce([{ id: 'u1', name: 'User 1' }]);
 
-    const req = { method: 'GET', url: '/api/saas-admin/users', query: { tenantId: 'target-tenant-uuid' } };
+    const req = {
+      method: 'GET',
+      url: '/api/saas-admin/users',
+      query: { tenantId: 'target-tenant-uuid' },
+    };
     const res = mockRes();
     await handleSaaSAdmin(req, res);
     expect(res._s()).toBe(200);
@@ -276,8 +364,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 400 se tenantId ausente no GET de usuários', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     const req = { method: 'GET', url: '/api/saas-admin/users', query: {} };
     const res = mockRes();
@@ -288,8 +381,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 405 para método/rota não suportada', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     const req = { method: 'PUT', url: '/api/saas-admin/unsupported', body: {} };
     const res = mockRes();
@@ -300,8 +398,13 @@ describe('SaaS Admin API', () => {
   it('deve retornar 500 em caso de erro fatal de banco', async () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
-      user: { id: 'admin-master', email: 'admin@dluxury.com', role: 'admin', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      user: {
+        id: 'admin-master',
+        email: 'admin@dluxury.com',
+        role: 'admin',
+        tenantId: '00000000-0000-0000-0000-000000000000',
+      },
+      error: null,
     });
     vi.mocked(sql).mockRejectedValue(new Error('Crash'));
 

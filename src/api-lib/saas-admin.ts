@@ -1,6 +1,7 @@
 import { sql, validateAuth } from './_db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { config } from './config/validateEnv.js';
 
 const MASTER_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -14,10 +15,15 @@ export async function handleSaaSAdmin(req: any, res: any) {
     // Permitir apenas o administrador do tenant master
     const isMasterTenant = auth.user.tenantId === MASTER_TENANT_ID;
     const isAdmin = auth.user.role === 'admin';
-    const isMasterAdminEmail = auth.user.email === 'admin@dluxury.com';
+    const isMasterAdminEmail = auth.user.email === config.ADMIN_DEFAULT_EMAIL;
 
     if (!isMasterTenant && !isMasterAdminEmail) {
-      return res.status(403).json({ success: false, error: 'Acesso negado. Apenas o administrador SaaS global tem acesso.' });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: 'Acesso negado. Apenas o administrador SaaS global tem acesso.',
+        });
     }
 
     const cleanUrl = (req.url || '').split('?')[0];
@@ -46,7 +52,7 @@ export async function handleSaaSAdmin(req: any, res: any) {
 
       return res.status(200).json({
         success: true,
-        data: tenantsRes.map(t => ({
+        data: tenantsRes.map((t) => ({
           id: t.id,
           nome: t.nome,
           subdominio: t.subdominio,
@@ -54,15 +60,17 @@ export async function handleSaaSAdmin(req: any, res: any) {
           planoTier: t.plano_tier,
           status: t.tenant_status,
           createdAt: t.tenant_created_at,
-          subscription: t.subscription_id ? {
-            id: t.subscription_id,
-            status: t.subscription_status,
-            plano: t.subscription_plano,
-            valor: parseFloat(t.subscription_valor || '0'),
-            diaVencimento: t.dia_vencimento,
-            currentPeriodEnd: t.current_period_end
-          } : null
-        }))
+          subscription: t.subscription_id
+            ? {
+                id: t.subscription_id,
+                status: t.subscription_status,
+                plano: t.subscription_plano,
+                valor: parseFloat(t.subscription_valor || '0'),
+                diaVencimento: t.dia_vencimento,
+                currentPeriodEnd: t.current_period_end,
+              }
+            : null,
+        })),
       });
     }
 
@@ -92,8 +100,9 @@ export async function handleSaaSAdmin(req: any, res: any) {
       }
 
       // Atualizar ou criar assinatura correspondente
-      const subExists = await sql`SELECT id FROM subscriptions WHERE tenant_id = ${tenantId}::uuid LIMIT 1`;
-      
+      const subExists =
+        await sql`SELECT id FROM subscriptions WHERE tenant_id = ${tenantId}::uuid LIMIT 1`;
+
       if (subExists.length > 0) {
         await sql`
           UPDATE subscriptions
@@ -108,7 +117,13 @@ export async function handleSaaSAdmin(req: any, res: any) {
         `;
       } else {
         const subId = crypto.randomUUID();
-        const valorCalculado = valor ? parseFloat(valor) : (planoTier === 'basic' ? 97.00 : planoTier === 'pro' ? 197.00 : 397.00);
+        const valorCalculado = valor
+          ? parseFloat(valor)
+          : planoTier === 'basic'
+            ? 97.0
+            : planoTier === 'pro'
+              ? 197.0
+              : 397.0;
         await sql`
           INSERT INTO subscriptions (id, tenant_id, status, plano, valor, dia_vencimento, current_period_end)
           VALUES (
@@ -123,7 +138,9 @@ export async function handleSaaSAdmin(req: any, res: any) {
         `;
       }
 
-      return res.status(200).json({ success: true, message: 'Dados do tenant e assinatura atualizados com sucesso.' });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Dados do tenant e assinatura atualizados com sucesso.' });
     }
 
     // POST /api/saas-admin/users -> Cadastrar usuário para tenant arbitrário
@@ -131,7 +148,12 @@ export async function handleSaaSAdmin(req: any, res: any) {
       const { tenantId, name, email, role, password } = req.body;
 
       if (!tenantId || !name || !email || !role || !password) {
-        return res.status(400).json({ success: false, error: 'Todos os campos são obrigatórios: tenantId, name, email, role, password.' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Todos os campos são obrigatórios: tenantId, name, email, role, password.',
+          });
       }
 
       const emailNormalized = email.trim().toLowerCase();
@@ -145,7 +167,9 @@ export async function handleSaaSAdmin(req: any, res: any) {
       // Verificar se o e-mail já existe globalmente
       const emailCheck = await sql`SELECT id FROM users WHERE email = ${emailNormalized} LIMIT 1`;
       if (emailCheck.length > 0) {
-        return res.status(400).json({ success: false, error: 'Este e-mail já está em uso por outro usuário.' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Este e-mail já está em uso por outro usuário.' });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -165,8 +189,8 @@ export async function handleSaaSAdmin(req: any, res: any) {
           name: name.toUpperCase(),
           email: emailNormalized,
           role,
-          tenantId
-        }
+          tenantId,
+        },
       });
     }
 
@@ -187,13 +211,17 @@ export async function handleSaaSAdmin(req: any, res: any) {
 
       return res.status(200).json({
         success: true,
-        data: usersRes
+        data: usersRes,
       });
     }
 
-    return res.status(405).json({ success: false, error: 'Método não permitido ou rota inexistente.' });
+    return res
+      .status(405)
+      .json({ success: false, error: 'Método não permitido ou rota inexistente.' });
   } catch (err: any) {
     console.error('[SAAS_ADMIN_ROUTE_ERROR]', err);
-    return res.status(500).json({ success: false, error: err.message || 'Erro interno na rota SaaS Admin.' });
+    return res
+      .status(500)
+      .json({ success: false, error: err.message || 'Erro interno na rota SaaS Admin.' });
   }
 }

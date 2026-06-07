@@ -55,6 +55,9 @@ scratch_*.cjs
 # Test coverage
 coverage/
 
+# Drizzle generated schema (credentials in connection string)
+drizzle/schema.ts
+
 # Playwright
 /test-results/
 /playwright-report/
