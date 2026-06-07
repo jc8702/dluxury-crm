@@ -44,6 +44,13 @@ export function auditMiddleware(req: any, res: any, next: () => void): void {
   const originalJson = res.json.bind(res);
   const bodySnapshot = req.body ? { ...req.body } : {};
 
+  // LIMITAÇÃO SERVERLESS (Vercel/AWS Lambda):
+  // Interceptar res.json dispara a auditoria de forma assíncrona (fire-and-forget).
+  // Em ambientes serverless agressivos, o processo pode congelar imediatamente após
+  // o envio da resposta (originalJson), cancelando a inserção no banco de dados.
+  // Idealmente, a auditoria deveria ser chamada explicitamente usando um `waitUntil`
+  // ou inserida sequencialmente no fluxo de cada handler antes do res.json.
+  // Para evitar bloquear a resposta do usuário, mantemos assíncrono.
   res.json = function (body: any) {
     const tenantId = req.tenantId || req.tenantContext?.tenantId || req.user?.tenantId || '';
 

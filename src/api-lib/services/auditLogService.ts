@@ -14,16 +14,27 @@ export interface AuditEntry {
 
 export async function logAudit(entry: AuditEntry): Promise<void> {
   try {
+    const isValidUUID = (id: string | undefined) =>
+      id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const safeRecordId = isValidUUID(entry.recordId) ? entry.recordId : null;
+    const safeUserId = isValidUUID(entry.userId) ? entry.userId : null;
+    const safeTenantId = isValidUUID(entry.tenantId) ? entry.tenantId : null;
+
+    if (!safeTenantId) {
+      console.warn('[auditLogService] Auditoria ignorada: tenantId ausente ou inválido', entry);
+      return;
+    }
+
     await sql`
       INSERT INTO audit_logs (
         tenant_id, user_id, action, table_name, record_id,
         data_before, data_after, ip_address, user_agent,
         retention_expires_at
       ) VALUES (
-        ${entry.tenantId}, ${entry.userId || null}, ${entry.action},
-        ${entry.tableName}, ${entry.recordId},
-        ${JSON.stringify(entry.oldValues || {})},
-        ${JSON.stringify(entry.newValues || {})},
+        ${safeTenantId}::uuid, ${safeUserId ? safeUserId : null}::uuid, ${entry.action},
+        ${entry.tableName}, ${safeRecordId ? safeRecordId : null}::uuid,
+        ${JSON.stringify(entry.oldValues || {})}::jsonb,
+        ${JSON.stringify(entry.newValues || {})}::jsonb,
         ${entry.ipAddress || null}, ${entry.userAgent || null},
         CURRENT_TIMESTAMP + INTERVAL '90 days'
       );

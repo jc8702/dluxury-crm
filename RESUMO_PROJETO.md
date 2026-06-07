@@ -4,15 +4,39 @@
 
 - **Status Atual:** Tenant Isolation Middleware + Fase 1 (DB) implementados e validados em branch dedicada `audit/2026-06-05-tenant-db`. Pronto para merge após revisão.
 - **Objetivo Central:** Garantir isolamento rigoroso de dados por tenant (multi-tenancy) e eliminar dívida técnica crítica (DB, UI, módulos, docs).
-- **Última Atualização:** 07/06/2026 - 19:00
+- **Última Atualização:** 07/06/2026 - 19:17
 
 ## Histórico de Alterações
+
+- **[07/06/2026 - 22:35]:** Refatoração e estabilização de Auditoria e Logs em serverless.
+  - Verificado que `req.tenantId` é setado antes de `auditMiddleware` via `resolveTenantRequest`.
+  - Refatorado `logAudit` (`src/api-lib/services/auditLogService.ts`) para tratamento robusto de UUIDs vazios, utilizando fallback explícito para `null` e casts corretos (`::uuid`, `::jsonb`), evitando erros silenciosos de tipo e perdas no catch.
+  - Identificado e documentado o comportamento frágil do interceptador de `res.json` na plataforma Vercel em `src/api-lib/middleware/auditMiddleware.ts` sem bloqueio da requisição atual.
+  - Constatado que a migração 0015 e a tabela `audit_logs` no banco de dados e schema do Drizzle já contam corretamente com as colunas `data_before` e `data_after`. O de/para interno na interface `AuditEntry` (`oldValues`, `newValues`) opera de forma consistente e correta via SQL cru.
+  - Branch utilizado: `fix/audit-logging`
+  - Push programado para `origin/fix/audit-logging`.
+
+- **[07/06/2026 - 19:23]:** Refatoração de Rate Limiting para evitar "double-send" (429 e redundância de headers).
+  - Mantido o `checkRateLimit` inline no roteador (`api/index.ts`) que possui retorno antecipado adequado (early-return).
+  - Removido o middleware assíncrono sobreposto (`globalRateLimitMiddleware`) do pipeline principal de requisições.
+  - Refatorado `loginRateLimit` (`src/api-lib/middleware/rateLimiter.ts`) para retornar booleano, permitindo ao `auth.ts` realizar `await loginRateLimit(...)` e parar a execução caso seja bloqueado.
+  - Adicionado guard `if (res.headersSent) return;` no roteador dinâmico.
+  - Testes do middleware de rate-limit (tipo de retorno e double-send) resolvidos. Falhas de teste residuais não relacionadas (DB mock).
+  - Branch utilizado: `fix/consolidate-rate-limit`
+  - Push realizado para origin/fix/consolidate-rate-limit.
+
+- **[07/06/2026 - 19:17]:** Aplicada a isolação global e estrita de tenant em api/index.ts.
+  - O roteador chama `resolveTenantRequest` para injetar `req.tenantId` e `req.tenantUser` antes dos middlewares de rateLimit e audit.
+  - Rotas públicas identificadas (`/api/auth`, `/api/signup`, `/api/checkout`, etc.) e tratadas de forma a não forçar a falha sem token.
+  - O problema da falta de validação em rotas não-withTenant foi resolvido globalmente, atendendo à TAREFA 1 e TAREFA 2.
+  - Branch utilizado: `fix/wire-tenant-isolation`
+  - Arquivos modificados: `api/index.ts`
 
 - **[07/06/2026 - 19:00]:** Realizado commit de modificações pendentes no frontend/backend e efetuado deploy unificado.
   - **GitHub**: Mudanças enviadas para a branch main.
   - **Neon**: Migrações executadas com sucesso via script scratch/run-migrations-now.mjs (14/14 tabelas OK).
   - **Vercel**: Deploy de produção disparado.
-  - A tentativa de merge da branch udit/2026-06-05-tenant-db foi abortada devido a conflitos não resolvidos. Aguardando revisão manual antes de avançar.
+  - A tentativa de merge da branch udit/2026-06-05-tenant-db foi abortada devido a conflitos não resolvidos. Aguardando revisão manual antes de avançar.
 
 - **[05/06/2026 - 22:55]:** **Tenant Isolation Middleware + Fase 1 (DB) — pronto para PR.**
   - **Branch:** `audit/2026-06-05-tenant-db` (ainda não mergeada).
@@ -64,3 +88,6 @@
 - [ ] Corrigir 1.415 hex hardcoded por arquivo prioritário: `QuotationForm` → `StackedBarChart`
 - [ ] Corrigir o bug pré-existente em `notificacoes.test.ts` (TDZ `quotations2`)
 - [ ] Adicionar CI check para os 279 erros TS pré-existentes (tipá-los progressivamente)
+
+ 
+ 
