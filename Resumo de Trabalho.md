@@ -396,3 +396,37 @@ Componentes usam classes Tailwind v4 (`bg-primary`, `text-primary-foreground`, `
 - [x] `npx tsc --noEmit` — 0 erros
 - [x] `npm run build` — sucesso
 - Commit: `8d28072` — "Feat: Design system base components (Button, Badge, Card, Input)"
+
+---
+
+## 10 — FEATURE GATES — 2026-06-07
+
+### Arquivos criados
+
+- `src/api-lib/middleware/featureGate.ts` — `validateFeatureAccess` + `requireFeature` middleware programático
+- `src/components/ProtectedFeature.tsx` — componente React com fallback de upgrade
+
+### Arquivos modificados
+
+- `src/lib/features.ts` — `Feature` type expandido com simulator, whatsapp, export-xml, api-integration, advanced-reports, digital-signature; matriz atualizada (basic/pro/enterprise)
+- `src/api-lib/feature-gate-middleware.ts` — novos mapeamentos de URL para whatsapp, export-xml, features
+- `api/index.ts` — nova rota `GET /api/features/check?feature=<name>`
+
+### Matrix de features por tier
+
+| Feature                                        | basic | pro | enterprise |
+| ---------------------------------------------- | ----- | --- | ---------- |
+| crm, quotations                                | ✅    | ✅  | ✅         |
+| financeiro, ia, plano_corte, estoque           | —     | ✅  | ✅         |
+| whatasapp, advanced-reports, digital-signature | —     | ✅  | ✅         |
+| export-xml, api-integration                    | —     | —   | ✅         |
+
+### Nota
+
+O feature gate centralizado (`feature-gate-middleware.ts`) já existia e fazia o bloqueio automático por URL. Esta etapa adicionou novas features à matriz, criou um middleware programático para uso em handlers específicos, e um componente React para proteção no frontend.
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso
+- Commit: `27c9c80` — "Feat: Feature gates by pricing tier (STARTER/PRO/ENTERPRISE)"
