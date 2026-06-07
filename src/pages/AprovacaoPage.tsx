@@ -125,7 +125,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
           <XCircle size={64} color="#EF4444" style={{ marginBottom: '1.5rem' }} />
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Ops! Algo deu errado.</h2>
-          <p style={{ color: 'rgba(255,b255,255,0.6)', lineHeight: '1.6' }}>{error}</p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: '1.6' }}>{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="btn-secondary"
@@ -181,7 +181,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               <p
                 style={{
                   fontSize: '1.1rem',
-                  color: 'rgba(255,b255,255,0.8)',
+                  color: 'rgba(255,255,255,0.8)',
                   marginBottom: '2rem',
                 }}
               >
@@ -193,13 +193,13 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   background: 'hsl(var(--surface-hover))',
                   padding: '1.5rem',
                   borderRadius: 'var(--radius-lg)',
-                  border: '1px dashed rgba(255,b255,255,0.2)',
+                  border: '1px dashed rgba(255,255,255,0.2)',
                 }}
               >
                 <p
                   style={{
                     fontSize: '0.8rem',
-                    color: 'rgba(255,b255,255,0.4)',
+                    color: 'rgba(255,255,255,0.4)',
                     margin: '0 0 0.5rem 0',
                   }}
                 >
@@ -226,7 +226,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>
                 Revisão Solicitada
               </h1>
-              <p style={{ color: 'rgba(255,b255,255,0.8)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.8)' }}>
                 Sua solicitação foi enviada para nossa equipe comercial interna. Em breve entraremos
                 em contato.
               </p>
@@ -283,7 +283,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
         <div
           style={{
             fontSize: '0.85rem',
-            color: 'rgba(255,b255,255,0.6)',
+            color: 'rgba(255,255,255,0.6)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
@@ -712,7 +712,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
         style={{
           background: '#0D2137',
           padding: '3rem 2rem',
-          color: 'rgba(255,b255,255,0.4)',
+          color: 'rgba(255,255,255,0.4)',
           textAlign: 'center',
           fontSize: '0.8rem',
         }}
