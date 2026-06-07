@@ -155,6 +155,44 @@ export default async function handler(req: any, res: any) {
 
     // Rate limiting (DoS protection + brute force prevention)
     const { globalRateLimitMiddleware } = await import('../src/api-lib/middleware/rateLimiter.js');
+
+    // ------------------------------------------------------------------------
+    // RESOLUÇÃO FORTE DE TENANT (com isMiddlewareEnabled)
+    // ------------------------------------------------------------------------
+    const isPublicRoute =
+      cleanUrl.startsWith('/api/auth') ||
+      cleanUrl.startsWith('/api/signup') ||
+      cleanUrl.startsWith('/api/checkout') ||
+      cleanUrl.startsWith('/api/init-db') ||
+      cleanUrl.startsWith('/api/webhooks') ||
+      cleanUrl.startsWith('/api/resolve-dominio') ||
+      cleanUrl.startsWith('/api/ping');
+
+    const { isMiddlewareEnabled, resolveTenantRequest } =
+      await import('../src/api-lib/middleware/tenantMiddleware.js');
+
+    if (isMiddlewareEnabled()) {
+      if (!isPublicRoute) {
+        // Rota protegida: Exige token válido e tenant existente
+        const tenantResult = await resolveTenantRequest(req);
+        if (!tenantResult.ok) {
+          return res
+            .status(tenantResult.status)
+            .json({ success: false, error: tenantResult.error });
+        }
+      } else {
+        // Rota pública: Tenta resolver apenas se houver token, não bloqueia
+        if (req.headers['authorization']) {
+          await resolveTenantRequest(req); // Injeta req.tenantId silenciosamente se válido
+        }
+      }
+    } else {
+      // Fallback legado se o middleware novo estiver desligado
+      if (!req.tenantId && authedTenantId) {
+        req.tenantId = authedTenantId;
+      }
+    }
+
     globalRateLimitMiddleware(req, res, () => {});
 
     // Auditoria LGPD intercepta mutations (POST/PATCH/PUT/DELETE)
