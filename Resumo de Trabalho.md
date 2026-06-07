@@ -104,28 +104,28 @@ A decisão foi **NÃO sobrescrever** essa implementação. Apenas aplicar o que 
 
 Padrão aplicado: assinatura `export async function handleX(req, res)` → `const handleXCore: TenantHandler = ...; export const handleX = withTenant(handleXCore);`; bloco `const { authorized, error, user } = validateAuth(req); if (!authorized) return res.status(401)...; const tenantId = user?.tenantId || '00000000-...'` → `const tenantId = req.tenantId; const user = req.tenantUser;`.
 
-| Arquivo | Handlers | Notas |
-|---|---|---|
-| `whatsapp.ts` | 1 | Piloto, validado |
-| `kanban-producao.ts` | 1 | |
-| `rentabilidade.ts` | 1 | Mantida função `autoCreateCustosReaisOP` (helper) |
-| `notificacoes.ts` | 1 | Mantida função `gerarNotificacoesAutomaticas` (helper) |
-| `contrato-digital.ts` | 1 | |
-| `estoque.ts` | 1 | Mantida `extractAndVerifyToken` (helper interno) |
-| `estoque-granular.ts` | 1 | |
-| `match-skus.ts` | 1 | |
-| `importacao-projetos.ts` | 1 | |
-| `compras.ts` | 1 | |
-| `production.ts` | 1 | `createOP`/`updateOPDetails`/`deleteOP` agora recebem `user` por parâmetro |
-| `financeiro.ts` | 1 | |
-| `calendario.ts` | 1 | |
-| `planocorte.ts` | 4 | `handlePlanoCorte`, `handleChapas`, `handleEngenhariaSKUs`, `handleImportarDesenho` |
-| `projects.ts` | 5 | `handleProjects`, `handleReports`, `handleEngineering`, `handleSKUs`, `handleSimulations` |
-| `quotations.ts` | 1 | + 2 funções com default `tenantId` (`explodirBOM`, `recalcularOrcamento`) — agora `tenantId` é parâmetro obrigatório |
-| `prospeccao.ts` | 4 | `handleProspeccoes`, `handleProspeccaoById`, `handleInteracoes`, `handleProspeccaoMetrics` |
-| `crm.ts` | 3 | `handleClients` (com 3 re-declarações de `tenantId` internas removidas), `handleKanban`, `handleGoals` |
-| `copilot.ts` | 1 | `handleAICopilot` |
-| `api/index.ts` | — | 2 silent-fallbacks no router principal removidos (rate-limit key, AI chat tenantId) — agora `authedTenantId`/`authedUserId` hoistados do `auth` validado |
+| Arquivo                  | Handlers | Notas                                                                                                                                                    |
+| ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `whatsapp.ts`            | 1        | Piloto, validado                                                                                                                                         |
+| `kanban-producao.ts`     | 1        |                                                                                                                                                          |
+| `rentabilidade.ts`       | 1        | Mantida função `autoCreateCustosReaisOP` (helper)                                                                                                        |
+| `notificacoes.ts`        | 1        | Mantida função `gerarNotificacoesAutomaticas` (helper)                                                                                                   |
+| `contrato-digital.ts`    | 1        |                                                                                                                                                          |
+| `estoque.ts`             | 1        | Mantida `extractAndVerifyToken` (helper interno)                                                                                                         |
+| `estoque-granular.ts`    | 1        |                                                                                                                                                          |
+| `match-skus.ts`          | 1        |                                                                                                                                                          |
+| `importacao-projetos.ts` | 1        |                                                                                                                                                          |
+| `compras.ts`             | 1        |                                                                                                                                                          |
+| `production.ts`          | 1        | `createOP`/`updateOPDetails`/`deleteOP` agora recebem `user` por parâmetro                                                                               |
+| `financeiro.ts`          | 1        |                                                                                                                                                          |
+| `calendario.ts`          | 1        |                                                                                                                                                          |
+| `planocorte.ts`          | 4        | `handlePlanoCorte`, `handleChapas`, `handleEngenhariaSKUs`, `handleImportarDesenho`                                                                      |
+| `projects.ts`            | 5        | `handleProjects`, `handleReports`, `handleEngineering`, `handleSKUs`, `handleSimulations`                                                                |
+| `quotations.ts`          | 1        | + 2 funções com default `tenantId` (`explodirBOM`, `recalcularOrcamento`) — agora `tenantId` é parâmetro obrigatório                                     |
+| `prospeccao.ts`          | 4        | `handleProspeccoes`, `handleProspeccaoById`, `handleInteracoes`, `handleProspeccaoMetrics`                                                               |
+| `crm.ts`                 | 3        | `handleClients` (com 3 re-declarações de `tenantId` internas removidas), `handleKanban`, `handleGoals`                                                   |
+| `copilot.ts`             | 1        | `handleAICopilot`                                                                                                                                        |
+| `api/index.ts`           | —        | 2 silent-fallbacks no router principal removidos (rate-limit key, AI chat tenantId) — agora `authedTenantId`/`authedUserId` hoistados do `auth` validado |
 
 #### Casos especiais (não migrados)
 
@@ -139,6 +139,7 @@ Padrão aplicado: assinatura `export async function handleX(req, res)` → `cons
 #### Testes atualizados (17 arquivos, ~250 testes)
 
 Padrão de teste aplicado:
+
 - `vi.mock('../middleware/tenantMiddleware.js', () => ({ withTenant: (handler: any) => handler }))` — pass-through que isola o teste do HOF.
 - Helper `mockReq({...})` injeta `tenantId` e `tenantUser` automaticamente.
 - `vi.mocked(validateAuth).mockReturnValue(...)` removido dos `beforeEach` — auth agora é responsabilidade do HOF.
@@ -151,6 +152,7 @@ Padrão de teste aplicado:
 Este arquivo testa explicitamente o isolamento multi-tenant. Antes mockava `validateAuth` para retornar tenants diferentes; agora injeta `_tenantId`/`_userId` diretamente no `mockReq` e valida que o `tenantId` chega nas queries SQL.
 
 6/6 testes passam, incluindo:
+
 - "deve injetar o tenant_id correto do Tenant A ao listar clientes"
 - "deve injetar o tenant_id correto do Tenant B ao listar clientes"
 - "deve barrar a alteração de cliente se pertencer a outro tenant" (cross-tenant attack)
@@ -177,3 +179,38 @@ Este arquivo testa explicitamente o isolamento multi-tenant. Antes mockava `vali
 
 Auditoria final do tenant isolation em produção (verificar logs do Sentry por `suspiciousActivity`).
 
+## 04 — AUDIT LOGGING — 07/06/2026
+
+### Objetivo
+
+Implementar trilha de auditoria LGPD com `auditLogService.ts` (logAudit, getAuditTrail) e `auditMiddleware.ts` (interceptação automática de mutations). Migration 0015 adiciona colunas `tenant_id`, `ip_address`, `user_agent`, `retention_expires_at` em `audit_logs`.
+
+### Arquivos criados
+
+- `src/api-lib/services/auditLogService.ts` — `logAudit()` com 90-day retention; `getAuditTrail()` com filtros por tenant/período/tabela.
+- `src/api-lib/middleware/auditMiddleware.ts` — intercepta `res.json` em POST/PATCH/PUT/DELETE; captura tenant, user, IP, user-agent.
+- `drizzle/0015_add_audit_log_columns.sql` — ADD COLUMN IF NOT EXISTS para 6 colunas + índices.
+
+### Arquivos alterados
+
+- `api/index.ts` — integração `auditMiddleware(req, res, () => {})` antes do dispatcher de rotas.
+- `drizzle/schema.ts` — `auditLogs` com `tenantId`, `tableName`, `recordId`, `ipAddress`, `userAgent`, `retentionExpiresAt`.
+- `drizzle/meta/_journal.json` — entrada idx 8 para 0015.
+
+### Adaptações do prompt original
+
+- `import { sql } from '@neondatabase/serverless'` → `import { sql } from '../_db.js'` (o neon não exporta `sql` diretamente; é instanciado via `neon(DATABASE_URL)`).
+- `app.use('/api', auditMiddleware)` → chamada dentro do `try` block do dispatcher Vercel (não há Express `app.use`).
+- Migration foi necessária: colunas do novo `logAudit` (`tenant_id, table_name, record_id, ip_address, user_agent`) não existiam.
+
+### Testes
+
+- `npx tsc --noEmit` — 0 erros.
+- `npx vitest run` — 707 passed, 23 skipped (mesmo baseline).
+- `npm run build` — Vite build bem-sucedido.
+
+### Pendências
+
+- Double-logging: `auditMiddleware` + `auditLog()` explícito nos handlers logam 2x. Remover chamadas explícitas em PROMPT futuro.
+- Testes específicos para `auditLogService` e `auditMiddleware` (fora do escopo do PROMPT 04).
+- Agendador de limpeza (cron job) para apagar registros com `retention_expires_at < NOW()`.
