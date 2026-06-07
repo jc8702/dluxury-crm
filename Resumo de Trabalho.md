@@ -484,3 +484,38 @@ O feature gate centralizado (`feature-gate-middleware.ts`) já existia e fazia o
 
 - [x] `npm run build` — sucesso
 - Commit: `b3ff26e` — "Feat: E2E tests (Playwright) — auth, quotations, tenant isolation"
+
+---
+
+## 13 — SECRETS HARDENING — 2026-06-07
+
+### Mudanças
+
+- `.gitignore`: `drizzle/schema.ts` adicionado (pode conter credentials em connection string)
+- `src/api-lib/config/validateEnv.ts`: valida env vars no boot (DATABASE_URL, APP_JWT_SECRET, ADMIN_DEFAULT_EMAIL)
+- `src/api-lib/saas-admin.ts`: email hardcoded `'admin@dluxury.com'` → `config.ADMIN_DEFAULT_EMAIL`
+- `src/api-lib/_init.ts`: seed email hardcoded substituído por `config.ADMIN_DEFAULT_EMAIL`
+- `src/api-lib/__tests__/saas-admin.test.ts`: `vi.mock` para `validateEnv.js` adicionado (15 testes passando)
+- `.env.example`: atualizado com todas as variáveis necessárias (DB, JWT, admin, Vercel, Redis, Sentry, Google AI)
+
+### Validações em boot
+
+- APP_JWT_SECRET deve ter 32+ caracteres (falha com erro claro se não tiver)
+- DATABASE_URL, APP_JWT_SECRET, ADMIN_DEFAULT_EMAIL são obrigatórios
+
+### Segurança
+
+- Nenhum `.env` foi commitado no histórico do git (verificado)
+- Nenhuma DATABASE_URL vazou em arquivos fonte (verificado)
+- Admin hardcoded removido do código fonte (configurável via env)
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso
+- [x] `npx vitest run` — 15/15 passando
+- Commit: `4700dfe` — "Security: Secrets hardening — validateEnv, remove hardcoded credentials, update .gitignore"
+
+### Próxima etapa
+
+- 14_PRODUCTION_HARDENING.md
