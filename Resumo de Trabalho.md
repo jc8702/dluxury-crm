@@ -370,3 +370,29 @@ Eliminar padrões N+1 em loops com SQL no módulo `api-lib/`, trocando N queries
 - [x] `npx tsc --noEmit` — 0 erros
 - [x] `npm run build` — sucesso
 - Commit: `3147db3` — "Perf: Bundle optimization — code split, lazy routes, remove dead code"
+
+---
+
+## 09 — DESIGN SYSTEM — 2026-06-07
+
+### Componentes criados
+
+- `src/components/design-system/Button.tsx` — 5 variants (primary/secondary/outline/danger/ghost), 3 sizes, isLoading
+- `src/components/design-system/Badge.tsx` — 5 tones (default/success/warning/destructive/info)
+- `src/components/design-system/Card.tsx` — container com tokens CSS (bg-card, border-border)
+- `src/components/design-system/Input.tsx` — com error state e focus ring
+- `src/components/design-system/index.ts` — barrel export
+
+### Decisão técnica
+
+Componentes usam classes Tailwind v4 (`bg-primary`, `text-primary-foreground`, `border-border`) em vez de `hsl(var(--))` inline, aproveitando o `@theme` já configurado no `index.css`.
+
+### Bug corrigido
+
+- `AprovacaoPage.tsx`: `rgba(255,b255,` → `rgba(255,255,` em 7 linhas
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso
+- Commit: `8d28072` — "Feat: Design system base components (Button, Badge, Card, Input)"
