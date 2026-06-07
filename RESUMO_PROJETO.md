@@ -4,9 +4,15 @@
 
 - **Status Atual:** Tenant Isolation Middleware + Fase 1 (DB) implementados e validados em branch dedicada `audit/2026-06-05-tenant-db`. Pronto para merge após revisão.
 - **Objetivo Central:** Garantir isolamento rigoroso de dados por tenant (multi-tenancy) e eliminar dívida técnica crítica (DB, UI, módulos, docs).
-- **Última Atualização:** 05/06/2026 - 22:55
+- **Última Atualização:** 07/06/2026 - 19:00
 
 ## Histórico de Alterações
+
+- **[07/06/2026 - 19:00]:** Realizado commit de modificações pendentes no frontend/backend e efetuado deploy unificado.
+  - **GitHub**: Mudanças enviadas para a branch main.
+  - **Neon**: Migrações executadas com sucesso via script scratch/run-migrations-now.mjs (14/14 tabelas OK).
+  - **Vercel**: Deploy de produção disparado.
+  - A tentativa de merge da branch udit/2026-06-05-tenant-db foi abortada devido a conflitos não resolvidos. Aguardando revisão manual antes de avançar.
 
 - **[05/06/2026 - 22:55]:** **Tenant Isolation Middleware + Fase 1 (DB) — pronto para PR.**
   - **Branch:** `audit/2026-06-05-tenant-db` (ainda não mergeada).
