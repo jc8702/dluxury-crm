@@ -31,7 +31,7 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
         JOIN conversas_whatsapp c ON m.conversa_whatsapp_id = c.id
         WHERE m.tenant_id = $1::uuid
       `;
-      
+
       const params: any[] = [tenantId];
       let paramCount = 1;
 
@@ -44,7 +44,12 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
         queryStr += ` AND c.operacao_prod_id = $${paramCount}::uuid`;
         params.push(operacao_prod_id);
       } else {
-        return res.status(400).json({ success: false, error: 'Parâmetro quotation_id ou operacao_prod_id é obrigatório' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Parâmetro quotation_id ou operacao_prod_id é obrigatório',
+          });
       }
 
       queryStr += ` ORDER BY m.timestamp_msg ASC`;
@@ -79,11 +84,11 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
           timestamp_msg: r.timestamp_msg,
           status_entrega: r.status_entrega,
           arquivo_url: r.arquivo_url,
-          usuario_nome: r.usuario_nome
+          usuario_nome: r.usuario_nome,
         })),
         tags,
         numero_telefone: cRows[0]?.numero_telefone || '',
-        contato_nome: cRows[0]?.contato_nome || ''
+        contato_nome: cRows[0]?.contato_nome || '',
       });
     }
 
@@ -94,7 +99,12 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       const { quotation_id, operacao_prod_id, numero_telefone, conteudo_msg, tags } = req.body;
 
       if (!conteudo_msg || !numero_telefone) {
-        return res.status(400).json({ success: false, error: 'Parâmetros numero_telefone e conteudo_msg são obrigatórios' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Parâmetros numero_telefone e conteudo_msg são obrigatórios',
+          });
       }
 
       // 1. Verificar/criar conversa
@@ -116,7 +126,7 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       }
 
       const conversaRows = await sql(cQuery as any, ...cParams);
-      
+
       const tagsStr = Array.isArray(tags) ? tags.join(',') : '';
 
       if (conversaRows.length === 0) {
@@ -169,11 +179,11 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       // 3. Simular envio e atualização de status em background (entrega -> leitura em segundos)
       simulateDeliveryPipeline(newMsg.id, tenantId).catch(console.error);
 
-      return res.status(200).json({ 
-        success: true, 
-        id: newMsg.id, 
+      return res.status(200).json({
+        success: true,
+        id: newMsg.id,
         status_entrega: 'enviado',
-        whatsapp_msg_id: waMsgId
+        whatsapp_msg_id: waMsgId,
       });
     }
 
@@ -193,8 +203,8 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
           id: m.id,
           titulo: m.titulo,
           conteudo_template: m.conteudo_template,
-          tipo_acionador: m.tipo_acionador
-        }))
+          tipo_acionador: m.tipo_acionador,
+        })),
       });
     }
 
@@ -205,12 +215,14 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       const { from_number, message_text, quotation_id, operacao_prod_id } = req.body;
 
       if (!from_number || !message_text) {
-        return res.status(400).json({ success: false, error: 'from_number e message_text são obrigatórios' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'from_number e message_text são obrigatórios' });
       }
 
       // 1. Achar conversa ou criar
       let conversa_id: number;
-      let cQuery = `
+      const cQuery = `
         SELECT id FROM conversas_whatsapp 
         WHERE tenant_id = $1::uuid AND numero_telefone = $2
       `;
@@ -261,7 +273,7 @@ export const handleWhatsApp = withTenant(handleWhatsAppCore);
 // ────────────────────────────────────────────────────────────────────────────────
 async function simulateDeliveryPipeline(msgId: number, tenantId: string) {
   // Atraso de 1.5s -> Entregue
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 1500));
   await sql`
     UPDATE mensagens_whatsapp
     SET status_entrega = 'entregue'
@@ -269,7 +281,7 @@ async function simulateDeliveryPipeline(msgId: number, tenantId: string) {
   `;
 
   // Atraso de mais 2.5s -> Lido (✓✓ azul)
-  await new Promise(r => setTimeout(r, 2500));
+  await new Promise((r) => setTimeout(r, 2500));
   await sql`
     UPDATE mensagens_whatsapp
     SET status_entrega = 'lido'

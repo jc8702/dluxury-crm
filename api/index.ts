@@ -121,9 +121,7 @@ export default async function handler(req: any, res: any) {
   const authedTenantId = auth.authorized && auth.user ? auth.user.tenantId : null;
   const authedUserId = auth.authorized && auth.user ? auth.user.id : null;
   const rateKey =
-    auth.authorized && auth.user && authedTenantId
-      ? `${authedTenantId}:${authedUserId}`
-      : clientIP;
+    auth.authorized && auth.user && authedTenantId ? `${authedTenantId}:${authedUserId}` : clientIP;
 
   // Rate limiting
   const cleanUrl = (req.url || '').split('?')[0];
@@ -154,6 +152,10 @@ export default async function handler(req: any, res: any) {
     const { verifyFeatureGate } = await import('../src/api-lib/feature-gate-middleware.js');
     const allowedByFeatureGate = await verifyFeatureGate(req, res);
     if (!allowedByFeatureGate) return;
+
+    // Auditoria LGPD intercepta mutations (POST/PATCH/PUT/DELETE)
+    const { auditMiddleware } = await import('../src/api-lib/middleware/auditMiddleware.js');
+    auditMiddleware(req, res, () => {});
 
     // Roteamento Dinâmico (Lazy Loading)
     if (cleanUrl.startsWith('/api/signup')) {
@@ -217,7 +219,8 @@ export default async function handler(req: any, res: any) {
     if (cleanUrl.startsWith('/api/orcamentos') || cleanUrl.startsWith('/api/orcamento-tecnico')) {
       return res.status(410).json({
         success: false,
-        error: 'Esta rota foi desativada. Use /api/quotations (tabela `quotations` consolidada em PROMPT 1).',
+        error:
+          'Esta rota foi desativada. Use /api/quotations (tabela `quotations` consolidada em PROMPT 1).',
         deprecated_at: '2026-06-04',
         replacement: '/api/quotations',
       });

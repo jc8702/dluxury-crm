@@ -14,10 +14,17 @@ vi.mock('../middleware/tenantMiddleware.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
     _s: () => sc,
     _d: () => jd,
@@ -26,7 +33,13 @@ function mockRes() {
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -43,12 +56,19 @@ function mockReq(overrides: any = {}): any {
 describe('handleKanbanProducao', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
-
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
   });
 
   it.skip('deve retornar 401 se não estiver autorizado', async () => {
-    vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token inválido' });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: false,
+      user: null,
+      error: 'Token inválido',
+    });
     const req = mockReq({ method: 'GET', url: '/board', query: {}, body: {} });
     const res = mockRes();
     await handleKanbanProducao(req, res);
@@ -66,9 +86,9 @@ describe('handleKanbanProducao', () => {
 
     const req = mockReq({ method: 'GET', url: '/board', query: {}, body: {} });
     const res = mockRes();
-    
+
     await handleKanbanProducao(req, res);
-    
+
     expect(res._s()).toBe(200);
     expect(res._d().success).toBe(true);
     expect(res._d().data.a_fazer).toHaveLength(1);
@@ -88,7 +108,7 @@ describe('handleKanbanProducao', () => {
       } else if (query && typeof query === 'object' && 'strings' in query) {
         qStr = (query.strings as string[]).join('?');
       }
-      
+
       if (qStr.includes('UPDATE etapas_prod_kanban')) {
         return [{ id: 10, operacao_prod_id: 'op-uuid', status_kanban: 'em_progresso' }];
       }
@@ -106,8 +126,8 @@ describe('handleKanbanProducao', () => {
         etapa_kanban_id: 10,
         novo_status: 'em_progresso',
         status_anterior: 'a_fazer',
-        nota: 'Mover para usinagem'
-      }
+        nota: 'Mover para usinagem',
+      },
     });
     const res = mockRes();
 
@@ -119,7 +139,12 @@ describe('handleKanbanProducao', () => {
   });
 
   it('deve retornar 400 em /move-card se faltar parâmetros', async () => {
-    const req = mockReq({ method: 'POST', url: '/move-card', query: {}, body: { novo_status: 'em_progresso' } });
+    const req = mockReq({
+      method: 'POST',
+      url: '/move-card',
+      query: {},
+      body: { novo_status: 'em_progresso' },
+    });
     const res = mockRes();
     await handleKanbanProducao(req, res);
     expect(res._s()).toBe(400);
@@ -158,8 +183,8 @@ describe('handleKanbanProducao', () => {
       body: {
         etapa_kanban_id: 10,
         responsavel_id: 'resp-uuid',
-        nota: 'Alteração de responsável'
-      }
+        nota: 'Alteração de responsável',
+      },
     });
     const res = mockRes();
 
@@ -173,7 +198,7 @@ describe('handleKanbanProducao', () => {
 
   it('deve carregar o histórico do cartão (GET /card-history)', async () => {
     vi.mocked(sql).mockResolvedValue([
-      { id: 1, status_anterior: 'a_fazer', status_novo: 'em_progresso', nota: 'Iniciou usinagem' }
+      { id: 1, status_anterior: 'a_fazer', status_novo: 'em_progresso', nota: 'Iniciou usinagem' },
     ] as any);
 
     const req = mockReq({ method: 'GET', url: '/card-history', query: { id: '10' }, body: {} });
@@ -188,16 +213,16 @@ describe('handleKanbanProducao', () => {
 
   it('deve carregar o board aplicando filtros (GET /board)', async () => {
     vi.mocked(sql).mockResolvedValue([]);
-    const req = mockReq({ 
-      method: 'GET', 
-      url: '/board', 
-      query: { 
-        filtro_responsavel: '00000000-0000-0000-0000-000000000001', 
-        filtro_prioridade: '1', 
-        filtro_ambiente: 'Cozinha', 
-        busca: 'OP-123' 
-      }, 
-      body: {} 
+    const req = mockReq({
+      method: 'GET',
+      url: '/board',
+      query: {
+        filtro_responsavel: '00000000-0000-0000-0000-000000000001',
+        filtro_prioridade: '1',
+        filtro_ambiente: 'Cozinha',
+        busca: 'OP-123',
+      },
+      body: {},
     });
     const res = mockRes();
     await handleKanbanProducao(req, res);
@@ -205,7 +230,11 @@ describe('handleKanbanProducao', () => {
   });
 
   it('deve retornar 400 no /move-card se status for inválido', async () => {
-    const req = mockReq({ method: 'POST', url: '/move-card', body: { etapa_kanban_id: 10, novo_status: 'invalido' } });
+    const req = mockReq({
+      method: 'POST',
+      url: '/move-card',
+      body: { etapa_kanban_id: 10, novo_status: 'invalido' },
+    });
     const res = mockRes();
     await handleKanbanProducao(req, res);
     expect(res._s()).toBe(400);
@@ -213,7 +242,11 @@ describe('handleKanbanProducao', () => {
 
   it('deve retornar 404 no /move-card se a etapa não for encontrada', async () => {
     vi.mocked(sql).mockResolvedValueOnce([]); // Retorna vazio no update da etapa
-    const req = mockReq({ method: 'POST', url: '/move-card', body: { etapa_kanban_id: 999, novo_status: 'em_progresso' } });
+    const req = mockReq({
+      method: 'POST',
+      url: '/move-card',
+      body: { etapa_kanban_id: 999, novo_status: 'em_progresso' },
+    });
     const res = mockRes();
     await handleKanbanProducao(req, res);
     expect(res._s()).toBe(404);
@@ -221,7 +254,7 @@ describe('handleKanbanProducao', () => {
 
   it('deve finalizar OP no /move-card se todas as etapas estiverem concluídas', async () => {
     vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
-      let qStr = (Array.isArray(query) ? query.join('?') : String(query)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(query) ? query.join('?') : String(query)).replace(/\s+/g, ' ');
       if (qStr.includes('UPDATE etapas_prod_kanban')) {
         return [{ id: 10, operacao_prod_id: 'op-123', status_kanban: 'concluido' }];
       }
@@ -237,7 +270,11 @@ describe('handleKanbanProducao', () => {
       return [];
     });
 
-    const req = mockReq({ method: 'POST', url: '/move-card', body: { etapa_kanban_id: 10, novo_status: 'concluido' } });
+    const req = mockReq({
+      method: 'POST',
+      url: '/move-card',
+      body: { etapa_kanban_id: 10, novo_status: 'concluido' },
+    });
     const res = mockRes();
     await handleKanbanProducao(req, res);
     expect(res._s()).toBe(200);

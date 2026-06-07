@@ -24,15 +24,18 @@ const CONFIG = {
   DEFAULT_VALIDADE_DIAS: 15,
   MAX_RETRY_ATTEMPTS: 3,
   QUERY_TIMEOUT_MS: 30000,
-  LOG_LEVEL: process.env.NODE_ENV === 'production' ? 'error' : 'debug'
+  LOG_LEVEL: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
 };
 
 // Logger condicional para produção
 const logger = {
-  debug: (..._args: any[]) => CONFIG.LOG_LEVEL === 'debug' && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
-  info: (..._args: any[]) => ['info', 'debug'].includes(CONFIG.LOG_LEVEL) && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
+  debug: (..._args: any[]) =>
+    CONFIG.LOG_LEVEL === 'debug' && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
+  info: (..._args: any[]) =>
+    ['info', 'debug'].includes(CONFIG.LOG_LEVEL) &&
+    /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
   warn: (...args: any[]) => console.warn('[ORCAMENTOS_PRO]', ...args),
-  error: (...args: any[]) => console.error('[ORCAMENTOS_PRO]', ...args)
+  error: (...args: any[]) => console.error('[ORCAMENTOS_PRO]', ...args),
 };
 
 // Validadores reutilizáveis
@@ -41,20 +44,22 @@ const validators = {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
   },
-  
+
   isPositiveNumber: (value: any): boolean => {
     const num = Number(value);
     return !isNaN(num) && num >= 0;
   },
-  
+
   sanitizeNumeric: (value: any, decimals: number = 2): string => {
     const num = parseFloat(value);
     return isNaN(num) ? '0'.padEnd(decimals + 2, '0') : num.toFixed(decimals);
   },
-  
+
   sanitizeString: (value: any, maxLength: number = 255): string => {
-    return String(value || '').trim().substring(0, maxLength);
-  }
+    return String(value || '')
+      .trim()
+      .substring(0, maxLength);
+  },
 };
 
 // Tipos para validação de payloads
@@ -112,7 +117,7 @@ export async function explodirBOM(skuEngId: string, qtdItem: number = 1, tenantI
 
   // Validar existência do SKU antes de explodir
   const skuExists = await db.query.skuEngenharia.findFirst({
-    where: and(eq(skuEngenharia.id, skuEngId), eq(skuEngenharia.tenantId, tenantId))
+    where: and(eq(skuEngenharia.id, skuEngId), eq(skuEngenharia.tenantId, tenantId)),
   });
 
   if (!skuExists) {
@@ -161,13 +166,13 @@ export async function explodirBOM(skuEngId: string, qtdItem: number = 1, tenantI
 
   logger.debug(`✅ BOM explodida: ${rows.length} componentes únicos encontrados`);
 
-  return rows.map(r => ({
+  return rows.map((r) => ({
     skuComponenteId: r.sku_componente_id,
     nome: validators.sanitizeString(r.nome, 500),
     codigo: validators.sanitizeString(r.codigo, 100),
     quantidadeCalculada: Number(r.quantidade_total) * qtdItem,
     custoUnitario: Number(r.preco_unitario),
-    custoTotal: Number(r.quantidade_total) * qtdItem * Number(r.preco_unitario)
+    custoTotal: Number(r.quantidade_total) * qtdItem * Number(r.preco_unitario),
   }));
 }
 
@@ -206,12 +211,12 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
           with: {
             bom: {
               with: {
-                componente: true
-              }
-            }
-          }
-        }
-      }
+                componente: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!orc) {
@@ -222,25 +227,32 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
     const taxaFinanceira = Number(orc.taxaFinanceiraPercentual || 0);
     const desconto = Number(orc.descontoPercentual || 0);
 
-    logger.debug(`⚙️ Config: Margem=${margemGlobal}% | Taxa=${taxaFinanceira}% | Desconto=${desconto}%`);
+    logger.debug(
+      `⚙️ Config: Margem=${margemGlobal}% | Taxa=${taxaFinanceira}% | Desconto=${desconto}%`,
+    );
 
     // 2. Preparar updates em batch (evita loop com múltiplas queries)
-    const itemUpdates: Array<{ id: string; custoCalc: string; precoVenda: string; margem: string }> = [];
-    
+    const itemUpdates: Array<{
+      id: string;
+      custoCalc: string;
+      precoVenda: string;
+      margem: string;
+    }> = [];
+
     let custoTotalAcumulado = 0;
     let vendaTotalAcumulada = 0;
 
     for (const item of orc.itens) {
       const qtdItem = Number(item.quantidade || 1);
-      
+
       // Calcular custo baseado na lista explodida
       let custoUnitario = 0;
-      
+
       if (item.bom && item.bom.length > 0) {
         custoUnitario = item.bom.reduce((sum, comp) => {
           const qtdComp = Number(comp.quantidadeAjustada || comp.quantidadeCalculada || 0);
           const custoComp = Number(comp.custoUnitario || 0);
-          return sum + (qtdComp * custoComp);
+          return sum + qtdComp * custoComp;
         }, 0);
       } else {
         // Fallback: usar custo já calculado (importante para itens importados/avulsos)
@@ -248,7 +260,8 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
       }
 
       // Aplicar fator de perda padrão, mão de obra de fabricação e de instalação
-      const custoAjustado = custoUnitario * (1 + fatorPerda) * (1 + moProducao) * (1 + moInstalacao);
+      const custoAjustado =
+        custoUnitario * (1 + fatorPerda) * (1 + moProducao) * (1 + moInstalacao);
 
       // Calcular preço de venda
       let precoVenda = 0;
@@ -258,11 +271,11 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
         // Override manual: preço fixo, margem real líquida recalculada (descontando imposto do preço final)
         precoVenda = Number(item.precoVendaSobrescrito);
         const precoSemImposto = precoVenda / (1 + aliquotaImposto);
-        margemReal = custoAjustado > 0 ? ((precoSemImposto / custoAjustado) - 1) * 100 : 0;
+        margemReal = custoAjustado > 0 ? (precoSemImposto / custoAjustado - 1) * 100 : 0;
       } else {
         // Cálculo padrão: markup comercial + taxa financeira + imposto sobre o preço de venda
-        const baseVenda = custoAjustado * (1 + (margemGlobal / 100));
-        const precoSemImposto = baseVenda * (1 + (taxaFinanceira / 100));
+        const baseVenda = custoAjustado * (1 + margemGlobal / 100);
+        const precoSemImposto = baseVenda * (1 + taxaFinanceira / 100);
         precoVenda = precoSemImposto * (1 + aliquotaImposto);
         margemReal = margemGlobal;
       }
@@ -276,14 +289,14 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
         id: item.id,
         custoCalc: validators.sanitizeNumeric(custoUnitario, 2),
         precoVenda: validators.sanitizeNumeric(precoVenda, 2),
-        margem: validators.sanitizeNumeric(margemReal, 2)
+        margem: validators.sanitizeNumeric(margemReal, 2),
       });
     }
 
     // 3. Executar updates em batch (1 query ao invés de N)
     if (itemUpdates.length > 0) {
       logger.debug(`💾 Atualizando ${itemUpdates.length} itens em batch...`);
-      
+
       // Drizzle não suporta batch update nativo, fazemos em chunks
       const chunks = [];
       for (let i = 0; i < itemUpdates.length; i += CONFIG.MAX_BATCH_SIZE) {
@@ -292,37 +305,41 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
 
       for (const chunk of chunks) {
         await Promise.all(
-          chunk.map(upd =>
-            tx.update(quotationItems)
+          chunk.map((upd) =>
+            tx
+              .update(quotationItems)
               .set({
                 custoUnitarioCalculado: upd.custoCalc,
                 precoVendaUnitario: upd.precoVenda,
                 margemLucro: upd.margem,
-                updatedAt: new Date()
+                updatedAt: new Date(),
               })
-              .where(eq(quotationItems.id, upd.id))
-          )
+              .where(eq(quotationItems.id, upd.id)),
+          ),
         );
       }
     }
 
     // 4. Aplicar desconto e atualizar cabeçalho
-    const valorFinal = vendaTotalAcumulada * (1 - (desconto / 100));
+    const valorFinal = vendaTotalAcumulada * (1 - desconto / 100);
 
-    await tx.update(quotations)
+    await tx
+      .update(quotations)
       .set({
         valorTotalCusto: validators.sanitizeNumeric(custoTotalAcumulado, 2),
         valorTotalVenda: validators.sanitizeNumeric(valorFinal, 2),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(and(eq(quotations.id, orcId), eq(quotations.tenantId, tenantId)));
 
-    logger.info(`✅ [RECALCULO OK] Custo: R$ ${custoTotalAcumulado.toFixed(2)} | Venda: R$ ${valorFinal.toFixed(2)}`);
+    logger.info(
+      `✅ [RECALCULO OK] Custo: R$ ${custoTotalAcumulado.toFixed(2)} | Venda: R$ ${valorFinal.toFixed(2)}`,
+    );
 
     return {
       custoTotal: custoTotalAcumulado,
       vendaTotal: valorFinal,
-      itensAtualizados: itemUpdates.length
+      itensAtualizados: itemUpdates.length,
     };
   });
 }
@@ -346,7 +363,7 @@ const payloadValidators = {
     // Validar cada item
     for (let i = 0; i < itens.length; i++) {
       const item = itens[i];
-      
+
       if (!item.skuEngenhariaId || !validators.isValidUUID(item.skuEngenhariaId)) {
         throw new ValidationError(`Item ${i}: skuEngenhariaId inválido`);
       }
@@ -363,12 +380,12 @@ const payloadValidators = {
         validadeDias: Number(header.validadeDias) || CONFIG.DEFAULT_VALIDADE_DIAS,
         margemLucroPercentual: Number(header.margemLucroPercentual) || CONFIG.DEFAULT_MARGEM,
         taxaFinanceiraPercentual: Number(header.taxaFinanceiraPercentual) || 0,
-        descontoPercentual: Number(header.descontoPercentual) || 0
+        descontoPercentual: Number(header.descontoPercentual) || 0,
       },
       itens: itens.map((it: any) => ({
         skuEngenhariaId: it.skuEngenhariaId,
-        quantidade: Number(it.quantidade)
-      }))
+        quantidade: Number(it.quantidade),
+      })),
     };
   },
 
@@ -403,10 +420,10 @@ const payloadValidators = {
         altura: item.altura?.toString(),
         espessura: item.espessura?.toString(),
         material: validators.sanitizeString(item.material, 255),
-        match_sugerido: item.match_sugerido
+        match_sugerido: item.match_sugerido,
       };
     });
-  }
+  },
 };
 
 // Rate limiting por usuário em memória
@@ -437,845 +454,982 @@ export function _resetRateLimit() {
 }
 
 const handleQuotationsCore: TenantHandler = async (req, res) => {
-    const tenantId = req.tenantId;
-    const user = req.tenantUser;
+  const tenantId = req.tenantId;
+  const user = req.tenantUser;
 
-    // Rate Limiting por usuário
-    const userId = user?.id || 'anonymous';
-    if (!checkRateLimit(userId)) {
-        logger.warn(`🚫 Rate limit excedido para o usuário: ${userId}`);
-        return res.status(429).json({ success: false, error: 'Limite de requisições excedido. Tente novamente mais tarde.' });
+  // Rate Limiting por usuário
+  const userId = user?.id || 'anonymous';
+  if (!checkRateLimit(userId)) {
+    logger.warn(`🚫 Rate limit excedido para o usuário: ${userId}`);
+    return res
+      .status(429)
+      .json({
+        success: false,
+        error: 'Limite de requisições excedido. Tente novamente mais tarde.',
+      });
+  }
+
+  const { method } = req;
+  const url = new URL(req.url, 'http://localhost');
+  const id = url.searchParams.get('id');
+  const action = url.searchParams.get('action');
+
+  /**
+   * Wrapper para retry em caso de deadlock (código 40P01 do Postgres)
+   */
+  async function withRetry<T>(fn: () => Promise<T>, context: string): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        lastError = err;
+
+        // Deadlock detectado (PostgreSQL error code 40P01)
+        if (err.code === '40P01' || err.message?.includes('deadlock')) {
+          logger.warn(
+            `⚠️ [${context}] Deadlock detectado (tentativa ${attempt}/${CONFIG.MAX_RETRY_ATTEMPTS})`,
+          );
+
+          if (attempt < CONFIG.MAX_RETRY_ATTEMPTS) {
+            const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+            await new Promise((resolve) => setTimeout(resolve, backoff));
+            continue;
+          }
+        }
+
+        // Erro não recuperável
+        throw err;
+      }
     }
 
-    const { method } = req;
-    const url = new URL(req.url, 'http://localhost');
-    const id = url.searchParams.get('id');
-    const action = url.searchParams.get('action');
+    throw lastError || new Error(`${context}: Falha após ${CONFIG.MAX_RETRY_ATTEMPTS} tentativas`);
+  }
 
-    /**
-     * Wrapper para retry em caso de deadlock (código 40P01 do Postgres)
-     */
-    async function withRetry<T>(fn: () => Promise<T>, context: string): Promise<T> {
-      let lastError: Error | null = null;
+  try {
+    if (method === 'GET') {
+      if (action === 'explode') {
+        const skuId = url.searchParams.get('skuId');
+        const qtd = Number(url.searchParams.get('qtd') || 1);
+        const componentes = await explodirBOM(skuId!, qtd, tenantId);
+        return res.status(200).json({ success: true, data: componentes });
+      }
 
-      for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
+      if (action === 'search-skus') {
+        const query = url.searchParams.get('q') || '';
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+
+        if (query.length < 2) {
+          return res.status(200).json({ success: true, data: [] });
+        }
+
+        logger.debug(`🔍 Buscando SKUs para: "${query}"`);
+
         try {
-          return await fn();
+          // Executar buscas em paralelo
+          const [comps, engs] = await Promise.all([
+            db
+              .select({
+                id: skuComponente.id,
+                codigo: skuComponente.codigo,
+                nome: skuComponente.nome,
+                precoUnitario: skuComponente.precoUnitario,
+              })
+              .from(skuComponente)
+              .where(
+                and(
+                  eq(skuComponente.tenantId, tenantId),
+                  or(
+                    ilike(skuComponente.codigo, `%${query}%`),
+                    ilike(skuComponente.nome, `%${query}%`),
+                  ),
+                ),
+              )
+              .limit(limit),
+
+            db
+              .select({
+                id: skuEngenharia.id,
+                codigo: skuEngenharia.codigo,
+                nome: skuEngenharia.nome,
+              })
+              .from(skuEngenharia)
+              .where(
+                and(
+                  eq(skuEngenharia.tenantId, tenantId),
+                  or(
+                    ilike(skuEngenharia.codigo, `%${query}%`),
+                    ilike(skuEngenharia.nome, `%${query}%`),
+                  ),
+                ),
+              )
+              .limit(limit),
+          ]);
+
+          const results = [
+            ...comps.map((c) => ({
+              ...c,
+              precoUnitario: Number(c.precoUnitario || 0),
+              tipo: 'COMPONENTE',
+            })),
+            ...engs.map((e) => ({
+              ...e,
+              precoUnitario: 0,
+              tipo: 'ENGENHARIA',
+            })),
+          ];
+
+          logger.debug(`✅ ${results.length} resultados encontrados`);
+          return res.status(200).json({ success: true, data: results });
         } catch (err: any) {
-          lastError = err;
-
-          // Deadlock detectado (PostgreSQL error code 40P01)
-          if (err.code === '40P01' || err.message?.includes('deadlock')) {
-            logger.warn(`⚠️ [${context}] Deadlock detectado (tentativa ${attempt}/${CONFIG.MAX_RETRY_ATTEMPTS})`);
-            
-            if (attempt < CONFIG.MAX_RETRY_ATTEMPTS) {
-              const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-              await new Promise(resolve => setTimeout(resolve, backoff));
-              continue;
-            }
-          }
-
-          // Erro não recuperável
-          throw err;
+          logger.error('❌ Erro na busca de SKUs:', err);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro na busca de SKUs',
+          });
         }
       }
 
-      throw lastError || new Error(`${context}: Falha após ${CONFIG.MAX_RETRY_ATTEMPTS} tentativas`);
+      if (id) {
+        logger.info(`🔍 Buscando orçamento: ${id}`);
+        let result;
+        try {
+          result = await db.query.quotations.findFirst({
+            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
+            with: {
+              itens: {
+                orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
+                with: {
+                  skuEngenharia: true,
+                  skuComponente: true,
+                  bom: {
+                    with: {
+                      componente: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+        } catch (dbErr: any) {
+          logger.error(`❌ Erro Crítico no Drizzle (findFirst):`, dbErr);
+          // Se falhar o findFirst complexo, tentamos um simples sem 'with' para recuperar o básico
+          result = await db.query.quotations.findFirst({
+            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
+          });
+          if (result) {
+            logger.warn(`⚠️ Recuperado com busca simples. O erro de 'with' persiste.`);
+            (result as any)._error = dbErr.message;
+          } else {
+            throw dbErr;
+          }
+        }
+
+        if (!result) {
+          logger.warn(`⚠️ Orçamento ${id} não encontrado em nenhuma tabela.`);
+          return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
+        }
+
+        logger.info(`✅ Orçamento ${id} carregado com ${result.itens?.length || 0} itens.`);
+        return res.status(200).json({ success: true, data: result });
+      }
+
+      const q = url.searchParams.get('q') || '';
+      const page = parseInt(url.searchParams.get('page') || '1');
+      const limit = parseInt(url.searchParams.get('limit') || '10');
+      const offset = (page - 1) * limit;
+
+      let query = db
+        .select()
+        .from(quotations)
+        .where(eq(quotations.tenantId, tenantId))
+        .orderBy(dsql`${quotations.updatedAt} DESC`);
+
+      if (q) {
+        query = db
+          .select()
+          .from(quotations)
+          .where(
+            and(eq(quotations.tenantId, tenantId), ilike(quotations.numeroOrcamento, `%${q}%`)),
+          )
+          .orderBy(dsql`${quotations.updatedAt} DESC`) as any;
+      }
+
+      const total = await db
+        .select({ count: dsql`count(*)` })
+        .from(quotations)
+        .where(eq(quotations.tenantId, tenantId));
+      const list = await (query as any).limit(limit).offset(offset);
+
+      return res.status(200).json({
+        success: true,
+        data: list,
+        pagination: {
+          total: Number(total[0].count),
+          page,
+          limit,
+          pages: Math.ceil(Number(total[0].count) / limit),
+        },
+      });
     }
 
-    try {
-        if (method === 'GET') {
-            if (action === 'explode') {
-                const skuId = url.searchParams.get('skuId');
-                const qtd = Number(url.searchParams.get('qtd') || 1);
-                const componentes = await explodirBOM(skuId!, qtd, tenantId);
-                return res.status(200).json({ success: true, data: componentes });
-            }
+    if (method === 'POST') {
+      logger.info('🆕 Criando novo orçamento...');
 
-            if (action === 'search-skus') {
-                const query = url.searchParams.get('q') || '';
-                const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
-                
-                if (query.length < 2) {
-                    return res.status(200).json({ success: true, data: [] });
-                }
+      try {
+        // 1. Validar payload
+        const validated = payloadValidators.createOrcamento(req.body);
 
-                logger.debug(`🔍 Buscando SKUs para: "${query}"`);
+        // 2. Executar criação em transação atômica
+        const result = await withRetry(async () => {
+          return await db.transaction(async (tx) => {
+            // Criar cabeçalho
+            const [newOrc] = await tx
+              .insert(quotations)
+              .values({
+                clienteId: validated.header.clienteId,
+                projetoId: validated.header.projetoId,
+                validadeDias: validated.header.validadeDias,
+                margemLucroPercentual: validated.header.margemLucroPercentual.toString(),
+                taxaFinanceiraPercentual: validated.header.taxaFinanceiraPercentual.toString(),
+                descontoPercentual: validated.header.descontoPercentual.toString(),
+                numeroOrcamento: `PRO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(
+                  Math.random() * 9999,
+                )
+                  .toString()
+                  .padStart(4, '0')}`,
+                status: 'RASCUNHO',
+                tenantId: tenantId,
+              })
+              .returning();
 
-                try {
-                    // Executar buscas em paralelo
-                    const [comps, engs] = await Promise.all([
-                        db.select({ 
-                            id: skuComponente.id, 
-                            codigo: skuComponente.codigo, 
-                            nome: skuComponente.nome, 
-                            precoUnitario: skuComponente.precoUnitario 
-                         })
-                        .from(skuComponente)
-                        .where(and(
-                            eq(skuComponente.tenantId, tenantId),
-                            or(
-                                ilike(skuComponente.codigo, `%${query}%`), 
-                                ilike(skuComponente.nome, `%${query}%`)
-                            )
-                        ))
-                        .limit(limit),
+            logger.debug(`✅ Cabeçalho criado: ${newOrc.id}`);
 
-                        db.select({ 
-                            id: skuEngenharia.id, 
-                            codigo: skuEngenharia.codigo, 
-                            nome: skuEngenharia.nome 
-                        })
-                        .from(skuEngenharia)
-                        .where(and(
-                            eq(skuEngenharia.tenantId, tenantId),
-                            or(
-                                ilike(skuEngenharia.codigo, `%${query}%`), 
-                                ilike(skuEngenharia.nome, `%${query}%`)
-                            )
-                        ))
-                        .limit(limit)
-                    ]);
+            // Inserir itens e explodir BOM em paralelo
+            const itemPromises = validated.itens.map(async (itemData) => {
+              const [newItem] = await tx
+                .insert(quotationItems)
+                .values({
+                  quotationId: newOrc.id,
+                  skuEngenhariaId: itemData.skuEngenhariaId,
+                  quantidade: itemData.quantidade.toString(),
+                })
+                .returning();
 
-                    const results = [
-                        ...comps.map(c => ({ 
-                            ...c, 
-                            precoUnitario: Number(c.precoUnitario || 0), 
-                            tipo: 'COMPONENTE' 
-                        })),
-                        ...engs.map(e => ({ 
-                            ...e, 
-                            precoUnitario: 0, 
-                            tipo: 'ENGENHARIA' 
-                        }))
-                    ];
+              // Explodir BOM
+              const componentes = await explodirBOM(itemData.skuEngenhariaId, 1, tenantId);
 
-                    logger.debug(`✅ ${results.length} resultados encontrados`);
-                    return res.status(200).json({ success: true, data: results });
+              if (componentes.length > 0) {
+                await tx.insert(quotationBom).values(
+                  componentes.map((c) => ({
+                    quotationItemId: newItem.id,
+                    skuComponenteId: c.skuComponenteId,
+                    quantidadeCalculada: c.quantidadeCalculada.toString(),
+                    quantidadeAjustada: c.quantidadeCalculada.toString(),
+                    custoUnitario: c.custoUnitario.toString(),
+                    origem: 'BOM',
+                  })),
+                );
+              }
 
-                } catch (err: any) {
-                    logger.error('❌ Erro na busca de SKUs:', err);
-                    return res.status(500).json({ 
-                        success: false, 
-                        error: 'Erro na busca de SKUs' 
-                    });
-                }
-            }
-
-            if (id) {
-                logger.info(`🔍 Buscando orçamento: ${id}`);
-                let result;
-                try {
-                    result = await db.query.quotations.findFirst({
-                        where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
-                        with: {
-                            itens: {
-                                orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
-                                with: {
-                                    skuEngenharia: true,
-                                    skuComponente: true,
-                                    bom: {
-                                        with: {
-                                            componente: true
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } catch (dbErr: any) {
-                    logger.error(`❌ Erro Crítico no Drizzle (findFirst):`, dbErr);
-                    // Se falhar o findFirst complexo, tentamos um simples sem 'with' para recuperar o básico
-                    result = await db.query.quotations.findFirst({ where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)) });
-                    if (result) {
-                        logger.warn(`⚠️ Recuperado com busca simples. O erro de 'with' persiste.`);
-                        (result as any)._error = dbErr.message;
-                    } else {
-                        throw dbErr;
-                    }
-                }
-
-
-
-                if (!result) {
-                    logger.warn(`⚠️ Orçamento ${id} não encontrado em nenhuma tabela.`);
-                    return res.status(404).json({ success: false, error: 'Orçamento não encontrado' });
-                }
-
-                logger.info(`✅ Orçamento ${id} carregado com ${result.itens?.length || 0} itens.`);
-                return res.status(200).json({ success: true, data: result });
-            }
-
-            const q = url.searchParams.get('q') || '';
-            const page = parseInt(url.searchParams.get('page') || '1');
-            const limit = parseInt(url.searchParams.get('limit') || '10');
-            const offset = (page - 1) * limit;
-
-            let query = db.select().from(quotations).where(eq(quotations.tenantId, tenantId)).orderBy(dsql`${quotations.updatedAt} DESC`);
-            
-            if (q) {
-                query = db.select()
-                    .from(quotations)
-                    .where(and(eq(quotations.tenantId, tenantId), ilike(quotations.numeroOrcamento, `%${q}%`)))
-                    .orderBy(dsql`${quotations.updatedAt} DESC`) as any;
-            }
-
-            const total = await db.select({ count: dsql`count(*)` }).from(quotations).where(eq(quotations.tenantId, tenantId));
-            const list = await (query as any).limit(limit).offset(offset);
-
-            return res.status(200).json({ 
-                success: true, 
-                data: list,
-                pagination: {
-                    total: Number(total[0].count),
-                    page,
-                    limit,
-                    pages: Math.ceil(Number(total[0].count) / limit)
-                }
+              return newItem;
             });
+
+            await Promise.all(itemPromises);
+            logger.debug(`✅ ${itemPromises.length} itens inseridos com BOM explodida`);
+
+            return newOrc;
+          });
+        }, 'CREATE_ORCAMENTO');
+
+        // 3. Recalcular totais (APÓS commit da transação)
+        await recalcularOrcamento(result.id, tenantId);
+
+        // 4. Audit log
+        await auditLog('ORCAMENTO_PRO', result.id, 'CREATE', user?.id || 'system');
+
+        logger.info(`✅ Orçamento ${result.numeroOrcamento} criado com sucesso`);
+
+        return res.status(201).json({
+          success: true,
+          data: {
+            id: result.id,
+            numeroOrcamento: result.numeroOrcamento,
+          },
+        });
+      } catch (err: any) {
+        console.error('❌ [CRITICAL] POST /api/quotations-pro Error:', err);
+        logger.error('❌ Erro ao criar orçamento:', err?.message || err);
+
+        // Erros de validação retornam 400
+        if (
+          err instanceof ValidationError ||
+          err.name === 'ValidationError' ||
+          err?.message?.includes('inválido') ||
+          err?.message?.includes('obrigatório') ||
+          err?.message?.includes('positiva')
+        ) {
+          return res.status(400).json({
+            success: false,
+            error: err?.message || 'Erro de validação',
+          });
         }
 
-        if (method === 'POST') {
-            logger.info("🆕 Criando novo orçamento...");
+        return res.status(500).json({
+          success: false,
+          error: `Erro na criação: ${err?.message || 'Erro desconhecido'}`,
+        });
+      }
+    }
 
-            try {
-                // 1. Validar payload
-                const validated = payloadValidators.createOrcamento(req.body);
+    if (method === 'PUT') {
+      if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
 
-                // 2. Executar criação em transação atômica
-                const result = await withRetry(async () => {
-                    return await db.transaction(async (tx) => {
-                        // Criar cabeçalho
-                        const [newOrc] = await tx.insert(quotations).values({
-                            clienteId: validated.header.clienteId,
-                            projetoId: validated.header.projetoId,
-                            validadeDias: validated.header.validadeDias,
-                            margemLucroPercentual: validated.header.margemLucroPercentual.toString(),
-                            taxaFinanceiraPercentual: validated.header.taxaFinanceiraPercentual.toString(),
-                            descontoPercentual: validated.header.descontoPercentual.toString(),
-                            numeroOrcamento: `PRO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`,
-                            status: 'RASCUNHO',
-                            tenantId: tenantId
-                        }).returning();
+      try {
+        return await withRetry(async () => {
+          // Verificar se o orçamento existe antes de qualquer PUT
+          const exists = await db.query.quotations.findFirst({
+            where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
+          });
 
-                        logger.debug(`✅ Cabeçalho criado: ${newOrc.id}`);
+          if (!exists) {
+            return res
+              .status(404)
+              .json({ success: false, error: 'Orçamento não encontrado para atualização.' });
+          }
 
-                        // Inserir itens e explodir BOM em paralelo
-                        const itemPromises = validated.itens.map(async (itemData) => {
-                            const [newItem] = await tx.insert(quotationItems).values({
-                                quotationId: newOrc.id,
-                                skuEngenhariaId: itemData.skuEngenhariaId,
-                                quantidade: itemData.quantidade.toString()
-                            }).returning();
+          if (action === 'update-bom') {
+            const { bomId, quantidadeAjustada } = req.body;
 
-                            // Explodir BOM
-                            const componentes = await explodirBOM(itemData.skuEngenhariaId, 1, tenantId);
-                            
-                            if (componentes.length > 0) {
-                                await tx.insert(quotationBom).values(
-                                    componentes.map(c => ({
-                                        quotationItemId: newItem.id,
-                                        skuComponenteId: c.skuComponenteId,
-                                        quantidadeCalculada: c.quantidadeCalculada.toString(),
-                                        quantidadeAjustada: c.quantidadeCalculada.toString(),
-                                        custoUnitario: c.custoUnitario.toString(),
-                                        origem: 'BOM'
-                                    }))
-                                );
-                            }
+            // Garantir que a lista explodida pertence a um item deste orçamento do tenant
+            const belongs = await db
+              .select()
+              .from(quotationBom)
+              .join(quotationItems, eq(quotationBom.quotationItemId, quotationItems.id))
+              .where(and(eq(quotationBom.id, bomId), eq(quotationItems.quotationId, id)));
+            if (!belongs.length) throw new Error('Item da BOM não pertence a este orçamento');
 
-                            return newItem;
-                        });
+            await db
+              .update(quotationBom)
+              .set({ quantidadeAjustada: quantidadeAjustada.toString(), editado: true })
+              .where(eq(quotationBom.id, bomId));
 
-                        await Promise.all(itemPromises);
-                        logger.debug(`✅ ${itemPromises.length} itens inseridos com BOM explodida`);
+            await recalcularOrcamento(id, tenantId);
+            return res.status(200).json({ success: true });
+          }
 
-                        return newOrc;
-                    });
-                }, 'CREATE_ORCAMENTO');
+          if (action === 'add-item') {
+            const { skuId, quantidade } = req.body;
 
-                // 3. Recalcular totais (APÓS commit da transação)
-                await recalcularOrcamento(result.id, tenantId);
-                
-                // 4. Audit log
-                await auditLog('ORCAMENTO_PRO', result.id, 'CREATE', user?.id || 'system');
-                
-                logger.info(`✅ Orçamento ${result.numeroOrcamento} criado com sucesso`);
-                
-                return res.status(201).json({ 
-                    success: true, 
-                    data: { 
-                        id: result.id, 
-                        numeroOrcamento: result.numeroOrcamento 
-                    } 
-                });
+            await db.transaction(async (tx) => {
+              // Verificar se é um módulo (Engenharia)
+              const isEng = await tx.query.skuEngenharia.findFirst({
+                where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)),
+              });
 
-            } catch (err: any) {
-                console.error("❌ [CRITICAL] POST /api/quotations-pro Error:", err);
-                logger.error("❌ Erro ao criar orçamento:", err?.message || err);
-                
-                // Erros de validação retornam 400
-                if (err instanceof ValidationError || err.name === 'ValidationError' || err?.message?.includes('inválido') || err?.message?.includes('obrigatório') || err?.message?.includes('positiva')) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        error: err?.message || 'Erro de validação' 
-                    });
+              if (isEng) {
+                const [newItem] = await tx
+                  .insert(quotationItems)
+                  .values({
+                    quotationId: id,
+                    skuEngenhariaId: skuId,
+                    quantidade: quantidade.toString(),
+                  })
+                  .returning();
+
+                const comps = await explodirBOM(skuId, 1, tenantId);
+                if (comps.length > 0) {
+                  await tx.insert(quotationBom).values(
+                    comps.map((c) => ({
+                      quotationItemId: newItem.id,
+                      skuComponenteId: c.skuComponenteId,
+                      quantidadeCalculada: c.quantidadeCalculada.toString(),
+                      quantidadeAjustada: c.quantidadeCalculada.toString(),
+                      custoUnitario: c.custoUnitario.toString(),
+                      origem: 'BOM',
+                    })),
+                  );
                 }
-
-                return res.status(500).json({ 
-                    success: false, 
-                    error: `Erro na criação: ${err?.message || 'Erro desconhecido'}` 
+              } else {
+                // Verificar se é um componente (Estoque)
+                const isComp = await tx.query.skuComponente.findFirst({
+                  where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)),
                 });
-            }
-        }
+                if (isComp) {
+                  const [newItem] = await tx
+                    .insert(quotationItems)
+                    .values({
+                      quotationId: id,
+                      skuEngenhariaId: null,
+                      quantidade: '1',
+                      observacoes: `ITEM AVULSO: ${isComp.nome}`,
+                    })
+                    .returning();
 
-        if (method === 'PUT') {
-            if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
+                  await tx.insert(quotationBom).values({
+                    quotationItemId: newItem.id,
+                    skuComponenteId: isComp.id,
+                    quantidadeCalculada: quantidade.toString(),
+                    quantidadeAjustada: quantidade.toString(),
+                    custoUnitario: isComp.precoUnitario?.toString() || '0',
+                    origem: 'DIRECT',
+                  });
+                }
+              }
+            });
+
+            await recalcularOrcamento(id, tenantId);
+            return res.status(200).json({ success: true });
+          }
+
+          if (action === 'import-items') {
+            logger.info(`📤 Iniciando importação em lote para orçamento ${id}`);
 
             try {
-                return await withRetry(async () => {
-                    // Verificar se o orçamento existe antes de qualquer PUT
-                    let exists = await db.query.quotations.findFirst({ where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)) });
-                    
+              // 1. Validar payload
+              const validatedItems = payloadValidators.importItems(req.body?.items || []);
 
+              logger.info(`... ${validatedItems.length} itens validados. Iniciando importação...`);
 
-                    if (!exists) {
-                        return res.status(404).json({ success: false, error: 'Orçamento não encontrado para atualização.' });
-                    }
+              // 2. Coletar SKUs únicos para validação em batch
+              const skuIds = new Set<string>();
+              validatedItems.forEach((item) => {
+                if (item.sku_id) skuIds.add(item.sku_id);
+                if (item.match_sugerido?.sku_componente_id) {
+                  skuIds.add(item.match_sugerido.sku_componente_id);
+                }
+              });
 
-                    if (action === 'update-bom') {
-                        const { bomId, quantidadeAjustada } = req.body;
-                        
-                        // Garantir que a lista explodida pertence a um item deste orçamento do tenant
-                        const belongs = await db.select()
-                            .from(quotationBom)
-                            .join(quotationItems, eq(quotationBom.quotationItemId, quotationItems.id))
-                            .where(and(eq(quotationBom.id, bomId), eq(quotationItems.quotationId, id)));
-                        if (!belongs.length) throw new Error('Item da BOM não pertence a este orçamento');
+              // 3. Buscar TODOS os SKUs em UMA query
+              const skuMap = new Map<string, any>();
 
-                        await db.update(quotationBom)
-                            .set({ quantidadeAjustada: quantidadeAjustada.toString(), editado: true })
-                            .where(eq(quotationBom.id, bomId));
-                        
-                        await recalcularOrcamento(id, tenantId);
-                        return res.status(200).json({ success: true });
-                    }
+              if (skuIds.size > 0) {
+                const skuArray = Array.from(skuIds);
 
-                    if (action === 'add-item') {
-                        const { skuId, quantidade } = req.body;
-                        
-                        await db.transaction(async (tx) => {
-                            // Verificar se é um módulo (Engenharia)
-                            const isEng = await tx.query.skuEngenharia.findFirst({ where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)) });
-                            
-                            if (isEng) {
-                                const [newItem] = await tx.insert(quotationItems).values({
-                                    quotationId: id,
-                                    skuEngenhariaId: skuId,
-                                    quantidade: quantidade.toString()
-                                }).returning();
+                // Buscar componentes
+                const componentes = await db
+                  .select()
+                  .from(skuComponente)
+                  .where(
+                    and(inArray(skuComponente.id, skuArray), eq(skuComponente.tenantId, tenantId)),
+                  );
 
-                                const comps = await explodirBOM(skuId, 1, tenantId);
-                                if (comps.length > 0) {
-                                    await tx.insert(quotationBom).values(
-                                        comps.map(c => ({
-                                            quotationItemId: newItem.id,
-                                            skuComponenteId: c.skuComponenteId,
-                                            quantidadeCalculada: c.quantidadeCalculada.toString(),
-                                            quantidadeAjustada: c.quantidadeCalculada.toString(),
-                                            custoUnitario: c.custoUnitario.toString(),
-                                            origem: 'BOM'
-                                        }))
-                                    );
-                                }
-                            } else {
-                                // Verificar se é um componente (Estoque)
-                                const isComp = await tx.query.skuComponente.findFirst({ where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)) });
-                                if (isComp) {
-                                    const [newItem] = await tx.insert(quotationItems).values({
-                                        quotationId: id,
-                                        skuEngenhariaId: null,
-                                        quantidade: '1',
-                                        observacoes: `ITEM AVULSO: ${isComp.nome}`
-                                    }).returning();
+                componentes.forEach((c) => skuMap.set(c.id, { ...c, tipo: 'COMPONENTE' }));
 
-                                    await tx.insert(quotationBom).values({
-                                        quotationItemId: newItem.id,
-                                        skuComponenteId: isComp.id,
-                                        quantidadeCalculada: quantidade.toString(),
-                                        quantidadeAjustada: quantidade.toString(),
-                                        custoUnitario: isComp.precoUnitario?.toString() || '0',
-                                        origem: 'DIRECT'
-                                    });
-                                }
-                            }
-                        });
+                logger.debug(`✅ ${componentes.length} SKUs encontrados na tabela de componentes`);
 
-                        await recalcularOrcamento(id, tenantId);
-                        return res.status(200).json({ success: true });
-                    }
-
-                    if (action === 'import-items') {
-                        logger.info(`📤 Iniciando importação em lote para orçamento ${id}`);
-                        
-                        try {
-                            // 1. Validar payload
-                            const validatedItems = payloadValidators.importItems(req.body?.items || []);
-                            
-                            logger.info(`... ${validatedItems.length} itens validados. Iniciando importação...`);
-
-                            // 2. Coletar SKUs únicos para validação em batch
-                            const skuIds = new Set<string>();
-                            validatedItems.forEach(item => {
-                                if (item.sku_id) skuIds.add(item.sku_id);
-                                if (item.match_sugerido?.sku_componente_id) {
-                                    skuIds.add(item.match_sugerido.sku_componente_id);
-                                }
-                            });
-
-                            // 3. Buscar TODOS os SKUs em UMA query
-                            const skuMap = new Map<string, any>();
-                            
-                            if (skuIds.size > 0) {
-                                const skuArray = Array.from(skuIds);
-                                
-                                // Buscar componentes
-                                const componentes = await db.select()
-                                    .from(skuComponente)
-                                    .where(and(inArray(skuComponente.id, skuArray), eq(skuComponente.tenantId, tenantId)));
-                                
-                                componentes.forEach(c => skuMap.set(c.id, { ...c, tipo: 'COMPONENTE' }));
-                                
-                                logger.debug(`✅ ${componentes.length} SKUs encontrados na tabela de componentes`);
-
-                                // Buscar materiais (tabela legada) se necessário
-                                try {
-                                    const materialIds = skuArray.filter(id => !skuMap.has(id));
-                                    if (materialIds.length > 0) {
-                                        const materials = await db.execute(dsql`
+                // Buscar materiais (tabela legada) se necessário
+                try {
+                  const materialIds = skuArray.filter((id) => !skuMap.has(id));
+                  if (materialIds.length > 0) {
+                    const materials = await db.execute(dsql`
                                             SELECT id::text, sku as codigo, nome, preco_custo::numeric as "precoUnitario" 
                                             FROM materiais 
-                                            WHERE id::text = ANY(${dsql.raw(`ARRAY[${materialIds.map(id => `'${id}'`).join(',')}]`)}) AND tenant_id = ${tenantId}::uuid
+                                            WHERE id::text = ANY(${dsql.raw(`ARRAY[${materialIds.map((id) => `'${id}'`).join(',')}]`)}) AND tenant_id = ${tenantId}::uuid
                                         `);
-                                        
-                                        materials.rows.forEach((m: any) => skuMap.set(m.id, { ...m, tipo: 'MATERIAL' }));
-                                        logger.debug(`✅ ${materials.rows.length} SKUs encontrados em materiais`);
-                                    }
-                                } catch (matErr: any) {
-                                    logger.warn(`⚠️ Erro ao buscar materiais (prosseguindo):`, matErr.message);
-                                }
-                            }
 
-                            // 4. Executar importação em transação
-                            const report = await db.transaction(async (tx) => {
-                                const stats = { success: 0, failed: 0, errors: [] as string[] };
+                    materials.rows.forEach((m: any) =>
+                      skuMap.set(m.id, { ...m, tipo: 'MATERIAL' }),
+                    );
+                    logger.debug(`✅ ${materials.rows.length} SKUs encontrados em materiais`);
+                  }
+                } catch (matErr: any) {
+                  logger.warn(`⚠️ Erro ao buscar materiais (prosseguindo):`, matErr.message);
+                }
+              }
 
-                                // Preparar batch de inserções
-                                const itemsToInsert: any[] = [];
-                                const explodidasToInsert: any[] = [];
+              // 4. Executar importação em transação
+              const report = await db.transaction(async (tx) => {
+                const stats = { success: 0, failed: 0, errors: [] as string[] };
 
-                                for (let i = 0; i < validatedItems.length; i++) {
-                                    const item = validatedItems[i];
-                                    const itemLabel = `Item #${i+1} (${item.nome})`;
+                // Preparar batch de inserções
+                const itemsToInsert: any[] = [];
+                const explodidasToInsert: any[] = [];
 
-                                    try {
-                                        const skuId = item.sku_id || item.match_sugerido?.sku_componente_id || null;
-                                        const skuData = skuId ? skuMap.get(skuId) : null;
-                                        
-                                        // Validar FK: só aceita SKU se for da tabela skuComponente
-                                        const finalSkuComponenteId = (skuData && skuData.tipo === 'COMPONENTE') ? skuId : null;
-                                        
-                                        const custoBase = skuData?.precoUnitario 
-                                            || item.match_sugerido?.custoUnitario 
-                                            || item.custoUnitario 
-                                            || 0;
+                for (let i = 0; i < validatedItems.length; i++) {
+                  const item = validatedItems[i];
+                  const itemLabel = `Item #${i + 1} (${item.nome})`;
 
-                                        const itemPayload = {
-                                            quotationId: id,
-                                            nomeCustomizado: item.nome,
-                                            quantidade: validators.sanitizeNumeric(item.quantidade, 3),
-                                            largura: validators.sanitizeString(item.largura, 20),
-                                            altura: validators.sanitizeString(item.altura, 20),
-                                            espessura: validators.sanitizeString(item.espessura, 20),
-                                            material: item.material,
-                                            skuComponenteId: finalSkuComponenteId,
-                                            skuCodigo: validators.sanitizeString(skuData?.codigo || item.match_sugerido?.sku_codigo, 100),
-                                            skuDescricao: validators.sanitizeString(skuData?.nome || item.match_sugerido?.nome, 500),
-                                            unidadeMedida: 'UN',
-                                            custoBaseEstoque: validators.sanitizeNumeric(custoBase, 2),
-                                            custoUnitarioCalculado: validators.sanitizeNumeric(custoBase, 2),
-                                            precoVendaUnitario: validators.sanitizeNumeric(custoBase * 1.3, 2),
-                                            origemDados: finalSkuComponenteId ? 'SKU_MATCH' : 'CSV',
-                                            possuiOverride: false,
-                                            observacoes: `Importado via CSV em ${new Date().toLocaleDateString('pt-BR')}`
-                                        };
+                  try {
+                    const skuId = item.sku_id || item.match_sugerido?.sku_componente_id || null;
+                    const skuData = skuId ? skuMap.get(skuId) : null;
 
-                                        itemsToInsert.push(itemPayload);
-                                        stats.success++;
+                    // Validar FK: só aceita SKU se for da tabela skuComponente
+                    const finalSkuComponenteId =
+                      skuData && skuData.tipo === 'COMPONENTE' ? skuId : null;
 
-                                    } catch (itemErr: any) {
-                                        stats.failed++;
-                                        stats.errors.push(`${itemLabel}: ${itemErr.message}`);
-                                        logger.error(`❌ ${itemLabel}:`, itemErr.message);
-                                    }
-                                }
+                    const custoBase =
+                      skuData?.precoUnitario ||
+                      item.match_sugerido?.custoUnitario ||
+                      item.custoUnitario ||
+                      0;
 
-                                // 5. Inserir todos os itens em batch
-                                if (itemsToInsert.length > 0) {
-                                    const insertedItems = await tx.insert(quotationItems)
-                                        .values(itemsToInsert)
-                                        .returning();
+                    const itemPayload = {
+                      quotationId: id,
+                      nomeCustomizado: item.nome,
+                      quantidade: validators.sanitizeNumeric(item.quantidade, 3),
+                      largura: validators.sanitizeString(item.largura, 20),
+                      altura: validators.sanitizeString(item.altura, 20),
+                      espessura: validators.sanitizeString(item.espessura, 20),
+                      material: item.material,
+                      skuComponenteId: finalSkuComponenteId,
+                      skuCodigo: validators.sanitizeString(
+                        skuData?.codigo || item.match_sugerido?.sku_codigo,
+                        100,
+                      ),
+                      skuDescricao: validators.sanitizeString(
+                        skuData?.nome || item.match_sugerido?.nome,
+                        500,
+                      ),
+                      unidadeMedida: 'UN',
+                      custoBaseEstoque: validators.sanitizeNumeric(custoBase, 2),
+                      custoUnitarioCalculado: validators.sanitizeNumeric(custoBase, 2),
+                      precoVendaUnitario: validators.sanitizeNumeric(custoBase * 1.3, 2),
+                      origemDados: finalSkuComponenteId ? 'SKU_MATCH' : 'CSV',
+                      possuiOverride: false,
+                      observacoes: `Importado via CSV em ${new Date().toLocaleDateString('pt-BR')}`,
+                    };
 
-                                    logger.debug(`✅ ${insertedItems.length} itens inseridos em batch`);
+                    itemsToInsert.push(itemPayload);
+                    stats.success++;
+                  } catch (itemErr: any) {
+                    stats.failed++;
+                    stats.errors.push(`${itemLabel}: ${itemErr.message}`);
+                    logger.error(`❌ ${itemLabel}:`, itemErr.message);
+                  }
+                }
 
-                                    // 6. Criar lista explodida para itens com SKU
-                                    for (let i = 0; i < insertedItems.length; i++) {
-                                        const item = insertedItems[i];
-                                        const originalData = itemsToInsert[i];
+                // 5. Inserir todos os itens em batch
+                if (itemsToInsert.length > 0) {
+                  const insertedItems = await tx
+                    .insert(quotationItems)
+                    .values(itemsToInsert)
+                    .returning();
 
-                                        if (originalData.skuComponenteId) {
-                                            explodidasToInsert.push({
-                                                quotationItemId: item.id,
-                                                skuComponenteId: originalData.skuComponenteId,
-                                                quantidadeCalculada: item.quantidade,
-                                                quantidadeAjustada: item.quantidade,
-                                                custoUnitario: originalData.custoBaseEstoque,
-                                                origem: 'IMPORT'
-                                            });
-                                        }
-                                    }
+                  logger.debug(`✅ ${insertedItems.length} itens inseridos em batch`);
 
-                                    if (explodidasToInsert.length > 0) {
-                                        await tx.insert(quotationBom).values(explodidasToInsert);
-                                        logger.debug(`✅ ${explodidasToInsert.length} componentes adicionados à lista explodida`);
-                                    }
-                                }
+                  // 6. Criar lista explodida para itens com SKU
+                  for (let i = 0; i < insertedItems.length; i++) {
+                    const item = insertedItems[i];
+                    const originalData = itemsToInsert[i];
 
-                                return stats;
-                            });
-
-                            // 7. Recalcular totais
-                            if (report.success > 0) {
-                                logger.info(`🧮 Recalculando totais para ${report.success} itens importados...`);
-                                await recalcularOrcamento(id, tenantId);
-                            }
-
-                            // 8. Retornar relatório
-                            if (report.failed === validatedItems.length) {
-                                return res.status(500).json({ 
-                                    success: false, 
-                                    error: 'Todos os itens falharam na importação.',
-                                    details: report.errors 
-                                });
-                            }
-
-                            logger.info(`✅ Importação concluída: ${report.success} sucessos, ${report.failed} falhas`);
-
-                            return res.status(200).json({ 
-                                success: true, 
-                                data: {
-                                    message: `Importação concluída: ${report.success} sucessos, ${report.failed} falhas.`,
-                                    total: validatedItems.length,
-                                    success: report.success,
-                                    failed: report.failed,
-                                    errors: report.errors
-                                }
-                            });
-
-                        } catch (err: any) {
-                            logger.error("❌ Erro crítico na importação:", err);
-                            
-                            if (err instanceof ValidationError || err.name === 'ValidationError' || err?.message?.includes('inválido') || err?.message?.includes('máximo') || err?.message?.includes('obrigatório') || err?.message?.includes('deve ser') || err?.message?.includes('quantidade')) {
-                                return res.status(400).json({ success: false, error: err?.message || 'Erro de validação' });
-                            }
-
-                            return res.status(500).json({ 
-                                success: false, 
-                                error: `Erro crítico: ${err?.message || 'Erro desconhecido'}` 
-                            });
-                        }
+                    if (originalData.skuComponenteId) {
+                      explodidasToInsert.push({
+                        quotationItemId: item.id,
+                        skuComponenteId: originalData.skuComponenteId,
+                        quantidadeCalculada: item.quantidade,
+                        quantidadeAjustada: item.quantidade,
+                        custoUnitario: originalData.custoBaseEstoque,
+                        origem: 'IMPORT',
+                      });
                     }
+                  }
 
-                    if (action === 'reset-to-global-margin') {
-                        const { itemIds } = req.body;
-                        if (!Array.isArray(itemIds) || itemIds.length === 0) throw new Error('Nenhum item selecionado');
-                        
-                        await db.update(quotationItems)
-                            .set({ possuiOverride: false, precoVendaSobrescrito: null })
-                            .where(and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)));
-                        
-                        await recalcularOrcamento(id, tenantId);
-                        return res.status(200).json({ success: true });
-                    }
+                  if (explodidasToInsert.length > 0) {
+                    await tx.insert(quotationBom).values(explodidasToInsert);
+                    logger.debug(
+                      `✅ ${explodidasToInsert.length} componentes adicionados à lista explodida`,
+                    );
+                  }
+                }
 
-                    if (action === 'apply-global-margin') {
-                        const { margem } = req.body;
-                        if (typeof margem !== 'number') throw new Error('Margem inválida');
+                return stats;
+              });
 
-                        // Atualizar cabeçalho e resetar overrides sob transação
-                        await db.transaction(async (tx) => {
-                            await tx.update(quotations)
-                                .set({ margemLucroPercentual: margem.toString() })
-                                .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
-                            
-                            await tx.update(quotationItems)
-                                .set({ possuiOverride: false, precoVendaSobrescrito: null })
-                                .where(eq(quotationItems.quotationId, id));
-                        });
+              // 7. Recalcular totais
+              if (report.success > 0) {
+                logger.info(`🧮 Recalculando totais para ${report.success} itens importados...`);
+                await recalcularOrcamento(id, tenantId);
+              }
 
-                        await recalcularOrcamento(id, tenantId);
-                        
-                        const count = await db.select({ count: dsql`count(*)` }).from(quotationItems).where(eq(quotationItems.quotationId, id));
-                        
-                        return res.status(200).json({ 
-                            success: true, 
-                            message: `Margem de ${margem}% aplicada a ${count[0].count} itens` 
-                        });
-                    }
+              // 8. Retornar relatório
+              if (report.failed === validatedItems.length) {
+                return res.status(500).json({
+                  success: false,
+                  error: 'Todos os itens falharam na importação.',
+                  details: report.errors,
+                });
+              }
 
-                    if (action === 'bulk-update-items') {
-                        const { itemIds, updates } = req.body;
-                        if (!Array.isArray(itemIds) || itemIds.length === 0) throw new Error('Nenhum item selecionado');
+              logger.info(
+                `✅ Importação concluída: ${report.success} sucessos, ${report.failed} falhas`,
+              );
 
-                        // Aplicar atualizações em lote buscando todos de uma vez
-                        await db.transaction(async (tx) => {
-                            const items = await tx.select()
-                                .from(quotationItems)
-                                .where(and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)));
+              return res.status(200).json({
+                success: true,
+                data: {
+                  message: `Importação concluída: ${report.success} sucessos, ${report.failed} falhas.`,
+                  total: validatedItems.length,
+                  success: report.success,
+                  failed: report.failed,
+                  errors: report.errors,
+                },
+              });
+            } catch (err: any) {
+              logger.error('❌ Erro crítico na importação:', err);
 
-                            for (const item of items) {
-                                const finalUpdates = { ...updates };
+              if (
+                err instanceof ValidationError ||
+                err.name === 'ValidationError' ||
+                err?.message?.includes('inválido') ||
+                err?.message?.includes('máximo') ||
+                err?.message?.includes('obrigatório') ||
+                err?.message?.includes('deve ser') ||
+                err?.message?.includes('quantidade')
+              ) {
+                return res
+                  .status(400)
+                  .json({ success: false, error: err?.message || 'Erro de validação' });
+              }
 
-                                // Lógica especial para ajustes percentuais de preço/custo
-                                if (updates.percentualPreco) {
-                                    const atual = Number(item.precoVendaUnitario || item.custoUnitarioCalculado || 0);
-                                    finalUpdates.precoVendaUnitario = (atual * (1 + Number(updates.percentualPreco) / 100)).toString();
-                                    finalUpdates.precoVendaSobrescrito = finalUpdates.precoVendaUnitario;
-                                    finalUpdates.possuiOverride = true;
-                                    delete finalUpdates.percentualPreco;
-                                }
+              return res.status(500).json({
+                success: false,
+                error: `Erro crítico: ${err?.message || 'Erro desconhecido'}`,
+              });
+            }
+          }
 
-                                if (updates.percentualCusto) {
-                                    const atual = Number(item.custoUnitarioCalculado || 0);
-                                    finalUpdates.custoUnitarioCalculado = (atual * (1 + Number(updates.percentualCusto) / 100)).toString();
-                                    finalUpdates.custoSobrescrito = finalUpdates.custoUnitarioCalculado;
-                                    finalUpdates.possuiOverride = true;
-                                    delete finalUpdates.percentualCusto;
-                                }
+          if (action === 'reset-to-global-margin') {
+            const { itemIds } = req.body;
+            if (!Array.isArray(itemIds) || itemIds.length === 0)
+              throw new Error('Nenhum item selecionado');
 
-                                await tx.update(quotationItems).set(finalUpdates).where(eq(quotationItems.id, item.id));
-                            }
-                        });
+            await db
+              .update(quotationItems)
+              .set({ possuiOverride: false, precoVendaSobrescrito: null })
+              .where(and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)));
 
-                        await recalcularOrcamento(id, tenantId);
-                        return res.status(200).json({ success: true });
-                    }
+            await recalcularOrcamento(id, tenantId);
+            return res.status(200).json({ success: true });
+          }
 
-                    if (action === 'update-sku') {
-                        const { itemId, skuId, tipo } = req.body;
-                        
-                        await db.transaction(async (tx) => {
-                            const item = await tx.query.quotationItems.findFirst({ where: eq(quotationItems.id, itemId) });
-                            if (!item) throw new Error('Item não encontrado');
+          if (action === 'apply-global-margin') {
+            const { margem } = req.body;
+            if (typeof margem !== 'number') throw new Error('Margem inválida');
 
-                            if (tipo === 'ENGENHARIA') {
-                                // Se for módulo, limpa a explodida antiga e gera a nova
-                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
-                                const comps = await explodirBOM(skuId, 1, tenantId);
-                                
-                                if (comps.length > 0) {
-                                    await tx.insert(quotationBom).values(
-                                        comps.map(c => ({
-                                            quotationItemId: itemId,
-                                            skuComponenteId: c.skuComponenteId,
-                                            quantidadeCalculada: c.quantidadeCalculada.toString(),
-                                            quantidadeAjustada: c.quantidadeCalculada.toString(),
-                                            custoUnitario: c.custoUnitario.toString(),
-                                            origem: 'BOM'
-                                        }))
-                                    );
-                                }
+            // Atualizar cabeçalho e resetar overrides sob transação
+            await db.transaction(async (tx) => {
+              await tx
+                .update(quotations)
+                .set({ margemLucroPercentual: margem.toString() })
+                .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
 
-                                await tx.update(quotationItems).set({ 
-                                    skuEngenhariaId: skuId,
-                                    material: null 
-                                }).where(eq(quotationItems.id, itemId));
-                            } else {
-                                // Se for componente direto
-                                const comp = await tx.query.skuComponente.findFirst({ where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)) });
-                                if (!comp) throw new Error('Componente não encontrado');
+              await tx
+                .update(quotationItems)
+                .set({ possuiOverride: false, precoVendaSobrescrito: null })
+                .where(eq(quotationItems.quotationId, id));
+            });
 
-                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
-                                await tx.insert(quotationBom).values({
-                                    quotationItemId: itemId,
-                                    skuComponenteId: skuId,
-                                    quantidadeCalculada: '1',
-                                    quantidadeAjustada: '1',
-                                    custoUnitario: comp.precoUnitario,
-                                    origem: 'MANUAL'
-                                });
+            await recalcularOrcamento(id, tenantId);
 
-                                await tx.update(quotationItems).set({ 
-                                    skuEngenhariaId: null,
-                                    material: comp.codigo,
-                                    custoUnitarioCalculado: comp.precoUnitario
-                                }).where(eq(quotationItems.id, itemId));
-                            }
-                        });
+            const count = await db
+              .select({ count: dsql`count(*)` })
+              .from(quotationItems)
+              .where(eq(quotationItems.quotationId, id));
 
-                        await recalcularOrcamento(id, tenantId);
-                        logger.info(`✅ SKU atualizado com sucesso para o item ${itemId}. Custo recalculado.`);
-                        return res.status(200).json({ success: true });
-                    }
+            return res.status(200).json({
+              success: true,
+              message: `Margem de ${margem}% aplicada a ${count[0].count} itens`,
+            });
+          }
 
-                    if (action === 'update-item') {
-                        const { itemId, ...updates } = req.body;
-                        logger.info(`[ORCAMENTOS_PRO] 📝 Atualizando item ${itemId}:`, JSON.stringify(updates, null, 2));
-                        
-                        await db.transaction(async (tx) => {
-                            // Buscar item atual para comparar SKU
-                            const oldItem = await tx.query.quotationItems.findFirst({ where: eq(quotationItems.id, itemId) });
-                            
-                            if (!oldItem) {
-                                throw new Error('Item não encontrado');
-                            }
+          if (action === 'bulk-update-items') {
+            const { itemIds, updates } = req.body;
+            if (!Array.isArray(itemIds) || itemIds.length === 0)
+              throw new Error('Nenhum item selecionado');
 
-                            // Normalização de SKUs para garantir persistência correta
-                            if (updates.skuId) {
-                                if (updates.skuTipo === 'ENGENHARIA') {
-                                    updates.skuEngenhariaId = updates.skuId;
-                                    updates.skuComponenteId = null;
-                                } else {
-                                    updates.skuComponenteId = updates.skuId;
-                                    updates.skuEngenhariaId = null;
-                                }
-                                delete updates.skuId;
-                                delete updates.skuTipo;
-                            }
+            // Aplicar atualizações em lote buscando todos de uma vez
+            await db.transaction(async (tx) => {
+              const items = await tx
+                .select()
+                .from(quotationItems)
+                .where(
+                  and(eq(quotationItems.quotationId, id), inArray(quotationItems.id, itemIds)),
+                );
 
-                            // Detectar se o SKU mudou para re-explodir ou atualizar referências
-                            if (updates.skuEngenhariaId && updates.skuEngenhariaId !== oldItem.skuEngenhariaId) {
-                                logger.info(`[ORCAMENTOS_PRO] 🔄 SKU de Engenharia mudou. Re-explodindo BOM para item ${itemId}...`);
-                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
-                                const comps = await explodirBOM(updates.skuEngenhariaId, 1, tenantId);
-                                
-                                if (comps.length > 0) {
-                                    await tx.insert(quotationBom).values(
-                                        comps.map(c => ({
-                                            quotationItemId: itemId,
-                                            skuComponenteId: c.skuComponenteId,
-                                            quantidadeCalculada: c.quantidadeCalculada.toString(),
-                                            quantidadeAjustada: c.quantidadeCalculada.toString(),
-                                            custoUnitario: c.custoUnitario.toString(),
-                                            origem: 'BOM'
-                                        }))
-                                    );
-                                }
-                            } else if (updates.skuComponenteId && updates.skuComponenteId !== oldItem.skuComponenteId) {
-                                logger.info(`[ORCAMENTOS_PRO] 🔄 SKU de Componente mudou para o item ${itemId}.`);
-                                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
-                                await tx.insert(quotationBom).values({
-                                    quotationItemId: itemId,
-                                    skuComponenteId: updates.skuComponenteId,
-                                    quantidadeCalculada: (updates.quantidade || oldItem.quantidade).toString(),
-                                    quantidadeAjustada: (updates.quantidade || oldItem.quantidade).toString(),
-                                    custoUnitario: (updates.custoUnitarioCalculado || oldItem.custoUnitarioCalculado || 0).toString(),
-                                    origem: 'MANUAL'
-                                });
-                            }
+              for (const item of items) {
+                const finalUpdates = { ...updates };
 
-                            // Limpar campos auxiliares
-                            const cleanUpdates = { ...updates };
-                            delete cleanUpdates.skuId;
-                            delete cleanUpdates.skuTipo;
+                // Lógica especial para ajustes percentuais de preço/custo
+                if (updates.percentualPreco) {
+                  const atual = Number(item.precoVendaUnitario || item.custoUnitarioCalculado || 0);
+                  finalUpdates.precoVendaUnitario = (
+                    atual *
+                    (1 + Number(updates.percentualPreco) / 100)
+                  ).toString();
+                  finalUpdates.precoVendaSobrescrito = finalUpdates.precoVendaUnitario;
+                  finalUpdates.possuiOverride = true;
+                  delete finalUpdates.percentualPreco;
+                }
 
-                            await tx.update(quotationItems).set(cleanUpdates).where(eq(quotationItems.id, itemId));
-                        });
+                if (updates.percentualCusto) {
+                  const atual = Number(item.custoUnitarioCalculado || 0);
+                  finalUpdates.custoUnitarioCalculado = (
+                    atual *
+                    (1 + Number(updates.percentualCusto) / 100)
+                  ).toString();
+                  finalUpdates.custoSobrescrito = finalUpdates.custoUnitarioCalculado;
+                  finalUpdates.possuiOverride = true;
+                  delete finalUpdates.percentualCusto;
+                }
 
-                        await recalcularOrcamento(id, tenantId);
-                        logger.info(`[ORCAMENTOS_PRO] ✅ Item ${itemId} atualizado e orçamento recalculado.`);
-                        return res.status(200).json({ success: true });
-                    }
+                await tx
+                  .update(quotationItems)
+                  .set(finalUpdates)
+                  .where(eq(quotationItems.id, item.id));
+              }
+            });
 
-                    if (action === 'delete-item') {
-                        const { itemId } = req.body;
-                        await db.delete(quotationItems).where(and(eq(quotationItems.id, itemId), eq(quotationItems.quotationId, id)));
-                        await recalcularOrcamento(id, tenantId);
-                        return res.status(200).json({ success: true });
-                    }
+            await recalcularOrcamento(id, tenantId);
+            return res.status(200).json({ success: true });
+          }
 
-                    // Update Header se não tiver nenhuma action
-                    const reqStatusUpper = req.body.status?.toUpperCase();
-                    const isApprovingStatus = reqStatusUpper === 'APROVADO' || reqStatusUpper === 'FECHADO' || reqStatusUpper === 'FECHADA';
+          if (action === 'update-sku') {
+            const { itemId, skuId, tipo } = req.body;
 
-                    if (isApprovingStatus) {
-                        const existsStatusUpper = exists?.status?.toUpperCase();
-                        const wasAlreadyApproved = existsStatusUpper === 'APROVADO' || existsStatusUpper === 'FECHADO' || existsStatusUpper === 'FECHADA';
+            await db.transaction(async (tx) => {
+              const item = await tx.query.quotationItems.findFirst({
+                where: eq(quotationItems.id, itemId),
+              });
+              if (!item) throw new Error('Item não encontrado');
 
-                        if (exists && !wasAlreadyApproved) {
-                            await db.transaction(async (tx) => {
-                                // 1. Atualizar status e cabeçalho do orçamento
-                                const finalBody = { ...req.body, updatedAt: new Date() };
-                                await tx.update(quotations)
-                                    .set(finalBody)
-                                    .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
+              if (tipo === 'ENGENHARIA') {
+                // Se for módulo, limpa a explodida antiga e gera a nova
+                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                const comps = await explodirBOM(skuId, 1, tenantId);
 
-                                // Sincronizar com a tabela comercial legada 'quotations'
-                                await tx.execute(dsql`
+                if (comps.length > 0) {
+                  await tx.insert(quotationBom).values(
+                    comps.map((c) => ({
+                      quotationItemId: itemId,
+                      skuComponenteId: c.skuComponenteId,
+                      quantidadeCalculada: c.quantidadeCalculada.toString(),
+                      quantidadeAjustada: c.quantidadeCalculada.toString(),
+                      custoUnitario: c.custoUnitario.toString(),
+                      origem: 'BOM',
+                    })),
+                  );
+                }
+
+                await tx
+                  .update(quotationItems)
+                  .set({
+                    skuEngenhariaId: skuId,
+                    material: null,
+                  })
+                  .where(eq(quotationItems.id, itemId));
+              } else {
+                // Se for componente direto
+                const comp = await tx.query.skuComponente.findFirst({
+                  where: and(eq(skuComponente.id, skuId), eq(skuComponente.tenantId, tenantId)),
+                });
+                if (!comp) throw new Error('Componente não encontrado');
+
+                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                await tx.insert(quotationBom).values({
+                  quotationItemId: itemId,
+                  skuComponenteId: skuId,
+                  quantidadeCalculada: '1',
+                  quantidadeAjustada: '1',
+                  custoUnitario: comp.precoUnitario,
+                  origem: 'MANUAL',
+                });
+
+                await tx
+                  .update(quotationItems)
+                  .set({
+                    skuEngenhariaId: null,
+                    material: comp.codigo,
+                    custoUnitarioCalculado: comp.precoUnitario,
+                  })
+                  .where(eq(quotationItems.id, itemId));
+              }
+            });
+
+            await recalcularOrcamento(id, tenantId);
+            logger.info(`✅ SKU atualizado com sucesso para o item ${itemId}. Custo recalculado.`);
+            return res.status(200).json({ success: true });
+          }
+
+          if (action === 'update-item') {
+            const { itemId, ...updates } = req.body;
+            logger.info(
+              `[ORCAMENTOS_PRO] 📝 Atualizando item ${itemId}:`,
+              JSON.stringify(updates, null, 2),
+            );
+
+            await db.transaction(async (tx) => {
+              // Buscar item atual para comparar SKU
+              const oldItem = await tx.query.quotationItems.findFirst({
+                where: eq(quotationItems.id, itemId),
+              });
+
+              if (!oldItem) {
+                throw new Error('Item não encontrado');
+              }
+
+              // Normalização de SKUs para garantir persistência correta
+              if (updates.skuId) {
+                if (updates.skuTipo === 'ENGENHARIA') {
+                  updates.skuEngenhariaId = updates.skuId;
+                  updates.skuComponenteId = null;
+                } else {
+                  updates.skuComponenteId = updates.skuId;
+                  updates.skuEngenhariaId = null;
+                }
+                delete updates.skuId;
+                delete updates.skuTipo;
+              }
+
+              // Detectar se o SKU mudou para re-explodir ou atualizar referências
+              if (updates.skuEngenhariaId && updates.skuEngenhariaId !== oldItem.skuEngenhariaId) {
+                logger.info(
+                  `[ORCAMENTOS_PRO] 🔄 SKU de Engenharia mudou. Re-explodindo BOM para item ${itemId}...`,
+                );
+                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                const comps = await explodirBOM(updates.skuEngenhariaId, 1, tenantId);
+
+                if (comps.length > 0) {
+                  await tx.insert(quotationBom).values(
+                    comps.map((c) => ({
+                      quotationItemId: itemId,
+                      skuComponenteId: c.skuComponenteId,
+                      quantidadeCalculada: c.quantidadeCalculada.toString(),
+                      quantidadeAjustada: c.quantidadeCalculada.toString(),
+                      custoUnitario: c.custoUnitario.toString(),
+                      origem: 'BOM',
+                    })),
+                  );
+                }
+              } else if (
+                updates.skuComponenteId &&
+                updates.skuComponenteId !== oldItem.skuComponenteId
+              ) {
+                logger.info(`[ORCAMENTOS_PRO] 🔄 SKU de Componente mudou para o item ${itemId}.`);
+                await tx.delete(quotationBom).where(eq(quotationBom.quotationItemId, itemId));
+                await tx.insert(quotationBom).values({
+                  quotationItemId: itemId,
+                  skuComponenteId: updates.skuComponenteId,
+                  quantidadeCalculada: (updates.quantidade || oldItem.quantidade).toString(),
+                  quantidadeAjustada: (updates.quantidade || oldItem.quantidade).toString(),
+                  custoUnitario: (
+                    updates.custoUnitarioCalculado ||
+                    oldItem.custoUnitarioCalculado ||
+                    0
+                  ).toString(),
+                  origem: 'MANUAL',
+                });
+              }
+
+              // Limpar campos auxiliares
+              const cleanUpdates = { ...updates };
+              delete cleanUpdates.skuId;
+              delete cleanUpdates.skuTipo;
+
+              await tx
+                .update(quotationItems)
+                .set(cleanUpdates)
+                .where(eq(quotationItems.id, itemId));
+            });
+
+            await recalcularOrcamento(id, tenantId);
+            logger.info(`[ORCAMENTOS_PRO] ✅ Item ${itemId} atualizado e orçamento recalculado.`);
+            return res.status(200).json({ success: true });
+          }
+
+          if (action === 'delete-item') {
+            const { itemId } = req.body;
+            await db
+              .delete(quotationItems)
+              .where(and(eq(quotationItems.id, itemId), eq(quotationItems.quotationId, id)));
+            await recalcularOrcamento(id, tenantId);
+            return res.status(200).json({ success: true });
+          }
+
+          // Update Header se não tiver nenhuma action
+          const reqStatusUpper = req.body.status?.toUpperCase();
+          const isApprovingStatus =
+            reqStatusUpper === 'APROVADO' ||
+            reqStatusUpper === 'FECHADO' ||
+            reqStatusUpper === 'FECHADA';
+
+          if (isApprovingStatus) {
+            const existsStatusUpper = exists?.status?.toUpperCase();
+            const wasAlreadyApproved =
+              existsStatusUpper === 'APROVADO' ||
+              existsStatusUpper === 'FECHADO' ||
+              existsStatusUpper === 'FECHADA';
+
+            if (exists && !wasAlreadyApproved) {
+              await db.transaction(async (tx) => {
+                // 1. Atualizar status e cabeçalho do orçamento
+                const finalBody = { ...req.body, updatedAt: new Date() };
+                await tx
+                  .update(quotations)
+                  .set(finalBody)
+                  .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
+
+                // Sincronizar com a tabela comercial legada 'quotations'
+                await tx.execute(dsql`
                                     UPDATE quotations 
                                     SET status = ${req.body.status}, 
                                         updated_at = NOW() 
                                     WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
                                 `);
-                                
-                                // 2. FASE 1: Gerar Títulos a Receber (Financeiro)
-                                const condId = req.body.condicaoPagamentoId || exists.condicaoPagamentoId;
-                                let totalParcelas = 1;
-                                
-                                if (condId) {
-                                    const cond = await tx.execute(dsql`
+
+                // 2. FASE 1: Gerar Títulos a Receber (Financeiro)
+                const condId = req.body.condicaoPagamentoId || exists.condicaoPagamentoId;
+                let totalParcelas = 1;
+
+                if (condId) {
+                  const cond = await tx.execute(dsql`
                                         SELECT parcelas FROM condicoes_pagamento 
                                         WHERE id = ${condId}::uuid AND tenant_id = ${tenantId}::uuid 
                                         LIMIT 1
                                     `);
-                                    if (cond.rows.length > 0) {
-                                        totalParcelas = Number((cond.rows[0] as any).parcelas || 1);
-                                    }
-                                }
+                  if (cond.rows.length > 0) {
+                    totalParcelas = Number((cond.rows[0] as any).parcelas || 1);
+                  }
+                }
 
-                                const valorTotal = Number(exists.valorTotalVenda) || 0;
-                                const valorParcela = valorTotal / totalParcelas;
-                                const dataEmissao = new Date();
-                                
-                                // Buscar classe financeira e forma de recebimento padrão do tenant
-                                await garantirSeedsFinanceiros(tenantId);
-                                
-                                const classResult = await tx.execute(dsql`
+                const valorTotal = Number(exists.valorTotalVenda) || 0;
+                const valorParcela = valorTotal / totalParcelas;
+                const dataEmissao = new Date();
+
+                // Buscar classe financeira e forma de recebimento padrão do tenant
+                await garantirSeedsFinanceiros(tenantId);
+
+                const classResult = await tx.execute(dsql`
                                     SELECT id FROM classes_financeiras 
                                     WHERE tenant_id = ${tenantId}::uuid 
                                     ORDER BY codigo ASC LIMIT 1
                                 `);
-                                const defaultClassId = classResult.rows[0]?.id || null;
+                const defaultClassId = classResult.rows[0]?.id || null;
 
-                                const formaResult = await tx.execute(dsql`
+                const formaResult = await tx.execute(dsql`
                                     SELECT id FROM formas_pagamento 
                                     WHERE tenant_id = ${tenantId}::uuid 
                                     LIMIT 1
                                 `);
-                                const defaultFormaId = formaResult.rows[0]?.id || null;
+                const defaultFormaId = formaResult.rows[0]?.id || null;
 
-                                if (!defaultClassId || !defaultFormaId) {
-                                    console.error(`[ORCAMENTOS_PRO] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defaultClassId}, Forma: ${defaultFormaId}`);
-                                    throw new Error('Não foi possível gerar os Títulos a Receber. Verifique se o Plano de Contas e as Formas de Pagamento estão cadastrados no módulo Financeiro.');
-                                }
+                if (!defaultClassId || !defaultFormaId) {
+                  console.error(
+                    `[ORCAMENTOS_PRO] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defaultClassId}, Forma: ${defaultFormaId}`,
+                  );
+                  throw new Error(
+                    'Não foi possível gerar os Títulos a Receber. Verifique se o Plano de Contas e as Formas de Pagamento estão cadastrados no módulo Financeiro.',
+                  );
+                }
 
-                                if (exists.clienteId) {
-                                    for (let i = 1; i <= totalParcelas; i++) {
-                                        const vencimento = new Date();
-                                        vencimento.setMonth(vencimento.getMonth() + (i - 1));
-                                        const numeroTitulo = `REC-PRO-${exists.numeroOrcamento}-${i}`;
-                                        
-                                        await tx.execute(dsql`
+                if (exists.clienteId) {
+                  for (let i = 1; i <= totalParcelas; i++) {
+                    const vencimento = new Date();
+                    vencimento.setMonth(vencimento.getMonth() + (i - 1));
+                    const numeroTitulo = `REC-PRO-${exists.numeroOrcamento}-${i}`;
+
+                    await tx.execute(dsql`
                                             INSERT INTO titulos_receber (
                                                 numero_titulo, cliente_id, quotation_id,
                                                 valor_original, valor_liquido, valor_aberto,
@@ -1293,51 +1447,51 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                                             )
                                             ON CONFLICT (numero_titulo) DO NOTHING
                                         `);
-                                    }
-                                }
+                  }
+                }
 
-                                // 3. FASE 2: Gerar PCP (Ordens de Produção)
-                                const itens = await tx.query.quotationItems.findMany({
-                                    where: eq(quotationItems.quotationId, id),
-                                    with: {
-                                        bom: {
-                                            with: {
-                                                componente: true
-                                            }
-                                        }
-                                    }
-                                });
+                // 3. FASE 2: Gerar PCP (Ordens de Produção)
+                const itens = await tx.query.quotationItems.findMany({
+                  where: eq(quotationItems.quotationId, id),
+                  with: {
+                    bom: {
+                      with: {
+                        componente: true,
+                      },
+                    },
+                  },
+                });
 
-                                for (const item of itens) {
-                                    if (item.skuEngenhariaId) {
-                                        const opId = `OP-${exists.numeroOrcamento}-${Math.floor(1000 + Math.random() * 9000)}`;
-                                        
-                                        // Mapear peças explodidas da BOM
-                                        const pecas = item.bom.map((l: any) => ({
-                                            sku: l.componente?.codigo || l.skuComponenteId,
-                                            nome: l.componente?.nome || 'Insumo',
-                                            quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
-                                            custoUnitario: l.custoUnitario
-                                        }));
+                for (const item of itens) {
+                  if (item.skuEngenhariaId) {
+                    const opId = `OP-${exists.numeroOrcamento}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-                                        // Inserir registro na produção foi movido para ordens_prod abaixo
-                                        // 4. FASE 3: Reservar Estoque (Comercial)
-                                        for (const peca of pecas) {
-                                            if (peca.sku) {
-                                                // Buscar o material correspondente no estoque comercial
-                                                const matResult = await tx.execute(dsql`
+                    // Mapear peças explodidas da BOM
+                    const pecas = item.bom.map((l: any) => ({
+                      sku: l.componente?.codigo || l.skuComponenteId,
+                      nome: l.componente?.nome || 'Insumo',
+                      quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
+                      custoUnitario: l.custoUnitario,
+                    }));
+
+                    // Inserir registro na produção foi movido para ordens_prod abaixo
+                    // 4. FASE 3: Reservar Estoque (Comercial)
+                    for (const peca of pecas) {
+                      if (peca.sku) {
+                        // Buscar o material correspondente no estoque comercial
+                        const matResult = await tx.execute(dsql`
                                                     SELECT id, estoque_atual, preco_custo::numeric as preco_custo 
                                                     FROM materiais 
                                                     WHERE LOWER(sku) = LOWER(${peca.sku}) AND tenant_id = ${tenantId}::uuid 
                                                     LIMIT 1
                                                 `);
-                                                
-                                                if (matResult.rows.length > 0) {
-                                                    const mat = matResult.rows[0] as any;
-                                                    const qtd = Number(peca.quantidade);
-                                                    const custo = Number(peca.custoUnitario || mat.preco_custo || 0);
-                                                    
-                                                    await tx.execute(dsql`
+
+                        if (matResult.rows.length > 0) {
+                          const mat = matResult.rows[0] as any;
+                          const qtd = Number(peca.quantidade);
+                          const custo = Number(peca.custoUnitario || mat.preco_custo || 0);
+
+                          await tx.execute(dsql`
                                                         INSERT INTO movimentacoes_estoque (
                                                             material_id, tipo, quantidade, motivo, quotation_id,
                                                             preco_unitario, valor_total, estoque_antes, estoque_depois,
@@ -1356,19 +1510,21 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                                                             ${tenantId}::uuid
                                                         )
                                                     `);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                        }
+                      }
+                    }
+                  }
+                }
 
-                                // 5. FASE 1: Gerar Kanban de Produção (ordens_prod e etapas_prod_kanban)
-                                const numeroOp = `OP-${exists.numeroOrcamento || exists.id.substring(0,8)}-${Math.floor(1000 + Math.random() * 9000)}`;
-                                const dataPrazo = exists.dataOrcamento ? new Date(exists.dataOrcamento) : new Date();
-                                const prazoDias = parseInt(String(exists.prazoEntregaDias || '30'), 10);
-                                dataPrazo.setDate(dataPrazo.getDate() + prazoDias);
+                // 5. FASE 1: Gerar Kanban de Produção (ordens_prod e etapas_prod_kanban)
+                const numeroOp = `OP-${exists.numeroOrcamento || exists.id.substring(0, 8)}-${Math.floor(1000 + Math.random() * 9000)}`;
+                const dataPrazo = exists.dataOrcamento
+                  ? new Date(exists.dataOrcamento)
+                  : new Date();
+                const prazoDias = parseInt(String(exists.prazoEntregaDias || '30'), 10);
+                dataPrazo.setDate(dataPrazo.getDate() + prazoDias);
 
-                                const opResult = await tx.execute(dsql`
+                const opResult = await tx.execute(dsql`
                                     INSERT INTO ordens_prod (
                                         id, tenant_id, quotation_id, numero_op, status, prioridade, data_prazo, observacoes
                                     ) VALUES (
@@ -1384,19 +1540,19 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                                     RETURNING id
                                 `);
 
-                                const newOpId = opResult.rows[0]?.id;
+                const newOpId = opResult.rows[0]?.id;
 
-                                if (newOpId) {
-                                    const etapasPadrao = [
-                                        { numero: 1, nome: 'MEDIÇÃO' },
-                                        { numero: 2, nome: 'PROJETO' },
-                                        { numero: 3, nome: 'PRODUÇÃO' },
-                                        { numero: 4, nome: 'MONTAGEM' },
-                                        { numero: 5, nome: 'ENTREGA' }
-                                    ];
+                if (newOpId) {
+                  const etapasPadrao = [
+                    { numero: 1, nome: 'MEDIÇÃO' },
+                    { numero: 2, nome: 'PROJETO' },
+                    { numero: 3, nome: 'PRODUÇÃO' },
+                    { numero: 4, nome: 'MONTAGEM' },
+                    { numero: 5, nome: 'ENTREGA' },
+                  ];
 
-                                    for (const et of etapasPadrao) {
-                                        await tx.execute(dsql`
+                  for (const et of etapasPadrao) {
+                    await tx.execute(dsql`
                                             INSERT INTO etapas_prod_kanban (
                                                 tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display
                                             ) VALUES (
@@ -1408,17 +1564,17 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                                                 ${et.numero}
                                             )
                                         `);
-                                    }
+                  }
 
-                                    // Criar eventos automáticos de calendário para prazos da OP
-                                    const usuarios = await tx.execute(dsql`
+                  // Criar eventos automáticos de calendário para prazos da OP
+                  const usuarios = await tx.execute(dsql`
                                         SELECT id FROM users 
                                         WHERE tenant_id = ${tenantId}::uuid
                                     `);
 
-                                    for (const u of usuarios.rows) {
-                                        const userId = (u as any).id;
-                                        await tx.execute(dsql`
+                  for (const u of usuarios.rows) {
+                    const userId = (u as any).id;
+                    await tx.execute(dsql`
                                             INSERT INTO eventos_calendario (
                                                 tenant_id, usuario_id, tipo_evento, titulo, descricao, data_evento, operacao_prod_id, cor_categoria, concluido, notificacao_dias_antes
                                             ) VALUES (
@@ -1434,64 +1590,72 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                                                 3
                                             )
                                         `);
-                                    }
-                                }
-                            });
-                        } else {
-                            await db.update(quotations).set(req.body).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
-                            if (exists) {
-                                await db.execute(dsql`
+                  }
+                }
+              });
+            } else {
+              await db
+                .update(quotations)
+                .set(req.body)
+                .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
+              if (exists) {
+                await db.execute(dsql`
                                     UPDATE quotations 
                                     SET status = ${req.body.status}, 
                                         updated_at = NOW() 
                                     WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
                                 `);
-                            }
-                        }
-                    } else {
-                        await db.update(quotations).set(req.body).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
-                        if (exists) {
-                            await db.execute(dsql`
+              }
+            }
+          } else {
+            await db
+              .update(quotations)
+              .set(req.body)
+              .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
+            if (exists) {
+              await db.execute(dsql`
                                 UPDATE quotations 
                                 SET status = ${req.body.status}, 
                                     updated_at = NOW() 
                                 WHERE id = ${id}::uuid OR numero = ${exists.numeroOrcamento}
                             `);
-                        }
-                    }
-                    
-                    await recalcularOrcamento(id, tenantId);
-                    return res.status(200).json({ success: true });
-                }, 'UPDATE_ORCAMENTO');
-            } catch (err: any) {
-                logger.error(`❌ Erro no PUT do orçamento ${id}:`, err);
-                return res.status(500).json({ success: false, error: err.message });
             }
-        }
+          }
 
-        if (method === 'DELETE') {
-            if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
-            
-            try {
-                return await withRetry(async () => {
-                    await db.delete(quotations).where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
-                    await auditLog('ORCAMENTO_PRO', id, 'DELETE', user?.id || 'system');
-                    return res.status(200).json({ success: true });
-                }, 'DELETE_ORCAMENTO');
-            } catch (err: any) {
-                logger.error(`❌ Erro ao deletar orçamento ${id}:`, err);
-                return res.status(500).json({ success: false, error: err.message });
-            }
-        }
-
-        return res.status(405).json({ success: false, error: 'Método não permitido' });
-    } catch (err: any) {
-        logger.error(`[ORCAMENTOS_PRO] ❌ Erro geral no handler:`, err);
-        if (err instanceof ValidationError || err.name === 'ValidationError') {
-            return res.status(400).json({ success: false, error: err.message });
-        }
+          await recalcularOrcamento(id, tenantId);
+          return res.status(200).json({ success: true });
+        }, 'UPDATE_ORCAMENTO');
+      } catch (err: any) {
+        logger.error(`❌ Erro no PUT do orçamento ${id}:`, err);
         return res.status(500).json({ success: false, error: err.message });
+      }
     }
+
+    if (method === 'DELETE') {
+      if (!id) return res.status(400).json({ success: false, error: 'ID obrigatório' });
+
+      try {
+        return await withRetry(async () => {
+          await db
+            .delete(quotations)
+            .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
+          await auditLog('ORCAMENTO_PRO', id, 'DELETE', user?.id || 'system');
+          return res.status(200).json({ success: true });
+        }, 'DELETE_ORCAMENTO');
+      } catch (err: any) {
+        logger.error(`❌ Erro ao deletar orçamento ${id}:`, err);
+        return res.status(500).json({ success: false, error: err.message });
+      }
+    }
+
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  } catch (err: any) {
+    logger.error(`[ORCAMENTOS_PRO] ❌ Erro geral no handler:`, err);
+    if (err instanceof ValidationError || err.name === 'ValidationError') {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    return res.status(500).json({ success: false, error: err.message });
+  }
 };
 
 export const handleQuotations = withTenant(handleQuotationsCore);

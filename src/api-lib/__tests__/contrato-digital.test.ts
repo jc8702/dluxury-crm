@@ -14,7 +14,7 @@ vi.mock('../drizzle-db.js', () => ({
   db: {
     select: vi.fn(),
     update: vi.fn(),
-  }
+  },
 }));
 
 const { sql, validateAuth } = await import('../_db.js');
@@ -22,8 +22,19 @@ const { db } = await import('../drizzle-db.js');
 
 function mockDrizzleChain(resolveValue: any = []) {
   const chain: any = {};
-  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning'];
-  methods.forEach(method => {
+  const methods = [
+    'select',
+    'from',
+    'leftJoin',
+    'innerJoin',
+    'where',
+    'limit',
+    'orderBy',
+    'update',
+    'set',
+    'returning',
+  ];
+  methods.forEach((method) => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
 
@@ -34,10 +45,17 @@ function mockDrizzleChain(resolveValue: any = []) {
 }
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
     _s: () => sc,
     _d: () => jd,
@@ -46,7 +64,13 @@ function mockRes() {
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -66,7 +90,7 @@ describe('handleContratoDigital', () => {
     vi.mocked(validateAuth).mockReturnValue({
       authorized: true,
       user: { id: 'u1', name: 'Alocado', tenantId: '00000000-0000-0000-0000-000000000000' },
-      error: null
+      error: null,
     });
   });
 
@@ -82,7 +106,14 @@ describe('handleContratoDigital', () => {
       }
 
       if (qStr.includes('FROM contrato_digital')) {
-        return [{ id: 1, quotation_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente' }];
+        return [
+          {
+            id: 1,
+            quotation_id: 'orc-1',
+            numero_contrato: 'CONT-1',
+            status_assinatura: 'pendente',
+          },
+        ];
       }
       if (qStr.includes('FROM historico_assinatura_digital')) {
         return [{ id: 10, contrato_id: 1, acao: 'contrato_gerado', detalhes: 'Emitido' }];
@@ -90,7 +121,12 @@ describe('handleContratoDigital', () => {
       return [];
     });
 
-    const req = mockReq({ method: 'GET', url: '/status', query: { quotation_id: 'orc-1' }, body: {} });
+    const req = mockReq({
+      method: 'GET',
+      url: '/status',
+      query: { quotation_id: 'orc-1' },
+      body: {},
+    });
     const res = mockRes();
     await handleContratoDigital(req, res);
 
@@ -102,8 +138,25 @@ describe('handleContratoDigital', () => {
   });
 
   it('deve gerar e enviar novo contrato (POST /gerar-e-enviar)', async () => {
-    const orcChain = mockDrizzleChain([{ id: 'orc-1', numeroOrcamento: 'ORC-2026-001', clienteId: 5, valorTotalVenda: '25000.00', prazoEntregaDias: 45, status: 'RASCUNHO' }]);
-    const itensChain = mockDrizzleChain([{ id: 'item-1', quotationId: 'orc-1', skuCodigo: 'MDF-BRA-15', quantidade: '5', precoVendaUnitario: '5000.00' }]);
+    const orcChain = mockDrizzleChain([
+      {
+        id: 'orc-1',
+        numeroOrcamento: 'ORC-2026-001',
+        clienteId: 5,
+        valorTotalVenda: '25000.00',
+        prazoEntregaDias: 45,
+        status: 'RASCUNHO',
+      },
+    ]);
+    const itensChain = mockDrizzleChain([
+      {
+        id: 'item-1',
+        quotationId: 'orc-1',
+        skuCodigo: 'MDF-BRA-15',
+        quantidade: '5',
+        precoVendaUnitario: '5000.00',
+      },
+    ]);
     vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itensChain);
 
     vi.mocked(sql).mockImplementation(async (query: any, ...params: any[]) => {
@@ -132,7 +185,7 @@ describe('handleContratoDigital', () => {
       method: 'POST',
       url: '/gerar-e-enviar',
       query: {},
-      body: { quotation_id: 'orc-1' }
+      body: { quotation_id: 'orc-1' },
     });
     const res = mockRes();
     await handleContratoDigital(req, res);
@@ -145,12 +198,16 @@ describe('handleContratoDigital', () => {
   });
 
   it('deve processar assinatura concluída via webhook e provisionar estoque (POST /webhook-assinatura)', async () => {
-    let sqlQueries: string[] = [];
+    const sqlQueries: string[] = [];
 
-    const orcChain = mockDrizzleChain([{ id: 'orc-1', numeroOrcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 }]);
+    const orcChain = mockDrizzleChain([
+      { id: 'orc-1', numeroOrcamento: 'ORC-2026-001', status: 'RASCUNHO', prazoEntregaDias: 45 },
+    ]);
     const updateOrcChain = mockDrizzleChain([]);
-    const itensChain = mockDrizzleChain([{ id: 'item-1', skuCodigo: 'MDF-BRA-15', quantidade: '5' }]);
-    
+    const itensChain = mockDrizzleChain([
+      { id: 'item-1', skuCodigo: 'MDF-BRA-15', quantidade: '5' },
+    ]);
+
     vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itensChain);
     vi.mocked(db.update).mockReturnValueOnce(updateOrcChain);
 
@@ -167,7 +224,15 @@ describe('handleContratoDigital', () => {
       sqlQueries.push(qStr);
 
       if (qStr.includes('FROM contrato_digital')) {
-        return [{ id: 1, quotation_id: 'orc-1', numero_contrato: 'CONT-1', status_assinatura: 'pendente', id_assinatura_externa: 'env-1' }];
+        return [
+          {
+            id: 1,
+            quotation_id: 'orc-1',
+            numero_contrato: 'CONT-1',
+            status_assinatura: 'pendente',
+            id_assinatura_externa: 'env-1',
+          },
+        ];
       }
       if (qStr.includes('INSERT INTO ordens_prod')) {
         return [{ id: 'new-op-uuid' }];
@@ -182,20 +247,20 @@ describe('handleContratoDigital', () => {
       method: 'POST',
       url: '/webhook-assinatura',
       query: {},
-      body: { envelope_id: 'env-1', status: 'completed' }
+      body: { envelope_id: 'env-1', status: 'completed' },
     });
     const res = mockRes();
     await handleContratoDigital(req, res);
 
     expect(res._s()).toBe(200);
     expect(res._d().success).toBe(true);
-    
+
     // Validar atualizações do banco
-    expect(sqlQueries.some(q => q.includes('UPDATE contrato_digital'))).toBe(true);
+    expect(sqlQueries.some((q) => q.includes('UPDATE contrato_digital'))).toBe(true);
     expect(db.update).toHaveBeenCalled();
-    expect(sqlQueries.some(q => q.includes('INSERT INTO ordens_prod'))).toBe(true);
-    expect(sqlQueries.some(q => q.includes('INSERT INTO etapas_prod_kanban'))).toBe(true);
-    expect(sqlQueries.some(q => q.includes('UPDATE estoque_materiais_detalhado'))).toBe(true);
-    expect(sqlQueries.some(q => q.includes('INSERT INTO movimento_estoque_granular'))).toBe(true);
+    expect(sqlQueries.some((q) => q.includes('INSERT INTO ordens_prod'))).toBe(true);
+    expect(sqlQueries.some((q) => q.includes('INSERT INTO etapas_prod_kanban'))).toBe(true);
+    expect(sqlQueries.some((q) => q.includes('UPDATE estoque_materiais_detalhado'))).toBe(true);
+    expect(sqlQueries.some((q) => q.includes('INSERT INTO movimento_estoque_granular'))).toBe(true);
   });
 });

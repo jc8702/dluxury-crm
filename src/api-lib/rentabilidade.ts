@@ -14,8 +14,10 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
     if (method === 'GET' && url.includes('/kpi')) {
       const { periodo, data_inicio, data_fim } = req.query;
 
-      let dataInicio = data_inicio ? new Date(data_inicio) : new Date(new Date().setMonth(new Date().getMonth() - 1));
-      let dataFim = data_fim ? new Date(data_fim) : new Date();
+      const dataInicio = data_inicio
+        ? new Date(data_inicio)
+        : new Date(new Date().setMonth(new Date().getMonth() - 1));
+      const dataFim = data_fim ? new Date(data_fim) : new Date();
 
       // Período anterior (para cálculo de variação)
       const diffMs = dataFim.getTime() - dataInicio.getTime();
@@ -45,8 +47,18 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           AND cr.data_conclusao_op BETWEEN ${dataInicioAnterior.toISOString().split('T')[0]}::date AND ${dataInicio.toISOString().split('T')[0]}::date
       `;
 
-      const current = currentResult[0] || { receita_total: 0, custo_total: 0, margem_total: 0, margem_media_percentual: 0 };
-      const prev = prevResult[0] || { receita_total: 0, custo_total: 0, margem_total: 0, margem_media_percentual: 0 };
+      const current = currentResult[0] || {
+        receita_total: 0,
+        custo_total: 0,
+        margem_total: 0,
+        margem_media_percentual: 0,
+      };
+      const prev = prevResult[0] || {
+        receita_total: 0,
+        custo_total: 0,
+        margem_total: 0,
+        margem_media_percentual: 0,
+      };
 
       const cReceita = parseFloat(current.receita_total);
       const cCustos = parseFloat(current.custo_total);
@@ -67,7 +79,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
         variacao_receita: pReceita > 0 ? ((cReceita - pReceita) / pReceita) * 100 : 0,
         variacao_custos: pCustos > 0 ? ((cCustos - pCustos) / pCustos) * 100 : 0,
         variacao_margem: pMargem > 0 ? ((cMargem - pMargem) / pMargem) * 100 : 0,
-        variacao_margem_percentual: cMargemPct - pMargemPct
+        variacao_margem_percentual: cMargemPct - pMargemPct,
       });
     }
 
@@ -143,8 +155,8 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           margem_percentual: parseFloat(r.margem_percentual_real || 0),
           variacao_custo_percentual: parseFloat(r.variacao_custo_percentual || 0),
           status: r.status,
-          descricao_desvios: r.descricao_desvios
-        }))
+          descricao_desvios: r.descricao_desvios,
+        })),
       });
     }
 
@@ -185,8 +197,8 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           cliente: r.cliente || 'Cliente Avulso',
           variacao_percentual: parseFloat(r.variacao_percentual || 0),
           margem_percentual_real: parseFloat(r.margem_percentual_real || 0),
-          descricao_desvios: r.descricao_desvios || ''
-        }))
+          descricao_desvios: r.descricao_desvios || '',
+        })),
       });
     }
 
@@ -228,8 +240,8 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           operacoes_lucrativas: parseInt(r.operacoes_lucrativas || 0),
           operacoes_prejuizadas: parseInt(r.operacoes_prejuizadas || 0),
           score_rentabilidade: parseInt(r.score_rentabilidade || 0),
-          ultimo_pedido_data: r.ultimo_pedido_data
-        }))
+          ultimo_pedido_data: r.ultimo_pedido_data,
+        })),
       });
     }
 
@@ -254,8 +266,8 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
         dados: dados.map((r: any) => ({
           mes: r.mes_ano,
           margem_estimada: parseFloat(r.margem_estimada || 0),
-          margem_real: parseFloat(r.margem_real || 0)
-        }))
+          margem_real: parseFloat(r.margem_real || 0),
+        })),
       });
     }
 
@@ -263,18 +275,20 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
     // POST /api/rentabilidade/salvar (Para salvar/atualizar custos reais de uma OP)
     // ────────────────────────────────────────────────────────────────────────────────
     if (method === 'POST' && url.includes('/salvar')) {
-      const { 
+      const {
         id,
-        custo_material_real, 
-        custo_mao_obra_real, 
-        tempo_horas_real, 
-        custo_retrabalho, 
+        custo_material_real,
+        custo_mao_obra_real,
+        tempo_horas_real,
+        custo_retrabalho,
         custo_desperdicio_material,
-        descricao_desvios
+        descricao_desvios,
       } = req.body;
 
       if (!id) {
-        return res.status(400).json({ success: false, error: 'ID do registro de rentabilidade é obrigatório' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'ID do registro de rentabilidade é obrigatório' });
       }
 
       // 1. Obter registro original
@@ -283,20 +297,37 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
       `;
 
       if (!original) {
-        return res.status(404).json({ success: false, error: 'Registro de rentabilidade não encontrado' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Registro de rentabilidade não encontrado' });
       }
 
       // 2. Calcular novos valores
-      const cMat = custo_material_real !== undefined ? parseFloat(custo_material_real) : parseFloat(original.custo_material_real || 0);
-      const cMao = custo_mao_obra_real !== undefined ? parseFloat(custo_mao_obra_real) : parseFloat(original.custo_mao_obra_real || 0);
-      const cRet = custo_retrabalho !== undefined ? parseFloat(custo_retrabalho) : parseFloat(original.custo_retrabalho || 0);
-      const cDes = custo_desperdicio_material !== undefined ? parseFloat(custo_desperdicio_material) : parseFloat(original.custo_desperdicio_material || 0);
-      
-      const tHoras = tempo_horas_real !== undefined ? parseFloat(tempo_horas_real) : parseFloat(original.tempo_horas_real || 0);
+      const cMat =
+        custo_material_real !== undefined
+          ? parseFloat(custo_material_real)
+          : parseFloat(original.custo_material_real || 0);
+      const cMao =
+        custo_mao_obra_real !== undefined
+          ? parseFloat(custo_mao_obra_real)
+          : parseFloat(original.custo_mao_obra_real || 0);
+      const cRet =
+        custo_retrabalho !== undefined
+          ? parseFloat(custo_retrabalho)
+          : parseFloat(original.custo_retrabalho || 0);
+      const cDes =
+        custo_desperdicio_material !== undefined
+          ? parseFloat(custo_desperdicio_material)
+          : parseFloat(original.custo_desperdicio_material || 0);
+
+      const tHoras =
+        tempo_horas_real !== undefined
+          ? parseFloat(tempo_horas_real)
+          : parseFloat(original.tempo_horas_real || 0);
 
       const totalReal = cMat + cMao + cRet + cDes;
       const totalEstimado = parseFloat(original.custo_total_estimado || 0);
-      
+
       const varCusto = totalReal - totalEstimado;
       const varPct = totalEstimado > 0 ? (varCusto / totalEstimado) * 100 : 0;
 
@@ -354,7 +385,11 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
     const valorVenda = parseFloat(op.valor_total_venda || 0);
     const custoEstimado = parseFloat(op.valor_total_custo || 0);
     const margemEstimada = valorVenda - custoEstimado;
-    const margemEstimadaPct = op.margem_lucro_percentual ? parseFloat(op.margem_lucro_percentual) : (valorVenda > 0 ? (margemEstimada / valorVenda) * 100 : 0);
+    const margemEstimadaPct = op.margem_lucro_percentual
+      ? parseFloat(op.margem_lucro_percentual)
+      : valorVenda > 0
+        ? (margemEstimada / valorVenda) * 100
+        : 0;
 
     // Divisão estimada padrão: 60% materiais, 40% mão de obra
     const matEstimado = custoEstimado * 0.6;
@@ -408,7 +443,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
     `;
     if (clienteRes && clienteRes.cliente_id) {
       const clienteId = parseInt(clienteRes.cliente_id);
-      
+
       // Calcular estatísticas agregadas do cliente
       const stats = await sql`
         SELECT 
@@ -431,7 +466,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
         const totalVendido = parseFloat(currentStats.total_vendido || 0);
         const ticketMedio = totalPedidos > 0 ? totalVendido / totalPedidos : 0;
         const margemPct = parseFloat(currentStats.margem_media_percentual || 0);
-        
+
         // Score de Rentabilidade: Margem percentual dividida por 5 (limitada entre 1 e 10)
         const score = Math.max(1, Math.min(10, Math.round(margemPct / 5)));
 
