@@ -5,6 +5,7 @@ import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
 import { auditLog, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 // Classe de erro customizada para validação
 export class ValidationError extends Error {
@@ -30,12 +31,12 @@ const CONFIG = {
 // Logger condicional para produção
 const logger = {
   debug: (..._args: any[]) =>
-    CONFIG.LOG_LEVEL === 'debug' && /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
+    CONFIG.LOG_LEVEL === 'debug' && /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
   info: (..._args: any[]) =>
     ['info', 'debug'].includes(CONFIG.LOG_LEVEL) &&
-    /* console.log('[ORCAMENTOS_PRO]', ..._args) */ null,
-  warn: (...args: any[]) => console.warn('[ORCAMENTOS_PRO]', ...args),
-  error: (...args: any[]) => console.error('[ORCAMENTOS_PRO]', ...args),
+    /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
+  warn: (...args: any[]) => logger.warn('[ORCAMENTOS_PRO]', ...args),
+  error: (...args: any[]) => logger.error('[ORCAMENTOS_PRO]', ...args),
 };
 
 // Validadores reutilizáveis
@@ -750,7 +751,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
           },
         });
       } catch (err: any) {
-        console.error('❌ [CRITICAL] POST /api/quotations-pro Error:', err);
+        logger.error('❌ [CRITICAL] POST /api/quotations-pro Error:', err);
         logger.error('❌ Erro ao criar orçamento:', err?.message || err);
 
         // Erros de validação retornam 400
@@ -1406,7 +1407,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 const defaultFormaId = formaResult.rows[0]?.id || null;
 
                 if (!defaultClassId || !defaultFormaId) {
-                  console.error(
+                  logger.error(
                     `[ORCAMENTOS_PRO] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defaultClassId}, Forma: ${defaultFormaId}`,
                   );
                   throw new Error(

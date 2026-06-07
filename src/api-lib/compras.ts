@@ -1,6 +1,7 @@
 import { sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 const handleComprasCore: TenantHandler = async (req, res) => {
   try {
@@ -150,7 +151,7 @@ const handleComprasCore: TenantHandler = async (req, res) => {
             )[0]?.id;
 
             if (!defClasse || !defForma || !defConta) {
-              console.error(
+              logger.error(
                 `[COMPRAS] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defClasse}, Forma: ${defForma}, Conta: ${defConta}`,
               );
               throw new Error(

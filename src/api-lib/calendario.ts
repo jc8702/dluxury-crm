@@ -1,5 +1,6 @@
 import { sql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 const handleCalendarioCore: TenantHandler = async (req, res) => {
   try {
@@ -338,7 +339,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('[CALENDARIO_ERROR]', err);
+    logger.error('[CALENDARIO_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };

@@ -1,6 +1,7 @@
 import { sql, auditLog } from './_db.js';
 import { writeOffStockForProjectBatch } from './_inventory.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 // TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM quotations)
 // Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela quotations foi dropada em 2026-06-04.
@@ -94,13 +95,13 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
             )
             ON CONFLICT DO NOTHING
           `;
-          /* console.log('Migration from kanban_items completed successfully.'); */
+          /* logger.info('Migration from kanban_items completed successfully.'); */
         } catch (migErr) {
-          console.error('Migration from kanban_items failed:', migErr);
+          logger.error('Migration from kanban_items failed:', migErr);
         }
       }
     } catch (e) {
-      console.error('Database setup error in projects:', e);
+      logger.error('Database setup error in projects:', e);
     }
     if (req.method === 'GET') {
       const { client_id, status, q } = req.query;
@@ -530,7 +531,7 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
 
     return res.status(405).end();
   } catch (err: any) {
-    console.error('ENGINEERING_PERSISTENCE_ERROR:', err);
+    logger.error('ENGINEERING_PERSISTENCE_ERROR:', err);
     return res.status(500).json({ success: false, error: `Falha na Engenharia: ${err.message}` });
   }
 };
@@ -689,7 +690,7 @@ const handleSimulationsCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('HANDLE_SIMULATIONS_ERROR:', err);
+    logger.error('HANDLE_SIMULATIONS_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -740,7 +741,7 @@ async function triggerOpCreationForProject(projectId: string, tenantId: string, 
       }
     }
   } catch (err) {
-    console.error('Error creating OP for project:', err);
+    logger.error('Error creating OP for project:', err);
   }
 }
 

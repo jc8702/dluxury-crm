@@ -1,6 +1,7 @@
 import { sql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { z } from 'zod';
+import { logger } from './logger.js';
 
 const TituloSchema = z.object({
   valor_original: z.number().min(0.01, 'Valor deve ser maior que zero'),
@@ -79,7 +80,7 @@ export async function bootstrapFinanceiro() {
           () => {},
         );
       } catch (e) {
-        console.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
+        logger.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
       }
     })();
   }
@@ -131,7 +132,7 @@ const handleFinanceiroCore: TenantHandler = async (req, res) => {
       id = req.query?.id || req.body?.id;
     }
 
-    /* console.log(`[FINANCEIRO] Route: ${req.method} ${fullUrl} -> Resource: ${resource}, ID: ${id}`); */
+    /* logger.info(`[FINANCEIRO] Route: ${req.method} ${fullUrl} -> Resource: ${resource}, ID: ${id}`); */
 
     if (resource === 'classes') {
       return await handleClasses(req, res, tenantId, id);
@@ -533,12 +534,10 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
       await validateClassePermiteLancamento(tenantId, f.classe_financeira_id);
 
       if (await checkPeriodoFechado(tenantId, f.data_vencimento)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Não é possível lançar títulos em um período financeiro fechado.',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Não é possível lançar títulos em um período financeiro fechado.',
+        });
       }
 
       return await sql.begin(async (tx) => {
@@ -674,13 +673,11 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
 
         await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${contaId} AND tenant_id = ${tenantId}`;
 
-        return res
-          .status(200)
-          .json({
-            success: true,
-            message: 'Baixa realizada com sucesso',
-            warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined,
-          });
+        return res.status(200).json({
+          success: true,
+          message: 'Baixa realizada com sucesso',
+          warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined,
+        });
       });
     } catch (err: any) {
       return res.status(400).json({ success: false, error: err.message });
@@ -716,12 +713,10 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
     const { action, fornecedor_id } = req.query;
     if (action === 'delete_group' && fornecedor_id) {
       await sql`UPDATE titulos_pagar SET deletado = true, excluido_em = NOW() WHERE (fornecedor_id = ${fornecedor_id} OR fornecedor_id::text = ${fornecedor_id}) AND status != 'pago' AND tenant_id = ${tenantId}`;
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: 'Todos os títulos pendentes do fornecedor foram excluídos',
-        });
+      return res.status(200).json({
+        success: true,
+        message: 'Todos os títulos pendentes do fornecedor foram excluídos',
+      });
     }
     if (id) {
       await sql`UPDATE titulos_pagar SET deletado = true, excluido_em = NOW() WHERE id = ${id} AND tenant_id = ${tenantId}`;
@@ -738,12 +733,10 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
       await validateClassePermiteLancamento(tenantId, f.classe_financeira_id);
 
       if (await checkPeriodoFechado(tenantId, f.data_vencimento)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Não é possível lançar títulos em um período financeiro fechado.',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Não é possível lançar títulos em um período financeiro fechado.',
+        });
       }
 
       return await sql.begin(async (tx) => {
@@ -1394,12 +1387,10 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
       LIMIT 20
     `;
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        data: projetos.map((p: any) => ({ ...p, receita_total: Number(p.receita_total || 0) })),
-      });
+    return res.status(200).json({
+      success: true,
+      data: projetos.map((p: any) => ({ ...p, receita_total: Number(p.receita_total || 0) })),
+    });
   }
 
   if (type === 'capital_giro') {
@@ -1507,12 +1498,10 @@ async function handleConferencia(req: any, res: any, tenantId: string) {
       )[0];
       if (tituloReceber) {
         await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_receber_id = ${tituloReceber.id} AND tenant_id = ${tenantId}`;
-        return res
-          .status(200)
-          .json({
-            success: true,
-            data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
-          });
+        return res.status(200).json({
+          success: true,
+          data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
+        });
       }
 
       const tituloPagar = (
@@ -1520,12 +1509,10 @@ async function handleConferencia(req: any, res: any, tenantId: string) {
       )[0];
       if (tituloPagar) {
         await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_pagar_id = ${tituloPagar.id} AND tenant_id = ${tenantId}`;
-        return res
-          .status(200)
-          .json({
-            success: true,
-            data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
-          });
+        return res.status(200).json({
+          success: true,
+          data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
+        });
       }
     }
 
@@ -1840,6 +1827,6 @@ export async function garantirSeedsFinanceiros(tenantId: string) {
       `;
     }
   } catch (err: any) {
-    console.error('[ERRO GARANTIR SEEDS FINANCEIROS]', err.message);
+    logger.error('[ERRO GARANTIR SEEDS FINANCEIROS]', err.message);
   }
 }

@@ -9,6 +9,7 @@ import { skuEngenharia } from '../db/schema/skus.js';
 import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 function safeUuid(val: any): string | null {
   if (!val || typeof val !== 'string') return null;
@@ -408,7 +409,7 @@ const handlePlanoCorteCore: TenantHandler = async (req, res) => {
         return res.status(405).json({ success: false, error: 'Método não permitido' });
     }
   } catch (err: any) {
-    console.error('PLANO_CORTE_API_ERROR:', err);
+    logger.error('PLANO_CORTE_API_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -510,7 +511,7 @@ const handleChapasCore: TenantHandler = async (req, res) => {
 
     return res.status(200).json({ success: true, data: combined });
   } catch (err: any) {
-    console.error('ERRO_BUSCA_CHAPAS:', err);
+    logger.error('ERRO_BUSCA_CHAPAS:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -543,7 +544,7 @@ const handleEngenhariaSKUsCore: TenantHandler = async (req, res) => {
       .limit(50);
     return res.status(200).json({ success: true, data: all });
   } catch (err: any) {
-    console.error('ERRO_ENGENHARIA_SKUS:', err);
+    logger.error('ERRO_ENGENHARIA_SKUS:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -618,7 +619,7 @@ const handleImportarDesenhoCore: TenantHandler = async (req, res) => {
 
         if (!text.trim()) throw new Error('PDF sem conteúdo de texto extraível');
       } catch (pdfErr: any) {
-        console.error('[API] Falha crítica na extração de PDF:', pdfErr);
+        logger.error('[API] Falha crítica na extração de PDF:', pdfErr);
         return res.status(500).json({
           success: false,
           error:
@@ -772,7 +773,7 @@ const handleImportarDesenhoCore: TenantHandler = async (req, res) => {
       debug: { textLength: text.length, rawCount: pecas.length },
     });
   } catch (err: any) {
-    console.error('IMPORT_DESENHO_ERROR:', err);
+    logger.error('IMPORT_DESENHO_ERROR:', err);
     return res.status(500).json({ success: false, error: 'ERRO AO PROCESSAR PDF: ' + err.message });
   }
 };

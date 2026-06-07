@@ -1,6 +1,7 @@
 import { sql, auditLog } from './_db.js';
 import { calcularPrevisaoEntrega } from './_productionForecasting.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 /**
  * M�DULO MES (Manufacturing Execution System) - ARIA 4.0
@@ -55,7 +56,7 @@ const handleProductionCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('PRODUCTION_HANDLER_ERROR:', err);
+    logger.error('PRODUCTION_HANDLER_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -96,7 +97,7 @@ async function listOPs(res: any, tenantId: string) {
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
   const precisaSincronizar = ops.some((o) => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
   if (precisaSincronizar) {
-    /* console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
+    /* logger.info('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
     await syncQueueForecasting(tenantId);
     const opsAtualizadas =
       await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
@@ -113,10 +114,10 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
   const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, quotation_id } =
     req.body;
 
-  /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, quotation_id }); */
+  /* logger.info('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, quotation_id }); */
 
   if (!op_id || !produto) {
-    console.error('[CREATE_OP] Missing required fields:', { op_id, produto });
+    logger.error('[CREATE_OP] Missing required fields:', { op_id, produto });
     return res.status(400).json({ success: false, error: 'Dados insuficientes para criar OP' });
   }
 
@@ -144,14 +145,14 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
 
     await auditLog('ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
 
-    /* console.log('[CREATE_OP] Created:', novaOP); */
+    /* logger.info('[CREATE_OP] Created:', novaOP); */
 
     // Atualizar fila
     await syncQueueForecasting(tenantId);
 
     return res.status(201).json({ success: true, data: novaOP });
   } catch (err: any) {
-    console.error('[CREATE_OP] Error:', err.message);
+    logger.error('[CREATE_OP] Error:', err.message);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -290,12 +291,10 @@ async function updateOPStatus(req: any, res: any, tenantId: string) {
     const idxTo = fluxo.indexOf(status);
     if (idxTo > idxFrom) {
       if (!checklistComplete || !piecesComplete) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Não é possível avançar: checklist e/ou peças pendentes',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Não é possível avançar: checklist e/ou peças pendentes',
+        });
       }
     }
   }
