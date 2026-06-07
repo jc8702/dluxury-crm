@@ -8,6 +8,14 @@
 
 ## Histórico de Alterações
 
+- **[07/06/2026 - 22:45]:** Implementada semântica transacional real (BEGIN/COMMIT/ROLLBACK) para `sql.begin` no Neon serverless.
+  - O utilitário `sql.begin` (`src/api-lib/_db.ts`) foi refatorado para usar o `db.transaction()` nativo do Drizzle via Pool (do `drizzle-db.ts`), garantindo atomicidade real para as operações críticas.
+  - Foi desenvolvido um wrapper (`tx`) retrocompatível que repassa "tagged templates" cruas e queries string literais (com ou sem os parâmetros) diretamente para a nova transação do Drizzle, preservando totalmente a assinatura e a forma de consumo dos arquivos como `financeiro.ts`, sem necessidade de refatorar chamadas ao redor do app.
+  - A interface global também herdou o stub funcional de `join` do `drizzle-orm` para garantir integridade.
+  - Teste forçado de transação interrompida (throw Error() no meio da TX) comprovou que o ROLLBACK ocorre e os dados são expurgados com sucesso.
+  - Branch utilizado: `fix/real-transactions`.
+  - Push programado para `origin/fix/real-transactions`.
+
 - **[07/06/2026 - 22:35]:** Refatoração e estabilização de Auditoria e Logs em serverless.
   - Verificado que `req.tenantId` é setado antes de `auditMiddleware` via `resolveTenantRequest`.
   - Refatorado `logAudit` (`src/api-lib/services/auditLogService.ts`) para tratamento robusto de UUIDs vazios, utilizando fallback explícito para `null` e casts corretos (`::uuid`, `::jsonb`), evitando erros silenciosos de tipo e perdas no catch.

@@ -46,10 +46,56 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   return _neonInstance.query(strings, params);
 };
 
+import { db } from './drizzle-db.js';
+import { sql as drizzleSql } from 'drizzle-orm';
+
 // Atribuição de propriedades dinâmicas
 (sqlInstance as any).begin = async (callback: (tx: any) => Promise<any>) => {
-  return await callback(sqlInstance);
+  if (!db) {
+    throw new Error('drizzle db instance not initialized for transactions.');
+  }
+
+  return await db.transaction(async (drizzleTx: any) => {
+    const tx = async (strings: any, ...values: any[]) => {
+      if (Array.isArray(strings) && (strings as any).raw) {
+        const query = drizzleSql(strings as any, ...values);
+        const result = await drizzleTx.execute(query);
+        return result.rows || result;
+      }
+
+      let params = values;
+      if (values.length === 1 && Array.isArray(values[0])) {
+        params = values[0];
+      }
+
+      // Quando usado como função bruta (tx('SELECT...', [param]))
+      // No Neon serverless, tx.session.client é a PoolClient ou usamos tx.execute(sql.raw(strings))
+      // Mas o params.length > 0 exige bind seguro
+      if (params.length === 0) {
+        const result = await drizzleTx.execute(drizzleSql.raw(strings));
+        return result.rows || result;
+      } else {
+        // Se precisar suportar raw SQL com parametros, converte para template manualmente
+        let text = strings;
+        params.forEach((p: any, i: number) => {
+          text = text.replace('$' + (i + 1), '$$' + (i + 1)); // Drizzle usa syntax diferente? Não, SQL puro.
+        });
+        throw new Error(
+          'Raw queries com parâmetros não são suportados dentro do transaction wrapper (use tagged template tx`...`)',
+        );
+      }
+    };
+
+    // Suporte caso alguém use tx.join
+    (tx as any).join = (values: any[], separator?: any) =>
+      drizzleSql.join(values, separator || drizzleSql`, `);
+
+    return await callback(tx);
+  });
 };
+
+(sqlInstance as any).join = (values: any[], separator?: any) =>
+  drizzleSql.join(values, separator || drizzleSql`, `);
 
 export const sql = sqlInstance as any as SqlClient;
 
