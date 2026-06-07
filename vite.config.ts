@@ -20,14 +20,23 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          lucide: ['lucide-react'],
-          date: ['date-fns'],
+        manualChunks: (id: string) => {
+          if (id.includes('three') || id.includes('@react-three')) return 'chunk-3d';
+          if (id.includes('@ai-sdk') || id.includes('@google/generative-ai')) return 'chunk-ai';
+          if (id.includes('react-big-calendar') || id.includes('fullcalendar'))
+            return 'chunk-calendar';
+          if (id.includes('lucide-react')) return 'lucide';
+          if (id.includes('date-fns')) return 'date';
+          if (
+            id.includes('react-dom') ||
+            id.includes('react-router-dom') ||
+            id.includes('scheduler')
+          )
+            return 'chunk-vendor';
         },
       },
     },
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 300,
   },
   server: {
     proxy: {
