@@ -339,3 +339,34 @@ Eliminar padrões N+1 em loops com SQL no módulo `api-lib/`, trocando N queries
 - `npx tsc --noEmit` — 0 erros
 - `npm run build` — sucesso
 - Commit: `070715d` — "perf(api-lib): eliminate N+1 query patterns"
+
+---
+
+## 08 — BUNDLE OPTIMIZATION — 2026-06-07
+
+### Mudanças
+
+- `vite.config.ts`: `manualChunks` configurado com função (chunk-3d, chunk-ai, chunk-calendar, chunk-vendor, lucide, date)
+- Rotas pesadas: App.tsx já usava `lazy()` para todas as páginas (confirmado)
+- `CuttingPlanPage.tsx` (1.138 linhas): removida — era duplicata morta de `modules/plano-corte/ui/pages/PlanoCorteIndustrialPage`
+
+### Tamanho antes/depois (gzip)
+
+| Chunk                       | Antes           | Depois        | Diff                      |
+| --------------------------- | --------------- | ------------- | ------------------------- |
+| `index` (main)              | 84 kB           | 26 kB         | -58 kB                    |
+| `SimuladorCortePage`        | 96 kB           | 30 kB         | -66 kB                    |
+| `three.module` / `chunk-3d` | 189 kB (inline) | 257 kB (lazy) | isolado                   |
+| `chunk-vendor`              | 18 kB           | 82 kB         | +64 kB (react-dom/router) |
+| **Carga inicial total**     | **~360 kB**     | **~199 kB**   | **-45%**                  |
+
+### Arquivos modificados
+
+- `vite.config.ts` — manualChunks function
+- `src/pages/CuttingPlanPage.tsx` — deletado (1.138 linhas mortas)
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso
+- Commit: `3147db3` — "Perf: Bundle optimization — code split, lazy routes, remove dead code"
