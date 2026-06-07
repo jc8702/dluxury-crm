@@ -430,3 +430,30 @@ O feature gate centralizado (`feature-gate-middleware.ts`) já existia e fazia o
 - [x] `npx tsc --noEmit` — 0 erros
 - [x] `npm run build` — sucesso
 - Commit: `27c9c80` — "Feat: Feature gates by pricing tier (STARTER/PRO/ENTERPRISE)"
+
+---
+
+## 11 — STRUCTURED LOGGING — 2026-06-07
+
+### Arquivos criados
+
+- `src/api-lib/logger.ts` — logger com níveis (info, warn, error, debug), saída JSON estruturada
+- `src/api-lib/middleware/requestLogger.ts` — log de cada request com requestId, method, path, status, duration
+
+### Arquivos modificados (console._ → logger._)
+
+- `quotations.ts`, `projects.ts`, `financeiro.ts`, `production.ts`
+- `crm.ts`, `planocorte.ts`, `compras.ts`, `calendario.ts`
+
+### Comportamento
+
+- Logs em JSON estruturado → filtráveis no Vercel por `service:dluxury-crm`
+- Cada entry inclui: `timestamp`, `service`, `env`, `tenantId`, `userId`, `requestId`, `duration`
+- `logger.debug()` silenciado em produção (NODE_ENV !== 'production')
+- `requestLogger` gera requestId aleatório e loga no `finish` do response
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso
+- Commit: `29beee7` — "Feat: Structured JSON logging (Vercel-compatible, replaces console.log)"
