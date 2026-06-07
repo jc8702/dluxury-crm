@@ -14,13 +14,11 @@ const handleNotificacoesCore: TenantHandler = async (req, res) => {
 
     if (method === 'GET') {
       if (req.url.includes('contar')) {
-        // Gera notificações antes de contar (centralizado no server)
         await gerarNotificacoesAutomaticas(tenantId).catch(console.error);
         const count =
           await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true, data: parseInt(count[0].count) });
       }
-      // Listar todas ou apenas não lidas
       const limit = req.query.limit || 50;
       const unreadOnly = req.query.unread === 'true';
       const query = unreadOnly
@@ -53,34 +51,60 @@ const handleNotificacoesCore: TenantHandler = async (req, res) => {
 
 export const handleNotificacoes = withTenant(handleNotificacoesCore);
 
+async function bulkInsertNotificacoes(
+  tenantId: string,
+  tipo: string,
+  referenciaTipo: string,
+  urlDestino: string,
+  rows: Array<{ id: string; titulo: string; mensagem: string; prioridade: string }>,
+) {
+  if (rows.length === 0) return 0;
+
+  const refIds = rows.map((r) => r.id);
+  const existing = await sql`
+    SELECT referencia_id FROM notificacoes
+    WHERE lida = false AND tipo = ${tipo} AND referencia_id = ANY(${refIds}) AND tenant_id = ${tenantId}
+  `;
+  const existingSet = new Set(existing.map((r: any) => r.referencia_id));
+  const toInsert = rows.filter((r) => !existingSet.has(r.id));
+  if (toInsert.length === 0) return 0;
+
+  const values = toInsert.map(
+    (r) =>
+      sql`(${tipo}, ${r.titulo}, ${r.mensagem}, ${r.prioridade}, ${referenciaTipo}, ${r.id}, ${urlDestino}, ${tenantId})`,
+  );
+  await sql`
+    INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
+    VALUES ${sql.join(values, sql`, `)}
+  `;
+  return toInsert.length;
+}
+
 export async function gerarNotificacoesAutomaticas(tenantId: string) {
   let criadas = 0;
 
-  // 1. Materiais com estoque crítico
   try {
     const materiais = await sql`
       SELECT id, nome, sku, estoque_atual, estoque_minimo 
       FROM materiais 
       WHERE estoque_atual <= estoque_minimo AND ativo = true AND tenant_id = ${tenantId}
     `;
-    for (const m of materiais) {
-      const exists = await sql`
-        SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'estoque_critico' AND referencia_id = ${m.id} AND tenant_id = ${tenantId}
-      `;
-      if (!exists.length) {
-        await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('estoque_critico', 'Estoque crítico: ' || ${m.sku}, ${`${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`}, ${m.estoque_atual <= 0 ? 'critica' : 'alta'}, 'material', ${m.id}, '/estoque', ${tenantId})
-        `;
-        criadas++;
-      }
-    }
+    criadas += await bulkInsertNotificacoes(
+      tenantId,
+      'estoque_critico',
+      'material',
+      '/estoque',
+      materiais.map((m: any) => ({
+        id: m.id,
+        titulo: `Estoque crítico: ${m.sku}`,
+        mensagem: `${m.nome} está com ${m.estoque_atual} unidades (mínimo: ${m.estoque_minimo})`,
+        prioridade: m.estoque_atual <= 0 ? 'critica' : 'alta',
+      })),
+    );
   } catch (e) {
     console.error('Erro ao gerar notificações de estoque:', e);
   }
 
-  // 2. Projetos com entrega próxima (3 dias)
   try {
     const projetos = await sql`
       SELECT id, ambiente, created_at, prazo_entrega
@@ -90,24 +114,22 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       AND tenant_id = ${tenantId}
       AND (prazo_entrega::date - CURRENT_DATE) BETWEEN 0 AND 3
     `;
-    for (const p of projetos) {
-      const exists = await sql`
-        SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'prazo_projeto' AND referencia_id = ${p.id} AND tenant_id = ${tenantId}
-      `;
-      if (!exists.length) {
-        await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('prazo_projeto', 'Entrega Próxima: ' || ${p.ambiente}, 'Entrega prevista para os próximos dias.', 'alta', 'projeto', ${p.id}, '/projetos', ${tenantId})
-        `;
-        criadas++;
-      }
-    }
+    criadas += await bulkInsertNotificacoes(
+      tenantId,
+      'prazo_projeto',
+      'projeto',
+      '/projetos',
+      projetos.map((p: any) => ({
+        id: p.id,
+        titulo: `Entrega Próxima: ${p.ambiente}`,
+        mensagem: 'Entrega prevista para os próximos dias.',
+        prioridade: 'alta',
+      })),
+    );
   } catch (e) {
     console.error('Erro ao gerar notificações de projetos:', e);
   }
 
-  // 3. Orçamentos sem resposta (7 dias)
   try {
     const limitDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const orcamentosPendentes = await db
@@ -125,24 +147,22 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
           lt(quotations.updatedAt, limitDate),
         ),
       );
-    for (const o of orcamentosPendentes) {
-      const exists = await sql`
-        SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'orcamento_sem_resposta' AND referencia_id = ${o.id} AND tenant_id = ${tenantId}
-      `;
-      if (!exists.length) {
-        await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('orcamento_sem_resposta', 'Orçamento sem retorno: ' || ${o.numero}, ${`Cliente ${o.cliente} não responde há 7 dias.`}, 'normal', 'quotation', ${o.id}, '/quotations', ${tenantId})
-        `;
-        criadas++;
-      }
-    }
+    criadas += await bulkInsertNotificacoes(
+      tenantId,
+      'orcamento_sem_resposta',
+      'quotation',
+      '/quotations',
+      orcamentosPendentes.map((o: any) => ({
+        id: o.id,
+        titulo: `Orçamento sem retorno: ${o.numero}`,
+        mensagem: `Cliente ${o.cliente} não responde há 7 dias.`,
+        prioridade: 'normal',
+      })),
+    );
   } catch (e) {
     console.error('Erro ao gerar notificações de orçamentos:', e);
   }
 
-  // 4. Garantias pendentes (3 dias)
   try {
     const garantias = await sql`
       SELECT id, numero, titulo
@@ -150,24 +170,22 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       WHERE status IN ('aberto', 'agendado') AND tenant_id = ${tenantId}
       AND created_at < NOW() - INTERVAL '3 days'
     `;
-    for (const g of garantias) {
-      const exists = await sql`
-        SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'garantia_pendente' AND referencia_id = ${g.id} AND tenant_id = ${tenantId}
-      `;
-      if (!exists.length) {
-        await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('garantia_pendente', 'Garantia Pendente: ' || ${g.numero}, ${`Chamado "${g.titulo}" aguarda atendimento há 3 dias.`}, 'alta', 'chamado', ${g.id}, '/pos-venda', ${tenantId})
-        `;
-        criadas++;
-      }
-    }
+    criadas += await bulkInsertNotificacoes(
+      tenantId,
+      'garantia_pendente',
+      'chamado',
+      '/pos-venda',
+      garantias.map((g: any) => ({
+        id: g.id,
+        titulo: `Garantia Pendente: ${g.numero}`,
+        mensagem: `Chamado "${g.titulo}" aguarda atendimento há 3 dias.`,
+        prioridade: 'alta',
+      })),
+    );
   } catch (e) {
     console.error('Erro ao gerar notificações de garantia:', e);
   }
 
-  // 5. Cobranças vencidas
   try {
     const cobrancas = await sql`
       SELECT id, nf, pedido, valor, due_date, cliente
@@ -175,19 +193,18 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       WHERE status NOT IN ('PAGO', 'pago', 'concluido') AND tenant_id = ${tenantId}
       AND due_date < CURRENT_DATE
     `;
-    for (const c of cobrancas) {
-      const exists = await sql`
-        SELECT id FROM notificacoes 
-        WHERE lida = false AND tipo = 'cobranca_vencida' AND referencia_id = ${c.id} AND tenant_id = ${tenantId}
-      `;
-      if (!exists.length) {
-        await sql`
-          INSERT INTO notificacoes (tipo, titulo, mensagem, prioridade, referencia_tipo, referencia_id, url_destino, tenant_id)
-          VALUES ('cobranca_vencida', 'Pagamento Vencido: ' || ${c.nf || c.pedido || 'N/A'}, ${`O pagamento de ${c.cliente || 'cliente'} no valor de R$ ${c.valor} venceu em ${new Date(c.due_date).toLocaleDateString()}.`}, 'critica', 'financeiro', ${c.id}, '/financeiro', ${tenantId})
-        `;
-        criadas++;
-      }
-    }
+    criadas += await bulkInsertNotificacoes(
+      tenantId,
+      'cobranca_vencida',
+      'financeiro',
+      '/financeiro',
+      cobrancas.map((c: any) => ({
+        id: c.id,
+        titulo: `Pagamento Vencido: ${c.nf || c.pedido || 'N/A'}`,
+        mensagem: `O pagamento de ${c.cliente || 'cliente'} no valor de R$ ${c.valor} venceu em ${new Date(c.due_date).toLocaleDateString()}.`,
+        prioridade: 'critica',
+      })),
+    );
   } catch (e) {
     console.error('Erro ao gerar notificações de cobrança:', e);
   }

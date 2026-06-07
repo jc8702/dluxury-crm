@@ -13,21 +13,29 @@ const handleComprasCore: TenantHandler = async (req, res) => {
     if (type === 'pedidos') {
       if (method === 'GET') {
         if (id) {
-          const pedido = (await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.id = ${id} AND p.tenant_id = ${tenantId}`)[0];
-          const itens = await sql`SELECT id, pedido_id, material_id, sku, descricao, quantidade_pedida, quantidade_recebida, unidade, preco_unitario, subtotal, status_item, created_at, updated_at FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId} ORDER BY id ASC`;
+          const pedido = (
+            await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.id = ${id} AND p.tenant_id = ${tenantId}`
+          )[0];
+          const itens =
+            await sql`SELECT id, pedido_id, material_id, sku, descricao, quantidade_pedida, quantidade_recebida, unidade, preco_unitario, subtotal, status_item, created_at, updated_at FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId} ORDER BY id ASC`;
           return res.status(200).json({ success: true, data: { ...pedido, itens } });
         }
         if (req.query.fornecedor_id) {
-          const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' AND p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
+          const result =
+            await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' AND p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
           return res.status(200).json({ success: true, data: result });
         }
-        const result = await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
+        const result =
+          await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
         return res.status(200).json({ success: true, data: result });
       }
 
       if (method === 'DELETE') {
         // Deletar pedido e seus itens
-        if (!id) return res.status(400).json({ success: false, error: 'id é obrigatório para deletar pedido' });
+        if (!id)
+          return res
+            .status(400)
+            .json({ success: false, error: 'id é obrigatório para deletar pedido' });
         await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId}`;
         await sql`DELETE FROM pedidos_compra WHERE id = ${id} AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true });
@@ -37,15 +45,24 @@ const handleComprasCore: TenantHandler = async (req, res) => {
         const f = req.body;
         // Gerar Número PC-ANO-SEQ
         const ano = new Date().getFullYear();
-        const count = await sql`SELECT count(*) FROM pedidos_compra WHERE numero LIKE ${`PC-${ano}-%`} AND tenant_id = ${tenantId}`;
+        const count =
+          await sql`SELECT count(*) FROM pedidos_compra WHERE numero LIKE ${`PC-${ano}-%`} AND tenant_id = ${tenantId}`;
         const seq = (parseInt(count[0].count) + 1).toString().padStart(3, '0');
         const numero = `PC-${ano}-${seq}`;
 
-        const totalItens = (f.itens || []).reduce((acc: number, item: any) => acc + ((Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0)), 0);
+        const totalItens = (f.itens || []).reduce(
+          (acc: number, item: any) =>
+            acc + (Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0),
+          0,
+        );
         const valorTotal = totalItens + (Number(f.frete) || 0);
 
-        const fornecedorId = f.fornecedor_id && f.fornecedor_id !== '' ? Number(f.fornecedor_id) : null;
-        const dataPrevisao = f.data_previsao_entrega && f.data_previsao_entrega !== '' ? f.data_previsao_entrega : null;
+        const fornecedorId =
+          f.fornecedor_id && f.fornecedor_id !== '' ? Number(f.fornecedor_id) : null;
+        const dataPrevisao =
+          f.data_previsao_entrega && f.data_previsao_entrega !== ''
+            ? f.data_previsao_entrega
+            : null;
         const observacoes = f.observacoes || null;
         const origem = f.origem || 'manual';
 
@@ -56,16 +73,22 @@ const handleComprasCore: TenantHandler = async (req, res) => {
         `;
         const pedido = result[0];
 
-        // Inserir itens se existirem
+        // Inserir itens em batch (1 query ao invés de N)
         if (f.itens && f.itens.length > 0) {
-          for (const item of f.itens) {
-            const matId = item.material_id && item.material_id !== '' ? Number(item.material_id) : null;
-            const subtotal = (Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0);
-            await sql`
-              INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal, tenant_id)
-              VALUES (${pedido.id}, ${matId}, ${item.sku || null}, ${item.descricao || null}, ${Number(item.quantidade_pedida) || 0}, ${item.unidade || null}, ${Number(item.preco_unitario) || 0}, ${subtotal}, ${tenantId})
-            `;
-          }
+          const values = sql.join(
+            f.itens.map((item: any) => {
+              const matId =
+                item.material_id && item.material_id !== '' ? Number(item.material_id) : null;
+              const subtotal =
+                (Number(item.quantidade_pedida) || 0) * (Number(item.preco_unitario) || 0);
+              return sql`(${pedido.id}, ${matId}, ${item.sku || null}, ${item.descricao || null}, ${Number(item.quantidade_pedida) || 0}, ${item.unidade || null}, ${Number(item.preco_unitario) || 0}, ${subtotal}, ${tenantId})`;
+            }),
+            sql`, `,
+          );
+          await sql`
+            INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal, tenant_id)
+            VALUES ${values}
+          `;
         }
 
         return res.status(201).json({ success: true, data: pedido });
@@ -73,13 +96,16 @@ const handleComprasCore: TenantHandler = async (req, res) => {
 
       if (method === 'PATCH' || method === 'PUT') {
         const f = req.body;
-        
+
         let valorTotal = f.valor_total;
         if (f.itens) {
-            const totalItens = f.itens.reduce((acc: number, item: any) => acc + (item.quantidade_pedida * item.preco_unitario), 0);
-            valorTotal = totalItens + (Number(f.frete) || 0);
+          const totalItens = f.itens.reduce(
+            (acc: number, item: any) => acc + item.quantidade_pedida * item.preco_unitario,
+            0,
+          );
+          valorTotal = totalItens + (Number(f.frete) || 0);
         }
-        
+
         const result = await sql`
           UPDATE pedidos_compra SET
             fornecedor_id = COALESCE(${f.fornecedor_id}, fornecedor_id),
@@ -97,60 +123,79 @@ const handleComprasCore: TenantHandler = async (req, res) => {
         // Geração automática de títulos a pagar ao confirmar o pedido
         if (f.status === 'confirmado') {
           await garantirSeedsFinanceiros(tenantId);
-          const existing = await sql`SELECT id FROM titulos_pagar WHERE pedido_compra_id = ${id} AND tenant_id = ${tenantId}`;
+          const existing =
+            await sql`SELECT id FROM titulos_pagar WHERE pedido_compra_id = ${id} AND tenant_id = ${tenantId}`;
           if (existing.length === 0) {
             // Tenta pegar condição de pagamento do pedido ou assume 1 parcela
-            const cond = (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null} AND tenant_id = ${tenantId}`)[0];
+            const cond = (
+              await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE id = ${f.condicao_pagamento_id || null} AND tenant_id = ${tenantId}`
+            )[0];
             const totalParcelas = cond?.parcelas || 1;
             const valorParcela = Number(pedido.valor_total) / totalParcelas;
             const dataEmissao = new Date();
-            
+
             // Busca valores padrão para evitar erro de FK
-            const defClasse = (await sql`SELECT id FROM classes_financeiras WHERE codigo = '2.4.01' AND tenant_id = ${tenantId} LIMIT 1`)[0]?.id || (await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
-            const defForma = (await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
-            const defConta = (await sql`SELECT id FROM contas_internas WHERE tenant_id = ${tenantId} LIMIT 1`)[0]?.id;
+            const defClasse =
+              (
+                await sql`SELECT id FROM classes_financeiras WHERE codigo = '2.4.01' AND tenant_id = ${tenantId} LIMIT 1`
+              )[0]?.id ||
+              (
+                await sql`SELECT id FROM classes_financeiras WHERE tenant_id = ${tenantId} LIMIT 1`
+              )[0]?.id;
+            const defForma = (
+              await sql`SELECT id FROM formas_pagamento WHERE tenant_id = ${tenantId} LIMIT 1`
+            )[0]?.id;
+            const defConta = (
+              await sql`SELECT id FROM contas_internas WHERE tenant_id = ${tenantId} LIMIT 1`
+            )[0]?.id;
 
             if (!defClasse || !defForma || !defConta) {
-              console.error(`[COMPRAS] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defClasse}, Forma: ${defForma}, Conta: ${defConta}`);
-              throw new Error('Não foi possível gerar os Títulos a Pagar. Verifique se o Plano de Contas, Contas Bancárias e Formas de Pagamento estão cadastrados.');
+              console.error(
+                `[COMPRAS] Falha ao gerar título: faltam seeds financeiros no tenant ${tenantId}. Classe: ${defClasse}, Forma: ${defForma}, Conta: ${defConta}`,
+              );
+              throw new Error(
+                'Não foi possível gerar os Títulos a Pagar. Verifique se o Plano de Contas, Contas Bancárias e Formas de Pagamento estão cadastrados.',
+              );
             }
 
-            for (let i = 1; i <= totalParcelas; i++) {
-              const vencimento = new Date();
-              vencimento.setMonth(vencimento.getMonth() + (i - 1));
-              
-              await sql`
-                INSERT INTO titulos_pagar (
-                  numero_titulo, fornecedor_id, pedido_compra_id,
-                  valor_original, valor_liquido, valor_aberto,
-                  data_emissao, data_vencimento, data_competencia,
-                  classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
-                  status, parcela, total_parcelas, tenant_id
-                ) VALUES (
-                  ${`PAG-AUTO-${pedido.numero}-${i}`}, ${pedido.fornecedor_id}, ${id},
-                  ${valorParcela}, ${valorParcela}, ${valorParcela},
-                  ${dataEmissao}, ${vencimento}, ${dataEmissao},
-                  ${defClasse}, ${defForma}, ${defConta},
-                  'aberto', ${i}, ${totalParcelas}, ${tenantId}
-                )`;
-            }
-          }
-        }
-
-        // Se enviou itens, sobrescrevemos
-        if (f.itens) {
-          await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId}`;
-          for (const item of f.itens) {
+            const parcelasValues = sql.join(
+              Array.from({ length: totalParcelas }, (_, i) => {
+                const vencimento = new Date();
+                vencimento.setMonth(vencimento.getMonth() + i);
+                return sql`(${`PAG-AUTO-${pedido.numero}-${i + 1}`}, ${pedido.fornecedor_id}, ${id}, ${valorParcela}, ${valorParcela}, ${valorParcela}, ${dataEmissao}, ${vencimento}, ${dataEmissao}, ${defClasse}, ${defForma}, ${defConta}, 'aberto', ${i + 1}, ${totalParcelas}, ${tenantId})`;
+              }),
+              sql`, `,
+            );
             await sql`
-              INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal, tenant_id)
-              VALUES (${id}, ${item.material_id}, ${item.sku}, ${item.descricao}, ${item.quantidade_pedida}, ${item.unidade}, ${item.preco_unitario}, ${item.quantidade_pedida * item.preco_unitario}, ${tenantId})
+              INSERT INTO titulos_pagar (
+                numero_titulo, fornecedor_id, pedido_compra_id,
+                valor_original, valor_liquido, valor_aberto,
+                data_emissao, data_vencimento, data_competencia,
+                classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+                status, parcela, total_parcelas, tenant_id
+              ) VALUES ${parcelasValues}
             `;
           }
         }
 
+        // Se enviou itens, sobrescrevemos (batch INSERT)
+        if (f.itens) {
+          await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId}`;
+          const values = sql.join(
+            f.itens.map(
+              (item: any) =>
+                sql`(${id}, ${item.material_id}, ${item.sku}, ${item.descricao}, ${item.quantidade_pedida}, ${item.unidade}, ${item.preco_unitario}, ${item.quantidade_pedida * item.preco_unitario}, ${tenantId})`,
+            ),
+            sql`, `,
+          );
+          await sql`
+            INSERT INTO pedido_compra_itens (pedido_id, material_id, sku, descricao, quantidade_pedida, unidade, preco_unitario, subtotal, tenant_id)
+            VALUES ${values}
+          `;
+        }
+
         return res.status(200).json({ success: true, data: pedido });
       }
-
     }
 
     if (type === 'itens') {
@@ -166,7 +211,9 @@ const handleComprasCore: TenantHandler = async (req, res) => {
         return res.status(201).json({ success: true, data: result[0] });
       }
       if (method === 'DELETE') {
-        const itm = (await sql`SELECT pedido_id FROM pedido_compra_itens WHERE id = ${id} AND tenant_id = ${tenantId}`)[0];
+        const itm = (
+          await sql`SELECT pedido_id FROM pedido_compra_itens WHERE id = ${id} AND tenant_id = ${tenantId}`
+        )[0];
         await sql`DELETE FROM pedido_compra_itens WHERE id = ${id} AND tenant_id = ${tenantId}`;
         if (itm) {
           await sql`UPDATE pedidos_compra SET valor_total = COALESCE((SELECT SUM(subtotal) FROM pedido_compra_itens WHERE pedido_id = ${itm.pedido_id} AND tenant_id = ${tenantId}), 0) WHERE id = ${itm.pedido_id} AND tenant_id = ${tenantId}`;
@@ -187,17 +234,19 @@ const handleComprasCore: TenantHandler = async (req, res) => {
           `;
 
           // 2. Atualizar quantidade_recebida no item
-          const itm = await sql`UPDATE pedido_compra_itens SET quantidade_recebida = quantidade_recebida + ${r.quantidade} WHERE id = ${r.item_id} AND tenant_id = ${tenantId} RETURNING *`;
+          const itm =
+            await sql`UPDATE pedido_compra_itens SET quantidade_recebida = quantidade_recebida + ${r.quantidade} WHERE id = ${r.item_id} AND tenant_id = ${tenantId} RETURNING *`;
           const item = itm[0];
 
           // 3. Atualizar status do item
-          const nStatus = item.quantidade_recebida >= item.quantidade_pedida ? 'recebido' : 'parcial';
+          const nStatus =
+            item.quantidade_recebida >= item.quantidade_pedida ? 'recebido' : 'parcial';
           await sql`UPDATE pedido_compra_itens SET status_item = ${nStatus} WHERE id = ${r.item_id} AND tenant_id = ${tenantId}`;
 
           // 4. Criar movimentacao_estoque
           await sql`
             INSERT INTO movimentacoes_estoque (material_id, tipo, quantidade, motivo, preco_unitario, valor_total, created_by, nota_fiscal, tenant_id)
-            VALUES (${item.material_id}, 'entrada', ${r.quantidade}, ${`PC-${pedido_id.substring(0,8)}`}, ${item.preco_unitario}, ${r.quantidade * item.preco_unitario}, ${user?.name || 'SISTEMA'}, ${nota_fiscal || null}, ${tenantId})
+            VALUES (${item.material_id}, 'entrada', ${r.quantidade}, ${`PC-${pedido_id.substring(0, 8)}`}, ${item.preco_unitario}, ${r.quantidade * item.preco_unitario}, ${user?.name || 'SISTEMA'}, ${nota_fiscal || null}, ${tenantId})
           `;
 
           // 5. Atualizar estoque_atual em materiais
@@ -205,10 +254,17 @@ const handleComprasCore: TenantHandler = async (req, res) => {
         }
 
         // 6. Atualizar status do pedido
-        const allItens = await sql`SELECT quantidade_pedida, quantidade_recebida FROM pedido_compra_itens WHERE pedido_id = ${pedido_id} AND tenant_id = ${tenantId}`;
-        const totalPedida = allItens.reduce((acc: number, i: any) => acc + Number(i.quantidade_pedida), 0);
-        const totalRecebida = allItens.reduce((acc: number, i: any) => acc + Number(i.quantidade_recebida), 0);
-        
+        const allItens =
+          await sql`SELECT quantidade_pedida, quantidade_recebida FROM pedido_compra_itens WHERE pedido_id = ${pedido_id} AND tenant_id = ${tenantId}`;
+        const totalPedida = allItens.reduce(
+          (acc: number, i: any) => acc + Number(i.quantidade_pedida),
+          0,
+        );
+        const totalRecebida = allItens.reduce(
+          (acc: number, i: any) => acc + Number(i.quantidade_recebida),
+          0,
+        );
+
         let pStatus = 'parcialmente_recebido';
         if (totalRecebida >= totalPedida) pStatus = 'recebido';
         else if (totalRecebida === 0) pStatus = 'enviado';

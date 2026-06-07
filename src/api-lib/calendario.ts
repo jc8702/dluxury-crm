@@ -261,17 +261,18 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
 
       const formattedDate = dataEvento.toISOString().split('T')[0];
 
-      for (const u of usuarios) {
-        await sql`
-          INSERT INTO eventos_calendario (
-            usuario_id, tipo_evento, titulo, descricao, data_evento, quotation_id, cor_categoria, notificacao_dias_antes, tenant_id
-          ) VALUES (
-            ${u.id}::uuid, 'quotation', ${`Entrega Pedido: ${quotation.numero_orcamento}`}, 
-            ${`Prazo contratual de entrega para o cliente ${quotation.cliente_nome || ''}`}, 
-            ${formattedDate}, ${quotation_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid
-          )
-        `;
-      }
+      const values = sql.join(
+        usuarios.map(
+          (u: any) =>
+            sql`(${u.id}::uuid, 'quotation', ${`Entrega Pedido: ${quotation.numero_orcamento}`}, ${`Prazo contratual de entrega para o cliente ${quotation.cliente_nome || ''}`}, ${formattedDate}, ${quotation_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid)`,
+        ),
+        sql`, `,
+      );
+      await sql`
+        INSERT INTO eventos_calendario (
+          usuario_id, tipo_evento, titulo, descricao, data_evento, quotation_id, cor_categoria, notificacao_dias_antes, tenant_id
+        ) VALUES ${values}
+      `;
 
       return res.status(200).json({ success: true, eventos_criados: usuarios.length });
     }
@@ -287,20 +288,26 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
           AND ec.tenant_id = ${tenantId}::uuid
       `;
 
-      for (const ev of eventosProximos) {
-        const msg = `Lembrete: O evento "${ev.titulo}" vence em ${ev.notificacao_dias_antes} dias (${ev.data_evento})`;
+      await sql`
+        INSERT INTO notificacoes_calendario (evento_calendario_id, tipo_notificacao, mensagem, tenant_id)
+        SELECT ec.id, 'email',
+          'Lembrete: O evento "' || ec.titulo || '" vence em ' || ec.notificacao_dias_antes || ' dias (' || ec.data_evento || ')',
+          ${tenantId}::uuid
+        FROM eventos_calendario ec
+        WHERE ec.notificacao_enviada = FALSE
+          AND ec.notificacao_dias_antes > 0
+          AND ec.data_evento <= CURRENT_DATE + ec.notificacao_dias_antes
+          AND ec.tenant_id = ${tenantId}::uuid
+      `;
 
-        await sql`
-          INSERT INTO notificacoes_calendario (evento_calendario_id, tipo_notificacao, mensagem, tenant_id)
-          VALUES (${ev.id}, 'email', ${msg}, ${tenantId}::uuid)
-        `;
-
-        await sql`
-          UPDATE eventos_calendario
-          SET notificacao_enviada = TRUE
-          WHERE id = ${ev.id} AND tenant_id = ${tenantId}::uuid
-        `;
-      }
+      await sql`
+        UPDATE eventos_calendario
+        SET notificacao_enviada = TRUE
+        WHERE notificacao_enviada = FALSE
+          AND notificacao_dias_antes > 0
+          AND data_evento <= CURRENT_DATE + notificacao_dias_antes
+          AND tenant_id = ${tenantId}::uuid
+      `;
 
       return res
         .status(200)

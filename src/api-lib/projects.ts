@@ -1,5 +1,5 @@
 import { sql, auditLog } from './_db.js';
-import { writeOffStockForProject } from './_inventory.js';
+import { writeOffStockForProjectBatch } from './_inventory.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
 // TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM quotations)
@@ -245,9 +245,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
       }
 
       if (r.length && f.status === 'concluido') {
-        const itms =
-          await sql`SELECT id FROM erp_project_items WHERE project_id = ${id} AND tenant_id = ${tenantId}`;
-        for (const itm of itms) await writeOffStockForProject(itm.id, tenantId);
+        await writeOffStockForProjectBatch(id, tenantId);
       }
       return res.status(200).json({ success: true, data: r[0] });
     }
@@ -276,7 +274,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
 
 const handleReportsCore: TenantHandler = async (req, res) => {
   try {
@@ -325,7 +323,7 @@ const handleReportsCore: TenantHandler = async (req, res) => {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
 
 const handleEngineeringCore: TenantHandler = async (req, res) => {
   try {
@@ -535,7 +533,7 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
     console.error('ENGINEERING_PERSISTENCE_ERROR:', err);
     return res.status(500).json({ success: false, error: `Falha na Engenharia: ${err.message}` });
   }
-}
+};
 
 const handleSKUsCore: TenantHandler = async (req, res) => {
   try {
@@ -601,7 +599,7 @@ const handleSKUsCore: TenantHandler = async (req, res) => {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
 
 const handleSimulationsCore: TenantHandler = async (req, res) => {
   try {
@@ -694,7 +692,7 @@ const handleSimulationsCore: TenantHandler = async (req, res) => {
     console.error('HANDLE_SIMULATIONS_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
 
 async function triggerOpCreationForProject(projectId: string, tenantId: string, projectData: any) {
   try {

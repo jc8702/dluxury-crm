@@ -3,9 +3,9 @@ import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js
 import { z } from 'zod';
 
 const TituloSchema = z.object({
-  valor_original: z.number().min(0.01, "Valor deve ser maior que zero"),
+  valor_original: z.number().min(0.01, 'Valor deve ser maior que zero'),
   data_vencimento: z.string().or(z.date()),
-  classe_financeira_id: z.string().uuid("Classe financeira inválida"),
+  classe_financeira_id: z.string().uuid('Classe financeira inválida'),
   total_parcelas: z.number().int().min(1).max(120).default(1),
   observacoes: z.string().optional().nullable(),
   numero_titulo: z.string().optional().nullable(),
@@ -14,9 +14,12 @@ const TituloSchema = z.object({
 });
 
 const BaixaSchema = z.object({
-  valor_baixa: z.number().min(0.01, "Valor da baixa deve ser maior que zero"),
-  data_baixa: z.string().or(z.date()).default(() => new Date()),
-  conta_interna_id: z.string().uuid("Conta bancária inválida"),
+  valor_baixa: z.number().min(0.01, 'Valor da baixa deve ser maior que zero'),
+  data_baixa: z
+    .string()
+    .or(z.date())
+    .default(() => new Date()),
+  conta_interna_id: z.string().uuid('Conta bancária inválida'),
   valor_juros: z.number().min(0).default(0),
   valor_multa: z.number().min(0).default(0),
   valor_desconto: z.number().min(0).default(0),
@@ -29,26 +32,52 @@ export async function bootstrapFinanceiro() {
   if (!bootstrapFinanceiroPromise) {
     bootstrapFinanceiroPromise = (async () => {
       try {
-    // Títulos Receber
-    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(() => {});
-    await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
-    
-    // Títulos Pagar
-    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(() => {});
-    await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
+        // Títulos Receber
+        await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_receber ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(
+          () => {},
+        );
 
-    // Baixas e Movimentações (Conferência)
-    await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(() => {});
-    await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(() => {});
-    await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(() => {});
-    await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(() => {});
-    
-    // Classes
-    await sql`ALTER TABLE classes_financeiras ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(() => {});
+        // Títulos Pagar
+        await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS taxa_financeira NUMERIC(5,2) DEFAULT 0`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS valor_custo_financeiro NUMERIC(15,2) DEFAULT 0`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS rateio JSONB DEFAULT '[]'`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE titulos_pagar ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(
+          () => {},
+        );
+
+        // Baixas e Movimentações (Conferência)
+        await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE baixas ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido BOOLEAN DEFAULT false`.catch(
+          () => {},
+        );
+        await sql`ALTER TABLE movimentacoes_tesouraria ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP`.catch(
+          () => {},
+        );
+
+        // Classes
+        await sql`ALTER TABLE classes_financeiras ADD COLUMN IF NOT EXISTS deletado BOOLEAN DEFAULT false`.catch(
+          () => {},
+        );
       } catch (e) {
         console.error('[FINANCEIRO BOOTSTRAP ERROR]', e);
       }
@@ -71,9 +100,14 @@ async function checkPeriodoFechado(tenantId: string, data: string | Date | undef
 }
 
 async function validateClassePermiteLancamento(tenantId: string, id: string) {
-  const classe = (await sql`SELECT permite_lancamento FROM classes_financeiras WHERE id = ${id} AND tenant_id = ${tenantId}`)[0];
+  const classe = (
+    await sql`SELECT permite_lancamento FROM classes_financeiras WHERE id = ${id} AND tenant_id = ${tenantId}`
+  )[0];
   if (!classe) throw new Error('Classe financeira não encontrada');
-  if (classe.permite_lancamento === false) throw new Error('Esta é uma classe sintética (Pai). Escolha uma classe analítica para o lançamento.');
+  if (classe.permite_lancamento === false)
+    throw new Error(
+      'Esta é uma classe sintética (Pai). Escolha uma classe analítica para o lançamento.',
+    );
   return true;
 }
 
@@ -149,13 +183,15 @@ export const handleFinanceiro = withTenant(handleFinanceiroCore);
 
 async function handleClasses(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    let result = await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
-    
+    let result =
+      await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
+
     if (result.length === 0) {
       await garantirSeedsFinanceiros(tenantId);
-      result = await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
+      result =
+        await sql`SELECT id, codigo, nome, tipo, natureza, pai_id, ativa, permite_lancamento, deletado, created_at, updated_at FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY codigo ASC`;
     }
-    
+
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -193,10 +229,13 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
     const isExtrato = req.url?.includes('/extrato') || req.query?.action === 'extrato';
     if (isExtrato) {
       // ID pode vir do path ou da query string
-      const contaId = id && id !== 'extrato' ? id : (req.query?.id);
-      if (!contaId) return res.status(400).json({ success: false, error: 'ID da conta é obrigatório' });
-      
-      const conta = (await sql`SELECT id, nome, saldo_inicial, saldo_atual FROM contas_internas WHERE id = ${contaId} AND tenant_id = ${tenantId}`)[0];
+      const contaId = id && id !== 'extrato' ? id : req.query?.id;
+      if (!contaId)
+        return res.status(400).json({ success: false, error: 'ID da conta é obrigatório' });
+
+      const conta = (
+        await sql`SELECT id, nome, saldo_inicial, saldo_atual FROM contas_internas WHERE id = ${contaId} AND tenant_id = ${tenantId}`
+      )[0];
       if (!conta) return res.status(404).json({ success: false, error: 'Conta não encontrada' });
 
       // Consolidar todas as movimentações
@@ -266,24 +305,26 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
       const extratoComSaldo = movsList.map((m: any, i: number) => ({
         ...m,
         valor: Number(m.valor),
-        saldo_momento: saldosMomento[i]
+        saldo_momento: saldosMomento[i],
       }));
 
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         data: {
           conta,
           saldo_inicial: saldoInicialImplicito, // saldo antes do primeiro lançamento
           saldo_inicial_cadastro: Number(conta.saldo_inicial || 0), // valor cadastrado pelo usuário
-          extrato: extratoComSaldo.reverse() // Mais recente primeiro para exibição
-        } 
+          extrato: extratoComSaldo.reverse(), // Mais recente primeiro para exibição
+        },
       });
     }
 
-    let result = await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    let result =
+      await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
     if (result.length === 0) {
       await sql`INSERT INTO contas_internas (nome, tipo, saldo_inicial, saldo_atual, ativa, tenant_id) VALUES ('CAIXA INTERNO', 'caixa', 0, 0, true, ${tenantId}::uuid)`;
-      result = await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+      result =
+        await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, data_saldo_inicial, ativa, deletado, created_at, updated_at FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
     }
     return res.status(200).json({ success: true, data: result });
   }
@@ -303,7 +344,9 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
     // Se o saldo_inicial foi alterado, aplica a diferença ao saldo_atual
     // (ex: inicial era 25.000, vira 30.000 → saldo_atual sobe R$5.000)
     if (f.saldo_inicial !== undefined) {
-      const atual = (await sql`SELECT saldo_inicial, saldo_atual FROM contas_internas WHERE id = ${id} AND tenant_id = ${tenantId}`)[0];
+      const atual = (
+        await sql`SELECT saldo_inicial, saldo_atual FROM contas_internas WHERE id = ${id} AND tenant_id = ${tenantId}`
+      )[0];
       if (atual) {
         const novoInicial = Number(f.saldo_inicial);
         const antigoInicial = Number(atual.saldo_inicial || 0);
@@ -319,7 +362,9 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
             saldo_atual  = saldo_atual + ${diferenca},
             ativa        = COALESCE(${f.ativa}, ativa)
           WHERE id = ${id} AND tenant_id = ${tenantId}`;
-        const updated = (await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, ativa, deletado, created_at, updated_at FROM contas_internas WHERE id = ${id} AND tenant_id = ${tenantId}`)[0];
+        const updated = (
+          await sql`SELECT id, nome, tipo, banco_codigo, agencia, conta, saldo_inicial, saldo_atual, ativa, deletado, created_at, updated_at FROM contas_internas WHERE id = ${id} AND tenant_id = ${tenantId}`
+        )[0];
         return res.status(200).json({ success: true, data: updated });
       }
     }
@@ -346,10 +391,12 @@ async function handleContasInternas(req: any, res: any, tenantId: string, id?: s
 
 async function handleFormasPagamento(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    let result = await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+    let result =
+      await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
     if (result.length === 0) {
       await sql`INSERT INTO formas_pagamento (nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, tenant_id) VALUES ('BOLETO', 'boleto', 0, 0, true, ${tenantId}::uuid), ('DINHEIRO', 'dinheiro', 0, 0, true, ${tenantId}::uuid)`;
-      result = await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
+      result =
+        await sql`SELECT id, nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, deletado, created_at, updated_at FROM formas_pagamento WHERE deletado = false AND tenant_id = ${tenantId}::uuid ORDER BY nome ASC`;
     }
     return res.status(200).json({ success: true, data: result });
   }
@@ -388,9 +435,9 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
     const valorParcela = Number(valor_original) / numParcelas;
     const baseDate = new Date(data_vencimento || new Date());
     for (let i = 1; i <= numParcelas; i++) {
-        const venc = new Date(baseDate);
-        venc.setMonth(venc.getMonth() + (i - 1));
-        parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
+      const venc = new Date(baseDate);
+      venc.setMonth(venc.getMonth() + (i - 1));
+      parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
     }
     return res.status(200).json({ success: true, data: { parcelas } });
   }
@@ -402,13 +449,15 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
         if (await checkPeriodoFechado(tenantId, validated.data_baixa)) {
           throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
         }
-        const titulo = (await tx`SELECT id, valor_aberto, status, data_vencimento FROM titulos_receber WHERE id = ${id} AND deletado = false AND tenant_id = ${tenantId}`)[0];
+        const titulo = (
+          await tx`SELECT id, valor_aberto, status, data_vencimento FROM titulos_receber WHERE id = ${id} AND deletado = false AND tenant_id = ${tenantId}`
+        )[0];
         if (!titulo) throw new Error('Título não encontrado ou excluído');
         if (titulo.status === 'pago') throw new Error('Este título já está totalmente pago');
 
         const valorBaixa = validated.valor_baixa;
         const valorOriginalAmortizado = req.body.valor_original_baixa || valorBaixa; // Valor sem juros/multa
-        
+
         await tx`INSERT INTO baixas (
           tipo, titulo_id, valor_baixa, valor_juros, valor_multa, valor_desconto, data_baixa, conta_interna_id, observacoes, tenant_id
         ) VALUES (
@@ -417,17 +466,19 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
 
         const novoValorAberto = Math.max(0, Number(titulo.valor_aberto) - valorOriginalAmortizado);
         const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-        
+
         await tx`UPDATE titulos_receber SET 
           valor_aberto = ${novoValorAberto}, 
           status = ${novoStatus}, 
           data_pagamento = ${novoStatus === 'pago' ? new Date() : null},
           updated_at = NOW()
         WHERE id = ${id} AND tenant_id = ${tenantId}`;
-        
+
         await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${valorBaixa} WHERE id = ${validated.conta_interna_id} AND tenant_id = ${tenantId}`;
-        
-        return res.status(200).json({ success: true, message: 'Recebimento realizado com sucesso' });
+
+        return res
+          .status(200)
+          .json({ success: true, message: 'Recebimento realizado com sucesso' });
       });
     } catch (err: any) {
       return res.status(400).json({ success: false, error: err.message });
@@ -463,7 +514,9 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
     const { action, cliente_id } = req.query;
     if (action === 'delete_group' && cliente_id) {
       await sql`UPDATE titulos_receber SET deletado = true, excluido_em = NOW() WHERE (cliente_id = ${cliente_id} OR cliente_id::text = ${cliente_id}) AND status != 'pago' AND tenant_id = ${tenantId}`;
-      return res.status(200).json({ success: true, message: 'Todos os títulos pendentes do cliente foram excluídos' });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Todos os títulos pendentes do cliente foram excluídos' });
     }
     if (id) {
       await sql`UPDATE titulos_receber SET deletado = true, excluido_em = NOW() WHERE id = ${id} AND tenant_id = ${tenantId}`;
@@ -480,54 +533,55 @@ async function handleTitulosReceber(req: any, res: any, tenantId: string, id?: s
       await validateClassePermiteLancamento(tenantId, f.classe_financeira_id);
 
       if (await checkPeriodoFechado(tenantId, f.data_vencimento)) {
-        return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Não é possível lançar títulos em um período financeiro fechado.',
+          });
       }
 
       return await sql.begin(async (tx) => {
-        const titulos: any[] = [];
         const mesesRecorrencia = Number(req.body.recorrencia_meses) || 1;
         const valorTaxaTotal = Number(req.body.valor_custo_financeiro) || 0;
         const taxaPerc = Number(req.body.taxa_financeira) || 0;
 
+        const rows: Array<{ num: string; parcela: number; venc: Date }> = [];
         for (let m = 0; m < mesesRecorrencia; m++) {
           for (let i = 1; i <= f.total_parcelas; i++) {
             const venc = new Date(f.data_vencimento);
             venc.setMonth(venc.getMonth() + (i - 1) + m);
-            const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
-            const t = await tx`
-              INSERT INTO titulos_receber (
-                numero_titulo, cliente_id, projeto_id, quotation_id, 
-                valor_original, valor_liquido, valor_aberto, 
-                data_emissao, data_vencimento, data_competencia, 
-                classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
-                status, parcela, total_parcelas, observacoes,
-                taxa_financeira, valor_custo_financeiro, rateio, tenant_id
-              ) VALUES (
-                ${(f.numero_titulo || `REC-${Date.now()}`) + suffix + (f.total_parcelas > 1 ? `-P${i}` : '')}, 
-                ${cliente_id}, 
-                ${f.projeto_id || null}, 
-                ${f.quotation_id || null}, 
-                ${f.valor_original / f.total_parcelas}, 
-                ${f.valor_original / f.total_parcelas}, 
-                ${f.valor_original / f.total_parcelas}, 
-                NOW(), 
-                ${venc}, 
-                ${venc}, 
-                ${f.classe_financeira_id}, 
-                NULL, 
-                ${req.body.forma_recebimento_id}, 
-                'aberto', 
-                ${i}, 
-                ${f.total_parcelas}, 
-                ${f.observacoes || ''},
-                ${taxaPerc},
-                ${valorTaxaTotal / f.total_parcelas},
-                ${JSON.stringify(req.body.rateio || [])},
-                ${tenantId}
-              ) RETURNING *`;
-            titulos.push(t[0]);
+            const suffix = mesesRecorrencia > 1 ? `-M${m + 1}` : '';
+            rows.push({
+              num:
+                (f.numero_titulo || `REC-${Date.now()}`) +
+                suffix +
+                (f.total_parcelas > 1 ? `-P${i}` : ''),
+              parcela: i,
+              venc,
+            });
           }
         }
+
+        const values = sql.join(
+          rows.map(
+            (r) =>
+              sql`(${r.num}, ${cliente_id}, ${f.projeto_id || null}, ${f.quotation_id || null}, ${f.valor_original / f.total_parcelas}, ${f.valor_original / f.total_parcelas}, ${f.valor_original / f.total_parcelas}, NOW(), ${r.venc}, ${r.venc}, ${f.classe_financeira_id}, NULL, ${req.body.forma_recebimento_id}, 'aberto', ${r.parcela}, ${f.total_parcelas}, ${f.observacoes || ''}, ${taxaPerc}, ${valorTaxaTotal / f.total_parcelas}, ${JSON.stringify(req.body.rateio || [])}, ${tenantId})`,
+          ),
+          sql`, `,
+        );
+
+        const titulos = await tx`
+          INSERT INTO titulos_receber (
+            numero_titulo, cliente_id, projeto_id, quotation_id, 
+            valor_original, valor_liquido, valor_aberto, 
+            data_emissao, data_vencimento, data_competencia, 
+            classe_financeira_id, condicao_pagamento_id, forma_recebimento_id, 
+            status, parcela, total_parcelas, observacoes,
+            taxa_financeira, valor_custo_financeiro, rateio, tenant_id
+          ) VALUES ${values}
+          RETURNING *
+        `;
         return res.status(201).json({ success: true, data: titulos });
       });
     } catch (err: any) {
@@ -568,9 +622,9 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
     const valorParcela = Number(valor_original) / numParcelas;
     const baseDate = new Date(data_vencimento || new Date());
     for (let i = 1; i <= numParcelas; i++) {
-        const venc = new Date(baseDate);
-        venc.setMonth(venc.getMonth() + (i - 1));
-        parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
+      const venc = new Date(baseDate);
+      venc.setMonth(venc.getMonth() + (i - 1));
+      parcelas.push({ numero_parcela: i, valor: valorParcela, data_vencimento: venc });
     }
     return res.status(200).json({ success: true, data: { parcelas } });
   }
@@ -582,19 +636,25 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
         if (await checkPeriodoFechado(tenantId, validated.data_baixa)) {
           throw new Error('Não é possível realizar baixa em um período financeiro fechado.');
         }
-        const titulo = (await tx`SELECT id, valor_aberto, status, conta_bancaria_id, data_vencimento FROM titulos_pagar WHERE id = ${id} AND deletado = false AND tenant_id = ${tenantId}`)[0];
+        const titulo = (
+          await tx`SELECT id, valor_aberto, status, conta_bancaria_id, data_vencimento FROM titulos_pagar WHERE id = ${id} AND deletado = false AND tenant_id = ${tenantId}`
+        )[0];
         if (!titulo) throw new Error('Título não encontrado ou excluído');
         if (titulo.status === 'pago') throw new Error('Este título já está totalmente pago');
 
         const contaId = validated.conta_interna_id || titulo.conta_bancaria_id;
-        const conta = (await tx`SELECT id, saldo_atual FROM contas_internas WHERE id = ${contaId} AND tenant_id = ${tenantId}`)[0];
+        const conta = (
+          await tx`SELECT id, saldo_atual FROM contas_internas WHERE id = ${contaId} AND tenant_id = ${tenantId}`
+        )[0];
         if (!conta) throw new Error('Conta bancária não encontrada');
 
         const valorBaixa = validated.valor_baixa;
         const valorOriginalAmortizado = req.body.valor_original_baixa || valorBaixa;
 
         let saldoWarning = false;
-        if (Number(conta.saldo_atual) < valorBaixa) { saldoWarning = true; }
+        if (Number(conta.saldo_atual) < valorBaixa) {
+          saldoWarning = true;
+        }
 
         await tx`INSERT INTO baixas (
           tipo, titulo_id, valor_baixa, valor_juros, valor_multa, valor_desconto, data_baixa, conta_interna_id, observacoes, tenant_id
@@ -604,7 +664,7 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
 
         const novoValorAberto = Math.max(0, Number(titulo.valor_aberto) - valorOriginalAmortizado);
         const novoStatus = novoValorAberto <= 0 ? 'pago' : 'pago_parcial';
-        
+
         await tx`UPDATE titulos_pagar SET 
           valor_aberto = ${novoValorAberto}, 
           status = ${novoStatus}, 
@@ -613,8 +673,14 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
         WHERE id = ${id} AND tenant_id = ${tenantId}`;
 
         await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${valorBaixa} WHERE id = ${contaId} AND tenant_id = ${tenantId}`;
-        
-        return res.status(200).json({ success: true, message: 'Baixa realizada com sucesso', warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined });
+
+        return res
+          .status(200)
+          .json({
+            success: true,
+            message: 'Baixa realizada com sucesso',
+            warning: saldoWarning ? 'Saldo insuficiente na conta' : undefined,
+          });
       });
     } catch (err: any) {
       return res.status(400).json({ success: false, error: err.message });
@@ -650,7 +716,12 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
     const { action, fornecedor_id } = req.query;
     if (action === 'delete_group' && fornecedor_id) {
       await sql`UPDATE titulos_pagar SET deletado = true, excluido_em = NOW() WHERE (fornecedor_id = ${fornecedor_id} OR fornecedor_id::text = ${fornecedor_id}) AND status != 'pago' AND tenant_id = ${tenantId}`;
-      return res.status(200).json({ success: true, message: 'Todos os títulos pendentes do fornecedor foram excluídos' });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: 'Todos os títulos pendentes do fornecedor foram excluídos',
+        });
     }
     if (id) {
       await sql`UPDATE titulos_pagar SET deletado = true, excluido_em = NOW() WHERE id = ${id} AND tenant_id = ${tenantId}`;
@@ -667,7 +738,12 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
       await validateClassePermiteLancamento(tenantId, f.classe_financeira_id);
 
       if (await checkPeriodoFechado(tenantId, f.data_vencimento)) {
-        return res.status(400).json({ success: false, error: 'Não é possível lançar títulos em um período financeiro fechado.' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Não é possível lançar títulos em um período financeiro fechado.',
+          });
       }
 
       return await sql.begin(async (tx) => {
@@ -676,44 +752,42 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
         const valorTaxaTotal = Number(req.body.valor_custo_financeiro) || 0;
         const taxaPerc = Number(req.body.taxa_financeira) || 0;
 
+        const rows: Array<{ num: string; parcela: number; venc: Date }> = [];
         for (let m = 0; m < mesesRecorrencia; m++) {
           for (let i = 1; i <= f.total_parcelas; i++) {
             const venc = new Date(f.data_vencimento);
             venc.setMonth(venc.getMonth() + (i - 1) + m);
-            const suffix = mesesRecorrencia > 1 ? `-M${m+1}` : '';
-            const t = await tx`
-              INSERT INTO titulos_pagar (
-                numero_titulo, fornecedor_id, pedido_compra_id,
-                valor_original, valor_liquido, valor_aberto, 
-                data_emissao, data_vencimento, data_competencia, 
-                classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, 
-                conta_bancaria_id, status, parcela, total_parcelas,
-                taxa_financeira, valor_custo_financeiro, rateio, tenant_id
-              ) VALUES (
-                ${(f.numero_titulo || `PAG-${Date.now()}`) + suffix + (f.total_parcelas > 1 ? `-P${i}` : '')}, 
-                ${fornecedor_id},
-                ${req.body.pedido_compra_id || null},
-                ${f.valor_original / f.total_parcelas}, 
-                ${f.valor_original / f.total_parcelas}, 
-                ${f.valor_original / f.total_parcelas}, 
-                NOW(), 
-                ${venc}, 
-                ${venc}, 
-                ${f.classe_financeira_id}, 
-                NULL, 
-                ${req.body.forma_pagamento_id}, 
-                ${req.body.conta_bancaria_id}, 
-                'aberto', 
-                ${i}, 
-                ${f.total_parcelas}, 
-                ${taxaPerc},
-                ${valorTaxaTotal / f.total_parcelas},
-                ${JSON.stringify(req.body.rateio || [])},
-                ${tenantId}
-              ) RETURNING *`;
-            titulos.push(t[0]);
+            const suffix = mesesRecorrencia > 1 ? `-M${m + 1}` : '';
+            rows.push({
+              num:
+                (f.numero_titulo || `PAG-${Date.now()}`) +
+                suffix +
+                (f.total_parcelas > 1 ? `-P${i}` : ''),
+              parcela: i,
+              venc,
+            });
           }
         }
+
+        const values = sql.join(
+          rows.map(
+            (r) =>
+              sql`(${r.num}, ${fornecedor_id}, ${req.body.pedido_compra_id || null}, ${f.valor_original / f.total_parcelas}, ${f.valor_original / f.total_parcelas}, ${f.valor_original / f.total_parcelas}, NOW(), ${r.venc}, ${r.venc}, ${f.classe_financeira_id}, NULL, ${req.body.forma_pagamento_id}, ${req.body.conta_bancaria_id}, 'aberto', ${r.parcela}, ${f.total_parcelas}, ${taxaPerc}, ${valorTaxaTotal / f.total_parcelas}, ${JSON.stringify(req.body.rateio || [])}, ${tenantId})`,
+          ),
+          sql`, `,
+        );
+
+        const titulos = await tx`
+          INSERT INTO titulos_pagar (
+            numero_titulo, fornecedor_id, pedido_compra_id,
+            valor_original, valor_liquido, valor_aberto, 
+            data_emissao, data_vencimento, data_competencia, 
+            classe_financeira_id, condicao_pagamento_id, forma_pagamento_id, 
+            conta_bancaria_id, status, parcela, total_parcelas,
+            taxa_financeira, valor_custo_financeiro, rateio, tenant_id
+          ) VALUES ${values}
+          RETURNING *
+        `;
         return res.status(201).json({ success: true, data: titulos });
       });
     } catch (err: any) {
@@ -748,29 +822,38 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
 
 async function handleTesouraria(req: any, res: any, tenantId: string, _id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, tipo, conta_origem_id, conta_destino_id, valor, data_movimento, classe_financeira_id, descricao, deletado, conferido, conferido_em, created_at FROM movimentacoes_tesouraria WHERE tenant_id = ${tenantId} ORDER BY data_movimento DESC`;
+    const result =
+      await sql`SELECT id, tipo, conta_origem_id, conta_destino_id, valor, data_movimento, classe_financeira_id, descricao, deletado, conferido, conferido_em, created_at FROM movimentacoes_tesouraria WHERE tenant_id = ${tenantId} ORDER BY data_movimento DESC`;
     return res.status(200).json({ success: true, data: result });
   }
 
   if (req.method === 'POST') {
-    const action = req.query?.action || (req.url?.includes('transferencia') ? 'transferencia' : 'lancamento');
+    const action =
+      req.query?.action || (req.url?.includes('transferencia') ? 'transferencia' : 'lancamento');
 
     try {
       return await sql.begin(async (tx) => {
         if (action === 'transferencia') {
           const { conta_origem_id, conta_destino_id, valor, data_movimento, descricao } = req.body;
-          
-          if (!conta_origem_id || !conta_destino_id) throw new Error('Origem e destino são obrigatórios');
+
+          if (!conta_origem_id || !conta_destino_id)
+            throw new Error('Origem e destino são obrigatórios');
           if (Number(valor) <= 0) throw new Error('Valor deve ser maior que zero');
 
           if (await checkPeriodoFechado(tenantId, data_movimento || new Date())) {
-            throw new Error('Não é possível realizar movimentações em um período financeiro fechado.');
+            throw new Error(
+              'Não é possível realizar movimentações em um período financeiro fechado.',
+            );
           }
 
-          const origem = (await tx`SELECT saldo_atual FROM contas_internas WHERE id = ${conta_origem_id} AND tenant_id = ${tenantId} FOR UPDATE`)[0];
+          const origem = (
+            await tx`SELECT saldo_atual FROM contas_internas WHERE id = ${conta_origem_id} AND tenant_id = ${tenantId} FOR UPDATE`
+          )[0];
           if (!origem) throw new Error('Conta de origem não encontrada');
           if (Number(origem.saldo_atual) < Number(valor)) {
-            throw new Error(`Saldo insuficiente na conta de origem (disponível: R$ ${Number(origem.saldo_atual).toFixed(2)})`);
+            throw new Error(
+              `Saldo insuficiente na conta de origem (disponível: R$ ${Number(origem.saldo_atual).toFixed(2)})`,
+            );
           }
 
           await tx`
@@ -780,18 +863,20 @@ async function handleTesouraria(req: any, res: any, tenantId: string, _id?: stri
               ('transferencia', ${conta_origem_id}, ${conta_destino_id}, ${Number(valor)}, 
                ${data_movimento ? new Date(data_movimento) : new Date()}, 
                ${descricao || 'Transferência entre contas'}, ${tenantId})`;
-          
+
           await tx`UPDATE contas_internas SET saldo_atual = saldo_atual - ${Number(valor)} WHERE id = ${conta_origem_id} AND tenant_id = ${tenantId}`;
           await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${Number(valor)} WHERE id = ${conta_destino_id} AND tenant_id = ${tenantId}`;
 
-          return res.status(201).json({ success: true, message: 'Transferência realizada com sucesso' });
-
+          return res
+            .status(201)
+            .json({ success: true, message: 'Transferência realizada com sucesso' });
         } else {
           // Lançamento avulso (entrada ou saída direta)
-          const { tipo, conta_interna_id, valor, data_movimento, classe_financeira_id, descricao } = req.body;
+          const { tipo, conta_interna_id, valor, data_movimento, classe_financeira_id, descricao } =
+            req.body;
           const isEntrada = tipo === 'entrada';
           const valorNum = Math.abs(Number(valor));
-          
+
           if (!conta_interna_id) throw new Error('Conta interna é obrigatória');
           if (valorNum <= 0) throw new Error('Valor deve ser maior que zero');
 
@@ -800,7 +885,9 @@ async function handleTesouraria(req: any, res: any, tenantId: string, _id?: stri
           }
 
           if (await checkPeriodoFechado(tenantId, data_movimento || new Date())) {
-            throw new Error('Não é possível realizar movimentações em um período financeiro fechado.');
+            throw new Error(
+              'Não é possível realizar movimentações em um período financeiro fechado.',
+            );
           }
 
           await tx`
@@ -814,10 +901,12 @@ async function handleTesouraria(req: any, res: any, tenantId: string, _id?: stri
                ${data_movimento ? new Date(data_movimento) : new Date()}, 
                ${classe_financeira_id || null}, 
                ${descricao || ''}, ${tenantId})`;
-          
+
           const ajuste = isEntrada ? valorNum : -valorNum;
           await tx`UPDATE contas_internas SET saldo_atual = saldo_atual + ${ajuste} WHERE id = ${conta_interna_id} AND tenant_id = ${tenantId}`;
-          return res.status(201).json({ success: true, message: 'Lançamento realizado com sucesso' });
+          return res
+            .status(201)
+            .json({ success: true, message: 'Lançamento realizado com sucesso' });
         }
       });
     } catch (err: any) {
@@ -830,14 +919,16 @@ async function handleTesouraria(req: any, res: any, tenantId: string, _id?: stri
 async function handleFluxoCaixa(req: any, res: any, tenantId: string) {
   if (req.method === 'GET') {
     const { granularity = 'daily', regime = 'caixa', periods } = req.query;
-    const numPeriods = parseInt(periods || (granularity === 'daily' ? '30' : granularity === 'weekly' ? '12' : '12'));
+    const numPeriods = parseInt(
+      periods || (granularity === 'daily' ? '30' : granularity === 'weekly' ? '12' : '12'),
+    );
 
     // Saldo atual de todas as contas
-    const saldos = await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
+    const saldos =
+      await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
     const saldoAtual = Number(saldos[0]?.total || 0);
 
     // Campo de data baseado no regime
-
 
     // Receitas e despesas detalhadas por data (regime de caixa: usa data_vencimento como proxy se data_pagamento null)
     const receitasRaw = await sql`
@@ -880,23 +971,32 @@ async function handleFluxoCaixa(req: any, res: any, tenantId: string) {
         fim = new Date(inicio);
         fim.setDate(fim.getDate() + 6);
         label = `${inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} - ${fim.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
-      } else { // monthly
+      } else {
+        // monthly
         inicio = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
         fim = new Date(hoje.getFullYear(), hoje.getMonth() + i + 1, 0);
-        label = inicio.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).toUpperCase();
+        label = inicio
+          .toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+          .toUpperCase();
       }
 
       const inicioStr = inicio.toISOString().split('T')[0];
       const fimStr = fim.toISOString().split('T')[0];
 
       const rec = receitasRaw.filter((r: any) => {
-        const d = r.data_ref instanceof Date ? r.data_ref.toISOString().split('T')[0] : String(r.data_ref).split('T')[0];
+        const d =
+          r.data_ref instanceof Date
+            ? r.data_ref.toISOString().split('T')[0]
+            : String(r.data_ref).split('T')[0];
         // O primeiro período engloba tudo o que está para trás (vencidos)
         if (i === 0) return d <= fimStr;
         return d >= inicioStr && d <= fimStr;
       });
       const pag = despesasRaw.filter((r: any) => {
-        const d = r.data_ref instanceof Date ? r.data_ref.toISOString().split('T')[0] : String(r.data_ref).split('T')[0];
+        const d =
+          r.data_ref instanceof Date
+            ? r.data_ref.toISOString().split('T')[0]
+            : String(r.data_ref).split('T')[0];
         if (i === 0) return d <= fimStr;
         return d >= inicioStr && d <= fimStr;
       });
@@ -919,9 +1019,9 @@ async function handleFluxoCaixa(req: any, res: any, tenantId: string) {
       });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      data: { saldo_atual: saldoAtual, periodos, granularity, regime }
+    return res.status(200).json({
+      success: true,
+      data: { saldo_atual: saldoAtual, periodos, granularity, regime },
     });
   }
   return res.status(405).end();
@@ -932,7 +1032,9 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
 
   if (type === 'dre') {
     const { data_inicio, data_fim, regime = 'caixa' } = req.query;
-    const startDate = data_inicio ? new Date(data_inicio as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const startDate = data_inicio
+      ? new Date(data_inicio as string)
+      : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const endDate = data_fim ? new Date(data_fim as string) : new Date();
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
@@ -940,9 +1042,9 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     const start = startDate.toISOString().split('T')[0];
     const end = endDate.toISOString().split('T')[0];
     const isCaixa = regime === 'caixa';
-    
+
     let receitas, despesas;
-    
+
     // Simpler approach - use parameterized queries with tag
     if (isCaixa) {
       receitas = await sql`
@@ -988,17 +1090,30 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     const totalReceitas = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
 
     // Categorizar despesas por código de classe (mais flexível)
-    const custosDiretos = despesas.filter((d: any) => d.codigo?.startsWith('2.1') || d.codigo?.startsWith('2.2') || d.codigo?.startsWith('2.4'));
-    const despesasOp = despesas.filter((d: any) => d.codigo?.startsWith('2.3') || d.codigo?.startsWith('2.5'));
-    const despesasAdmin = despesas.filter((d: any) => d.codigo?.startsWith('2.6') || d.codigo === '9.9');
+    const custosDiretos = despesas.filter(
+      (d: any) =>
+        d.codigo?.startsWith('2.1') || d.codigo?.startsWith('2.2') || d.codigo?.startsWith('2.4'),
+    );
+    const despesasOp = despesas.filter(
+      (d: any) => d.codigo?.startsWith('2.3') || d.codigo?.startsWith('2.5'),
+    );
+    const despesasAdmin = despesas.filter(
+      (d: any) => d.codigo?.startsWith('2.6') || d.codigo === '9.9',
+    );
     const despesasFinanceiras = despesas.filter((d: any) => d.codigo?.startsWith('1.3.2'));
     const receitasFinanceiras = receitas.filter((r: any) => r.codigo?.startsWith('1.3.2'));
 
     const totalCustosDiretos = custosDiretos.reduce((s: number, r: any) => s + Number(r.valor), 0);
     const totalDespesasOp = despesasOp.reduce((s: number, r: any) => s + Number(r.valor), 0);
     const totalDespesasAdmin = despesasAdmin.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalRecFinanceiras = receitasFinanceiras.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalDespFinanceiras = despesasFinanceiras.reduce((s: number, r: any) => s + Number(r.valor), 0);
+    const totalRecFinanceiras = receitasFinanceiras.reduce(
+      (s: number, r: any) => s + Number(r.valor),
+      0,
+    );
+    const totalDespFinanceiras = despesasFinanceiras.reduce(
+      (s: number, r: any) => s + Number(r.valor),
+      0,
+    );
 
     const receitaBruta = totalReceitas;
     const receitaLiquida = receitaBruta; // sem deduções neste momento
@@ -1006,8 +1121,8 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     const ebitda = lucroBruto - totalDespesasOp - totalDespesasAdmin;
     const lucroLiquido = ebitda + totalRecFinanceiras - totalDespFinanceiras;
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       data: {
         periodo: { inicio: startDate, fim: endDate, regime },
         receita_bruta: receitaBruta,
@@ -1022,31 +1137,38 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
           receitas: receitas.map((r: any) => ({ ...r, valor: Number(r.valor) })),
           custos_diretos: custosDiretos.map((r: any) => ({ ...r, valor: Number(r.valor) })),
           despesas_operacionais: despesasOp.map((r: any) => ({ ...r, valor: Number(r.valor) })),
-          despesas_administrativas: despesasAdmin.map((r: any) => ({ ...r, valor: Number(r.valor) })),
+          despesas_administrativas: despesasAdmin.map((r: any) => ({
+            ...r,
+            valor: Number(r.valor),
+          })),
           resultado_financeiro: {
             receitas: totalRecFinanceiras,
             despesas: totalDespFinanceiras,
-            saldo: totalRecFinanceiras - totalDespFinanceiras
-          }
-        }
-      }
+            saldo: totalRecFinanceiras - totalDespFinanceiras,
+          },
+        },
+      },
     });
   }
 
   if (type === 'aging') {
     const isPagar = req.query.modo === 'pagar';
     const isHistory = req.query.historico === 'true';
-    
+
     let details: any[] = [];
-    
+
     if (!isPagar && !isHistory) {
-      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento ASC`;
+      details =
+        await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status NOT IN ('pago', 'cancelado') AND tr.deletado = false AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento ASC`;
     } else if (!isPagar && isHistory) {
-      details = await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento DESC LIMIT 50`;
+      details =
+        await sql`SELECT tr.id, tr.numero_titulo, tr.cliente_id, tr.projeto_id, tr.quotation_id, tr.valor_original, tr.valor_liquido, tr.valor_aberto, tr.data_emissao, tr.data_vencimento, tr.data_competencia, tr.data_pagamento, tr.classe_financeira_id, tr.condicao_pagamento_id, tr.forma_recebimento_id, tr.status, tr.parcela, tr.total_parcelas, tr.observacoes, tr.deletado, tr.created_at, tr.updated_at, COALESCE(c.nome, 'N/A') as entidade_nome, c.email as entidade_email, c.telefone as entidade_telefone FROM titulos_receber tr LEFT JOIN clients c ON c.id::text = tr.cliente_id::text WHERE tr.status = 'pago' AND tr.deletado = false AND tr.data_vencimento < CURRENT_DATE AND tr.tenant_id = ${tenantId} ORDER BY tr.data_vencimento DESC LIMIT 50`;
     } else if (isPagar && !isHistory) {
-      details = await sql`SELECT tp.id, tp.numero_titulo, tp.fornecedor_id, tp.pedido_compra_id, tp.valor_original, tp.valor_liquido, tp.valor_aberto, tp.data_emissao, tp.data_vencimento, tp.data_competencia, tp.data_pagamento, tp.classe_financeira_id, tp.condicao_pagamento_id, tp.forma_pagamento_id, tp.conta_bancaria_id, tp.status, tp.parcela, tp.total_parcelas, tp.observacoes, tp.deletado, tp.created_at, tp.updated_at, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false AND tp.tenant_id = ${tenantId} ORDER BY tp.data_vencimento ASC`;
+      details =
+        await sql`SELECT tp.id, tp.numero_titulo, tp.fornecedor_id, tp.pedido_compra_id, tp.valor_original, tp.valor_liquido, tp.valor_aberto, tp.data_emissao, tp.data_vencimento, tp.data_competencia, tp.data_pagamento, tp.classe_financeira_id, tp.condicao_pagamento_id, tp.forma_pagamento_id, tp.conta_bancaria_id, tp.status, tp.parcela, tp.total_parcelas, tp.observacoes, tp.deletado, tp.created_at, tp.updated_at, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status NOT IN ('pago', 'cancelado') AND tp.deletado = false AND tp.tenant_id = ${tenantId} ORDER BY tp.data_vencimento ASC`;
     } else {
-      details = await sql`SELECT tp.id, tp.numero_titulo, tp.fornecedor_id, tp.pedido_compra_id, tp.valor_original, tp.valor_liquido, tp.valor_aberto, tp.data_emissao, tp.data_vencimento, tp.data_competencia, tp.data_pagamento, tp.classe_financeira_id, tp.condicao_pagamento_id, tp.forma_pagamento_id, tp.conta_bancaria_id, tp.status, tp.parcela, tp.total_parcelas, tp.observacoes, tp.deletado, tp.created_at, tp.updated_at, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status = 'pago' AND tp.deletado = false AND tp.data_vencimento < CURRENT_DATE AND tp.tenant_id = ${tenantId} ORDER BY tp.data_vencimento DESC LIMIT 50`;
+      details =
+        await sql`SELECT tp.id, tp.numero_titulo, tp.fornecedor_id, tp.pedido_compra_id, tp.valor_original, tp.valor_liquido, tp.valor_aberto, tp.data_emissao, tp.data_vencimento, tp.data_competencia, tp.data_pagamento, tp.classe_financeira_id, tp.condicao_pagamento_id, tp.forma_pagamento_id, tp.conta_bancaria_id, tp.status, tp.parcela, tp.total_parcelas, tp.observacoes, tp.deletado, tp.created_at, tp.updated_at, COALESCE(f.nome, 'N/A') as entidade_nome, f.email as entidade_email, f.telefone as entidade_telefone FROM titulos_pagar tp LEFT JOIN fornecedores f ON f.id::text = tp.fornecedor_id::text WHERE tp.status = 'pago' AND tp.deletado = false AND tp.data_vencimento < CURRENT_DATE AND tp.tenant_id = ${tenantId} ORDER BY tp.data_vencimento DESC LIMIT 50`;
     }
 
     const summary = [
@@ -1058,7 +1180,9 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     ];
 
     (details || []).forEach((t: any) => {
-      const dias = Math.floor((new Date().getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
+      const dias = Math.floor(
+        (new Date().getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24),
+      );
       const idx = dias <= 0 ? 0 : dias <= 30 ? 1 : dias <= 60 ? 2 : dias <= 90 ? 3 : 4;
       summary[idx].total += Number(t.valor_aberto || 0);
       summary[idx].qtd_titulos += 1;
@@ -1069,7 +1193,8 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
 
   if (type === 'projetado') {
     const days = parseInt(req.query?.days || '30');
-    const saldoInicial = await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
+    const saldoInicial =
+      await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
     const inicial = Number(saldoInicial[0]?.total || 0);
 
     const recs = await sql`
@@ -1090,22 +1215,26 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     const projecao = [];
     let saldoAcumulado = inicial;
     const hoje = new Date();
-    
+
     for (let i = 0; i < days; i++) {
       const d = new Date(hoje);
       d.setDate(d.getDate() + i);
       const dStr = d.toISOString().split('T')[0];
 
-      const r = Number(recs.find((r: any) => r.data.toISOString().split('T')[0] === dStr)?.valor || 0);
-      const p = Number(pags.find((p: any) => p.data.toISOString().split('T')[0] === dStr)?.valor || 0);
-      
-      saldoAcumulado += (r - p);
-      
+      const r = Number(
+        recs.find((r: any) => r.data.toISOString().split('T')[0] === dStr)?.valor || 0,
+      );
+      const p = Number(
+        pags.find((p: any) => p.data.toISOString().split('T')[0] === dStr)?.valor || 0,
+      );
+
+      saldoAcumulado += r - p;
+
       projecao.push({
         data: dStr,
         recebimentos: r,
         pagamentos: p,
-        saldo: saldoAcumulado
+        saldo: saldoAcumulado,
       });
     }
 
@@ -1113,13 +1242,17 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
   }
 
   if (type === 'dashboard') {
-    const saldos = await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
-    const rec30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days' AND tenant_id = ${tenantId}`;
-    const pag30 = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days' AND tenant_id = ${tenantId}`;
-    
+    const saldos =
+      await sql`SELECT SUM(saldo_atual::numeric) as total FROM contas_internas WHERE deletado = false AND tenant_id = ${tenantId}`;
+    const rec30 =
+      await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days' AND tenant_id = ${tenantId}`;
+    const pag30 =
+      await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status != 'pago' AND deletado = false AND data_vencimento <= NOW() + INTERVAL '30 days' AND tenant_id = ${tenantId}`;
+
     // Inadimplência (Vencidos há mais de 5 dias)
-    const vencidosRec = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento < (NOW() - INTERVAL '5 days') AND tenant_id = ${tenantId}`;
-    
+    const vencidosRec =
+      await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status != 'pago' AND deletado = false AND data_vencimento < (NOW() - INTERVAL '5 days') AND tenant_id = ${tenantId}`;
+
     // Histórico de Faturamento (3 meses)
     const faturamentoMes = await sql`
       SELECT 
@@ -1169,8 +1302,10 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
     `;
 
     // Capital de giro = A Receber + Estoque - A Pagar
-    const totalReceber = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status IN ('aberto', 'pago_parcial') AND deletado = false AND tenant_id = ${tenantId}`;
-    const totalPagar = await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status IN ('aberto', 'pago_parcial') AND deletado = false AND tenant_id = ${tenantId}`;
+    const totalReceber =
+      await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_receber WHERE status IN ('aberto', 'pago_parcial') AND deletado = false AND tenant_id = ${tenantId}`;
+    const totalPagar =
+      await sql`SELECT SUM(valor_aberto::numeric) as total FROM titulos_pagar WHERE status IN ('aberto', 'pago_parcial') AND deletado = false AND tenant_id = ${tenantId}`;
     const capitalGiro = Number(totalReceber[0]?.total || 0) - Number(totalPagar[0]?.total || 0);
 
     // Vencimentos próximos (7 dias)
@@ -1194,8 +1329,8 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
       LIMIT 10
     `;
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       data: {
         saldo_total: Number(saldos[0]?.total || 0),
         a_receber_30d: Number(rec30[0]?.total || 0),
@@ -1207,11 +1342,16 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
         top5_inadimplentes: top5Inadimplentes.map((r: any) => ({
           ...r,
           total_vencido: Number(r.total_vencido),
-          dias_atraso: Math.floor((Date.now() - new Date(r.vencimento_mais_antigo).getTime()) / 86400000)
+          dias_atraso: Math.floor(
+            (Date.now() - new Date(r.vencimento_mais_antigo).getTime()) / 86400000,
+          ),
         })),
         contas: contasDetalhes.map((c: any) => ({ ...c, saldo_atual: Number(c.saldo_atual) })),
-        proximos_vencimentos: proximosVencimentos.map((v: any) => ({ ...v, valor: Number(v.valor) })),
-      }
+        proximos_vencimentos: proximosVencimentos.map((v: any) => ({
+          ...v,
+          valor: Number(v.valor),
+        })),
+      },
     });
   }
 
@@ -1233,7 +1373,9 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
 
   if (type === 'rentabilidade') {
     const { data_inicio, data_fim } = req.query;
-    const start = data_inicio ? new Date(data_inicio as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const start = data_inicio
+      ? new Date(data_inicio as string)
+      : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const end = data_fim ? new Date(data_fim as string) : new Date();
 
     const projetos = await sql`
@@ -1252,7 +1394,12 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
       LIMIT 20
     `;
 
-    return res.status(200).json({ success: true, data: projetos.map((p: any) => ({ ...p, receita_total: Number(p.receita_total || 0) })) });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        data: projetos.map((p: any) => ({ ...p, receita_total: Number(p.receita_total || 0) })),
+      });
   }
 
   if (type === 'capital_giro') {
@@ -1262,11 +1409,15 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
       const d = new Date();
       const inicio = new Date(d.getFullYear(), d.getMonth() - i, 1);
       const fim = new Date(d.getFullYear(), d.getMonth() - i + 1, 0);
-      const label = inicio.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).toUpperCase();
-      
-      const rec = await sql`SELECT COALESCE(SUM(valor_aberto::numeric), 0) as total FROM titulos_receber WHERE status IN ('aberto', 'pago_parcial') AND data_vencimento <= ${fim} AND deletado = false AND tenant_id = ${tenantId}`;
-      const pag = await sql`SELECT COALESCE(SUM(valor_aberto::numeric), 0) as total FROM titulos_pagar WHERE status IN ('aberto', 'pago_parcial') AND data_vencimento <= ${fim} AND deletado = false AND tenant_id = ${tenantId}`;
-      
+      const label = inicio
+        .toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+        .toUpperCase();
+
+      const rec =
+        await sql`SELECT COALESCE(SUM(valor_aberto::numeric), 0) as total FROM titulos_receber WHERE status IN ('aberto', 'pago_parcial') AND data_vencimento <= ${fim} AND deletado = false AND tenant_id = ${tenantId}`;
+      const pag =
+        await sql`SELECT COALESCE(SUM(valor_aberto::numeric), 0) as total FROM titulos_pagar WHERE status IN ('aberto', 'pago_parcial') AND data_vencimento <= ${fim} AND deletado = false AND tenant_id = ${tenantId}`;
+
       evolucao.push({ label, capital: Number(rec[0].total) - Number(pag[0].total) });
     }
     return res.status(200).json({ success: true, data: evolucao });
@@ -1275,10 +1426,10 @@ async function handleRelatorios(req: any, res: any, tenantId: string) {
   return res.status(404).json({ success: false, error: 'Relatório não encontrado' });
 }
 
-
 async function handleFechamentos(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, mes, ano, status, observacoes, data_fechamento, created_at, updated_at FROM fechamentos_financeiros WHERE tenant_id = ${tenantId} ORDER BY ano DESC, mes DESC, data_fechamento DESC NULLS LAST`;
+    const result =
+      await sql`SELECT id, mes, ano, status, observacoes, data_fechamento, created_at, updated_at FROM fechamentos_financeiros WHERE tenant_id = ${tenantId} ORDER BY ano DESC, mes DESC, data_fechamento DESC NULLS LAST`;
     return res.status(200).json({ success: true, data: result });
   }
 
@@ -1292,8 +1443,12 @@ async function handleFechamentos(req: any, res: any, tenantId: string, id?: stri
     }
 
     const existing = f.id
-      ? (await sql`SELECT id, mes, ano, status, observacoes, data_fechamento FROM fechamentos_financeiros WHERE id = ${f.id} AND tenant_id = ${tenantId}`)[0]
-      : (await sql`SELECT id, mes, ano, status, observacoes, data_fechamento FROM fechamentos_financeiros WHERE mes = ${mes} AND ano = ${ano} AND tenant_id = ${tenantId} LIMIT 1`)[0];
+      ? (
+          await sql`SELECT id, mes, ano, status, observacoes, data_fechamento FROM fechamentos_financeiros WHERE id = ${f.id} AND tenant_id = ${tenantId}`
+        )[0]
+      : (
+          await sql`SELECT id, mes, ano, status, observacoes, data_fechamento FROM fechamentos_financeiros WHERE mes = ${mes} AND ano = ${ano} AND tenant_id = ${tenantId} LIMIT 1`
+        )[0];
 
     const dataFechamento = f.status === 'fechado' ? new Date() : existing?.data_fechamento || null;
 
@@ -1347,23 +1502,36 @@ async function handleConferencia(req: any, res: any, tenantId: string) {
     }
 
     if (numeroTitulo) {
-      const tituloReceber = (await tx`SELECT id FROM titulos_receber WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId} LIMIT 1`)[0];
+      const tituloReceber = (
+        await tx`SELECT id FROM titulos_receber WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId} LIMIT 1`
+      )[0];
       if (tituloReceber) {
         await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_receber_id = ${tituloReceber.id} AND tenant_id = ${tenantId}`;
-        return res.status(200).json({ success: true, data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' } });
+        return res
+          .status(200)
+          .json({
+            success: true,
+            data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
+          });
       }
 
-      const tituloPagar = (await tx`SELECT id FROM titulos_pagar WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId} LIMIT 1`)[0];
+      const tituloPagar = (
+        await tx`SELECT id FROM titulos_pagar WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId} LIMIT 1`
+      )[0];
       if (tituloPagar) {
         await tx`UPDATE baixas SET conferido = ${conferido}, conferido_em = ${conferidoEm} WHERE titulo_pagar_id = ${tituloPagar.id} AND tenant_id = ${tenantId}`;
-        return res.status(200).json({ success: true, data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' } });
+        return res
+          .status(200)
+          .json({
+            success: true,
+            data: { numero_titulo: numeroTitulo, conferido, origem: 'baixa' },
+          });
       }
     }
 
     return res.status(400).json({ success: false, error: 'Dados insuficientes para conferência' });
   });
 }
-
 
 async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?: string) {
   // ── GERAR TÍTULOS DO MÊS ──
@@ -1373,70 +1541,120 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
     const anoInt = parseInt(ano || String(new Date().getFullYear()));
 
     return await sql.begin(async (tx) => {
-      const contas = await tx`SELECT id, tipo, dia_vencimento, descricao, valor, cliente_id, fornecedor_id, classe_financeira_id, forma_pagamento_id, conta_bancaria_id FROM contas_recorrentes WHERE ativa = true AND deletado = false AND tenant_id = ${tenantId}`;
-      const titulosGerados = [];
+      const contas =
+        await tx`SELECT id, tipo, dia_vencimento, descricao, valor, cliente_id, fornecedor_id, classe_financeira_id, forma_pagamento_id, conta_bancaria_id FROM contas_recorrentes WHERE ativa = true AND deletado = false AND tenant_id = ${tenantId}`;
+
+      // Build entries for each account in memory
+      const receberEntries: Array<{
+        conta: any;
+        numeroTitulo: string;
+        dataVencimento: Date;
+        descricao: string;
+      }> = [];
+      const pagarEntries: Array<{
+        conta: any;
+        numeroTitulo: string;
+        dataVencimento: Date;
+        descricao: string;
+      }> = [];
 
       for (const conta of contas) {
         const tipo = conta.tipo || 'pagar';
         const prefixo = tipo === 'receber' ? 'REC' : 'PAG';
-        
-        // Usa o ID completo para evitar qualquer chance de colisão e verifica inclusive deletados 
-        // para evitar erro de constraint UNIQUE do Postgres
         const numeroTitulo = `${prefixo}-${conta.id}-${mesInt}/${anoInt}`;
-        
-        const queryJaExiste = tipo === 'receber' 
-          ? tx`SELECT id FROM titulos_receber WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId}`
-          : tx`SELECT id FROM titulos_pagar WHERE numero_titulo = ${numeroTitulo} AND tenant_id = ${tenantId}`;
-        
-        const jaExiste = await queryJaExiste;
-        if (jaExiste.length > 0) continue;
-
         const dataVencimento = new Date(anoInt, mesInt - 1, conta.dia_vencimento);
         const descricaoTitulo = conta.descricao || `Recorrente dia ${conta.dia_vencimento}`;
-
-        let result;
-        if (tipo === 'receber') {
-          result = await tx`
-            INSERT INTO titulos_receber (
-              numero_titulo, cliente_id, valor_original, valor_liquido, valor_aberto,
-              data_emissao, data_vencimento, data_competencia,
-              classe_financeira_id, forma_recebimento_id,
-              status, parcela, total_parcelas, observacoes, tenant_id
-            ) VALUES (
-              ${numeroTitulo}, ${conta.cliente_id || null},
-              ${conta.valor}, ${conta.valor}, ${conta.valor},
-              NOW(), ${dataVencimento}, ${dataVencimento},
-              ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null},
-              'aberto', 1, 1, ${descricaoTitulo}, ${tenantId}
-            ) RETURNING *`;
-        } else {
-          result = await tx`
-            INSERT INTO titulos_pagar (
-              numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
-              data_emissao, data_vencimento, data_competencia,
-              classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
-              status, parcela, total_parcelas, observacoes, tenant_id
-            ) VALUES (
-              ${numeroTitulo}, ${conta.fornecedor_id || null},
-              ${conta.valor}, ${conta.valor}, ${conta.valor},
-              NOW(), ${dataVencimento}, ${dataVencimento},
-              ${conta.classe_financeira_id || null}, ${conta.forma_pagamento_id || null}, ${conta.conta_bancaria_id || null},
-              'aberto', 1, 1, ${descricaoTitulo}, ${tenantId}
-            ) RETURNING *`;
-        }
-        titulosGerados.push(result[0]);
+        const entry = { conta, numeroTitulo, dataVencimento, descricao: descricaoTitulo };
+        if (tipo === 'receber') receberEntries.push(entry);
+        else pagarEntries.push(entry);
       }
 
-      return res.status(201).json({ 
-        success: true, 
-        message: `${titulosGerados.length} título(s) gerado(s)`, 
-        data: titulosGerados 
+      // Batch check existing titles (1 query per table)
+      const existingReceber =
+        receberEntries.length > 0
+          ? await tx`
+            SELECT numero_titulo FROM titulos_receber
+            WHERE numero_titulo IN (${sql.join(
+              receberEntries.map((e) => sql`${e.numeroTitulo}`),
+              sql`, `,
+            )})
+            AND tenant_id = ${tenantId}
+          `
+          : [];
+      const existingPagar =
+        pagarEntries.length > 0
+          ? await tx`
+            SELECT numero_titulo FROM titulos_pagar
+            WHERE numero_titulo IN (${sql.join(
+              pagarEntries.map((e) => sql`${e.numeroTitulo}`),
+              sql`, `,
+            )})
+            AND tenant_id = ${tenantId}
+          `
+          : [];
+
+      const existingSet = new Set([
+        ...existingReceber.map((r: any) => r.numero_titulo),
+        ...existingPagar.map((r: any) => r.numero_titulo),
+      ]);
+
+      const titulosGerados: any[] = [];
+
+      // Batch INSERT receber entries
+      const newReceber = receberEntries.filter((e) => !existingSet.has(e.numeroTitulo));
+      if (newReceber.length > 0) {
+        const receberValues = sql.join(
+          newReceber.map(
+            (e) =>
+              sql`(${e.numeroTitulo}, ${e.conta.cliente_id || null}, ${e.conta.valor}, ${e.conta.valor}, ${e.conta.valor}, NOW(), ${e.dataVencimento}, ${e.dataVencimento}, ${e.conta.classe_financeira_id || null}, ${e.conta.forma_pagamento_id || null}, 'aberto', 1, 1, ${e.descricao}, ${tenantId})`,
+          ),
+          sql`, `,
+        );
+        const result = await tx`
+          INSERT INTO titulos_receber (
+            numero_titulo, cliente_id, valor_original, valor_liquido, valor_aberto,
+            data_emissao, data_vencimento, data_competencia,
+            classe_financeira_id, forma_recebimento_id,
+            status, parcela, total_parcelas, observacoes, tenant_id
+          ) VALUES ${receberValues}
+          RETURNING *
+        `;
+        titulosGerados.push(...result);
+      }
+
+      // Batch INSERT pagar entries
+      const newPagar = pagarEntries.filter((e) => !existingSet.has(e.numeroTitulo));
+      if (newPagar.length > 0) {
+        const pagarValues = sql.join(
+          newPagar.map(
+            (e) =>
+              sql`(${e.numeroTitulo}, ${e.conta.fornecedor_id || null}, ${e.conta.valor}, ${e.conta.valor}, ${e.conta.valor}, NOW(), ${e.dataVencimento}, ${e.dataVencimento}, ${e.conta.classe_financeira_id || null}, ${e.conta.forma_pagamento_id || null}, ${e.conta.conta_bancaria_id || null}, 'aberto', 1, 1, ${e.descricao}, ${tenantId})`,
+          ),
+          sql`, `,
+        );
+        const result = await tx`
+          INSERT INTO titulos_pagar (
+            numero_titulo, fornecedor_id, valor_original, valor_liquido, valor_aberto,
+            data_emissao, data_vencimento, data_competencia,
+            classe_financeira_id, forma_pagamento_id, conta_bancaria_id,
+            status, parcela, total_parcelas, observacoes, tenant_id
+          ) VALUES ${pagarValues}
+          RETURNING *
+        `;
+        titulosGerados.push(...result);
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: `${titulosGerados.length} título(s) gerado(s)`,
+        data: titulosGerados,
       });
     });
   }
 
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, cliente_id, ativa, deletado, created_at, updated_at FROM contas_recorrentes WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY dia_vencimento ASC`;
+    const result =
+      await sql`SELECT id, descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, cliente_id, ativa, deletado, created_at, updated_at FROM contas_recorrentes WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY dia_vencimento ASC`;
     return res.status(200).json({ success: true, data: result });
   }
 
@@ -1481,24 +1699,39 @@ async function handleDiagnostic(req: any, res: any, tenantId: string) {
     steps.push(`   - Sucesso: ${dbTime[0].now}`);
 
     steps.push('2. Verificando estrutura das tabelas críticas...');
-    const tables = ['classes_financeiras', 'contas_internas', 'formas_pagamento', 'condicoes_pagamento', 'titulos_receber', 'titulos_pagar'];
+    const tables = [
+      'classes_financeiras',
+      'contas_internas',
+      'formas_pagamento',
+      'condicoes_pagamento',
+      'titulos_receber',
+      'titulos_pagar',
+    ];
     for (const t of tables) {
-      const cols = await sql`SELECT column_name FROM information_schema.columns WHERE table_name = ${t}`;
+      const cols =
+        await sql`SELECT column_name FROM information_schema.columns WHERE table_name = ${t}`;
       const colNames = cols.map((c: any) => c.column_name);
-      if (!colNames.includes('deletado')) throw new Error(`Coluna "deletado" ausente na tabela ${t}!`);
+      if (!colNames.includes('deletado'))
+        throw new Error(`Coluna "deletado" ausente na tabela ${t}!`);
       steps.push(`   - Tabela ${t}: OK`);
     }
 
     steps.push('3. Verificando integridade de dados...');
-    const totalClasses = (await sql`SELECT COUNT(*) FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}`)[0].count;
+    const totalClasses = (
+      await sql`SELECT COUNT(*) FROM classes_financeiras WHERE deletado = false AND tenant_id = ${tenantId}`
+    )[0].count;
     steps.push(`   - Classes Financeiras ativas: ${totalClasses}`);
-    
+
     if (Number(totalClasses) === 0) {
-       steps.push('   - AVISO: Nenhuma classe financeira encontrada. Recomenda-se inicializar o plano de contas.');
+      steps.push(
+        '   - AVISO: Nenhuma classe financeira encontrada. Recomenda-se inicializar o plano de contas.',
+      );
     }
 
     steps.push('4. Testando motor de cálculo (Simulado)...');
-    const testCond = (await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE deletado = false AND tenant_id = ${tenantId} LIMIT 1`)[0];
+    const testCond = (
+      await sql`SELECT id, nome, parcelas FROM condicoes_pagamento WHERE deletado = false AND tenant_id = ${tenantId} LIMIT 1`
+    )[0];
     if (testCond) {
       const nParcelas = testCond.parcelas;
       steps.push(`   - Cálculo 1000 em ${nParcelas}x: OK`);
@@ -1506,24 +1739,25 @@ async function handleDiagnostic(req: any, res: any, tenantId: string) {
       steps.push('   - AVISO: Nenhuma condição de pagamento cadastrada.');
     }
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       message: 'SISTEMA FINANCEIRO 100% OPERACIONAL',
-      steps 
+      steps,
     });
   } catch (e: any) {
-    return res.status(500).json({ 
-      success: false, 
-      message: 'FALHA NO DIAGNÓSTICO', 
+    return res.status(500).json({
+      success: false,
+      message: 'FALHA NO DIAGNÓSTICO',
       error: e.message,
-      steps 
+      steps,
     });
   }
 }
 
 async function handleCondicoesPagamento(req: any, res: any, tenantId: string, id?: string) {
   if (req.method === 'GET') {
-    const result = await sql`SELECT id, nome, descricao, parcelas, ativo, entrada_percentual, juros_percentual, deletado, created_at, updated_at FROM condicoes_pagamento WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY nome ASC`;
+    const result =
+      await sql`SELECT id, nome, descricao, parcelas, ativo, entrada_percentual, juros_percentual, deletado, created_at, updated_at FROM condicoes_pagamento WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY nome ASC`;
     return res.status(200).json({ success: true, data: result });
   }
   if (req.method === 'POST') {
@@ -1583,7 +1817,8 @@ export async function garantirSeedsFinanceiros(tenantId: string) {
     `;
 
     // 2. Contas Internas
-    const totalContas = await sql`SELECT count(*) as count FROM contas_internas WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
+    const totalContas =
+      await sql`SELECT count(*) as count FROM contas_internas WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
     if (totalContas.length && parseInt(totalContas[0].count, 10) === 0) {
       await sql`
         INSERT INTO contas_internas (nome, tipo, saldo_inicial, saldo_atual, ativa, tenant_id)
@@ -1592,7 +1827,8 @@ export async function garantirSeedsFinanceiros(tenantId: string) {
     }
 
     // 3. Formas de Pagamento
-    const totalFormas = await sql`SELECT count(*) as count FROM formas_pagamento WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
+    const totalFormas =
+      await sql`SELECT count(*) as count FROM formas_pagamento WHERE tenant_id = ${tenantId}::uuid AND deletado = false`;
     if (totalFormas.length && parseInt(totalFormas[0].count, 10) === 0) {
       await sql`
         INSERT INTO formas_pagamento (nome, tipo, taxa_percentual, prazo_compensacao_dias, ativa, tenant_id)

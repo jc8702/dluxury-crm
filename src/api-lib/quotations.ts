@@ -297,27 +297,20 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
     if (itemUpdates.length > 0) {
       logger.debug(`💾 Atualizando ${itemUpdates.length} itens em batch...`);
 
-      // Drizzle não suporta batch update nativo, fazemos em chunks
-      const chunks = [];
-      for (let i = 0; i < itemUpdates.length; i += CONFIG.MAX_BATCH_SIZE) {
-        chunks.push(itemUpdates.slice(i, i + CONFIG.MAX_BATCH_SIZE));
-      }
-
-      for (const chunk of chunks) {
-        await Promise.all(
-          chunk.map((upd) =>
-            tx
-              .update(quotationItems)
-              .set({
-                custoUnitarioCalculado: upd.custoCalc,
-                precoVendaUnitario: upd.precoVenda,
-                margemLucro: upd.margem,
-                updatedAt: new Date(),
-              })
-              .where(eq(quotationItems.id, upd.id)),
+      await tx.execute(dsql`
+        UPDATE quotation_items AS qi
+        SET custo_unitario_calculado = v.custo_calc::numeric,
+            preco_venda_unitario = v.preco_venda::numeric,
+            margem_lucro = v.margem::numeric,
+            updated_at = NOW()
+        FROM (VALUES ${dsql.join(
+          itemUpdates.map(
+            (upd) => dsql`(${upd.id}::uuid, ${upd.custoCalc}, ${upd.precoVenda}, ${upd.margem})`,
           ),
-        );
-      }
+          dsql`, `,
+        )}) AS v(id, custo_calc, preco_venda, margem)
+        WHERE qi.id = v.id
+      `);
     }
 
     // 4. Aplicar desconto e atualizar cabeçalho
@@ -461,12 +454,10 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
   const userId = user?.id || 'anonymous';
   if (!checkRateLimit(userId)) {
     logger.warn(`🚫 Rate limit excedido para o usuário: ${userId}`);
-    return res
-      .status(429)
-      .json({
-        success: false,
-        error: 'Limite de requisições excedido. Tente novamente mais tarde.',
-      });
+    return res.status(429).json({
+      success: false,
+      error: 'Limite de requisições excedido. Tente novamente mais tarde.',
+    });
   }
 
   const { method } = req;
@@ -1424,30 +1415,31 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 }
 
                 if (exists.clienteId) {
-                  for (let i = 1; i <= totalParcelas; i++) {
+                  const parcelasRows = Array.from({ length: totalParcelas }, (_, i) => {
+                    const idx = i + 1;
                     const vencimento = new Date();
-                    vencimento.setMonth(vencimento.getMonth() + (i - 1));
-                    const numeroTitulo = `REC-PRO-${exists.numeroOrcamento}-${i}`;
+                    vencimento.setMonth(vencimento.getMonth() + i);
+                    const numeroTitulo = `REC-PRO-${exists.numeroOrcamento}-${idx}`;
+                    return { idx, vencimento, numeroTitulo };
+                  });
 
-                    await tx.execute(dsql`
-                                            INSERT INTO titulos_receber (
-                                                numero_titulo, cliente_id, quotation_id,
-                                                valor_original, valor_liquido, valor_aberto,
-                                                data_emissao, data_vencimento, data_competencia,
-                                                classe_financeira_id, forma_recebimento_id,
-                                                status, parcela, total_parcelas, tenant_id
-                                            ) VALUES (
-                                                ${numeroTitulo}, 
-                                                ${exists.clienteId}::uuid, 
-                                                ${id}::uuid,
-                                                ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)},
-                                                ${dataEmissao}, ${vencimento}, ${dataEmissao},
-                                                ${defaultClassId}::uuid, ${defaultFormaId}::uuid,
-                                                'aberto', ${i}, ${totalParcelas}, ${tenantId}::uuid
-                                            )
-                                            ON CONFLICT (numero_titulo) DO NOTHING
-                                        `);
-                  }
+                  const values = sql.join(
+                    parcelasRows.map(
+                      (r) =>
+                        sql`(${r.numeroTitulo}, ${exists.clienteId}::uuid, ${id}::uuid, ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)}, ${valorParcela.toFixed(2)}, ${dataEmissao}, ${r.vencimento}, ${dataEmissao}, ${defaultClassId}::uuid, ${defaultFormaId}::uuid, 'aberto', ${r.idx}, ${totalParcelas}, ${tenantId}::uuid)`,
+                    ),
+                    sql`, `,
+                  );
+                  await tx.execute(dsql`
+                    INSERT INTO titulos_receber (
+                      numero_titulo, cliente_id, quotation_id,
+                      valor_original, valor_liquido, valor_aberto,
+                      data_emissao, data_vencimento, data_competencia,
+                      classe_financeira_id, forma_recebimento_id,
+                      status, parcela, total_parcelas, tenant_id
+                    ) VALUES ${values}
+                    ON CONFLICT (numero_titulo) DO NOTHING
+                  `);
                 }
 
                 // 3. FASE 2: Gerar PCP (Ordens de Produção)
@@ -1462,57 +1454,67 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                   },
                 });
 
+                // Collect all part SKUs per item for batch lookup
+                const allParts: Array<{
+                  sku: string;
+                  quantidade: number;
+                  custoUnitario: number;
+                  opId: string;
+                }> = [];
                 for (const item of itens) {
                   if (item.skuEngenhariaId) {
                     const opId = `OP-${exists.numeroOrcamento}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-                    // Mapear peças explodidas da BOM
                     const pecas = item.bom.map((l: any) => ({
                       sku: l.componente?.codigo || l.skuComponenteId,
                       nome: l.componente?.nome || 'Insumo',
                       quantidade: l.quantidadeAjustada || l.quantidadeCalculada,
                       custoUnitario: l.custoUnitario,
                     }));
-
-                    // Inserir registro na produção foi movido para ordens_prod abaixo
-                    // 4. FASE 3: Reservar Estoque (Comercial)
                     for (const peca of pecas) {
                       if (peca.sku) {
-                        // Buscar o material correspondente no estoque comercial
-                        const matResult = await tx.execute(dsql`
-                                                    SELECT id, estoque_atual, preco_custo::numeric as preco_custo 
-                                                    FROM materiais 
-                                                    WHERE LOWER(sku) = LOWER(${peca.sku}) AND tenant_id = ${tenantId}::uuid 
-                                                    LIMIT 1
-                                                `);
-
-                        if (matResult.rows.length > 0) {
-                          const mat = matResult.rows[0] as any;
-                          const qtd = Number(peca.quantidade);
-                          const custo = Number(peca.custoUnitario || mat.preco_custo || 0);
-
-                          await tx.execute(dsql`
-                                                        INSERT INTO movimentacoes_estoque (
-                                                            material_id, tipo, quantidade, motivo, quotation_id,
-                                                            preco_unitario, valor_total, estoque_antes, estoque_depois,
-                                                            created_by, tenant_id
-                                                        ) VALUES (
-                                                            ${mat.id},
-                                                            'saida_reserva',
-                                                            ${qtd},
-                                                            ${`Reserva automática OP ${opId} - Orçamento ${exists.numeroOrcamento}`},
-                                                            ${id}::uuid,
-                                                            ${custo},
-                                                            ${qtd * custo},
-                                                            ${mat.estoque_atual || 0},
-                                                            ${mat.estoque_atual || 0},
-                                                            'SISTEMA',
-                                                            ${tenantId}::uuid
-                                                        )
-                                                    `);
-                        }
+                        allParts.push({
+                          sku: peca.sku.toLowerCase(),
+                          quantidade: Number(peca.quantidade),
+                          custoUnitario: Number(peca.custoUnitario || 0),
+                          opId,
+                        });
                       }
                     }
+                  }
+                }
+
+                if (allParts.length > 0) {
+                  // Batch lookup all materials by SKU
+                  const uniqueSkus = [...new Set(allParts.map((p) => p.sku))];
+                  const skuChunks = uniqueSkus.map((s) => dsql`LOWER(${s})`);
+                  const skuWhere =
+                    skuChunks.length === 1 ? skuChunks[0] : dsql.join(skuChunks, dsql`, `);
+                  const matRows = await tx.execute(dsql`
+                    SELECT id, LOWER(sku) as sku, estoque_atual, preco_custo::numeric as preco_custo
+                    FROM materiais
+                    WHERE LOWER(sku) IN (${dsql.join(skuChunks, dsql`, `)}) AND tenant_id = ${tenantId}::uuid
+                  `);
+                  const matBySku = new Map<string, any>();
+                  for (const row of matRows.rows) {
+                    matBySku.set((row as any).sku, row);
+                  }
+
+                  // Batch INSERT all movimentacoes
+                  const movChunks = allParts
+                    .filter((p) => matBySku.has(p.sku))
+                    .map((p) => {
+                      const mat = matBySku.get(p.sku)!;
+                      const custo = p.custoUnitario || Number(mat.preco_custo || 0);
+                      return dsql`(${mat.id}::uuid, 'saida_reserva', ${p.quantidade}, ${`Reserva automática OP ${p.opId} - Orçamento ${exists.numeroOrcamento}`}, ${id}::uuid, ${custo}, ${p.quantidade * custo}, ${mat.estoque_atual || 0}, ${mat.estoque_atual || 0}, 'SISTEMA', ${tenantId}::uuid)`;
+                    });
+                  if (movChunks.length > 0) {
+                    await tx.execute(dsql`
+                      INSERT INTO movimentacoes_estoque (
+                        material_id, tipo, quantidade, motivo, quotation_id,
+                        preco_unitario, valor_total, estoque_antes, estoque_depois,
+                        created_by, tenant_id
+                      ) VALUES ${dsql.join(movChunks, dsql`, `)}
+                    `);
                   }
                 }
 
@@ -1551,45 +1553,36 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                     { numero: 5, nome: 'ENTREGA' },
                   ];
 
-                  for (const et of etapasPadrao) {
-                    await tx.execute(dsql`
-                                            INSERT INTO etapas_prod_kanban (
-                                                tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display
-                                            ) VALUES (
-                                                ${tenantId}::uuid,
-                                                ${newOpId}::uuid,
-                                                ${et.numero},
-                                                ${et.nome},
-                                                'a_fazer',
-                                                ${et.numero}
-                                            )
-                                        `);
-                  }
+                  await tx.execute(dsql`
+                    INSERT INTO etapas_prod_kanban (
+                      tenant_id, operacao_prod_id, etapa_numero, etapa_nome, status_kanban, ordem_display
+                    ) VALUES ${dsql.join(
+                      etapasPadrao.map(
+                        (et: any) =>
+                          dsql`(${tenantId}::uuid, ${newOpId}::uuid, ${et.numero}, ${et.nome}, 'a_fazer', ${et.numero})`,
+                      ),
+                      dsql`, `,
+                    )}
+                  `);
 
-                  // Criar eventos automáticos de calendário para prazos da OP
+                  // Criar eventos automáticos de calendário para prazos da OP (batch)
                   const usuarios = await tx.execute(dsql`
-                                        SELECT id FROM users 
-                                        WHERE tenant_id = ${tenantId}::uuid
-                                    `);
+                    SELECT id FROM users 
+                    WHERE tenant_id = ${tenantId}::uuid
+                  `);
 
-                  for (const u of usuarios.rows) {
-                    const userId = (u as any).id;
+                  if (usuarios.rows.length > 0) {
                     await tx.execute(dsql`
-                                            INSERT INTO eventos_calendario (
-                                                tenant_id, usuario_id, tipo_evento, titulo, descricao, data_evento, operacao_prod_id, cor_categoria, concluido, notificacao_dias_antes
-                                            ) VALUES (
-                                                ${tenantId}::uuid,
-                                                ${userId}::uuid,
-                                                'prazo_entrega',
-                                                ${`Prazo de Entrega OP: ${numeroOp}`},
-                                                ${`Ordem de Produção gerada a partir do Orçamento ${exists.numeroOrcamento}`},
-                                                ${dataPrazo.toISOString().split('T')[0]},
-                                                ${newOpId}::uuid,
-                                                '#DC2626',
-                                                FALSE,
-                                                3
-                                            )
-                                        `);
+                      INSERT INTO eventos_calendario (
+                        tenant_id, usuario_id, tipo_evento, titulo, descricao, data_evento, operacao_prod_id, cor_categoria, concluido, notificacao_dias_antes
+                      ) VALUES ${dsql.join(
+                        usuarios.rows.map(
+                          (u: any) =>
+                            dsql`(${tenantId}::uuid, ${u.id}::uuid, 'prazo_entrega', ${`Prazo de Entrega OP: ${numeroOp}`}, ${`Ordem de Produção gerada a partir do Orçamento ${exists.numeroOrcamento}`}, ${dataPrazo.toISOString().split('T')[0]}, ${newOpId}::uuid, '#DC2626', FALSE, 3)`,
+                        ),
+                        dsql`, `,
+                      )}
+                    `);
                   }
                 }
               });

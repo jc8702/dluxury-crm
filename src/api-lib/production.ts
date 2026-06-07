@@ -24,28 +24,41 @@ const handleProductionCore: TenantHandler = async (req, res) => {
 
   try {
     // Garantia de migração (v6 hotfix)
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(() => {});
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_corte INTEGER DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS tempo_previsto_montagem INTEGER DEFAULT 0`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS data_prevista_entrega TIMESTAMP WITH TIME ZONE`.catch(
+      () => {},
+    );
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'`.catch(
+      () => {},
+    );
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS visita_id TEXT`.catch(() => {});
     await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS projeto_id TEXT`.catch(() => {});
-    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS quotation_id TEXT`.catch(() => {});
-    await sql`UPDATE ordens_producao SET status = 'AGUARDANDO' WHERE status = 'PENDENTE'`.catch(() => {});
+    await sql`ALTER TABLE ordens_producao ADD COLUMN IF NOT EXISTS quotation_id TEXT`.catch(
+      () => {},
+    );
+    await sql`UPDATE ordens_producao SET status = 'AGUARDANDO' WHERE status = 'PENDENTE'`.catch(
+      () => {},
+    );
 
     if (method === 'GET' && (!id || id === 'list')) return await listOPs(res, tenantId);
     if (method === 'GET' && id === 'metrics') return await getProductionMetrics(res, tenantId);
     if (method === 'POST') return await createOP(req, res, tenantId, user);
-    if (method === 'PATCH' && id === 'details') return await updateOPDetails(req, res, tenantId, user);
+    if (method === 'PATCH' && id === 'details')
+      return await updateOPDetails(req, res, tenantId, user);
     if (method === 'PATCH') return await updateOPStatus(req, res, tenantId);
     if (method === 'DELETE') return await deleteOP(req, res, tenantId, user);
-    
+
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
     console.error('PRODUCTION_HANDLER_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
 
 // --- 2. LÓGICA DE NEGÓCIO ---
 
@@ -53,31 +66,40 @@ const handleProductionCore: TenantHandler = async (req, res) => {
  * Sincroniza as previsões de entrega de toda a fila ativa
  */
 async function syncQueueForecasting(tenantId: string) {
-  const allOps = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
+  const allOps =
+    await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
   if (allOps.length === 0) return;
 
   const previstos = calcularPrevisaoEntrega(allOps as any);
 
-  for (const op of previstos) {
-    await sql`
-      UPDATE ordens_producao 
-      SET data_prevista_entrega = ${new Date(op.data_prevista_entrega as number)},
-          tempo_previsto_corte = ${op.tempo_previsto_corte},
-          tempo_previsto_montagem = ${op.tempo_previsto_montagem}
-      WHERE op_id = ${op.op_id} AND tenant_id = ${tenantId}
-    `;
-  }
+  const values = sql.join(
+    previstos.map(
+      (op: any) =>
+        sql`(${op.op_id}, ${new Date(op.data_prevista_entrega as number)}::timestamptz, ${op.tempo_previsto_corte}, ${op.tempo_previsto_montagem})`,
+    ),
+    sql`, `,
+  );
+  await sql`
+    UPDATE ordens_producao AS o
+    SET data_prevista_entrega = v.data_prevista,
+        tempo_previsto_corte = v.tempo_corte,
+        tempo_previsto_montagem = v.tempo_montagem
+    FROM (VALUES ${values}) AS v(op_id, data_prevista, tempo_corte, tempo_montagem)
+    WHERE o.op_id = v.op_id AND o.tenant_id = ${tenantId}
+  `;
 }
 
 async function listOPs(res: any, tenantId: string) {
-  const ops = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
-  
+  const ops =
+    await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
+
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
-  const precisaSincronizar = ops.some(o => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
+  const precisaSincronizar = ops.some((o) => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
   if (precisaSincronizar) {
     /* console.log('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
     await syncQueueForecasting(tenantId);
-    const opsAtualizadas = await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
+    const opsAtualizadas =
+      await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
     return res.status(200).json({ success: true, data: opsAtualizadas });
   }
 
@@ -88,7 +110,8 @@ async function listOPs(res: any, tenantId: string) {
  * Cria uma nova OP (Geralmente chamada pelo Agente ou Vendas)
  */
 async function createOP(req: any, res: any, tenantId: string, user: any) {
-  const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, quotation_id } = req.body;
+  const { op_id, produto, pecas, metadata, checklist, visita_id, projeto_id, quotation_id } =
+    req.body;
 
   /* console.log('[CREATE_OP] Received:', { op_id, produto, pecas, visita_id, projeto_id, quotation_id }); */
 
@@ -99,12 +122,17 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
 
   try {
     const defaultChecklist = [
-      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'CORTE', completed: false },
-      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FITA DE BORDA', completed: false },
-      { id: `chk-${Math.random().toString(36).substr(2,8)}`, task: 'FURAÇÕES', completed: false }
+      { id: `chk-${Math.random().toString(36).substr(2, 8)}`, task: 'CORTE', completed: false },
+      {
+        id: `chk-${Math.random().toString(36).substr(2, 8)}`,
+        task: 'FITA DE BORDA',
+        completed: false,
+      },
+      { id: `chk-${Math.random().toString(36).substr(2, 8)}`, task: 'FURAÇÕES', completed: false },
     ];
 
-    const checklistToSave = Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
+    const checklistToSave =
+      Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
     const initialStatus = req.body.status || 'PENDENTE';
 
@@ -126,7 +154,7 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
     console.error('[CREATE_OP] Error:', err.message);
     return res.status(500).json({ success: false, error: err.message });
   }
-};
+}
 
 export const handleProduction = withTenant(handleProductionCore);
 
@@ -137,12 +165,14 @@ async function updateOPDetails(req: any, res: any, tenantId: string, user: any) 
   const { op_id, produto, pecas, checklist, metadata } = req.body;
 
   // Merge update: update fields that are provided. Keep existing otherwise.
-  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
+  const [existing] =
+    await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   const newProduto = produto !== undefined ? produto : existing.produto;
   const newPecas = pecas !== undefined ? pecas : existing.pecas;
-  const newChecklist = checklist !== undefined ? JSON.stringify(checklist || []) : existing.checklist;
+  const newChecklist =
+    checklist !== undefined ? JSON.stringify(checklist || []) : existing.checklist;
   const newMetadata = metadata !== undefined ? JSON.stringify(metadata) : existing.metadata;
 
   const [atualizada] = await sql`
@@ -156,12 +186,21 @@ async function updateOPDetails(req: any, res: any, tenantId: string, user: any) 
     RETURNING *
   `;
 
-  await auditLog('ordens_producao', atualizada.id, 'UPDATE_DETAILS', user?.id, existing, atualizada);
+  await auditLog(
+    'ordens_producao',
+    atualizada.id,
+    'UPDATE_DETAILS',
+    user?.id,
+    existing,
+    atualizada,
+  );
 
   // If changed peças, recalcula previsões
   await syncQueueForecasting(tenantId);
 
-  try { window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } })); } catch {
+  try {
+    window.dispatchEvent(new CustomEvent('op_updated', { detail: { op_id } }));
+  } catch {
     // Ignore window reference error on server-side
   }
 
@@ -175,16 +214,21 @@ async function deleteOP(req: any, res: any, tenantId: string, user: any) {
   const { op_id } = req.query || req.body || {};
   if (!op_id) return res.status(400).json({ success: false, error: 'op_id é obrigatório' });
 
-  const [existing] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
+  const [existing] =
+    await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!existing) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   // Soft Delete
   await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
 
   // Soft Delete em itens de kanban relacionados
-  await sql`UPDATE kanban_items SET status = 'DELETADO', updated_at = CURRENT_TIMESTAMP WHERE (op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'}) AND tenant_id = ${tenantId}`.catch(() => {});
+  await sql`UPDATE kanban_items SET status = 'DELETADO', updated_at = CURRENT_TIMESTAMP WHERE (op_id = ${op_id} OR observations::text LIKE ${'%' + op_id + '%'}) AND tenant_id = ${tenantId}`.catch(
+    () => {},
+  );
 
-  await auditLog('ordens_producao', existing.id, 'DELETE', user?.id, existing, { deleted_at: new Date() });
+  await auditLog('ordens_producao', existing.id, 'DELETE', user?.id, existing, {
+    deleted_at: new Date(),
+  });
 
   return res.status(200).json({ success: true, data: { op_id } });
 }
@@ -196,7 +240,8 @@ async function updateOPStatus(req: any, res: any, tenantId: string) {
   const { op_id, status } = req.body;
 
   // Busca estado atual
-  const [op] = await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
+  const [op] =
+    await sql`SELECT * FROM ordens_producao WHERE op_id = ${op_id} AND tenant_id = ${tenantId}`;
   if (!op) return res.status(404).json({ success: false, error: 'OP não encontrada' });
 
   let data_inicio = op.data_inicio;
@@ -205,8 +250,16 @@ async function updateOPStatus(req: any, res: any, tenantId: string) {
   // Defensive validation: do not allow advancing if checklist or piece-level checks are incomplete
   if (status && status !== op.status) {
     // Load checklist and metadata
-    const checklist = Array.isArray(op.checklist) ? op.checklist : (op.checklist ? JSON.parse(op.checklist) : []);
-    const metadata = op.metadata ? (typeof op.metadata === 'string' ? JSON.parse(op.metadata) : op.metadata) : {};
+    const checklist = Array.isArray(op.checklist)
+      ? op.checklist
+      : op.checklist
+        ? JSON.parse(op.checklist)
+        : [];
+    const metadata = op.metadata
+      ? typeof op.metadata === 'string'
+        ? JSON.parse(op.metadata)
+        : op.metadata
+      : {};
 
     const checklistComplete = checklist.length === 0 || checklist.every((i: any) => i.completed);
     // piece-level checks: expect metadata.pecas as array with optional operator_checked boolean
@@ -214,35 +267,51 @@ async function updateOPStatus(req: any, res: any, tenantId: string) {
     try {
       const pecas = Array.isArray(metadata.pecas) ? metadata.pecas : [];
       for (const p of pecas) {
-        if (p && p.operator_checked === false) { piecesComplete = false; break; }
+        if (p && p.operator_checked === false) {
+          piecesComplete = false;
+          break;
+        }
       }
     } catch {
       // Ignore window reference error on server-side
     }
 
     // If attempting to advance to next productive stage (not allowing revert to AGUARDANDO), block if incomplete
-    const fluxo: string[] = ["AGUARDANDO", "PRODUCAO", "MONTAGEM", "PINTURA", "INSPECAO", "PRONTO", "FINALIZADO"];
+    const fluxo: string[] = [
+      'AGUARDANDO',
+      'PRODUCAO',
+      'MONTAGEM',
+      'PINTURA',
+      'INSPECAO',
+      'PRONTO',
+      'FINALIZADO',
+    ];
     const idxFrom = fluxo.indexOf(op.status);
     const idxTo = fluxo.indexOf(status);
     if (idxTo > idxFrom) {
       if (!checklistComplete || !piecesComplete) {
-        return res.status(400).json({ success: false, error: 'Não é possível avançar: checklist e/ou peças pendentes' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: 'Não é possível avançar: checklist e/ou peças pendentes',
+          });
       }
     }
   }
 
   // Se começou agora (moveu de AGUARDANDO para qualquer etapa produtiva)
-  if (!data_inicio && status !== "AGUARDANDO") {
+  if (!data_inicio && status !== 'AGUARDANDO') {
     data_inicio = new Date();
   }
 
   // Se voltou para AGUARDANDO, reseta início
-  if (status === "AGUARDANDO") {
+  if (status === 'AGUARDANDO') {
     data_inicio = null;
   }
 
   // Se finalizou
-  if (status === "FINALIZADA") {
+  if (status === 'FINALIZADA') {
     data_fim = new Date();
   } else {
     // Se saiu de FINALIZADA (reabriu), reseta fim
@@ -278,39 +347,42 @@ async function getProductionMetrics(res: any, tenantId: string) {
     AND (op.projeto_id IS NULL OR (p.id IS NOT NULL AND p.deleted_at IS NULL))
   `;
   const agora = Date.now();
-  
-  const finalizadas = allOps.filter(o => o.status === "FINALIZADA" && o.data_inicio && o.data_fim);
-  const pendentes = allOps.filter(o => o.status !== "FINALIZADA");
-  
+
+  const finalizadas = allOps.filter(
+    (o) => o.status === 'FINALIZADA' && o.data_inicio && o.data_fim,
+  );
+  const pendentes = allOps.filter((o) => o.status !== 'FINALIZADA');
+
   // Cálculo de Lead Time Médio em minutos (histórico)
-  const tempos = finalizadas.map(o => {
+  const tempos = finalizadas.map((o) => {
     const inicio = new Date(o.data_inicio).getTime();
     const fim = new Date(o.data_fim).getTime();
     return (fim - inicio) / (1000 * 60);
   });
 
-  const leadTimeMedio = tempos.length > 0 
-    ? (tempos.reduce((a: any, b: any) => a + b, 0) / tempos.length) 
-    : 0;
+  const leadTimeMedio =
+    tempos.length > 0 ? tempos.reduce((a: any, b: any) => a + b, 0) / tempos.length : 0;
 
   // Novas métricas de previsão
-  const opsAtrasadas = pendentes.filter((o: any) => 
-    o.data_prevista_entrega && new Date(o.data_prevista_entrega).getTime() < agora
+  const opsAtrasadas = pendentes.filter(
+    (o: any) => o.data_prevista_entrega && new Date(o.data_prevista_entrega).getTime() < agora,
   ).length;
 
-  const totalMinutosFila = pendentes.reduce((acc: any, o: any) => 
-    acc + (o.tempo_previsto_corte || 0) + (o.tempo_previsto_montagem || 0), 0
+  const totalMinutosFila = pendentes.reduce(
+    (acc: any, o: any) => acc + (o.tempo_previsto_corte || 0) + (o.tempo_previsto_montagem || 0),
+    0,
   );
 
   const metrics = {
     totalOPs: allOps.length,
     finalizadas: finalizadas.length,
-    emProducao: allOps.filter((o: any) => o.status !== "PENDENTE" && o.status !== "FINALIZADA").length,
+    emProducao: allOps.filter((o: any) => o.status !== 'PENDENTE' && o.status !== 'FINALIZADA')
+      .length,
     leadTimeMedio: parseFloat(leadTimeMedio.toFixed(2)),
     taxaEficiencia: allOps.length > 0 ? (finalizadas.length / allOps.length) * 100 : 0,
     // Previsão
     opsAtrasadas,
-    filaTotalDias: parseFloat((totalMinutosFila / 480).toFixed(1)) // Carga diária
+    filaTotalDias: parseFloat((totalMinutosFila / 480).toFixed(1)), // Carga diária
   };
 
   return res.status(200).json({ success: true, data: metrics });
