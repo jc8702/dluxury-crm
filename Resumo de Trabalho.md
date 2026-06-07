@@ -309,3 +309,33 @@ src/components/crm/
 - [x] `npx tsc --noEmit` — 0 erros
 - [x] `npm run build` — Vite build bem-sucedido
 - [x] 3 pages com < 120 linhas cada
+
+---
+
+## 07 — N+1 QUERY ELIMINATION — 2026-06-07
+
+### Objetivo
+
+Eliminar padrões N+1 em loops com SQL no módulo `api-lib/`, trocando N queries individuais por operações batch.
+
+### Files modificados (9)
+
+| File              | N+1 loops eliminados                                                                  | Técnica                                                   |
+| ----------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `_inventory.ts`   | 3 funções (reserveStock, writeOffStock, releaseStock)                                 | `UPDATE ... FROM (SELECT ...)` + `ANY(array)`             |
+| `notificacoes.ts` | 5 loops (cliente, visita, material, categoria, usuário)                               | `bulkInsertNotificacoes` helper                           |
+| `compras.ts`      | 2 loops (parcelas INSERT, itens INSERT)                                               | `sql.join` multi-row VALUES                               |
+| `projects.ts`     | 1 loop (writeOffStock)                                                                | nova `writeOffStockForProjectBatch`                       |
+| `production.ts`   | 1 loop (per-OP UPDATE)                                                                | `UPDATE FROM (VALUES ...)`                                |
+| `calendario.ts`   | 2 loops (per-user INSERT, per-event INSERT+UPDATE)                                    | multi-row INSERT + `INSERT FROM SELECT`                   |
+| `financeiro.ts`   | 3 loops (nested mes×parcela, per-conta, per-mês)                                      | flattened VALUES + batch IN + bulk INSERT                 |
+| `quotations.ts`   | 7 loops (instalment, stage, user, nested item×part, chunked items, bulk-update-items) | batch VALUES + batch material lookup + UPDATE FROM VALUES |
+| `planocorte.ts`   | 1 loop (duplicate check)                                                              | single fetch + Set lookup                                 |
+
+### Resultados
+
+- N queries reduzidas para O(1) em ~30 loops
+- ~456 linhas de diff líquido
+- `npx tsc --noEmit` — 0 erros
+- `npm run build` — sucesso
+- Commit: `070715d` — "perf(api-lib): eliminate N+1 query patterns"
