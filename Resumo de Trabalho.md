@@ -261,3 +261,51 @@ In-memory (`RateLimiterMemory`) é compatível com Vercel serverless sem estado 
 
 - Implementar `RateLimiterRedis` com Upstash em produção.
 - Testes específicos para cada limiter (fora do escopo do PROMPT 05).
+
+---
+
+## 06 — REFACTOR PAGES — 07/06/2026
+
+### Pages refatoradas
+
+- FinanceiroContasPage.tsx: 1163 → 74 linhas
+- ProspeccaoPage.tsx: 997 → 38 linhas
+- FinanceiroTitulosPagarPage.tsx: 955 → 60 linhas
+
+### Componentes criados
+
+- 3 hooks de dados (useContasHook, useProspeccaoHook, useTitulosPagarHook)
+- 3 hooks de filtros (useContasFilters, useProspeccaoFilters, useTitulosPagarFilters)
+- 3 componentes ListView (ContasListView, ProspeccaoListView, TitulosPagarListView)
+- 3 componentes FormModal (ContasFormModal, ProspeccaoFormModal, TitulosPagarFormModal)
+- 1 componente extra: ContasExtratoModal
+
+### Estrutura
+
+```
+src/hooks/financeiro/
+├── useContasHook.ts          # CRUD contas + extrato + transferência + fechamentos
+├── useContasFilters.ts       # Filtros de extrato (data, tipo, busca)
+└── useTitulosPagarHook.ts    # CRUD títulos + baixa + lote + paginação
+
+src/hooks/crm/
+├── useProspeccaoHook.ts      # CRUD leads + métricas + kanban
+└── useProspeccaoFilters.ts   # Constants (STATUS_CONFIG, ORIGENS, KANBAN_COLS) + helpers
+
+src/components/financeiro/
+├── ContasListView.tsx        # Grid cards + header + transferência + fechamento modals
+├── ContasFormModal.tsx       # Create/edit conta form
+├── ContasExtratoModal.tsx    # Extrato table with filters
+├── TitulosPagarListView.tsx  # Tabela agrupada + header + wizard drawer
+└── TitulosPagarFormModal.tsx # BaixaModal + EditTituloModal + LoteModal
+
+src/components/crm/
+├── ProspeccaoListView.tsx    # Kanban + list views + KPI cards + filters
+└── ProspeccaoFormModal.tsx   # Drawer form create/edit lead
+```
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — Vite build bem-sucedido
+- [x] 3 pages com < 120 linhas cada
