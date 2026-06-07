@@ -38,25 +38,7 @@ export async function applyRateLimit(
   }
 }
 
-export function globalRateLimitMiddleware(req: any, res: any, next: () => void): void {
-  const identifier = req.tenantId || getClientIP(req) || 'anonymous';
-  const cleanUrl = (req.url || '').split('?')[0];
-
-  if (cleanUrl.includes('/search') || cleanUrl.includes('/busca')) {
-    applyRateLimit('search', identifier, res).then((ok) => ok && next());
-    return;
-  }
-
-  if (cleanUrl.includes('/export') || cleanUrl.includes('/exportar')) {
-    applyRateLimit('export', identifier, res).then((ok) => ok && next());
-    return;
-  }
-
-  applyRateLimit('api', identifier, res).then((ok) => ok && next());
-}
-
-export async function loginRateLimit(req: any, res: any, next: () => void): Promise<void> {
+export async function loginRateLimit(req: any, res: any): Promise<boolean> {
   const identifier = getClientIP(req) || 'unknown';
-  const ok = await applyRateLimit('login', identifier, res);
-  if (ok) next();
+  return await applyRateLimit('login', identifier, res);
 }

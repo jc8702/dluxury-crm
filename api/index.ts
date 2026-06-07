@@ -153,9 +153,6 @@ export default async function handler(req: any, res: any) {
     const allowedByFeatureGate = await verifyFeatureGate(req, res);
     if (!allowedByFeatureGate) return;
 
-    // Rate limiting (DoS protection + brute force prevention)
-    const { globalRateLimitMiddleware } = await import('../src/api-lib/middleware/rateLimiter.js');
-
     // ------------------------------------------------------------------------
     // RESOLUÇÃO FORTE DE TENANT (com isMiddlewareEnabled)
     // ------------------------------------------------------------------------
@@ -193,11 +190,11 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    globalRateLimitMiddleware(req, res, () => {});
-
     // Auditoria LGPD intercepta mutations (POST/PATCH/PUT/DELETE)
     const { auditMiddleware } = await import('../src/api-lib/middleware/auditMiddleware.js');
     auditMiddleware(req, res, () => {});
+
+    if (res.headersSent) return;
 
     // Roteamento Dinâmico (Lazy Loading)
     if (cleanUrl.startsWith('/api/signup')) {
