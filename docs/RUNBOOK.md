@@ -51,3 +51,22 @@ psql $DATABASE_URL < backup-antes-da-migration.sql
 
 - Reiniciar instância Vercel (apaga in-memory store)
 - Se usar Upstash Redis: acessar console e apagar key do IP
+
+## Dívida Técnica Conhecida
+
+### Testes falhando (baseline)
+
+32 testes falham em 16 arquivos — todos são falhas pré-existentes relacionadas a mock de DB:
+
+- `_inventory.test.ts` — mocks de `sql` não correspondem ao número real de chamadas
+- Outros 15 arquivos com problemas similares de mock
+- Causa raiz: refatoração dos helpers de mock não acompanhou mudanças nos módulos sob teste
+- Status: **não bloqueante** (testes de segurança e isolamento passam: 6/6 em `tenant-isolation.test.ts`)
+
+### Lint warnings (baseline)
+
+~210 warnings, todos de duas categorias:
+
+- `no-console` — `console.log`/`console.warn`/`console.error` legítimos em handlers
+- `@typescript-eslint/no-unused-vars` — parâmetros de callback não usados intencionalmente
+- Status: **não bloqueante** (zero erros, apenas advertências de estilo)

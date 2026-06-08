@@ -11,6 +11,10 @@
 - withTenant() proxy filtra automaticamente por tenant_id
 - Tabelas financeiras (titulos_receber, titulos_pagar, baixas) têm tenant_id
 - audit_logs tem tenant_id e registra todas as mutações
+- Feature flag `NEW_TENANT_MIDDLEWARE` (env var) controla o tenantMiddleware
+  - Default: `"true"` (middleware ativo com resolução forte de tenant)
+  - `"false"` → fallback legado via `validateAuth` + `authedTenantId`
+  - Configurar em Vercel dashboard ou `.env`
 
 ## Rate Limiting
 

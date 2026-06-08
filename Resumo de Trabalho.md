@@ -550,6 +550,52 @@ O feature gate centralizado (`feature-gate-middleware.ts`) já existia e fazia o
 
 ---
 
+---
+
+## 15 — REPO FINALIZE — 2026-06-07
+
+### Objetivo
+
+Finalizar qualidade do repositório: verificar baseline de ferramentas, documentar feature flags, caçar double-send, atualizar docs.
+
+### Baseline verificado
+
+| Ferramenta      | Resultado                           |
+| --------------- | ----------------------------------- |
+| `tsc --noEmit`  | 0 erros ✅                          |
+| `npm run lint`  | 210 warnings, 0 erros               |
+| `npm run build` | Sucesso (5811 modules)              |
+| `npm run test`  | 32 failed / 549 passed / 20 skipped |
+
+### Feature flags documentados
+
+- `NEW_TENANT_MIDDLEWARE` adicionado ao `.env.example` (default `"true"`)
+- `docs/SECURITY.md` atualizado com documentação da flag e fallback legado
+
+### Double-send audit (api/index.ts)
+
+Nenhum padrão de double-send encontrado. Padrões verificados:
+
+- **verifyBillingStatus** / **verifyFeatureGate**: enviam resposta + retornam `false`, caller verifica e retorna → seguro
+- **auditMiddleware**: intercepta `res.json` para log, não envia resposta própria; guard `if (res.headersSent) return` presente
+- **Todos os handlers**: usam `return await handleXxx(req, res)` → sem fall-through
+
+### GitLab default branch
+
+Instrução para operação manual:
+
+> Acessar GitLab → Settings → Repository → Default branch → alterar de `master` para `main`.
+> O branch `master` está parado em `c25bb307` e não recebe mais commits.
+
+### Dívida técnica documentada
+
+- `docs/RUNBOOK.md` expandido com seção de dívida técnica conhecida (testes falhando, lint warnings)
+- Baseline de warnings e falhas de teste documentada
+
+### Branch
+
+- `chore/repo-finalize` (deste commit)
+
 ## ✅ SISTEMA PRONTO PARA BETA SaaS PRIVADO
 
 Próximos passos:
