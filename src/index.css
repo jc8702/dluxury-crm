@@ -177,6 +177,88 @@
   --ui-border-strong: hsl(var(--border));
   --ui-color-danger: hsl(var(--destructive));
 
+  /* ─── UI Color Scales (Badges, CardStat, Chips) ─── */
+  --ui-color-navy-50: #f0f3f7;
+  --ui-color-navy-100: #e3e7ec;
+  --ui-color-navy-700: #141a23;
+  --ui-color-navy-800: #0d1117;
+  --ui-color-teal-50: #e6faf8;
+  --ui-color-teal-200: #7ee0d4;
+  --ui-color-teal-500: hsl(var(--success));
+  --ui-color-teal-700: #006b66;
+  --ui-color-gold-50: #faf3e0;
+  --ui-color-gold-100: #f5e6b8;
+  --ui-color-gold-400: hsl(var(--accent));
+  --ui-color-gold-500: #c49400;
+  --ui-color-gold-700: #6e5500;
+  --ui-color-neutral-0: hsl(0 0% 100%);
+  --ui-color-neutral-50: #fafafa;
+  --ui-color-success-soft: #dcfce7;
+  --ui-color-warning-soft: #fef3c7;
+  --ui-color-danger-soft: #fee2e2;
+  --ui-color-info-soft: #dbeafe;
+
+  /* ─── UI Actions ─── */
+  --ui-action-primary: hsl(var(--primary));
+  --ui-action-primary-hover: hsl(var(--primary-hover));
+  --ui-action-primary-fg: hsl(var(--primary-foreground));
+  --ui-action-secondary: hsl(var(--secondary));
+  --ui-action-secondary-hover: hsl(var(--surface-hover));
+  --ui-action-secondary-fg: hsl(var(--secondary-foreground));
+  --ui-action-accent: hsl(var(--accent));
+  --ui-action-accent-hover: hsl(45 67% 45%);
+  --ui-action-accent-fg: hsl(var(--accent-foreground));
+  --ui-action-danger: hsl(var(--destructive));
+  --ui-action-danger-hover: hsl(0 72% 45%);
+  --ui-action-danger-fg: hsl(var(--destructive-foreground));
+
+  /* ─── UI Focus ─── */
+  --ui-focus-ring: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.4);
+  --ui-focus-ring-danger: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive) / 0.4);
+  --ui-shadow-focus: 0 0 0 3px hsl(var(--primary) / 0.2);
+  --ui-shadow-danger-focus: 0 0 0 3px hsl(var(--destructive) / 0.2);
+
+  /* ─── UI Typography ─── */
+  --ui-font-sans: 'Source Sans 3', 'DM Sans', system-ui, -apple-system, sans-serif;
+  --ui-text-xs: 0.75rem;
+  --ui-text-sm: 0.875rem;
+  --ui-text-base: 0.875rem;
+  --ui-text-lg: 1rem;
+  --ui-text-xl: 1.125rem;
+  --ui-text-2xl: 1.375rem;
+  --ui-tracking-wide: 0.04em;
+
+  /* ─── UI Space (4px grid) ─── */
+  --ui-space-0: 0;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-space-10: 40px;
+
+  /* ─── UI Radius ─── */
+  --ui-radius-xs: 4px;
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-full: 9999px;
+
+  /* ─── UI Shadows ─── */
+  --ui-shadow-1: 0 1px 2px 0 rgb(13 17 23 / 0.04), 0 1px 1px 0 rgb(13 17 23 / 0.03);
+  --ui-shadow-2: 0 4px 8px -2px rgb(13 17 23 / 0.06), 0 2px 4px -2px rgb(13 17 23 / 0.04);
+  --ui-shadow-3: 0 12px 24px -4px rgb(13 17 23 / 0.1), 0 4px 8px -2px rgb(13 17 23 / 0.06);
+
+  /* ─── UI Z-index ─── */
+  --ui-z-sticky: 80;
+  --ui-z-modal: 110;
+
+  /* ─── UI Motion ─── */
+  --ui-duration-fast: 120ms;
+  --ui-duration-base: 180ms;
+  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* ─── Decorative ─── */
   --gradient-primary: linear-gradient(135deg, hsl(24 55% 36%), hsl(45 67% 52%));
   --gradient-surface: linear-gradient(180deg, hsl(40 15% 97%), hsl(40 10% 94%));
@@ -255,6 +337,88 @@
   --ui-bg-subtle: hsl(var(--surface-hover));
   --ui-border-strong: hsl(var(--border));
   --ui-color-danger: hsl(var(--destructive));
+
+  /* ─── UI Color Scales (Dark mode overrides) ─── */
+  --ui-color-navy-50: #1d242e;
+  --ui-color-navy-100: #141a23;
+  --ui-color-navy-700: #c2cad3;
+  --ui-color-navy-800: #e3e7ec;
+  --ui-color-teal-50: #002e2b;
+  --ui-color-teal-200: #004d47;
+  --ui-color-teal-500: hsl(var(--success));
+  --ui-color-teal-700: #7ee0d4;
+  --ui-color-gold-50: #1f1700;
+  --ui-color-gold-100: #423300;
+  --ui-color-gold-400: hsl(var(--primary));
+  --ui-color-gold-500: hsl(var(--primary));
+  --ui-color-gold-700: #fae7a3;
+  --ui-color-neutral-0: hsl(240 5% 3%);
+  --ui-color-neutral-50: #18181b;
+  --ui-color-success-soft: #052e16;
+  --ui-color-warning-soft: #422006;
+  --ui-color-danger-soft: #450a0a;
+  --ui-color-info-soft: #0c1929;
+
+  /* ─── UI Actions ─── */
+  --ui-action-primary: hsl(var(--primary));
+  --ui-action-primary-hover: hsl(var(--primary-hover));
+  --ui-action-primary-fg: hsl(var(--primary-foreground));
+  --ui-action-secondary: hsl(var(--secondary));
+  --ui-action-secondary-hover: hsl(var(--surface-hover));
+  --ui-action-secondary-fg: hsl(var(--secondary-foreground));
+  --ui-action-accent: hsl(var(--accent));
+  --ui-action-accent-hover: hsl(45 93% 35%);
+  --ui-action-accent-fg: hsl(var(--accent-foreground));
+  --ui-action-danger: hsl(var(--destructive));
+  --ui-action-danger-hover: hsl(0 72% 48%);
+  --ui-action-danger-fg: hsl(var(--destructive-foreground));
+
+  /* ─── UI Focus ─── */
+  --ui-focus-ring: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.5);
+  --ui-focus-ring-danger: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive) / 0.5);
+  --ui-shadow-focus: 0 0 0 3px hsl(var(--primary) / 0.3);
+  --ui-shadow-danger-focus: 0 0 0 3px hsl(var(--destructive) / 0.3);
+
+  /* ─── UI Typography ─── */
+  --ui-font-sans: 'Source Sans 3', 'DM Sans', system-ui, -apple-system, sans-serif;
+  --ui-text-xs: 0.75rem;
+  --ui-text-sm: 0.875rem;
+  --ui-text-base: 0.875rem;
+  --ui-text-lg: 1rem;
+  --ui-text-xl: 1.125rem;
+  --ui-text-2xl: 1.375rem;
+  --ui-tracking-wide: 0.04em;
+
+  /* ─── UI Space (4px grid) ─── */
+  --ui-space-0: 0;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-space-10: 40px;
+
+  /* ─── UI Radius ─── */
+  --ui-radius-xs: 4px;
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-full: 9999px;
+
+  /* ─── UI Shadows ─── */
+  --ui-shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --ui-shadow-2: 0 4px 12px -2px rgb(0 0 0 / 0.4);
+  --ui-shadow-3: 0 12px 30px -4px rgb(0 0 0 / 0.6);
+
+  /* ─── UI Z-index ─── */
+  --ui-z-sticky: 80;
+  --ui-z-modal: 110;
+
+  /* ─── UI Motion ─── */
+  --ui-duration-fast: 120ms;
+  --ui-duration-base: 180ms;
+  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ─── Decorative ─── */
   --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 93% 40%));
