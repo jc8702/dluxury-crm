@@ -4,7 +4,7 @@ export async function handleAfterSales(req: any, res: any) {
   try {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId; // injetado por tenantMiddleware
 
     const url = new URL(req.url, `http://${req.headers.host}`);
     const query = Object.fromEntries(url.searchParams.entries());
@@ -33,15 +33,17 @@ export async function handleAfterSales(req: any, res: any) {
     }
 
     if (req.method === 'POST') {
-      const { cliente_id, projeto_id, titulo, descricao, tipo, prioridade, data_agendamento } = req.body;
-      
+      const { cliente_id, projeto_id, titulo, descricao, tipo, prioridade, data_agendamento } =
+        req.body;
+
       // Gerar número automático GAR-2025-001
       const year = new Date().getFullYear();
-      const [{ count }] = await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM created_at) = ${year} AND tenant_id = ${tenantId}`;
+      const [{ count }] =
+        await sql`SELECT COUNT(*) as count FROM chamados_garantia WHERE EXTRACT(YEAR FROM created_at) = ${year} AND tenant_id = ${tenantId}`;
       const numero = `GAR-${year}-${(Number(count) + 1).toString().padStart(3, '0')}`;
 
       // Verificar garantia (1 ano após entrega do projeto) - Simulação simplificada
-      const dentro_garantia = true; 
+      const dentro_garantia = true;
 
       const [chamado] = await sql`
         INSERT INTO chamados_garantia (cliente_id, projeto_id, numero, titulo, descricao, tipo, prioridade, dentro_garantia, data_agendamento, tenant_id)

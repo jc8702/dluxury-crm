@@ -596,6 +596,44 @@ Instrução para operação manual:
 
 - `chore/repo-finalize` (deste commit)
 
+---
+
+## 16 — SILENT-FALLBACK CLEANUP + AUDIT LOGS SCHEMA + N+1 FIX — 2026-06-08
+
+### TAREFA 1 — Silent-fallback eliminado em 5 arquivos
+
+Substituído `user?.tenantId || '00000000-...'` por `req.tenantId` (injetado por tenantMiddleware) em:
+
+| Arquivo                 | Linha | Nota                                                                                                |
+| ----------------------- | ----- | --------------------------------------------------------------------------------------------------- |
+| `agenda.ts`             | 15    | ✅                                                                                                  |
+| `after_sales.ts`        | 7     | ✅                                                                                                  |
+| `aprovacao.ts`          | 94    | ✅                                                                                                  |
+| `retalhos.ts`           | 12    | ✅                                                                                                  |
+| `billing-middleware.ts` | 38    | Usa `req.tenantId \|\| auth.user?.tenantId` (fallback duplo — roda antes de `resolveTenantRequest`) |
+
+### TAREFA 2 — Schema Drizzle para audit_logs
+
+- `src/db/schema/auditLogs.ts` criado — 12 colunas (id, tenantId, userId, action, tableName, recordId, oldValues, newValues, ipAddress, userAgent, timestamp, retentionExpiresAt)
+- `src/db/schema/index.ts` — adicionado `export * from './auditLogs.js'`
+
+### TAREFA 3 — ModalEvento dead code
+
+**Skip** — componente está ativo em `VisitKanban.tsx:7`.
+
+### TAREFA 4 — N+1 em projects.ts (GET handler)
+
+Substituídas 3 subqueries `SELECT DISTINCT ON ... FROM quotations ...` repetidas por um único CTE Drizzle `drizzleSql` definido antes das branches e referenciado via `WITH latest_quot AS (${latestQuotCte})`.
+
+- Queries executadas via `db.execute(drizzleSql\`...\`)`(Drizzle ORM) em vez de`sql` (neon raw)
+- Helper `execSql` normaliza retorno para `r.rows`
+- Branches sem CTE (search/autocomplete) mantêm raw SQL puro
+
+### Validação
+
+- [x] `npx tsc --noEmit` — 0 erros
+- [x] `npm run build` — sucesso (44s, 5812 modules)
+
 ## ✅ SISTEMA PRONTO PARA BETA SaaS PRIVADO
 
 Próximos passos:

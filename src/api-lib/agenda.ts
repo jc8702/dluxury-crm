@@ -1,4 +1,3 @@
-
 import { validateAuth } from './_db.js';
 import { AgendaService } from '../modules/agenda/application/AgendaService.js';
 
@@ -12,7 +11,7 @@ export async function handleAgenda(req: any, res: any) {
     const { authorized, error, user } = validateAuth(req);
     if (!authorized) return res.status(401).json({ success: false, error });
 
-    const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId; // injetado por tenantMiddleware
 
     // Roteamento baseado em recurso/ação
     if (method === 'GET') {
@@ -38,10 +37,13 @@ export async function handleAgenda(req: any, res: any) {
 
     if (method === 'POST') {
       // Criar novo evento
-      const data = await agendaService.agendarEvento({
-        ...body,
-        criado_por: user?.id || 'system'
-      }, tenantId);
+      const data = await agendaService.agendarEvento(
+        {
+          ...body,
+          criado_por: user?.id || 'system',
+        },
+        tenantId,
+      );
       return res.status(201).json({ success: true, data });
     }
 

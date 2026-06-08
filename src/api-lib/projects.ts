@@ -1,11 +1,9 @@
 import { sql, auditLog } from './_db.js';
+import { db } from './drizzle-db.js';
+import { sql as drizzleSql } from 'drizzle-orm';
 import { writeOffStockForProjectBatch } from './_inventory.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { logger } from './logger.js';
-
-// TODO: PROMPT 4 - Refatorar 3 subqueries orfas em handleProjects (L119/L134/L155: FROM quotations)
-// Ver DEBT_TECHNICO_ORCAMENTOS.md secao 6. Tabela quotations foi dropada em 2026-06-04.
-// Rota afetada: GET /api/projects (campo valor_orcamento_atual sempre null).
 
 const handleProjectsCore: TenantHandler = async (req, res) => {
   try {
@@ -106,10 +104,21 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
     if (req.method === 'GET') {
       const { client_id, status, q } = req.query;
 
+      // CTE: latest quotation per project — definido uma vez com Drizzle, reaproveitado nas branches
+      const latestQuotCte = drizzleSql`
+        SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
+        FROM quotations
+        WHERE tenant_id = ${tenantId}
+        ORDER BY projeto_id, created_at DESC
+      `;
+
+      // Helper para executar raw SQL através do Drizzle ORM e retornar rows
+      const execSql = (strings: TemplateStringsArray, ...values: any[]) =>
+        db.execute(drizzleSql(strings as any, ...values)).then((r) => r.rows);
+
       let query;
       if (q) {
-        // Busca por TAG ou Nome (PRJ- autocomplete)
-        query = sql`
+        query = execSql`
           SELECT p.*, 
                  COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
                  c.nome as client_name
@@ -121,37 +130,30 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
           LIMIT 10
         `;
       } else if (client_id) {
-        query = sql`
+        query = execSql`
+          WITH latest_quot AS (${latestQuotCte})
           SELECT p.*, 
                  COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
                  o.valor_final as valor_orcamento_atual
           FROM projects p
-          LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
-            FROM quotations
-            WHERE tenant_id = ${tenantId}
-            ORDER BY projeto_id, created_at DESC
-          ) o ON p.id::text = o.projeto_id::text
+          LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
           WHERE p.client_id = ${client_id} AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else if (status) {
-        query = sql`
+        query = execSql`
+          WITH latest_quot AS (${latestQuotCte})
           SELECT p.*, 
                  COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
                  o.valor_final as valor_orcamento_atual
           FROM projects p
-          LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
-            FROM quotations
-            WHERE tenant_id = ${tenantId}
-            ORDER BY projeto_id, created_at DESC
-          ) o ON p.id::text = o.projeto_id::text
+          LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
           WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else {
-        query = sql`
+        query = execSql`
+          WITH latest_quot AS (${latestQuotCte})
           SELECT 
             p.*, 
             COALESCE(p.tag, 'PRJ-' || UPPER(SUBSTRING(p.id::text, 1, 6))) as tag,
@@ -162,12 +164,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
             o.valor_final as valor_orcamento_atual
           FROM projects p
           LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
-          LEFT JOIN (
-            SELECT DISTINCT ON (projeto_id) valor_total_venda as valor_final, projeto_id
-            FROM quotations
-            WHERE tenant_id = ${tenantId}
-            ORDER BY projeto_id, created_at DESC
-          ) o ON p.id::text = o.projeto_id::text
+          LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
           WHERE p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
           ORDER BY p.updated_at DESC
         `;

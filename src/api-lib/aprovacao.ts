@@ -49,21 +49,21 @@ export async function handleAprovacao(req: any, res: any) {
         .limit(1);
 
       const orc = orcList[0];
-      if (!orc) return res.status(404).json({ success: false, error: 'Proposta não encontrada ou link expirado' });
+      if (!orc)
+        return res
+          .status(404)
+          .json({ success: false, error: 'Proposta não encontrada ou link expirado' });
 
       // Buscar itens do orçamento usando Drizzle
       const itmsRows = await db
         .select()
         .from(quotationItems)
         .where(
-          and(
-            eq(quotationItems.quotationId, orc.id),
-            eq(quotationItems.tenantId, orc.tenant_id)
-          )
+          and(eq(quotationItems.quotationId, orc.id), eq(quotationItems.tenantId, orc.tenant_id)),
         )
         .orderBy(quotationItems.createdAt);
 
-      const itms = itmsRows.map(item => ({
+      const itms = itmsRows.map((item) => ({
         id: item.id,
         quotation_id: item.quotationId,
         descricao: item.skuDescricao || item.nomeCustomizado || 'Item',
@@ -75,11 +75,13 @@ export async function handleAprovacao(req: any, res: any) {
         acabamento: item.skuDescricao || '',
         quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,
         valor_unitario: item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0,
-        valor_total: (item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0) * (item.quantidade ? parseFloat(item.quantidade) : 0),
+        valor_total:
+          (item.precoVendaUnitario ? parseFloat(item.precoVendaUnitario) : 0) *
+          (item.quantidade ? parseFloat(item.quantidade) : 0),
         erp_product_id: item.skuEngenhariaId || '',
         erp_parametros: item.metadata || {},
         created_at: item.createdAt,
-        updated_at: item.updatedAt
+        updated_at: item.updatedAt,
       }));
 
       const condicao = null; // Mapeado para null por compatibilidade (condições comeciais vêm em observações)
@@ -90,8 +92,9 @@ export async function handleAprovacao(req: any, res: any) {
     // Gerar link (Protegido)
     if (method === 'POST' && req.url.includes('gerar')) {
       const auth = validateAuth(req);
-      if (!auth.authorized) return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
-      const tenantId = auth.user?.tenantId || '00000000-0000-0000-0000-000000000000';
+      if (!auth.authorized)
+        return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
+      const tenantId = req.tenantId; // injetado por tenantMiddleware
 
       const { quotation_id } = req.body;
       const newToken = crypto.randomUUID();
@@ -104,21 +107,16 @@ export async function handleAprovacao(req: any, res: any) {
           tokenAprovacao: newToken,
           urlAprovacao: url,
           status: 'enviado',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
-        .where(
-          and(
-            eq(quotations.id, quotation_id),
-            eq(quotations.tenantId, tenantId)
-          )
-        )
+        .where(and(eq(quotations.id, quotation_id), eq(quotations.tenantId, tenantId)))
         .returning({
           id: quotations.id,
           numero: quotations.numeroOrcamento,
           token_aprovacao: quotations.tokenAprovacao,
           url_aprovacao: quotations.urlAprovacao,
           status: quotations.status,
-          updated_at: quotations.updatedAt
+          updated_at: quotations.updatedAt,
         });
 
       return res.status(200).json({ success: true, data: result[0] });
@@ -136,15 +134,16 @@ export async function handleAprovacao(req: any, res: any) {
           aprovadoEm: new Date(),
           aprovadoIp: typeof ip === 'string' ? ip : String(ip || ''),
           aprovadoNome: nome,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(quotations.tokenAprovacao, token))
         .returning({
           id: quotations.id,
-          numero: quotations.numeroOrcamento
+          numero: quotations.numeroOrcamento,
         });
 
-      if (result.length === 0) return res.status(404).json({ success: false, error: 'Erro ao aprovar proposta' });
+      if (result.length === 0)
+        return res.status(404).json({ success: false, error: 'Erro ao aprovar proposta' });
 
       return res.status(200).json({ success: true, data: result[0] });
     }
@@ -158,10 +157,10 @@ export async function handleAprovacao(req: any, res: any) {
           status: 'revisao_solicitada',
           recusadoEm: new Date(),
           motivoRecusa: motivo,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(quotations.tokenAprovacao, token));
-      
+
       return res.status(200).json({ success: true });
     }
 

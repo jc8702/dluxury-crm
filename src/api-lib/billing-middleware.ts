@@ -35,15 +35,17 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
       return true;
     }
 
-    const tenantId = auth.user.tenantId || '00000000-0000-0000-0000-000000000000';
+    const tenantId = req.tenantId || auth.user?.tenantId; // fallback: tenantMiddleware pode não ter executado ainda
 
     // Buscar a assinatura ativa do tenant
-    const sub = (await sql`
+    const sub = (
+      await sql`
       SELECT status, current_period_end 
       FROM subscriptions 
       WHERE tenant_id = ${tenantId}::uuid
       LIMIT 1
-    `)[0];
+    `
+    )[0];
 
     // Se não houver assinatura cadastrada, assume-se plano básico e deixa passar (ou pode ser criado um default)
     if (!sub) {
@@ -54,7 +56,7 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
     if (sub.status === 'suspended' || sub.status === 'inactive') {
       res.status(402).json({
         success: false,
-        error: 'Assinatura suspensa por falta de pagamento. Acesso restrito a Somente Leitura.'
+        error: 'Assinatura suspensa por falta de pagamento. Acesso restrito a Somente Leitura.',
       });
       return false;
     }
@@ -69,7 +71,8 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
       if (diffDays > 5) {
         res.status(402).json({
           success: false,
-          error: 'Assinatura suspensa após tolerância de 5 dias de atraso. Regularize seu faturamento para reabilitar a escrita.'
+          error:
+            'Assinatura suspensa após tolerância de 5 dias de atraso. Regularize seu faturamento para reabilitar a escrita.',
         });
         return false;
       }

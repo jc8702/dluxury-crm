@@ -9,7 +9,7 @@ import { validateAuth } from './_db.js';
 export async function handleRetalhos(req: any, res: any) {
   const { authorized, error, user } = validateAuth(req);
   if (!authorized) return res.status(401).json({ success: false, error });
-  const tenantId = user?.tenantId || '00000000-0000-0000-0000-000000000000';
+  const tenantId = req.tenantId; // injetado por tenantMiddleware
 
   const method = req.method;
   const { id, action } = req.query || {};
@@ -18,21 +18,27 @@ export async function handleRetalhos(req: any, res: any) {
     switch (method) {
       case 'GET':
         if (id) {
-          const [item] = await db.select().from(retalhosEstoque).where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
-          if (!item) return res.status(404).json({ success: false, error: 'Retalho não encontrado' });
+          const [item] = await db
+            .select()
+            .from(retalhosEstoque)
+            .where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
+          if (!item)
+            return res.status(404).json({ success: false, error: 'Retalho não encontrado' });
           return res.status(200).json({ success: true, data: item });
         } else {
           // Listagem com filtros
           const { sku_chapa, largura_min, altura_min, disponivel, descartado } = req.query || {};
-          
+
           const query = db.select().from(retalhosEstoque);
           const filters = [eq(retalhosEstoque.tenantId, tenantId)];
 
           if (sku_chapa) filters.push(eq(retalhosEstoque.sku_chapa, sku_chapa));
           if (largura_min) filters.push(gte(retalhosEstoque.largura_mm, parseInt(largura_min)));
           if (altura_min) filters.push(gte(retalhosEstoque.altura_mm, parseInt(altura_min)));
-          if (disponivel !== undefined) filters.push(eq(retalhosEstoque.disponivel, disponivel === 'true'));
-          if (descartado !== undefined) filters.push(eq(retalhosEstoque.descartado, descartado === 'true'));
+          if (disponivel !== undefined)
+            filters.push(eq(retalhosEstoque.disponivel, disponivel === 'true'));
+          if (descartado !== undefined)
+            filters.push(eq(retalhosEstoque.descartado, descartado === 'true'));
 
           const results = await query.where(and(...filters)).orderBy(retalhosEstoque.created_at);
           return res.status(200).json({ success: true, data: results });
@@ -41,10 +47,19 @@ export async function handleRetalhos(req: any, res: any) {
       case 'POST':
         // Criar novo retalho usando SQL direto para evitar erros de mapeamento do Drizzle
         try {
-          const { 
-            largura_mm, altura_mm, espessura_mm, sku_chapa, origem, 
-            plano_corte_origem_id, projeto_origem, observacoes, 
-            localizacao, disponivel, descartado, metadata 
+          const {
+            largura_mm,
+            altura_mm,
+            espessura_mm,
+            sku_chapa,
+            origem,
+            plano_corte_origem_id,
+            projeto_origem,
+            observacoes,
+            localizacao,
+            disponivel,
+            descartado,
+            metadata,
           } = req.body;
 
           const usuario_criou = user?.name || req.body.usuario_criou || 'SISTEMA';
@@ -86,10 +101,10 @@ export async function handleRetalhos(req: any, res: any) {
         // Atualizar retalho (usar ou descartar)
         if (!id) return res.status(400).json({ success: false, error: 'ID necessário' });
 
-        const updateData: any = { 
-          ...req.body, 
+        const updateData: any = {
+          ...req.body,
           updated_at: new Date(),
-          usuario_atualizou: user?.name || 'SISTEMA'
+          usuario_atualizou: user?.name || 'SISTEMA',
         };
 
         if (action === 'usar') {
@@ -101,24 +116,29 @@ export async function handleRetalhos(req: any, res: any) {
           updateData.data_descarte = new Date();
         }
 
-        const [atualizado] = await db.update(retalhosEstoque)
+        const [atualizado] = await db
+          .update(retalhosEstoque)
           .set(updateData)
           .where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)))
           .returning();
-        
+
         return res.status(200).json({ success: true, data: atualizado });
       }
 
       case 'DELETE': {
         if (!id) return res.status(400).json({ success: false, error: 'ID necessário' });
 
-        const [retalho] = await db.select({ sku: retalhosEstoque.sku }).from(retalhosEstoque).where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
-        
+        const [retalho] = await db
+          .select({ sku: retalhosEstoque.sku })
+          .from(retalhosEstoque)
+          .where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
+
         if (retalho && retalho.sku) {
           const { sql: rawSql } = await import('./_db.js');
-          
+
           // Encontrar material vinculado
-          const matRes = await (rawSql as any)`SELECT id FROM materiais WHERE sku = ${retalho.sku} AND tenant_id = ${tenantId}`;
+          const matRes =
+            await (rawSql as any)`SELECT id FROM materiais WHERE sku = ${retalho.sku} AND tenant_id = ${tenantId}`;
           if (Array.isArray(matRes) && matRes.length > 0) {
             const matId = matRes[0].id;
             // Remover movimentações vinculadas ao material
@@ -131,7 +151,9 @@ export async function handleRetalhos(req: any, res: any) {
           await (rawSql as any)`DELETE FROM movimentacoes_estoque WHERE retalho_id = ${id} AND tenant_id = ${tenantId}`;
         }
 
-        await db.delete(retalhosEstoque).where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
+        await db
+          .delete(retalhosEstoque)
+          .where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)));
         return res.status(200).json({ success: true });
       }
 
