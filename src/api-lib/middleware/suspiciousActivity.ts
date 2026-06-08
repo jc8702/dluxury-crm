@@ -11,6 +11,7 @@
 
 import * as Sentry from '@sentry/node';
 import type { TenantId } from '../../types/tenant.js';
+import { logger } from '../logger.js';
 
 export type SuspiciousReason =
   | 'MISSING_TENANT_CLAIM'
@@ -56,7 +57,7 @@ export function logSuspicious(event: SuspiciousEvent, req?: any): void {
     };
 
     if (process.env.NODE_ENV !== 'production') {
-      console.error(
+      logger.error(
         '[suspicious]',
         JSON.stringify({
           tag: 'tenant_isolation_violation',
@@ -85,7 +86,7 @@ export function logSuspicious(event: SuspiciousEvent, req?: any): void {
     }
   } catch (loggingError) {
     try {
-      console.error('[suspicious-logger-failed]', String(loggingError));
+      logger.error('[suspicious-logger-failed]', String(loggingError));
     } catch {
       /* swallow */
     }

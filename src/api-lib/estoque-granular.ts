@@ -3,6 +3,7 @@ import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js
 import { db } from './drizzle-db.js';
 import { quotations } from '../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
+import { logger } from './logger.js';
 
 // Função para calcular a similaridade de strings (Sorensen-Dice Coefficient)
 function stringSimilarity(s1: string, s2: string): number {
@@ -72,7 +73,7 @@ async function verificarAlertas(skuCodigo: string, tenantId: string) {
       `;
     }
   } catch (err) {
-    console.error('Erro ao verificar alertas de estoque:', err);
+    logger.error('Erro ao verificar alertas de estoque:', err);
   }
 }
 
@@ -161,13 +162,10 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
         req.body;
 
       if (!sku_codigo || !tipo_movimento || quantidade === undefined || !status_alvo) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              'Parâmetros sku_codigo, tipo_movimento, quantidade e status_alvo são obrigatórios',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Parâmetros sku_codigo, tipo_movimento, quantidade e status_alvo são obrigatórios',
+        });
       }
 
       const qtdMov = Number(quantidade);
@@ -184,12 +182,10 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
       `;
 
       if (!item) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: `SKU '${sku_codigo}' não encontrado no estoque detalhado`,
-          });
+        return res.status(404).json({
+          success: false,
+          error: `SKU '${sku_codigo}' não encontrado no estoque detalhado`,
+        });
       }
 
       // Mapear status_alvo para a coluna física correspondente
@@ -203,13 +199,11 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
 
       const colunaFisica = colunaMapeada[status_alvo];
       if (!colunaFisica) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              'Status alvo inválido. Deve ser: disponivel, em_transito, provisionado, defeituoso ou vencido',
-          });
+        return res.status(400).json({
+          success: false,
+          error:
+            'Status alvo inválido. Deve ser: disponivel, em_transito, provisionado, defeituoso ou vencido',
+        });
       }
 
       const saldoAnterior = Number(item[colunaFisica] || 0);
@@ -233,12 +227,10 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
       }
 
       if (saldoNovo < 0) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: `Estoque insuficiente para a coluna ${status_alvo} (Saldo atual: ${saldoAnterior}, Tentativa de saída: ${qtdMov})`,
-          });
+        return res.status(400).json({
+          success: false,
+          error: `Estoque insuficiente para a coluna ${status_alvo} (Saldo atual: ${saldoAnterior}, Tentativa de saída: ${qtdMov})`,
+        });
       }
 
       // 2. Registrar na tabela movimento_estoque_granular
@@ -278,14 +270,12 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
       // 4. Verificar alertas (mínimo atingido, falta)
       await verificarAlertas(sku_codigo, tenantId);
 
-      return res
-        .status(200)
-        .json({
-          success: true,
-          saldo_novo: saldoNovo,
-          quantidade_total: novoTotal,
-          valor_total_estoque: novoValorTotal,
-        });
+      return res.status(200).json({
+        success: true,
+        saldo_novo: saldoNovo,
+        quantidade_total: novoTotal,
+        valor_total_estoque: novoValorTotal,
+      });
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -525,7 +515,7 @@ const handleEstoqueGranularCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('Erro na API de estoque granular:', err);
+    logger.error('Erro na API de estoque granular:', err);
     return res
       .status(500)
       .json({ success: false, error: err.message || 'Erro interno do servidor' });

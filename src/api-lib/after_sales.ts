@@ -1,4 +1,5 @@
 import { sql, validateAuth } from './_db.js';
+import { logger } from './logger.js';
 
 export async function handleAfterSales(req: any, res: any) {
   try {
@@ -94,7 +95,7 @@ export async function handleAfterSales(req: any, res: any) {
 
     return res.status(405).end();
   } catch (err: any) {
-    console.error('AFTER_SALES_ERROR:', err);
+    logger.error('AFTER_SALES_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }

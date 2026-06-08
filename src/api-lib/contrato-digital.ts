@@ -3,6 +3,7 @@ import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems } from '../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
+import { logger } from './logger.js';
 
 // Refatorado para usar quotations via Drizzle ORM
 // Rotas afetadas: /api/contratos/{status,gerar-e-enviar,webhook-assinatura}.
@@ -451,7 +452,7 @@ const handleContratoDigitalCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('Erro na API de contratos:', err);
+    logger.error('Erro na API de contratos:', err);
     return res
       .status(500)
       .json({ success: false, error: err.message || 'Erro interno do servidor' });

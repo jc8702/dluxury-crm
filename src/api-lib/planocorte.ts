@@ -10,6 +10,7 @@ import { eq, ilike, or, isNull, and, sql } from 'drizzle-orm';
 import { auditLog, sql as rawSql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { logger } from './logger.js';
+import { requireFeature } from './middleware/featureGate.js';
 
 function safeUuid(val: any): string | null {
   if (!val || typeof val !== 'string') return null;
@@ -41,6 +42,8 @@ const handlePlanoCorteCore: TenantHandler = async (req, res) => {
   const { id } = req.query || {};
 
   try {
+    await requireFeature('simulator')(req, res, () => {});
+    if (res.headersSent) return;
     switch (method) {
       case 'GET':
         if (id) {
@@ -421,6 +424,8 @@ const handleChapasCore: TenantHandler = async (req, res) => {
 
   const { q } = req.query || {};
   try {
+    await requireFeature('simulator')(req, res, () => {});
+    if (res.headersSent) return;
     const termText = String(q || '').trim();
 
     // 1. Buscar no Estoque (Tabela materiais)
@@ -523,6 +528,8 @@ const handleEngenhariaSKUsCore: TenantHandler = async (req, res) => {
 
   const { q } = req.query || {};
   try {
+    await requireFeature('simulator')(req, res, () => {});
+    if (res.headersSent) return;
     const termText = String(q || '').trim();
     if (termText) {
       const term = `%${termText}%`;
@@ -556,6 +563,8 @@ const handleImportarDesenhoCore: TenantHandler = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    await requireFeature('simulator')(req, res, () => {});
+    if (res.headersSent) return;
     const { fileBase64 } = req.body;
     if (!fileBase64)
       return res.status(400).json({ success: false, error: 'ARQUIVO NÃO FORNECIDO' });

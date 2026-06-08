@@ -1,4 +1,5 @@
 import { sql, validateAuth } from './_db.js';
+import { logger } from './logger.js';
 
 /**
  * Middleware para verificar o status da assinatura do tenant.
@@ -80,7 +81,7 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
 
     return true;
   } catch (err: any) {
-    console.error('[BILLING_MIDDLEWARE_ERROR]', err);
+    logger.error('[BILLING_MIDDLEWARE_ERROR]', err);
     // Em caso de falha de banco de dados no middleware, deixa passar para não parar a aplicação
     return true;
   }

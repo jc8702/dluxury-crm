@@ -1,8 +1,12 @@
 import { sql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { requireFeature } from './middleware/featureGate.js';
+import { logger } from './logger.js';
 
 const handleWhatsAppCore: TenantHandler = async (req, res) => {
   try {
+    await requireFeature('whatsapp')(req, res, () => {});
+    if (res.headersSent) return;
     const tenantId = req.tenantId;
     const user = req.tenantUser;
     const method = req.method;
@@ -44,12 +48,10 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
         queryStr += ` AND c.operacao_prod_id = $${paramCount}::uuid`;
         params.push(operacao_prod_id);
       } else {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Parâmetro quotation_id ou operacao_prod_id é obrigatório',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Parâmetro quotation_id ou operacao_prod_id é obrigatório',
+        });
       }
 
       queryStr += ` ORDER BY m.timestamp_msg ASC`;
@@ -99,12 +101,10 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       const { quotation_id, operacao_prod_id, numero_telefone, conteudo_msg, tags } = req.body;
 
       if (!conteudo_msg || !numero_telefone) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Parâmetros numero_telefone e conteudo_msg são obrigatórios',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Parâmetros numero_telefone e conteudo_msg são obrigatórios',
+        });
       }
 
       // 1. Verificar/criar conversa
@@ -177,7 +177,7 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
       `;
 
       // 3. Simular envio e atualização de status em background (entrega -> leitura em segundos)
-      simulateDeliveryPipeline(newMsg.id, tenantId).catch(console.error);
+      simulateDeliveryPipeline(newMsg.id, tenantId).catch(logger.error);
 
       return res.status(200).json({
         success: true,
@@ -261,7 +261,7 @@ const handleWhatsAppCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('[WHATSAPP_ERROR]', err);
+    logger.error('[WHATSAPP_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -307,6 +307,6 @@ async function seedDefaultModelos(tenantId: string) {
       `;
     }
   } catch (e: any) {
-    console.error('Seed Default Modelos Error:', e.message);
+    logger.error('Seed Default Modelos Error:', e.message);
   }
 }

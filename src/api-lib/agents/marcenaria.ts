@@ -2,10 +2,11 @@ import { db } from '../drizzle-db.js';
 import { conhecimentoMarcenaria } from '../../db/schema/conhecimento.js';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { logger } from '../logger.js';
 
 async function getEmbeddingForQuery(text: string, apiKey: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -14,16 +15,16 @@ async function getEmbeddingForQuery(text: string, apiKey: string): Promise<numbe
     body: JSON.stringify({
       model: 'models/text-embedding-004',
       content: {
-        parts: [{ text }]
-      }
-    })
+        parts: [{ text }],
+      },
+    }),
   });
 
   if (!response.ok) {
     throw new Error(`Erro na API do Gemini de Embeddings: ${response.status}`);
   }
 
-  const result = await response.json() as any;
+  const result = (await response.json()) as any;
   return result?.embedding?.values || [];
 }
 
@@ -41,7 +42,7 @@ function getSimulatedQueryEmbedding(text: string): number[] {
     vector.push(value);
   }
   const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
-  return vector.map(val => val / magnitude);
+  return vector.map((val) => val / magnitude);
 }
 
 export async function ragConhecimentoTecnico(query: string, apiKey: string): Promise<string> {
@@ -73,10 +74,10 @@ export async function ragConhecimentoTecnico(query: string, apiKey: string): Pro
     }
 
     return results
-      .map(r => `### Tópico: ${r.titulo} (Categoria: ${r.categoria})\n${r.conteudo}`)
+      .map((r) => `### Tópico: ${r.titulo} (Categoria: ${r.categoria})\n${r.conteudo}`)
       .join('\n\n');
   } catch (err: any) {
-    console.error('RAG Error:', err);
+    logger.error('RAG Error:', err);
     return `Erro ao realizar a busca RAG: ${err.message}`;
   }
 }
@@ -96,9 +97,12 @@ DIRETRIZES DE RESPOSTA:
 `,
   tools: {
     ragConhecimentoTecnico: {
-      description: 'Busca diretrizes e regras técnicas na base de RAG sobre marcenaria, ergonomia, folgas, ferragens e materiais.',
+      description:
+        'Busca diretrizes e regras técnicas na base de RAG sobre marcenaria, ergonomia, folgas, ferragens e materiais.',
       schema: z.object({
-        query: z.string().describe('A dúvida conceitual técnica do usuário sobre marcenaria ou ergonomia'),
+        query: z
+          .string()
+          .describe('A dúvida conceitual técnica do usuário sobre marcenaria ou ergonomia'),
       }),
       execute: async (args: { query: string }, ctx: { apiKey: string }) => {
         const text = await ragConhecimentoTecnico(args.query, ctx.apiKey);
@@ -112,7 +116,7 @@ DIRETRIZES DE RESPOSTA:
             'Analisar resistência de prateleiras',
           ],
         };
-      }
-    }
-  }
+      },
+    },
+  },
 };

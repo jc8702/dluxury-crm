@@ -1,4 +1,5 @@
 import { sql } from './_db.js';
+import { logger } from './logger.js';
 
 export async function reserveStockForProject(projectItemId: string, tenantId: string) {
   try {
@@ -11,7 +12,7 @@ export async function reserveStockForProject(projectItemId: string, tenantId: st
       DO UPDATE SET estoque_reservado = erp_inventory.estoque_reservado + EXCLUDED.estoque_reservado
     `;
   } catch (err) {
-    console.error('Erro ao reservar estoque:', err);
+    logger.error('Erro ao reservar estoque:', err);
     throw err;
   }
 }
@@ -29,7 +30,7 @@ export async function writeOffStockForProject(projectItemId: string, tenantId: s
         AND ei.tenant_id = ${tenantId}::uuid
     `;
   } catch (err) {
-    console.error('Erro ao dar baixa no estoque:', err);
+    logger.error('Erro ao dar baixa no estoque:', err);
     throw err;
   }
 }
@@ -48,7 +49,7 @@ export async function writeOffStockForProjectBatch(projectId: string, tenantId: 
         AND ei.tenant_id = ${tenantId}::uuid
     `;
   } catch (err) {
-    console.error('Erro ao dar baixa em lote no estoque:', err);
+    logger.error('Erro ao dar baixa em lote no estoque:', err);
     throw err;
   }
 }
@@ -65,7 +66,7 @@ export async function releaseStockForProject(projectItemId: string, tenantId: st
         AND ei.tenant_id = ${tenantId}::uuid
     `;
   } catch (err) {
-    console.error('Erro ao liberar reserva de estoque:', err);
+    logger.error('Erro ao liberar reserva de estoque:', err);
     throw err;
   }
 }

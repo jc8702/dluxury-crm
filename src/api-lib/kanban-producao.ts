@@ -1,5 +1,6 @@
 import { sql, auditLog } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
   try {
@@ -77,7 +78,7 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         a_fazer: [],
         em_progresso: [],
         bloqueado: [],
-        concluido: []
+        concluido: [],
       };
 
       cards.forEach((card: any) => {
@@ -131,8 +132,11 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         FROM etapas_prod_kanban
         WHERE operacao_prod_id = ${etapa.operacao_prod_id} AND tenant_id = ${tenantId}::uuid
       `;
-      
-      if (totalEtapas.length && parseInt(totalEtapas[0].count) === parseInt(totalEtapas[0].concluidas)) {
+
+      if (
+        totalEtapas.length &&
+        parseInt(totalEtapas[0].count) === parseInt(totalEtapas[0].concluidas)
+      ) {
         await sql`
           UPDATE ordens_prod 
           SET status = 'concluído', data_conclusao = CURRENT_DATE, updated_at = NOW()
@@ -142,7 +146,7 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
           const { autoCreateCustosReaisOP } = await import('./rentabilidade.js');
           await autoCreateCustosReaisOP(etapa.operacao_prod_id, tenantId);
         } catch (err) {
-          console.error('[AUTO_CREATE_CUSTOS_REAIS_OP_ERROR]', err);
+          logger.error('[AUTO_CREATE_CUSTOS_REAIS_OP_ERROR]', err);
         }
       } else {
         // Se começou pelo menos uma e não terminou todas
@@ -154,7 +158,14 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
       }
 
       // Auditar ação
-      await auditLog('etapas_prod_kanban', String(etapa_kanban_id), 'MOVE_CARD', user.id, { status_anterior }, etapa);
+      await auditLog(
+        'etapas_prod_kanban',
+        String(etapa_kanban_id),
+        'MOVE_CARD',
+        user.id,
+        { status_anterior },
+        etapa,
+      );
 
       return res.status(200).json({ success: true, data: etapa });
     }
@@ -228,12 +239,12 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         ORDER BY m.timestamp_movimento DESC
       `;
 
-      return res.status(200).json({ 
-        success: true, 
-        data: { 
+      return res.status(200).json({
+        success: true,
+        data: {
           etapa,
-          historico 
-        } 
+          historico,
+        },
       });
     }
 
@@ -254,7 +265,7 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
   } catch (err: any) {
-    console.error('[KANBAN_PRODUCAO_ERROR]', err);
+    logger.error('[KANBAN_PRODUCAO_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };

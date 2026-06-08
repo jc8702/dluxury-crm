@@ -598,6 +598,58 @@ Instrução para operação manual:
 
 ---
 
+---
+
+## 17 — E2E CI, FEATURE GATES, LOGGER COVERAGE, BUNDLE SIZE — 2026-06-08
+
+### TAREFA 1 — E2E job adicionado ao GitHub Actions CI
+
+`.github/workflows/ci.yml` — novo job `e2e` após `lint-and-test`:
+
+- `playwright install chromium --with-deps`
+- `vite preview --port 5173` + `wait-on http://localhost:5173`
+- `playwright test tests/e2e/tenant-isolation.spec.ts`
+- Upload de artefato `playwright-report` em caso de falha
+
+### TAREFA 2 — requireFeature aplicado nos endpoints críticos
+
+| Handler                     | Arquivo         | Feature     |
+| --------------------------- | --------------- | ----------- |
+| `handleSimulationsCore`     | `projects.ts`   | `simulator` |
+| `handleWhatsAppCore`        | `whatsapp.ts`   | `whatsapp`  |
+| `handlePlanoCorteCore`      | `planocorte.ts` | `simulator` |
+| `handleChapasCore`          | `planocorte.ts` | `simulator` |
+| `handleEngenhariaSKUsCore`  | `planocorte.ts` | `simulator` |
+| `handleImportarDesenhoCore` | `planocorte.ts` | `simulator` |
+
+Defense in depth: o `feature-gate-middleware.ts` já bloqueava estas rotas no router; agora cada handler também valida o feature gate internamente.
+
+### TAREFA 3 — console.\* substituído por logger em 25 arquivos
+
+Todos os `console.error` / `console.warn` / `console.log` em handlers e serviços de `src/api-lib/` (excluindo `__tests__/`) foram substituídos por `logger.error` / `logger.warn` / `logger.info`. Arquivos impactados: `_bomEngine.ts`, `_db.ts`, `_inventory.ts`, `after_sales.ts`, `agenda.ts`, `asaas-service.ts`, `billing-middleware.ts`, `checkout.ts`, `contrato-digital.ts`, `copilot.ts`, `drizzle-db.ts`, `estoque-granular.ts`, `feature-gate-middleware.ts`, `importacao-projetos.ts`, `kanban-producao.ts`, `notificacoes.ts`, `rentabilidade.ts`, `retalhos.ts`, `saas-admin.ts`, `tenant-provisioning.ts`, `whatsapp.ts`, `services/auditLogService.ts`, `middleware/auditMiddleware.ts`, `middleware/suspiciousActivity.ts`, `agents/marcenaria.ts`.
+
+### TAREFA 4 — Bundle size medido
+
+```
+Build: 5813 modules, 44.80s
+Maiores chunks JS:
+  chunk-3d                                    923,71 kB
+  EngineeringPage                             661,53 kB
+  PlanoCorteIndustrialPage                    527,41 kB
+  jspdf.es.min                                380,92 kB
+  CartesianChart                              325,14 kB
+  RetalhosPage                                282,57 kB
+  chunk-vendor                                248,53 kB
+  html2canvas.esm                             197,19 kB
+  index.es (pdf lib)                          155,26 kB
+  SimuladorCortePage                          120,32 kB
+```
+
+### Validação
+
+- [x] `npm run build` — sucesso (5813 modules)
+- [x] Commit e push para `origin/main`
+
 ## 16 — SILENT-FALLBACK CLEANUP + AUDIT LOGS SCHEMA + N+1 FIX — 2026-06-08
 
 ### TAREFA 1 — Silent-fallback eliminado em 5 arquivos

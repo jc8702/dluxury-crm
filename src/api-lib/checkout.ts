@@ -1,5 +1,6 @@
 import { sql, validateAuth } from './_db.js';
 import { AsaasService } from './asaas-service.js';
+import { logger } from './logger.js';
 
 export async function handleCheckout(req: any, res: any) {
   try {
@@ -30,23 +31,31 @@ export async function handleCheckout(req: any, res: any) {
 
       const sub = subRes[0];
       const invoices = [];
-      const startDate = sub.created_at ? new Date(sub.created_at) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const startDate = sub.created_at
+        ? new Date(sub.created_at)
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const diaVenc = sub.dia_vencimento || 5;
       const today = new Date();
-      
+
       // Começar a gerar faturas a partir do primeiro mês de assinatura
-      let currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, diaVenc);
-      
-      while (currentDate <= today || (currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear())) {
-        const isCurrentMonth = currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
-        
+      const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, diaVenc);
+
+      while (
+        currentDate <= today ||
+        (currentDate.getMonth() === today.getMonth() &&
+          currentDate.getFullYear() === today.getFullYear())
+      ) {
+        const isCurrentMonth =
+          currentDate.getMonth() === today.getMonth() &&
+          currentDate.getFullYear() === today.getFullYear();
+
         let invoiceStatus = 'pago';
         if (sub.status === 'overdue' && isCurrentMonth) {
           invoiceStatus = 'pendente';
         } else if (sub.status === 'suspended') {
           invoiceStatus = 'cancelado';
         }
-        
+
         invoices.push({
           id: `fat_${tenantId.substring(0, 4)}_${currentDate.getFullYear()}${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`,
           competencia: `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`,
@@ -54,17 +63,17 @@ export async function handleCheckout(req: any, res: any) {
           dataVencimento: currentDate.toISOString().split('T')[0],
           status: invoiceStatus,
           metodoPagamento: 'Boleto Bancário',
-          linkPdf: `https://sandbox.asaas.com/i/mock_invoice_${currentDate.getFullYear()}_${currentDate.getMonth() + 1}`
+          linkPdf: `https://sandbox.asaas.com/i/mock_invoice_${currentDate.getFullYear()}_${currentDate.getMonth() + 1}`,
         });
-        
+
         currentDate.setMonth(currentDate.getMonth() + 1);
       }
-      
+
       invoices.reverse();
 
       return res.status(200).json({
         success: true,
-        data: invoices
+        data: invoices,
       });
     }
 
@@ -75,7 +84,7 @@ export async function handleCheckout(req: any, res: any) {
         SET status = 'suspended', updated_at = NOW() 
         WHERE tenant_id = ${tenantId}::uuid
       `;
-      
+
       await sql`
         UPDATE tenants 
         SET status = 'inativo' 
@@ -84,7 +93,7 @@ export async function handleCheckout(req: any, res: any) {
 
       return res.status(200).json({
         success: true,
-        message: 'Assinatura cancelada com sucesso.'
+        message: 'Assinatura cancelada com sucesso.',
       });
     }
 
@@ -97,16 +106,16 @@ export async function handleCheckout(req: any, res: any) {
         LIMIT 1
       `;
 
-      const sub = subRes[0] || { valor: 197.00 };
+      const sub = subRes[0] || { valor: 197.0 };
 
       return res.status(200).json({
         success: true,
         data: {
-          codigoBarras: "34191.79001 01043.513184 91020.150008 7 90000000019700",
-          linkPdf: "https://sandbox.asaas.com/i/mock_boleto_url",
+          codigoBarras: '34191.79001 01043.513184 91020.150008 7 90000000019700',
+          linkPdf: 'https://sandbox.asaas.com/i/mock_boleto_url',
           vencimento: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          valor: parseFloat(sub.valor || '197.00')
-        }
+          valor: parseFloat(sub.valor || '197.00'),
+        },
       });
     }
 
@@ -125,15 +134,15 @@ export async function handleCheckout(req: any, res: any) {
           data: {
             status: 'trial',
             plano: 'pro',
-            valor: 197.00,
+            valor: 197.0,
             diasRestantes: 14,
-            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-          }
+            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          },
         });
       }
 
       const sub = subRes[0];
-      
+
       const periodEnd = sub.current_period_end ? new Date(sub.current_period_end) : new Date();
       const diffTime = periodEnd.getTime() - Date.now();
       const diasRestantes = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
@@ -153,8 +162,8 @@ export async function handleCheckout(req: any, res: any) {
           diaVencimento: sub.dia_vencimento,
           currentPeriodEnd: sub.current_period_end,
           diasRestantes,
-          invoiceUrl
-        }
+          invoiceUrl,
+        },
       });
     }
 
@@ -168,38 +177,47 @@ export async function handleCheckout(req: any, res: any) {
       `;
 
       if (subRes.length === 0) {
-        return res.status(404).json({ success: false, error: 'Assinatura não encontrada para este tenant.' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Assinatura não encontrada para este tenant.' });
       }
 
       const sub = subRes[0];
       const asaas = new AsaasService();
       let invoiceUrl = '';
 
-      if (sub.asaas_subscription_id && !sub.asaas_subscription_id.startsWith('sub_mock_') && !sub.asaas_subscription_id.startsWith('sub_fail_')) {
+      if (
+        sub.asaas_subscription_id &&
+        !sub.asaas_subscription_id.startsWith('sub_mock_') &&
+        !sub.asaas_subscription_id.startsWith('sub_fail_')
+      ) {
         try {
           const asaasSub = await asaas.consultarStatusAssinatura(sub.asaas_subscription_id);
-          invoiceUrl = (asaasSub as any).invoiceUrl || `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
+          invoiceUrl =
+            (asaasSub as any).invoiceUrl ||
+            `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
         } catch {
           invoiceUrl = `https://sandbox.asaas.com/i/${sub.asaas_subscription_id}`;
         }
       } else {
         try {
-          const tenantRes = await sql`SELECT nome, email FROM tenants t JOIN users u ON u.tenant_id = t.id WHERE t.id = ${tenantId}::uuid AND u.role = 'admin' LIMIT 1`;
+          const tenantRes =
+            await sql`SELECT nome, email FROM tenants t JOIN users u ON u.tenant_id = t.id WHERE t.id = ${tenantId}::uuid AND u.role = 'admin' LIMIT 1`;
           const tenantNome = tenantRes[0]?.nome || 'Marcenaria CRM';
           const tenantEmail = tenantRes[0]?.email || 'comercial@marcenaria.com';
 
           const customer = await asaas.criarCliente({
             name: tenantNome,
             email: tenantEmail,
-            externalReference: tenantId
+            externalReference: tenantId,
           });
 
-          const valorPlano = sub.plano === 'basic' ? 97.00 : sub.plano === 'pro' ? 197.00 : 397.00;
+          const valorPlano = sub.plano === 'basic' ? 97.0 : sub.plano === 'pro' ? 197.0 : 397.0;
           const createdSub = await asaas.criarAssinatura({
             customer: customer.id,
             plano: sub.plano,
             valor: valorPlano,
-            externalReference: tenantId
+            externalReference: tenantId,
           });
 
           invoiceUrl = createdSub.invoiceUrl;
@@ -212,20 +230,22 @@ export async function handleCheckout(req: any, res: any) {
             WHERE tenant_id = ${tenantId}::uuid
           `;
         } catch (err: any) {
-          console.error('[RECREATE_ASAAS_SUB_ERROR]', err);
+          logger.error('[RECREATE_ASAAS_SUB_ERROR]', err);
           invoiceUrl = `https://sandbox.asaas.com/i/mock_recreate_${sub.plano}`;
         }
       }
 
       return res.status(200).json({
         success: true,
-        data: { invoiceUrl }
+        data: { invoiceUrl },
       });
     }
 
     return res.status(405).json({ success: false, error: 'Método não permitido.' });
   } catch (err: any) {
-    console.error('[CHECKOUT_ROUTE_ERROR]', err);
-    return res.status(500).json({ success: false, error: err.message || 'Erro interno no faturamento.' });
+    logger.error('[CHECKOUT_ROUTE_ERROR]', err);
+    return res
+      .status(500)
+      .json({ success: false, error: err.message || 'Erro interno no faturamento.' });
   }
 }

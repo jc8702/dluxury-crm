@@ -1,5 +1,6 @@
 import { sql } from './_db.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 const handleRentabilidadeCore: TenantHandler = async (req, res) => {
   try {
@@ -360,7 +361,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    console.error('[RENTABILIDADE_ERROR]', err);
+    logger.error('[RENTABILIDADE_ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
@@ -519,6 +520,6 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
       }
     }
   } catch (err) {
-    console.error('Error autoCreateCustosReaisOP:', err);
+    logger.error('Error autoCreateCustosReaisOP:', err);
   }
 }

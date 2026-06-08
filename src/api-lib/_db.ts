@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import jwt from 'jsonwebtoken';
+import { logger } from './logger.js';
 
 const dbUrl = process.env.DATABASE_URL || '';
 const JWT_SECRET = process.env.APP_JWT_SECRET;
@@ -183,6 +184,6 @@ export async function auditLog(
       VALUES (${entity_type}, ${entity_id}, ${action}, ${user_id}, ${JSON.stringify(data_before)}, ${JSON.stringify(data_after)})
     `;
   } catch (e: any) {
-    console.error('Audit Log Error:', e.message);
+    logger.error('Audit Log Error:', e.message);
   }
 }

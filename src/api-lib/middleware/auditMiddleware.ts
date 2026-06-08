@@ -1,4 +1,5 @@
 import { logAudit } from '../services/auditLogService.js';
+import { logger } from '../logger.js';
 
 function getClientIP(req: any): string {
   const forwarded = req.headers?.['x-forwarded-for'];
@@ -78,7 +79,7 @@ export function auditMiddleware(req: any, res: any, next: () => void): void {
         newValues: bodySnapshot,
         ipAddress: getClientIP(req),
         userAgent: getUserAgent(req),
-      }).catch((err) => console.error('[auditMiddleware] async log error:', err));
+      }).catch((err) => logger.error('[auditMiddleware] async log error:', err));
     }
 
     if (action === 'DELETE' && tenantId) {
@@ -92,7 +93,7 @@ export function auditMiddleware(req: any, res: any, next: () => void): void {
         newValues: {},
         ipAddress: getClientIP(req),
         userAgent: getUserAgent(req),
-      }).catch((err) => console.error('[auditMiddleware] async log error:', err));
+      }).catch((err) => logger.error('[auditMiddleware] async log error:', err));
     }
 
     return originalJson(body);

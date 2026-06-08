@@ -2,6 +2,7 @@ import { sql, validateAuth } from './_db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { config } from './config/validateEnv.js';
+import { logger } from './logger.js';
 
 const MASTER_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -18,12 +19,10 @@ export async function handleSaaSAdmin(req: any, res: any) {
     const isMasterAdminEmail = auth.user.email === config.ADMIN_DEFAULT_EMAIL;
 
     if (!isMasterTenant && !isMasterAdminEmail) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Acesso negado. Apenas o administrador SaaS global tem acesso.',
-        });
+      return res.status(403).json({
+        success: false,
+        error: 'Acesso negado. Apenas o administrador SaaS global tem acesso.',
+      });
     }
 
     const cleanUrl = (req.url || '').split('?')[0];
@@ -148,12 +147,10 @@ export async function handleSaaSAdmin(req: any, res: any) {
       const { tenantId, name, email, role, password } = req.body;
 
       if (!tenantId || !name || !email || !role || !password) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: 'Todos os campos são obrigatórios: tenantId, name, email, role, password.',
-          });
+        return res.status(400).json({
+          success: false,
+          error: 'Todos os campos são obrigatórios: tenantId, name, email, role, password.',
+        });
       }
 
       const emailNormalized = email.trim().toLowerCase();
@@ -219,7 +216,7 @@ export async function handleSaaSAdmin(req: any, res: any) {
       .status(405)
       .json({ success: false, error: 'Método não permitido ou rota inexistente.' });
   } catch (err: any) {
-    console.error('[SAAS_ADMIN_ROUTE_ERROR]', err);
+    logger.error('[SAAS_ADMIN_ROUTE_ERROR]', err);
     return res
       .status(500)
       .json({ success: false, error: err.message || 'Erro interno na rota SaaS Admin.' });

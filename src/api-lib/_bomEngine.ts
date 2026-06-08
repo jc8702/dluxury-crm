@@ -1,4 +1,5 @@
 import { create, all } from 'mathjs';
+import { logger } from './logger.js';
 
 const math = create(all);
 
@@ -15,16 +16,16 @@ export interface BOMItem {
  */
 export async function calculateBOM(paramsJson: any, bom: BOMItem[]) {
   if (!bom || !Array.isArray(bom)) return [];
-  
+
   const context: Record<string, number> = {};
-  
+
   // Normalizar parâmetros para caixa alta e validar se são números
   Object.entries(paramsJson || {}).forEach(([key, val]) => {
     const numVal = Number(val);
     context[key.toUpperCase()] = isNaN(numVal) ? 0 : numVal;
   });
 
-  return bom.map(item => {
+  return bom.map((item) => {
     try {
       let formula = item.formula_quantidade;
 
@@ -45,12 +46,12 @@ export async function calculateBOM(paramsJson: any, bom: BOMItem[]) {
       const liquidQty = typeof rawQty === 'number' && !isNaN(rawQty) ? rawQty : 0;
 
       // 2. Fator de Perda
-      let lossFactor = 1.10;
+      let lossFactor = 1.1;
       try {
         const rawLoss = math.evaluate(item.formula_perda || '1.10', context);
-        lossFactor = typeof rawLoss === 'number' && !isNaN(rawLoss) ? rawLoss : 1.10;
+        lossFactor = typeof rawLoss === 'number' && !isNaN(rawLoss) ? rawLoss : 1.1;
       } catch {
-        console.warn(`Erro na fórmula de perda para ${item.componente_nome}, usando default 1.10`);
+        logger.warn(`Erro na fórmula de perda para ${item.componente_nome}, usando default 1.10`);
       }
 
       const qtyWithLoss = liquidQty * lossFactor;
@@ -64,19 +65,18 @@ export async function calculateBOM(paramsJson: any, bom: BOMItem[]) {
         nome: item.componente_nome,
         quantidade_liquida: Number(liquidQty.toFixed(4)),
         quantidade_com_perda: finalQty,
-        sucesso: true
+        sucesso: true,
       };
     } catch (err) {
-      console.error(`[BOM_ENGINE_ERROR] Erro no cálculo de ${item.componente_nome}:`, err);
-      return { 
-        sku_id: item.sku_id, 
-        nome: item.componente_nome, 
-        quantidade_liquida: 0, 
+      logger.error(`[BOM_ENGINE_ERROR] Erro no cálculo de ${item.componente_nome}:`, err);
+      return {
+        sku_id: item.sku_id,
+        nome: item.componente_nome,
+        quantidade_liquida: 0,
         quantidade_com_perda: 0,
         sucesso: false,
-        erro: err instanceof Error ? err.message : 'Erro desconhecido'
+        erro: err instanceof Error ? err.message : 'Erro desconhecido',
       };
     }
   });
 }
-

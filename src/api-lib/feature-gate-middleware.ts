@@ -1,5 +1,6 @@
 import { sql, validateAuth } from './_db.js';
 import { PlanTier, hasFeature, PLAN_LIMITS } from '../lib/features.js';
+import { logger } from './logger.js';
 
 /**
  * Middleware para validar o Feature Gate e os limites do plano comercial do tenant.
@@ -110,7 +111,7 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
 
     return true;
   } catch (err: any) {
-    console.error('[FEATURE_GATE_MIDDLEWARE_ERROR]', err);
+    logger.error('[FEATURE_GATE_MIDDLEWARE_ERROR]', err);
     // Em caso de falha de infraestrutura interna, deixa prosseguir para evitar paralisar o sistema
     return true;
   }

@@ -1,4 +1,5 @@
 import { sql } from '../_db.js';
+import { logger } from '../logger.js';
 
 export interface AuditEntry {
   tenantId: string;
@@ -21,7 +22,7 @@ export async function logAudit(entry: AuditEntry): Promise<void> {
     const safeTenantId = isValidUUID(entry.tenantId) ? entry.tenantId : null;
 
     if (!safeTenantId) {
-      console.warn('[auditLogService] Auditoria ignorada: tenantId ausente ou inválido', entry);
+      logger.warn('[auditLogService] Auditoria ignorada: tenantId ausente ou inválido', entry);
       return;
     }
 
@@ -40,7 +41,7 @@ export async function logAudit(entry: AuditEntry): Promise<void> {
       );
     `;
   } catch (error: any) {
-    console.error('[auditLogService] Erro ao registrar auditoria:', error.message);
+    logger.error('[auditLogService] Erro ao registrar auditoria:', error.message);
   }
 }
 
@@ -108,7 +109,7 @@ export async function getAuditTrail(params: {
     const rows = await sql.query(query, values);
     return rows.rows || rows;
   } catch (error: any) {
-    console.error('[auditLogService] Erro ao consultar auditoria:', error.message);
+    logger.error('[auditLogService] Erro ao consultar auditoria:', error.message);
     return [];
   }
 }

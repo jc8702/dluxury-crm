@@ -3,10 +3,23 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AsaasService } from './asaas-service.js';
+import { logger } from './logger.js';
 
 const BLACKLIST_SUBDOMAINS = new Set([
-  'admin', 'api', 'www', 'app', 'dashboard', 'login', 'signup', 
-  'billing', 'support', 'default', 'dluxury', 'crm', 'mail', 'webmail'
+  'admin',
+  'api',
+  'www',
+  'app',
+  'dashboard',
+  'login',
+  'signup',
+  'billing',
+  'support',
+  'default',
+  'dluxury',
+  'crm',
+  'mail',
+  'webmail',
 ]);
 
 const JWT_SECRET = process.env.APP_JWT_SECRET;
@@ -58,7 +71,8 @@ export async function provisionarTenant(params: {
   }
 
   // 2. Verificar se subdomínio ou e-mail já estão em uso
-  const existingTenant = await sql`SELECT id FROM tenants WHERE subdominio = ${subNormalized} LIMIT 1`;
+  const existingTenant =
+    await sql`SELECT id FROM tenants WHERE subdominio = ${subNormalized} LIMIT 1`;
   if (existingTenant.length > 0) {
     throw new Error('Este subdomínio já está em uso.');
   }
@@ -92,32 +106,35 @@ export async function provisionarTenant(params: {
 
     try {
       const asaas = new AsaasService();
-      
+
       const customer = await asaas.criarCliente({
         name: empresa.trim().toUpperCase(),
         email: emailNormalized,
-        externalReference: tenantId
+        externalReference: tenantId,
       });
       asaasCustomerId = customer.id;
 
-      const valorPlano = plano === 'basic' ? 97.00 : plano === 'pro' ? 197.00 : 397.00;
+      const valorPlano = plano === 'basic' ? 97.0 : plano === 'pro' ? 197.0 : 397.0;
       const sub = await asaas.criarAssinatura({
         customer: asaasCustomerId,
         plano,
         valor: valorPlano,
-        externalReference: tenantId
+        externalReference: tenantId,
       });
       asaasSubscriptionId = sub.id;
       invoiceUrl = sub.invoiceUrl;
     } catch (asaasErr: any) {
-      console.error('[ASAAS_PROVISIONING_WARNING] Falha na integração do Asaas. Prosseguindo com dados mock.', asaasErr.message);
+      logger.error(
+        '[ASAAS_PROVISIONING_WARNING] Falha na integração do Asaas. Prosseguindo com dados mock.',
+        asaasErr.message,
+      );
       asaasCustomerId = `cus_mock_${crypto.randomUUID().substring(0, 8)}`;
       asaasSubscriptionId = `sub_mock_${crypto.randomUUID().substring(0, 8)}`;
       invoiceUrl = `https://sandbox.asaas.com/i/mock_${asaasSubscriptionId}`;
     }
 
     // 5. Criar Assinatura Local no Banco
-    const valorPlano = plano === 'basic' ? 97.00 : plano === 'pro' ? 197.00 : 397.00;
+    const valorPlano = plano === 'basic' ? 97.0 : plano === 'pro' ? 197.0 : 397.0;
     await sql`
       INSERT INTO subscriptions (id, tenant_id, asaas_customer_id, asaas_subscription_id, status, plano, valor, dia_vencimento, current_period_end)
       VALUES (${subscriptionId}, ${tenantId}, ${asaasCustomerId}, ${asaasSubscriptionId}, 'trial', ${plano}, ${valorPlano}, 5, NOW() + INTERVAL '14 days')
@@ -151,10 +168,10 @@ export async function provisionarTenant(params: {
         name: nomeAdmin.trim().toUpperCase(),
         tenantId,
         planoTier: plano,
-        subdominio: subNormalized
+        subdominio: subNormalized,
       },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     return {
@@ -168,12 +185,12 @@ export async function provisionarTenant(params: {
         role: 'admin',
         tenantId,
         planoTier: plano,
-        subdominio: subNormalized
-      }
+        subdominio: subNormalized,
+      },
     };
   } catch (err: any) {
     // Rollback manual simples para evitar registros órfãos em caso de falha de conexão/inserção parcial
-    console.error('[SIGNUP_PROVISIONING_ERROR]', err);
+    logger.error('[SIGNUP_PROVISIONING_ERROR]', err);
     await sql`DELETE FROM users WHERE tenant_id = ${tenantId}`.catch(() => {});
     await sql`DELETE FROM erp_categories WHERE tenant_id = ${tenantId}`.catch(() => {});
     await sql`DELETE FROM subscriptions WHERE tenant_id = ${tenantId}`.catch(() => {});
@@ -194,10 +211,16 @@ export async function handleSignup(req: any, res: any) {
         return res.status(400).json({ success: false, error: 'Subdomínio não informado.' });
       }
       const subNormalized = subdomain.trim().toLowerCase();
-      if (!/^[a-z0-9-]+$/.test(subNormalized) || subNormalized.length < 3 || subNormalized.length > 30 || BLACKLIST_SUBDOMAINS.has(subNormalized)) {
+      if (
+        !/^[a-z0-9-]+$/.test(subNormalized) ||
+        subNormalized.length < 3 ||
+        subNormalized.length > 30 ||
+        BLACKLIST_SUBDOMAINS.has(subNormalized)
+      ) {
         return res.status(200).json({ success: true, data: { disponivel: false } });
       }
-      const existing = await sql`SELECT id FROM tenants WHERE subdominio = ${subNormalized} LIMIT 1`;
+      const existing =
+        await sql`SELECT id FROM tenants WHERE subdominio = ${subNormalized} LIMIT 1`;
       return res.status(200).json({ success: true, data: { disponivel: existing.length === 0 } });
     }
 
@@ -210,12 +233,12 @@ export async function handleSignup(req: any, res: any) {
         email: body.email,
         senha: body.senha,
         nomeAdmin: body.nomeAdmin,
-        plano: body.plano
+        plano: body.plano,
       });
 
       return res.status(201).json({
         success: true,
-        data: result
+        data: result,
       });
     }
 
@@ -223,7 +246,7 @@ export async function handleSignup(req: any, res: any) {
   } catch (err: any) {
     return res.status(400).json({
       success: false,
-      error: err.message || 'Erro ao criar conta.'
+      error: err.message || 'Erro ao criar conta.',
     });
   }
 }

@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'; // No Node moderno, fetch é nativo, mas importamos ou usamos global para compatibilidade
+import { logger } from './logger.js';
 
 export interface AsaasCustomerParams {
   name: string;
@@ -25,34 +26,38 @@ export class AsaasService {
     this.apiKey = process.env.ASAAS_API_KEY || '';
   }
 
-  private async request<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', body?: any): Promise<T> {
+  private async request<T>(
+    path: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    body?: any,
+  ): Promise<T> {
     if (!this.apiKey) {
-      console.warn('[ASAAS_SERVICE] Chave ASAAS_API_KEY ausente. Simulando resposta.');
+      logger.warn('[ASAAS_SERVICE] Chave ASAAS_API_KEY ausente. Simulando resposta.');
       return this.simulateFallback<T>(path, method, body);
     }
 
     const url = `${this.baseUrl}${path}`;
     const headers = {
       'Content-Type': 'application/json',
-      'access_token': this.apiKey
+      access_token: this.apiKey,
     };
 
     try {
       const response = await fetch(url, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined
+        body: body ? JSON.stringify(body) : undefined,
       });
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error(`[ASAAS_API_ERROR] ${method} ${path}: Status ${response.status}`, errText);
+        logger.error(`[ASAAS_API_ERROR] ${method} ${path}: Status ${response.status}`, errText);
         throw new Error(`Erro na API do Asaas: ${response.status} - ${errText}`);
       }
 
       return (await response.json()) as T;
     } catch (err: any) {
-      console.error(`[ASAAS_REQUEST_FAILED] ${method} ${path}:`, err.message);
+      logger.error(`[ASAAS_REQUEST_FAILED] ${method} ${path}:`, err.message);
       throw err;
     }
   }
@@ -60,17 +65,17 @@ export class AsaasService {
   // Simular em Sandbox local se chave não estiver configurada no .env
   private simulateFallback<T>(path: string, method: string, body: any): any {
     const tenantId = body?.externalReference || 'mock-tenant-id';
-    
+
     if (path.startsWith('/customers') && method === 'POST') {
       return {
         object: 'customer',
         id: `cus_mock_${Math.random().toString(36).substring(2, 10)}`,
         name: body.name,
         email: body.email,
-        externalReference: tenantId
+        externalReference: tenantId,
       };
     }
-    
+
     if (path.startsWith('/subscriptions') && method === 'POST') {
       const subId = `sub_mock_${Math.random().toString(36).substring(2, 10)}`;
       return {
@@ -81,7 +86,7 @@ export class AsaasService {
         cycle: 'MONTHLY',
         status: 'ACTIVE',
         externalReference: tenantId,
-        invoiceUrl: `https://sandbox.asaas.com/i/mock_invoice_${subId}`
+        invoiceUrl: `https://sandbox.asaas.com/i/mock_invoice_${subId}`,
       };
     }
 
@@ -89,9 +94,9 @@ export class AsaasService {
       return {
         id: path.split('/').pop(),
         status: 'ACTIVE',
-        value: 197.00,
+        value: 197.0,
         cycle: 'MONTHLY',
-        nextDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        nextDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       };
     }
 
@@ -102,14 +107,14 @@ export class AsaasService {
    * Cria um cliente no painel do Asaas.
    */
   async criarCliente(params: AsaasCustomerParams): Promise<{ id: string }> {
-    console.log(`[ASAAS_SERVICE] Criando cliente para tenant ${params.externalReference}`);
+    logger.info(`[ASAAS_SERVICE] Criando cliente para tenant ${params.externalReference}`);
     const data = await this.request<{ id: string }>('/customers', 'POST', {
       name: params.name,
       email: params.email,
       phone: params.phone,
       cpfCnpj: params.cpfCnpj || undefined,
       externalReference: params.externalReference,
-      notificationDisabled: false
+      notificationDisabled: false,
     });
     return { id: data.id };
   }
@@ -117,9 +122,13 @@ export class AsaasService {
   /**
    * Cria uma assinatura mensal recorrente para o cliente.
    */
-  async criarAssinatura(params: AsaasSubscriptionParams): Promise<{ id: string; invoiceUrl: string }> {
-    console.log(`[ASAAS_SERVICE] Criando assinatura para customer ${params.customer}, plano ${params.plano}`);
-    
+  async criarAssinatura(
+    params: AsaasSubscriptionParams,
+  ): Promise<{ id: string; invoiceUrl: string }> {
+    logger.info(
+      `[ASAAS_SERVICE] Criando assinatura para customer ${params.customer}, plano ${params.plano}`,
+    );
+
     // Vencimento da primeira parcela: 3 dias a partir de hoje
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 3);
@@ -132,23 +141,25 @@ export class AsaasService {
       nextDueDate: formattedDueDate,
       cycle: 'MONTHLY',
       description: `Assinatura mensal D'Luxury CRM - Plano ${params.plano.toUpperCase()}`,
-      externalReference: params.externalReference
+      externalReference: params.externalReference,
     });
 
-    return { 
+    return {
       id: data.id,
-      invoiceUrl: data.invoiceUrl || `https://sandbox.asaas.com/i/${data.id}` // Fallback para sandbox link
+      invoiceUrl: data.invoiceUrl || `https://sandbox.asaas.com/i/${data.id}`, // Fallback para sandbox link
     };
   }
 
   /**
    * Consulta o status atual de uma assinatura no Asaas.
    */
-  async consultarStatusAssinatura(subscriptionId: string): Promise<{ status: string; nextDueDate: string }> {
+  async consultarStatusAssinatura(
+    subscriptionId: string,
+  ): Promise<{ status: string; nextDueDate: string }> {
     const data = await this.request<any>(`/subscriptions/${subscriptionId}`, 'GET');
     return {
       status: data.status, // ACTIVE, OVERDUE, SUSPENDED, CANCELED
-      nextDueDate: data.nextDueDate
+      nextDueDate: data.nextDueDate,
     };
   }
 }

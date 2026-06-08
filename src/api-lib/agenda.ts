@@ -1,5 +1,6 @@
 import { validateAuth } from './_db.js';
 import { AgendaService } from '../modules/agenda/application/AgendaService.js';
+import { logger } from './logger.js';
 
 const agendaService = new AgendaService();
 
@@ -77,7 +78,7 @@ export async function handleAgenda(req: any, res: any) {
 
     return res.status(405).end();
   } catch (err: any) {
-    console.error('[AGENDA API ERROR]', err);
+    logger.error('[AGENDA API ERROR]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }

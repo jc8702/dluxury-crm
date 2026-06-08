@@ -4,6 +4,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { writeOffStockForProjectBatch } from './_inventory.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 import { logger } from './logger.js';
+import { requireFeature } from './middleware/featureGate.js';
 
 const handleProjectsCore: TenantHandler = async (req, res) => {
   try {
@@ -601,6 +602,8 @@ const handleSKUsCore: TenantHandler = async (req, res) => {
 
 const handleSimulationsCore: TenantHandler = async (req, res) => {
   try {
+    await requireFeature('simulator')(req, res, () => {});
+    if (res.headersSent) return;
     const tenantId = req.tenantId;
     const user = req.tenantUser;
 

@@ -3,6 +3,7 @@ import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js
 import { db } from './drizzle-db.js';
 import { quotations, clientes } from '../db/schema/index.js';
 import { eq, and, lt } from 'drizzle-orm';
+import { logger } from './logger.js';
 
 const handleNotificacoesCore: TenantHandler = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const handleNotificacoesCore: TenantHandler = async (req, res) => {
 
     if (method === 'GET') {
       if (req.url.includes('contar')) {
-        await gerarNotificacoesAutomaticas(tenantId).catch(console.error);
+        await gerarNotificacoesAutomaticas(tenantId).catch(logger.error);
         const count =
           await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true, data: parseInt(count[0].count) });
@@ -102,7 +103,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       })),
     );
   } catch (e) {
-    console.error('Erro ao gerar notificações de estoque:', e);
+    logger.error('Erro ao gerar notificações de estoque:', e);
   }
 
   try {
@@ -127,7 +128,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       })),
     );
   } catch (e) {
-    console.error('Erro ao gerar notificações de projetos:', e);
+    logger.error('Erro ao gerar notificações de projetos:', e);
   }
 
   try {
@@ -160,7 +161,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       })),
     );
   } catch (e) {
-    console.error('Erro ao gerar notificações de orçamentos:', e);
+    logger.error('Erro ao gerar notificações de orçamentos:', e);
   }
 
   try {
@@ -183,7 +184,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       })),
     );
   } catch (e) {
-    console.error('Erro ao gerar notificações de garantia:', e);
+    logger.error('Erro ao gerar notificações de garantia:', e);
   }
 
   try {
@@ -206,7 +207,7 @@ export async function gerarNotificacoesAutomaticas(tenantId: string) {
       })),
     );
   } catch (e) {
-    console.error('Erro ao gerar notificações de cobrança:', e);
+    logger.error('Erro ao gerar notificações de cobrança:', e);
   }
 
   return { criadas };

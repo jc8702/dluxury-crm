@@ -2,83 +2,89 @@ import { db } from './drizzle-db.js';
 import { skuComponente } from '../db/schema/skus.js';
 import { ilike, or } from 'drizzle-orm';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import { logger } from './logger.js';
 
 /**
  * SERVIÇO DE IMPORTAÇÃO DE PROJETOS - BACKEND (Vercel Serverless)
- * Refatorado: Recebe apenas JSON para evitar limites de payload (413) 
+ * Refatorado: Recebe apenas JSON para evitar limites de payload (413)
  * e erros de DOMMatrix/Polyfills de PDF no Node.js.
  */
 
 export class ImportadorProjeto {
-    /**
-     * Mapeia os itens detectados (JSON) para os SKUs reais do banco de dados
-     */
-    static async mapearParaSKUs(itens: any[], tenantId: string) {
-        const result = [];
-        for (const item of itens) {
-            // Limpeza para busca: remove termos genéricos para aumentar chance de match
-            const cleanDesc = (item.nome || item.descricao || '')
-                .replace(/MDF/gi, '')
-                .replace(/\d+mm/gi, '')
-                .trim();
+  /**
+   * Mapeia os itens detectados (JSON) para os SKUs reais do banco de dados
+   */
+  static async mapearParaSKUs(itens: any[], tenantId: string) {
+    const result = [];
+    for (const item of itens) {
+      // Limpeza para busca: remove termos genéricos para aumentar chance de match
+      const cleanDesc = (item.nome || item.descricao || '')
+        .replace(/MDF/gi, '')
+        .replace(/\d+mm/gi, '')
+        .trim();
 
-            const material = item.material || '';
+      const material = item.material || '';
 
-            // Busca no banco por nome, código ou material
-            const matches = await db.select()
-                .from(skuComponente)
-                .where(or(
-                    ilike(skuComponente.nome, `%${cleanDesc}%`),
-                    ilike(skuComponente.codigo, `%${cleanDesc}%`),
-                    ilike(skuComponente.nome, `%${material}%`)
-                ))
-                .limit(1);
+      // Busca no banco por nome, código ou material
+      const matches = await db
+        .select()
+        .from(skuComponente)
+        .where(
+          or(
+            ilike(skuComponente.nome, `%${cleanDesc}%`),
+            ilike(skuComponente.codigo, `%${cleanDesc}%`),
+            ilike(skuComponente.nome, `%${material}%`),
+          ),
+        )
+        .limit(1);
 
-            result.push({
-                ...item,
-                match_sugerido: matches.length > 0 ? {
-                    sku_componente_id: matches[0].id,
-                    codigo: matches[0].codigo,
-                    nome: matches[0].nome,
-                    custoUnitario: matches[0].custoUnitario,
-                    confianca: 0.9
-                } : null
-            });
-        }
-        return result;
+      result.push({
+        ...item,
+        match_sugerido:
+          matches.length > 0
+            ? {
+                sku_componente_id: matches[0].id,
+                codigo: matches[0].codigo,
+                nome: matches[0].nome,
+                custoUnitario: matches[0].custoUnitario,
+                confianca: 0.9,
+              }
+            : null,
+      });
     }
+    return result;
+  }
 }
 
 const handleImportarProjetoCore: TenantHandler = async (req, res) => {
-    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
+  if (req.method !== 'POST')
+    return res.status(405).json({ success: false, error: 'M�todo n�o permitido' });
 
-    try {
-        const tenantId = req.tenantId;
+  try {
+    const tenantId = req.tenantId;
 
-        const { jsonData } = req.body;
-        
-        if (!jsonData || !Array.isArray(jsonData)) {
-            return res.status(400).json({ success: false, error: 'Dados JSON inválidos ou ausentes.' });
-        }
+    const { jsonData } = req.body;
 
-        /* console.log(`[API IMPORTADOR] Processando ${jsonData.length} itens do tipo ${type}`); */
-
-        // O mapeamento para SKUs é a única responsabilidade pesada que ficou no backend
-        const result = await ImportadorProjeto.mapearParaSKUs(jsonData, tenantId);
-
-        return res.status(200).json({ 
-            success: true, 
-            data: result,
-            total: result.length,
-            mapeados: result.filter(r => r.match_sugerido).length
-        });
-    } catch (err: any) {
-        console.error('[API IMPORTADOR] Falha:', err.message);
-        return res.status(500).json({
-            success: false,
-            error: err.message || 'Erro interno ao processar projeto'
-        });
+    if (!jsonData || !Array.isArray(jsonData)) {
+      return res.status(400).json({ success: false, error: 'Dados JSON inválidos ou ausentes.' });
     }
+
+    // O mapeamento para SKUs é a única responsabilidade pesada que ficou no backend
+    const result = await ImportadorProjeto.mapearParaSKUs(jsonData, tenantId);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      total: result.length,
+      mapeados: result.filter((r) => r.match_sugerido).length,
+    });
+  } catch (err: any) {
+    logger.error('[API IMPORTADOR] Falha:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Erro interno ao processar projeto',
+    });
+  }
 };
 
 export const handleImportarProjeto = withTenant(handleImportarProjetoCore);

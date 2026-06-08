@@ -2,6 +2,7 @@ import { db } from './drizzle-db.js';
 import { retalhosEstoque } from '../db/schema/planos-de-corte.js';
 import { eq, and, gte } from 'drizzle-orm';
 import { validateAuth } from './_db.js';
+import { logger } from './logger.js';
 
 /**
  * HANDLER PARA GESTÃO DE RETALHOS (BLOCO 2)
@@ -93,7 +94,7 @@ export async function handleRetalhos(req: any, res: any) {
           const novo = Array.isArray(result) ? result[0] : result;
           return res.status(201).json({ success: true, data: novo });
         } catch (dbErr: any) {
-          console.error('DATABASE_INSERT_ERROR:', dbErr);
+          logger.error('DATABASE_INSERT_ERROR:', dbErr);
           throw dbErr;
         }
 
@@ -161,7 +162,7 @@ export async function handleRetalhos(req: any, res: any) {
         return res.status(405).json({ success: false, error: 'Método não permitido' });
     }
   } catch (err: any) {
-    console.error('RETALHOS_API_ERROR:', err);
+    logger.error('RETALHOS_API_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
