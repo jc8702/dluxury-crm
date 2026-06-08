@@ -739,7 +739,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
         await recalcularOrcamento(result.id, tenantId);
 
         // 4. Audit log
-        await auditLog('ORCAMENTO_PRO', result.id, 'CREATE', user?.id || 'system');
+        await auditLog(tenantId, 'ORCAMENTO_PRO', result.id, 'CREATE', user?.id || 'system');
 
         logger.info(`✅ Orçamento ${result.numeroOrcamento} criado com sucesso`);
 
@@ -1633,7 +1633,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
           await db
             .delete(quotations)
             .where(and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)));
-          await auditLog('ORCAMENTO_PRO', id, 'DELETE', user?.id || 'system');
+          await auditLog(tenantId, 'ORCAMENTO_PRO', id, 'DELETE', user?.id || 'system');
           return res.status(200).json({ success: true });
         }, 'DELETE_ORCAMENTO');
       } catch (err: any) {

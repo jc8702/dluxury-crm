@@ -1,4 +1,5 @@
 import { logAudit } from '../services/auditLogService.js';
+import { waitUntil } from '@vercel/functions';
 
 function getClientIP(req: any): string {
   const forwarded = req.headers?.['x-forwarded-for'];
@@ -42,60 +43,68 @@ export function auditMiddleware(req: any, res: any, next: () => void): void {
   }
 
   const originalJson = res.json.bind(res);
+  const originalEnd = res.end.bind(res);
   const bodySnapshot = req.body ? { ...req.body } : {};
 
-  // LIMITAÇÃO SERVERLESS (Vercel/AWS Lambda):
-  // Interceptar res.json dispara a auditoria de forma assíncrona (fire-and-forget).
-  // Em ambientes serverless agressivos, o processo pode congelar imediatamente após
-  // o envio da resposta (originalJson), cancelando a inserção no banco de dados.
-  // Idealmente, a auditoria deveria ser chamada explicitamente usando um `waitUntil`
-  // ou inserida sequencialmente no fluxo de cada handler antes do res.json.
-  // Para evitar bloquear a resposta do usuário, mantemos assíncrono.
-  res.json = function (body: any) {
+  const actionMap: Record<string, string> = {
+    POST: 'CREATE',
+    PATCH: 'UPDATE',
+    PUT: 'UPDATE',
+    DELETE: 'DELETE',
+  };
+
+  let audited = false;
+
+  function runAudit(): Promise<void> | undefined {
+    if (audited) return;
+    audited = true;
+
     const tenantId = req.tenantId || req.tenantContext?.tenantId || req.user?.tenantId || '';
-
     const userId = req.tenantUser?.id || req.tenantContext?.user?.id || req.user?.id || '';
-
-    const actionMap: Record<string, string> = {
-      POST: 'CREATE',
-      PATCH: 'UPDATE',
-      PUT: 'UPDATE',
-      DELETE: 'DELETE',
-    };
-
     const action = actionMap[req.method] || req.method;
     const tableName = inferTableName(req.url || '');
     const recordId = inferRecordId(bodySnapshot, req.url || '', req.method);
 
-    if (tenantId && action !== 'DELETE') {
-      logAudit({
-        tenantId,
-        userId,
-        action,
-        tableName,
-        recordId,
-        oldValues: {},
-        newValues: bodySnapshot,
-        ipAddress: getClientIP(req),
-        userAgent: getUserAgent(req),
-      }).catch((err) => console.error('[auditMiddleware] async log error:', err));
-    }
+    if (!tenantId) return;
 
-    if (action === 'DELETE' && tenantId) {
-      logAudit({
-        tenantId,
-        userId,
-        action,
-        tableName,
-        recordId,
-        oldValues: bodySnapshot,
-        newValues: {},
-        ipAddress: getClientIP(req),
-        userAgent: getUserAgent(req),
-      }).catch((err) => console.error('[auditMiddleware] async log error:', err));
-    }
+    const isDelete = action === 'DELETE';
+    return logAudit({
+      tenantId,
+      userId,
+      action,
+      tableName,
+      recordId,
+      oldValues: isDelete ? bodySnapshot : {},
+      newValues: isDelete ? {} : bodySnapshot,
+      ipAddress: getClientIP(req),
+      userAgent: getUserAgent(req),
+    }).catch((err) => console.error('[auditMiddleware] async log error:', err));
+  }
 
+  const hasWaitUntil = typeof waitUntil === 'function';
+
+  res.json = function (body: any) {
+    const promise = runAudit();
+    if (promise && hasWaitUntil) {
+      waitUntil(promise);
+      return originalJson(body);
+    }
+    if (promise) {
+      return promise.then(() => originalJson(body));
+    }
     return originalJson(body);
+  };
+
+  res.end = function (this: any, ...args: any[]) {
+    const promise = runAudit();
+    if (promise && hasWaitUntil) {
+      waitUntil(promise);
+      return originalEnd(...args);
+    }
+    if (promise) {
+      return promise.then(() => originalEnd(...args));
+    }
+    return originalEnd(...args);
   };
 
   next();

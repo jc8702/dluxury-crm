@@ -168,8 +168,11 @@ export async function resolveTenantByDomain(
 
 /**
  * Registra uma ação no audit_log
+ * @deprecated Use logAudit() from services/auditLogService.js instead.
+ *             Mantida apenas para compatibilidade — delega internamente para logAudit().
  */
 export async function auditLog(
+  tenantId: string,
   entity_type: string,
   entity_id: string,
   action: string,
@@ -178,11 +181,17 @@ export async function auditLog(
   data_after: any = null,
 ) {
   try {
-    await sql`
-      INSERT INTO audit_logs (entity_type, entity_id, action, user_id, data_before, data_after)
-      VALUES (${entity_type}, ${entity_id}, ${action}, ${user_id}, ${JSON.stringify(data_before)}, ${JSON.stringify(data_after)})
-    `;
+    const { logAudit } = await import('./services/auditLogService.js');
+    await logAudit({
+      tenantId,
+      userId: user_id || undefined,
+      action,
+      tableName: entity_type,
+      recordId: entity_id,
+      oldValues: data_before || {},
+      newValues: data_after || {},
+    });
   } catch (e: any) {
-    console.error('Audit Log Error:', e.message);
+    console.error('Audit Log Error (deprecated auditLog):', e.message);
   }
 }

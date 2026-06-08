@@ -40,7 +40,7 @@ const handleClientsCore: TenantHandler = async (req, res) => {
           ${cnpjVal}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}, ${tenantId}
         ) RETURNING *
       `;
-      await auditLog('clients', result[0].id, 'CREATE', user?.id, null, result[0]);
+      await auditLog(tenantId, 'clients', result[0].id, 'CREATE', user?.id, null, result[0]);
       return res.status(201).json({ success: true, data: result[0] });
     }
     if (req.method === 'PATCH' || req.method === 'PUT') {
@@ -79,7 +79,7 @@ const handleClientsCore: TenantHandler = async (req, res) => {
         WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *
       `;
 
-      await auditLog('clients', id, 'UPDATE', user?.id, before[0], result[0]);
+      await auditLog(tenantId, 'clients', id, 'UPDATE', user?.id, before[0], result[0]);
 
       return res.status(200).json({ success: true, data: result[0] });
     }
@@ -99,7 +99,7 @@ const handleClientsCore: TenantHandler = async (req, res) => {
           .set({ deletedAt: new Date() })
           .where(and(eq(quotations.clienteId, clienteIdNum), eq(quotations.tenantId, tenantId)));
       }
-      await auditLog('clients', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
+      await auditLog(tenantId, 'clients', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
       return res.status(200).json({ success: true });
     }
     return res.status(405).end();

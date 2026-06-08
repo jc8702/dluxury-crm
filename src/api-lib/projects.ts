@@ -203,7 +203,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
           ${tenantId}::uuid
         ) RETURNING *`;
 
-      await auditLog('projects', result[0].id, 'CREATE', user?.id, null, result[0]);
+      await auditLog(tenantId, 'projects', result[0].id, 'CREATE', user?.id, null, result[0]);
 
       if (result[0].status === 'em_producao') {
         await triggerOpCreationForProject(result[0].id, tenantId, result[0]);
@@ -239,7 +239,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
           updated_at = CURRENT_TIMESTAMP 
         WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
 
-      await auditLog('projects', id, 'UPDATE', user?.id, before[0], r[0]);
+      await auditLog(tenantId, 'projects', id, 'UPDATE', user?.id, before[0], r[0]);
 
       if (r.length && f.status === 'em_producao' && before[0].status !== 'em_producao') {
         await triggerOpCreationForProject(id, tenantId, r[0]);
@@ -265,7 +265,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
       // Aqui usamos Soft Delete também nas OPs se houver a coluna
       await sql`UPDATE ordens_producao SET deleted_at = CURRENT_TIMESTAMP WHERE (projeto_id = ${id} OR metadata->>'projeto_id' = ${id}) AND tenant_id = ${tenantId}`;
 
-      await auditLog('projects', id, 'DELETE', user?.id, before[0], {
+      await auditLog(tenantId, 'projects', id, 'DELETE', user?.id, before[0], {
         deleted_at: new Date().toISOString(),
       });
 

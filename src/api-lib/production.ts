@@ -143,7 +143,7 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
       RETURNING *
     `;
 
-    await auditLog('ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
+    await auditLog(tenantId, 'ordens_producao', novaOP.id, 'CREATE', user?.id, null, novaOP);
 
     /* logger.info('[CREATE_OP] Created:', novaOP); */
 
@@ -188,6 +188,7 @@ async function updateOPDetails(req: any, res: any, tenantId: string, user: any) 
   `;
 
   await auditLog(
+    tenantId,
     'ordens_producao',
     atualizada.id,
     'UPDATE_DETAILS',
@@ -227,7 +228,7 @@ async function deleteOP(req: any, res: any, tenantId: string, user: any) {
     () => {},
   );
 
-  await auditLog('ordens_producao', existing.id, 'DELETE', user?.id, existing, {
+  await auditLog(tenantId, 'ordens_producao', existing.id, 'DELETE', user?.id, existing, {
     deleted_at: new Date(),
   });
 

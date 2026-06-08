@@ -77,7 +77,7 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         a_fazer: [],
         em_progresso: [],
         bloqueado: [],
-        concluido: []
+        concluido: [],
       };
 
       cards.forEach((card: any) => {
@@ -131,8 +131,11 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         FROM etapas_prod_kanban
         WHERE operacao_prod_id = ${etapa.operacao_prod_id} AND tenant_id = ${tenantId}::uuid
       `;
-      
-      if (totalEtapas.length && parseInt(totalEtapas[0].count) === parseInt(totalEtapas[0].concluidas)) {
+
+      if (
+        totalEtapas.length &&
+        parseInt(totalEtapas[0].count) === parseInt(totalEtapas[0].concluidas)
+      ) {
         await sql`
           UPDATE ordens_prod 
           SET status = 'concluído', data_conclusao = CURRENT_DATE, updated_at = NOW()
@@ -154,7 +157,15 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
       }
 
       // Auditar ação
-      await auditLog('etapas_prod_kanban', String(etapa_kanban_id), 'MOVE_CARD', user.id, { status_anterior }, etapa);
+      await auditLog(
+        tenantId,
+        'etapas_prod_kanban',
+        String(etapa_kanban_id),
+        'MOVE_CARD',
+        user.id,
+        { status_anterior },
+        etapa,
+      );
 
       return res.status(200).json({ success: true, data: etapa });
     }
@@ -228,12 +239,12 @@ const handleKanbanProducaoCore: TenantHandler = async (req, res) => {
         ORDER BY m.timestamp_movimento DESC
       `;
 
-      return res.status(200).json({ 
-        success: true, 
-        data: { 
+      return res.status(200).json({
+        success: true,
+        data: {
           etapa,
-          historico 
-        } 
+          historico,
+        },
       });
     }
 

@@ -84,7 +84,7 @@ const handleProspeccoesCore: TenantHandler = async (req, res) => {
         VALUES (${result[0].id}, ${tenantId}, 'criacao', 'Lead criado', ${result[0].status}, ${user?.name || 'Sistema'})
       `;
 
-      await auditLog('prospeccoes', result[0].id, 'CREATE', user?.id, null, result[0]);
+      await auditLog(tenantId, 'prospeccoes', result[0].id, 'CREATE', user?.id, null, result[0]);
       return res.status(201).json({ success: true, data: result[0] });
     }
 
@@ -93,7 +93,7 @@ const handleProspeccoesCore: TenantHandler = async (req, res) => {
     console.error('[Prospeccoes] Erro:', err);
     return res.status(500).json({ success: false, error: err.message || 'Erro interno' });
   }
-}
+};
 
 // ─── PROSPECÇÃO INDIVIDUAL (GET / PATCH / DELETE) ────────────────────────────
 
@@ -165,7 +165,7 @@ const handleProspeccaoByIdCore: TenantHandler = async (req, res) => {
         `;
       }
 
-      await auditLog('prospeccoes', id, 'UPDATE', user?.id, before[0], result[0]);
+      await auditLog(tenantId, 'prospeccoes', id, 'UPDATE', user?.id, before[0], result[0]);
       return res.status(200).json({ success: true, data: result[0] });
     }
 
@@ -175,7 +175,7 @@ const handleProspeccaoByIdCore: TenantHandler = async (req, res) => {
       if (!before.length)
         return res.status(404).json({ success: false, error: 'Prospecção não encontrada' });
       await sql`UPDATE prospeccoes SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
-      await auditLog('prospeccoes', id, 'DELETE', user?.id, before[0], null);
+      await auditLog(tenantId, 'prospeccoes', id, 'DELETE', user?.id, before[0], null);
       return res.status(200).json({ success: true });
     }
 
@@ -184,7 +184,7 @@ const handleProspeccaoByIdCore: TenantHandler = async (req, res) => {
     console.error('[ProspeccaoById] Erro:', err);
     return res.status(500).json({ success: false, error: err.message || 'Erro interno' });
   }
-}
+};
 
 // ─── INTERAÇÕES ──────────────────────────────────────────────────────────────
 
@@ -228,7 +228,7 @@ const handleInteracoesCore: TenantHandler = async (req, res) => {
     console.error('[Interacoes] Erro:', err);
     return res.status(500).json({ success: false, error: err.message || 'Erro interno' });
   }
-}
+};
 
 // ─── MÉTRICAS / FUNIL ────────────────────────────────────────────────────────
 

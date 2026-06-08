@@ -85,7 +85,7 @@ const handlePlanoCorteCore: TenantHandler = async (req, res) => {
             })
             .returning();
 
-          await auditLog('planos_de_corte', novo.id, 'CREATE', user?.id, null, novo);
+          await auditLog(tenantId, 'planos_de_corte', novo.id, 'CREATE', user?.id, null, novo);
 
           return res.status(201).json({ success: true, data: novo });
         } else if (action === 'verificar_retalhos_duplicados') {
@@ -358,6 +358,7 @@ const handlePlanoCorteCore: TenantHandler = async (req, res) => {
             .returning();
 
           await auditLog(
+            tenantId,
             'planos_de_corte',
             validPlanoId,
             'SAVE_RESULT',
@@ -398,7 +399,7 @@ const handlePlanoCorteCore: TenantHandler = async (req, res) => {
           .set({ deleted_at: new Date() })
           .where(and(eq(planosDeCorte.id, validId), eq(planosDeCorte.tenantId, tenantId)));
 
-        await auditLog('planos_de_corte', validId, 'DELETE', user?.id, existing, {
+        await auditLog(tenantId, 'planos_de_corte', validId, 'DELETE', user?.id, existing, {
           status: 'deleted',
         });
 
