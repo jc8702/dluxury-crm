@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, jsonb, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { tenants } from './tenants.js';
 
@@ -8,15 +8,17 @@ export const auditLogs = pgTable('audit_logs', {
     .references(() => tenants.id, { onDelete: 'cascade' })
     .notNull(),
   userId: uuid('user_id'),
-  action: varchar('action', { length: 50 }).notNull(),
-  tableName: varchar('table_name', { length: 100 }),
-  recordId: uuid('record_id'),
-  oldValues: jsonb('old_values'),
-  newValues: jsonb('new_values'),
+  entityType: text('entity_type'),
+  entityId: text('entity_id'),
+  action: text('action').notNull(),
+  tableName: text('table_name'),
+  recordId: text('record_id'),
+  dataBefore: jsonb('data_before'),
+  dataAfter: jsonb('data_after'),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   retentionExpiresAt: timestamp('retention_expires_at', { withTimezone: true }).default(
-    sql`NOW() + INTERVAL '90 days'`,
+    sql`CURRENT_TIMESTAMP + INTERVAL '90 days'`,
   ),
 });
