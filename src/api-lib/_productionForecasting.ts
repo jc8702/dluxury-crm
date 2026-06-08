@@ -4,8 +4,8 @@
  */
 
 const CAPACIDADE = {
-  CORTE: 480,      // minutos por dia (8h)
-  MONTAGEM: 480
+  CORTE: 480, // minutos por dia (8h)
+  MONTAGEM: 480,
 };
 
 export interface OrdemProducao {
@@ -25,8 +25,8 @@ export interface OrdemProducao {
  */
 export function estimarTempoOP(pecas: number) {
   return {
-    corte: pecas * 2,       // 2 min por peça
-    montagem: pecas * 3     // 3 min por peça
+    corte: pecas * 2, // 2 min por peça
+    montagem: pecas * 3, // 3 min por peça
   };
 }
 
@@ -36,7 +36,7 @@ export function estimarTempoOP(pecas: number) {
 export function calcularPrevisaoEntrega(ordens: OrdemProducao[]): OrdemProducao[] {
   // 1. Filtrar e Ordenar fila (apenas pendentes ou em produção)
   const fila = ordens
-    .filter(op => op.status !== "FINALIZADA")
+    .filter((op) => op.status !== 'FINALIZADA')
     .sort((a, b) => {
       const dateA = new Date(a.created_at || 0).getTime();
       const dateB = new Date(b.created_at || 0).getTime();
@@ -48,7 +48,7 @@ export function calcularPrevisaoEntrega(ordens: OrdemProducao[]): OrdemProducao[
 
   const agora = Date.now();
 
-  return fila.map(op => {
+  return fila.map((op) => {
     const tempo = estimarTempoOP(op.pecas || 0);
 
     // Soma carga à fila
@@ -64,13 +64,13 @@ export function calcularPrevisaoEntrega(ordens: OrdemProducao[]): OrdemProducao[
 
     // Projeta data final (agora + lead time da fila)
     // Nota: Em um sistema real, pularíamos finais de semana aqui.
-    const dataPrevista = agora + (diasTotais * 24 * 60 * 60 * 1000);
+    const dataPrevista = agora + diasTotais * 24 * 60 * 60 * 1000;
 
     return {
       ...op,
       tempo_previsto_corte: tempo.corte,
       tempo_previsto_montagem: tempo.montagem,
-      data_prevista_entrega: dataPrevista
+      data_prevista_entrega: dataPrevista,
     };
   });
 }

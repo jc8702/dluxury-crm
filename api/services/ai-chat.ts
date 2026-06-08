@@ -9,7 +9,8 @@ const aiInstancesCache = new Map<string, GoogleGenAI>();
 
 function decryptKey(cipherText: string): string {
   try {
-    const rawKey = process.env.APP_ENCRYPTION_KEY || GEMINI_API_KEY || 'default-fallback-key-32-chars-long!';
+    const rawKey =
+      process.env.APP_ENCRYPTION_KEY || GEMINI_API_KEY || 'default-fallback-key-32-chars-long!';
     const key = crypto.createHash('sha256').update(rawKey).digest();
     const parts = cipherText.split(':');
     if (parts.length !== 3) return '';
@@ -33,7 +34,8 @@ async function obterInstanciaAI(tenantId?: string): Promise<GoogleGenAI> {
       return aiInstancesCache.get(tenantId)!;
     }
     try {
-      const tenantRes = await sql`SELECT gemini_api_key_custom FROM tenants WHERE id = ${tenantId}::uuid`;
+      const tenantRes =
+        await sql`SELECT gemini_api_key_custom FROM tenants WHERE id = ${tenantId}::uuid`;
       const encryptedKey = tenantRes[0]?.gemini_api_key_custom;
       if (encryptedKey) {
         const decryptedKey = decryptKey(encryptedKey);
@@ -50,12 +52,16 @@ async function obterInstanciaAI(tenantId?: string): Promise<GoogleGenAI> {
   return ai;
 }
 
-function calcularCustoEstimado(model: string, promptTokens: number, completionTokens: number): number {
+function calcularCustoEstimado(
+  model: string,
+  promptTokens: number,
+  completionTokens: number,
+): number {
   const isPro = model.includes('pro');
   if (isPro) {
-    return (promptTokens * 1.25 + completionTokens * 5.00) / 1_000_000;
+    return (promptTokens * 1.25 + completionTokens * 5.0) / 1_000_000;
   } else {
-    return (promptTokens * 0.075 + completionTokens * 0.30) / 1_000_000;
+    return (promptTokens * 0.075 + completionTokens * 0.3) / 1_000_000;
   }
 }
 
@@ -98,7 +104,9 @@ const _TIMEOUT_MS = 45000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
 
 if (!GEMINI_API_KEY) {
-  console.warn('[AI_CHAT] Aviso: GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY ausente no ambiente.');
+  console.warn(
+    '[AI_CHAT] Aviso: GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY ausente no ambiente.',
+  );
 }
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -115,23 +123,23 @@ function limparEParsearJSON(text: string | undefined): any {
     return JSON.parse(cleaned);
   } catch (err) {
     console.warn('[AI_CHAT] Falha ao fazer parse de JSON bruto, tentando extração por regex:', err);
-    
+
     // Tenta extrair chaves do roteador
     const agentMatch = cleaned.match(/"agente_escolhido"\s*:\s*"([^"]+)"/);
     const confMatch = cleaned.match(/"confianca"\s*:\s*([0-9.]+)/);
     const reasonMatch = cleaned.match(/"razao"\s*:\s*"([^"]+)"/);
-    
+
     // Tenta extrair chaves do formatador final
     const responseMatch = cleaned.match(/"response"\s*:\s*"([^"]+)"/);
     const confidenceMatch = cleaned.match(/"confidence"\s*:\s*(\d+)/);
-    
+
     const result: any = {};
     if (agentMatch) result.agente_escolhido = agentMatch[1];
     if (confMatch) result.confianca = parseFloat(confMatch[1]);
     if (reasonMatch) result.razao = reasonMatch[1];
     if (responseMatch) result.response = responseMatch[1];
     if (confidenceMatch) result.confidence = parseInt(confidenceMatch[1], 10);
-    
+
     return result;
   }
 }
@@ -200,7 +208,7 @@ Foque em garantir que os prazos e as etapas dos projetos de móveis sejam monito
   administrativo: `Você é o Agente Administrativo do D'LUXURY ERP.
 SUA ESPECIALIDADE: Configurações, logs, auditoria, permissões de usuários e processos internos do sistema.
 MODO ESTRITO (STRICT MODE): Você não tem acesso a dados financeiros profundos nem conhecimento técnico de marcenaria.
-Se perguntarem de engenharia ou caixa, redirecione.`
+Se perguntarem de engenharia ou caixa, redirecione.`,
 };
 
 // Wrapper resiliente de chamada do Gemini com fallback automático e logs padronizados
@@ -221,21 +229,20 @@ async function chamarGemini(params: {
 
   for (const model of modelsToTry) {
     try {
-      /* console.log(`[AI_CHAT] Tentando chamada no modelo ${model}...`) */;
-      const response = await aiClient.models.generateContent({
-        model,
-        contents: params.contents,
-        config: {
-          systemInstruction: params.systemInstruction,
-          temperature: params.temperature ?? TEMPERATURE,
-          maxOutputTokens: params.maxOutputTokens ?? MAX_TOKENS,
-          responseMimeType: params.responseMimeType,
-          responseSchema: params.responseSchema,
-        }
-      });
-      /* console.log(`[AI_CHAT] Sucesso na execução com ${model}`) */;
-      
-      const usage = response.usageMetadata;
+      /* console.log(`[AI_CHAT] Tentando chamada no modelo ${model}...`) */ const response =
+        await aiClient.models.generateContent({
+          model,
+          contents: params.contents,
+          config: {
+            systemInstruction: params.systemInstruction,
+            temperature: params.temperature ?? TEMPERATURE,
+            maxOutputTokens: params.maxOutputTokens ?? MAX_TOKENS,
+            responseMimeType: params.responseMimeType,
+            responseSchema: params.responseSchema,
+          },
+        });
+      /* console.log(`[AI_CHAT] Sucesso na execução com ${model}`) */ const usage =
+        response.usageMetadata;
       if (usage && params.tenantId && params.usuarioId) {
         await registrarLogUso({
           tenantId: params.tenantId,
@@ -250,13 +257,20 @@ async function chamarGemini(params: {
     } catch (err: any) {
       console.error(`[AI_ERROR] Erro na execução com ${model}:`, err.message || err);
       lastError = err;
-      
+
       // Se for erro de quota esgotada (429 / RESOURCE_EXHAUSTED) ou indisponibilidade, continuamos para o flash
-      if (err.status === 429 || err.statusCode === 429 || String(err).includes('429') || String(err).includes('RESOURCE_EXHAUSTED')) {
-        console.warn(`[AI_CHAT] Limite de quota ou rate limit atingido no ${model}. Realizando fallback para próximo modelo.`);
+      if (
+        err.status === 429 ||
+        err.statusCode === 429 ||
+        String(err).includes('429') ||
+        String(err).includes('RESOURCE_EXHAUSTED')
+      ) {
+        console.warn(
+          `[AI_CHAT] Limite de quota ou rate limit atingido no ${model}. Realizando fallback para próximo modelo.`,
+        );
         continue;
       }
-      
+
       // Para outros erros estruturais importantes de validação de schemas, repassamos imediatamente
       throw err;
     }
@@ -266,10 +280,13 @@ async function chamarGemini(params: {
 }
 
 // Roteador semântico de agentes
-export async function rotearAgente(userMessage: string, historySummary?: string, tenantId?: string, usuarioId?: string): Promise<{ agente_escolhido: string; confianca: number; razao: string }> {
-  /* console.log(`[AI_ROUTER] Roteando mensagem: "${userMessage.slice(0, 60)}..."`) */;
-  
-  const prompt = `Analise a mensagem do usuário e decida qual é o agente especialista apropriado do D'LUXURY ERP.
+export async function rotearAgente(
+  userMessage: string,
+  historySummary?: string,
+  tenantId?: string,
+  usuarioId?: string,
+): Promise<{ agente_escolhido: string; confianca: number; razao: string }> {
+  /* console.log(`[AI_ROUTER] Roteando mensagem: "${userMessage.slice(0, 60)}..."`) */ const prompt = `Analise a mensagem do usuário e decida qual é o agente especialista apropriado do D'LUXURY ERP.
 
 Histórico de conversa recente:
 ${historySummary || 'Sem histórico.'}
@@ -292,29 +309,40 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
   try {
     const response = await chamarGemini({
       contents: prompt,
-      systemInstruction: 'Você é o roteador semântico do D\'LUXURY ERP. Escolha o agente de forma neutra e técnica.',
+      systemInstruction:
+        "Você é o roteador semântico do D'LUXURY ERP. Escolha o agente de forma neutra e técnica.",
       responseMimeType: 'application/json',
       responseSchema: {
         type: 'OBJECT',
         properties: {
           agente_escolhido: {
             type: 'STRING',
-            enum: ['marcenaria', 'engenharia', 'producao', 'pcp', 'comercial', 'financeiro', 'estoque', 'projetos', 'administrativo'],
-            description: 'Identificador do agente escolhido.'
+            enum: [
+              'marcenaria',
+              'engenharia',
+              'producao',
+              'pcp',
+              'comercial',
+              'financeiro',
+              'estoque',
+              'projetos',
+              'administrativo',
+            ],
+            description: 'Identificador do agente escolhido.',
           },
           confianca: {
             type: 'NUMBER',
-            description: 'Confiança na seleção, de 0.0 a 1.0.'
+            description: 'Confiança na seleção, de 0.0 a 1.0.',
           },
           razao: {
             type: 'STRING',
-            description: 'Explicação técnica curta do motivo da escolha.'
-          }
+            description: 'Explicação técnica curta do motivo da escolha.',
+          },
         },
-        required: ['agente_escolhido', 'confianca', 'razao']
+        required: ['agente_escolhido', 'confianca', 'razao'],
       },
       tenantId,
-      usuarioId
+      usuarioId,
     });
 
     const parsed = limparEParsearJSON(response.text);
@@ -322,14 +350,17 @@ Retorne obrigatoriamente um objeto JSON válido seguindo a estrutura do schema f
     const confianca = typeof parsed.confianca === 'number' ? parsed.confianca : 0.5;
     const razao = parsed.razao || 'Seleção padrão';
 
-    /* console.log(`[AI_ROUTER] Roteamento concluído: ${agente} (Confiança: ${confianca})`) */;
-    return { agente_escolhido: agente, confianca, razao };
+    /* console.log(`[AI_ROUTER] Roteamento concluído: ${agente} (Confiança: ${confianca})`) */ return {
+      agente_escolhido: agente,
+      confianca,
+      razao,
+    };
   } catch (err) {
     console.error('[AI_ERROR] Erro no roteador semântico. Usando fallback administrativo:', err);
     return {
       agente_escolhido: 'administrativo',
       confianca: 0.1,
-      razao: 'Erro ao processar roteador semântico, fallback seguro acionado.'
+      razao: 'Erro ao processar roteador semântico, fallback seguro acionado.',
     };
   }
 }
@@ -365,28 +396,35 @@ async function consultar_orcamentos(input: { status?: string; limite?: number },
       String(o.cliente_nome || 'Não informado'),
       currency.format(Number(o.valor_total_venda || 0)),
       String(o.status || '-'),
-      o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '-'
+      o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '-',
     ]);
 
     const chartData = rows.map((o: any) => ({
       orcamento: String(o.numero_orcamento || '-'),
-      valor: Number(o.valor_total_venda || 0)
+      valor: Number(o.valor_total_venda || 0),
     }));
 
     return {
       text: `Encontrados ${rows.length} orçamentos com status ${status}.`,
       table_data: {
         headers: ['ORÇAMENTO', 'CLIENTE', 'VALOR VENDA', 'STATUS', 'DATA'],
-        rows: tableRows
+        rows: tableRows,
       },
-      chart_data: rows.length > 0 ? {
-        type: 'bar',
-        xKey: 'orcamento',
-        series: [{ key: 'valor', label: 'Valor Venda (R$)', color: '#00A99D' }],
-        data: chartData,
-        title: 'Valores de Venda dos Orçamentos'
-      } : null,
-      suggestions: ['Ver fluxo de caixa', 'Analisar curva ABC de clientes', 'Calcular margem de lucro']
+      chart_data:
+        rows.length > 0
+          ? {
+              type: 'bar',
+              xKey: 'orcamento',
+              series: [{ key: 'valor', label: 'Valor Venda (R$)', color: '#00A99D' }],
+              data: chartData,
+              title: 'Valores de Venda dos Orçamentos',
+            }
+          : null,
+      suggestions: [
+        'Ver fluxo de caixa',
+        'Analisar curva ABC de clientes',
+        'Calcular margem de lucro',
+      ],
     };
   } catch (err: any) {
     console.error('[AI_ERROR] Erro na tool consultar_orcamentos:', err);
@@ -398,20 +436,22 @@ async function consultar_orcamentos(input: { status?: string; limite?: number },
 async function calcular_margem(input: { custo: number; venda: number }) {
   const custo = Number(input.custo);
   const venda = Number(input.venda);
-  /* console.log(`[AI_TOOL] calcular_margem chamado: custo=${custo}, venda=${venda}`) */;
-
-  if (isNaN(custo) || isNaN(venda) || venda === 0) {
+  /* console.log(`[AI_TOOL] calcular_margem chamado: custo=${custo}, venda=${venda}`) */ if (
+    isNaN(custo) ||
+    isNaN(venda) ||
+    venda === 0
+  ) {
     return {
       text: 'Não foi possível calcular a margem devido a valores de custo ou venda inválidos.',
       table_data: null,
       chart_data: null,
-      suggestions: []
+      suggestions: [],
     };
   }
 
   const lucro = venda - custo;
   const margem = (lucro / venda) * 100;
-  const markup = custo > 0 ? (venda / custo) : 0;
+  const markup = custo > 0 ? venda / custo : 0;
 
   return {
     text: `Cálculo de margem realizado com sucesso. Margem calculada: ${margem.toFixed(2)}%.`,
@@ -422,8 +462,8 @@ async function calcular_margem(input: { custo: number; venda: number }) {
         ['Preço de Custo', currency.format(custo)],
         ['Lucro Bruto', currency.format(lucro)],
         ['Margem de Lucro', `${margem.toFixed(2)}%`],
-        ['Markup', `${markup.toFixed(2)}x`]
-      ]
+        ['Markup', `${markup.toFixed(2)}x`],
+      ],
     },
     chart_data: {
       type: 'pie',
@@ -431,11 +471,15 @@ async function calcular_margem(input: { custo: number; venda: number }) {
       valueKey: 'value',
       data: [
         { name: 'Custo', value: custo },
-        { name: 'Lucro Bruto', value: lucro }
+        { name: 'Lucro Bruto', value: lucro },
       ],
-      title: 'Composição do Preço de Venda'
+      title: 'Composição do Preço de Venda',
     },
-    suggestions: ['Ver top SKUs vendidos', 'Buscar materiais em estoque', 'Consultar últimos orçamentos aprovados']
+    suggestions: [
+      'Ver top SKUs vendidos',
+      'Buscar materiais em estoque',
+      'Consultar últimos orçamentos aprovados',
+    ],
   };
 }
 
@@ -458,20 +502,27 @@ async function buscar_materiais(input: { termo: string; limite?: number }, tenan
       String(m.codigo || '-'),
       String(m.nome || '-'),
       currency.format(Number(m.preco || 0)),
-      Number(m.estoque || 0).toString()
+      Number(m.estoque || 0).toString(),
     ]);
 
     return {
       text: `Foram encontrados ${result.length} materiais na tabela de materiais legados.`,
       table_data: {
         headers: ['Código', 'Nome', 'Preço Unitário', 'Estoque'],
-        rows: tableRows
+        rows: tableRows,
       },
       chart_data: null,
-      suggestions: ['Calcular margem de lucro', 'Ver estoque de chapas', 'Consultar ordens de serviço']
+      suggestions: [
+        'Calcular margem de lucro',
+        'Ver estoque de chapas',
+        'Consultar ordens de serviço',
+      ],
     };
   } catch (err: any) {
-    console.warn('[AI_CHAT] Erro ao buscar na tabela materiais legada. Acionando fallback seguro para sku_componente:', err.message || err);
+    console.warn(
+      '[AI_CHAT] Erro ao buscar na tabela materiais legada. Acionando fallback seguro para sku_componente:',
+      err.message || err,
+    );
     try {
       // Fallback para tabela sku_componente usando Drizzle
       const result = await db
@@ -490,17 +541,21 @@ async function buscar_materiais(input: { termo: string; limite?: number }, tenan
         String(m.codigo || '-'),
         String(m.nome || '-'),
         currency.format(Number(m.preco || 0)),
-        Number(m.estoque || 0).toString()
+        Number(m.estoque || 0).toString(),
       ]);
 
       return {
         text: `Encontrados ${result.length} componentes no cadastro de SKUs (fallback seguro).`,
         table_data: {
           headers: ['Código', 'Nome', 'Preço Unitário', 'Estoque'],
-          rows: tableRows
+          rows: tableRows,
         },
         chart_data: null,
-        suggestions: ['Calcular margem de lucro', 'Ver estoque de chapas', 'Consultar ordens de serviço']
+        suggestions: [
+          'Calcular margem de lucro',
+          'Ver estoque de chapas',
+          'Consultar ordens de serviço',
+        ],
       };
     } catch (fallbackErr: any) {
       console.error('[AI_ERROR] Erro no fallback de buscar_materiais:', fallbackErr);
@@ -508,7 +563,7 @@ async function buscar_materiais(input: { termo: string; limite?: number }, tenan
         text: 'Nenhum material cadastrado pôde ser recuperado.',
         table_data: null,
         chart_data: null,
-        suggestions: []
+        suggestions: [],
       };
     }
   }
@@ -517,13 +572,18 @@ async function buscar_materiais(input: { termo: string; limite?: number }, tenan
 // RAG Marcenaria
 async function ragConhecimentoTecnico(input: { query: string }, apiKey: string) {
   try {
-    const { ragConhecimentoTecnico: originalRag } = await import('../../src/api-lib/agents/marcenaria.js');
+    const { ragConhecimentoTecnico: originalRag } =
+      await import('../../src/api-lib/agents/marcenaria.js');
     const response = await originalRag(input.query, apiKey);
     return {
       text: response,
       table_data: null,
       chart_data: null,
-      suggestions: ['Ver tolerâncias de corrediças', 'Medidas padrão de nichos', 'Folga de portas de correr']
+      suggestions: [
+        'Ver tolerâncias de corrediças',
+        'Medidas padrão de nichos',
+        'Folga de portas de correr',
+      ],
     };
   } catch (err) {
     console.error('[AI_ERROR] Erro ao carregar RAG de marcenaria:', err);
@@ -531,14 +591,17 @@ async function ragConhecimentoTecnico(input: { query: string }, apiKey: string) 
       text: 'Conhecimento técnico de marcenaria temporariamente indisponível no RAG.',
       table_data: null,
       chart_data: null,
-      suggestions: []
+      suggestions: [],
     };
   }
 }
 
-export async function executarFerramenta(toolName: string, toolInput: any, tenantId: string): Promise<any> {
-  /* console.log(`[AI_TOOL] Executando ferramenta ${toolName}...`) */;
-  try {
+export async function executarFerramenta(
+  toolName: string,
+  toolInput: any,
+  tenantId: string,
+): Promise<any> {
+  /* console.log(`[AI_TOOL] Executando ferramenta ${toolName}...`) */ try {
     switch (toolName) {
       case 'consultar_orcamentos':
         return await consultar_orcamentos(toolInput, tenantId);
@@ -557,7 +620,7 @@ export async function executarFerramenta(toolName: string, toolInput: any, tenan
       text: `Erro ao executar a ferramenta ${toolName}.`,
       table_data: null,
       chart_data: null,
-      suggestions: []
+      suggestions: [],
     };
   }
 }
@@ -575,9 +638,8 @@ export async function processarChat(payload: {
   tenantId?: string;
   usuarioId?: string;
 }): Promise<any> {
-  /* console.log('[AI_CHAT] Iniciando processamento do chat...') */;
-  
-  const userMessage = payload.message.trim();
+  /* console.log('[AI_CHAT] Iniciando processamento do chat...') */ const userMessage =
+    payload.message.trim();
   const agentMode = payload.agentMode || 'auto';
   const history = (payload.conversation_history || []).slice(-MAX_CONVERSATION_TURNS);
   const context = payload.context || {};
@@ -587,7 +649,9 @@ export async function processarChat(payload: {
   const usuarioId = payload.usuarioId;
 
   // Histórico resumido para os prompts
-  const historySummary = history.map(h => `${h.role === 'user' ? 'USUÁRIO' : 'DLUX'}: ${h.content}`).join('\n');
+  const historySummary = history
+    .map((h) => `${h.role === 'user' ? 'USUÁRIO' : 'DLUX'}: ${h.content}`)
+    .join('\n');
 
   // 1. Decidir Agente (Se modo manual, respeitamos; senão, roteamos automaticamente)
   let chosenAgent = 'marcenaria';
@@ -596,7 +660,7 @@ export async function processarChat(payload: {
 
   if (agentMode !== 'auto' && SYSTEM_PROMPTS[agentMode]) {
     chosenAgent = agentMode;
-    /* console.log(`[AI_CHAT] Modo manual: usando agente "${chosenAgent}"`) */;
+    /* console.log(`[AI_CHAT] Modo manual: usando agente "${chosenAgent}"`) */
   } else {
     const route = await rotearAgente(userMessage, historySummary, tenantId, usuarioId);
     chosenAgent = route.agente_escolhido;
@@ -605,52 +669,58 @@ export async function processarChat(payload: {
   }
 
   // Montamos o contexto enriquecido
-  const _contextText = Object.entries(context)
-    .filter(([k, v]) => v !== undefined && v !== null && k !== 'token')
-    .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
-    .join('\n') || 'Sem contexto adicional.';
+  const _contextText =
+    Object.entries(context)
+      .filter(([k, v]) => v !== undefined && v !== null && k !== 'token')
+      .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
+      .join('\n') || 'Sem contexto adicional.';
 
   // Montamos as chamadas de mensagens do Gemini
   const contents: any[] = [];
-  
+
   // Formatamos o histórico recente
-  history.forEach(item => {
+  history.forEach((item) => {
     contents.push({
       role: item.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: item.content }]
+      parts: [{ text: item.content }],
     });
   });
 
   // Mensagem atual do usuário
   contents.push({
     role: 'user',
-    parts: [{ text: userMessage }]
+    parts: [{ text: userMessage }],
   });
 
   // Definindo as ferramentas disponíveis na API do Gemini
   const toolDeclarations: any[] = [
     {
       name: 'consultar_orcamentos',
-      description: 'Consulta no banco de dados orçamentos por status (APROVADO, RASCUNHO, etc.). Útil para saber orçamentos fechados, andamento ou totais.',
+      description:
+        'Consulta no banco de dados orçamentos por status (APROVADO, RASCUNHO, etc.). Útil para saber orçamentos fechados, andamento ou totais.',
       parameters: {
         type: 'OBJECT',
         properties: {
-          status: { type: 'STRING', description: 'Status do orçamento em letras maiúsculas (ex: APROVADO, RASCUNHO).' },
-          limite: { type: 'NUMBER', description: 'Limite de orçamentos a serem retornados.' }
-        }
-      }
+          status: {
+            type: 'STRING',
+            description: 'Status do orçamento em letras maiúsculas (ex: APROVADO, RASCUNHO).',
+          },
+          limite: { type: 'NUMBER', description: 'Limite de orçamentos a serem retornados.' },
+        },
+      },
     },
     {
       name: 'calcular_margem',
-      description: 'Calcula a margem de lucro bruto, lucro real e markup dado o valor de custo e de venda do projeto/item.',
+      description:
+        'Calcula a margem de lucro bruto, lucro real e markup dado o valor de custo e de venda do projeto/item.',
       parameters: {
         type: 'OBJECT',
         properties: {
           custo: { type: 'NUMBER', description: 'Preço de custo do móvel ou projeto.' },
-          venda: { type: 'NUMBER', description: 'Preço de venda final do móvel ou projeto.' }
+          venda: { type: 'NUMBER', description: 'Preço de venda final do móvel ou projeto.' },
         },
-        required: ['custo', 'venda']
-      }
+        required: ['custo', 'venda'],
+      },
     },
     {
       name: 'buscar_materiais',
@@ -658,26 +728,37 @@ export async function processarChat(payload: {
       parameters: {
         type: 'OBJECT',
         properties: {
-          termo: { type: 'STRING', description: 'Termo ou palavra-chave para pesquisar no estoque.' },
-          limite: { type: 'NUMBER', description: 'Número máximo de registros de estoque retornados.' }
+          termo: {
+            type: 'STRING',
+            description: 'Termo ou palavra-chave para pesquisar no estoque.',
+          },
+          limite: {
+            type: 'NUMBER',
+            description: 'Número máximo de registros de estoque retornados.',
+          },
         },
-        required: ['termo']
-      }
-    }
+        required: ['termo'],
+      },
+    },
   ];
 
   // Se o agente for marcenaria, damos acesso à ferramenta de RAG técnico conceitual
   if (chosenAgent === 'marcenaria') {
     toolDeclarations.push({
       name: 'ragConhecimentoTecnico',
-      description: 'Busca regras conceituais, especificações de ferragens e padrões ergonômicos de marcenaria sob demanda.',
+      description:
+        'Busca regras conceituais, especificações de ferragens e padrões ergonômicos de marcenaria sob demanda.',
       parameters: {
         type: 'OBJECT',
         properties: {
-          query: { type: 'STRING', description: 'A pergunta ou conceito técnico sobre montagem, folgas ou materiais de marcenaria.' }
+          query: {
+            type: 'STRING',
+            description:
+              'A pergunta ou conceito técnico sobre montagem, folgas ou materiais de marcenaria.',
+          },
         },
-        required: ['query']
-      }
+        required: ['query'],
+      },
     });
   }
 
@@ -690,14 +771,12 @@ export async function processarChat(payload: {
   let finalResponseText = '';
   let finalConfidence = Math.round(_routeConfidence * 100);
   let finalSources: string[] = ['Conhecimento Geral da IA'];
-  
+
   let primaryToolResult: any = null;
 
   while (hasPendingCalls && currentIteration < maxIterations) {
     currentIteration++;
-    /* console.log(`[AI_CHAT] Iteração do loop de tools: ${currentIteration}/${maxIterations}`) */;
-
-    // Chamada ao Gemini
+    /* console.log(`[AI_CHAT] Iteração do loop de tools: ${currentIteration}/${maxIterations}`) */ // Chamada ao Gemini
     const geminiResponse = await chamarGemini({
       contents,
       systemInstruction: SYSTEM_PROMPTS[chosenAgent],
@@ -706,17 +785,15 @@ export async function processarChat(payload: {
       responseSchema: undefined,
       temperature: TEMPERATURE,
       tenantId,
-      usuarioId
+      usuarioId,
     });
 
     const candidate = geminiResponse.candidates?.[0];
     const parts = candidate?.content?.parts || [];
-    const functionCalls = parts.filter(p => p.functionCall);
+    const functionCalls = parts.filter((p) => p.functionCall);
 
     if (functionCalls.length > 0) {
-      /* console.log(`[AI_CHAT] Gemini solicitou ${functionCalls.length} chamada(s) de ferramentas.`) */;
-      
-      // Adiciona a chamada de ferramenta feita pelo modelo ao histórico do Gemini
+      /* console.log(`[AI_CHAT] Gemini solicitou ${functionCalls.length} chamada(s) de ferramentas.`) */ // Adiciona a chamada de ferramenta feita pelo modelo ao histórico do Gemini
       contents.push(candidate.content);
 
       const responseParts: any[] = [];
@@ -728,9 +805,7 @@ export async function processarChat(payload: {
         const toolName = fc.name;
         const toolArgs = fc.args || {};
 
-        /* console.log(`[AI_TOOL] Executando chamada para a tool: ${toolName}`) */;
-        
-        // Executamos a ferramenta correspondente
+        /* console.log(`[AI_TOOL] Executando chamada para a tool: ${toolName}`) */ // Executamos a ferramenta correspondente
         const result = await executarFerramenta(toolName, toolArgs, tenantId);
 
         if (!primaryToolResult && (result.table_data || result.chart_data)) {
@@ -742,20 +817,19 @@ export async function processarChat(payload: {
         responseParts.push({
           functionResponse: {
             name: toolName,
-            response: { output: result.text || JSON.stringify(result) }
-          }
+            response: { output: result.text || JSON.stringify(result) },
+          },
         });
       }
 
       // Adiciona o retorno das ferramentas ao histórico do Gemini
       contents.push({
         role: 'user',
-        parts: responseParts
+        parts: responseParts,
       });
-
     } else {
-      /* console.log('[AI_CHAT] Nenhuma chamada de ferramenta pendente. Coletando resposta final.') */;
-      finalResponseText = geminiResponse.text || '';
+      /* console.log('[AI_CHAT] Nenhuma chamada de ferramenta pendente. Coletando resposta final.') */ finalResponseText =
+        geminiResponse.text || '';
       hasPendingCalls = false;
     }
   }
@@ -768,12 +842,15 @@ export async function processarChat(payload: {
   // ----------------------------------------------------
   // Geração de Resposta Estruturada Final
   // ----------------------------------------------------
-  /* console.log('[AI_CHAT] Formatando resposta final estruturada...') */;
-  
-  let formattedText = finalResponseText;
+  /* console.log('[AI_CHAT] Formatando resposta final estruturada...') */ let formattedText =
+    finalResponseText;
   const chartData = primaryToolResult?.chart_data || null;
   let tableData = primaryToolResult?.table_data || null;
-  let suggestions = primaryToolResult?.suggestions || ['Como posso te ajudar mais?', 'Verificar orçamentos aprovados', 'Calcular margens de vendas'];
+  let suggestions = primaryToolResult?.suggestions || [
+    'Como posso te ajudar mais?',
+    'Verificar orçamentos aprovados',
+    'Calcular margens de vendas',
+  ];
 
   // Vamos fazer uma chamada estruturada ao Gemini para gerar o JSON final perfeito contendo a formatação
   try {
@@ -796,28 +873,36 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
       responseSchema: {
         type: 'OBJECT',
         properties: {
-          response: { type: 'STRING', description: 'A resposta completa do assistente formatada em Markdown limpo.' },
+          response: {
+            type: 'STRING',
+            description: 'A resposta completa do assistente formatada em Markdown limpo.',
+          },
           confidence: { type: 'NUMBER', description: 'Nível de confiança da resposta (0 a 100).' },
-          sources: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Fontes utilizadas para a resposta (ex: Banco de Dados ERP, RAG Marcenaria).' },
+          sources: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description:
+              'Fontes utilizadas para a resposta (ex: Banco de Dados ERP, RAG Marcenaria).',
+          },
           table_data: {
             type: 'OBJECT',
             description: 'Tabela de dados opcional gerada ou extraída da resposta.',
             properties: {
               headers: { type: 'ARRAY', items: { type: 'STRING' } },
-              rows: { type: 'ARRAY', items: { type: 'ARRAY', items: { type: 'STRING' } } }
+              rows: { type: 'ARRAY', items: { type: 'ARRAY', items: { type: 'STRING' } } },
             },
-            required: ['headers', 'rows']
+            required: ['headers', 'rows'],
           },
           suggestions: {
             type: 'ARRAY',
             items: { type: 'STRING' },
-            description: 'Sugestões de follow-up inteligentes sugeridas para o usuário.'
-          }
+            description: 'Sugestões de follow-up inteligentes sugeridas para o usuário.',
+          },
         },
-        required: ['response', 'confidence', 'sources']
+        required: ['response', 'confidence', 'sources'],
       },
       tenantId,
-      usuarioId
+      usuarioId,
     });
 
     const parsedFinal = limparEParsearJSON(jsonResponse.text);
@@ -837,7 +922,10 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
       suggestions = parsedFinal.suggestions;
     }
   } catch (err: any) {
-    console.warn('[AI_CHAT] Erro ao estruturar resposta final em JSON. Usando fallbacks seguros:', err.message || err);
+    console.warn(
+      '[AI_CHAT] Erro ao estruturar resposta final em JSON. Usando fallbacks seguros:',
+      err.message || err,
+    );
     // Em caso de erro, mantemos o texto gerado na iteração
     if (primaryToolResult) {
       finalSources = ['Banco de Dados ERP'];
@@ -854,15 +942,13 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
       memorySummary,
       userMessage,
       assistantMessage: formattedText,
-      today
+      today,
     });
   } catch (memErr) {
     console.error('[AI_ERROR] Falha ao atualizar memória:', memErr);
   }
 
-  /* console.log(`[AI_CHAT] Processamento finalizado com sucesso para o agente ${chosenAgent}.`) */;
-
-  return {
+  /* console.log(`[AI_CHAT] Processamento finalizado com sucesso para o agente ${chosenAgent}.`) */ return {
     text: formattedText,
     chart_data: chartData,
     table_data: tableData,
@@ -870,7 +956,7 @@ Retorne um JSON contendo o texto final formatado em Markdown, nível de confian�
     agent: chosenAgent,
     confidence_score: finalConfidence,
     sources: finalSources,
-    memory_summary: updatedMemory
+    memory_summary: updatedMemory,
   };
 }
 
@@ -901,8 +987,8 @@ Siga as regras:
       contents: prompt,
       config: {
         temperature: 0.3,
-        maxOutputTokens: 200
-      }
+        maxOutputTokens: 200,
+      },
     });
 
     return (response.text || params.memorySummary).trim();
@@ -911,4 +997,3 @@ Siga as regras:
     return params.memorySummary;
   }
 }
-

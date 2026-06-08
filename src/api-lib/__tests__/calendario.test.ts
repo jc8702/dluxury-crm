@@ -36,7 +36,13 @@ function mockRes() {
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -53,6 +59,8 @@ function mockReq(overrides: any = {}): any {
 describe('handleCalendario', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
+    sql.join = vi.fn((values: any[]) => values);
+    sql.begin = vi.fn(async (cb: any) => cb(sql));
   });
 
   describe('GET /eventos', () => {
@@ -214,7 +222,11 @@ describe('handleCalendario', () => {
         .mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]) // SELECT usuarios
         .mockResolvedValue([]); // INSERT eventos
 
-      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'orc-uuid' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: 'orc-uuid' },
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -329,7 +341,11 @@ describe('handleCalendario', () => {
         ])
         .mockResolvedValueOnce([{ id: 'u1' }])
         .mockResolvedValueOnce([{ id: 'auto-1' }]);
-      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'q1' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: 'q1' },
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect([200, 201]).toContain(res._s());

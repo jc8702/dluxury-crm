@@ -740,7 +740,7 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
       }
 
       return await sql.begin(async (tx) => {
-        const titulos = [];
+        let titulos: any = [];
         const mesesRecorrencia = Number(req.body.recorrencia_meses) || 1;
         const valorTaxaTotal = Number(req.body.valor_custo_financeiro) || 0;
         const taxaPerc = Number(req.body.taxa_financeira) || 0;
@@ -770,7 +770,7 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
           sql`, `,
         );
 
-        const titulos = await tx`
+        titulos = await tx`
           INSERT INTO titulos_pagar (
             numero_titulo, fornecedor_id, pedido_compra_id,
             valor_original, valor_liquido, valor_aberto, 

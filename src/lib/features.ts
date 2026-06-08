@@ -24,7 +24,6 @@ export const FEATURES: Record<PlanTier, string[]> = {
     'ia',
     'plano_corte',
     'estoque',
-    'simulador_cnc',
     'simulator',
     'whatsapp',
     'advanced-reports',

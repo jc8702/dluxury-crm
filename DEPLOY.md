@@ -1,6 +1,7 @@
 # Deploy Checklist
 
 ## ✅ 1. Vercel (Frontend & API)
+
 **Status:** DEPLOYADO
 **URL:** https://dluxury-crm.vercel.app
 
@@ -19,6 +20,7 @@ Você precisa executar o script de migração no seu banco Neon para garantir in
 5. Execute o script
 
 ### O que esse script faz:
+
 - cria índices de performance para `eventos`, `orcamentos`, `projetos`
 - normaliza dados para minúsculas (evita bug de ENUM maiúsculo)
 - cria trigger para normalizar futuras inserções
@@ -36,10 +38,13 @@ Você precisa executar o script de migração no seu banco Neon para garantir in
 ## 🆘 Problemas Comuns
 
 ### 1. "DATABASE_URL não encontrada" no Vercel
+
 Verifique se a variável de ambiente `DATABASE_URL` está configurada no Vercel Project Settings.
 
 ### 2. "Table 'eventos' doesn't exist"
+
 O banco pode estar vazio ou as tabelas não foram criadas. Verifique se o schema está sincronizado.
 
 ### 3. Erro de CORS
+
 Se a API não responder, verifique as configurações de CORS no `api/index.ts`.

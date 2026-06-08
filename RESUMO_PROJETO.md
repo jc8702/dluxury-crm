@@ -2,11 +2,18 @@
 
 ## Informações Gerais
 
-- **Status Atual:** Tenant Isolation Middleware + Fase 1 (DB) implementados e validados em branch dedicada `audit/2026-06-05-tenant-db`. Pronto para merge após revisão.
+- **Status Atual:** Queries parametrizadas seguras em transações (sql.begin) suportadas no Neon/Drizzle e 100% dos testes corrigidos e passando.
 - **Objetivo Central:** Garantir isolamento rigoroso de dados por tenant (multi-tenancy) e eliminar dívida técnica crítica (DB, UI, módulos, docs).
-- **Última Atualização:** 07/06/2026 - 19:17
+- **Última Atualização:** 08/06/2026 - 00:26
 
 ## Histórico de Alterações
+
+- **[08/06/2026 - 00:26]:** Queries transacionais parametrizadas seguras no Neon/Drizzle e estabilização da suíte de testes (`fix/transaction-raw-params`)
+  - Corrigido o wrapper `tx` de `sql.begin` (`src/api-lib/_db.ts`) para suportar de maneira segura e parametrizada chamadas como função (string + params) no Drizzle/Neon utilizando a sessão transacional subjacente.
+  - Criado teste de robustez transacional (`db-transaction-raw.test.ts`) comprovando rollback de erros e commits funcionais com tagged templates e strings cruas parametrizadas.
+  - Corrigidos mocks em `compras.test.ts`, `financeiro.test.ts`, `quotations.test.ts` e `notificacoes.test.ts` para prover compatibilidade com a propriedade `join` e `begin` transacionais.
+  - Ajustados dados mockados de materiais e notificações nos testes para evitar falso-positivo em geração de movimentações em lote e notificações duplicadas.
+  - Suíte de testes (706 testes) passando e build final compilando com 100% de sucesso.
 
 - **[07/06/2026 - 22:58]:** Higienização de Repositório (`chore/repo-hygiene`)
   - Removido lixo versionado da raiz que serviam apenas como scripts one-off de debug, relatórios, backups (.sql, logs, etc.) que não tem uso em runtime.

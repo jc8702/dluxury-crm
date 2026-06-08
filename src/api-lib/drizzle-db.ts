@@ -5,16 +5,25 @@ import * as schema from '../db/schema/index.js';
 
 neonConfig.webSocketConstructor = ws;
 
-const databaseUrl = (
-  (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') || 
-  (import.meta as any).env?.VITE_DATABASE_URL || 
-  ''
-).replace(/"/g, '');
+let _dbInstance: any = null;
 
-if (!databaseUrl && typeof window === 'undefined') {
-  console.warn('DATABASE_URL ausente no ambiente de servidor.');
-}
-
-// Inicializa apenas se houver URL.
-const pool = databaseUrl ? new Pool({ connectionString: databaseUrl }) : null;
-export const db = pool ? drizzle(pool, { schema }) : null as any;
+export const db = new Proxy({} as any, {
+  get(target, prop, receiver) {
+    if (prop === 'then') return undefined;
+    if (!_dbInstance) {
+      const databaseUrl = (
+        (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') || 
+        (import.meta as any).env?.VITE_DATABASE_URL || 
+        ''
+      ).replace(/"/g, '');
+      if (databaseUrl) {
+        const pool = new Pool({ connectionString: databaseUrl });
+        _dbInstance = drizzle(pool, { schema });
+      }
+    }
+    if (!_dbInstance) {
+      throw new Error('drizzle db instance not initialized for transactions.');
+    }
+    return Reflect.get(_dbInstance, prop, receiver);
+  }
+}) as any;

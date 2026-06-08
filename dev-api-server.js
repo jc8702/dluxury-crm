@@ -13,8 +13,12 @@ const PORT = 3000;
 
 const server = http.createServer(async (req, res) => {
   console.log(`[API] ${req.method} ${req.url}`);
-  
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost:4173', 'http://127.0.0.1:5173'];
+
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'http://127.0.0.1:5173',
+  ];
   const origin = req.headers['origin'];
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -31,7 +35,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   let body = '';
-  req.on('data', chunk => {
+  req.on('data', (chunk) => {
     body += chunk.toString();
   });
 
@@ -63,7 +67,7 @@ const server = http.createServer(async (req, res) => {
         setHeader: (name, value) => {
           res.setHeader(name, value);
           return vRes;
-        }
+        },
       };
 
       await handler(req, vRes);

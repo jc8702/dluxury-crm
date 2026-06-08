@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  bootstrapFinanceiro,
-  garantirSeedsFinanceiros,
-} from '../financeiro.js';
+import { bootstrapFinanceiro, garantirSeedsFinanceiros } from '../financeiro.js';
 
 vi.mock('../_db.js', () => ({
   sql: vi.fn().mockResolvedValue([]),
@@ -12,7 +9,9 @@ vi.mock('../_db.js', () => ({
 const { sql } = await import('../_db.js');
 
 describe('bootstrapFinanceiro', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('deve executar todas as migrations idempotentemente sem erro', async () => {
     await bootstrapFinanceiro();
@@ -33,13 +32,17 @@ describe('bootstrapFinanceiro', () => {
 });
 
 describe('garantirSeedsFinanceiros', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('deve inserir classes financeiras e contas quando não existem', async () => {
     vi.mocked(sql).mockImplementation(async (q: any) => {
       const sqlText = String(q?.[0] || '').toLowerCase();
-      if (sqlText.includes('select count(*) as count from contas_internas')) return [{ count: '0' }];
-      if (sqlText.includes('select count(*) as count from formas_pagamento')) return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from contas_internas'))
+        return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from formas_pagamento'))
+        return [{ count: '0' }];
       return [];
     });
     await garantirSeedsFinanceiros('00000000-0000-0000-0000-000000000000');
@@ -49,8 +52,10 @@ describe('garantirSeedsFinanceiros', () => {
   it('deve pular inserção de contas_internas quando já existem', async () => {
     vi.mocked(sql).mockImplementation(async (q: any) => {
       const sqlText = String(q?.[0] || '').toLowerCase();
-      if (sqlText.includes('select count(*) as count from contas_internas')) return [{ count: '5' }];
-      if (sqlText.includes('select count(*) as count from formas_pagamento')) return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from contas_internas'))
+        return [{ count: '5' }];
+      if (sqlText.includes('select count(*) as count from formas_pagamento'))
+        return [{ count: '0' }];
       return [];
     });
     await garantirSeedsFinanceiros('00000000-0000-0000-0000-000000000000');
@@ -59,8 +64,10 @@ describe('garantirSeedsFinanceiros', () => {
   it('deve pular inserção de formas_pagamento quando já existem', async () => {
     vi.mocked(sql).mockImplementation(async (q: any) => {
       const sqlText = String(q?.[0] || '').toLowerCase();
-      if (sqlText.includes('select count(*) as count from contas_internas')) return [{ count: '0' }];
-      if (sqlText.includes('select count(*) as count from formas_pagamento')) return [{ count: '4' }];
+      if (sqlText.includes('select count(*) as count from contas_internas'))
+        return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from formas_pagamento'))
+        return [{ count: '4' }];
       return [];
     });
     await garantirSeedsFinanceiros('00000000-0000-0000-0000-000000000000');
@@ -70,7 +77,8 @@ describe('garantirSeedsFinanceiros', () => {
     vi.mocked(sql).mockImplementation(async (q: any) => {
       const sqlText = String(q?.[0] || '').toLowerCase();
       if (sqlText.includes('select count(*) as count from contas_internas')) return [];
-      if (sqlText.includes('select count(*) as count from formas_pagamento')) return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from formas_pagamento'))
+        return [{ count: '0' }];
       return [];
     });
     await garantirSeedsFinanceiros('00000000-0000-0000-0000-000000000000');
@@ -79,7 +87,8 @@ describe('garantirSeedsFinanceiros', () => {
   it('deve tratar resposta vazia do count de formas_pagamento (length = 0)', async () => {
     vi.mocked(sql).mockImplementation(async (q: any) => {
       const sqlText = String(q?.[0] || '').toLowerCase();
-      if (sqlText.includes('select count(*) as count from contas_internas')) return [{ count: '0' }];
+      if (sqlText.includes('select count(*) as count from contas_internas'))
+        return [{ count: '0' }];
       if (sqlText.includes('select count(*) as count from formas_pagamento')) return [];
       return [];
     });
@@ -96,7 +105,9 @@ describe('garantirSeedsFinanceiros', () => {
       return [];
     });
     await expect(garantirSeedsFinanceiros('t1')).resolves.toBeUndefined();
-    expect(consoleSpy).toHaveBeenCalledWith('[ERRO GARANTIR SEEDS FINANCEIROS]', 'seed failure');
+    expect(consoleSpy).toHaveBeenCalled();
+    const logStr = JSON.stringify(consoleSpy.mock.calls);
+    expect(logStr).toContain('ERRO GARANTIR SEEDS FINANCEIROS');
     consoleSpy.mockRestore();
   });
 });

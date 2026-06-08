@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handlePlanoCorte, handleChapas, handleEngenhariaSKUs, handleImportarDesenho } from '../planocorte.js';
+import {
+  handlePlanoCorte,
+  handleChapas,
+  handleEngenhariaSKUs,
+  handleImportarDesenho,
+} from '../planocorte.js';
 
 // Mock do pdfjs-dist para testar importação de PDF
 vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
@@ -9,22 +14,22 @@ vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
         numPages: 1,
         getPage: vi.fn().mockResolvedValue({
           getTextContent: vi.fn().mockResolvedValue({
-            items: [{ str: 'Peça A 800 x 600 x 18' }]
-          })
-        })
-      })
-    })
+            items: [{ str: 'Peça A 800 x 600 x 18' }],
+          }),
+        }),
+      }),
+    }),
   },
   getDocument: vi.fn().mockReturnValue({
     promise: Promise.resolve({
       numPages: 1,
       getPage: vi.fn().mockResolvedValue({
         getTextContent: vi.fn().mockResolvedValue({
-          items: [{ str: 'Peça A 800 x 600 x 18' }]
-        })
-      })
-    })
-  })
+          items: [{ str: 'Peça A 800 x 600 x 18' }],
+        }),
+      }),
+    }),
+  }),
 }));
 
 vi.mock('../drizzle-db.js', () => ({
@@ -33,7 +38,7 @@ vi.mock('../drizzle-db.js', () => ({
     update: vi.fn(),
     insert: vi.fn(),
     execute: vi.fn(),
-  }
+  },
 }));
 
 vi.mock('../_db.js', () => ({
@@ -51,8 +56,22 @@ const { db } = await import('../drizzle-db.js');
 
 function mockDrizzleChain(resolveValue: any = []) {
   const chain: any = {};
-  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning', 'insert', 'values', 'execute'];
-  methods.forEach(method => {
+  const methods = [
+    'select',
+    'from',
+    'leftJoin',
+    'innerJoin',
+    'where',
+    'limit',
+    'orderBy',
+    'update',
+    'set',
+    'returning',
+    'insert',
+    'values',
+    'execute',
+  ];
+  methods.forEach((method) => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
 
@@ -63,18 +82,32 @@ function mockDrizzleChain(resolveValue: any = []) {
 }
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
-    _s: () => sc, _d: () => jd,
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -91,8 +124,14 @@ function mockReq(overrides: any = {}): any {
 describe('handlePlanoCorte', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
     vi.mocked(mockSql).mockResolvedValue([]);
+    mockSql.join = vi.fn((values: any[]) => values);
+    mockSql.begin = vi.fn(async (cb: any) => cb(mockSql));
   });
 
   it('deve listar planos (GET)', async () => {
@@ -129,18 +168,25 @@ describe('handlePlanoCorte', () => {
     const insertChain = mockDrizzleChain([{ id: '1', nome: 'Novo Plano' }]);
     vi.mocked(db.insert).mockReturnValueOnce(insertChain);
 
-    const req = mockReq({ method: 'POST', query: { action: 'criar_plano' }, body: { nome: 'Novo Plano' } });
+    const req = mockReq({
+      method: 'POST',
+      query: { action: 'criar_plano' },
+      body: { nome: 'Novo Plano' },
+    });
     const res = mockRes();
     await handlePlanoCorte(req, res);
     expect(res._s()).toBe(201);
   });
 
   it('deve verificar retalhos duplicados (POST action=verificar_retalhos_duplicados)', async () => {
-    vi.mocked(mockSql).mockResolvedValueOnce([{ id: 'ret-1' }]);
+    vi.mocked(mockSql).mockResolvedValueOnce([{ largura_mm: 500, altura_mm: 300 }]);
     const req = mockReq({
       method: 'POST',
       query: { action: 'verificar_retalhos_duplicados' },
-      body: { plano_id: '123e4567-e89b-12d3-a456-426614174000', retalhos_gerados: [{ largura_mm: 500, altura_mm: 300 }] }
+      body: {
+        plano_id: '123e4567-e89b-12d3-a456-426614174000',
+        retalhos_gerados: [{ largura_mm: 500, altura_mm: 300 }],
+      },
     });
     const res = mockRes();
     await handlePlanoCorte(req, res);
@@ -190,13 +236,29 @@ describe('handlePlanoCorte', () => {
         nome_projeto: 'Projeto Teste',
         projeto_id: '123e4567-e89b-12d3-a456-426614174000',
         materiais_consumidos: [
-          { id_retalho: '123e4567-e89b-12d3-a456-426614174001', plano_id: '123e4567-e89b-12d3-a456-426614174002', sku: 'CHP-MDF-15' },
-          { id_retalho: null, plano_id: '123e4567-e89b-12d3-a456-426614174002', sku: 'CHP-MDF-18', qtd: 2 }
+          {
+            id_retalho: '123e4567-e89b-12d3-a456-426614174001',
+            plano_id: '123e4567-e89b-12d3-a456-426614174002',
+            sku: 'CHP-MDF-15',
+          },
+          {
+            id_retalho: null,
+            plano_id: '123e4567-e89b-12d3-a456-426614174002',
+            sku: 'CHP-MDF-18',
+            qtd: 2,
+          },
         ],
         retalhos_gerados: [
-          { plano_corte_id: '123e4567-e89b-12d3-a456-426614174002', largura_mm: 600, altura_mm: 400, espessura_mm: 15, sku_chapa: 'CHP-MDF-15', quantidade: 1 }
-        ]
-      }
+          {
+            plano_corte_id: '123e4567-e89b-12d3-a456-426614174002',
+            largura_mm: 600,
+            altura_mm: 400,
+            espessura_mm: 15,
+            sku_chapa: 'CHP-MDF-15',
+            quantidade: 1,
+          },
+        ],
+      },
     });
     const res = mockRes();
     await handlePlanoCorte(req, res);
@@ -209,13 +271,15 @@ describe('handlePlanoCorte', () => {
     const selectChain = mockDrizzleChain([{ id: 'plano-1', nome: 'Plano Existente' }]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
 
-    const updateChain = mockDrizzleChain([{ id: 'plano-1', nome: 'Plano Existente', resultado: 'OK' }]);
+    const updateChain = mockDrizzleChain([
+      { id: 'plano-1', nome: 'Plano Existente', resultado: 'OK' },
+    ]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
     const req = mockReq({
       method: 'POST',
       query: {},
-      body: { plano_id: '123e4567-e89b-12d3-a456-426614174000', materiais: [], resultado: 'OK' }
+      body: { plano_id: '123e4567-e89b-12d3-a456-426614174000', materiais: [], resultado: 'OK' },
     });
     const res = mockRes();
     await handlePlanoCorte(req, res);
@@ -224,13 +288,15 @@ describe('handlePlanoCorte', () => {
   });
 
   it('deve atualizar plano (PUT)', async () => {
-    const updateChain = mockDrizzleChain([{ id: '123e4567-e89b-12d3-a456-426614174000', nome: 'Plano Alterado' }]);
+    const updateChain = mockDrizzleChain([
+      { id: '123e4567-e89b-12d3-a456-426614174000', nome: 'Plano Alterado' },
+    ]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
     const req = mockReq({
       method: 'PUT',
       query: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      body: { nome: 'Plano Alterado' }
+      body: { nome: 'Plano Alterado' },
     });
     const res = mockRes();
     await handlePlanoCorte(req, res);
@@ -239,7 +305,9 @@ describe('handlePlanoCorte', () => {
   });
 
   it('deve realizar soft delete do plano (DELETE)', async () => {
-    const selectChain = mockDrizzleChain([{ id: '123e4567-e89b-12d3-a456-426614174000', nome: 'Plano a Deletar' }]);
+    const selectChain = mockDrizzleChain([
+      { id: '123e4567-e89b-12d3-a456-426614174000', nome: 'Plano a Deletar' },
+    ]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
 
     const updateChain = mockDrizzleChain([]);
@@ -247,7 +315,7 @@ describe('handlePlanoCorte', () => {
 
     const req = mockReq({
       method: 'DELETE',
-      query: { id: '123e4567-e89b-12d3-a456-426614174000' }
+      query: { id: '123e4567-e89b-12d3-a456-426614174000' },
     });
     const res = mockRes();
     await handlePlanoCorte(req, res);
@@ -266,19 +334,45 @@ describe('handlePlanoCorte', () => {
 describe('handleChapas', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
     vi.mocked(mockSql).mockResolvedValue([]);
+    mockSql.join = vi.fn((values: any[]) => values);
+    mockSql.begin = vi.fn(async (cb: any) => cb(mockSql));
   });
 
   it('deve listar chapas e mesclar com materiais do estoque', async () => {
-    vi.mocked(mockSql).mockResolvedValueOnce([{ id: 'm1', sku: 'CHP-0007', nome: 'MDF 15MM BRANCO TX', largura_mm: '2750', altura_mm: '1830', preco_custo: '230.00' }]);
-    
-    const selectChain = mockDrizzleChain([{ id: 'e1', sku: 'MDF-BRA-15', nome: 'MDF Branco 15mm', largura_mm: 2750, altura_mm: 1830, espessura_mm: 15, preco_unitario: '280.00', ativo: true }]);
+    vi.mocked(mockSql).mockResolvedValueOnce([
+      {
+        id: 'm1',
+        sku: 'CHP-0007',
+        nome: 'MDF 15MM BRANCO TX',
+        largura_mm: '2750',
+        altura_mm: '1830',
+        preco_custo: '230.00',
+      },
+    ]);
+
+    const selectChain = mockDrizzleChain([
+      {
+        id: 'e1',
+        sku: 'MDF-BRA-15',
+        nome: 'MDF Branco 15mm',
+        largura_mm: 2750,
+        altura_mm: 1830,
+        espessura_mm: 15,
+        preco_unitario: '280.00',
+        ativo: true,
+      },
+    ]);
     vi.mocked(db.select).mockReturnValueOnce(selectChain);
-    
+
     const req = mockReq({ method: 'GET', query: { q: '0007' } });
     const res = mockRes();
-    
+
     await handleChapas(req, res);
     expect(res._s()).toBe(200);
     expect(res._d().data).toBeDefined();
@@ -289,8 +383,14 @@ describe('handleChapas', () => {
 describe('handleEngenhariaSKUs', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
     vi.mocked(mockSql).mockResolvedValue([]);
+    mockSql.join = vi.fn((values: any[]) => values);
+    mockSql.begin = vi.fn(async (cb: any) => cb(mockSql));
   });
 
   it('deve buscar SKUs de engenharia por termo (GET ?q=X)', async () => {
@@ -319,8 +419,14 @@ describe('handleEngenhariaSKUs', () => {
 describe('handleImportarDesenho', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
     vi.mocked(mockSql).mockResolvedValue([]);
+    mockSql.join = vi.fn((values: any[]) => values);
+    mockSql.begin = vi.fn(async (cb: any) => cb(mockSql));
   });
 
   it('deve retornar 400 se nenhum arquivo base64 for enviado', async () => {
@@ -357,7 +463,7 @@ ENDSEC
     const dxfBase64 = Buffer.from(dxfContent).toString('base64');
     const req = mockReq({
       method: 'POST',
-      body: { fileBase64: dxfBase64, fileName: 'projeto.dxf' }
+      body: { fileBase64: dxfBase64, fileName: 'projeto.dxf' },
     });
     const res = mockRes();
     await handleImportarDesenho(req, res);
@@ -373,7 +479,7 @@ ENDSEC
     const pdfBase64 = Buffer.from('PDF_DUMMY_DATA').toString('base64');
     const req = mockReq({
       method: 'POST',
-      body: { fileBase64: pdfBase64, fileName: 'projeto.pdf' }
+      body: { fileBase64: pdfBase64, fileName: 'projeto.pdf' },
     });
     const res = mockRes();
     await handleImportarDesenho(req, res);
@@ -403,7 +509,7 @@ ENDSEC
     const dxfBase64 = Buffer.from(dxfContent).toString('base64');
     const req = mockReq({
       method: 'POST',
-      body: { fileBase64: dxfBase64, fileName: 'projeto_reverso.dxf' }
+      body: { fileBase64: dxfBase64, fileName: 'projeto_reverso.dxf' },
     });
     const res = mockRes();
     await handleImportarDesenho(req, res);
@@ -416,7 +522,7 @@ ENDSEC
   it('deve retornar 500 caso ocorra erro ao processar o desenho', async () => {
     const req = mockReq({
       method: 'POST',
-      body: { fileBase64: Buffer.from('CORRUPT_DATA').toString('base64'), fileName: 'projeto.pdf' }
+      body: { fileBase64: Buffer.from('CORRUPT_DATA').toString('base64'), fileName: 'projeto.pdf' },
     });
     const res = mockRes();
     await handleImportarDesenho(req, res);

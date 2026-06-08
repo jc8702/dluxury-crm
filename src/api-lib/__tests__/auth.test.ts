@@ -11,6 +11,11 @@ vi.mock('../_db.js', () => ({
   auditLog: vi.fn(),
 }));
 
+vi.mock('../middleware/rateLimiter.js', () => ({
+  loginRateLimit: vi.fn().mockResolvedValue(true),
+  applyRateLimit: vi.fn().mockResolvedValue(true),
+}));
+
 const { sql, resolveTenantByDomain } = await import('../_db.js');
 const { TENANT_MASTER_ID } = await import('../../types/tenant.js');
 

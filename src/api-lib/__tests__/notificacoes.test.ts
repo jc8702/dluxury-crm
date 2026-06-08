@@ -13,7 +13,7 @@ vi.mock('../middleware/tenantMiddleware.js', () => ({
 vi.mock('../drizzle-db.js', () => ({
   db: {
     select: vi.fn(),
-  }
+  },
 }));
 
 const { sql, validateAuth } = await import('../_db.js');
@@ -21,8 +21,19 @@ const { db } = await import('../drizzle-db.js');
 
 function mockDrizzleChain(resolveValue: any = []) {
   const chain: any = {};
-  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning'];
-  methods.forEach(method => {
+  const methods = [
+    'select',
+    'from',
+    'leftJoin',
+    'innerJoin',
+    'where',
+    'limit',
+    'orderBy',
+    'update',
+    'set',
+    'returning',
+  ];
+  methods.forEach((method) => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
 
@@ -33,18 +44,36 @@ function mockDrizzleChain(resolveValue: any = []) {
 }
 
 function mockRes() {
-  let sc = 200, jd: any = null, ended = false;
+  let sc = 200,
+    jd: any = null,
+    ended = false;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => { ended = true; return self; }),
-    _s: () => sc, _d: () => jd,
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
+    end: vi.fn(() => {
+      ended = true;
+      return self;
+    }),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -61,9 +90,15 @@ function mockReq(overrides: any = {}): any {
 describe('handleNotificacoes', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
+    sql.join = vi.fn((values: any[]) => values);
+    sql.begin = vi.fn(async (cb: any) => cb(sql));
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: 'tenant-123' }, error: null });
-    
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: 'tenant-123' },
+      error: null,
+    });
+
     const defaultChain = mockDrizzleChain([]);
     vi.mocked(db.select).mockReturnValue(defaultChain);
   });
@@ -91,7 +126,11 @@ describe('handleNotificacoes', () => {
 
   it('deve filtrar apenas não lidas se unread=true', async () => {
     vi.mocked(sql).mockResolvedValue([{ id: '1', lida: false }]);
-    const req = mockReq({ method: 'GET', url: '/api/notificacoes', query: { unread: 'true', limit: '10' } });
+    const req = mockReq({
+      method: 'GET',
+      url: '/api/notificacoes',
+      query: { unread: 'true', limit: '10' },
+    });
     const res = mockRes();
 
     await handleNotificacoes(req, res);
@@ -101,7 +140,10 @@ describe('handleNotificacoes', () => {
 
   it('deve contar não lidas em GET /contar', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('SELECT count(*)')) {
         return [{ count: '5' }];
       }
@@ -174,20 +216,27 @@ describe('handleNotificacoes', () => {
 describe('gerarNotificacoesAutomaticas', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
+    sql.join = vi.fn((values: any[]) => values);
+    sql.begin = vi.fn(async (cb: any) => cb(sql));
     const defaultChain = mockDrizzleChain([]);
     vi.mocked(db.select).mockReturnValue(defaultChain);
   });
 
   it('deve criar notificações de estoque crítico para materiais abaixo do mínimo', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM materiais')) {
         return [
           { id: 'm1', nome: 'MDF 18mm', sku: 'MDF18', estoque_atual: 0, estoque_minimo: 5 },
-          { id: 'm2', nome: 'MDF 15mm', sku: 'MDF15', estoque_atual: 2, estoque_minimo: 5 }
+          { id: 'm2', nome: 'MDF 15mm', sku: 'MDF15', estoque_atual: 2, estoque_minimo: 5 },
         ];
       }
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'estoque_critico\'')) {
+      if (
+        qStr.includes("SELECT id FROM notificacoes WHERE lida = false AND tipo = 'estoque_critico'")
+      ) {
         return [];
       }
       return [];
@@ -200,12 +249,15 @@ describe('gerarNotificacoesAutomaticas', () => {
 
   it('não deve duplicar notificações se estoque crítico já tiver notificação não lida', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM materiais')) {
         return [{ id: 'm1', nome: 'MDF 18mm', sku: 'MDF18', estoque_atual: 0, estoque_minimo: 5 }];
       }
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'estoque_critico\'')) {
-        return [{ id: 'notif-1' }];
+      if (qStr.includes('FROM notificacoes')) {
+        return [{ referencia_id: 'm1' }];
       }
       return [];
     });
@@ -217,11 +269,16 @@ describe('gerarNotificacoesAutomaticas', () => {
 
   it('deve criar notificações de prazos de projetos próximos de vencer', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM projects')) {
         return [{ id: 'p1', ambiente: 'Cozinha Planejada', prazo_entrega: '2026-06-10' }];
       }
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'prazo_projeto\'')) {
+      if (
+        qStr.includes("SELECT id FROM notificacoes WHERE lida = false AND tipo = 'prazo_projeto'")
+      ) {
         return [];
       }
       return [];
@@ -233,15 +290,20 @@ describe('gerarNotificacoesAutomaticas', () => {
   });
 
   it('deve criar notificações de orçamentos pendentes sem resposta', async () => {
-    const mockOrcamentos = [
-      { id: 'q1', numero: 'ORC-001', cliente: 'Roberto' }
-    ];
+    const mockOrcamentos = [{ id: 'q1', numero: 'ORC-001', cliente: 'Roberto' }];
     const customChain = mockDrizzleChain(mockOrcamentos);
     vi.mocked(db.select).mockReturnValue(customChain);
 
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'orcamento_sem_resposta\'')) {
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
+      if (
+        qStr.includes(
+          "SELECT id FROM notificacoes WHERE lida = false AND tipo = 'orcamento_sem_resposta'",
+        )
+      ) {
         return [];
       }
       return [];
@@ -254,11 +316,18 @@ describe('gerarNotificacoesAutomaticas', () => {
 
   it('deve criar notificações de chamados de garantia pendentes', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM chamados_garantia')) {
         return [{ id: 'g1', numero: 'GAR-002', titulo: 'Porta desalinhada' }];
       }
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'garantia_pendente\'')) {
+      if (
+        qStr.includes(
+          "SELECT id FROM notificacoes WHERE lida = false AND tipo = 'garantia_pendente'",
+        )
+      ) {
         return [];
       }
       return [];
@@ -271,11 +340,20 @@ describe('gerarNotificacoesAutomaticas', () => {
 
   it('deve criar notificações de cobranças financeiras vencidas', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM billings')) {
-        return [{ id: 'b1', nf: 'NF-100', valor: '500.00', due_date: '2026-06-01', cliente: 'Renata' }];
+        return [
+          { id: 'b1', nf: 'NF-100', valor: '500.00', due_date: '2026-06-01', cliente: 'Renata' },
+        ];
       }
-      if (qStr.includes('SELECT id FROM notificacoes WHERE lida = false AND tipo = \'cobranca_vencida\'')) {
+      if (
+        qStr.includes(
+          "SELECT id FROM notificacoes WHERE lida = false AND tipo = 'cobranca_vencida'",
+        )
+      ) {
         return [];
       }
       return [];
@@ -288,7 +366,10 @@ describe('gerarNotificacoesAutomaticas', () => {
 
   it('deve tolerar erros individuais em seções e continuar executando as demais', async () => {
     vi.mocked(sql).mockImplementation(async (strings: any) => {
-      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(/\s+/g, ' ');
+      const qStr = (Array.isArray(strings) ? strings.join('') : String(strings)).replace(
+        /\s+/g,
+        ' ',
+      );
       if (qStr.includes('FROM materiais')) {
         throw new Error('Erro de BD no estoque');
       }

@@ -5,7 +5,7 @@ import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
 import { auditLog, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
-import { logger } from './logger.js';
+import { logger as globalLogger } from './logger.js';
 
 // Classe de erro customizada para validação
 export class ValidationError extends Error {
@@ -30,13 +30,12 @@ const CONFIG = {
 
 // Logger condicional para produção
 const logger = {
-  debug: (..._args: any[]) =>
-    CONFIG.LOG_LEVEL === 'debug' && /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
-  info: (..._args: any[]) =>
-    ['info', 'debug'].includes(CONFIG.LOG_LEVEL) &&
-    /* logger.info('[ORCAMENTOS_PRO]', ..._args) */ null,
-  warn: (...args: any[]) => logger.warn('[ORCAMENTOS_PRO]', ...args),
-  error: (...args: any[]) => logger.error('[ORCAMENTOS_PRO]', ...args),
+  debug: (msg: string, meta?: any) =>
+    CONFIG.LOG_LEVEL === 'debug' ? globalLogger.debug(`[ORCAMENTOS_PRO] ${msg}`, meta) : null,
+  info: (msg: string, meta?: any) =>
+    ['info', 'debug'].includes(CONFIG.LOG_LEVEL) ? globalLogger.info(`[ORCAMENTOS_PRO] ${msg}`, meta) : null,
+  warn: (msg: string, meta?: any) => globalLogger.warn(`[ORCAMENTOS_PRO] ${msg}`, meta),
+  error: (msg: string, meta?: any) => globalLogger.error(`[ORCAMENTOS_PRO] ${msg}`, meta),
 };
 
 // Validadores reutilizáveis

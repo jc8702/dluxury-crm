@@ -1,9 +1,9 @@
 import { sql } from '../src/api-lib/_db.js';
 
 async function setup() {
-    console.log('🚀 Criando tabelas de Engenharia e Orçamentos...');
-    try {
-        await sql`
+  console.log('🚀 Criando tabelas de Engenharia e Orçamentos...');
+  try {
+    await sql`
         CREATE TABLE IF NOT EXISTS sku_engenharia (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -14,7 +14,7 @@ async function setup() {
             updated_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS sku_montagem (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -25,7 +25,7 @@ async function setup() {
             created_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS sku_componente (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             codigo VARCHAR(20) UNIQUE NOT NULL,
@@ -38,7 +38,7 @@ async function setup() {
             created_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS bom_engenharia_montagem (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             sku_engenharia_id UUID REFERENCES sku_engenharia(id) ON DELETE CASCADE,
@@ -49,7 +49,7 @@ async function setup() {
             UNIQUE(sku_engenharia_id, sku_montagem_id)
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS bom_montagem_componente (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             sku_montagem_id UUID REFERENCES sku_montagem(id) ON DELETE CASCADE,
@@ -60,7 +60,7 @@ async function setup() {
             UNIQUE(sku_montagem_id, sku_componente_id)
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS orcamentos_pro (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             numero_orcamento VARCHAR(30) UNIQUE NOT NULL,
@@ -82,7 +82,7 @@ async function setup() {
             updated_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS orcamento_itens (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             orcamento_id UUID REFERENCES orcamentos_pro(id) ON DELETE CASCADE,
@@ -94,7 +94,7 @@ async function setup() {
             created_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS orcamento_lista_explodida (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             orcamento_item_id UUID REFERENCES orcamento_itens(id) ON DELETE CASCADE,
@@ -108,11 +108,11 @@ async function setup() {
             created_at TIMESTAMP DEFAULT NOW()
         );`;
 
-        console.log('✅ Todas as tabelas foram criadas com sucesso!');
-    } catch (err) {
-        console.error('❌ Erro ao criar tabelas:', err);
-    }
-    process.exit(0);
+    console.log('✅ Todas as tabelas foram criadas com sucesso!');
+  } catch (err) {
+    console.error('❌ Erro ao criar tabelas:', err);
+  }
+  process.exit(0);
 }
 
 setup();

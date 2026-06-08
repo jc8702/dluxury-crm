@@ -1,7 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import jwt from 'jsonwebtoken';
 
-const dbUrl = process.env.DATABASE_URL || '';
 const JWT_SECRET = process.env.APP_JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('APP_JWT_SECRET environment variable is required');
@@ -15,17 +14,23 @@ interface SqlClient {
   begin: (callback: (tx: any) => Promise<any>) => Promise<any>;
 }
 
-const sqlInstance = (strings: any, ...values: any[]) => {
-  if (!dbUrl) {
+const getNeonInstance = () => {
+  const url = process.env.DATABASE_URL || '';
+  if (!url) {
     throw new Error('DATABASE_URL ausente no ambiente Vercel.');
   }
   if (!_neonInstance) {
-    _neonInstance = neon(dbUrl);
+    _neonInstance = neon(url);
   }
+  return _neonInstance;
+};
+
+const sqlInstance = (strings: any, ...values: any[]) => {
+  const instance = getNeonInstance();
 
   // Se for chamado como tagged template
   if (Array.isArray(strings) && (strings as any).raw) {
-    return _neonInstance(strings as any, ...values);
+    return instance(strings as any, ...values);
   }
 
   // Se for chamado como função (legado ou raw string)
@@ -33,17 +38,17 @@ const sqlInstance = (strings: any, ...values: any[]) => {
   if (values.length === 1 && Array.isArray(values[0])) {
     params = values[0];
   }
-  return _neonInstance.query(strings, params);
+  return instance.query(strings, params);
 };
 
 // Atribuição de propriedades dinâmicas
 (sqlInstance as any).query = (strings: any, ...values: any[]) => {
-  if (!_neonInstance) _neonInstance = neon(dbUrl);
+  const instance = getNeonInstance();
   let params = values;
   if (values.length === 1 && Array.isArray(values[0])) {
     params = values[0];
   }
-  return _neonInstance.query(strings, params);
+  return instance.query(strings, params);
 };
 
 import { db } from './drizzle-db.js';
@@ -51,7 +56,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 
 // Atribuição de propriedades dinâmicas
 (sqlInstance as any).begin = async (callback: (tx: any) => Promise<any>) => {
-  if (!db) {
+  if (!process.env.DATABASE_URL) {
     throw new Error('drizzle db instance not initialized for transactions.');
   }
 
@@ -69,20 +74,20 @@ import { sql as drizzleSql } from 'drizzle-orm';
       }
 
       // Quando usado como função bruta (tx('SELECT...', [param]))
-      // No Neon serverless, tx.session.client é a PoolClient ou usamos tx.execute(sql.raw(strings))
-      // Mas o params.length > 0 exige bind seguro
       if (params.length === 0) {
         const result = await drizzleTx.execute(drizzleSql.raw(strings));
         return result.rows || result;
       } else {
-        // Se precisar suportar raw SQL com parametros, converte para template manualmente
-        let text = strings;
-        params.forEach((p: any, i: number) => {
-          text = text.replace('$' + (i + 1), '$$' + (i + 1)); // Drizzle usa syntax diferente? Não, SQL puro.
-        });
-        throw new Error(
-          'Raw queries com parâmetros não são suportados dentro do transaction wrapper (use tagged template tx`...`)',
-        );
+        // Obter o cliente transacional subjacente da sessão do Drizzle para rodar query segura com binds
+        const client = drizzleTx.session?.client || (drizzleTx as any).client;
+        if (client && typeof client.query === 'function') {
+          const result = await client.query(strings, params);
+          return result.rows || result;
+        } else {
+          throw new Error(
+            'Não foi possível obter o cliente transacional subjacente para a query parametrizada.',
+          );
+        }
       }
     };
 

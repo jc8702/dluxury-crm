@@ -14,6 +14,8 @@ export function createMockSql() {
     return await cb(mock);
   });
 
+  mock.join = vi.fn((values: any[]) => values);
+
   return mock;
 }
 

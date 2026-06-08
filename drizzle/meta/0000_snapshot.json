@@ -73,9 +73,7 @@
         "erp_chapas_sku_unique": {
           "name": "erp_chapas_sku_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "sku"
-          ]
+          "columns": ["sku"]
         }
       },
       "policies": {},
@@ -140,9 +138,7 @@
         "erp_skus_engenharia_sku_unique": {
           "name": "erp_skus_engenharia_sku_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "sku"
-          ]
+          "columns": ["sku"]
         }
       },
       "policies": {},

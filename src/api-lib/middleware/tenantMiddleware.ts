@@ -91,7 +91,7 @@ function isMiddlewareEnabled(): boolean {
 }
 
 function extractBearer(req: RequestLike): string | null {
-  const header = req.headers['authorization'];
+  const header = req.headers?.['authorization'];
   if (!header) return null;
   const value = Array.isArray(header) ? header[0] : header;
   if (!value || !value.startsWith('Bearer ')) return null;

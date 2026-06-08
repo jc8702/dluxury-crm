@@ -6,7 +6,7 @@ import {
   _resetRateLimit,
 } from '../quotations.js';
 import { db } from '../drizzle-db.js';
-import { validateAuth } from '../_db.js';
+import { validateAuth, sql } from '../_db.js';
 import { PgDialect } from 'drizzle-orm/pg-core';
 
 // Mock do banco de dados e auxiliares
@@ -44,26 +44,36 @@ vi.mock('../drizzle-db.js', () => {
   return { db: mockDb };
 });
 
-vi.mock('../_db.js', () => ({
-  auditLog: vi.fn().mockResolvedValue({}),
-  validateAuth: vi.fn(),
-  sql: Object.assign(vi.fn().mockResolvedValue([]), {
+vi.mock('../_db.js', () => {
+  const mockSql = Object.assign(vi.fn().mockResolvedValue([]), {
     begin: vi.fn().mockImplementation(async (cb) =>
       cb(
         Object.assign(vi.fn().mockResolvedValue([]), {
-          // Mock any transaction methods if needed
+          join: vi.fn((values: any[]) => values),
         }),
       ),
     ),
-  }),
-}));
+    join: vi.fn((values: any[]) => values),
+  });
+  return {
+    auditLog: vi.fn().mockResolvedValue({}),
+    validateAuth: vi.fn(),
+    sql: mockSql,
+  };
+});
 
 vi.mock('../middleware/tenantMiddleware.js', () => ({
   withTenant: (handler: any) => handler,
 }));
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -89,7 +99,6 @@ describe('Módulo de Orçamentos PRO', () => {
         user: { id: `test-user-${Math.random()}` },
       };
     });
-
   });
 
   describe('Validação de Rate Limiting', () => {
@@ -415,7 +424,9 @@ describe('Módulo de Orçamentos PRO', () => {
             return { rows: [{ id: 'forma-123' }] };
           }
           if (rawSql.includes('FROM materiais')) {
-            return { rows: [{ id: 'mat-123', estoque_atual: 10, preco_custo: 50.0 }] };
+            return {
+              rows: [{ id: 'mat-123', sku: 'chp-mdf-15', estoque_atual: 10, preco_custo: 50.0 }],
+            };
           }
           return { rows: [] };
         }),

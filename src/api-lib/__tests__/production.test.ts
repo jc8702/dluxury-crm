@@ -18,12 +18,20 @@ vi.mock('../_productionForecasting.js', () => ({
 const { sql, validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
-    _s: () => sc, _d: () => jd,
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
@@ -37,7 +45,13 @@ function mockMigrations() {
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -57,11 +71,21 @@ describe('handleProduction', () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
 
     vi.mocked(sql).mockImplementation(() => Promise.resolve([]));
+    sql.join = vi.fn((values: any[]) => values);
+    sql.begin = vi.fn(async (cb: any) => cb(sql));
   });
 
   describe('GET', () => {
     it('deve listar OPs (GET list)', async () => {
-      vi.mocked(sql).mockResolvedValue([{ id: '1', op_id: 'OP-001', produto: 'Armário', status: 'AGUARDANDO', data_prevista_entrega: null }]);
+      vi.mocked(sql).mockResolvedValue([
+        {
+          id: '1',
+          op_id: 'OP-001',
+          produto: 'Armário',
+          status: 'AGUARDANDO',
+          data_prevista_entrega: null,
+        },
+      ]);
       const req = mockReq({ method: 'GET', url: '/api/production/list', query: { id: 'list' } });
       const res = mockRes();
       await handleProduction(req, res);
@@ -71,9 +95,23 @@ describe('handleProduction', () => {
 
     it('deve retornar métricas (GET metrics)', async () => {
       vi.mocked(sql).mockResolvedValue([
-        { id: '1', op_id: 'OP-001', produto: 'Armário', status: 'FINALIZADA', data_inicio: new Date(Date.now() - 86400000), data_fim: new Date(), data_prevista_entrega: null, tempo_previsto_corte: 0, tempo_previsto_montagem: 0 },
+        {
+          id: '1',
+          op_id: 'OP-001',
+          produto: 'Armário',
+          status: 'FINALIZADA',
+          data_inicio: new Date(Date.now() - 86400000),
+          data_fim: new Date(),
+          data_prevista_entrega: null,
+          tempo_previsto_corte: 0,
+          tempo_previsto_montagem: 0,
+        },
       ]);
-      const req = mockReq({ method: 'GET', url: '/api/production/metrics', query: { id: 'metrics' } });
+      const req = mockReq({
+        method: 'GET',
+        url: '/api/production/metrics',
+        query: { id: 'metrics' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(200);
@@ -85,7 +123,12 @@ describe('handleProduction', () => {
   describe('POST', () => {
     it('deve criar OP (POST)', async () => {
       vi.mocked(sql).mockResolvedValue([{ id: '1', op_id: 'OP-001', produto: 'Armário' }]);
-      const req = mockReq({ method: 'POST', url: '/api/production', query: {}, body: { op_id: 'OP-001', produto: 'Armário' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/api/production',
+        query: {},
+        body: { op_id: 'OP-001', produto: 'Armário' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(201);
@@ -99,7 +142,12 @@ describe('handleProduction', () => {
     });
 
     it('deve retornar 400 se apenas op_id sem produto', async () => {
-      const req = mockReq({ method: 'POST', url: '/api/production', query: {}, body: { op_id: 'OP-002' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/api/production',
+        query: {},
+        body: { op_id: 'OP-002' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(400);
@@ -110,9 +158,26 @@ describe('handleProduction', () => {
     it('deve atualizar status da OP', async () => {
       mockMigrations();
       vi.mocked(sql)
-        .mockResolvedValueOnce([{ id: '1', op_id: 'OP-001', status: 'AGUARDANDO', checklist: '[]', metadata: '{}', data_inicio: null, data_fim: null }]) // SELECT before update
-        .mockResolvedValueOnce([{ id: '1', op_id: 'OP-001', status: 'PRODUCAO', data_inicio: new Date(), data_fim: null }]); // UPDATE RETURNING
-      const req = mockReq({ method: 'PATCH', url: '/api/production/OP-001', query: {}, body: { op_id: 'OP-001', status: 'PRODUCAO' } });
+        .mockResolvedValueOnce([
+          {
+            id: '1',
+            op_id: 'OP-001',
+            status: 'AGUARDANDO',
+            checklist: '[]',
+            metadata: '{}',
+            data_inicio: null,
+            data_fim: null,
+          },
+        ]) // SELECT before update
+        .mockResolvedValueOnce([
+          { id: '1', op_id: 'OP-001', status: 'PRODUCAO', data_inicio: new Date(), data_fim: null },
+        ]); // UPDATE RETURNING
+      const req = mockReq({
+        method: 'PATCH',
+        url: '/api/production/OP-001',
+        query: {},
+        body: { op_id: 'OP-001', status: 'PRODUCAO' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(200);
@@ -121,7 +186,11 @@ describe('handleProduction', () => {
     it('deve retornar 404 se OP não encontrada no PATCH', async () => {
       mockMigrations();
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = mockReq({ method: 'PATCH', query: { op_id: 'OP-999' }, body: { op_id: 'OP-999', status: 'PRODUCAO' } });
+      const req = mockReq({
+        method: 'PATCH',
+        query: { op_id: 'OP-999' },
+        body: { op_id: 'OP-999', status: 'PRODUCAO' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(404);
@@ -132,9 +201,32 @@ describe('handleProduction', () => {
     it('deve atualizar detalhes da OP', async () => {
       mockMigrations();
       vi.mocked(sql)
-        .mockResolvedValueOnce([{ id: '1', op_id: 'OP-001', produto: 'Armário', pecas: 5, checklist: '[]', metadata: '{}' }])
-        .mockResolvedValueOnce([{ id: '1', op_id: 'OP-001', produto: 'Armário V2', pecas: 5, checklist: '[]', metadata: '{}' }]);
-      const req = mockReq({ method: 'PATCH', url: '/api/production/details', query: { id: 'details' }, body: { op_id: 'OP-001', produto: 'Armário V2' } });
+        .mockResolvedValueOnce([
+          {
+            id: '1',
+            op_id: 'OP-001',
+            produto: 'Armário',
+            pecas: 5,
+            checklist: '[]',
+            metadata: '{}',
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: '1',
+            op_id: 'OP-001',
+            produto: 'Armário V2',
+            pecas: 5,
+            checklist: '[]',
+            metadata: '{}',
+          },
+        ]);
+      const req = mockReq({
+        method: 'PATCH',
+        url: '/api/production/details',
+        query: { id: 'details' },
+        body: { op_id: 'OP-001', produto: 'Armário V2' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(200);
@@ -143,7 +235,12 @@ describe('handleProduction', () => {
     it('deve retornar 404 se OP não encontrada no details', async () => {
       mockMigrations();
       vi.mocked(sql).mockResolvedValueOnce([]);
-      const req = mockReq({ method: 'PATCH', url: '/api/production/details', query: { id: 'details' }, body: { op_id: 'OP-999' } });
+      const req = mockReq({
+        method: 'PATCH',
+        url: '/api/production/details',
+        query: { id: 'details' },
+        body: { op_id: 'OP-999' },
+      });
       const res = mockRes();
       await handleProduction(req, res);
       expect(res._s()).toBe(404);
@@ -190,7 +287,11 @@ describe('handleProduction', () => {
 
   describe('Auth e error handling', () => {
     it.skip('deve retornar 401 sem auth', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Sem token' });
+      vi.mocked(validateAuth).mockReturnValue({
+        authorized: false,
+        user: null,
+        error: 'Sem token',
+      });
       const req = mockReq({ method: 'GET', url: '/api/production', query: {} });
       const res = mockRes();
       await handleProduction(req, res);
@@ -198,7 +299,11 @@ describe('handleProduction', () => {
     });
 
     it('deve usar tenantId default quando user sem tenantId', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+      vi.mocked(validateAuth).mockReturnValue({
+        authorized: true,
+        user: { id: 'u1' },
+        error: null,
+      });
       vi.mocked(sql).mockResolvedValue([]);
       const req = mockReq({ method: 'GET', url: '/api/production', query: { id: 'list' } });
       const res = mockRes();
@@ -207,8 +312,14 @@ describe('handleProduction', () => {
     });
 
     it('deve retornar 500 em erro de banco', async () => {
-      vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
-      vi.mocked(sql).mockImplementation(async () => { throw new Error('DB down'); });
+      vi.mocked(validateAuth).mockReturnValue({
+        authorized: true,
+        user: { id: 'u1' },
+        error: null,
+      });
+      vi.mocked(sql).mockImplementation(async () => {
+        throw new Error('DB down');
+      });
       const req = mockReq({ method: 'GET', url: '/api/production', query: { id: 'list' } });
       const res = mockRes();
       await handleProduction(req, res);
