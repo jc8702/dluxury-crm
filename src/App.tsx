@@ -6,6 +6,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useCrmStore } from './stores/useCrmStore';
 
+import CopilotModal from './components/CopilotModal';
+
 import LandingPage from './pages/landing/Landing';
 
 // Lazy loading das páginas (Mapeamento Cirúrgico)
@@ -313,6 +315,7 @@ export default function App() {
 
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                <CopilotModal />
               </Suspense>
             </HashRouter>
           </ErrorBoundary>
