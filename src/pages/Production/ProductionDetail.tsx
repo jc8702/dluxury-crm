@@ -23,7 +23,9 @@ import {
   FileText,
   Clock,
 } from 'lucide-react';
-import { Button, Card, CardContent, Badge } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
+import { Badge } from '../../components/common';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
@@ -809,7 +811,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                         {s.task}
                       </div>
                     </div>
-                    {s.completed && <Badge variant="success">OK</Badge>}
+                    {s.completed && <Badge tone="success">OK</Badge>}
                   </li>
                 ))}
               </ol>

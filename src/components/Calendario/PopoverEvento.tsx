@@ -96,7 +96,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md rounded-[var(--ui-radius-lg)] border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Cabecalho Colorido */}
         <div className="h-3 w-full" style={{ backgroundColor: evento.cor_categoria }} />
 
@@ -115,7 +115,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 {obterNomeTipo(evento.tipo_evento)}
               </span>
               {evento.concluido && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-500/20 text-green-500 border border-green-500/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)] border border-[var(--ui-color-success)]/30">
                   CONCLUÍDO
                 </span>
               )}
@@ -230,7 +230,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 disabled={loading}
                 className={`
                   flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-white transition-all
-                  ${evento.concluido ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'}
+                  ${evento.concluido ? 'bg-[var(--ui-color-warning)] hover:brightness-90' : 'bg-[var(--ui-color-success)] hover:brightness-90'}
                 `}
               >
                 <CheckCircle className="w-4 h-4" />

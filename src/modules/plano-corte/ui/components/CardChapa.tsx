@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Chapa } from '../../infrastructure/repositories/ChapaRepository';
-import { Button } from '../../../../components/common';
+import { Button } from '../../../../components/ui';
 
 interface CardChapaProps {
   chapa: Chapa;

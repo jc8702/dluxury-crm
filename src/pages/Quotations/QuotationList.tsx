@@ -12,7 +12,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { Button } from '../../components/common';
+import { Button } from '../../components/ui';
 
 export type QuotationStatus =
   | 'RASCUNHO'

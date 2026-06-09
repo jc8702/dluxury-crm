@@ -1,6 +1,8 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Button, Modal, Card, CardContent, Badge, Input } from '../components/common';
+import { Button, Card } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Modal, Badge, Input } from '../components/common';
 import {
   Plus,
   Edit2,
@@ -311,7 +313,7 @@ function TreeNode({
               : 'DESPESA'}
           </Badge>
 
-          {!node.ativa && <Badge variant="secondary">INATIVA</Badge>}
+          {!node.ativa && <Badge tone="primary">INATIVA</Badge>}
 
           {usage > 0 && (
             <Badge
@@ -634,7 +636,7 @@ export default function FinanceiroClassesPage() {
       {/* Modal */}
       {modal !== null && (
         <Modal
-          isOpen
+          open
           onClose={() => setModal(null)}
           title={modal.id ? 'Editar Classe' : 'Nova Classe Financeira'}
         >

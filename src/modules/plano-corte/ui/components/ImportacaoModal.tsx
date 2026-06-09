@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { parseCSV, parsePlanoCorteCSV } from '../../infrastructure/parsers/CSVParser';
 import { parseSketchUpDAE } from '../../infrastructure/parsers/SketchUpParser';
-import { Modal, Button } from '../../../../components/common';
+import { Modal } from '../../../../components/common';
+import { Button } from '../../../../components/ui';
 
 interface ImportacaoModalProps {
   onImportar: (pecas: any[]) => void;
@@ -64,7 +65,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
   }, [arquivo, tipo, onImportar, onFechar]);
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="Importar Peças" size="md">
+    <Modal open={true} onClose={onFechar} title="Importar Peças" size="md">
       <div className="space-y-6">
         {/* TIPO DE IMPORTAÃ‡ÃƒO */}
         <div className="space-y-2">

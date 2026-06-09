@@ -12,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
 
 interface HistoricoModalProps {
@@ -51,7 +52,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
   });
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="Histórico de Planos" size="lg">
+    <Modal open={true} onClose={onFechar} title="Histórico de Planos" size="lg">
       <div className="flex flex-col gap-6 max-h-[75vh]">
         {/* FILTROS */}
         <div className="flex gap-4 items-center">

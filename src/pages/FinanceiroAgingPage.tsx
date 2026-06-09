@@ -3,15 +3,9 @@ import { api } from '../lib/api';
 import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../components/common/Skeleton';
-import {
-  Button,
-  Modal,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-} from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Modal, Badge } from '../components/common';
 
 export default function FinanceiroAgingPage() {
   const { warning } = useToast();
@@ -245,7 +239,7 @@ export default function FinanceiroAgingPage() {
           }}
         >
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800 }}>DETALHAMENTO DE TÃTULOS VENCIDOS</h3>
-          <Badge variant={totalVencido > 0 ? 'destructive' : 'success'}>
+          <Badge tone={totalVencido > 0 ? 'danger' : 'success'}>
             TOTAL VENCIDO: R$ {totalVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </Badge>
         </div>
@@ -386,7 +380,7 @@ export default function FinanceiroAgingPage() {
 
       {/* History Modal */}
       <Modal
-        isOpen={showHistoryModal}
+        open={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         title="Histórico de Pagamentos"
         size="md"
@@ -429,7 +423,7 @@ export default function FinanceiroAgingPage() {
                     {Number(h.valor_aberto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </td>
                   <td>
-                    <Badge variant="success">{h.status}</Badge>
+                    <Badge tone="success">{h.status}</Badge>
                   </td>
                 </tr>
               ))}

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
 import { AlertTriangle } from 'lucide-react';
+import { Card } from '../../ui';
 
 interface EstoqueAlertasBannerProps {
   onFilterCritico: () => void;
@@ -27,84 +28,50 @@ const EstoqueAlertasBanner: React.FC<EstoqueAlertasBannerProps> = ({ onFilterCri
   if (alertas.total === 0) return null;
 
   return (
-    <div
-      className="card animate-fade-in"
+    <Card
+      variant="flat"
+      padding="md"
+      interactive
       onClick={onFilterCritico}
+      className="flex items-center justify-between mb-8 animate-fade-in"
       style={{
-        padding: '1rem 1.5rem',
-        marginBottom: '2rem',
-        background: 'rgba(239, 68, 68, 0.1)',
-        border: '1px solid rgba(239, 68, 68, 0.2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        cursor: 'pointer',
+        background: 'var(--ui-color-danger-soft)',
+        borderColor: 'var(--ui-color-danger)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: 'rgba(239, 68, 68, 0.2)',
-            color: '#ef4444',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full bg-[var(--ui-color-danger-soft)] flex items-center justify-center text-[var(--ui-color-danger)] border border-[var(--ui-color-danger)]/30">
           <AlertTriangle size={20} />
         </div>
         <div>
-          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#ef4444' }}>
+          <h4 className="m-0 text-base font-bold text-[var(--ui-color-danger)]">
             Atenção ao Estoque
           </h4>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+          <p className="m-0 text-sm text-[var(--ui-text-secondary)]">
             Existem {alertas.total} itens que precisam de reposição imediata.
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem' }}>
+      <div className="flex gap-6">
         {alertas.criticos > 0 && (
-          <div style={{ textAlign: 'center' }}>
-            <span
-              style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}
-            >
+          <div className="text-center">
+            <span className="block text-xl font-extrabold text-[var(--ui-color-danger)]">
               {alertas.criticos}
             </span>
-            <span
-              style={{
-                fontSize: '0.65rem',
-                color: 'hsl(var(--muted-foreground))',
-                textTransform: 'uppercase',
-              }}
-            >
-              Críticos
-            </span>
+            <span className="text-[10px] text-[var(--ui-text-secondary)] uppercase">Críticos</span>
           </div>
         )}
         {alertas.zerados > 0 && (
-          <div style={{ textAlign: 'center' }}>
-            <span
-              style={{ display: 'block', fontSize: '1.25rem', fontWeight: '800', color: '#94a3b8' }}
-            >
+          <div className="text-center">
+            <span className="block text-xl font-extrabold text-[var(--ui-text-muted)]">
               {alertas.zerados}
             </span>
-            <span
-              style={{
-                fontSize: '0.65rem',
-                color: 'hsl(var(--muted-foreground))',
-                textTransform: 'uppercase',
-              }}
-            >
-              Zerados
-            </span>
+            <span className="text-[10px] text-[var(--ui-text-secondary)] uppercase">Zerados</span>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
 

@@ -2,7 +2,8 @@
 import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { Button, Input } from '../components/common';
+import { Button } from '../components/ui';
+import { Input } from '../components/common';
 
 const _MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];
 
@@ -172,7 +173,7 @@ export default function FinanceiroTitulosReceberWizard({
           value={formData.numero_titulo}
           onChange={(e) => setFormData({ ...formData, numero_titulo: e.target.value })}
           placeholder="Ex: NF-12345"
-          helperText="Gerado automaticamente. Pode editar para o número da NF."
+          hint="Gerado automaticamente. Pode editar para o número da NF."
         />
       </div>
     </div>

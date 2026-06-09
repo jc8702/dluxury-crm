@@ -267,7 +267,7 @@ export function ContasListView({
       </div>
 
       <Modal
-        isOpen={showTransferencia}
+        open={showTransferencia}
         onClose={onTransferClose}
         title="MOVIMENTAÇÃO DE TESOURARIA"
         size="md"
@@ -387,7 +387,7 @@ export function ContasListView({
       </Modal>
 
       <Modal
-        isOpen={showFechamento}
+        open={showFechamento}
         onClose={onFechamentoClose}
         title="FECHAMENTOS DE CICLO"
         size="lg"

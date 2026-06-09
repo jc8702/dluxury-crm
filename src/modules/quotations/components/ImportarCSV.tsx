@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Upload, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui';
 import SKUMatchingUI from './SKUMatchingUI';
 import { inventoryService } from '../../../services/inventoryService';
 

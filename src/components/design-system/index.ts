@@ -1,4 +1,5 @@
-export { Button } from './Button';
-export { Badge } from './Badge';
-export { Card } from './Card';
-export { Input } from './Input';
+// ─── DEPRECATED: Usar @/components/ui diretamente ───
+export { Button } from '@/components/ui';
+export { Badge } from '@/components/ui';
+export { Card } from '@/components/ui';
+export { Input } from '@/components/ui';

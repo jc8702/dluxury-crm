@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
-import { Button } from '../../components/common';
+import { Button } from '../../components/ui';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 

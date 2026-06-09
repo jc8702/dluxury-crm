@@ -9,10 +9,9 @@ import {
   Save,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { Button, Card } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
 import {
-  Button,
-  Card,
-  CardContent,
   Input,
   Modal,
   Select,

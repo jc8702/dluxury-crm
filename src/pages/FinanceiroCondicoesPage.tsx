@@ -1,13 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
-import {
-  Button,
-  Modal,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-} from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Modal, Input } from '../components/common';
 import { Plus, RefreshCw, Edit, CreditCard, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from '../components/common/Skeleton';
@@ -324,7 +318,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
       </Card>
 
       <Modal
-        isOpen={isOpen}
+        open={isOpen}
         onClose={() => setIsOpen(false)}
         title={editing ? 'Editar Condição de Pagamento' : 'Nova Condição de Pagamento'}
       >

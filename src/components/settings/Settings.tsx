@@ -2,19 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import { useToast } from '../../context/ToastContext';
-import { CardSkeleton } from '../../components/common/Skeleton';
 import { api } from '../../lib/api';
 import type { ConfiguracaoPrecificacao } from '../../types/entities';
-import {
-  Button,
-  Modal,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Badge,
-  Input,
-} from '../../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
+import { Modal, Badge, Input, CardSkeleton } from '../../components/common';
 
 const Settings: React.FC = () => {
   const { user, systemUsers, loadSystemUsers } = useAuth();
@@ -215,16 +207,11 @@ const Settings: React.FC = () => {
           <CardContent>
             {profileMsg && (
               <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  marginBottom: '1rem',
-                  fontSize: '0.85rem',
-                  background: profileMsg.includes('Erro')
-                    ? 'rgba(239,68,68,0.1)'
-                    : 'rgba(16,185,129,0.1)',
-                  color: profileMsg.includes('Erro') ? '#ef4444' : '#10b981',
-                }}
+                className={`p-3 rounded-[var(--ui-radius-md)] mb-4 text-sm ${
+                  profileMsg.includes('Erro')
+                    ? 'bg-[var(--ui-color-danger-soft)] text-[var(--ui-color-danger)]'
+                    : 'bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)]'
+                }`}
               >
                 {profileMsg}
               </div>
@@ -264,7 +251,7 @@ const Settings: React.FC = () => {
               {systemUsers.map((u) => (
                 <div
                   key={u.id}
-                  className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-border/40"
+                  className="flex justify-between items-center bg-[var(--ui-bg-subtle)] p-3 rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)]"
                 >
                   <div>
                     <p className="font-semibold text-sm text-foreground">{u.name}</p>
@@ -356,7 +343,7 @@ const Settings: React.FC = () => {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
+            <div className="p-4 bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)]">
               <span className="text-xs text-muted-foreground block mb-1">PLANO CONTRATADO</span>
               <span className="font-bold text-lg text-foreground uppercase">
                 {subData?.plano || 'PRO'}
@@ -380,15 +367,15 @@ const Settings: React.FC = () => {
                       : 'Pendente'}
               </Badge>
             </div>
-            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
+            <div className="p-4 bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)]">
               <span className="text-xs text-muted-foreground block mb-1">VALOR DA ASSINATURA</span>
               <span className="font-bold text-lg text-foreground">
                 R$ {(subData?.valor || 197.0).toFixed(2).replace('.', ',')}
               </span>
               <span className="text-xs text-muted-foreground"> /mês</span>
             </div>
-            <div className="p-4 bg-white/5 rounded-2xl border border-border/40">
-              <span className="text-xs text-muted-foreground block mb-1">STATUS DE COBRANÃ‡A</span>
+            <div className="p-4 bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)]">
+              <span className="text-xs text-muted-foreground block mb-1">STATUS DE COBRANÇA</span>
               <span className="font-bold text-sm text-foreground block">
                 {subData?.status === 'trial'
                   ? `Avaliação ativa: resta(m) ${subData?.diasRestantes || 14} dia(s)`
@@ -412,7 +399,7 @@ const Settings: React.FC = () => {
               <div className="border border-border/40 rounded-xl overflow-hidden text-xs">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-white/5 border-b border-border/40 text-muted-foreground font-semibold">
+                    <tr className="bg-[var(--ui-bg-subtle)] border-b border-[var(--ui-border)] text-[var(--ui-text-secondary)] font-semibold">
                       <th className="px-4 py-2">Competência</th>
                       <th className="px-4 py-2">Valor</th>
                       <th className="px-4 py-2">Vencimento</th>
@@ -422,7 +409,7 @@ const Settings: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-border/20 text-foreground">
                     {invoices.map((invoice) => (
-                      <tr key={invoice.id} className="hover:bg-white/5">
+                      <tr key={invoice.id} className="hover:bg-[var(--ui-surface-hover)]">
                         <td className="px-4 py-2 font-mono">{invoice.competencia}</td>
                         <td className="px-4 py-2 font-semibold">
                           R$ {invoice.valor.toFixed(2).replace('.', ',')}
@@ -437,8 +424,8 @@ const Settings: React.FC = () => {
                           <span
                             className={`inline-block px-2 py-0.5 rounded font-semibold text-[10px] uppercase ${
                               invoice.status === 'pago'
-                                ? 'bg-emerald-500/10 text-emerald-400'
-                                : 'bg-amber-500/10 text-amber-400'
+                                ? 'bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)]'
+                                : 'bg-[var(--ui-color-warning-soft)] text-[var(--ui-color-warning)]'
                             }`}
                           >
                             {invoice.status}
@@ -466,7 +453,7 @@ const Settings: React.FC = () => {
               type="button"
               variant="outline"
               onClick={handleCancelSubscription}
-              className="flex-1 font-semibold text-rose-500 border-rose-500/30 hover:bg-rose-500/10"
+              className="flex-1 font-semibold text-[var(--ui-color-danger)] border-[var(--ui-color-danger)]/30 hover:bg-[var(--ui-color-danger-soft)]"
               disabled={subData?.status === 'suspended' || cancelling}
             >
               {cancelling ? 'Cancelando...' : 'Cancelar Assinatura'}
@@ -478,7 +465,7 @@ const Settings: React.FC = () => {
       {/* Modal de Membro de Equipe */}
       {showUserModal && (
         <Modal
-          isOpen={showUserModal}
+          open={showUserModal}
           onClose={() => setShowUserModal(false)}
           title="Novo Membro da Equipe"
           size="md"
@@ -564,7 +551,7 @@ const Settings: React.FC = () => {
       {/* Modal de Exibição de Boleto */}
       {showBoletoModal && boletoData && (
         <Modal
-          isOpen={showBoletoModal}
+          open={showBoletoModal}
           onClose={() => setShowBoletoModal(false)}
           title="Boleto para Pagamento"
           size="md"
@@ -601,7 +588,7 @@ const Settings: React.FC = () => {
                   type="text"
                   readOnly
                   value={boletoData.codigoBarras}
-                  className="flex-1 bg-white/5 border border-border/40 rounded-lg px-3 py-2 text-xs font-mono select-all focus:outline-none"
+                  className="flex-1 bg-[var(--ui-bg-subtle)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-3 py-2 text-xs font-mono select-all focus:outline-none"
                 />
                 <Button
                   size="sm"
@@ -641,7 +628,7 @@ const CondicaoModal: React.FC<{
 }> = ({ show, onClose, onSave, data, setData, isEditing }) => {
   return (
     <Modal
-      isOpen={show}
+      open={show}
       onClose={onClose}
       title={isEditing ? 'Editar Condição' : 'Nova Condição de Pagamento'}
       size="sm"
@@ -722,7 +709,7 @@ const NotificationSettingsSection: React.FC = () => {
           {alerts.map((a) => (
             <div
               key={a.type}
-              className="p-4 bg-white/5 rounded-2xl border border-border/40 flex flex-col justify-between"
+              className="p-4 bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] flex flex-col justify-between"
             >
               <div>
                 <div className="font-bold text-sm text-foreground mb-1">{a.title}</div>

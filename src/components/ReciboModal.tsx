@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Modal } from '../components/common/Modal';
+import { Modal } from '@/components/ui';
 import { Printer, X } from 'lucide-react';
 
 interface ReciboModalProps {
@@ -57,7 +57,7 @@ const ReciboModal: React.FC<ReciboModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Recibo de Quitação" width="700px">
+    <Modal open={isOpen} onClose={onClose} title="Recibo de Quitação" size="md">
       <div id="recibo-print-area">
         <div
           className="recibo"

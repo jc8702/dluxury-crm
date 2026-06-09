@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
 import {
-  Button,
   Input,
   Modal,
   Select,
@@ -9,8 +10,6 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  Card,
-  CardContent,
 } from '../../components/common';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import type { ProjectStatus } from '../../types/entities';
@@ -226,7 +225,7 @@ const ProjectKanban: React.FC = () => {
       />
 
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={closeModal}
         title={editingItem ? 'Editar Projeto' : 'Novo Projeto'}
         size="lg"

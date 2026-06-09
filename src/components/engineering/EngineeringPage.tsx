@@ -2,9 +2,10 @@
 import { Settings2, Plus, Zap, Loader2, Save, X } from 'lucide-react';
 import { evaluate } from 'mathjs';
 import { useToast } from '../../context/ToastContext';
-import { CardSkeleton } from '../../components/common/Skeleton';
 import { api } from '../../lib/api';
-import { Button, Card, CardContent, Input, Modal } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
+import { Modal, Input, CardSkeleton } from '../../components/common';
 import DataTable from '../common/DataTable';
 import { SKUAutocomplete } from '../../modules/quotations/components/SKUAutocomplete';
 
@@ -379,7 +380,7 @@ const EngineeringPage: React.FC = () => {
       </Card>
 
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           resetForm();
@@ -438,7 +439,7 @@ const EngineeringPage: React.FC = () => {
               value={formData.valor_total}
               onChange={(e) => setFormData({ ...formData, valor_total: Number(e.target.value) })}
               disabled={formData.regras_calculo?.length > 0}
-              helperText={
+              hint={
                 formData.regras_calculo?.length > 0
                   ? 'Calculado proporcionalmente a partir das peças MDF'
                   : 'Defina o valor base do módulo'
@@ -545,7 +546,7 @@ const EngineeringPage: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-border/40">
                     <Input
                       label="Fórmula Largura (L)"
-                      helperText="Ex: L, L-20, L*0.5"
+                      hint="Ex: L, L-20, L*0.5"
                       value={comp.formula_largura}
                       onChange={(e) =>
                         updateComponent(comp.id, { formula_largura: e.target.value })
@@ -553,20 +554,20 @@ const EngineeringPage: React.FC = () => {
                     />
                     <Input
                       label="Fórmula Altura (A)"
-                      helperText="Ex: A, A-30, A*0.8"
+                      hint="Ex: A, A-30, A*0.8"
                       value={comp.formula_altura}
                       onChange={(e) => updateComponent(comp.id, { formula_altura: e.target.value })}
                     />
                     <Input
                       label="Fator Perda"
-                      helperText="Ex: 1.10 = 10%"
+                      hint="Ex: 1.10 = 10%"
                       value={comp.formula_perda}
                       onChange={(e) => updateComponent(comp.id, { formula_perda: e.target.value })}
                     />
                     <Input
                       type="number"
                       label="Desconto Fita (mm)"
-                      helperText="Subtraído do comprimento"
+                      hint="Subtraído do comprimento"
                       min={0}
                       value={comp.desconto_fita_mm || 0}
                       onChange={(e) =>

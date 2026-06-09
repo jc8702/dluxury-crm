@@ -6,6 +6,7 @@ import { exportarEtiquetas } from '../../application/usecases/ExportarEtiquetas'
 import { exportarCNC, salvarArquivoCNC } from '../../application/usecases/ExportarCNC';
 import { useToast } from '../../../../context/ToastContext';
 import type { ResultadoOtimizacao, LayoutChapa } from '../../domain/entities/CuttingPlan';
+// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
 
 interface ExportacaoModalProps {
@@ -173,7 +174,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Central de Exportação" size="lg">
+    <Modal open={true} onClose={onClose} title="Central de Exportação" size="lg">
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Mapa de Corte */}

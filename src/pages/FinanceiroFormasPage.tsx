@@ -1,14 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
-import {
-  Button,
-  Modal,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Badge,
-} from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Modal, Input, Badge } from '../components/common';
 import { Plus, RefreshCw, Edit, DollarSign, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -85,7 +78,7 @@ const FinanceiroFormasPage: React.FC = () => {
       case 'debito':
         return 'outline';
       case 'boleto':
-        return 'secondary';
+        return 'primary';
       default:
         return 'outline';
     }
@@ -262,7 +255,7 @@ const FinanceiroFormasPage: React.FC = () => {
                         {f.nome}
                       </td>
                       <td style={{ padding: '1rem', fontSize: '0.85rem' }}>
-                        <Badge variant={getTipoBadgeVariant(f.tipo)}>
+                        <Badge tone={getTipoBadgeVariant(f.tipo)}>
                           {String(f.tipo || '').toUpperCase()}
                         </Badge>
                       </td>
@@ -314,7 +307,7 @@ const FinanceiroFormasPage: React.FC = () => {
       </Card>
 
       <Modal
-        isOpen={isOpen}
+        open={isOpen}
         onClose={() => setIsOpen(false)}
         title={editing ? 'Editar Forma de Pagamento' : 'Nova Forma de Pagamento'}
       >

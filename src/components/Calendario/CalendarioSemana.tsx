@@ -52,7 +52,7 @@ export default function CalendarioSemana({
           <div
             key={dia.toDateString()}
             className={`
-              flex flex-col border rounded-2xl bg-card min-h-[380px] shadow-sm overflow-hidden hover:shadow-md transition-all group
+              flex flex-col border rounded-[var(--ui-radius-lg)] bg-card min-h-[380px] shadow-sm overflow-hidden hover:shadow-md transition-all group
               ${isHoje ? 'border-primary ring-1 ring-primary/20' : 'border-border'}
             `}
           >

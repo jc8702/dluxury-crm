@@ -14,10 +14,9 @@ import {
   Clock,
 } from 'lucide-react';
 import { api } from '../../lib/api';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
 import {
-  Button,
-  Card,
-  CardContent,
   Input,
   Modal,
   Select,
@@ -31,9 +30,9 @@ import DataTable from '../common/DataTable';
 const CATEGORIAS_TAXONOMIA = [
   { value: 'CHP', label: 'Chapas (MDF/MDP)' },
   { value: 'FBD', label: 'Fitas de Borda' },
-  { value: 'FER', label: 'Ferragens (Dobradiças, Corrediças)' },
-  { value: 'AC', label: 'Acessórios' },
-  { value: 'MD', label: 'Madeiras Maciças' },
+  { value: 'FER', label: 'Ferragens (Dobradiï¿½as, Corrediï¿½as)' },
+  { value: 'AC', label: 'Acessï¿½rios' },
+  { value: 'MD', label: 'Madeiras Maciï¿½as' },
   { value: 'ACM', label: 'ACM / Metais' },
   { value: 'VID', label: 'Vidros / Espelhos' },
   { value: 'OUT', label: 'Outros Insumos' },
@@ -158,10 +157,10 @@ const SKUPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight uppercase flex items-center gap-2">
-              Catálogo de Peças / SKUs
+              Catï¿½logo de Peï¿½as / SKUs
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Gerenciamento atômico de insumos técnicos e acessórios.
+              Gerenciamento atï¿½mico de insumos tï¿½cnicos e acessï¿½rios.
             </p>
           </div>
         </div>
@@ -184,7 +183,7 @@ const SKUPage: React.FC = () => {
             />
             <Input
               className="pl-10"
-              placeholder="Buscar por descrição, código ou categoria..."
+              placeholder="Buscar por descriï¿½ï¿½o, cï¿½digo ou categoria..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -203,13 +202,13 @@ const SKUPage: React.FC = () => {
         ) : (
           <DataTable
             headers={[
-              'Código SKU',
+              'Cï¿½digo SKU',
               'Categoria',
               'Nome do Item',
               'Unidade',
-              'Preço Base',
+              'Preï¿½o Base',
               'Status',
-              'Ações',
+              'Aï¿½ï¿½es',
             ]}
             data={filteredSkus}
             renderRow={(s) => (
@@ -247,13 +246,13 @@ const SKUPage: React.FC = () => {
                 </td>
               </>
             )}
-            emptyMessage="Nenhum SKU encontrado no catálogo."
+            emptyMessage="Nenhum SKU encontrado no catï¿½logo."
           />
         )}
       </div>
 
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={formData.id ? 'Editar SKU' : 'Cadastrar Novo SKU'}
         size="lg"
@@ -285,7 +284,7 @@ const SKUPage: React.FC = () => {
               <Tag size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
               <Input
                 required
-                label="Código SKU *"
+                label="Cï¿½digo SKU *"
                 className="pl-10"
                 placeholder="Ex: CHP-0001"
                 value={formData.sku_code}
@@ -299,9 +298,9 @@ const SKUPage: React.FC = () => {
             <Package size={16} className="absolute left-3 top-9 text-muted-foreground z-10" />
             <Input
               required
-              label="Nome da Peça / SKU *"
+              label="Nome da Peï¿½a / SKU *"
               className="pl-10"
-              placeholder="Ex: Dobradiça 35mm Click"
+              placeholder="Ex: Dobradiï¿½a 35mm Click"
               value={formData.nome}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
             />
@@ -336,8 +335,8 @@ const SKUPage: React.FC = () => {
                 step="0.0001"
                 label={
                   calcModoChapa
-                    ? 'Preço Base Final Calculado por MÂ² (R$) *'
-                    : 'Preço Base de Custo (R$) *'
+                    ? 'Preï¿½o Base Final Calculado por MÂ² (R$) *'
+                    : 'Preï¿½o Base de Custo (R$) *'
                 }
                 className={`pl-10 ${calcModoChapa ? 'bg-primary/5 border-primary/20 font-bold' : ''}`}
                 placeholder="0.00"
@@ -358,7 +357,7 @@ const SKUPage: React.FC = () => {
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />
                 <span className="text-sm font-semibold text-foreground">
-                  Calcular preço base a partir do valor da Chapa Inteira
+                  Calcular preï¿½o base a partir do valor da Chapa Inteira
                 </span>
               </label>
 
@@ -461,4 +460,3 @@ const SKUPage: React.FC = () => {
 };
 
 export default SKUPage;
-

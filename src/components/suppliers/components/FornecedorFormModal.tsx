@@ -3,7 +3,8 @@ import { useEscClose } from '../../../hooks/useEscClose';
 import { useInventoryStore as useInventory } from '../../../stores/useInventoryStore';
 import type { Fornecedor } from '../../../types/entities';
 import { X, Save } from 'lucide-react';
-import { Input, Modal, Button } from '../../../components/common';
+import { Modal } from '../../../components/common';
+import { Button, Input } from '../../../components/ui';
 
 interface FornecedorFormModalProps {
   fornecedor?: Fornecedor | null;
@@ -71,7 +72,7 @@ const FornecedorFormModal: React.FC<FornecedorFormModalProps> = ({
 
   return (
     <Modal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title={fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor'}
     >

@@ -6,7 +6,9 @@ import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Button, Card, CardContent, Input, Modal, Badge } from '../components/common';
+import { Button, Card } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Input, Modal, Badge } from '../components/common';
 
 const ComprasPage: React.FC = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
@@ -40,7 +42,7 @@ const ComprasPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'rascunho':
-        return 'secondary';
+        return 'primary';
       case 'enviado':
         return 'info';
       case 'confirmado':
@@ -52,7 +54,7 @@ const ComprasPage: React.FC = () => {
       case 'cancelado':
         return 'danger';
       default:
-        return 'secondary';
+        return 'primary';
     }
   };
 
@@ -263,7 +265,7 @@ const PedidosTable: React.FC<{
                   R$ {Number(p.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </td>
                 <td className="p-4 text-center">
-                  <Badge variant={getStatusColor(p.status)}>{getStatusLabel(p.status)}</Badge>
+                  <Badge tone={getStatusColor(p.status)}>{getStatusLabel(p.status)}</Badge>
                 </td>
                 <td className="p-4 text-center">
                   <Button
@@ -409,7 +411,7 @@ const PedidoModal: React.FC<{ pedido: any; onClose: () => void; onSave: () => vo
 
   return (
     <Modal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title={pedido ? `Visualizar / Editar Pedido: ${pedido.numero}` : 'Novo Pedido de Compra'}
       size="xl"

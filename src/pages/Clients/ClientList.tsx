@@ -109,7 +109,7 @@ export const ClientList: React.FC<ClientListProps> = ({
       key: 'origem',
       header: 'Origem',
       render: (c: Client) => (
-        <Badge variant="outline">{origemLabels[c.origem || 'outro'] || c.origem}</Badge>
+        <Badge tone="outline">{origemLabels[c.origem || 'outro'] || c.origem}</Badge>
       ),
     },
     {
@@ -135,7 +135,7 @@ export const ClientList: React.FC<ClientListProps> = ({
       render: (c: Client) => {
         const isActive = (c.status || 'ativo') === 'ativo';
         return (
-          <Badge variant={isActive ? 'success' : 'danger'}>{isActive ? 'ATIVO' : 'INATIVO'}</Badge>
+          <Badge tone={isActive ? 'success' : 'danger'}>{isActive ? 'ATIVO' : 'INATIVO'}</Badge>
         );
       },
     },
@@ -184,7 +184,7 @@ export const ClientList: React.FC<ClientListProps> = ({
             <p className="text-[var(--ui-text-secondary)]">
               Gerencie sua base de clientes pessoa física
             </p>
-            <Badge variant="primary" className="font-semibold">
+            <Badge tone="primary" className="font-semibold">
               {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
             </Badge>
           </div>

@@ -18,7 +18,9 @@ import { api } from '../lib/api';
 import type { Notificacao } from '../api-lib/types';
 import { useToast } from '../context/ToastContext';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Badge } from '../components/common';
 
 export default function NotificacoesPage() {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);

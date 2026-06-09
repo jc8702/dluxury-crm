@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { Plus, Trash2, Scissors, AlertTriangle, Layers } from 'lucide-react';
 import type { Peca } from '../../domain/types';
-import { Button } from '../../../../components/common';
+import { Button } from '../../../../components/ui';
 
 interface PainelPecasChapaProps {
   chapaId: string;

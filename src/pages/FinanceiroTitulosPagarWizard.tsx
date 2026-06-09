@@ -3,7 +3,8 @@ import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Button, Input } from '../components/common';
+import { Button } from '../components/ui';
+import { Input } from '../components/common';
 
 // Meios que exigem campo de taxa financeira
 const MEIOS_COM_TAXA = ['boleto', 'cartao_credito', 'cheque', 'cartao_debito'];

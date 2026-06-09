@@ -10,7 +10,7 @@ import {
   Calendar,
   ArrowLeft,
 } from 'lucide-react';
-import { Button } from '../components/common';
+import { Button } from '../components/ui';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);

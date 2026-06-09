@@ -17,7 +17,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
 
   return (
     <Modal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={editing ? 'REVISÃO DE CONTA' : 'ABERTURA DE CONTA'}
       size="md"

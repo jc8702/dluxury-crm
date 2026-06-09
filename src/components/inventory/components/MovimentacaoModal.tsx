@@ -3,7 +3,8 @@ import { useInventoryStore as useInventory } from '../../../stores/useInventoryS
 import { useCrmStore as useCRM } from '../../../stores/useCrmStore';
 import type { Material } from '../../../types/entities';
 import { ArrowUpCircle, ArrowDownCircle, Settings2 } from 'lucide-react';
-import { Modal, Button, Input } from '../../../components/common';
+import { Modal } from '../../../components/common';
+import { Button, Input } from '../../../components/ui';
 import { api } from '../../../lib/api';
 
 interface MovimentacaoModalProps {
@@ -109,7 +110,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Registrar Movimentação" size="md">
+    <Modal open={true} onClose={onClose} title="Registrar Movimentação" size="md">
       <div className="mb-4">
         <p className="text-sm text-muted-foreground">{material.nome}</p>
       </div>

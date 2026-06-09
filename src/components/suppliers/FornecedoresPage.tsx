@@ -3,7 +3,8 @@ import { useInventoryStore as useInventory } from '../../stores/useInventoryStor
 import type { Fornecedor } from '../../types/entities';
 import { useToast } from '../../context/ToastContext';
 import { Truck, Plus, Search, Mail, Phone, MapPin, Edit2, Trash2 } from 'lucide-react';
-
+import { Button } from '../ui';
+import { Card } from '../ui';
 import FornecedorFormModal from './components/FornecedorFormModal';
 
 const FornecedoresPage: React.FC = () => {
@@ -40,175 +41,95 @@ const FornecedoresPage: React.FC = () => {
   };
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-    >
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="animate-fade-in flex flex-col gap-6">
+      <header className="flex justify-between items-center">
         <div>
-          <h2
-            style={{
-              fontSize: '2rem',
-              fontWeight: '900',
-              color: 'var(--text)',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}
-          >
-            <Truck size={28} style={{ color: 'hsl(var(--primary))' }} /> Fornecedores
+          <h2 className="flex items-center gap-3 text-3xl font-black text-[var(--ui-text-primary)] m-0">
+            <Truck size={28} className="text-[var(--ui-color-primary)]" /> Fornecedores
           </h2>
-          <p
-            style={{
-              color: 'hsl(var(--muted-foreground))',
-              fontSize: '0.95rem',
-              marginTop: '0.25rem',
-            }}
-          >
+          <p className="text-[var(--ui-text-secondary)] text-sm mt-1">
             Gerencie seus parceiros de materiais e acabamentos.
           </p>
         </div>
-        <button
-          onClick={handleNew}
-          className="btn btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <Plus size={20} /> Novo Fornecedor
-        </button>
+        <Button onClick={handleNew} variant="primary" leftIcon={<Plus size={20} />}>
+          Novo Fornecedor
+        </Button>
       </header>
 
-      <div className="card" style={{ padding: '0.75rem 1.25rem' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
+      <Card variant="flat" padding="sm" className="bg-[var(--ui-bg-subtle)]">
+        <div className="relative max-w-[400px]">
           <Search
             size={16}
-            style={{
-              position: 'absolute',
-              left: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'hsl(var(--muted-foreground))',
-            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ui-text-muted)]"
           />
           <input
-            className="input-base"
-            style={{ paddingLeft: '2.5rem', width: '100%' }}
+            className="input-base pl-10 w-full"
             placeholder="Buscar por nome ou CNPJ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="grid-3" style={{ gap: '1.5rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((f) => (
-          <div
+          <Card
             key={f.id}
-            className="card hover-scale"
-            style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            variant="elevated"
+            padding="lg"
+            interactive
+            className="flex flex-col gap-4"
           >
-            <div
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
-            >
-              <div
-                style={{
-                  padding: '0.75rem',
-                  background: 'rgba(212,175,55,0.1)',
-                  borderRadius: '12px',
-                  color: '#d4af37',
-                }}
-              >
+            <div className="flex justify-between items-start">
+              <div className="p-3 rounded-xl bg-[var(--ui-color-gold-50)] text-[var(--ui-color-gold-500)]">
                 <Truck size={24} />
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleEdit(f)}
-                  style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--muted-foreground))' }}
                   aria-label={`Editar fornecedor ${f.nome}`}
                 >
                   <Edit2 size={16} />
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleDelete(f.id)}
-                  style={{ all: 'unset', cursor: 'pointer', color: 'hsl(var(--destructive))' }}
                   aria-label={`Excluir fornecedor ${f.nome}`}
+                  className="text-[var(--ui-color-danger)]"
                 >
                   <Trash2 size={16} />
-                </button>
+                </Button>
               </div>
             </div>
 
             <div>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{f.nome}</h4>
-              <p
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'hsl(var(--muted-foreground))',
-                  marginTop: '0.2rem',
-                }}
-              >
+              <h4 className="text-lg font-bold m-0 text-[var(--ui-text-primary)]">{f.nome}</h4>
+              <p className="text-xs text-[var(--ui-text-secondary)] mt-1">
                 {f.cnpj || 'CNPJ não informado'}
               </p>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                borderTop: '1px solid hsl(var(--border))',
-                paddingTop: '1rem',
-              }}
-            >
+            <div className="flex flex-col gap-2 border-t border-[var(--ui-border)] pt-4 text-sm text-[var(--ui-text-secondary)]">
               {f.contato && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
+                <div className="flex items-center gap-2">
                   <Edit2 size={14} /> <span>{f.contato}</span>
                 </div>
               )}
               {f.telefone && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
+                <div className="flex items-center gap-2">
                   <Phone size={14} /> <span>{f.telefone}</span>
                 </div>
               )}
               {f.email && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
+                <div className="flex items-center gap-2">
                   <Mail size={14} /> <span>{f.email}</span>
                 </div>
               )}
               {(f.cidade || f.estado) && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.85rem',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
+                <div className="flex items-center gap-2">
                   <MapPin size={14} />{' '}
                   <span>
                     {f.cidade}
@@ -218,7 +139,7 @@ const FornecedoresPage: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

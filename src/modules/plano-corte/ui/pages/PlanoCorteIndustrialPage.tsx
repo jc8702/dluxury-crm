@@ -28,7 +28,7 @@ import { BuscaSKU } from '../components/BuscaSKU';
 import { AbasProjetoChapaS } from '../components/AbasProjetoChapaS';
 import { CanvasComAbas } from '../components/CanvasComAbas';
 import { PainelPecasChapa } from '../components/PainelPecasChapa';
-import { Button } from '../../../../components/common';
+import { Button } from '../../../../components/ui';
 
 // Camada de Aplicação / Casos de Uso
 import { OtimizarPorChapa } from '../../application/use-cases/OtimizarPorChapa';

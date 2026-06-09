@@ -7,7 +7,9 @@ import EstoqueAlertasBanner from './components/EstoqueAlertasBanner';
 import { statusEstoque } from '../../utils/estoque';
 import { useToast } from '../../context/ToastContext';
 import { Package, Plus, Search, History, LayoutGrid, List } from 'lucide-react';
-import { Button, Card, CardContent, Input, Badge } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
+import { Input, Badge } from '../../components/common';
 import EstoqueGranular from '../estoque/EstoqueGranular';
 import SKUPage from '../skus/SKUPage';
 
@@ -84,7 +86,7 @@ const Inventory: React.FC = () => {
       case 'zerado':
         return 'danger';
       default:
-        return 'secondary';
+        return 'primary';
     }
   };
 
@@ -260,7 +262,7 @@ const Inventory: React.FC = () => {
                             {equivalencia.toFixed(2)} {m.unidade_uso}
                           </td>
                           <td className="p-4">
-                            <Badge variant={getStatusBadgeVariant(status)}>
+                            <Badge tone={getStatusBadgeVariant(status)}>
                               {status ? status.toUpperCase() : '—'}
                             </Badge>
                           </td>
@@ -469,5 +471,3 @@ const Inventory: React.FC = () => {
 };
 
 export default Inventory;
-
-

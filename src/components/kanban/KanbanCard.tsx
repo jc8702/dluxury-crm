@@ -35,11 +35,20 @@ export default function KanbanCard({ card, onClick }: KanbanCardProps) {
     if (prioridade === 1)
       return {
         text: '🔥 URGENTE',
-        class: 'bg-destructive/20 text-destructive border-destructive/25',
+        class:
+          'bg-[var(--ui-color-danger-soft)] text-[var(--ui-color-danger)] border-[var(--ui-color-danger)]/30',
       };
     if (prioridade === 9)
-      return { text: '☘ BAIXA', class: 'bg-green-500/20 text-green-400 border-green-500/25' };
-    return { text: '⚡ NORMAL', class: 'bg-amber-500/20 text-amber-400 border-amber-500/25' };
+      return {
+        text: '☘ BAIXA',
+        class:
+          'bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)] border-[var(--ui-color-success)]/30',
+      };
+    return {
+      text: '⚡ NORMAL',
+      class:
+        'bg-[var(--ui-color-warning-soft)] text-[var(--ui-color-warning)] border-[var(--ui-color-warning)]/30',
+    };
   };
 
   const isAtrasado = () => {

@@ -16,7 +16,8 @@ import {
 import { reportService } from '../../services/reportService';
 import { api } from '../../lib/api';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '../../components/common';
+import { Button } from '../../components/ui';
+import { Card, CardHeader, CardTitle, CardBody as CardContent } from '../../components/ui';
 import {
   ResponsiveContainer,
   BarChart,
@@ -244,12 +245,12 @@ const ReportsPage: React.FC = () => {
                   </label>
                   <div className="relative">
                     <select
-                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-primary appearance-none"
+                      className="w-full bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-4 py-3 text-xs font-bold text-[var(--ui-text-primary)] focus:outline-none focus:border-[var(--ui-color-primary)] appearance-none"
                       value={selectedProjectId}
                       onChange={(e) => setSelectedProjectId(e.target.value)}
                     >
                       {projects.map((p) => (
-                        <option key={p.id} value={p.id} className="bg-neutral-900">
+                        <option key={p.id} value={p.id} className="bg-[var(--ui-surface)]">
                           {p.cliente_name || 'N/A'} - {p.ambiente}
                         </option>
                       ))}
@@ -393,7 +394,7 @@ const ReportsPage: React.FC = () => {
                     <div className="overflow-x-auto max-h-[500px] overflow-y-auto scrollbar-thin">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-[#0A0A0A] border-b border-border sticky top-0 z-10">
+                          <tr className="bg-[var(--ui-bg-subtle)] border-b border-[var(--ui-border)] sticky top-0 z-[var(--ui-z-sticky)]">
                             {(reportData.length > 0 ? Object.keys(reportData[0]) : []).map((k) => (
                               <th
                                 key={k}
@@ -456,13 +457,17 @@ const ReportMenuItem: React.FC<{
   <Button
     variant={active ? 'primary' : 'ghost'}
     onClick={onClick}
-    className={`w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs border ${
+    className={`w-full justify-start rounded-[var(--ui-radius-lg)] h-12 font-bold uppercase tracking-wider text-xs border ${
       active
-        ? 'border-primary/20 bg-primary/10 text-primary shadow-[0_0_15px_rgba(212,175,55,0.05)]'
-        : 'border-transparent text-muted-foreground hover:bg-muted/10'
+        ? 'border-[var(--ui-border-strong)]/20 bg-[var(--ui-bg-subtle)] text-[var(--ui-text-primary)] shadow-[0_0_15px_rgba(212,175,55,0.05)]'
+        : 'border-transparent text-[var(--ui-text-secondary)] hover:bg-muted/10'
     }`}
   >
-    <div className={`mr-3 ${active ? 'text-primary' : 'text-muted-foreground'}`}>{icon}</div>
+    <div
+      className={`mr-3 ${active ? 'text-[var(--ui-color-primary)]' : 'text-[var(--ui-text-secondary)]'}`}
+    >
+      {icon}
+    </div>
     <span className="italic">{label}</span>
   </Button>
 );

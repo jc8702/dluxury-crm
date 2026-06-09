@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { Modal, Button } from '@/components/common';
+import { Button } from '@/components/ui';
+import { Modal } from '@/components/common';
 import { Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
@@ -63,7 +64,7 @@ export function ImportacaoModal({
 
   return (
     <Modal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={() => {
         setStatus('idle');
         onClose();

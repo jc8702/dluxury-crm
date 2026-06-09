@@ -3,7 +3,8 @@ import { useToast } from '../../context/ToastContext';
 import { Users, Plus, RefreshCw } from 'lucide-react';
 import KanbanBoard from '../../components/kanban/KanbanBoard';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
-import { Button, Card, CardContent } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
 import ModalEvento from '../agenda/ModalEvento';
 
 const VisitKanban: React.FC = () => {

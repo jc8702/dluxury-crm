@@ -3,7 +3,8 @@ import { useInventoryStore as useInventory } from '../../../stores/useInventoryS
 import type { Material } from '../../../types/entities';
 import { Save, Plus } from 'lucide-react';
 import FornecedorFormModal from '../../suppliers/components/FornecedorFormModal';
-import { Modal, Button, Input } from '../../../components/common';
+import { Modal } from '../../../components/common';
+import { Button, Input } from '../../../components/ui';
 
 interface MaterialFormModalProps {
   material?: Material;
@@ -208,7 +209,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
 
   return (
     <Modal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title={material ? 'Editar Material' : 'Novo Material'}
       size="xl"
@@ -327,7 +328,7 @@ const MaterialFormModal: React.FC<MaterialFormModalProps> = ({ material, onClose
                 label="Fator de Conversão (Compra → Uso)"
                 value={form.fator_conversao}
                 onChange={(e) => setForm({ ...form, fator_conversao: Number(e.target.value) })}
-                helperText="Ex: 1 chapa = 5.0325 m². 1 rolo = 50m."
+                hint="Ex: 1 chapa = 5.0325 m². 1 rolo = 50m."
               />
               {(form.unidade_compra === 'chapa' || form.unidade_uso === 'm2') && (
                 <div className="grid grid-cols-2 gap-4">

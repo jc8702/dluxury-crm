@@ -17,7 +17,7 @@ import {
   FileDown,
   RefreshCw,
 } from 'lucide-react';
-import { Button } from '../../components/common';
+import { Button } from '../../components/ui';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
 import type { Material, CategoriaMaterial } from '../../types';

@@ -40,7 +40,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
   const valorTotal = valorAberto + valorMulta + valorJuros;
 
   return (
-    <Modal isOpen={!!baixaModal} onClose={onClose} title="Registrar Pagamento Industrial">
+    <Modal open={!!baixaModal} onClose={onClose} title="Registrar Pagamento Industrial">
       <div className="min-w-[450px] p-2">
         <div className="space-y-6">
           <div className="glass-elevated p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
@@ -122,7 +122,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
 export function EditTituloModal({ editModal, onClose, onChange, onSave }: EditProps) {
   return (
     <Modal
-      isOpen={!!editModal}
+      open={!!editModal}
       onClose={onClose}
       title="Manutenção de Compromisso Industrial"
       size="lg"
@@ -231,7 +231,7 @@ export function LoteModal({
 }: LoteProps) {
   return (
     <Modal
-      isOpen={loteModal}
+      open={loteModal}
       onClose={onClose}
       title={`Liquidação em Lote (${selectedCount} Títulos)`}
     >

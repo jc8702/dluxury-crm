@@ -12,7 +12,8 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
 import { formatCurrency } from '../utils/calculations';
 const fmt = formatCurrency;
 

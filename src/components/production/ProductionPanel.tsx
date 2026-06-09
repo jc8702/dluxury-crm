@@ -4,7 +4,9 @@ import { useToast } from '../../context/ToastContext';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { ArrowLeft, Edit2, Trash2, Plus, X, Loader2 } from 'lucide-react';
 import { WhatsAppService } from '../../modules/plano-corte/infrastructure/services/WhatsAppService';
-import { Button, Card, CardContent, Input, Modal, Badge } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
+import { Modal, Input, Badge } from '../../components/common';
 
 type StatusCol =
   | 'AGUARDANDO'
@@ -282,7 +284,7 @@ const ProductionPanel: React.FC = () => {
                 <Trash2 size={12} />
               </button>
             </div>
-            <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-2">
+            <Badge tone="primary" className="text-[10px] font-bold py-0.5 px-2">
               {op.pecas} PEÃ‡AS
             </Badge>
           </div>
@@ -444,7 +446,7 @@ const ProductionPanel: React.FC = () => {
               >
                 {col.label}
               </h2>
-              <Badge variant="secondary" className="font-extrabold text-[11px]">
+              <Badge tone="primary" className="font-extrabold text-[11px]">
                 {colOps.length + colProjects.length}
               </Badge>
             </header>
@@ -513,7 +515,7 @@ const ProductionPanel: React.FC = () => {
       {/* Modal de Edição Industrial */}
       {editingOP && (
         <Modal
-          isOpen={!!editingOP}
+          open={!!editingOP}
           onClose={() => setEditingOP(null)}
           title={`DETALHES DA ORDEM #${editingOP.op_id}`}
           size="xl"
@@ -624,7 +626,7 @@ const ProductionPanel: React.FC = () => {
                         className="text-xs flex justify-between p-3 bg-muted/20 border border-border/20 rounded-xl"
                       >
                         <span className="font-medium text-foreground">{m.descricao}</span>
-                        <Badge variant="secondary" className="font-extrabold text-[10px]">
+                        <Badge tone="primary" className="font-extrabold text-[10px]">
                           {m.quantidade}
                           {m.unidade || ''}
                         </Badge>
@@ -685,7 +687,7 @@ const ProductionPanel: React.FC = () => {
                         />
                         <span className="text-sm font-semibold text-foreground">{p.nome}</span>
                       </div>
-                      <Badge variant="outline" className="font-mono text-xs">
+                      <Badge tone="outline" className="font-mono text-xs">
                         {p.largura}x{p.altura}
                       </Badge>
                     </div>

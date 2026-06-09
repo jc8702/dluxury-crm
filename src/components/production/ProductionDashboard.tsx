@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
-import { CardSkeleton } from '../../components/common/Skeleton';
+import { Card } from '../../components/ui';
 
 interface Metrics {
   totalOPs: number;
@@ -11,6 +10,46 @@ interface Metrics {
   opsAtrasadas: number;
   filaTotalDias: number;
 }
+
+const cards: Array<{
+  key: keyof Metrics;
+  label: string;
+  border: string;
+  subtext: string;
+  subcolor: string;
+  formatter?: (v: number) => string;
+}> = [
+  {
+    key: 'totalOPs',
+    label: 'Total de OPs',
+    border: 'var(--ui-color-gold-500)',
+    subtext: '📊 Monitoramento Ativo',
+    subcolor: 'var(--ui-color-success)',
+  },
+  {
+    key: 'opsAtrasadas',
+    label: 'Atrasos Críticos',
+    border: 'var(--ui-color-danger)',
+    subtext: '⚠️ Requer Atenção',
+    subcolor: 'var(--ui-color-danger)',
+  },
+  {
+    key: 'filaTotalDias',
+    label: 'Carga de Fila',
+    border: 'var(--ui-color-info)',
+    subtext: '⏳ Prazo p/ Limpar Fila',
+    subcolor: 'var(--ui-color-info)',
+    formatter: (v) => `${v} dias`,
+  },
+  {
+    key: 'taxaEficiencia',
+    label: 'OEE / Eficiência',
+    border: 'var(--ui-color-success)',
+    subtext: '📈 Meta Mensal',
+    subcolor: 'var(--ui-color-success)',
+    formatter: (v) => `${v.toFixed(1)}%`,
+  },
+];
 
 const ProductionDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -29,103 +68,51 @@ const ProductionDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Poll a cada 30s
+    const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading)
+  if (loading) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="h-32 rounded-[var(--ui-radius-lg)] bg-[var(--ui-bg-subtle)] animate-pulse"
+          />
+        ))}
       </div>
     );
+  }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem',
-      }}
-    >
-      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #d4af37' }}>
-        <p
-          style={{
-            fontSize: '0.7rem',
-            color: 'hsl(var(--muted-foreground))',
-            fontWeight: '800',
-            textTransform: 'uppercase',
-          }}
-        >
-          Total de OPs
-        </p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>
-          {metrics?.totalOPs || 0}
-        </h4>
-        <div style={{ fontSize: '0.7rem', color: '#10b981' }}>ðŸ“Š Monitoramento Ativo</div>
-      </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+      {cards.map((c) => {
+        const value = metrics ? metrics[c.key] : 0;
+        const isAtraso = c.key === 'opsAtrasadas';
+        const valColor =
+          isAtraso && value > 0 ? 'var(--ui-color-danger)' : 'var(--ui-text-primary)';
 
-      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #ef4444' }}>
-        <p
-          style={{
-            fontSize: '0.7rem',
-            color: 'hsl(var(--muted-foreground))',
-            fontWeight: '800',
-            textTransform: 'uppercase',
-          }}
-        >
-          Atrasos Críticos
-        </p>
-        <h4
-          style={{
-            fontSize: '2rem',
-            fontWeight: '900',
-            margin: '0.5rem 0',
-            color: (metrics?.opsAtrasadas || 0) > 0 ? '#ef4444' : 'inherit',
-          }}
-        >
-          {metrics?.opsAtrasadas || 0}
-        </h4>
-        <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>âš ï¸ Requer Atenção</div>
-      </div>
-
-      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #3b82f6' }}>
-        <p
-          style={{
-            fontSize: '0.7rem',
-            color: 'hsl(var(--muted-foreground))',
-            fontWeight: '800',
-            textTransform: 'uppercase',
-          }}
-        >
-          Carga de Fila
-        </p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>
-          {metrics?.filaTotalDias || 0} dias
-        </h4>
-        <div style={{ fontSize: '0.7rem', color: '#3b82f6' }}>â³ Prazo p/ Limpar Fila</div>
-      </div>
-
-      <div className="card glass" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
-        <p
-          style={{
-            fontSize: '0.7rem',
-            color: 'hsl(var(--muted-foreground))',
-            fontWeight: '800',
-            textTransform: 'uppercase',
-          }}
-        >
-          OEE / Eficiência
-        </p>
-        <h4 style={{ fontSize: '2rem', fontWeight: '900', margin: '0.5rem 0' }}>
-          {(metrics?.taxaEficiencia ?? 0).toFixed(1)}%
-        </h4>
-        <div style={{ fontSize: '0.7rem', color: '#10b981' }}>ðŸ“ˆ Meta Mensal</div>
-      </div>
+        return (
+          <Card
+            key={c.key}
+            variant="elevated"
+            padding="lg"
+            className="flex flex-col gap-1"
+            style={{ borderLeft: `4px solid ${c.border}` }}
+          >
+            <p className="text-[11px] font-extrabold uppercase tracking-[var(--ui-tracking-wide)] text-[var(--ui-text-secondary)] m-0">
+              {c.label}
+            </p>
+            <p className="text-3xl font-black m-0 leading-tight" style={{ color: valColor }}>
+              {c.formatter ? c.formatter(Number(value)) : value}
+            </p>
+            <p className="text-[11px] font-semibold m-0" style={{ color: c.subcolor }}>
+              {c.subtext}
+            </p>
+          </Card>
+        );
+      })}
     </div>
   );
 };

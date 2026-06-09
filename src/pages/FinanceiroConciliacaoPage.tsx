@@ -9,7 +9,9 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Badge } from '../components/common';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -519,7 +521,7 @@ export default function FinanceiroConciliacaoPage() {
                           </div>
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
-                          <Badge variant={txn.type === 'CREDIT' ? 'success' : 'destructive'}>
+                          <Badge tone={txn.type === 'CREDIT' ? 'success' : 'danger'}>
                             {txn.type === 'CREDIT' ? 'ENTRADA' : 'SAÃDA'}
                           </Badge>
                         </td>
@@ -538,21 +540,21 @@ export default function FinanceiroConciliacaoPage() {
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
                           {txn.status === 'matched' && (
-                            <Badge variant="success" className="gap-1">
+                            <Badge tone="success" className="gap-1">
                               <CheckCircle className="w-3.5 h-3.5 inline mr-1" /> AUTO
                             </Badge>
                           )}
                           {txn.status === 'manual' && (
-                            <Badge variant="default" className="gap-1">
+                            <Badge tone="neutral" className="gap-1">
                               <Link className="w-3.5 h-3.5 inline mr-1" /> MANUAL
                             </Badge>
                           )}
                           {txn.status === 'unmatched' && (
-                            <Badge variant="warning" className="gap-1">
+                            <Badge tone="warning" className="gap-1">
                               <AlertTriangle className="w-3.5 h-3.5 inline mr-1" /> PENDENTE
                             </Badge>
                           )}
-                          {txn.status === 'ignored' && <Badge variant="secondary">IGNORADO</Badge>}
+                          {txn.status === 'ignored' && <Badge tone="primary">IGNORADO</Badge>}
                         </td>
                         <td
                           style={{

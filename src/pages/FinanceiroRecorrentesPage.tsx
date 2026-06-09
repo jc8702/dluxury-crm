@@ -4,16 +4,9 @@ import { Repeat, Plus, Trash2, Edit2, Play, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { TableSkeleton } from '../components/common/Skeleton';
-import {
-  Button,
-  Modal,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-  Input,
-} from '../components/common';
+import { Button, Card, CardHeader, CardTitle } from '../components/ui';
+import { CardBody as CardContent } from '../components/ui';
+import { Modal, Badge, Input } from '../components/common';
 
 export default function FinanceiroRecorrentesPage() {
   const { success, error } = useToast();
@@ -223,9 +216,9 @@ export default function FinanceiroRecorrentesPage() {
                 <tr key={r.id}>
                   <td style={{ textAlign: 'center' }}>
                     {r.ativa ? (
-                      <Badge variant="success">ATIVA</Badge>
+                      <Badge tone="success">ATIVA</Badge>
                     ) : (
-                      <Badge variant="secondary">INATIVA</Badge>
+                      <Badge tone="primary">INATIVA</Badge>
                     )}
                   </td>
                   <td>
@@ -270,7 +263,7 @@ export default function FinanceiroRecorrentesPage() {
 
       {/* Modal de Configuração */}
       <Modal
-        isOpen={isOpen}
+        open={isOpen}
         onClose={() => setIsOpen(false)}
         title={editing ? 'Editar Recorrência' : 'Nova Conta Recorrente'}
         size="lg"
@@ -409,7 +402,7 @@ export default function FinanceiroRecorrentesPage() {
 
       {/* Modal de Geração */}
       <Modal
-        isOpen={gerarModal}
+        open={gerarModal}
         onClose={() => setGerarModal(false)}
         title="Gerar Títulos Mensais"
         size="sm"

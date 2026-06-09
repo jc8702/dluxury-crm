@@ -394,7 +394,7 @@ export function PlanoCorteDemo() {
                         </div>
                       </div>
                       <div className="text-xs">
-                        {peca.rotacionada && <Badge variant="warning">🔄 Rotacionada</Badge>}
+                        {peca.rotacionada && <Badge tone="warning">🔄 Rotacionada</Badge>}
                       </div>
                     </div>
                   ))}
@@ -413,7 +413,7 @@ export function PlanoCorteDemo() {
                 <p className="text-[var(--ui-text-secondary)] mb-4">
                   Clique em um algoritmo ao lado para iniciar a simulação
                 </p>
-                <Badge variant="outline" className="text-xs">
+                <Badge tone="outline" className="text-xs">
                   Testando com {PECAS_EXEMPLO.length} peças reais de marcenaria
                 </Badge>
               </Card>

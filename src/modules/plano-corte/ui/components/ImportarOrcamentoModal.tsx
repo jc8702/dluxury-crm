@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, CheckCircle, X, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
+// @todo migrar para Modal de @/components/ui (trocar isOpen → open)
 import { Modal } from '../../../../components/common';
 
 interface ImportarOrcamentoModalProps {
@@ -152,7 +153,7 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
   });
 
   return (
-    <Modal isOpen={true} onClose={onFechar} title="Importar Peças do Orçamento" size="md">
+    <Modal open={true} onClose={onFechar} title="Importar Peças do Orçamento" size="md">
       <div className="flex flex-col gap-6 max-h-[75vh]">
         <div className="relative group">
           <Search

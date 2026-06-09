@@ -149,7 +149,7 @@ export default function CalendarioIntegrado() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl border border-border bg-card/65 backdrop-blur-md shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-[var(--ui-radius-lg)] border border-border bg-card/65 backdrop-blur-md shadow-md">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20">
             <CalendarIcon className="w-6 h-6" />
@@ -157,7 +157,7 @@ export default function CalendarioIntegrado() {
           <div>
             <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-1.5 capitalize">
               {obterNomeMes()}
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <Sparkles className="w-4 h-4 text-[var(--ui-color-warning)] fill-[var(--ui-color-warning)]" />
             </h2>
             <p className="text-xs text-muted-foreground">
               Agenda integrada contendo tarefas, reuniões, prazos de OPs e prazos de propostas
@@ -276,7 +276,7 @@ export default function CalendarioIntegrado() {
       {/* Modal Criar Evento Manual */}
       {showCreateModal && diaSelecionadoParaCriar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md rounded-[var(--ui-radius-lg)] border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-border bg-muted/30">
               <h3 className="text-lg font-bold text-foreground">
                 Agendar para: {diaSelecionadoParaCriar.toLocaleDateString('pt-BR')}

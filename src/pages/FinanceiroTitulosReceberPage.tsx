@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Modal, Button, Input } from '../components/common';
+import { Button } from '../components/ui';
+import { Modal, Input } from '../components/common';
 
 import {
   Plus,
@@ -500,7 +501,7 @@ export default function FinanceiroTitulosReceberPage() {
 
       {/* Modal Antecipação */}
       <Modal
-        isOpen={!!antecipacaoModal}
+        open={!!antecipacaoModal}
         onClose={() => setAntecipacaoModal(null)}
         title="Simulador de Antecipação Industrial"
         size="md"
@@ -528,7 +529,7 @@ export default function FinanceiroTitulosReceberPage() {
                   label="Taxa Mensal de Desconto (%)"
                   value={taxaAntecipacao}
                   onChange={(e) => setTaxaAntecipacao(Number(e.target.value))}
-                  helperText="Média corporativa D'Luxury: 2.8% a 4.5%"
+                  hint="Média corporativa D'Luxury: 2.8% a 4.5%"
                 />
 
                 <div className="p-6 rounded-xl space-y-3 bg-primary/5 border border-primary/20">
@@ -602,7 +603,7 @@ export default function FinanceiroTitulosReceberPage() {
 
       {/* Modal Baixa */}
       <Modal
-        isOpen={!!baixaModal}
+        open={!!baixaModal}
         onClose={() => setBaixaModal(null)}
         title="Registrar Recebimento Industrial"
         size="md"
@@ -723,7 +724,7 @@ export default function FinanceiroTitulosReceberPage() {
 
       {/* Modal Edição Individual */}
       <Modal
-        isOpen={!!editModal}
+        open={!!editModal}
         onClose={() => setEditModal(null)}
         title="Manutenção de Título Industrial"
         size="lg"

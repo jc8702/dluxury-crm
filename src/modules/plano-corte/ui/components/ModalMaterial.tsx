@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { Box, Settings2 } from 'lucide-react';
-import { Modal, Button, Input } from '../../../../components/common';
+import { Modal } from '../../../../components/common';
+import { Button, Input } from '../../../../components/ui';
 
 const ESPESSURAS_PADRAO = [6, 15, 18, 25];
 const TIPOS_PADRAO = ['Branco', 'Madeirado', 'Lacca', 'Estrutura', 'Fundo'];
@@ -22,7 +23,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
   );
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Selecionar Chapa / Material" size="xl">
+    <Modal open={true} onClose={onClose} title="Selecionar Chapa / Material" size="xl">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Esquerda: Cadastro do Estoque */}
         <div className="md:col-span-2 flex flex-col gap-4 pr-0 md:pr-6 border-r-0 md:border-r border-border min-h-[400px]">

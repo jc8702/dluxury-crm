@@ -30,7 +30,8 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { Button, Card, CardContent } from '../../components/common';
+import { Button, Card } from '../../components/ui';
+import { CardBody as CardContent } from '../../components/ui';
 import { useInventoryStore as useInventory } from '../../stores/useInventoryStore';
 import { useToast } from '../../context/ToastContext';
 

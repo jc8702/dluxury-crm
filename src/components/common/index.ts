@@ -1,8 +1,17 @@
-export { Button } from './Button';
-export { Modal } from './Modal';
-export { Input } from './Input';
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
-export { Badge } from './Badge';
+// ─── DEPRECATED: Migrar para @/components/ui ───
+// Este barrel existe apenas para compatibilidade retroativa.
+// Novos componentes devem importar diretamente de '@/components/ui'.
+
+// Compatível — re-exportado do novo Design System
+export { Button } from '@/components/ui';
+export { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui';
+/** @deprecated Usar CardBody de '@/components/ui' */
+export { CardBody as CardContent } from '@/components/ui';
+
+// ✅ Migrado — re-exportado do novo Design System
+export { Modal } from '@/components/ui';
+export { Input } from '@/components/ui';
+export { Badge } from '@/components/ui';
 export {
   Select,
   SelectGroup,
@@ -11,9 +20,11 @@ export {
   SelectContent,
   SelectLabel,
   SelectItem,
-  SelectSeparator
+  SelectSeparator,
 } from './Select';
 export { ConfirmDialog } from './ConfirmDialog';
+
+// Itens únicos — sem equivalente no DS novo
 export { EmptyState } from './EmptyState';
 export { Skeleton, TableSkeleton, CardSkeleton } from './Skeleton';
 export { ErrorBoundary } from './ErrorBoundary';

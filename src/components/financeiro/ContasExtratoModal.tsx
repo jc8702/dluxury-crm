@@ -51,7 +51,7 @@ export function ContasExtratoModal({
 
   return (
     <Modal
-      isOpen={showExtrato}
+      open={showExtrato}
       onClose={onClose}
       title={`EXTRATO ANALÍTICO — ${extratoContaNome.toUpperCase()}`}
       size="full"
