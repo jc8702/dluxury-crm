@@ -415,6 +415,10 @@ export default async function handler(req: any, res: any) {
       const { handleSKUs } = await import('../src/api-lib/projects.js');
       return await handleSKUs(req, res);
     }
+    if (cleanUrl.startsWith('/api/servicos')) {
+      const { handleServicos } = await import('../src/api-lib/servicos.js');
+      return await handleServicos(req, res);
+    }
     if (cleanUrl.startsWith('/api/reports')) {
       const { handleReports } = await import('../src/api-lib/projects.js');
       return await handleReports(req, res);

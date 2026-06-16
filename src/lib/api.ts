@@ -460,6 +460,19 @@ export const api = {
     list: () => apiCall<any[]>('production?type=cutting_plan_list'),
     save: (data: any) => apiCall<any>('production?type=cutting_plan', 'POST', data),
   },
+  servicos: {
+    list: (params?: { categoria?: string; q?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.categoria) qs.set('categoria', params.categoria);
+      if (params?.q) qs.set('q', params.q);
+      const query = qs.toString();
+      return apiCall<any[]>(`servicos${query ? `?${query}` : ''}`);
+    },
+    categorias: () => apiCall<string[]>('servicos?action=categorias'),
+    create: (data: any) => apiCall<any>('servicos', 'POST', data),
+    update: (id: string, data: any) => apiCall<any>(`servicos?id=${id}`, 'PATCH', data),
+    delete: (id: string) => apiCall<any>(`servicos?id=${id}`, 'DELETE'),
+  },
   afterSales: {
     list: () => apiCall<any[]>('after-sales'),
     getStats: () => apiCall<any>('after-sales?stats=true'),
