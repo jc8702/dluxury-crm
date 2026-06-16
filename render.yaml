@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: dluxury-crm
+    runtime: node
+    repo: https://github.com/jc8702/dluxury-crm
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_JWT_SECRET
+        sync: false
+      - key: APP_PIN
+        sync: false
+    buildCommand: bash scripts/render-build.sh
+    startCommand: npm start
+    healthCheckPath: /api/ping
+    domains:
+      - dluxury-crm.onrender.com

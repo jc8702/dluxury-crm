@@ -1,0 +1,28 @@
+[project]
+ref_id = "xiptohsjanxwcyrwugef"
+name = "click-marido"
+plan = "free"
+region = "us-west-2"
+access_token = ""
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+major_version = 17
+
+[db.pooler]
+enabled = true
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true

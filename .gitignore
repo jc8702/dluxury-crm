@@ -89,3 +89,8 @@ lighthouse-report.json
 migrate-db.ts
 migrate-estoque.ts
 create-user.ts
+
+.vercel
+
+supabase/.temp/
+.vercel
