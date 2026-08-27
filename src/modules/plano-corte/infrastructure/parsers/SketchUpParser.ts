@@ -21,7 +21,7 @@ export async function parseSketchUpDAE(arquivo: File): Promise<PecaSketchUp[]> {
   // Buscar geometrias (nós <geometry>)
   const geometrias = xml.querySelectorAll('geometry');
 
-  geometrias.forEach(geo => {
+  geometrias.forEach((geo) => {
     const id = geo.getAttribute('id') || 'sem_nome';
     const nome = limparNome(id);
 
@@ -37,8 +37,10 @@ export async function parseSketchUpDAE(arquivo: File): Promise<PecaSketchUp[]> {
     const dimensoes = calcularDimensoes(vertices);
 
     // Assumir que a menor dimensão é a espessura
-    const dims = [dimensoes.largura, dimensoes.altura, dimensoes.profundidade].sort((a, b) => a - b);
-    
+    const dims = [dimensoes.largura, dimensoes.altura, dimensoes.profundidade].sort(
+      (a, b) => a - b,
+    );
+
     const largura = Math.round(dims[2]);
     const altura = Math.round(dims[1]);
     const espessura = Math.round(dims[0]);
@@ -60,7 +62,7 @@ export async function parseSketchUpDAE(arquivo: File): Promise<PecaSketchUp[]> {
         largura_mm: largura,
         altura_mm: altura,
         espessura_mm: espessura,
-        quantidade: 1
+        quantidade: 1,
       });
     }
   });
@@ -78,12 +80,12 @@ function limparNome(id: string): string {
 
 function extrairVertices(mesh: Element): number[][] {
   const vertices: number[][] = [];
-  
+
   const floatArray = mesh.querySelector('float_array');
   if (!floatArray) return vertices;
 
   const numeros = floatArray.textContent?.trim().split(/\s+/).map(Number) || [];
-  
+
   for (let i = 0; i < numeros.length; i += 3) {
     vertices.push([numeros[i], numeros[i + 1], numeros[i + 2]]);
   }
@@ -91,10 +93,17 @@ function extrairVertices(mesh: Element): number[][] {
   return vertices;
 }
 
-function calcularDimensoes(vertices: number[][]): { largura: number; altura: number; profundidade: number } {
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
-  let minZ = Infinity, maxZ = -Infinity;
+function calcularDimensoes(vertices: number[][]): {
+  largura: number;
+  altura: number;
+  profundidade: number;
+} {
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
+  let minZ = Infinity,
+    maxZ = -Infinity;
 
   vertices.forEach(([x, y, z]) => {
     minX = Math.min(minX, x);
@@ -111,6 +120,6 @@ function calcularDimensoes(vertices: number[][]): { largura: number; altura: num
   return {
     largura: Math.abs(maxX - minX) * INCH_TO_MM,
     altura: Math.abs(maxY - minY) * INCH_TO_MM,
-    profundidade: Math.abs(maxZ - minZ) * INCH_TO_MM
+    profundidade: Math.abs(maxZ - minZ) * INCH_TO_MM,
   };
 }

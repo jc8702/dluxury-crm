@@ -4,24 +4,24 @@ import { jsPDF } from 'jspdf';
 export async function exportarEtiquetas(
   pecas: any[],
   planoCorteId: string,
-  urlBase: string = 'https://app.dluxury.com/rastreamento'
+  urlBase: string = 'https://app.dluxury.com/rastreamento',
 ): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: [100, 50] // Etiqueta térmica 100x50mm
+    format: [100, 50], // Etiqueta térmica 100x50mm
   });
 
   for (let i = 0; i < pecas.length; i++) {
     if (i > 0) doc.addPage();
 
     const peca = pecas[i];
-    
+
     // Gerar QR Code
     const qrData = `${urlBase}/${planoCorteId}/${peca.id}`;
     const qrDataURL = await QRCode.toDataURL(qrData, {
       width: 100,
-      margin: 1
+      margin: 1,
     });
 
     // QR Code (lado esquerdo)
@@ -50,7 +50,7 @@ export async function exportarEtiquetas(
       if (peca.fio_de_fita.baixo) fitas.push('B');
       if (peca.fio_de_fita.esquerda) fitas.push('E');
       if (peca.fio_de_fita.direita) fitas.push('D');
-      
+
       if (fitas.length > 0) {
         doc.setFontSize(7);
         doc.text(`Fita: ${fitas.join(', ')}`, 45, 38);

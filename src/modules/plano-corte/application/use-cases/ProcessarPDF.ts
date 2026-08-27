@@ -5,7 +5,7 @@ import type { ProjetoCorte, ChapaSelecionada } from '../../domain/types.js';
 export class ProcessarPDF {
   constructor(
     private parser: PDFParser = new PDFParser(),
-    private chapaRepo: ChapaRepository = new ChapaRepository()
+    private chapaRepo: ChapaRepository = new ChapaRepository(),
   ) {}
 
   async executar(file: File): Promise<ProjetoCorte> {
@@ -40,7 +40,9 @@ export class ProcessarPDF {
       }
 
       if (!pecasExtraidas || pecasExtraidas.length === 0) {
-        throw new Error('Nenhuma peça identificada no arquivo. Verifique se o PDF contém texto legível.');
+        throw new Error(
+          'Nenhuma peça identificada no arquivo. Verifique se o PDF contém texto legível.',
+        );
       }
 
       // 3. Estruturar o projeto com agrupamento por Material + Espessura (Fase 2.1)
@@ -50,7 +52,7 @@ export class ProcessarPDF {
         chapas: [],
         criado_em: new Date(),
         status: 'rascunho',
-        originario_pdf: true
+        originario_pdf: true,
       };
 
       const agrupamentos: Record<string, any[]> = {};
@@ -64,25 +66,27 @@ export class ProcessarPDF {
       for (const [, pecas] of Object.entries(agrupamentos)) {
         const materialDetectado = pecas[0]?.material || '';
         const espessuraNum = pecas[0]?.espessura || 18;
-        
+
         // Tentar buscar uma chapa real no estoque
-        const queryBusca = materialDetectado 
+        const queryBusca = materialDetectado
           ? `${materialDetectado} ${espessuraNum}MM`
           : `MDF ${espessuraNum}MM`;
-          
+
         const resultadosBusca = await this.chapaRepo.buscarPorSKU(queryBusca);
-        let chapaEstoque = resultadosBusca.find(c => c.espessura === espessuraNum);
-        
+        let chapaEstoque = resultadosBusca.find((c) => c.espessura === espessuraNum);
+
         // Fallback: se não achar pelo material, busca pela espessura e pega a primeira disponível
         if (!chapaEstoque) {
           const fallbackBusca = await this.chapaRepo.buscarPorSKU(`${espessuraNum}MM`);
-          chapaEstoque = fallbackBusca.find(c => c.espessura === espessuraNum) || fallbackBusca[0];
+          chapaEstoque =
+            fallbackBusca.find((c) => c.espessura === espessuraNum) || fallbackBusca[0];
         }
 
         const novaChapa: ChapaSelecionada = {
           id: `ch_imp_${Math.random().toString(36).substr(2, 9)}`,
           sku_chapa: chapaEstoque?.sku || `${materialDetectado || 'MDF'}-${espessuraNum}`,
-          nome_exibicao: chapaEstoque?.nome || `${materialDetectado || 'MDF'} ${espessuraNum}MM (IMPORTADO)`,
+          nome_exibicao:
+            chapaEstoque?.nome || `${materialDetectado || 'MDF'} ${espessuraNum}MM (IMPORTADO)`,
           largura_mm: chapaEstoque?.largura || 2750,
           altura_mm: chapaEstoque?.altura || 1840,
           espessura_mm: espessuraNum,
@@ -95,8 +99,8 @@ export class ProcessarPDF {
             altura: p.comprimento,
             quantidade: p.quantidade || 1,
             material: materialDetectado,
-            rotacionavel: true
-          }))
+            rotacionavel: true,
+          })),
         };
         projeto.chapas.push(novaChapa);
       }
@@ -125,9 +129,23 @@ export class ProcessarPDF {
           preco_unitario: 320,
           criada_em: new Date(),
           pecas: [
-            { id: 'dp1', nome: 'LATERAL GABINETE', largura: 720, altura: 550, quantidade: 4, rotacionavel: true },
-            { id: 'dp2', nome: 'BASE GABINETE', largura: 600, altura: 550, quantidade: 2, rotacionavel: true }
-          ]
+            {
+              id: 'dp1',
+              nome: 'LATERAL GABINETE',
+              largura: 720,
+              altura: 550,
+              quantidade: 4,
+              rotacionavel: true,
+            },
+            {
+              id: 'dp2',
+              nome: 'BASE GABINETE',
+              largura: 600,
+              altura: 550,
+              quantidade: 2,
+              rotacionavel: true,
+            },
+          ],
         },
         {
           id: 'demo_ch_2',
@@ -139,12 +157,25 @@ export class ProcessarPDF {
           preco_unitario: 285,
           criada_em: new Date(),
           pecas: [
-            { id: 'dp3', nome: 'PRATELEIRA', largura: 567, altura: 530, quantidade: 6, rotacionavel: true },
-            { id: 'dp4', nome: 'TAMPO', largura: 1200, altura: 600, quantidade: 1, rotacionavel: true }
-          ]
-        }
-      ]
+            {
+              id: 'dp3',
+              nome: 'PRATELEIRA',
+              largura: 567,
+              altura: 530,
+              quantidade: 6,
+              rotacionavel: true,
+            },
+            {
+              id: 'dp4',
+              nome: 'TAMPO',
+              largura: 1200,
+              altura: 600,
+              quantidade: 1,
+              rotacionavel: true,
+            },
+          ],
+        },
+      ],
     };
   }
 }
-

@@ -1,9 +1,12 @@
-import { sql } from "../../../api-lib/_db.js";
-import { Evento, EventoSchema } from "../domain/Evento.js";
-import { normalizeObjetivo } from "../domain/normalizeObjetivo.js";
+import { sql } from '../../../api-lib/_db.js';
+import { Evento, EventoSchema } from '../domain/Evento.js';
+import { normalizeObjetivo } from '../domain/normalizeObjetivo.js';
 
 export class EventosRepository {
-  async list(tenantId: string, filters: { inicio?: Date, fim?: Date, tipo?: string, responsavel_id?: string } = {}) {
+  async list(
+    tenantId: string,
+    filters: { inicio?: Date; fim?: Date; tipo?: string; responsavel_id?: string } = {},
+  ) {
     let queryStr = `
       SELECT e.*, 
              c.nome as cliente_nome,
@@ -42,23 +45,23 @@ export class EventosRepository {
     }
 
     queryStr += ` ORDER BY e.data_inicio ASC`;
-    
+
     return await sql(queryStr as any, ...params);
   }
 
   async getById(id: string, tenantId: string) {
-    const results = await sql`SELECT * FROM eventos WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}`;
+    const results =
+      await sql`SELECT * FROM eventos WHERE id::TEXT = ${id}::TEXT AND tenant_id = ${tenantId}`;
     return results[0] || null;
   }
 
   async create(data: Evento, tenantId: string) {
     const validated = EventoSchema.parse(data);
-    
+
     // NORMALIZAÇÃO FORÇADA - ponto único de entrada
     const objetivoNormalizado = normalizeObjetivo(validated.objetivo);
-    /* console.log('[REPO] objetivo normalizado:', objetivoNormalizado) */;
-    
-    const results = await sql`
+    /* console.log('[REPO] objetivo normalizado:', objetivoNormalizado) */ const results =
+      await sql`
       INSERT INTO eventos (
         tipo, titulo, descricao, data_inicio, data_fim, dia_inteiro,
         cliente_id, projeto_id, visita_id, quotation_id, endereco, objetivo, status_visita,
@@ -76,11 +79,11 @@ export class EventosRepository {
 
   async update(id: string, data: Partial<Evento>, tenantId: string) {
     const current = await this.getById(id, tenantId);
-    if (!current) throw new Error("Evento não encontrado");
+    if (!current) throw new Error('Evento não encontrado');
 
     const merged = { ...current, ...data };
     const validated = EventoSchema.parse(merged);
-    
+
     // NORMALIZAÇÃO FORÇADA
     const objetivoNormalizado = normalizeObjetivo(validated.objetivo);
 

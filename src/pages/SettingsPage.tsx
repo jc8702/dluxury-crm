@@ -1,2 +1,3 @@
-import Settings from '../components/settings/Settings'; const SettingsPage = () => <Settings />; export default SettingsPage;
-
+import Settings from '../components/settings/Settings';
+const SettingsPage = () => <Settings />;
+export default SettingsPage;

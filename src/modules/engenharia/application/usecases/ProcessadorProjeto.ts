@@ -1,4 +1,7 @@
-import { ParseadorProjeto, type ProjeParsed } from '../../../plano-corte/infrastructure/parsers/ParseadorProjeto.js';
+import {
+  ParseadorProjeto,
+  type ProjeParsed,
+} from '../../../plano-corte/infrastructure/parsers/ParseadorProjeto.js';
 import { HybridOptimizer } from '../../../plano-corte/domain/services/HybridOptimizer.js';
 import { GeradorPecasParametrico } from '../../domain/services/GeradorPecasParametrico.js';
 import { RetalhosRepository } from '../../../plano-corte/infrastructure/repositories/RetalhosRepository.js';
@@ -30,14 +33,14 @@ export interface ResultadoProcessamento {
   sucesso: boolean;
   erros: string[];
   avisos: string[];
-  
+
   // Dados de entrada parseados
   projeto?: ProjeParsed;
-  
+
   // Dados de engenharia
   pecas?: Peca[];
   ferragens?: Array<{ sku: string; descricao: string; quantidade: number }>;
-  
+
   // Otimização de corte
   layouts?: Array<{
     tipo: 'retalho' | 'chapa_inteira';
@@ -52,10 +55,10 @@ export interface ResultadoProcessamento {
   aproveitamento_percentual?: number;
   retalhos_utilizados?: number;
   chapas_novas_utilizadas?: number;
-  
+
   // Custos
   custos?: ResultadoCustos; // Tipado pelo CustosService
-  
+
   // Metadados
   tempo_processamento_ms: number;
   confianca_geral: number; // 0-100
@@ -63,7 +66,7 @@ export interface ResultadoProcessamento {
 
 /**
  * CLASSE PRINCIPAL: ProcessadorProjeto
- * 
+ *
  * Orquestra todo o fluxo de um projeto desde a entrada textual até o custo final.
  */
 export class ProcessadorProjeto {
@@ -85,12 +88,14 @@ export class ProcessadorProjeto {
       erros: [],
       avisos: [],
       tempo_processamento_ms: 0,
-      confianca_geral: 0
+      confianca_geral: 0,
     };
 
     try {
-      (this.logger as any).info(`[PROCESSADOR] Iniciando processamento: "${requisicao.descricao_projeto}"`);
-      
+      (this.logger as any).info(
+        `[PROCESSADOR] Iniciando processamento: "${requisicao.descricao_projeto}"`,
+      );
+
       // 1. PARSE
       const parseResult = ParseadorProjeto.parse(requisicao.descricao_projeto);
       resultado.projeto = parseResult.projeto;
@@ -103,17 +108,14 @@ export class ProcessadorProjeto {
 
       // 2. GERAR PEÇAS
       const gerador = new GeradorPecasParametrico(this.db);
-      const geracaoResult = await gerador.gerarPecas(
-        parseResult.projeto!.tipo_movel,
-        {
-          largura: parseResult.projeto!.largura_mm,
-          altura: parseResult.projeto!.altura_mm,
-          profundidade: parseResult.projeto!.profundidade_mm,
-          gavetas: parseResult.projeto!.customizacoes.gavetas,
-          portas: parseResult.projeto!.customizacoes.portas,
-          prateleiras: parseResult.projeto!.customizacoes.prateleiras
-        }
-      );
+      const geracaoResult = await gerador.gerarPecas(parseResult.projeto!.tipo_movel, {
+        largura: parseResult.projeto!.largura_mm,
+        altura: parseResult.projeto!.altura_mm,
+        profundidade: parseResult.projeto!.profundidade_mm,
+        gavetas: parseResult.projeto!.customizacoes.gavetas,
+        portas: parseResult.projeto!.customizacoes.portas,
+        prateleiras: parseResult.projeto!.customizacoes.prateleiras,
+      });
 
       if (geracaoResult.erros.length > 0) {
         resultado.erros.push(...geracaoResult.erros);
@@ -131,7 +133,7 @@ export class ProcessadorProjeto {
         retalhosDisponiveis = await repo.buscarRetalhosDisponiveis({
           sku_chapa: requisicao.sku_chapa,
           disponivel: true,
-          descartado: false
+          descartado: false,
         });
       }
 
@@ -141,7 +143,7 @@ export class ProcessadorProjeto {
         resultado.pecas!,
         requisicao.sku_chapa,
         retalhosDisponiveis,
-        iteracoes
+        iteracoes,
       );
 
       if (layouts.length === 0) {
@@ -150,8 +152,8 @@ export class ProcessadorProjeto {
       }
 
       resultado.layouts = layouts;
-      resultado.retalhos_utilizados = layouts.filter(l => l.tipo === 'retalho').length;
-      resultado.chapas_novas_utilizadas = layouts.filter(l => l.tipo === 'chapa_inteira').length;
+      resultado.retalhos_utilizados = layouts.filter((l) => l.tipo === 'retalho').length;
+      resultado.chapas_novas_utilizadas = layouts.filter((l) => l.tipo === 'chapa_inteira').length;
       resultado.aproveitamento_percentual = this.calcularAproveitamentoMedio(layouts);
 
       // 5. CALCULAR CUSTOS
@@ -163,7 +165,7 @@ export class ProcessadorProjeto {
         sku_chapa: requisicao.sku_chapa,
         preco_chapa: requisicao.opcoes?.preco_chapa_override,
         precos_ferragem: requisicao.opcoes?.precos_ferragem,
-        margem_minima: requisicao.opcoes?.margem_minima || 0.30
+        margem_minima: requisicao.opcoes?.margem_minima || 0.3,
       });
 
       resultado.custos = custoResult;
@@ -172,14 +174,14 @@ export class ProcessadorProjeto {
       resultado.confianca_geral = Math.round(
         (parseResult.projeto!.confianca_geral +
           (geracaoResult.avisos.length === 0 ? 100 : 85) +
-          (layouts.length > 0 ? 100 : 0)) / 3
+          (layouts.length > 0 ? 100 : 0)) /
+          3,
       );
 
       resultado.sucesso = true;
       resultado.tempo_processamento_ms = performance.now() - inicio;
 
       return resultado;
-
     } catch (erro) {
       resultado.erros.push(`Erro interno: ${erro instanceof Error ? erro.message : String(erro)}`);
       return resultado;
@@ -190,7 +192,7 @@ export class ProcessadorProjeto {
     pecas: Peca[],
     sku_chapa: string,
     retalhos: RetalhoDisponivel[],
-    iteracoes: number
+    iteracoes: number,
   ): Promise<NonNullable<ResultadoProcessamento['layouts']>> {
     const layouts: NonNullable<ResultadoProcessamento['layouts']> = [];
     let pecasRestantes = [...pecas];
@@ -202,9 +204,10 @@ export class ProcessadorProjeto {
     for (const retalho of retalhosOrdenados) {
       if (pecasRestantes.length === 0) break;
 
-      const pecasQueCabem = pecasRestantes.filter(p => 
-        (p.largura <= retalho.largura_mm && p.altura <= retalho.altura_mm) ||
-        (p.altura <= retalho.largura_mm && p.largura <= retalho.altura_mm)
+      const pecasQueCabem = pecasRestantes.filter(
+        (p) =>
+          (p.largura <= retalho.largura_mm && p.altura <= retalho.altura_mm) ||
+          (p.altura <= retalho.largura_mm && p.largura <= retalho.altura_mm),
       );
 
       if (pecasQueCabem.length > 0) {
@@ -215,11 +218,11 @@ export class ProcessadorProjeto {
           largura_original_mm: retalho.largura_mm,
           altura_original_mm: retalho.altura_mm,
           pecas_posicionadas: pecasQueCabem,
-          area_aproveitada_mm2: pecasQueCabem.reduce((sum, p) => sum + p.largura * p.altura, 0)
+          area_aproveitada_mm2: pecasQueCabem.reduce((sum, p) => sum + p.largura * p.altura, 0),
         });
 
         await repo.usarRetalho(retalho.id, `proj-${Date.now()}`);
-        pecasRestantes = pecasRestantes.filter(p => !pecasQueCabem.includes(p));
+        pecasRestantes = pecasRestantes.filter((p) => !pecasQueCabem.includes(p));
       }
     }
 
@@ -229,7 +232,7 @@ export class ProcessadorProjeto {
       if (chapa) {
         const optimizer = new HybridOptimizer(chapa.largura_mm, chapa.altura_mm, 3);
         const res = optimizer.otimizar(pecasRestantes, iteracoes);
-        
+
         // Simulação de divisão por chapas (simplificado para o exemplo)
         layouts.push({
           tipo: 'chapa_inteira',
@@ -237,7 +240,7 @@ export class ProcessadorProjeto {
           largura_original_mm: chapa.largura_mm,
           altura_original_mm: chapa.altura_mm,
           pecas_posicionadas: res.pecas_posicionadas,
-          area_aproveitada_mm2: res.area_usada
+          area_aproveitada_mm2: res.area_usada,
         });
       }
     }
@@ -245,8 +248,13 @@ export class ProcessadorProjeto {
     return layouts;
   }
 
-  private calcularAproveitamentoMedio(layouts: NonNullable<ResultadoProcessamento['layouts']>): number {
-    const totalArea = layouts.reduce((sum, l) => sum + l.largura_original_mm * l.altura_original_mm, 0);
+  private calcularAproveitamentoMedio(
+    layouts: NonNullable<ResultadoProcessamento['layouts']>,
+  ): number {
+    const totalArea = layouts.reduce(
+      (sum, l) => sum + l.largura_original_mm * l.altura_original_mm,
+      0,
+    );
     const areaUsada = layouts.reduce((sum, l) => sum + l.area_aproveitada_mm2, 0);
     return totalArea > 0 ? (areaUsada / totalArea) * 100 : 0;
   }

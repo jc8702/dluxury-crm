@@ -1,4 +1,4 @@
-import type { Peca } from "../types.js";
+import type { Peca } from '../types.js';
 
 export interface PecaPosicionada extends Peca {
   x: number;

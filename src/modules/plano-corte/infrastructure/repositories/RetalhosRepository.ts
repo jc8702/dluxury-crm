@@ -1,7 +1,12 @@
 import { db } from '../../../../api-lib/drizzle-db.js';
 import { retalhosEstoque } from '../../../../db/schema/planos-de-corte.js';
 import { eq, and, gte, sql, desc, asc } from 'drizzle-orm';
-import type { Retalho, RetalhoDisponivel, CriarRetalhoInput, FiltrosRetalho } from '../../domain/entities/Retalho.js';
+import type {
+  Retalho,
+  RetalhoDisponivel,
+  CriarRetalhoInput,
+  FiltrosRetalho,
+} from '../../domain/entities/Retalho.js';
 import { api } from '../../../../lib/api.js';
 
 /**
@@ -27,7 +32,7 @@ export class RetalhosRepository {
 
     const conditions = [
       eq(retalhosEstoque.disponivel, true),
-      eq(retalhosEstoque.descartado, false)
+      eq(retalhosEstoque.descartado, false),
     ];
 
     if (filtros?.sku_chapa) {
@@ -43,34 +48,42 @@ export class RetalhosRepository {
     }
 
     if (filtros?.area_min) {
-      conditions.push(sql`(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) >= ${filtros.area_min}`);
+      conditions.push(
+        sql`(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) >= ${filtros.area_min}`,
+      );
     }
 
     if (filtros?.origem) {
       conditions.push(eq(retalhosEstoque.origem, filtros.origem as any)); // Drizzle enum match
     }
 
-    const result = await db.select({
-      id: retalhosEstoque.id,
-      largura_mm: retalhosEstoque.largura_mm,
-      altura_mm: retalhosEstoque.altura_mm,
-      espessura_mm: retalhosEstoque.espessura_mm,
-      sku_chapa: retalhosEstoque.sku_chapa,
-      area_mm2: sql<number>`(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm})`.as('area_mm2'),
-      origem: retalhosEstoque.origem,
-      plano_corte_origem_id: retalhosEstoque.plano_corte_origem_id,
-      projeto_origem: retalhosEstoque.projeto_origem,
-      observacoes: retalhosEstoque.observacoes,
-      localizacao: retalhosEstoque.localizacao,
-      criado_em: retalhosEstoque.created_at,
-      atualizado_em: retalhosEstoque.updated_at,
-      dias_estoque: sql<number>`EXTRACT(EPOCH FROM (NOW() - ${retalhosEstoque.created_at})) / 86400`.as('dias_estoque'),
-      disponivel: retalhosEstoque.disponivel,
-      descartado: retalhosEstoque.descartado
-    })
-    .from(retalhosEstoque)
-    .where(and(...conditions))
-    .orderBy(asc(retalhosEstoque.sku_chapa), asc(sql`area_mm2`), asc(retalhosEstoque.created_at));
+    const result = await db
+      .select({
+        id: retalhosEstoque.id,
+        largura_mm: retalhosEstoque.largura_mm,
+        altura_mm: retalhosEstoque.altura_mm,
+        espessura_mm: retalhosEstoque.espessura_mm,
+        sku_chapa: retalhosEstoque.sku_chapa,
+        area_mm2: sql<number>`(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm})`.as(
+          'area_mm2',
+        ),
+        origem: retalhosEstoque.origem,
+        plano_corte_origem_id: retalhosEstoque.plano_corte_origem_id,
+        projeto_origem: retalhosEstoque.projeto_origem,
+        observacoes: retalhosEstoque.observacoes,
+        localizacao: retalhosEstoque.localizacao,
+        criado_em: retalhosEstoque.created_at,
+        atualizado_em: retalhosEstoque.updated_at,
+        dias_estoque:
+          sql<number>`EXTRACT(EPOCH FROM (NOW() - ${retalhosEstoque.created_at})) / 86400`.as(
+            'dias_estoque',
+          ),
+        disponivel: retalhosEstoque.disponivel,
+        descartado: retalhosEstoque.descartado,
+      })
+      .from(retalhosEstoque)
+      .where(and(...conditions))
+      .orderBy(asc(retalhosEstoque.sku_chapa), asc(sql`area_mm2`), asc(retalhosEstoque.created_at));
 
     return result as unknown as RetalhoDisponivel[];
   }
@@ -83,25 +96,28 @@ export class RetalhosRepository {
     if (typeof window !== 'undefined' && (!db || !db.insert)) {
       return api.retalhos.create(input) as unknown as Retalho;
     }
-    
+
     const now = new Date();
-    const result = await db.insert(retalhosEstoque).values({
-      largura_mm: input.largura_mm,
-      altura_mm: input.altura_mm,
-      espessura_mm: input.espessura_mm,
-      sku_chapa: input.sku_chapa,
-      origem: input.origem as any,
-      plano_corte_origem_id: input.plano_corte_origem_id,
-      projeto_origem: input.projeto_origem,
-      observacoes: input.observacoes,
-      localizacao: input.localizacao,
-      usuario_criou: input.usuario_criou || 'sistema',
-      disponivel: true,
-      descartado: false,
-      created_at: now,
-      updated_at: now,
-      metadata: {}
-    }).returning();
+    const result = await db
+      .insert(retalhosEstoque)
+      .values({
+        largura_mm: input.largura_mm,
+        altura_mm: input.altura_mm,
+        espessura_mm: input.espessura_mm,
+        sku_chapa: input.sku_chapa,
+        origem: input.origem as any,
+        plano_corte_origem_id: input.plano_corte_origem_id,
+        projeto_origem: input.projeto_origem,
+        observacoes: input.observacoes,
+        localizacao: input.localizacao,
+        usuario_criou: input.usuario_criou || 'sistema',
+        disponivel: true,
+        descartado: false,
+        created_at: now,
+        updated_at: now,
+        metadata: {},
+      })
+      .returning();
 
     return result[0] as unknown as Retalho;
   }
@@ -116,18 +132,21 @@ export class RetalhosRepository {
       return;
     }
 
-    await db.update(retalhosEstoque)
+    await db
+      .update(retalhosEstoque)
       .set({
         disponivel: false,
         utilizado_em_id: planoCorteId,
         data_utilizacao: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       })
-      .where(and(
-        eq(retalhosEstoque.id, retalhoId),
-        eq(retalhosEstoque.disponivel, true),
-        eq(retalhosEstoque.descartado, false)
-      ));
+      .where(
+        and(
+          eq(retalhosEstoque.id, retalhoId),
+          eq(retalhosEstoque.disponivel, true),
+          eq(retalhosEstoque.descartado, false),
+        ),
+      );
   }
 
   /**
@@ -135,13 +154,14 @@ export class RetalhosRepository {
    * Marca retalho como descartado (danificado, obsoleto, etc)
    */
   async descartarRetalho(retalhoId: string, motivo: string): Promise<void> {
-    await db.update(retalhosEstoque)
+    await db
+      .update(retalhosEstoque)
       .set({
         descartado: true,
         disponivel: false,
         motivo_descarte: motivo,
         data_descarte: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       })
       .where(eq(retalhosEstoque.id, retalhoId));
   }
@@ -164,7 +184,8 @@ export class RetalhosRepository {
       conditions.push(eq(retalhosEstoque.descartado, filtros.descartado));
     }
 
-    const result = await db.select()
+    const result = await db
+      .select()
       .from(retalhosEstoque)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(retalhosEstoque.created_at));
@@ -175,29 +196,32 @@ export class RetalhosRepository {
   /**
    * OBTER ESTATÍSTICAS
    */
-  async obterEstatisticas(): Promise<Array<{
-    sku_chapa: string;
-    total_retalhos: number;
-    disponiveis: number;
-    utilizados: number;
-    descartados: number;
-    area_total_disponivel_mm2: number;
-    area_media_mm2: number;
-  }>> {
+  async obterEstatisticas(): Promise<
+    Array<{
+      sku_chapa: string;
+      total_retalhos: number;
+      disponiveis: number;
+      utilizados: number;
+      descartados: number;
+      area_total_disponivel_mm2: number;
+      area_media_mm2: number;
+    }>
+  > {
     if (!db || !db.select) return [];
 
-    const result = await db.select({
-      sku_chapa: retalhosEstoque.sku_chapa,
-      total_retalhos: sql<number>`count(*)`,
-      disponiveis: sql<number>`sum(case when ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
-      utilizados: sql<number>`sum(case when ${retalhosEstoque.disponivel} = false and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
-      descartados: sql<number>`sum(case when ${retalhosEstoque.descartado} = true then 1 else 0 end)`,
-      area_total_disponivel_mm2: sql<number>`sum(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`,
-      area_media_mm2: sql<number>`avg(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`
-    })
-    .from(retalhosEstoque)
-    .groupBy(retalhosEstoque.sku_chapa)
-    .orderBy(retalhosEstoque.sku_chapa);
+    const result = await db
+      .select({
+        sku_chapa: retalhosEstoque.sku_chapa,
+        total_retalhos: sql<number>`count(*)`,
+        disponiveis: sql<number>`sum(case when ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
+        utilizados: sql<number>`sum(case when ${retalhosEstoque.disponivel} = false and ${retalhosEstoque.descartado} = false then 1 else 0 end)`,
+        descartados: sql<number>`sum(case when ${retalhosEstoque.descartado} = true then 1 else 0 end)`,
+        area_total_disponivel_mm2: sql<number>`sum(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`,
+        area_media_mm2: sql<number>`avg(${retalhosEstoque.largura_mm} * ${retalhosEstoque.altura_mm}) filter (where ${retalhosEstoque.disponivel} = true and ${retalhosEstoque.descartado} = false)`,
+      })
+      .from(retalhosEstoque)
+      .groupBy(retalhosEstoque.sku_chapa)
+      .orderBy(retalhosEstoque.sku_chapa);
 
     return result as any;
   }

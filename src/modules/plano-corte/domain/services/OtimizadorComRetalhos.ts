@@ -25,7 +25,7 @@ export class OtimizadorComRetalhos {
     pecas: Peca[],
     chapa: ChapaMaterial,
     planoCorteId: string,
-    usarRetalhos: boolean = true
+    usarRetalhos: boolean = true,
   ): Promise<ResultadoOtimizacao> {
     const inicio = performance.now();
     const layouts: LayoutChapa[] = [];
@@ -36,7 +36,7 @@ export class OtimizadorComRetalhos {
       try {
         const retalhos = await this.retalhosRepo.buscarRetalhosDisponiveis({
           sku_chapa: chapa.sku,
-          area_min: 90000 // 300x300mm mínimo
+          area_min: 90000, // 300x300mm mínimo
         });
 
         for (const retalho of retalhos) {
@@ -55,7 +55,7 @@ export class OtimizadorComRetalhos {
               espacos_livres: resultado.espacos_vazios,
               area_aproveitada_mm2: resultado.area_usada,
               area_total_mm2: resultado.area_total,
-              aproveitamento_percentual: resultado.aproveitamento
+              aproveitamento_percentual: resultado.aproveitamento,
             });
 
             try {
@@ -64,8 +64,8 @@ export class OtimizadorComRetalhos {
               console.error('[OTIMIZADOR] Erro ao marcar retalho:', e);
             }
 
-            const idsPosicionados = new Set(resultado.pecas_posicionadas.map(p => p.id));
-            pecasRestantes = pecasRestantes.filter(p => !idsPosicionados.has(p.id));
+            const idsPosicionados = new Set(resultado.pecas_posicionadas.map((p) => p.id));
+            pecasRestantes = pecasRestantes.filter((p) => !idsPosicionados.has(p.id));
           }
         }
       } catch (err) {
@@ -93,17 +93,16 @@ export class OtimizadorComRetalhos {
         espacos_livres: resultado.espacos_vazios,
         area_aproveitada_mm2: resultado.area_usada,
         area_total_mm2: resultado.area_total,
-        aproveitamento_percentual: resultado.aproveitamento
+        aproveitamento_percentual: resultado.aproveitamento,
       });
 
-
-      const idsPosicionados = new Set(resultado.pecas_posicionadas.map(p => p.id));
-      pecasRestantes = pecasRestantes.filter(p => !idsPosicionados.has(p.id));
+      const idsPosicionados = new Set(resultado.pecas_posicionadas.map((p) => p.id));
+      pecasRestantes = pecasRestantes.filter((p) => !idsPosicionados.has(p.id));
     }
 
     // FASE 3: Estatísticas
-    const retalhosUtilizados = layouts.filter(l => l.tipo === 'retalho').length;
-    const chapasNovas = layouts.filter(l => l.tipo === 'chapa_inteira').length;
+    const retalhosUtilizados = layouts.filter((l) => l.tipo === 'retalho').length;
+    const chapasNovas = layouts.filter((l) => l.tipo === 'chapa_inteira').length;
     const areaTotalChapas = layouts.reduce((acc, l) => acc + l.area_total_mm2, 0);
     const areaUsadaPecas = layouts.reduce((acc, l) => acc + l.area_aproveitada_mm2, 0);
 
@@ -115,17 +114,26 @@ export class OtimizadorComRetalhos {
       area_total_pecas_mm2: areaUsadaPecas,
       area_total_chapas_mm2: areaTotalChapas,
       aproveitamento_medio: (areaUsadaPecas / areaTotalChapas) * 100,
-      economia_retalhos_mm2: layouts.filter(l => l.tipo === 'retalho').reduce((acc, l) => acc + l.area_aproveitada_mm2, 0),
-      tempo_calculo_ms: performance.now() - inicio
+      economia_retalhos_mm2: layouts
+        .filter((l) => l.tipo === 'retalho')
+        .reduce((acc, l) => acc + l.area_aproveitada_mm2, 0),
+      tempo_calculo_ms: performance.now() - inicio,
     };
   }
 
-  private async tentarEncaixarEmRetalho(pecas: Peca[], retalho: RetalhoDisponivel): Promise<ResultadoOtimizacaoSimples> {
+  private async tentarEncaixarEmRetalho(
+    pecas: Peca[],
+    retalho: RetalhoDisponivel,
+  ): Promise<ResultadoOtimizacaoSimples> {
     const otimizador = new HybridOptimizer(retalho.largura_mm, retalho.altura_mm, this.kerfMm);
     return otimizador.otimizar(pecas, 10);
   }
 
-  private async salvarSobrasComoRetalhos(espacos: Retangulo[], chapa: ChapaMaterial, planoCorteId: string): Promise<void> {
+  private async salvarSobrasComoRetalhos(
+    espacos: Retangulo[],
+    chapa: ChapaMaterial,
+    planoCorteId: string,
+  ): Promise<void> {
     for (const sobra of espacos) {
       if (sobra.largura >= 300 && sobra.altura >= 300) {
         await this.retalhosRepo.salvarRetalho({
@@ -135,7 +143,7 @@ export class OtimizadorComRetalhos {
           sku_chapa: chapa.sku,
           origem: 'sobra_plano_corte',
           plano_corte_origem_id: planoCorteId,
-          usuario_criou: 'sistema'
+          usuario_criou: 'sistema',
         });
       }
     }

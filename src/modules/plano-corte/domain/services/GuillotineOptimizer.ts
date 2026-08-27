@@ -1,10 +1,9 @@
 import type { Peca, PecaPosicionada } from '../types.js';
 import type { ResultadoOtimizacaoSimples } from './MaxRectsOptimizer.js';
 
-
 /**
  * CLASSE: Guillotine Optimizer — Best Fit Decreasing
- * 
+ *
  * Algoritmo:
  * 1. Ordena peças por área (maior primeiro) — BFD heurística
  * 2. Para cada peça, encontra melhor faixa (horizontal ou vertical)
@@ -25,7 +24,7 @@ export class GuillotineOptimizer {
   otimizar(pecas: Peca[]): ResultadoOtimizacaoSimples {
     const inicio = performance.now();
 
-    const pecasOrdenadas = [...pecas].sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
+    const pecasOrdenadas = [...pecas].sort((a, b) => b.largura * b.altura - a.largura * a.altura);
     const pecas_posicionadas: PecaPosicionada[] = [];
     const pecas_rejeitadas: Peca[] = [];
 
@@ -36,7 +35,9 @@ export class GuillotineOptimizer {
       altura: number;
     }
 
-    const faixasLivres: Faixa[] = [{ x: 0, y: 0, largura: this.largura_chapa, altura: this.altura_chapa }];
+    const faixasLivres: Faixa[] = [
+      { x: 0, y: 0, largura: this.largura_chapa, altura: this.altura_chapa },
+    ];
 
     for (const peca of pecasOrdenadas) {
       let posicionada = false;
@@ -50,9 +51,13 @@ export class GuillotineOptimizer {
         // Tentar normal
         if (larguraNecessaria <= faixa.largura && alturaNecessaria <= faixa.altura) {
           rotacionada = false;
-        } 
+        }
         // Tentar rotacionado
-        else if (peca.rotacionavel && (peca.altura + this.kerf_mm <= faixa.largura) && (peca.largura + this.kerf_mm <= faixa.altura)) {
+        else if (
+          peca.rotacionavel &&
+          peca.altura + this.kerf_mm <= faixa.largura &&
+          peca.largura + this.kerf_mm <= faixa.altura
+        ) {
           larguraNecessaria = peca.altura + this.kerf_mm;
           alturaNecessaria = peca.largura + this.kerf_mm;
           rotacionada = true;
@@ -67,7 +72,7 @@ export class GuillotineOptimizer {
           altura: rotacionada ? peca.largura : peca.altura,
           x: faixa.x,
           y: faixa.y,
-          rotacionada
+          rotacionada,
         });
 
         // Split Guillotine (Horizontal Split Strategy)
@@ -80,7 +85,7 @@ export class GuillotineOptimizer {
             x: f.x + larguraNecessaria,
             y: f.y,
             largura: f.largura - larguraNecessaria,
-            altura: alturaNecessaria
+            altura: alturaNecessaria,
           });
         }
 
@@ -90,7 +95,7 @@ export class GuillotineOptimizer {
             x: f.x,
             y: f.y + alturaNecessaria,
             largura: f.largura,
-            altura: f.altura - alturaNecessaria
+            altura: f.altura - alturaNecessaria,
           });
         }
 
@@ -103,7 +108,7 @@ export class GuillotineOptimizer {
       }
     }
 
-    const area_usada = pecas_posicionadas.reduce((sum, p) => sum + (p.largura * p.altura), 0);
+    const area_usada = pecas_posicionadas.reduce((sum, p) => sum + p.largura * p.altura, 0);
     const area_total = this.largura_chapa * this.altura_chapa;
     const aproveitamento = (area_usada / area_total) * 100;
 
@@ -115,7 +120,7 @@ export class GuillotineOptimizer {
       area_total,
       area_desperdicada: area_total - area_usada,
       tempo_ms: Math.round(performance.now() - inicio),
-      espacos_vazios: faixasLivres
+      espacos_vazios: faixasLivres,
     };
   }
 }

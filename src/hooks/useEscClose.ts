@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 export function useEscClose(onClose: () => void, enabled: boolean = true) {
   useEffect(() => {
     if (!enabled) return;
-    
+
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -17,4 +17,3 @@ export function useEscClose(onClose: () => void, enabled: boolean = true) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, enabled]);
 }
-

@@ -61,12 +61,12 @@ const calcularMaoDeObra = (tempoMinutos: number, custoHora: number): number => {
  */
 const calcularPrecoMaterialComMarkup = (
   itens: SKUConsumo[],
-  config: PricingConfigSchema
+  config: PricingConfigSchema,
 ): number => {
   return itens.reduce((total, item) => {
     // Busca do config com fallback
     const markup = config.markupCategoria[item.categoria] ?? config.fallbacks.markupCategoria;
-    return total + (item.quantidade * item.custoMedio * markup);
+    return total + item.quantidade * item.custoMedio * markup;
   }, 0);
 };
 
@@ -77,7 +77,7 @@ const calcularPrecoMaterialComMarkup = (
  */
 export function calcularPrecoProjeto(
   input: ProjetoInput,
-  config: PricingConfigSchema
+  config: PricingConfigSchema,
 ): ResultadoPreco {
   const alertas: string[] = [];
 
@@ -94,7 +94,7 @@ export function calcularPrecoProjeto(
   // 3.4 Aplicação de Markups
   // Primeiro calculamos o preço base do material com markup de categoria (usando fallbacks)
   const precoMaterialMarkup = calcularPrecoMaterialComMarkup(input.itens, config);
-  
+
   // Somamos com a mão de obra
   let precoFinal = precoMaterialMarkup + custoMaoDeObra;
 
@@ -106,8 +106,8 @@ export function calcularPrecoProjeto(
   const margem = precoFinal > 0 ? (precoFinal - custoTotal) / precoFinal : 0;
 
   // 3.6 VALIDAÇÕES E ALERTAS
-  if (custoTotal <= 0) alertas.push("Custo inválido");
-  if (margem < config.margemMinima) alertas.push("Margem abaixo do mínimo");
+  if (custoTotal <= 0) alertas.push('Custo inválido');
+  if (margem < config.margemMinima) alertas.push('Margem abaixo do mínimo');
 
   return {
     custoMaterial,
@@ -115,7 +115,7 @@ export function calcularPrecoProjeto(
     custoTotal,
     precoFinal: parseFloat(precoFinal.toFixed(2)),
     margem: parseFloat(margem.toFixed(4)),
-    alertas
+    alertas,
   };
 }
 

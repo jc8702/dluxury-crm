@@ -9,7 +9,7 @@ export function success(data: any, message?: string) {
     data,
     message: message || null,
     error: null,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -20,7 +20,7 @@ export function failure(error: string, statusCode: number = 400) {
     message: null,
     error,
     statusCode,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -30,6 +30,6 @@ export function validationError(errors: any[]) {
     data: null,
     message: 'Erro de validação',
     error: errors,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }

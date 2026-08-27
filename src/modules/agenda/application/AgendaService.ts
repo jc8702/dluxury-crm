@@ -1,5 +1,5 @@
-import { EventosRepository } from "../infrastructure/EventosRepository.js";
-import { Evento, EventoDomain, STATUS_VISITA } from "../domain/Evento.js";
+import { EventosRepository } from '../infrastructure/EventosRepository.js';
+import { Evento, EventoDomain, STATUS_VISITA } from '../domain/Evento.js';
 
 export class AgendaService {
   private repository: EventosRepository;
@@ -18,7 +18,7 @@ export class AgendaService {
   }
 
   async agendarEvento(data: Evento, tenantId: string) {
-    // Lógica extra: verificar conflitos de agenda? 
+    // Lógica extra: verificar conflitos de agenda?
     // Por enquanto, apenas cria.
     return await this.repository.create(data, tenantId);
   }
@@ -29,8 +29,8 @@ export class AgendaService {
 
   async moverVisita(id: string, novoStatus: string, tenantId: string) {
     const evento = await this.repository.getById(id, tenantId);
-    if (!evento) throw new Error("Evento não encontrado");
-    
+    if (!evento) throw new Error('Evento não encontrado');
+
     if (!EventoDomain.canMoveTo(evento as any, novoStatus)) {
       throw new Error(`Transição de status inválida para ${novoStatus}`);
     }

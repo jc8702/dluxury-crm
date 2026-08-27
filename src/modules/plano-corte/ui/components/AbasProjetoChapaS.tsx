@@ -17,11 +17,11 @@ export function AbasProjetoChapaS({
   chapaAtiva,
   onSelecionarChapa,
   onRemoverChapa,
-  onNovaAba
+  onNovaAba,
 }: AbasProps) {
   return (
     <div className="w-full flex flex-col gap-2">
-      {chapas.map(chapa => (
+      {chapas.map((chapa) => (
         <div
           key={chapa.id}
           onClick={() => onSelecionarChapa(chapa.id)}
@@ -32,18 +32,24 @@ export function AbasProjetoChapaS({
           }`}
         >
           {/* Indicador de Status Lateral */}
-          <div className={`w-1 self-stretch rounded-full ${chapaAtiva?.id === chapa.id ? 'bg-[#FFA500]' : 'bg-muted-foreground/30'}`} />
-          
+          <div
+            className={`w-1 self-stretch rounded-full ${chapaAtiva?.id === chapa.id ? 'bg-[#FFA500]' : 'bg-muted-foreground/30'}`}
+          />
+
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between gap-2">
-              <span className={`text-[10px] font-black uppercase tracking-widest truncate ${chapaAtiva?.id === chapa.id ? 'text-[#FFA500]' : 'text-muted-foreground'}`}>
+              <span
+                className={`text-[10px] font-black uppercase tracking-widest truncate ${chapaAtiva?.id === chapa.id ? 'text-[#FFA500]' : 'text-muted-foreground'}`}
+              >
                 {chapa.nome_exibicao}
               </span>
               <div className="px-2 py-0.5 rounded bg-muted border border-border text-[8px] font-mono text-muted-foreground">
                 {chapa.espessura_mm}mm
               </div>
             </div>
-            <span className="text-[9px] font-mono text-muted-foreground truncate mt-1">{chapa.sku_chapa}</span>
+            <span className="text-[9px] font-mono text-muted-foreground truncate mt-1">
+              {chapa.sku_chapa}
+            </span>
           </div>
 
           <button
@@ -59,12 +65,14 @@ export function AbasProjetoChapaS({
       ))}
 
       {onNovaAba && (
-        <button 
+        <button
           onClick={onNovaAba}
           className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl border border-dashed border-border text-muted-foreground hover:text-[#FFA500] hover:border-[#FFA500]/30 hover:bg-[#FFA500]/5 transition-all group mt-2"
         >
           <Plus size={18} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Adicionar Novo Material</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+            Adicionar Novo Material
+          </span>
         </button>
       )}
 
@@ -73,8 +81,12 @@ export function AbasProjetoChapaS({
           <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-4">
             <Layers size={24} className="text-muted-foreground" />
           </div>
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Nenhum material</h3>
-          <p className="text-[9px] text-muted-foreground mt-1 uppercase font-black">Busque por SKU para iniciar</p>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            Nenhum material
+          </h3>
+          <p className="text-[9px] text-muted-foreground mt-1 uppercase font-black">
+            Busque por SKU para iniciar
+          </p>
         </div>
       )}
     </div>

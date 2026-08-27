@@ -12,7 +12,11 @@ export class ExportadorPDF {
       doc.setFontSize(16);
       doc.text(`Plano de Corte: ${nomePlano}`, 10, 15);
       doc.setFontSize(12);
-      doc.text(`Chapa ${index + 1} - ${sup.largura}x${sup.altura}mm - Aproveitamento: ${sup.aproveitamentoPct.toFixed(1)}%`, 10, 22);
+      doc.text(
+        `Chapa ${index + 1} - ${sup.largura}x${sup.altura}mm - Aproveitamento: ${sup.aproveitamentoPct.toFixed(1)}%`,
+        10,
+        22,
+      );
 
       // Calcular escala para caber na página A4 (Deixando espaço embaixo para legenda)
       const maxW = 277; // 297 - 20 margens laterais
@@ -28,9 +32,9 @@ export class ExportadorPDF {
       doc.rect(offsetX, offsetY, sup.largura * scale, sup.altura * scale, 'FD');
 
       // Desenhar Peças
-      sup.pecasPositionadas.forEach(peca => {
-        const x = offsetX + (peca.x * scale);
-        const y = offsetY + (peca.y * scale);
+      sup.pecasPositionadas.forEach((peca) => {
+        const x = offsetX + peca.x * scale;
+        const y = offsetY + peca.y * scale;
         const w = peca.largura * scale;
         const h = peca.altura * scale;
 
@@ -53,22 +57,29 @@ export class ExportadorPDF {
 
         // Escrever número da etiqueta na peça (mesmo pequena)
         doc.setFontSize(w < 10 || h < 10 ? 4 : 7);
-        doc.text(`#${peca.numeroEtiqueta}`, x + (w/2), y + (h/2), { align: 'center', baseline: 'middle' });
+        doc.text(`#${peca.numeroEtiqueta}`, x + w / 2, y + h / 2, {
+          align: 'center',
+          baseline: 'middle',
+        });
 
         // Se a peça for grande o suficiente, escrever descrição
         if (w > 20 && h > 15) {
           doc.setFontSize(6);
-          const desc = peca.descricao.length > 12 ? peca.descricao.substring(0, 12) + '..' : peca.descricao;
-          doc.text(desc, x + (w/2), y + (h/2) + 4, { align: 'center', baseline: 'middle' });
-          doc.text(`${peca.largura}x${peca.altura}`, x + (w/2), y + (h/2) + 8, { align: 'center', baseline: 'middle' });
+          const desc =
+            peca.descricao.length > 12 ? peca.descricao.substring(0, 12) + '..' : peca.descricao;
+          doc.text(desc, x + w / 2, y + h / 2 + 4, { align: 'center', baseline: 'middle' });
+          doc.text(`${peca.largura}x${peca.altura}`, x + w / 2, y + h / 2 + 8, {
+            align: 'center',
+            baseline: 'middle',
+          });
         }
       });
 
       // --- LEGENDA (Tabela de Peças Abaixo do Desenho) ---
-      const legendYStart = offsetY + (sup.altura * scale) + 10;
+      const legendYStart = offsetY + sup.altura * scale + 10;
       doc.setFontSize(10);
       doc.text('Legenda de Peças:', offsetX, legendYStart);
-      
+
       let col = 0;
       let row = 0;
       const colWidth = 65;
@@ -84,10 +95,14 @@ export class ExportadorPDF {
         // Se exceder as colunas, paramos (limite de espaço)
         if (col > 3) return;
 
-        const xPos = offsetX + (col * colWidth);
-        const yPos = legendYStart + 6 + (row * rowHeight);
-        
-        doc.text(`#${peca.numeroEtiqueta} - ${peca.largura}x${peca.altura}mm - ${peca.descricao.substring(0,20)}`, xPos, yPos);
+        const xPos = offsetX + col * colWidth;
+        const yPos = legendYStart + 6 + row * rowHeight;
+
+        doc.text(
+          `#${peca.numeroEtiqueta} - ${peca.largura}x${peca.altura}mm - ${peca.descricao.substring(0, 20)}`,
+          xPos,
+          yPos,
+        );
         row++;
       });
     });

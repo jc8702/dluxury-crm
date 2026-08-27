@@ -33,7 +33,9 @@ const logger = {
   debug: (msg: string, meta?: any) =>
     CONFIG.LOG_LEVEL === 'debug' ? globalLogger.debug(`[ORCAMENTOS_PRO] ${msg}`, meta) : null,
   info: (msg: string, meta?: any) =>
-    ['info', 'debug'].includes(CONFIG.LOG_LEVEL) ? globalLogger.info(`[ORCAMENTOS_PRO] ${msg}`, meta) : null,
+    ['info', 'debug'].includes(CONFIG.LOG_LEVEL)
+      ? globalLogger.info(`[ORCAMENTOS_PRO] ${msg}`, meta)
+      : null,
   warn: (msg: string, meta?: any) => globalLogger.warn(`[ORCAMENTOS_PRO] ${msg}`, meta),
   error: (msg: string, meta?: any) => globalLogger.error(`[ORCAMENTOS_PRO] ${msg}`, meta),
 };

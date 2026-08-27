@@ -16,7 +16,7 @@ export interface Peca {
   nome: string; // Descrição/Nome (Catalog)
   identificador?: string; // Nome Customizado (User)
   largura: number; // mm
-  altura: number;  // mm
+  altura: number; // mm
   rotacionavel: boolean;
   fio_de_fita?: FioDeFita;
   quantidade?: number;

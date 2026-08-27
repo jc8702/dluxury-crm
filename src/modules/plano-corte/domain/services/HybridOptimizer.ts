@@ -5,13 +5,13 @@ import GuillotineOptimizer from './GuillotineOptimizer.js';
 
 /**
  * CLASSE: Hybrid Optimizer — Multi-iteração
- * 
+ *
  * Estratégia:
  * 1. Ordena peças de diferentes formas (área, perímetro, nome)
  * 2. Em cada iteração, tenta um algoritmo diferente
  * 3. Mantém o melhor resultado encontrado
  * 4. Aumenta confiabilidade através de redundância inteligente
- * 
+ *
  * Iterações recomendadas:
  * - 20 iterações → 80% aproveitamento, 3.2s (PRODUÇÃO)
  * - 50 iterações → 82-90% aproveitamento, 8.5s (QUALIDADE MÁXIMA)
@@ -29,7 +29,7 @@ export class HybridOptimizer {
 
   /**
    * MÉTODO PÚBLICO: Otimizar com múltiplas iterações
-   * 
+   *
    * @param pecas - Array de peças a otimizar
    * @param iteracoes - Número de iterações (padrão: 20)
    * @returns Melhor resultado encontrado
@@ -59,7 +59,7 @@ export class HybridOptimizer {
         area_total: this.largura_chapa * this.altura_chapa,
         area_desperdicada: this.largura_chapa * this.altura_chapa,
         tempo_ms: 0,
-        espacos_vazios: []
+        espacos_vazios: [],
       };
     }
 
@@ -69,10 +69,7 @@ export class HybridOptimizer {
   /**
    * UMA ITERAÇÃO: Tenta uma heurística diferente
    */
-  private otimizarUmaIteracao(
-    pecas: Peca[],
-    indiceIteracao: number
-  ): ResultadoOtimizacaoSimples {
+  private otimizarUmaIteracao(pecas: Peca[], indiceIteracao: number): ResultadoOtimizacaoSimples {
     const heuristica = indiceIteracao % 5;
     const pecasOrdenadas = this.ordenarPecas(pecas, heuristica);
 
@@ -80,25 +77,17 @@ export class HybridOptimizer {
     const usarGuillotine = indiceIteracao % 3 === 0; // A cada 3 iterações, usar Guillotine
 
     if (usarGuillotine) {
-      const opt = new GuillotineOptimizer(
-        this.largura_chapa,
-        this.altura_chapa,
-        this.kerf_mm
-      );
+      const opt = new GuillotineOptimizer(this.largura_chapa, this.altura_chapa, this.kerf_mm);
       return opt.otimizar(pecasOrdenadas);
     } else {
-      const opt = new MaxRectsOptimizer(
-        this.largura_chapa,
-        this.altura_chapa,
-        this.kerf_mm
-      );
+      const opt = new MaxRectsOptimizer(this.largura_chapa, this.altura_chapa, this.kerf_mm);
       return opt.otimizar(pecasOrdenadas);
     }
   }
 
   /**
    * ORDENAR PEÇAS COM DIFERENTES HEURÍSTICAS
-   * 
+   *
    * Diferentes ordenações podem levar a diferentes aproveitamentos
    */
   private ordenarPecas(pecas: Peca[], heuristica: number): Peca[] {
@@ -107,39 +96,31 @@ export class HybridOptimizer {
     switch (heuristica) {
       case 0:
         // Por área decrescente (padrão)
-        return copia.sort(
-          (a, b) => (b.largura * b.altura) - (a.largura * a.altura)
-        );
+        return copia.sort((a, b) => b.largura * b.altura - a.largura * a.altura);
 
       case 1:
         // Por perímetro decrescente
-        return copia.sort(
-          (a, b) => {
-            const perimetroA = 2 * (a.largura + a.altura);
-            const perimetroB = 2 * (b.largura + b.altura);
-            return perimetroB - perimetroA;
-          }
-        );
+        return copia.sort((a, b) => {
+          const perimetroA = 2 * (a.largura + a.altura);
+          const perimetroB = 2 * (b.largura + b.altura);
+          return perimetroB - perimetroA;
+        });
 
       case 2:
         // Por lado mais longo decrescente
-        return copia.sort(
-          (a, b) => {
-            const maxA = Math.max(a.largura, a.altura);
-            const maxB = Math.max(b.largura, b.altura);
-            return maxB - maxA;
-          }
-        );
+        return copia.sort((a, b) => {
+          const maxA = Math.max(a.largura, a.altura);
+          const maxB = Math.max(b.largura, b.altura);
+          return maxB - maxA;
+        });
 
       case 3:
         // Por lado mais curto decrescente (estreitas primeiro)
-        return copia.sort(
-          (a, b) => {
-            const minA = Math.min(a.largura, a.altura);
-            const minB = Math.min(b.largura, b.altura);
-            return minB - minA;
-          }
-        );
+        return copia.sort((a, b) => {
+          const minA = Math.min(a.largura, a.altura);
+          const minB = Math.min(b.largura, b.altura);
+          return minB - minA;
+        });
 
       case 4:
       default:
@@ -175,7 +156,7 @@ export class HybridOptimizer {
 
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash |= 0; // Convert to 32-bit integer
     }
 

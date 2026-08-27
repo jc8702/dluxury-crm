@@ -12,7 +12,7 @@ export interface ParserResult {
 export class DrawingParserFactory {
   static async parse(file: File): Promise<ParserResult> {
     const extension = file.name.split('.').pop()?.toLowerCase();
-    
+
     switch (extension) {
       case 'pdf': {
         const pdfParser = new PDFParser();
@@ -20,16 +20,20 @@ export class DrawingParserFactory {
         return {
           chapas,
           confidence: 0.9, // PDF digital tem alta confiança
-          format: 'pdf'
+          format: 'pdf',
         };
       }
-      
+
       case 'dxf':
         // Placeholder para implementação futura ou integração com ezdxf/dxf-parser
-        throw new Error('Suporte nativo a DXF em desenvolvimento. Por favor, exporte como PDF por enquanto.');
-      
+        throw new Error(
+          'Suporte nativo a DXF em desenvolvimento. Por favor, exporte como PDF por enquanto.',
+        );
+
       case 'dwf':
-        throw new Error('Suporte a DWF requer integração com Autodesk Cloud. Por favor, use PDF ou DXF.');
+        throw new Error(
+          'Suporte a DWF requer integração com Autodesk Cloud. Por favor, use PDF ou DXF.',
+        );
 
       default:
         throw new Error(`Formato .${extension} não suportado para importação automática.`);

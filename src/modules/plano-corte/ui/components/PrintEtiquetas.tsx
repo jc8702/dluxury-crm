@@ -38,30 +38,38 @@ export const PrintEtiquetas = ({ resultado }: PrintEtiquetasProps) => {
           .print-only { display: none !important; }
         }
       `}</style>
-      
+
       <div className="print-only">
         <div className="print-etiquetas">
-          {resultado?.grupos.flatMap(g => g.superficies.flatMap(s => s.pecasPositionadas.map(p => (
-            <div key={`${p.pecaId}-${p.numeroEtiqueta}`} className="etiqueta">
-              <div className="etiqueta-content">
-                <div className="etiqueta-header">
-                  <span>D'LUXURY ERP</span>
-                  <span>#{String(p.numeroEtiqueta).padStart(3, '0')}</span>
+          {resultado?.grupos.flatMap((g) =>
+            g.superficies.flatMap((s) =>
+              s.pecasPositionadas.map((p) => (
+                <div key={`${p.pecaId}-${p.numeroEtiqueta}`} className="etiqueta">
+                  <div className="etiqueta-content">
+                    <div className="etiqueta-header">
+                      <span>D'LUXURY ERP</span>
+                      <span>#{String(p.numeroEtiqueta).padStart(3, '0')}</span>
+                    </div>
+                    <div className="etiqueta-title">{p.descricao}</div>
+                    <div className="etiqueta-dim">
+                      {p.largura} × {p.altura} <span style={{ fontSize: '10pt' }}>mm</span>
+                    </div>
+                    <div className="etiqueta-footer">
+                      <span>
+                        {p.ambiente} | {p.movel || 'Geral'}
+                      </span>
+                      <span style={{ fontWeight: 'bold' }}>{g.sku}</span>
+                    </div>
+                  </div>
+                  <img
+                    className="etiqueta-qr"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ID:${p.pecaId}|DIM:${p.largura}x${p.altura}|MAT:${g.sku}`}
+                    alt="QR Code"
+                  />
                 </div>
-                <div className="etiqueta-title">{p.descricao}</div>
-                <div className="etiqueta-dim">{p.largura} × {p.altura} <span style={{fontSize: '10pt'}}>mm</span></div>
-                <div className="etiqueta-footer">
-                  <span>{p.ambiente} | {p.movel || 'Geral'}</span>
-                  <span style={{fontWeight: 'bold'}}>{g.sku}</span>
-                </div>
-              </div>
-              <img 
-                className="etiqueta-qr" 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ID:${p.pecaId}|DIM:${p.largura}x${p.altura}|MAT:${g.sku}`} 
-                alt="QR Code" 
-              />
-            </div>
-          ))))}
+              )),
+            ),
+          )}
         </div>
       </div>
     </>

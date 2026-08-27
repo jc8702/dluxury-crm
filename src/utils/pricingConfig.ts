@@ -43,7 +43,9 @@ export class PricingConfigManager {
   getMarkupProjeto(tipoProjeto: string): number {
     const markup = this.config.markupProjeto[tipoProjeto];
     if (markup === undefined || markup === null) {
-      console.warn(`[PricingConfig] Tipo de Projeto "${tipoProjeto}" não encontrado. Usando fallback.`);
+      console.warn(
+        `[PricingConfig] Tipo de Projeto "${tipoProjeto}" não encontrado. Usando fallback.`,
+      );
       return this.config.fallbacks.markupProjeto;
     }
     return markup;
@@ -52,9 +54,15 @@ export class PricingConfigManager {
   /**
    * Getters básicos para valores diretos
    */
-  get custoHora(): number { return this.config.custoHora; }
-  get margemMinima(): number { return this.config.margemMinima; }
-  get fullConfig(): PricingConfigSchema { return { ...this.config }; }
+  get custoHora(): number {
+    return this.config.custoHora;
+  }
+  get margemMinima(): number {
+    return this.config.margemMinima;
+  }
+  get fullConfig(): PricingConfigSchema {
+    return { ...this.config };
+  }
 }
 
 // --- 3. EXEMPLO DE CONFIGURAÇÃO (ESTÁTICA OU VINDA DO BANCO) ---
@@ -63,21 +71,21 @@ export const DEFAULT_PRICING_CONFIG: PricingConfigSchema = {
   custoHora: 50.0,
   fallbacks: {
     markupCategoria: 1.5, // 50% de markup se não encontrar a categoria
-    markupProjeto: 1.1,    // 10% adicional se não encontrar o tipo de projeto
+    markupProjeto: 1.1, // 10% adicional se não encontrar o tipo de projeto
   },
   markupCategoria: {
-    'Chapa': 1.6,
-    'Fita': 2.2,
-    'Ferragem': 1.4,
-    'Servico_Terceiro': 1.2
+    Chapa: 1.6,
+    Fita: 2.2,
+    Ferragem: 1.4,
+    Servico_Terceiro: 1.2,
   },
   markupProjeto: {
-    'Cozinha': 1.25,
-    'Dormitorio': 1.15,
-    'Banheiro': 1.30,
-    'Corporativo': 1.40
+    Cozinha: 1.25,
+    Dormitorio: 1.15,
+    Banheiro: 1.3,
+    Corporativo: 1.4,
   },
-  margemMinima: 0.22 // 22% de lucro real mínimo
+  margemMinima: 0.22, // 22% de lucro real mínimo
 };
 
 /**

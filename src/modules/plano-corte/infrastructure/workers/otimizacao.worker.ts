@@ -46,7 +46,7 @@ self.onmessage = async (event: MessageEvent<MensagemEntrada>) => {
     cancelarOperacao = true;
     self.postMessage({
       tipo: 'concluido',
-      erro: 'Operação cancelada pelo usuário'
+      erro: 'Operação cancelada pelo usuário',
     } as MensagemSaida);
     return;
   }
@@ -57,7 +57,7 @@ self.onmessage = async (event: MessageEvent<MensagemEntrada>) => {
     } catch (erro) {
       self.postMessage({
         tipo: 'erro',
-        erro: erro instanceof Error ? erro.message : 'Erro desconhecido'
+        erro: erro instanceof Error ? erro.message : 'Erro desconhecido',
       } as MensagemSaida);
     }
   }
@@ -77,11 +77,7 @@ async function processarOtimizacao(payload: {
   kerf_mm?: number;
   iteracoes?: number;
 }): Promise<void> {
-  const {
-    materiais,
-    kerf_mm = 3,
-    iteracoes = 20
-  } = payload;
+  const { materiais, kerf_mm = 3, iteracoes = 20 } = payload;
 
   const totalMateriais = materiais.length;
   cancelarOperacao = false;
@@ -99,15 +95,11 @@ async function processarOtimizacao(payload: {
       material_sku: material.sku,
       progresso: Math.round((i / totalMateriais) * 100),
       totalMateriais,
-      materialAtual: i + 1
+      materialAtual: i + 1,
     } as MensagemSaida);
 
     // Executar otimização
-    const optimizer = new HybridOptimizer(
-      material.largura_mm,
-      material.altura_mm,
-      kerf_mm
-    );
+    const optimizer = new HybridOptimizer(material.largura_mm, material.altura_mm, kerf_mm);
 
     const resultado = optimizer.otimizar(material.pecas, iteracoes);
 
@@ -118,12 +110,12 @@ async function processarOtimizacao(payload: {
       resultado,
       progresso: Math.round(((i + 1) / totalMateriais) * 100),
       totalMateriais,
-      materialAtual: i + 1
+      materialAtual: i + 1,
     } as MensagemSaida);
 
     // Pequena pausa para não bloquear completamente a thread principal
     // (permite que o navegador processe outras coisas)
-    await new Promise(resolve => setTimeout(resolve, 1));
+    await new Promise((resolve) => setTimeout(resolve, 1));
   }
 
   // Enviar: operação concluída
@@ -131,7 +123,7 @@ async function processarOtimizacao(payload: {
     tipo: 'concluido',
     progresso: 100,
     totalMateriais,
-    materialAtual: totalMateriais
+    materialAtual: totalMateriais,
   } as MensagemSaida);
 }
 

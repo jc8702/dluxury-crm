@@ -1,6 +1,6 @@
 /**
  * SERVIÇO: ThermalPrinterService (WebUSB)
- * 
+ *
  * Permite a comunicação direta com impressoras térmicas (Zebra, Argox, Elgin) via WebUSB.
  * Gera comandos ZPL/TSPL para impressão instantânea sem PDF.
  */
@@ -18,8 +18,8 @@ export class ThermalPrinterService {
         filters: [
           { vendorId: 0x0a5f }, // Zebra
           { vendorId: 0x04b8 }, // Epson
-          { vendorId: 0x154f }  // Argox
-        ]
+          { vendorId: 0x154f }, // Argox
+        ],
       });
       await device.open();
       await device.selectConfiguration(1);
@@ -48,11 +48,15 @@ export class ThermalPrinterService {
     `;
 
     // No ambiente real, enviaríamos o buffer para o device USB
-    /* console.log('Imprimindo via WebUSB (ZPL):', zpl) */;
-    return zpl;
+    /* console.log('Imprimindo via WebUSB (ZPL):', zpl) */ return zpl;
   }
 
-  private static formatarBordas(fita: { topo?: boolean; baixo?: boolean; esquerda?: boolean; direita?: boolean } | undefined | null) {
+  private static formatarBordas(
+    fita:
+      | { topo?: boolean; baixo?: boolean; esquerda?: boolean; direita?: boolean }
+      | undefined
+      | null,
+  ) {
     if (!fita) return 'Nenhuma';
     const bordas = [];
     if (fita.topo) bordas.push('T');
@@ -62,4 +66,3 @@ export class ThermalPrinterService {
     return bordas.join('/') || 'Nenhuma';
   }
 }
-

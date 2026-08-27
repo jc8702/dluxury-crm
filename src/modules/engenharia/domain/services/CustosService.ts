@@ -43,7 +43,7 @@ export interface ResultadoCustos {
     }>;
     subtotal: number;
   };
-  
+
   processamento: {
     corte_chapa: { tempo_horas: number; preco_hora: number; preco_total: number };
     furação: { tempo_horas: number; preco_hora: number; preco_total: number };
@@ -53,28 +53,28 @@ export interface ResultadoCustos {
     subtotal: number;
     detalhes: string;
   };
-  
+
   indiretos: {
     administrativo: { percentual: number; preco_total: number };
     logistica: { percentual: number; preco_total: number };
     subtotal: number;
   };
-  
+
   resumo: {
     custo_material: number;
     custo_processamento: number;
     custo_indiretos: number;
     custo_total: number;
   };
-  
+
   margem: {
     margem_minima_percentual: number;
     preco_venda_com_margem: number;
     markup: number;
   };
-  
+
   preco_venda: number;
-  
+
   // Detalhes para auditoria
   detalhes: {
     chapas_novas: number;
@@ -87,7 +87,7 @@ export interface ResultadoCustos {
 
 /**
  * CLASSE: CustosService
- * 
+ *
  * Implementa cálculo de custos industriais reais.
  */
 export class CustosService {
@@ -112,17 +112,15 @@ export class CustosService {
 
       // 3. Calcular custos indiretos
       const custoIndiretos = this.calcularCustosIndiretos(
-        custoMaterial.subtotal + custoProcessamento.subtotal
+        custoMaterial.subtotal + custoProcessamento.subtotal,
       );
 
       // 4. Calcular custo total
       const custoTotal =
-        custoMaterial.subtotal +
-        custoProcessamento.subtotal +
-        custoIndiretos.subtotal;
+        custoMaterial.subtotal + custoProcessamento.subtotal + custoIndiretos.subtotal;
 
       // 5. Aplicar margem mínima e calcular preço de venda
-      const margem_minima = input.margem_minima || 0.30;
+      const margem_minima = input.margem_minima || 0.3;
       const preco_venda = custoTotal / (1 - margem_minima);
       const markup = preco_venda / custoTotal;
 
@@ -138,24 +136,23 @@ export class CustosService {
           custo_material: custoMaterial.subtotal,
           custo_processamento: custoProcessamento.subtotal,
           custo_indiretos: custoIndiretos.subtotal,
-          custo_total: custoTotal
+          custo_total: custoTotal,
         },
         margem: {
           margem_minima_percentual: margem_minima,
           preco_venda_com_margem: preco_venda,
-          markup
+          markup,
         },
         preco_venda,
-        detalhes
+        detalhes,
       };
 
       (this.logger as any).info(
         `[CUSTOS] Projeto: R$ ${custoTotal.toFixed(2)} custo → ` +
-        `R$ ${preco_venda.toFixed(2)} venda (${markup.toFixed(2)}x)`
+          `R$ ${preco_venda.toFixed(2)} venda (${markup.toFixed(2)}x)`,
       );
 
       return resultado;
-
     } catch (erro: any) {
       (this.logger as any).error('[CUSTOS] Erro ao calcular custos:', erro);
       throw erro;
@@ -185,8 +182,8 @@ export class CustosService {
       const preco_unitario = input.preco_chapa || (await this.buscarPrecoChapaParaSKU(sku));
       const preco_total = dados.quantidade * preco_unitario;
       const aproveitamento = this.calcularAproveitamentoParaLayout(
-        input.layouts.filter(l => l.chapa_sku === sku && l.tipo === 'chapa_inteira'),
-        dados.area
+        input.layouts.filter((l) => l.chapa_sku === sku && l.tipo === 'chapa_inteira'),
+        dados.area,
       );
       const fator_desperdicio = 1 / (aproveitamento / 100);
 
@@ -196,7 +193,7 @@ export class CustosService {
         preco_unitario,
         preco_total,
         aproveitamento,
-        fator_desperdicio
+        fator_desperdicio,
       });
 
       custoChapas += preco_total;
@@ -217,7 +214,7 @@ export class CustosService {
         descricao: ferragem.descricao,
         quantidade: ferragem.quantidade,
         preco_unitario,
-        preco_total
+        preco_total,
       });
 
       custoFerragens += preco_total;
@@ -227,7 +224,7 @@ export class CustosService {
       chapas,
       retalhos_economia,
       ferragens,
-      subtotal: custoChapas + custoFerragens
+      subtotal: custoChapas + custoFerragens,
     };
   }
 
@@ -239,32 +236,52 @@ export class CustosService {
     const custo_corte = tempo_corte * preco_hora_corte;
 
     const perimet_total = input.pecas.reduce((sum, p) => sum + 2 * (p.largura + p.altura), 0);
-    const tempo_furação = (perimet_total / 300) * 2 / 60;
+    const tempo_furação = ((perimet_total / 300) * 2) / 60;
     const preco_hora_furação = 50;
     const custo_furação = tempo_furação * preco_hora_furação;
 
-    const tempo_fita = numero_pecas * 1.5 / 60;
+    const tempo_fita = (numero_pecas * 1.5) / 60;
     const preco_hora_fita = 35;
     const custo_fita = tempo_fita * preco_hora_fita;
 
-    const tempo_montagem = numero_pecas * 10 / 60;
+    const tempo_montagem = (numero_pecas * 10) / 60;
     const preco_hora_montagem = 45;
     const custo_montagem = tempo_montagem * preco_hora_montagem;
 
-    const tempo_acabamento = numero_pecas * 5 / 60;
+    const tempo_acabamento = (numero_pecas * 5) / 60;
     const preco_hora_acabamento = 40;
     const custo_acabamento = tempo_acabamento * preco_hora_acabamento;
 
     const subtotal = custo_corte + custo_furação + custo_fita + custo_montagem + custo_acabamento;
 
     return {
-      corte_chapa: { tempo_horas: parseFloat(tempo_corte.toFixed(2)), preco_hora: preco_hora_corte, preco_total: custo_corte },
-      furação: { tempo_horas: parseFloat(tempo_furação.toFixed(2)), preco_hora: preco_hora_furação, preco_total: custo_furação },
-      aplicacao_fita: { tempo_horas: parseFloat(tempo_fita.toFixed(2)), preco_hora: preco_hora_fita, preco_total: custo_fita },
-      montagem: { tempo_horas: parseFloat(tempo_montagem.toFixed(2)), preco_hora: preco_hora_montagem, preco_total: custo_montagem },
-      acabamento: { tempo_horas: parseFloat(tempo_acabamento.toFixed(2)), preco_hora: preco_hora_acabamento, preco_total: custo_acabamento },
+      corte_chapa: {
+        tempo_horas: parseFloat(tempo_corte.toFixed(2)),
+        preco_hora: preco_hora_corte,
+        preco_total: custo_corte,
+      },
+      furação: {
+        tempo_horas: parseFloat(tempo_furação.toFixed(2)),
+        preco_hora: preco_hora_furação,
+        preco_total: custo_furação,
+      },
+      aplicacao_fita: {
+        tempo_horas: parseFloat(tempo_fita.toFixed(2)),
+        preco_hora: preco_hora_fita,
+        preco_total: custo_fita,
+      },
+      montagem: {
+        tempo_horas: parseFloat(tempo_montagem.toFixed(2)),
+        preco_hora: preco_hora_montagem,
+        preco_total: custo_montagem,
+      },
+      acabamento: {
+        tempo_horas: parseFloat(tempo_acabamento.toFixed(2)),
+        preco_hora: preco_hora_acabamento,
+        preco_total: custo_acabamento,
+      },
       subtotal,
-      detalhes: `${numero_pecas} peças, ≈ ${(tempo_corte + tempo_furação + tempo_fita + tempo_montagem + tempo_acabamento).toFixed(1)}h total`
+      detalhes: `${numero_pecas} peças, ≈ ${(tempo_corte + tempo_furação + tempo_fita + tempo_montagem + tempo_acabamento).toFixed(1)}h total`,
     };
   }
 
@@ -278,11 +295,14 @@ export class CustosService {
     return {
       administrativo: { percentual: percentual_admin, preco_total: custo_admin },
       logistica: { percentual: percentual_logistica, preco_total: custo_logistica },
-      subtotal: custo_admin + custo_logistica
+      subtotal: custo_admin + custo_logistica,
     };
   }
 
-  private calcularAproveitamentoParaLayout(layouts: CalculoCustoInput['layouts'], area_chapa: number): number {
+  private calcularAproveitamentoParaLayout(
+    layouts: CalculoCustoInput['layouts'],
+    area_chapa: number,
+  ): number {
     const area_usada = layouts.reduce((sum, l) => sum + l.area_aproveitada_mm2, 0);
     return area_chapa > 0 ? (area_usada / area_chapa) * 100 : 0;
   }
@@ -295,17 +315,24 @@ export class CustosService {
 
   private async buscarPrecoFerragemParaSKU(sku: string): Promise<number> {
     const precosDefault: Record<string, number> = {
-      'FER-0001': 28, 'FER-0002': 12, 'FER-0003': 8, 'FER-0004': 5, 'FER-0005': 15
+      'FER-0001': 28,
+      'FER-0002': 12,
+      'FER-0003': 8,
+      'FER-0004': 5,
+      'FER-0005': 15,
     };
     return precosDefault[sku] || 10;
   }
 
   private calcularDetalhes(input: CalculoCustoInput) {
-    const chapas_novas = input.layouts.filter(l => l.tipo === 'chapa_inteira').length;
-    const retalhos_utilizados = input.layouts.filter(l => l.tipo === 'retalho').length;
+    const chapas_novas = input.layouts.filter((l) => l.tipo === 'chapa_inteira').length;
+    const retalhos_utilizados = input.layouts.filter((l) => l.tipo === 'retalho').length;
     const numero_pecas = input.pecas.length;
 
-    const area_total = input.layouts.reduce((sum, l) => sum + l.largura_original_mm * l.altura_original_mm, 0);
+    const area_total = input.layouts.reduce(
+      (sum, l) => sum + l.largura_original_mm * l.altura_original_mm,
+      0,
+    );
     const area_usada = input.layouts.reduce((sum, l) => sum + l.area_aproveitada_mm2, 0);
     const aproveitamento = area_total > 0 ? (area_usada / area_total) * 100 : 0;
 
@@ -314,7 +341,7 @@ export class CustosService {
       retalhos_utilizados,
       numero_pecas,
       tempo_producao_total_horas: 0, // Simplificado
-      aproveitamento_medio: parseFloat(aproveitamento.toFixed(2))
+      aproveitamento_medio: parseFloat(aproveitamento.toFixed(2)),
     };
   }
 }

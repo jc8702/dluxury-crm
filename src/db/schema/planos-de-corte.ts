@@ -1,4 +1,14 @@
-import { pgTable, uuid, varchar, integer, jsonb, text, timestamp, numeric, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  integer,
+  jsonb,
+  text,
+  timestamp,
+  numeric,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
 
 // 1. Tabela Principal de Planos de Corte
@@ -8,8 +18,8 @@ export const planosDeCorte = pgTable('planos_de_corte', {
   nome: varchar('nome', { length: 255 }).notNull(),
   sku_engenharia: varchar('sku_engenharia', { length: 100 }),
   kerf_mm: integer('kerf_mm').default(3),
-  materiais: jsonb('materiais').notNull(),       // Armazena ChapaMaterial[]
-  resultado: jsonb('resultado'),                  // Armazena ResultadoOtimizacao
+  materiais: jsonb('materiais').notNull(), // Armazena ChapaMaterial[]
+  resultado: jsonb('resultado'), // Armazena ResultadoOtimizacao
   visita_id: uuid('visita_id'),
   projeto_id: uuid('projeto_id'),
   orcamento_id: uuid('orcamento_id'),
@@ -89,4 +99,3 @@ export const movimentacoesEstoque = pgTable('erp_movimentacoes_industrial', {
   created_at: timestamp('created_at').defaultNow(),
   usuario_id: varchar('usuario_id', { length: 100 }),
 });
-

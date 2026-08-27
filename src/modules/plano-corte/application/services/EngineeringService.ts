@@ -1,6 +1,6 @@
 /**
  * SERVIÇO: EngineeringService
- * 
+ *
  * Calcula a necessidade de ferragens e insumos pequenos baseados na geometria das peças.
  * Heurísticas industriais para marcenaria.
  */
@@ -22,7 +22,7 @@ export class EngineeringService {
     let cavilhas = 0;
     let suportesPrateleira = 0;
 
-    pecas.forEach(p => {
+    pecas.forEach((p) => {
       // Regra: Portas (peças com fita de borda em 4 lados e área significativa)
       if (p.largura > 300 && p.altura > 600) {
         dobradicas += p.altura > 1200 ? 3 : 2;
@@ -30,11 +30,12 @@ export class EngineeringService {
       }
 
       // Regra: Estrutura (caixaria) - Identificação por nome ou geometria
-      const isEstrutural = p.nome.toLowerCase().includes('lateral') || 
-                           p.nome.toLowerCase().includes('base') ||
-                           p.nome.toLowerCase().includes('fundo') ||
-                           (p.largura < 100 && p.altura > 500) || // Travessas
-                           (p.largura > 400 && p.altura > 400);   // Bases grandes
+      const isEstrutural =
+        p.nome.toLowerCase().includes('lateral') ||
+        p.nome.toLowerCase().includes('base') ||
+        p.nome.toLowerCase().includes('fundo') ||
+        (p.largura < 100 && p.altura > 500) || // Travessas
+        (p.largura > 400 && p.altura > 400); // Bases grandes
 
       if (isEstrutural) {
         parafusos4x40 += 6;
@@ -48,11 +49,11 @@ export class EngineeringService {
     });
 
     return [
-      { item: "Dobradiça 35mm Slow", quantidade: dobradicas, unidade: "un" },
-      { item: "Parafuso 4.0x40 CP", quantidade: parafusos4x40, unidade: "un" },
-      { item: "Parafuso 3.5x14 CP", quantidade: parafusos35x14, unidade: "un" },
-      { item: "Cavilha Madeira 8x30", quantidade: cavilhas, unidade: "un" },
-      { item: "Suporte Prateleira Zincado", quantidade: suportesPrateleira, unidade: "un" }
-    ].filter(f => f.quantidade > 0);
+      { item: 'Dobradiça 35mm Slow', quantidade: dobradicas, unidade: 'un' },
+      { item: 'Parafuso 4.0x40 CP', quantidade: parafusos4x40, unidade: 'un' },
+      { item: 'Parafuso 3.5x14 CP', quantidade: parafusos35x14, unidade: 'un' },
+      { item: 'Cavilha Madeira 8x30', quantidade: cavilhas, unidade: 'un' },
+      { item: 'Suporte Prateleira Zincado', quantidade: suportesPrateleira, unidade: 'un' },
+    ].filter((f) => f.quantidade > 0);
   }
 }

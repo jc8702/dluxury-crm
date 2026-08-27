@@ -90,7 +90,7 @@ export interface ResultadoGeracaoPecas {
 
 /**
  * CLASSE: GeradorPecasParametrico
- * 
+ *
  * Gera listas de peças e ferragens a partir de templates técnicos parametrizáveis.
  */
 export class GeradorPecasParametrico {
@@ -108,7 +108,7 @@ export class GeradorPecasParametrico {
    */
   async gerarPecas(
     tipo_slug: string,
-    parametros: ParametrosProjeto
+    parametros: ParametrosProjeto,
   ): Promise<ResultadoGeracaoPecas> {
     const erros: string[] = [];
     const avisos: string[] = [];
@@ -123,7 +123,7 @@ export class GeradorPecasParametrico {
           pecas: [],
           ferragens: [],
           erros: [`Template de tipo de móvel não encontrado: "${tipo_slug}"`],
-          avisos: []
+          avisos: [],
         };
       }
 
@@ -134,7 +134,7 @@ export class GeradorPecasParametrico {
           pecas: [],
           ferragens: [],
           erros: validacao.erros,
-          avisos: validacao.avisos
+          avisos: validacao.avisos,
         };
       }
       avisos.push(...validacao.avisos);
@@ -150,7 +150,6 @@ export class GeradorPecasParametrico {
       const ferragens = this.calcularFerragens(template.ferragens_padrao, contexto);
 
       return { sucesso: true, pecas, ferragens, erros, avisos };
-
     } catch (erro: any) {
       (this.logger as any).error(`[GERADOR] Erro ao gerar peças:`, erro);
       return {
@@ -158,7 +157,7 @@ export class GeradorPecasParametrico {
         pecas: [],
         ferragens: [],
         erros: [erro instanceof Error ? erro.message : String(erro)],
-        avisos: []
+        avisos: [],
       };
     }
   }
@@ -171,15 +170,25 @@ export class GeradorPecasParametrico {
     return this.obterTemplateExemplo(tipo_slug);
   }
 
-  private validarParametros(parametros: ParametrosProjeto, constraints: TemplateTipoMovel['parametros']) {
+  private validarParametros(
+    parametros: ParametrosProjeto,
+    constraints: TemplateTipoMovel['parametros'],
+  ) {
     const erros: string[] = [];
     const avisos: string[] = [];
 
     if (parametros.altura < constraints.altura_min || parametros.altura > constraints.altura_max) {
-      erros.push(`Altura ${parametros.altura}mm fora da faixa (${constraints.altura_min}-${constraints.altura_max}mm)`);
+      erros.push(
+        `Altura ${parametros.altura}mm fora da faixa (${constraints.altura_min}-${constraints.altura_max}mm)`,
+      );
     }
-    if (parametros.largura < constraints.largura_min || parametros.largura > constraints.largura_max) {
-      erros.push(`Largura ${parametros.largura}mm fora da faixa (${constraints.largura_min}-${constraints.largura_max}mm)`);
+    if (
+      parametros.largura < constraints.largura_min ||
+      parametros.largura > constraints.largura_max
+    ) {
+      erros.push(
+        `Largura ${parametros.largura}mm fora da faixa (${constraints.largura_min}-${constraints.largura_max}mm)`,
+      );
     }
 
     return { valido: erros.length === 0, erros, avisos };
@@ -197,14 +206,21 @@ export class GeradorPecasParametrico {
       E_HDF: 6,
       E_ESPESSURA: 18,
       KERF: 3,
-      FOLGA: 5
+      FOLGA: 5,
     };
   }
 
-  private gerarPecasDoTemplate(templ: TemplateTipoMovel['template_pecas'][number], contexto: Record<string, number>): Peca[] {
+  private gerarPecasDoTemplate(
+    templ: TemplateTipoMovel['template_pecas'][number],
+    contexto: Record<string, number>,
+  ): Peca[] {
     const pecas: Peca[] = [];
-    const largura = templ.formula_largura ? Math.round(this.avaliarFormula(templ.formula_largura, contexto)) : contexto['P_LARGURA'];
-    const altura = templ.formula_altura ? Math.round(this.avaliarFormula(templ.formula_altura, contexto)) : contexto['P_ALTURA'];
+    const largura = templ.formula_largura
+      ? Math.round(this.avaliarFormula(templ.formula_largura, contexto))
+      : contexto['P_LARGURA'];
+    const altura = templ.formula_altura
+      ? Math.round(this.avaliarFormula(templ.formula_altura, contexto))
+      : contexto['P_ALTURA'];
 
     const qtd = templ.quantidade_fixa || (templ.id === 'frente_gaveta' ? contexto['P_GAVETAS'] : 1);
 
@@ -215,18 +231,25 @@ export class GeradorPecasParametrico {
         largura,
         altura,
         rotacionavel: true,
-        fio_de_fita: templ.fio_de_fita
+        fio_de_fita: templ.fio_de_fita,
       });
     }
     return pecas;
   }
 
-  private calcularFerragens(ferragens_templ: TemplateTipoMovel['ferragens_padrao'], contexto: Record<string, number>) {
-    return ferragens_templ.map(f => ({
-      sku: f.sku,
-      descricao: f.descricao,
-      quantidade: f.formula_quantidade ? Math.ceil(this.avaliarFormula(f.formula_quantidade, contexto)) : (f.quantidade_fixa || 0)
-    })).filter(f => f.quantidade > 0);
+  private calcularFerragens(
+    ferragens_templ: TemplateTipoMovel['ferragens_padrao'],
+    contexto: Record<string, number>,
+  ) {
+    return ferragens_templ
+      .map((f) => ({
+        sku: f.sku,
+        descricao: f.descricao,
+        quantidade: f.formula_quantidade
+          ? Math.ceil(this.avaliarFormula(f.formula_quantidade, contexto))
+          : f.quantidade_fixa || 0,
+      }))
+      .filter((f) => f.quantidade > 0);
   }
 
   private avaliarFormula(formula: string, contexto: Record<string, number>): number {
@@ -242,17 +265,64 @@ export class GeradorPecasParametrico {
   private obterTemplateExemplo(tipo_slug: string): TemplateTipoMovel | null {
     if (tipo_slug === 'gaveteiro-modular') {
       return {
-        id: 'template-001', tipo_slug, nome: 'Gaveteiro Modular', descricao: 'Gaveteiro ajustável',
-        parametros: { altura_min: 400, altura_max: 2200, largura_min: 400, largura_max: 1500, profundidade_padrao: 450, profundidade_variavel: true, profundidade_min: 350, profundidade_max: 600, materiais_aceitos: ['MDF'], gavetas_max: 6 },
+        id: 'template-001',
+        tipo_slug,
+        nome: 'Gaveteiro Modular',
+        descricao: 'Gaveteiro ajustável',
+        parametros: {
+          altura_min: 400,
+          altura_max: 2200,
+          largura_min: 400,
+          largura_max: 1500,
+          profundidade_padrao: 450,
+          profundidade_variavel: true,
+          profundidade_min: 350,
+          profundidade_max: 600,
+          materiais_aceitos: ['MDF'],
+          gavetas_max: 6,
+        },
         template_pecas: [
-          { id: 'lateral', nome: 'Lateral', material: 'MDF', espessura_mm: 18, quantidade_fixa: 2, formula_altura: 'P_ALTURA', formula_largura: 'P_PROFUNDIDADE', fio_de_fita: { topo: true } },
-          { id: 'base', nome: 'Base', material: 'MDF', espessura_mm: 18, quantidade_fixa: 1, formula_altura: 'P_PROFUNDIDADE', formula_largura: 'P_LARGURA - 2*E_ESPESSURA' },
-          { id: 'frente_gaveta', nome: 'Frente Gaveta', material: 'MDF', espessura_mm: 18, quantidade_fixa: 0, formula_altura: '(P_ALTURA / P_GAVETAS) - 4', formula_largura: 'P_LARGURA - 4' }
+          {
+            id: 'lateral',
+            nome: 'Lateral',
+            material: 'MDF',
+            espessura_mm: 18,
+            quantidade_fixa: 2,
+            formula_altura: 'P_ALTURA',
+            formula_largura: 'P_PROFUNDIDADE',
+            fio_de_fita: { topo: true },
+          },
+          {
+            id: 'base',
+            nome: 'Base',
+            material: 'MDF',
+            espessura_mm: 18,
+            quantidade_fixa: 1,
+            formula_altura: 'P_PROFUNDIDADE',
+            formula_largura: 'P_LARGURA - 2*E_ESPESSURA',
+          },
+          {
+            id: 'frente_gaveta',
+            nome: 'Frente Gaveta',
+            material: 'MDF',
+            espessura_mm: 18,
+            quantidade_fixa: 0,
+            formula_altura: '(P_ALTURA / P_GAVETAS) - 4',
+            formula_largura: 'P_LARGURA - 4',
+          },
         ],
         ferragens_padrao: [
-          { sku: 'FER-0001', descricao: 'Corrediça Telescópica', categoria: 'corrediça', formula_quantidade: 'P_GAVETAS * 2' }
+          {
+            sku: 'FER-0001',
+            descricao: 'Corrediça Telescópica',
+            categoria: 'corrediça',
+            formula_quantidade: 'P_GAVETAS * 2',
+          },
         ],
-        versao: 1, ativo: true, criado_em: new Date(), atualizado_em: new Date()
+        versao: 1,
+        ativo: true,
+        criado_em: new Date(),
+        atualizado_em: new Date(),
       };
     }
     return null;

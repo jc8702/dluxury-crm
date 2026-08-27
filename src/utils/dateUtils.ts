@@ -17,7 +17,7 @@ export function toUTCDate(year: number, month: number, day: number, hour = 0, mi
  */
 export function parseLocalDateTime(dateString: string): Date | null {
   if (!dateString) return null;
-  
+
   const [datePart, timePart] = dateString.split('T');
   if (!datePart) return null;
 
@@ -33,9 +33,9 @@ export function parseLocalDateTime(dateString: string): Date | null {
  */
 export function toInputDateString(date: Date | string | null): string {
   if (!date) return '';
-  
+
   const d = new Date(date);
-  
+
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');

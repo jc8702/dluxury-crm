@@ -6,39 +6,38 @@ import type { LayoutChapa } from '../../domain/entities/CuttingPlan';
  */
 
 export interface ConfiguracaoCNC {
-  velocidadeCorte: number;       // mm/min
-  profundidadeTotal: number;    // mm (ex: -18.5)
-  profundidadePasso: number;    // mm por passada (ex: 9.5 para fazer em 2x)
-  velocidadeMergulho: number;   // mm/min (Feed Rate vertical)
-  alturaSeguranca: number;      // mm (acima da chapa)
-  spindleRPM: number;           // Rotação do motor
-  leadInMm: number;             // Extensão de entrada para evitar marcas no ponto de mergulho
+  velocidadeCorte: number; // mm/min
+  profundidadeTotal: number; // mm (ex: -18.5)
+  profundidadePasso: number; // mm por passada (ex: 9.5 para fazer em 2x)
+  velocidadeMergulho: number; // mm/min (Feed Rate vertical)
+  alturaSeguranca: number; // mm (acima da chapa)
+  spindleRPM: number; // Rotação do motor
+  leadInMm: number; // Extensão de entrada para evitar marcas no ponto de mergulho
 }
 
 const CONFIG_PADRAO: ConfiguracaoCNC = {
-  velocidadeCorte: 4500,        // Velocidade industrial padrão
-  profundidadeTotal: -18.5,     // Atravessa levemente a chapa de 18mm
-  profundidadePasso: 9.5,       // Executa o corte em 2 passadas para melhor acabamento
-  velocidadeMergulho: 1200,     // Mergulho mais lento para preservar a fresa
-  alturaSeguranca: 10,          // Margem segura contra grampos e ventosas
+  velocidadeCorte: 4500, // Velocidade industrial padrão
+  profundidadeTotal: -18.5, // Atravessa levemente a chapa de 18mm
+  profundidadePasso: 9.5, // Executa o corte em 2 passadas para melhor acabamento
+  velocidadeMergulho: 1200, // Mergulho mais lento para preservar a fresa
+  alturaSeguranca: 10, // Margem segura contra grampos e ventosas
   spindleRPM: 18000,
-  leadInMm: 5                   // Entrada suave
+  leadInMm: 5, // Entrada suave
 };
 
-export function exportarCNC(
-  layout: LayoutChapa,
-  config: ConfiguracaoCNC = CONFIG_PADRAO
-): string {
+export function exportarCNC(layout: LayoutChapa, config: ConfiguracaoCNC = CONFIG_PADRAO): string {
   const linhas: string[] = [];
 
   // CABEÇALHO G-CODE
   linhas.push('; ════════════════════════════════════════════════════════');
-  linhas.push('; PLANO DE CORTE INDUSTRIAL - D\'LUXURY ERP');
+  linhas.push("; PLANO DE CORTE INDUSTRIAL - D'LUXURY ERP");
   linhas.push(`; Gerado em: ${new Date().toLocaleString('pt-BR')}`);
   linhas.push(`; Chapa: ${layout.chapa_sku}`);
   linhas.push(`; Dimensões: ${layout.largura_original_mm}×${layout.altura_original_mm}mm`);
   linhas.push(`; Peças: ${layout.pecas_posicionadas.length}`);
-  linhas.push(`; Passos: ${Math.ceil(Math.abs(config.profundidadeTotal / config.profundidadePasso))} passadas`);
+  linhas.push(
+    `; Passos: ${Math.ceil(Math.abs(config.profundidadeTotal / config.profundidadePasso))} passadas`,
+  );
   linhas.push('; ════════════════════════════════════════════════════════');
   linhas.push('');
 
@@ -53,7 +52,7 @@ export function exportarCNC(
   // CORTAR CADA PEÇA
   layout.pecas_posicionadas.forEach((peca, idx) => {
     linhas.push(`; PEÇA ${idx + 1}: ${peca.nome} [${peca.largura}x${peca.altura}]`);
-    
+
     // Coordenadas
     const x1 = peca.x;
     const y1 = peca.y;
@@ -66,10 +65,10 @@ export function exportarCNC(
 
     // Movimentação rápida para o ponto inicial
     linhas.push(`G00 X${entryX.toFixed(3)} Y${entryY.toFixed(3)}`);
-    
+
     // Cálculo de passadas
     const numPassadas = Math.ceil(Math.abs(config.profundidadeTotal / config.profundidadePasso));
-    
+
     for (let p = 1; p <= numPassadas; p++) {
       let zAtual = -(p * config.profundidadePasso);
       // Garantir que não ultrapasse a profundidade total
@@ -78,7 +77,7 @@ export function exportarCNC(
       }
 
       linhas.push(`; Passada ${p}/${numPassadas} [Z=${zAtual.toFixed(2)}]`);
-      
+
       // Mergulho
       linhas.push(`G01 Z${zAtual.toFixed(2)} F${config.velocidadeMergulho}`);
 

@@ -12,8 +12,8 @@ export const db = new Proxy({} as any, {
     if (prop === 'then') return undefined;
     if (!_dbInstance) {
       const databaseUrl = (
-        (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') || 
-        (import.meta as any).env?.VITE_DATABASE_URL || 
+        (typeof process !== 'undefined' ? process.env?.DATABASE_URL : '') ||
+        (import.meta as any).env?.VITE_DATABASE_URL ||
         ''
       ).replace(/"/g, '');
       if (databaseUrl) {
@@ -25,5 +25,5 @@ export const db = new Proxy({} as any, {
       throw new Error('drizzle db instance not initialized for transactions.');
     }
     return Reflect.get(_dbInstance, prop, receiver);
-  }
+  },
 }) as any;

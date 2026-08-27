@@ -38,7 +38,7 @@ export class ExportadorGCode {
 
   static exportarChapa(superficie: Superficie, index: number, kerf: number) {
     const gcode = this.gerarGCodeString(superficie, index, kerf);
-    
+
     // Fallback if document is undefined (e.g. running in Node.js for tests)
     if (typeof document !== 'undefined') {
       const blob = new Blob([gcode], { type: 'text/plain' });
@@ -47,8 +47,7 @@ export class ExportadorGCode {
       link.download = `chapa_${index + 1}.gcode`;
       link.click();
     } else {
-      /* console.log("ExportadorGCode: Ambiente sem DOM, ignorando download. Gcode gerado:\n", gcode.substring(0, 200) + '...') */;
+      /* console.log("ExportadorGCode: Ambiente sem DOM, ignorando download. Gcode gerado:\n", gcode.substring(0, 200) + '...') */
     }
   }
 }
-

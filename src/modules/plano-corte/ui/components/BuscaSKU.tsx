@@ -43,29 +43,32 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
     return () => clearTimeout(timer);
   }, [termoBusca, repo]);
 
-  const handleAdicionarChapa = useCallback((chapa: Chapa) => {
-    // Verificar se já foi adicionada
-    const jaAdicionada = chapasSelecionadas.some(c => c.sku_chapa === chapa.sku);
-    if (jaAdicionada) {
-      return;
-    }
+  const handleAdicionarChapa = useCallback(
+    (chapa: Chapa) => {
+      // Verificar se já foi adicionada
+      const jaAdicionada = chapasSelecionadas.some((c) => c.sku_chapa === chapa.sku);
+      if (jaAdicionada) {
+        return;
+      }
 
-    onAdicionarChapa({
-      id: chapa.id,
-      sku_chapa: chapa.sku,
-      nome_exibicao: `${chapa.material} ${chapa.espessura}mm`.toUpperCase(),
-      largura_mm: chapa.largura,
-      altura_mm: chapa.altura,
-      espessura_mm: chapa.espessura,
-      preco_unitario: chapa.preco,
-      imagem_url: chapa.imagem_url,
-      criada_em: new Date(),
-      pecas: []
-    });
+      onAdicionarChapa({
+        id: chapa.id,
+        sku_chapa: chapa.sku,
+        nome_exibicao: `${chapa.material} ${chapa.espessura}mm`.toUpperCase(),
+        largura_mm: chapa.largura,
+        altura_mm: chapa.altura,
+        espessura_mm: chapa.espessura,
+        preco_unitario: chapa.preco,
+        imagem_url: chapa.imagem_url,
+        criada_em: new Date(),
+        pecas: [],
+      });
 
-    setTermoBusca(''); // Limpar busca
-    setResultados([]);
-  }, [chapasSelecionadas, onAdicionarChapa]);
+      setTermoBusca(''); // Limpar busca
+      setResultados([]);
+    },
+    [chapasSelecionadas, onAdicionarChapa],
+  );
 
   return (
     <div className="mb-8">
@@ -92,18 +95,20 @@ export function BuscaSKU({ onAdicionarChapa, chapasSelecionadas }: BuscaSKUProps
       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
         {resultados.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {resultados.map(chapa => (
+            {resultados.map((chapa) => (
               <CardChapa
                 key={chapa.id}
                 chapa={chapa}
                 onAdicionar={() => handleAdicionarChapa(chapa)}
-                jaAdicionada={chapasSelecionadas.some(c => c.sku_chapa === chapa.sku)}
+                jaAdicionada={chapasSelecionadas.some((c) => c.sku_chapa === chapa.sku)}
               />
             ))}
           </div>
         ) : termoBusca.trim().length >= 2 && !carregando ? (
           <div className="bg-card border border-dashed border-border rounded-xl p-8 text-center">
-            <p className="text-muted-foreground font-medium m-0">Nenhuma chapa encontrada para "{termoBusca}"</p>
+            <p className="text-muted-foreground font-medium m-0">
+              Nenhuma chapa encontrada para "{termoBusca}"
+            </p>
           </div>
         ) : null}
       </div>

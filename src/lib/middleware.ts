@@ -19,7 +19,7 @@ export function withMiddleware(handler: (req: any, res: any) => any) {
           path: req.url,
           method: req.method,
           ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
-        }) */;
+        }) */
       }
 
       // EXECUTA O HANDLER
@@ -27,18 +27,17 @@ export function withMiddleware(handler: (req: any, res: any) => any) {
 
       // LOG DE RESPOSTA
       if (process.env.NODE_ENV !== 'test') {
-        /* console.log('[RESPONSE TIME]', Date.now() - start, 'ms') */;
+        /* console.log('[RESPONSE TIME]', Date.now() - start, 'ms') */
       }
 
       return result;
-
     } catch (error: any) {
       console.error('[MIDDLEWARE ERROR]', error);
 
       // Retorna erro padronizado
       return res.status(500).json({
         success: false,
-        error: 'Erro interno do servidor'
+        error: 'Erro interno do servidor',
       });
     }
   };

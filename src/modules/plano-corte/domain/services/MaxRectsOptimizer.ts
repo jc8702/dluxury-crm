@@ -11,10 +11,9 @@ export interface ResultadoOtimizacaoSimples {
   espacos_vazios: Retangulo[];
 }
 
-
 /**
  * CLASSE: MaxRects Optimizer — Best Short Side Fit
- * 
+ *
  * Algoritmo:
  * 1. Mantém lista de retângulos vazios (espaços livres)
  * 2. Para cada peça, encontra melhor encaixe (menor lado curto)
@@ -39,19 +38,17 @@ export class MaxRectsOptimizer {
    */
   otimizar(pecas: Peca[]): ResultadoOtimizacaoSimples {
     const inicio = performance.now();
-    
+
     // Ordenar peças por área decrescente (heurística)
-    const pecasOrdenadas = [...pecas].sort(
-      (a, b) => (b.largura * b.altura) - (a.largura * a.altura)
-    );
+    const pecasOrdenadas = [...pecas].sort((a, b) => b.largura * b.altura - a.largura * a.altura);
 
     const pecas_posicionadas: PecaPosicionada[] = [];
     const pecas_rejeitadas: Peca[] = [];
-    
+
     // Iniciar com retângulo vazio representando a área útil (descontando margem)
     const margem = this.margem_mm;
-    const efetivaLargura = this.largura_chapa - (margem * 2);
-    const efetivaAltura = this.altura_chapa - (margem * 2);
+    const efetivaLargura = this.largura_chapa - margem * 2;
+    const efetivaAltura = this.altura_chapa - margem * 2;
 
     if (efetivaLargura <= 0 || efetivaAltura <= 0) {
       return {
@@ -62,27 +59,26 @@ export class MaxRectsOptimizer {
         area_total: this.largura_chapa * this.altura_chapa,
         area_desperdicada: this.largura_chapa * this.altura_chapa,
         tempo_ms: 0,
-        espacos_vazios: []
+        espacos_vazios: [],
       };
     }
 
-    const espacosVazios: Retangulo[] = [{
-      x: margem,
-      y: margem,
-      largura: efetivaLargura,
-      altura: efetivaAltura
-    }];
+    const espacosVazios: Retangulo[] = [
+      {
+        x: margem,
+        y: margem,
+        largura: efetivaLargura,
+        altura: efetivaAltura,
+      },
+    ];
 
     // Tentar posicionar cada peça
     for (const peca of pecasOrdenadas) {
-      const melhorEncaixe = this.encontrarMelhorEncaixe(
-        peca,
-        espacosVazios
-      );
+      const melhorEncaixe = this.encontrarMelhorEncaixe(peca, espacosVazios);
 
       if (melhorEncaixe) {
         const { posicao: _posicao, rotacionada: _rotacionada } = melhorEncaixe;
-        
+
         // Adicionar peça posicionada
         const larguraFinal = melhorEncaixe.rotacionada ? peca.altura : peca.largura;
         const alturaFinal = melhorEncaixe.rotacionada ? peca.largura : peca.altura;
@@ -93,7 +89,7 @@ export class MaxRectsOptimizer {
           altura: alturaFinal,
           x: melhorEncaixe.posicao.x,
           y: melhorEncaixe.posicao.y,
-          rotacionada: melhorEncaixe.rotacionada
+          rotacionada: melhorEncaixe.rotacionada,
         });
 
         // Atualizar espaços vazios com as dimensões finais
@@ -101,7 +97,7 @@ export class MaxRectsOptimizer {
           espacosVazios,
           melhorEncaixe.posicao,
           larguraFinal,
-          alturaFinal
+          alturaFinal,
         );
       } else {
         pecas_rejeitadas.push(peca);
@@ -109,10 +105,7 @@ export class MaxRectsOptimizer {
     }
 
     // Calcular métricas com base na área útil
-    const area_usada = pecas_posicionadas.reduce(
-      (sum, p) => sum + (p.largura * p.altura),
-      0
-    );
+    const area_usada = pecas_posicionadas.reduce((sum, p) => sum + p.largura * p.altura, 0);
     const area_total = efetivaLargura * efetivaAltura;
     const aproveitamento = area_total > 0 ? (area_usada / area_total) * 100 : 0;
 
@@ -126,13 +119,13 @@ export class MaxRectsOptimizer {
       area_total,
       area_desperdicada: area_total - area_usada,
       tempo_ms: Math.round(tempo_ms * 100) / 100,
-      espacos_vazios: espacosVazios
+      espacos_vazios: espacosVazios,
     };
   }
 
   /**
    * ENCONTRAR MELHOR ENCAIXE (Best Short Side Fit)
-   * 
+   *
    * BSSF procura:
    * 1. Espaço com menor lado curto (min y ou min x)
    * 2. Desempata com menor lado longo
@@ -140,7 +133,7 @@ export class MaxRectsOptimizer {
    */
   private encontrarMelhorEncaixe(
     peca: Peca,
-    espacosVazios: Retangulo[]
+    espacosVazios: Retangulo[],
   ): { posicao: { x: number; y: number }; rotacionada: boolean } | null {
     let melhorScore = Infinity;
     let melhorEspacoIdx = -1;
@@ -156,7 +149,7 @@ export class MaxRectsOptimizer {
       ) {
         const score = Math.min(
           espaco.largura - (peca.largura + this.kerf_mm),
-          espaco.altura - (peca.altura + this.kerf_mm)
+          espaco.altura - (peca.altura + this.kerf_mm),
         );
 
         if (score < melhorScore) {
@@ -174,7 +167,7 @@ export class MaxRectsOptimizer {
         ) {
           const score = Math.min(
             espaco.largura - (peca.altura + this.kerf_mm),
-            espaco.altura - (peca.largura + this.kerf_mm)
+            espaco.altura - (peca.largura + this.kerf_mm),
           );
 
           if (score < melhorScore) {
@@ -193,13 +186,13 @@ export class MaxRectsOptimizer {
     const espaco = espacosVazios[melhorEspacoIdx];
     return {
       posicao: { x: espaco.x, y: espaco.y },
-      rotacionada: melhorRotacionada
+      rotacionada: melhorRotacionada,
     };
   }
 
   /**
    * ATUALIZAR ESPAÇOS VAZIOS (Split & Pruning)
-   * 
+   *
    * Segue o algoritmo oficial de MaxRects:
    * 1. Para cada espaço livre que sobrepõe a peça colocada:
    * 2. Divide esse espaço em até 4 novos espaços
@@ -209,26 +202,26 @@ export class MaxRectsOptimizer {
     espacosVazios: Retangulo[],
     pecaPos: { x: number; y: number },
     largura: number,
-    altura: number
+    altura: number,
   ): void {
-    const pecaRect: Retangulo = { 
-      x: pecaPos.x, 
-      y: pecaPos.y, 
-      largura: largura + this.kerf_mm, 
-      altura: altura + this.kerf_mm 
+    const pecaRect: Retangulo = {
+      x: pecaPos.x,
+      y: pecaPos.y,
+      largura: largura + this.kerf_mm,
+      altura: altura + this.kerf_mm,
     };
-    
+
     // Log para depuração de sobreposição
     if (this.kerf_mm > 0) {
-       // Otimização: se o kerf for muito grande, avisar
-       if (this.kerf_mm > 20) console.warn('[MAXRECTS] Kerf muito alto:', this.kerf_mm);
+      // Otimização: se o kerf for muito grande, avisar
+      if (this.kerf_mm > 20) console.warn('[MAXRECTS] Kerf muito alto:', this.kerf_mm);
     }
 
     const novosEspacos: Retangulo[] = [];
-    
+
     for (let i = 0; i < espacosVazios.length; i++) {
       const espaco = espacosVazios[i];
-      
+
       // Se houver sobreposição
       if (this.haSobreposicao(espaco, pecaRect)) {
         // Dividir o espaço livre atual
@@ -241,7 +234,7 @@ export class MaxRectsOptimizer {
 
     // Poda: Remover espaços contidos em outros e espaços inválidos
     const espacosLimpos = this.podarEspacosRedundantes(novosEspacos);
-    
+
     espacosVazios.length = 0;
     espacosVazios.push(...espacosLimpos);
   }
@@ -266,11 +259,11 @@ export class MaxRectsOptimizer {
       }
       // Espaço abaixo
       if (peca.y + peca.altura < espaco.y + espaco.altura) {
-        resultados.push({ 
-          x: espaco.x, 
-          y: peca.y + peca.altura, 
-          largura: espaco.largura, 
-          altura: espaco.y + espaco.altura - (peca.y + peca.altura) 
+        resultados.push({
+          x: espaco.x,
+          y: peca.y + peca.altura,
+          largura: espaco.largura,
+          altura: espaco.y + espaco.altura - (peca.y + peca.altura),
         });
       }
     }
@@ -283,11 +276,11 @@ export class MaxRectsOptimizer {
       }
       // Espaço à direita
       if (peca.x + peca.largura < espaco.x + espaco.largura) {
-        resultados.push({ 
-          x: peca.x + peca.largura, 
-          y: espaco.y, 
-          largura: espaco.x + espaco.largura - (peca.x + peca.largura), 
-          altura: espaco.altura 
+        resultados.push({
+          x: peca.x + peca.largura,
+          y: espaco.y,
+          largura: espaco.x + espaco.largura - (peca.x + peca.largura),
+          altura: espaco.altura,
         });
       }
     }
@@ -297,21 +290,24 @@ export class MaxRectsOptimizer {
 
   private podarEspacosRedundantes(espacos: Retangulo[]): Retangulo[] {
     // 1. Remover espaços muito pequenos
-    const filtrados = espacos.filter(e => e.largura >= 1 && e.altura >= 1);
+    const filtrados = espacos.filter((e) => e.largura >= 1 && e.altura >= 1);
     const paraRemover = new Set<number>();
 
     // 2. Remover espaços que estão totalmente contidos em outros
     for (let i = 0; i < filtrados.length; i++) {
       for (let j = 0; j < filtrados.length; j++) {
         if (i === j) continue;
-        
+
         const a = filtrados[i];
         const b = filtrados[j];
-        
+
         // Se A está contido em B
-        if (a.x >= b.x && a.y >= b.y && 
-            a.x + a.largura <= b.x + b.largura && 
-            a.y + a.altura <= b.y + b.altura) {
+        if (
+          a.x >= b.x &&
+          a.y >= b.y &&
+          a.x + a.largura <= b.x + b.largura &&
+          a.y + a.altura <= b.y + b.altura
+        ) {
           paraRemover.add(i);
           break;
         }

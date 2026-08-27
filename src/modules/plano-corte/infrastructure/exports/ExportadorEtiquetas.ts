@@ -9,7 +9,7 @@ export class ExportadorEtiquetas {
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: [100, 50]
+      format: [100, 50],
     });
 
     let isFirst = true;
@@ -66,18 +66,18 @@ export class ExportadorEtiquetas {
             id: peca.pecaId,
             l: peca.largura,
             a: peca.altura,
-            desc: peca.descricao
+            desc: peca.descricao,
           });
           // Gerar data URI do QR code (base64 PNG)
-          const qrCodeDataUrl = await QRCode.toDataURL(qrData, { 
+          const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
             errorCorrectionLevel: 'M',
             margin: 1,
-            width: 100
+            width: 100,
           });
-          
+
           // Posicionar o QR Code à direita (x=70, y=10, w=25, h=25)
           doc.addImage(qrCodeDataUrl, 'PNG', 70, 5, 25, 25);
-          
+
           doc.setFontSize(6);
           doc.text('SCAN', 82.5, 32, { align: 'center' });
         } catch (err) {
@@ -87,7 +87,7 @@ export class ExportadorEtiquetas {
     }
 
     if (isFirst) {
-      console.warn("Nenhuma peça para gerar etiqueta.");
+      console.warn('Nenhuma peça para gerar etiqueta.');
       return;
     }
 

@@ -3,7 +3,7 @@ import type { ComponenteImportado } from './GenericCSVParser.js';
 
 /**
  * CutListParser - Parser específico para CSVs exportados pelo plugin CutList (SketchUp)
- * 
+ *
  * Peculiaridades:
  * - Dimensões em décimos de milímetro (ex: 87000mm = 870mm)
  * - Coluna "Fundo" contém o nome da peça
@@ -19,9 +19,9 @@ export class CutListParser {
     if (!valor) return 0;
     const clean = valor.replace('mm', '').replace(',', '.').trim();
     const num = parseFloat(clean);
-    
+
     if (isNaN(num)) return 0;
-    
+
     // Conforme exemplo: 87000mm -> 870mm (divisão por 100)
     return num / 100;
   }
@@ -39,10 +39,10 @@ export class CutListParser {
   static async parse(file: File): Promise<ComponenteImportado[]> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        
+
         // Detectar delimitador
         const delimiter = text.includes(';') ? ';' : ',';
 
@@ -50,17 +50,21 @@ export class CutListParser {
           delimiter,
           header: true,
           skipEmptyLines: true,
-            complete: (results) => {
+          complete: (results) => {
             const components: ComponenteImportado[] = results.data.map((row: any, index) => {
               const largura = this.parseSketchUpDimension(row['Comprimento'] || row['Length']);
               const altura = this.parseSketchUpDimension(row['Largura'] || row['Width']);
               const espessura = this.parseEspessura(row['Material'] || row['Thickness']);
               const quantidade = parseInt(row['Quantidade'] || row['Quantity']) || 1;
-              const nome = (row['Fundo'] || row['Description'] || row['Name'] || row['Componente'])?.trim() || `Peça sem nome (linha ${index + 1})`;
+              const nome =
+                (row['Fundo'] || row['Description'] || row['Name'] || row['Componente'])?.trim() ||
+                `Peça sem nome (linha ${index + 1})`;
 
               // Validações de escala (warnings)
               if (largura > 0 && (largura < 10 || largura > 10000)) {
-                console.warn(`[CutListParser] Possível erro de escala na largura: ${largura}mm na linha ${index + 1}`);
+                console.warn(
+                  `[CutListParser] Possível erro de escala na largura: ${largura}mm na linha ${index + 1}`,
+                );
               }
 
               return {
@@ -74,13 +78,13 @@ export class CutListParser {
                 sku_encontrado: null,
                 produto_id: null,
                 status: 'manual',
-                linha_original: index + 1
+                linha_original: index + 1,
               };
             });
 
             resolve(components);
           },
-          error: (err) => reject(err)
+          error: (err) => reject(err),
         });
       };
 

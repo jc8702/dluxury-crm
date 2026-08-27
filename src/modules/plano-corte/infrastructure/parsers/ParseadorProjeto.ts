@@ -1,6 +1,6 @@
 /**
  * MELHORIA 3.1: ParseadorProjeto ROBUSTO
- * 
+ *
  * PROBLEMA: regex simples /(\d+)x(\d+)/ não trata:
  * - Múltiplas unidades (mm, cm, m, polegadas)
  * - Ordem variada (800x600 vs 600x800)
@@ -17,7 +17,7 @@ export enum UnidadeMedida {
   MM = 'mm',
   CM = 'cm',
   M = 'm',
-  POLEGADAS = 'pol'
+  POLEGADAS = 'pol',
 }
 
 /**
@@ -32,7 +32,7 @@ export enum TipoMovelEnum {
   CRIADO = 'criado',
   RACK = 'rack',
   PAINEL = 'painel',
-  OUTRO = 'outro'
+  OUTRO = 'outro',
 }
 
 /**
@@ -89,7 +89,7 @@ export class ParseadorProjeto {
   private static readonly RANGES_VALIDOS = {
     largura: { min: 250, max: 4000, descricao: '250mm a 4m' },
     altura: { min: 300, max: 2500, descricao: '300mm a 2.5m' },
-    profundidade: { min: 250, max: 800, descricao: '250mm a 800mm' }
+    profundidade: { min: 250, max: 800, descricao: '250mm a 800mm' },
   };
 
   // Tabela de conversão de unidades para mm
@@ -97,7 +97,7 @@ export class ParseadorProjeto {
     [UnidadeMedida.MM]: 1,
     [UnidadeMedida.CM]: 10,
     [UnidadeMedida.M]: 1000,
-    [UnidadeMedida.POLEGADAS]: 25.4
+    [UnidadeMedida.POLEGADAS]: 25.4,
   };
 
   // Palavras-chave para reconhecer tipos de móvel
@@ -110,7 +110,7 @@ export class ParseadorProjeto {
     [TipoMovelEnum.CRIADO]: ['criado', 'bedside', 'noite'],
     [TipoMovelEnum.RACK]: ['rack', 'tv', 'audio'],
     [TipoMovelEnum.PAINEL]: ['painel', 'divisória', 'divider'],
-    [TipoMovelEnum.OUTRO]: ['móvel', 'peça', 'item']
+    [TipoMovelEnum.OUTRO]: ['móvel', 'peça', 'item'],
   };
 
   /**
@@ -124,7 +124,7 @@ export class ParseadorProjeto {
       return {
         sucesso: false,
         erros: ['Entrada inválida ou vazia'],
-        avisos: []
+        avisos: [],
       };
     }
 
@@ -136,12 +136,11 @@ export class ParseadorProjeto {
       return {
         sucesso: false,
         erros: dimensoesResult.erros,
-        avisos: []
+        avisos: [],
       };
     }
 
-    const { largura_mm, altura_mm, profundidade_mm, confianca_dimensoes } =
-      dimensoesResult;
+    const { largura_mm, altura_mm, profundidade_mm, confianca_dimensoes } = dimensoesResult;
 
     // 2. Reconhecer tipo de móvel
     const tipoMovel = this.reconhecerTipoMovel(msgNormalizada);
@@ -153,13 +152,13 @@ export class ParseadorProjeto {
     const validacaoRanges = this.validarRanges(
       largura_mm || 0,
       altura_mm || 0,
-      profundidade_mm || 0
+      profundidade_mm || 0,
     );
     if (!validacaoRanges.valido) {
       return {
         sucesso: false,
         erros: validacaoRanges.erros,
-        avisos: validacaoRanges.avisos
+        avisos: validacaoRanges.avisos,
       };
     }
 
@@ -169,7 +168,7 @@ export class ParseadorProjeto {
       largura_mm || 0,
       altura_mm || 0,
       profundidade_mm || 0,
-      customizacoes
+      customizacoes,
     );
     if (validacaoCoerencia.erros.length > 0) {
       erros.push(...validacaoCoerencia.erros);
@@ -188,15 +187,11 @@ export class ParseadorProjeto {
       ((confianca_dimensoes || 0) +
         (tipoMovel !== TipoMovelEnum.OUTRO ? 95 : 70) +
         (customizacoes.gavetas > 0 ? 90 : 95)) /
-        3
+        3,
     );
 
     // 8. Sugerir material baseado no tipo
-    const materialSugerido = this.sugerirMaterial(
-      tipoMovel,
-      altura_mm || 0,
-      profundidade_mm || 0
-    );
+    const materialSugerido = this.sugerirMaterial(tipoMovel, altura_mm || 0, profundidade_mm || 0);
 
     const projeto: ProjeParsed = {
       tipo_movel: tipoMovel,
@@ -205,14 +200,14 @@ export class ParseadorProjeto {
       profundidade_mm: profundidade_mm || 0,
       customizacoes,
       material_sugerido: materialSugerido,
-      confianca_geral: confiancaGeral
+      confianca_geral: confiancaGeral,
     };
 
     return {
       sucesso: true,
       projeto,
       erros,
-      avisos
+      avisos,
     };
   }
 
@@ -237,7 +232,7 @@ export class ParseadorProjeto {
     if (matches.length === 0) {
       return {
         sucesso: false,
-        erros: ['Nenhuma dimensão encontrada (ex: 800x600 ou 80cm x 60cm)']
+        erros: ['Nenhuma dimensão encontrada (ex: 800x600 ou 80cm x 60cm)'],
       };
     }
 
@@ -258,12 +253,9 @@ export class ParseadorProjeto {
       }
 
       // Determinar unidade (default: mm se não especificada)
-      const unidadeText = (
-        unidadeStr || 'mm'
-      ).toLowerCase() as UnidadeMedida;
+      const unidadeText = (unidadeStr || 'mm').toLowerCase() as UnidadeMedida;
       const unidade =
-        Object.values(UnidadeMedida).find(u => u === unidadeText) ||
-        UnidadeMedida.MM;
+        Object.values(UnidadeMedida).find((u) => u === unidadeText) || UnidadeMedida.MM;
 
       // Converter para mm
       const fator = this.CONVERSOES[unidade];
@@ -271,9 +263,7 @@ export class ParseadorProjeto {
 
       // Validar se é número realista (não > 10m ou < 10mm)
       if (valor_mm > 10000 || valor_mm < 10) {
-        erros.push(
-          `Dimensão fora de escala: ${numero}${unidade} = ${valor_mm}mm`
-        );
+        erros.push(`Dimensão fora de escala: ${numero}${unidade} = ${valor_mm}mm`);
         continue;
       }
 
@@ -281,16 +271,14 @@ export class ParseadorProjeto {
         valor_mm,
         valor_original: numero,
         unidade_original: unidade,
-        confianca: unidadeStr ? 'alta' : 'media'
+        confianca: unidadeStr ? 'alta' : 'media',
       });
     }
 
     if (dimensoes.length < 2) {
       return {
         sucesso: false,
-        erros: [
-          `Encontradas apenas ${dimensoes.length} dimensão(ões), precisam de 2-3`
-        ]
+        erros: [`Encontradas apenas ${dimensoes.length} dimensão(ões), precisam de 2-3`],
       };
     }
 
@@ -299,9 +287,8 @@ export class ParseadorProjeto {
 
     // Atribuir largura, altura, profundidade
     let largura_mm = dimensoes[0].valor_mm; // Maior
-    let altura_mm = dimensoes[1].valor_mm;  // Segundo maior
-    const profundidade_mm =
-      dimensoes.length === 3 ? dimensoes[2].valor_mm : 450; // Default 450mm
+    let altura_mm = dimensoes[1].valor_mm; // Segundo maior
+    const profundidade_mm = dimensoes.length === 3 ? dimensoes[2].valor_mm : 450; // Default 450mm
 
     // Heurística: se altura > largura 1.5x, provavelmente trocou
     if (altura_mm > largura_mm * 1.5) {
@@ -310,12 +297,9 @@ export class ParseadorProjeto {
 
     // Calcular confiança média
     const confianca_dimensoes = Math.round(
-      (dimensoes.reduce(
-        (sum, d) => sum + (d.confianca === 'alta' ? 100 : 80),
-        0
-      ) /
+      (dimensoes.reduce((sum, d) => sum + (d.confianca === 'alta' ? 100 : 80), 0) /
         dimensoes.length) *
-        (erros.length === 0 ? 1 : 0.7)
+        (erros.length === 0 ? 1 : 0.7),
     );
 
     return {
@@ -324,7 +308,7 @@ export class ParseadorProjeto {
       altura_mm,
       profundidade_mm,
       confianca_dimensoes,
-      erros
+      erros,
     };
   }
 
@@ -353,7 +337,7 @@ export class ParseadorProjeto {
       vidro: false,
       espelho: false,
       rodapio: false,
-      acabamento: undefined as string | undefined
+      acabamento: undefined as string | undefined,
     };
 
     // Gavetas
@@ -401,7 +385,7 @@ export class ParseadorProjeto {
   private static validarRanges(
     largura: number,
     altura: number,
-    profundidade: number
+    profundidade: number,
   ): {
     valido: boolean;
     erros: string[];
@@ -413,20 +397,18 @@ export class ParseadorProjeto {
     // Largura
     if (largura < this.RANGES_VALIDOS.largura.min) {
       erros.push(
-        `Largura ${largura}mm está abaixo do mínimo (${this.RANGES_VALIDOS.largura.min}mm)`
+        `Largura ${largura}mm está abaixo do mínimo (${this.RANGES_VALIDOS.largura.min}mm)`,
       );
     }
     if (largura > this.RANGES_VALIDOS.largura.max) {
       erros.push(
-        `Largura ${largura}mm está acima do máximo (${this.RANGES_VALIDOS.largura.max}mm)`
+        `Largura ${largura}mm está acima do máximo (${this.RANGES_VALIDOS.largura.max}mm)`,
       );
     }
 
     // Altura
     if (altura < this.RANGES_VALIDOS.altura.min) {
-      erros.push(
-        `Altura ${altura}mm está abaixo do mínimo (${this.RANGES_VALIDOS.altura.min}mm)`
-      );
+      erros.push(`Altura ${altura}mm está abaixo do mínimo (${this.RANGES_VALIDOS.altura.min}mm)`);
     }
     if (altura > this.RANGES_VALIDOS.altura.max) {
       avisos.push(`Altura >2.5m pode precisar reforço estrutural`);
@@ -435,19 +417,19 @@ export class ParseadorProjeto {
     // Profundidade
     if (profundidade < this.RANGES_VALIDOS.profundidade.min) {
       erros.push(
-        `Profundidade ${profundidade}mm está abaixo do mínimo (${this.RANGES_VALIDOS.profundidade.min}mm)`
+        `Profundidade ${profundidade}mm está abaixo do mínimo (${this.RANGES_VALIDOS.profundidade.min}mm)`,
       );
     }
     if (profundidade > this.RANGES_VALIDOS.profundidade.max) {
       erros.push(
-        `Profundidade ${profundidade}mm está acima do máximo (${this.RANGES_VALIDOS.profundidade.max}mm)`
+        `Profundidade ${profundidade}mm está acima do máximo (${this.RANGES_VALIDOS.profundidade.max}mm)`,
       );
     }
 
     return {
       valido: erros.length === 0,
       erros,
-      avisos
+      avisos,
     };
   }
 
@@ -459,7 +441,7 @@ export class ParseadorProjeto {
     largura: number,
     altura: number,
     profundidade: number,
-    customizacoes: any
+    customizacoes: any,
   ): {
     erros: string[];
     avisos: string[];
@@ -472,20 +454,20 @@ export class ParseadorProjeto {
       const alturaGaveta = altura / customizacoes.gavetas;
       if (alturaGaveta < 100) {
         erros.push(
-          `${customizacoes.gavetas} gavetas em ${altura}mm = ${alturaGaveta.toFixed(0)}mm por gaveta (mínimo 100mm)`
+          `${customizacoes.gavetas} gavetas em ${altura}mm = ${alturaGaveta.toFixed(0)}mm por gaveta (mínimo 100mm)`,
         );
       }
       if (alturaGaveta < 150) {
-        avisos.push(
-          `Gavetas pequenas (${alturaGaveta.toFixed(0)}mm), cliente pode reclamar`
-        );
+        avisos.push(`Gavetas pequenas (${alturaGaveta.toFixed(0)}mm), cliente pode reclamar`);
       }
     }
 
     // Proporções (muito alto + pouco profundo = instável)
     const proporcao = altura / profundidade;
     if (proporcao > 4) {
-      avisos.push(`Proporção altura/profundidade ${proporcao.toFixed(1)}x pode parecer desproporcionado`);
+      avisos.push(
+        `Proporção altura/profundidade ${proporcao.toFixed(1)}x pode parecer desproporcionado`,
+      );
     }
     if (proporcao < 0.5) {
       avisos.push(`Móvel muito baixo (proporção ${proporcao.toFixed(1)}x)`);
@@ -500,7 +482,7 @@ export class ParseadorProjeto {
   private static sugerirMaterial(
     tipo: TipoMovelEnum,
     altura: number,
-    _profundidade: number
+    _profundidade: number,
   ): string {
     // Gaveteir/armário com altura < 1200mm: 18mm é suficiente
     if (altura < 1200) {
