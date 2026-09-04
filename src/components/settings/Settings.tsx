@@ -314,13 +314,13 @@ const Settings: React.FC = () => {
       <Card className="glass">
         <CardHeader>
           <CardTitle className="text-primary flex items-center gap-2">
-            ðŸ’° Padrões de Orçamento
+            ⚙️ Padrões de Orçamento
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Input type="number" step="0.1" label="Taxa Financeira Padrão (%)" defaultValue={0.0} />
-            <Input type="number" label="Prazo Padrão de Entrega (Dias Ãšteis)" defaultValue={45} />
+            <Input type="number" label="Prazo Padrão de Entrega (Dias Úteis)" defaultValue={45} />
             <Input type="number" label="Adicional de Urgência (%)" defaultValue={15} />
           </div>
           <p className="text-xs text-muted-foreground italic mt-2">
@@ -338,7 +338,7 @@ const Settings: React.FC = () => {
       <Card className="glass">
         <CardHeader>
           <CardTitle className="text-primary flex items-center gap-2 text-xl font-bold">
-            ðŸ’³ Assinatura e Plano SaaS
+            💳 Assinatura e Plano SaaS
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -666,7 +666,7 @@ const CondicaoModal: React.FC<{
 const NotificationSettingsSection: React.FC = () => {
   const alerts = [
     {
-      title: 'ðŸ“‰ Estoque Crítico',
+      title: '📉 Estoque Crítico',
       desc: 'Avisa quando materiais atingem o nível mínimo.',
       type: 'estoque',
     },
@@ -676,17 +676,17 @@ const NotificationSettingsSection: React.FC = () => {
       type: 'projeto',
     },
     {
-      title: 'ðŸ’° Cobranças Vencidas',
+      title: '⚙️ Cobranças Vencidas',
       desc: 'Identifica faturas que passaram da data de vencimento.',
       type: 'financeiro',
     },
     {
-      title: 'ðŸ“ Orçamentos s/ Retorno',
+      title: '📋 Orçamentos s/ Retorno',
       desc: 'Avisa sobre orçamentos enviados há mais de 7 dias.',
       type: 'comercial',
     },
     {
-      title: 'ðŸ› ï¸ Garantias Pendentes',
+      title: '🔧 Garantias Pendentes',
       desc: 'Alerta sobre chamados técnicos abertos há mais de 3 dias.',
       type: 'pos-venda',
     },
@@ -696,7 +696,7 @@ const NotificationSettingsSection: React.FC = () => {
     <Card className="glass">
       <CardHeader>
         <CardTitle className="text-primary flex items-center gap-2 text-xl font-bold">
-          ðŸ”” Automação de Alertas e Notificações
+          🔔 Automação de Alertas e Notificações
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -770,7 +770,7 @@ const TechnicalPricingSection: React.FC = () => {
     <Card className="glass">
       <CardHeader>
         <CardTitle className="text-primary text-xl font-bold">
-          ðŸ“ Configurações de Precificação Técnica (Marcenaria)
+          📦 Configurações de Precificação Técnica (Marcenaria)
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">

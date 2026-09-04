@@ -242,7 +242,7 @@ export default function FinanceiroConciliacaoPage() {
               gap: '0.75rem',
             }}
           >
-            <RefreshCw /> CONCILIAÃ‡ÃƒO BANCÁRIA
+            <RefreshCw /> CONCILIAÇÃO BANCÁRIA
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
             Importe seu extrato OFX e compare com os lançamentos internos
@@ -261,7 +261,7 @@ export default function FinanceiroConciliacaoPage() {
               </>
             ) : (
               <>
-                <CheckCircle className="w-4 h-4 mr-1 inline" /> PERSISTIR CONCILIAÃ‡ÃƒO
+                <CheckCircle className="w-4 h-4 mr-1 inline" /> PERSISTIR CONCILIAÇÃO
               </>
             )}
           </Button>
@@ -398,7 +398,7 @@ export default function FinanceiroConciliacaoPage() {
                   marginBottom: '0.5rem',
                 }}
               >
-                <span>PROGRESSO DA CONCILIAÃ‡ÃƒO</span>
+                <span>PROGRESSO DA CONCILIAÇÃO</span>
                 <span
                   style={{
                     color:
@@ -444,7 +444,7 @@ export default function FinanceiroConciliacaoPage() {
               style={{ padding: '1rem 1.5rem', borderBottom: '1px solid hsl(var(--border))' }}
             >
               <CardTitle style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-                TRANSAÃ‡ÕES DO EXTRATO OFX
+                TRANSAÇÕES DO EXTRATO OFX
               </CardTitle>
             </CardHeader>
             <div style={{ overflowX: 'auto' }}>
@@ -453,12 +453,12 @@ export default function FinanceiroConciliacaoPage() {
                   <tr style={{ background: 'hsl(var(--surface-hover))' }}>
                     {[
                       'DATA',
-                      'DESCRIÃ‡ÃƒO',
+                      'DESCRIÇÃO',
                       'TIPO',
                       'VALOR',
                       'STATUS',
-                      'CORRESPONDÃŠNCIA',
-                      'AÃ‡ÕES',
+                      'CORRESPONDÊNCIA',
+                      'AÇÕES',
                     ].map((h) => (
                       <th
                         key={h}
