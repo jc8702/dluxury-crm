@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
@@ -178,7 +178,7 @@ export default function FinanceiroTitulosPagarWizard({
     }
   };
 
-  // ─── PASSO 1: Identificação ───────────────────────────────────────────────
+  // âââ PASSO 1: Identificação âââââââââââââââââââââââââââââââââââââââââââââââ
   const renderStep1 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
@@ -306,7 +306,7 @@ export default function FinanceiroTitulosPagarWizard({
     </div>
   );
 
-  // ─── PASSO 2: Valores + Pagamento + Parcelas ─────────────────────────────
+  // âââ PASSO 2: Valores + Pagamento + Parcelas âââââââââââââââââââââââââââââ
   const renderStep2 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
@@ -360,7 +360,7 @@ export default function FinanceiroTitulosPagarWizard({
           </div>
         </div>
 
-        {/* Taxa Financeira – Sempre disponível para ajuste manual */}
+        {/* Taxa Financeira â Sempre disponível para ajuste manual */}
         <div
           className="animate-fade-in"
           style={{
@@ -621,7 +621,7 @@ export default function FinanceiroTitulosPagarWizard({
     </div>
   );
 
-  // ─── PASSO 3: Confirmação ─────────────────────────────────────────────────
+  // âââ PASSO 3: Confirmação âââââââââââââââââââââââââââââââââââââââââââââââââ
   const renderStep3 = () => (
     <div className="animate-fade-in">
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
@@ -713,7 +713,7 @@ export default function FinanceiroTitulosPagarWizard({
         className={isDrawer ? 'animate-pop-in' : 'card glass animate-pop-in'}
         style={isDrawer ? { padding: 0 } : { padding: '2.5rem' }}
       >
-        {/* Stepper – 3 passos */}
+        {/* Stepper â 3 passos */}
         <div
           style={{
             display: 'flex',
@@ -809,7 +809,7 @@ export default function FinanceiroTitulosPagarWizard({
               isLoading={loading}
               onClick={handleSave}
             >
-              CONFIRMAR E GERAR TÃTULOS
+              CONFIRMAR E GERAR TÍTULOS
             </Button>
           )}
         </div>

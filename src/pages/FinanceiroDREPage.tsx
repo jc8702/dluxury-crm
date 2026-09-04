@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   PieChart,
@@ -267,23 +267,23 @@ export default function FinanceiroDREPage() {
               sublabel="Consolidação de Vendas e Serviços Industriais"
             >
               {data.detalhes?.receitas?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} />
+                <LineItem key={i} label={`${r.codigo} â ${r.nome}`} value={r.valor} />
               ))}
             </Block>
 
             <div className="p-5 px-8 mb-8 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex justify-between items-center group transition-all hover:bg-emerald-500/15">
               <span className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.3em] italic flex items-center gap-2">
-                <Minus className="w-4 h-4 opacity-40 rotate-90" /> RECEITA LÃQUIDA OPERACIONAL
+                <Minus className="w-4 h-4 opacity-40 rotate-90" /> RECEITA LÍQUIDA OPERACIONAL
               </span>
               <span className="text-2xl font-black text-emerald-500 italic tracking-tighter">
                 {fmt(data.receita_liquida)}
               </span>
             </div>
 
-            <Divider label="CUSTOS DE PRODUÃ‡ÃƒO" />
+            <Divider label="CUSTOS DE PRODUÃÃO" />
 
             <Block
-              label="MATÉRIA-PRIMA & MÃƒO DE OBRA"
+              label="MATÉRIA-PRIMA & MÃÆO DE OBRA"
               value={data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0}
               colorClass="border-orange-500"
               isNegative
@@ -291,7 +291,7 @@ export default function FinanceiroDREPage() {
               sublabel="Custos Diretos Atribuíveis (Classes 2.1 e 2.2)"
             >
               {data.detalhes?.custos_diretos?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} â ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -316,7 +316,7 @@ export default function FinanceiroDREPage() {
             <Divider label="ESTRUTURA OPERACIONAL" />
 
             <Block
-              label="DESPESAS COMERCIAIS & LOGÃSTICA"
+              label="DESPESAS COMERCIAIS & LOGÍSTICA"
               value={
                 data.detalhes?.despesas_operacionais?.reduce((s: any, r: any) => s + r.valor, 0) ||
                 0
@@ -327,7 +327,7 @@ export default function FinanceiroDREPage() {
               sublabel="Apoio de Vendas, Fretes e Marketing"
             >
               {data.detalhes?.despesas_operacionais?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} â ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -345,7 +345,7 @@ export default function FinanceiroDREPage() {
               sublabel="Custos Fixos de Gestão e Suporte"
             >
               {data.detalhes?.despesas_administrativas?.map((r, i) => (
-                <LineItem key={i} label={`${r.codigo} — ${r.nome}`} value={r.valor} isNegative />
+                <LineItem key={i} label={`${r.codigo} â ${r.nome}`} value={r.valor} isNegative />
               ))}
             </Block>
 
@@ -367,10 +367,10 @@ export default function FinanceiroDREPage() {
               </span>
             </div>
 
-            <Divider label="FINALIZAÃ‡ÃƒO FINANCEIRA" />
+            <Divider label="FINALIZAÃÃO FINANCEIRA" />
 
             <Block
-              label="RESULTADO FINANCEIRO LÃQUIDO"
+              label="RESULTADO FINANCEIRO LÍQUIDO"
               value={data.detalhes?.resultado_financeiro?.saldo || 0}
               colorClass={
                 data.detalhes?.resultado_financeiro?.saldo >= 0
@@ -391,7 +391,7 @@ export default function FinanceiroDREPage() {
 
               <div className="z-10 text-center md:text-left mb-6 md:mb-0">
                 <div className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2 opacity-60">
-                  LUCRO LÃQUIDO OPERACIONAL
+                  LUCRO LÍQUIDO OPERACIONAL
                 </div>
                 <div className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">
                   Margem Líquida Final:{' '}
@@ -519,7 +519,7 @@ export default function FinanceiroDREPage() {
                 ) : (
                   <Minus className="w-5 h-5 text-primary rotate-90" />
                 )}
-                {regime === 'competencia' ? 'ESTRATÉGIA COMPETÃŠNCIA' : 'REALIDADE CAIXA'}
+                {regime === 'competencia' ? 'ESTRATÉGIA COMPETÃÅ NCIA' : 'REALIDADE CAIXA'}
               </div>
               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-3 opacity-60 leading-relaxed">
                 {regime === 'competencia'

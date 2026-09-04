@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Input } from '../components/common';
@@ -110,7 +110,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
               margin: 0,
             }}
           >
-            <CreditCard style={{ color: 'hsl(var(--primary))' }} /> CONDIÃ‡ÕES DE PAGAMENTO
+            <CreditCard style={{ color: 'hsl(var(--primary))' }} /> CONDIÃÕES DE PAGAMENTO
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>
             Parâmetros de parcelamento, juros e entrada
@@ -137,7 +137,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
             style={{ fontSize: '0.85rem' }}
             aria-label="Nova condição de pagamento"
           >
-            <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVA CONDIÃ‡ÃƒO
+            <Plus size={16} style={{ marginRight: '0.25rem' }} /> NOVA CONDIÃÃO
           </Button>
         </div>
       </div>
@@ -196,7 +196,7 @@ const FinanceiroCondicoesPage: React.FC = () => {
                         color: 'hsl(var(--muted-foreground))',
                       }}
                     >
-                      DESCRIÃ‡ÃƒO
+                      DESCRIÃÃO
                     </th>
                     <th
                       style={{

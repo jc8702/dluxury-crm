@@ -55,7 +55,7 @@ const TIPOS_MARCENARIA = [
   { codigo: '1.1.3', nome: 'Home Office', tipo: 'receita', natureza: 'credora', pai_id: null },
   {
     codigo: '1.1.4',
-    nome: 'Ãreas de Serviço e Banheiros',
+    nome: 'Áreas de Serviço e Banheiros',
     tipo: 'receita',
     natureza: 'credora',
     pai_id: null,
@@ -517,7 +517,7 @@ export default function FinanceiroClassesPage() {
               disabled={seeding}
               style={{ fontSize: '0.8rem' }}
             >
-              {seeding ? '⏳ Criando...' : '✨ CRIAR PLANO MARCENARIA'}
+              {seeding ? 'â³ Criando...' : 'â¨ CRIAR PLANO MARCENARIA'}
             </Button>
           )}
           <Button variant="primary" onClick={() => setModal({})} style={{ fontSize: '0.85rem' }}>
@@ -561,7 +561,7 @@ export default function FinanceiroClassesPage() {
         ))}
       </div>
 
-      {/* Ãrvore */}
+      {/* Árvore */}
       <Card style={{ overflow: 'hidden' }}>
         <CardContent style={{ padding: 0 }}>
           {loading ? (

@@ -164,7 +164,7 @@ export default function FinanceiroFluxoCaixaPage() {
                   transition: '0.2s',
                 }}
               >
-                {g === 'daily' ? 'DIA' : g === 'weekly' ? 'SEM' : 'MÃŠS'}
+                {g === 'daily' ? 'DIA' : g === 'weekly' ? 'SEM' : 'MÊS'}
               </button>
             ))}
           </div>
@@ -296,7 +296,7 @@ export default function FinanceiroFluxoCaixaPage() {
                 }}
               >
                 <CardTitle style={{ fontSize: '1rem', fontWeight: 800 }}>
-                  PROJEÃ‡ÃƒO DE DISPONIBILIDADE
+                  PROJEÇÃO DE DISPONIBILIDADE
                 </CardTitle>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Button
@@ -561,7 +561,7 @@ export default function FinanceiroFluxoCaixaPage() {
             >
               <Calendar color="hsl(var(--primary))" size={20} />
               <CardTitle style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>
-                DETALHES DO PERÃODO
+                DETALHES DO PERÍODODO
               </CardTitle>
             </CardHeader>
 

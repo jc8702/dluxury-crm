@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Card, CardHeader, CardTitle } from '../components/ui';
 import { CardBody as CardContent } from '../components/ui';
 import { Modal, Input, Badge } from '../components/common';
@@ -233,7 +233,7 @@ const FinanceiroFormasPage: React.FC = () => {
                         textAlign: 'right',
                       }}
                     >
-                      COMPENSAÃ‡ÃƒO
+                      COMPENSAÃÃO
                     </th>
                     <th style={{ padding: '1rem', width: '80px' }}></th>
                   </tr>

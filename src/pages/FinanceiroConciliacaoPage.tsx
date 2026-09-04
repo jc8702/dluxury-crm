@@ -242,7 +242,7 @@ export default function FinanceiroConciliacaoPage() {
               gap: '0.75rem',
             }}
           >
-            <RefreshCw /> CONCILIAÃ‡ÃƒO BANCÃRIA
+            <RefreshCw /> CONCILIAÃ‡ÃƒO BANCÁRIA
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
             Importe seu extrato OFX e compare com os lançamentos internos
@@ -522,7 +522,7 @@ export default function FinanceiroConciliacaoPage() {
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
                           <Badge tone={txn.type === 'CREDIT' ? 'success' : 'danger'}>
-                            {txn.type === 'CREDIT' ? 'ENTRADA' : 'SAÃDA'}
+                            {txn.type === 'CREDIT' ? 'ENTRADA' : 'SAÍDA'}
                           </Badge>
                         </td>
                         <td

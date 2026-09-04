@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { ArrowLeft, Check, ArrowRight, Loader, Info, AlertCircle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
@@ -127,7 +127,7 @@ export default function FinanceiroTitulosReceberWizard({
     }
   };
 
-  // ─── PASSO 1: Identificação ───────────────────────────────────────────────
+  // âââ PASSO 1: Identificação âââââââââââââââââââââââââââââââââââââââââââââââ
   const renderStep1 = () => (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">Identificação</h3>
@@ -179,7 +179,7 @@ export default function FinanceiroTitulosReceberWizard({
     </div>
   );
 
-  // ─── PASSO 2: Valores + Forma + Parcelas ──────────────────────────────────
+  // âââ PASSO 2: Valores + Forma + Parcelas ââââââââââââââââââââââââââââââââââ
   const renderStep2 = () => (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">
@@ -217,7 +217,7 @@ export default function FinanceiroTitulosReceberWizard({
           </select>
         </div>
 
-        {/* Taxa Financeira – Sempre disponível para ajuste manual */}
+        {/* Taxa Financeira â Sempre disponível para ajuste manual */}
         <div className="animate-fade-in p-4 border border-amber-500/30 rounded-xl bg-amber-500/5">
           <div className="flex items-center gap-2 mb-3 text-amber-400 font-black text-xs uppercase tracking-widest">
             <AlertCircle size={16} /> CUSTO FINANCEIRO / TAXAS (%)
@@ -396,7 +396,7 @@ export default function FinanceiroTitulosReceberWizard({
     </div>
   );
 
-  // ─── PASSO 3: Confirmação ─────────────────────────────────────────────────
+  // âââ PASSO 3: Confirmação âââââââââââââââââââââââââââââââââââââââââââââââââ
   const renderStep3 = () => (
     <div className="animate-fade-in space-y-6">
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">
@@ -459,7 +459,7 @@ export default function FinanceiroTitulosReceberWizard({
       )}
 
       <div className={isDrawer ? 'animate-pop-in' : 'glass p-8 md:p-12 animate-pop-in'}>
-        {/* Stepper – 3 passos */}
+        {/* Stepper â 3 passos */}
         <div className="flex justify-between mb-12 relative">
           <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />
           {[1, 2, 3].map((s) => (
@@ -520,7 +520,7 @@ export default function FinanceiroTitulosReceberWizard({
               {loading ? (
                 <Loader className="animate-spin" size={16} />
               ) : (
-                'CONFIRMAR E GERAR TÃTULOS'
+                'CONFIRMAR E GERAR TÍTULOS'
               )}
             </Button>
           )}

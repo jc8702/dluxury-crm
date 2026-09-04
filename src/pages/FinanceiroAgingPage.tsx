@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { AlertCircle, Calendar, User, Clock, Mail, Phone, Filter, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
@@ -148,10 +148,10 @@ export default function FinanceiroAgingPage() {
             Aging /{' '}
             {modo === 'receber'
               ? historico
-                ? 'HISTÃ“RICO RECEBER'
+                ? 'HISTÓRICO RECEBER'
                 : 'Inadimplência'
               : historico
-                ? 'HISTÃ“RICO PAGAR'
+                ? 'HISTÓRICO PAGAR'
                 : 'Dívidas'}
           </h1>
           <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem' }}>
@@ -188,7 +188,7 @@ export default function FinanceiroAgingPage() {
             onClick={() => setHistorico(!historico)}
           >
             <Filter className="w-4 h-4 mr-1" />
-            {historico ? 'HISTÃ“RICO' : 'VENCIDOS'}
+            {historico ? 'HISTÓRICO' : 'VENCIDOS'}
           </Button>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function FinanceiroAgingPage() {
             borderBottom: '1px solid hsl(var(--border))',
           }}
         >
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 800 }}>DETALHAMENTO DE TÃTULOS VENCIDOS</h3>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 800 }}>DETALHAMENTO DE TÍTULOS VENCIDOS</h3>
           <Badge tone={totalVencido > 0 ? 'danger' : 'success'}>
             TOTAL VENCIDO: R$ {totalVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </Badge>
