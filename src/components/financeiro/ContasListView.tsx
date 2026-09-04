@@ -85,23 +85,13 @@ export function ContasListView({
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-border pb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-              <Wallet className="text-primary w-6 h-6" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">
-              Tesouraria Corporativa
-            </span>
-          </div>
-          <h1 className="text-5xl font-black italic tracking-tighter">
-            CONTAS{' '}
-            <span className="text-primary underline decoration-primary/30 underline-offset-8">
-              INTERNAS
-            </span>
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <Wallet className="text-primary w-5 h-5" />
+            Contas Internas
           </h1>
-          <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Consolidação de saldos bancários, caixas operacionais e investimentos. Gestão de
             liquidez em tempo real com auditoria de extratos.
           </p>
@@ -148,26 +138,22 @@ export function ContasListView({
           Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="glass-elevated p-8 rounded-[2rem] border border-border h-64 animate-pulse"
+              className="glass p-8 rounded-2xl border border-border h-64 animate-pulse"
             />
           ))
         ) : contas.length === 0 ? (
-          <div className="col-span-full glass-elevated p-32 text-center rounded-[3rem] border border-dashed border-border relative overflow-hidden">
+          <div className="col-span-full glass p-32 text-center rounded-2xl border border-dashed border-border relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
             <div className="relative z-10">
               <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20">
                 <Building2 className="w-12 h-12" />
               </div>
-              <h3 className="text-2xl font-black italic tracking-tight mb-3">TESOURARIA VAZIA</h3>
-              <p className="text-muted-foreground mb-10 max-w-md mx-auto font-medium">
+              <h3 className="text-lg font-semibold tracking-tight mb-3">Tesouraria Vazia</h3>
+              <p className="text-[var(--ui-text-secondary)] mb-10 max-w-md mx-auto text-sm font-medium">
                 Sua infraestrutura financeira ainda não possui contas ativas.
               </p>
-              <Button
-                variant="primary"
-                className="px-12 h-14 font-black italic shadow-lg shadow-primary/20"
-                onClick={onNew}
-              >
-                ADICIONAR PRIMEIRA CONTA
+              <Button variant="primary" className="px-12 h-12 font-semibold" onClick={onNew}>
+                Adicionar Primeira Conta
               </Button>
             </div>
           </div>
@@ -177,7 +163,7 @@ export function ContasListView({
             return (
               <div
                 key={c.id}
-                className="glass-elevated group hover:border-primary/40 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full border border-border relative"
+                className="glass group hover:border-primary/40 transition-all duration-500 rounded-2xl overflow-hidden flex flex-col h-full border border-border relative"
               >
                 <div
                   className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-10 transition-opacity group-hover:opacity-20 ${isPos ? 'bg-emerald-500' : 'bg-red-500'}`}
@@ -452,20 +438,20 @@ export function ContasListView({
             </Button>
           </div>
           <div>
-            <h4 className="text-[11px] font-black mb-6 flex items-center gap-3 uppercase tracking-[0.3em] text-muted-foreground italic">
-              <Lock className="w-4 h-4 text-primary" /> LINHA DO TEMPO DE SEGURANÇA
+            <h4 className="text-sm font-semibold mb-6 flex items-center gap-3 text-[var(--ui-text-secondary)]">
+              <Lock className="w-4 h-4 text-primary" /> Linha do Tempo de Segurança
             </h4>
-            <div className="glass-elevated rounded-[2rem] overflow-hidden border border-border">
+            <div className="glass rounded-2xl overflow-hidden border border-border">
               <table className="w-full text-left">
                 <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">
+                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Ciclo Mensal
                     </th>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest">
+                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Status de Integridade
                     </th>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase italic tracking-widest text-right">
+                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)] text-right">
                       Ações de Gestor
                     </th>
                   </tr>

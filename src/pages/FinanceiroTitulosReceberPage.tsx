@@ -159,20 +159,20 @@ export default function FinanceiroTitulosReceberPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter flex items-center gap-3 uppercase italic">
-            <ArrowDownLeft className="text-primary w-10 h-10" />
-            Títulos a <span className="text-primary">Receber</span>
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <ArrowDownLeft className="text-primary w-5 h-5" />
+            Títulos a Receber
           </h1>
-          <p className="text-muted-foreground mt-1 font-medium italic">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Gestão estratégica de recebíveis e fluxo de caixa industrial
           </p>
         </div>
         <Button
           variant="primary"
-          className="h-14 px-8 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+          className="h-10 px-5 rounded-lg flex items-center gap-2 font-semibold text-sm"
           onClick={() => setIsWizardOpen(true)}
         >
-          <Plus size={24} /> NOVO RECEBIMENTO
+          <Plus size={16} /> Novo Recebimento
         </Button>
       </div>
 
@@ -201,14 +201,14 @@ export default function FinanceiroTitulosReceberPage() {
             icon: Calendar,
           },
         ].map((stat, i) => (
-          <div key={i} className={`glass-elevated p-6 animate-fade-in border-l-4 ${stat.border}`}>
+          <div key={i} className={`glass p-6 animate-fade-in border-l-4 ${stat.border}`}>
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-black tracking-widest text-muted-foreground uppercase">
+              <span className="text-xs font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider">
                 {stat.label}
               </span>
               <stat.icon className={`${stat.color}`} size={20} />
             </div>
-            <div className={`text-3xl font-black tracking-tight ${stat.color}`}>
+            <div className={`text-2xl font-bold tracking-tight ${stat.color}`}>
               R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function FinanceiroTitulosReceberPage() {
       </div>
 
       {/* Table Card */}
-      <div className="glass-elevated overflow-hidden mb-10">
+      <div className="glass overflow-hidden mb-10">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -480,7 +480,7 @@ export default function FinanceiroTitulosReceberPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-4 uppercase font-black italic"
+              className="h-9 px-4 text-xs font-semibold"
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
             >
@@ -489,7 +489,7 @@ export default function FinanceiroTitulosReceberPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-4 uppercase font-black italic"
+              className="h-9 px-4 text-xs font-semibold"
               disabled={page * perPage >= total}
               onClick={() => setPage(page + 1)}
             >

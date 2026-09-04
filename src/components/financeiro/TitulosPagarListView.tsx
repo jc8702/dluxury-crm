@@ -118,10 +118,10 @@ export function TitulosPagarListView({
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
-            <ArrowUpRight className="text-red-500 w-10 h-10" /> TÍTULOS A PAGAR
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <ArrowUpRight className="text-red-500 w-5 h-5" /> Títulos a Pagar
           </h1>
-          <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Gestão Industrial de Saídas & Compromissos
           </p>
         </div>
@@ -194,17 +194,17 @@ export function TitulosPagarListView({
         ].map((stat, i) => (
           <div
             key={i}
-            className={`glass-elevated p-6 rounded-2xl border ${stat.border} ${stat.bg} relative overflow-hidden group hover:scale-[1.02] transition-all duration-500`}
+            className={`glass p-6 rounded-2xl border ${stat.border} ${stat.bg} relative overflow-hidden group hover:scale-[1.02] transition-all duration-500`}
           >
             <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground italic group-hover:text-white transition-colors">
+              <span className="text-xs font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider group-hover:text-white transition-colors">
                 {stat.label}
               </span>
               <stat.icon
                 className={`w-5 h-5 ${stat.color} opacity-80 group-hover:scale-110 transition-transform`}
               />
             </div>
-            <div className="text-3xl font-black tracking-tighter italic text-white group-hover:text-primary transition-colors">
+            <div className="text-2xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
               R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <div
@@ -214,7 +214,7 @@ export function TitulosPagarListView({
         ))}
       </div>
 
-      <div className="glass-elevated rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>

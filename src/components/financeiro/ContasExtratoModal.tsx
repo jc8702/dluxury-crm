@@ -98,13 +98,13 @@ export function ContasExtratoModal({
             ].map((card, i) => (
               <div
                 key={i}
-                className={`glass-elevated p-6 rounded-[2rem] border-l-4 ${card.border} relative overflow-hidden`}
+                className={`glass p-6 rounded-2xl border-l-4 ${card.border} relative overflow-hidden`}
               >
                 {card.highlight && <div className="absolute inset-0 bg-primary/5" />}
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-3 flex items-center gap-2">
+                <p className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-3 flex items-center gap-2">
                   {card.icon} {card.label}
                 </p>
-                <p className={`text-2xl font-black italic tracking-tighter ${card.color}`}>
+                <p className={`text-xl font-bold tracking-tight ${card.color}`}>
                   {(card as any).isNeg ? '- ' : card.value > 0 && i !== 0 && i !== 3 ? '+ ' : ''}
                   {fmt(card.value)}
                 </p>
@@ -163,18 +163,18 @@ export function ContasExtratoModal({
             </div>
           </div>
 
-          <div className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl relative">
+          <div className="glass rounded-2xl overflow-hidden border border-border shadow-2xl relative">
             <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-[#0A0A0A] z-20">
                   <tr className="border-b border-border">
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
+                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Data de Efetivação
                     </th>
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
+                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Memorial / Descrição
                     </th>
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">
+                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Módulo Origem
                     </th>
                     <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">

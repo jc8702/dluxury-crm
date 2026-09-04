@@ -92,29 +92,25 @@ export default function FinanceiroDREPage() {
     sectionKey?: string;
   }) => (
     <div
-      className={`glass-elevated border-l-4 ${colorClass} p-6 rounded-r-2xl mb-4 transition-all hover:bg-white/[0.04] group`}
+      className={`glass border-l-4 ${colorClass} p-6 rounded-r-2xl mb-4 transition-all hover:bg-white/[0.04] group`}
     >
       <div className="flex justify-between items-center">
         <div>
-          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic mb-1 opacity-70">
-            {label}
-          </div>
+          <div className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-1">{label}</div>
           {sublabel && (
-            <div className="text-[10px] text-muted-foreground italic font-medium opacity-50">
-              {sublabel}
-            </div>
+            <div className="text-xs text-[var(--ui-text-secondary)] opacity-60">{sublabel}</div>
           )}
         </div>
         <div className="text-right flex items-center gap-8">
           {margin !== undefined && (
             <div
-              className={`text-xs font-black italic ${margin >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+              className={`text-xs font-semibold ${margin >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
             >
               {fmtPct(margin)} MARGEM
             </div>
           )}
           <div
-            className={`text-2xl font-black italic tracking-tighter ${isNegative ? 'text-red-500' : 'text-white'}`}
+            className={`text-xl font-bold tracking-tight ${isNegative ? 'text-red-500' : 'text-white'}`}
           >
             {isNegative ? '(' : ''}
             {fmt(Math.abs(value))}
@@ -179,14 +175,14 @@ export default function FinanceiroDREPage() {
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
 
-      {/* Header Corporativo e Controles */}
+      {/* Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
-            <PieChart className="text-primary w-10 h-10" />
-            DRE CORPORATIVO
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <PieChart className="text-primary w-5 h-5" />
+            DRE Corporativo
           </h1>
-          <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-2 ml-1 italic opacity-60">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Demonstração do Resultado do Exercício
           </p>
         </div>
@@ -208,33 +204,33 @@ export default function FinanceiroDREPage() {
               <ToggleRight className="w-5 h-5 text-primary" />
             )}
             <span className={regime === 'caixa' ? 'text-primary' : 'text-muted-foreground'}>
-              REGIME: {regime === 'competencia' ? 'COMPETÃŠNCIA' : 'CAIXA'}
+              REGIME: {regime === 'competencia' ? 'COMPETÊNCIA' : 'CAIXA'}
             </span>
           </Button>
 
           {/* Filtro de Período Industrial */}
-          <div className="flex items-center gap-3 glass-elevated p-1 rounded-2xl border border-border">
+          <div className="flex items-center gap-3 glass p-1 rounded-2xl border border-border">
             <input
               type="date"
-              className="bg-transparent border-none text-[11px] font-black text-white px-4 py-2 uppercase italic focus:ring-0 w-40"
+              className="bg-transparent border-none text-xs font-semibold text-white px-4 py-2 focus:ring-0 w-40"
               value={periodo.inicio}
               onChange={(e) => setPeriodo((p) => ({ ...p, inicio: e.target.value }))}
             />
-            <span className="text-[10px] font-black text-muted-foreground opacity-50 italic">
-              ATÉ
+            <span className="text-xs font-semibold text-[var(--ui-text-secondary)] opacity-60">
+              até
             </span>
             <input
               type="date"
-              className="bg-transparent border-none text-[11px] font-black text-white px-4 py-2 uppercase italic focus:ring-0 w-40"
+              className="bg-transparent border-none text-xs font-semibold text-white px-4 py-2 focus:ring-0 w-40"
               value={periodo.fim}
               onChange={(e) => setPeriodo((p) => ({ ...p, fim: e.target.value }))}
             />
             <Button
               variant="primary"
-              className="h-10 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest italic flex items-center gap-2"
+              className="h-10 px-6 rounded-lg text-xs font-semibold flex items-center gap-2"
               onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}
             >
-              <Calendar className="w-4 h-4" /> APLICAR
+              <Calendar className="w-4 h-4" /> Aplicar
             </Button>
           </div>
         </div>
@@ -251,9 +247,9 @@ export default function FinanceiroDREPage() {
           </div>
         </div>
       ) : !data ? (
-        <div className="glass-elevated p-20 rounded-3xl text-center">
-          <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-          <p className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">
+        <div className="glass p-20 rounded-2xl text-center">
+          <TrendingDown className="w-16 h-16 text-[var(--ui-text-secondary)] mx-auto mb-4 opacity-20" />
+          <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">
             Sem dados operacionais para o período
           </p>
         </div>
@@ -414,9 +410,9 @@ export default function FinanceiroDREPage() {
 
           {/* Sidebar de Inteligência Financeira */}
           <div className="lg:col-span-4 space-y-8 sticky top-8">
-            <div className="glass-elevated p-8 rounded-3xl border border-border space-y-8">
-              <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> PAINEL DE MARGENS
+            <div className="glass p-8 rounded-2xl border border-border space-y-8">
+              <div className="text-sm font-semibold text-[var(--ui-text-secondary)] flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" /> Painel de Margens
               </div>
 
               {[
@@ -441,10 +437,10 @@ export default function FinanceiroDREPage() {
               ].map((m, i) => (
                 <div key={i} className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                    <span className="text-xs font-semibold text-[var(--ui-text-secondary)]">
                       {m.label}
                     </span>
-                    <span className={`text-xl font-black italic tracking-tight ${m.color}`}>
+                    <span className={`text-lg font-bold tracking-tight ${m.color}`}>
                       {fmtPct(m.value)}
                     </span>
                   </div>
@@ -458,9 +454,9 @@ export default function FinanceiroDREPage() {
               ))}
             </div>
 
-            <div className="glass-elevated p-8 rounded-3xl border border-border space-y-6">
-              <div className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] italic opacity-50">
-                RESUMO EXECUTIVO
+            <div className="glass p-8 rounded-2xl border border-border space-y-6">
+              <div className="text-sm font-semibold text-[var(--ui-text-secondary)]">
+                Resumo Executivo
               </div>
               {[
                 {
@@ -501,27 +497,23 @@ export default function FinanceiroDREPage() {
                   key={i}
                   className="flex justify-between items-center py-3 border-b border-border last:border-0 group transition-all hover:bg-muted/30"
                 >
-                  <div
-                    className={`flex items-center gap-3 ${item.color} text-[11px] font-black italic uppercase tracking-wider`}
-                  >
+                  <div className={`flex items-center gap-3 ${item.color} text-xs font-semibold`}>
                     {item.icon}
-                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                    <span className="text-[var(--ui-text-secondary)] group-hover:text-foreground transition-colors">
                       {item.label}
                     </span>
                   </div>
-                  <span className={`text-sm font-black italic tracking-tight ${item.color}`}>
+                  <span className={`text-sm font-bold tracking-tight ${item.color}`}>
                     {fmt(item.value)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="glass-elevated p-6 rounded-3xl border border-primary/20 bg-primary/5 text-center relative overflow-hidden">
+            <div className="glass p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center relative overflow-hidden">
               <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
-              <div className="text-[10px] font-black text-primary uppercase tracking-[0.3em] italic mb-2">
-                MODO DE APURAÃ‡ÃƒO
-              </div>
-              <div className="text-xl font-black text-white italic tracking-tighter flex items-center justify-center gap-2">
+              <div className="text-xs font-semibold text-primary mb-2">Modo de Apuração</div>
+              <div className="text-lg font-bold text-white tracking-tight flex items-center justify-center gap-2">
                 {regime === 'competencia' ? (
                   <TrendingUp className="w-5 h-5 text-primary" />
                 ) : (

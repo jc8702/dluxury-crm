@@ -137,25 +137,15 @@ export default function NotificacoesPage() {
   };
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto animate-fade-in pb-20">
-      {/* Header Corporativo */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-border pb-8">
+    <div className="p-4 md:p-6 max-w-[1400px] mx-auto animate-fade-in pb-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-              <Bell className="text-primary w-6 h-6 animate-pulse" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">
-              Monitoramento e Alertas
-            </span>
-          </div>
-          <h1 className="text-5xl font-black italic tracking-tighter">
-            CENTRAL DE{' '}
-            <span className="text-primary underline decoration-primary/30 underline-offset-8">
-              ALERTAS
-            </span>
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <Bell className="text-primary w-5 h-5" />
+            Central de Alertas
           </h1>
-          <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Monitoramento em tempo real de gargalos operacionais, estoques mínimos, prazos de
             projetos e cobranças financeiras.
           </p>
@@ -164,7 +154,7 @@ export default function NotificacoesPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outline"
-            className="h-12 px-6 group border-border/40 hover:bg-muted"
+            className="h-10 px-5 group"
             onClick={forceCheck}
             disabled={checking}
             isLoading={checking}
@@ -172,15 +162,15 @@ export default function NotificacoesPage() {
             <RefreshCw
               className={`w-4 h-4 mr-2 transition-transform group-hover:rotate-180 ${checking ? 'animate-spin' : ''}`}
             />{' '}
-            VERIFICAR NOVOS
+            Verificar Novos
           </Button>
           <Button
             variant="primary"
-            className="h-12 px-8 font-black italic tracking-tight shadow-lg shadow-primary/20"
+            className="h-10 px-5 font-semibold text-sm"
             onClick={markAllRead}
             disabled={stats.naoLidas === 0}
           >
-            <Check className="w-5 h-5 mr-2" /> MARCAR TODAS COMO LIDAS
+            <Check className="w-4 h-4 mr-2" /> Marcar Todas como Lidas
           </Button>
         </div>
       </div>
@@ -219,15 +209,13 @@ export default function NotificacoesPage() {
         ].map((card, i) => (
           <div
             key={i}
-            className={`glass-elevated p-6 rounded-2xl border-l-4 ${card.border} relative overflow-hidden group`}
+            className={`glass p-6 rounded-2xl border-l-4 ${card.border} relative overflow-hidden group`}
           >
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-3">
+            <p className="text-xs font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider mb-3">
               {card.label}
             </p>
-            <p className={`text-4xl font-black italic tracking-tighter ${card.color}`}>
-              {card.value}
-            </p>
-            <p className="text-[10px] font-medium text-muted-foreground mt-2">{card.desc}</p>
+            <p className={`text-3xl font-bold tracking-tight ${card.color}`}>{card.value}</p>
+            <p className="text-xs font-medium text-[var(--ui-text-secondary)] mt-2">{card.desc}</p>
           </div>
         ))}
       </div>
@@ -235,16 +223,16 @@ export default function NotificacoesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Filtros Laterais */}
         <div className="lg:col-span-3 space-y-6">
-          <Card className="glass-elevated rounded-3xl border border-border">
+          <Card className="glass rounded-2xl border border-border">
             <CardHeader>
-              <CardTitle className="text-xs font-black tracking-widest uppercase italic">
+              <CardTitle className="text-sm font-semibold tracking-tight">
                 Filtro de Leitura
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 p-4 pt-0">
               <Button
                 variant={filter === 'não_lidas' ? 'primary' : 'ghost'}
-                className="w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs"
+                className="w-full justify-start rounded-lg h-10 font-semibold text-xs"
                 onClick={() => setFilter('não_lidas')}
               >
                 <div
@@ -254,7 +242,7 @@ export default function NotificacoesPage() {
               </Button>
               <Button
                 variant={filter === 'todas' ? 'primary' : 'ghost'}
-                className="w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs"
+                className="w-full justify-start rounded-lg h-10 font-semibold text-xs"
                 onClick={() => setFilter('todas')}
               >
                 <div
@@ -265,9 +253,9 @@ export default function NotificacoesPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-elevated rounded-3xl border border-border">
+          <Card className="glass rounded-2xl border border-border">
             <CardHeader>
-              <CardTitle className="text-xs font-black tracking-widest uppercase italic">
+              <CardTitle className="text-sm font-semibold tracking-tight">
                 Filtrar por Gravidade
               </CardTitle>
             </CardHeader>
@@ -281,7 +269,7 @@ export default function NotificacoesPage() {
                 <Button
                   key={item.val}
                   variant={priorityFilter === item.val ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start rounded-2xl h-12 font-bold uppercase tracking-wider text-xs border ${priorityFilter === item.val ? 'border-primary/20 bg-primary/10 text-primary' : 'border-transparent'}`}
+                  className={`w-full justify-start rounded-lg h-10 font-semibold text-xs border ${priorityFilter === item.val ? 'border-primary/20 bg-primary/10 text-primary' : 'border-transparent'}`}
                   onClick={() => setPriorityFilter(item.val as any)}
                 >
                   <div className={`w-2 h-2 rounded-full mr-3 ${item.color}`} />
@@ -294,7 +282,7 @@ export default function NotificacoesPage() {
 
         {/* Lista de Alertas */}
         <div className="lg:col-span-9">
-          <Card className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl">
+          <Card className="glass rounded-2xl overflow-hidden border border-border shadow-2xl">
             <CardContent className="p-0 min-h-[500px]">
               {loading ? (
                 <div className="p-8 space-y-6">
@@ -342,11 +330,11 @@ export default function NotificacoesPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start gap-4 mb-1">
                             <div className="flex flex-wrap items-center gap-3 min-w-0">
-                              <h4 className="text-base font-black italic tracking-tight uppercase text-white truncate max-w-[400px]">
+                              <h4 className="text-sm font-semibold tracking-tight text-white truncate max-w-[400px]">
                                 {n.titulo}
                               </h4>
                               <span
-                                className={`text-[8px] font-black px-2.5 py-0.5 rounded-md border tracking-widest uppercase ${
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
                                   n.prioridade === 'critica'
                                     ? 'bg-red-500/10 border-red-500/20 text-red-400'
                                     : n.prioridade === 'alta'
@@ -373,13 +361,13 @@ export default function NotificacoesPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 px-4 rounded-xl text-xs font-black italic tracking-wider border-border/40 hover:bg-muted"
+                                className="h-9 px-4 rounded-lg text-xs font-semibold"
                                 onClick={() => {
                                   handleMarkRead(n.id);
                                   window.location.hash = n.url_destino!;
                                 }}
                               >
-                                RESOLVER ALERTA{' '}
+                                Resolver Alerta{' '}
                                 <ArrowRight
                                   size={14}
                                   className="ml-2 group-hover:translate-x-1 transition-transform"
@@ -390,10 +378,10 @@ export default function NotificacoesPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-9 px-4 text-xs font-black tracking-widest text-primary hover:bg-primary/10 rounded-xl"
+                                className="h-9 px-4 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg"
                                 onClick={() => handleMarkRead(n.id)}
                               >
-                                MARCAR COMO LIDO
+                                Marcar como Lido
                               </Button>
                             )}
                           </div>

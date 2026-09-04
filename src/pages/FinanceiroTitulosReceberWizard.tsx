@@ -458,7 +458,7 @@ export default function FinanceiroTitulosReceberWizard({
         </Button>
       )}
 
-      <div className={isDrawer ? 'animate-pop-in' : 'glass-elevated p-8 md:p-12 animate-pop-in'}>
+      <div className={isDrawer ? 'animate-pop-in' : 'glass p-8 md:p-12 animate-pop-in'}>
         {/* Stepper – 3 passos */}
         <div className="flex justify-between mb-12 relative">
           <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />

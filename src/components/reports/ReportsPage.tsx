@@ -187,25 +187,15 @@ const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto animate-fade-in pb-20">
+    <div className="p-4 md:p-6 max-w-[1400px] mx-auto animate-fade-in pb-20">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 border-b border-border pb-8">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-              <BarChart3 className="text-primary w-6 h-6" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground italic">
-              Business Intelligence
-            </span>
-          </div>
-          <h1 className="text-5xl font-black italic tracking-tighter">
-            CENTRAL DE{' '}
-            <span className="text-primary underline decoration-primary/30 underline-offset-8">
-              RELATÃ“RIOS
-            </span>
+          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
+            <BarChart3 className="text-primary w-5 h-5" />
+            Central de Relatórios
           </h1>
-          <p className="text-muted-foreground mt-4 font-medium max-w-xl leading-relaxed">
+          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Métricas de produção marcenaria, fluxo de caixa, custos integrados de peças e insumos
             para auditoria gerencial.
           </p>
@@ -215,9 +205,9 @@ const ReportsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Menu Lateral de Relatórios */}
         <aside className="md:col-span-3 space-y-6">
-          <Card className="glass-elevated rounded-3xl border border-border">
+          <Card className="glass rounded-2xl border border-border">
             <CardHeader>
-              <CardTitle className="text-xs font-black tracking-widest uppercase italic">
+              <CardTitle className="text-sm font-semibold tracking-tight">
                 Painéis Financeiros
               </CardTitle>
             </CardHeader>
@@ -231,9 +221,9 @@ const ReportsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="glass-elevated rounded-3xl border border-border">
+          <Card className="glass rounded-2xl border border-border">
             <CardHeader>
-              <CardTitle className="text-xs font-black tracking-widest uppercase italic">
+              <CardTitle className="text-sm font-semibold tracking-tight">
                 Operacional & Produção
               </CardTitle>
             </CardHeader>
@@ -276,9 +266,9 @@ const ReportsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="glass-elevated rounded-3xl border border-border">
+          <Card className="glass rounded-2xl border border-border">
             <CardHeader>
-              <CardTitle className="text-xs font-black tracking-widest uppercase italic">
+              <CardTitle className="text-sm font-semibold tracking-tight">
                 Suprimentos & Compras
               </CardTitle>
             </CardHeader>
@@ -297,12 +287,12 @@ const ReportsPage: React.FC = () => {
         <main className="md:col-span-9">
           {!activeReport ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="glass-elevated p-8 text-center rounded-[2.5rem] border border-dashed border-border col-span-2 py-20">
+              <Card className="glass p-8 text-center rounded-2xl border border-dashed border-border col-span-2 py-20">
                 <LayoutDashboard className="w-16 h-16 text-primary/20 mx-auto mb-6" />
-                <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">
-                  QUETIONADOR DE BI DESATIVADO
+                <h3 className="text-lg font-semibold tracking-tight text-[var(--ui-text-primary)] mb-2">
+                  Questionador de BI Desativado
                 </h3>
-                <p className="text-muted-foreground max-w-md mx-auto text-xs uppercase tracking-wider font-medium leading-relaxed mb-6">
+                <p className="text-[var(--ui-text-secondary)] max-w-md mx-auto text-sm font-medium leading-relaxed mb-6">
                   Selecione um dos relatórios do menu ao lado para extrair inteligência, renderizar
                   gráficos interativos e exportar documentos PDF oficiais.
                 </p>
@@ -332,7 +322,7 @@ const ReportsPage: React.FC = () => {
               ].map((box, i) => (
                 <div
                   key={i}
-                  className="glass-elevated p-6 rounded-[2rem] border border-border/40 hover:border-primary/20 transition-all duration-300"
+                  className="glass p-6 rounded-2xl border border-border/40 hover:border-primary/20 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="p-2.5 bg-primary/5 rounded-xl border border-primary/10 text-primary">
@@ -354,15 +344,15 @@ const ReportsPage: React.FC = () => {
               {renderChart()}
 
               {/* Tabela de Dados e Ações */}
-              <Card className="glass-elevated rounded-[2.5rem] overflow-hidden border border-border shadow-2xl">
+              <Card className="glass rounded-2xl overflow-hidden border border-border shadow-2xl">
                 <CardHeader className="flex flex-row justify-between items-center border-b border-border p-6 flex-wrap gap-4 bg-muted/10">
                   <div>
-                    <CardTitle className="text-lg font-black tracking-tighter uppercase italic flex items-center gap-2">
-                      <FileText className="text-primary w-5 h-5" />
+                    <CardTitle className="text-sm font-semibold tracking-tight flex items-center gap-2">
+                      <FileText className="text-primary w-4 h-4" />
                       {activeReport.split('-').pop()?.toUpperCase()}
                     </CardTitle>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      Compilado em {new Date().toLocaleDateString('pt-BR')} Ã s{' '}
+                    <span className="text-xs text-[var(--ui-text-secondary)]">
+                      Compilado em {new Date().toLocaleDateString('pt-BR')} às{' '}
                       {new Date().toLocaleTimeString('pt-BR')}
                     </span>
                   </div>

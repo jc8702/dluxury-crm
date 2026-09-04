@@ -43,7 +43,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
     <Modal open={!!baixaModal} onClose={onClose} title="Registrar Pagamento Industrial">
       <div className="min-w-[450px] p-2">
         <div className="space-y-6">
-          <div className="glass-elevated p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
+          <div className="glass p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
             <div className="flex justify-between items-center">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Valor Original

@@ -487,17 +487,25 @@ export default function FinanceiroClassesPage() {
         <div>
           <h1
             style={{
-              fontSize: '1.75rem',
-              fontWeight: 900,
+              fontSize: 'var(--ui-text-2xl)',
+              fontWeight: 600,
+              letterSpacing: '-0.025em',
+              color: 'var(--ui-text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
               margin: 0,
             }}
           >
-            <Layers style={{ color: 'hsl(var(--primary))' }} /> PLANO DE CONTAS
+            <Layers style={{ color: 'hsl(var(--primary))' }} /> Plano de Contas
           </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', margin: 0 }}>
+          <p
+            style={{
+              color: 'var(--ui-text-secondary)',
+              fontSize: 'var(--ui-text-sm)',
+              margin: '0.25rem 0 0 0',
+            }}
+          >
             Hierarquia financeira de receitas e despesas
           </p>
         </div>
@@ -509,7 +517,7 @@ export default function FinanceiroClassesPage() {
               disabled={seeding}
               style={{ fontSize: '0.8rem' }}
             >
-              {seeding ? 'â³ Criando...' : 'âœ¨ CRIAR PLANO MARCENARIA'}
+              {seeding ? '⏳ Criando...' : '✨ CRIAR PLANO MARCENARIA'}
             </Button>
           )}
           <Button variant="primary" onClick={() => setModal({})} style={{ fontSize: '0.85rem' }}>
