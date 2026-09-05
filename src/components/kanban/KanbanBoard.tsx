@@ -88,9 +88,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ items, columns, onMove, onEdi
                       <div
                         className="text-[10px] font-black px-2 py-0.5 rounded-full w-fit mb-2"
                         style={{
-                          background: 'linear-gradient(135deg, #E2AC00, #B49050)',
-                          color: '#000',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          background:
+                            'linear-gradient(135deg, hsl(var(--accent)), hsl(38_50%_45%))',
+                          color: 'hsl(var(--accent-foreground))',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
                         }}
                       >
                         {item.tag}

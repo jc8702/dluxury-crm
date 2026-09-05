@@ -50,9 +50,9 @@ interface Props {
 }
 
 function TemperaturaIcon({ t }: { t: string }) {
-  if (t === 'quente') return <Flame size={14} className="text-orange-500" />;
-  if (t === 'morno') return <Thermometer size={14} className="text-yellow-500" />;
-  return <Snowflake size={14} className="text-sky-400" />;
+  if (t === 'quente') return <Flame size={14} className="text-[hsl(38_92%_35%)]" />;
+  if (t === 'morno') return <Thermometer size={14} className="text-[hsl(var(--accent))]" />;
+  return <Snowflake size={14} className="text-[hsl(var(--info))]" />;
 }
 
 function LeadCard({
@@ -265,31 +265,31 @@ export function ProspeccaoListView({
               label: 'Total Leads',
               value: metrics.resumo.total,
               icon: <Users size={18} />,
-              color: '#6366f1',
+              color: 'hsl(var(--primary))',
             },
             {
               label: 'Ativos',
               value: metrics.resumo.ativos,
               icon: <Target size={18} />,
-              color: '#0ea5e9',
+              color: 'hsl(var(--info))',
             },
             {
               label: 'Ganhos',
               value: metrics.resumo.ganhos,
               icon: <CheckCircle size={18} />,
-              color: '#22c55e',
+              color: 'hsl(var(--success))',
             },
             {
               label: 'Taxa Conv.',
               value: `${metrics.resumo.taxaConversao}%`,
               icon: <TrendingUp size={18} />,
-              color: '#f59e0b',
+              color: 'hsl(38_92%_35%)',
             },
             {
               label: 'Ticket Médio',
               value: fmtCurrency(metrics.resumo.ticketMedio),
               icon: <ArrowUpRight size={18} />,
-              color: '#8b5cf6',
+              color: 'hsl(var(--primary))',
             },
           ].map((kpi) => (
             <div

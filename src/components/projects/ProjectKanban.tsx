@@ -199,16 +199,16 @@ const ProjectKanban: React.FC = () => {
             <h4 className="text-2xl font-extrabold text-success">{approved}</h4>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-[hsl(var(--info))]">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">Em Produção</p>
-            <h4 className="text-2xl font-extrabold text-blue-500">{inProduction}</h4>
+            <h4 className="text-2xl font-extrabold text-[hsl(var(--info))]">{inProduction}</h4>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-amber-500">
+        <Card className="border-l-4 border-l-[hsl(38_92%_35%)]">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">Valor Total Pipeline</p>
-            <h4 className="text-xl font-extrabold text-amber-500">
+            <h4 className="text-xl font-extrabold text-[hsl(38_92%_35%)]">
               R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </h4>
           </CardContent>

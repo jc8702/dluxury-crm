@@ -252,7 +252,7 @@ export function ProspeccaoFormModal({ initial, onClose, onSave }: Props) {
               type="submit"
               disabled={saving}
               className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-              style={{ background: '#1e293b', color: '#fff' }}
+              style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
             >
               {saving ? 'Salvando...' : initial ? 'Atualizar' : 'Criar Lead'}
             </button>

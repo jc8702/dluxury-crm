@@ -11,7 +11,7 @@ export function NotificacoesBadge() {
       try {
         const res = await fetch('/api?action=contar_nao_lidas', {
           // Timeout de 5s para não travar o carregamento da UI
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(5000),
         });
         if (!res.ok) return;
         const data = await res.json();
@@ -40,18 +40,20 @@ export function NotificacoesBadge() {
   if (count === 0) return null;
 
   return (
-    <span style={{
-      background: '#EF4444',
-      color: 'white',
-      borderRadius: '10px',
-      padding: '2px 6px',
-      fontSize: '11px',
-      fontWeight: 'bold',
-      minWidth: '18px',
-      textAlign: 'center',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-      marginLeft: '4px'
-    }}>
+    <span
+      style={{
+        background: 'hsl(var(--destructive))',
+        color: 'white',
+        borderRadius: '10px',
+        padding: '2px 6px',
+        fontSize: '11px',
+        fontWeight: 'bold',
+        minWidth: '18px',
+        textAlign: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+        marginLeft: '4px',
+      }}
+    >
       {count > 99 ? '99+' : count}
     </span>
   );

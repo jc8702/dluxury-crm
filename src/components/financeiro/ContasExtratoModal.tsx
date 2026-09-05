@@ -75,15 +75,15 @@ export function ContasExtratoModal({
               {
                 label: 'Total Entradas',
                 value: extratoTotais.entradas,
-                color: 'text-emerald-500',
-                border: 'border-emerald-500/30',
+                color: 'text-[hsl(var(--success))]',
+                border: 'border-[hsl(var(--success)/0.3)]',
                 icon: <ArrowUpCircle className="w-4 h-4" />,
               },
               {
                 label: 'Total Saídas',
                 value: extratoTotais.saidas,
-                color: 'text-red-500',
-                border: 'border-red-500/30',
+                color: 'text-[hsl(var(--destructive))]',
+                border: 'border-[hsl(var(--destructive)/0.3)]',
                 icon: <ArrowDownCircle className="w-4 h-4" />,
                 isNeg: true,
               },
@@ -166,7 +166,7 @@ export function ContasExtratoModal({
           <div className="glass rounded-2xl overflow-hidden border border-border shadow-2xl relative">
             <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
               <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 bg-[#0A0A0A] z-20">
+                <thead className="sticky top-0 bg-card z-20">
                   <tr className="border-b border-border">
                     <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
                       Data de Efetivação
@@ -223,7 +223,7 @@ export function ContasExtratoModal({
                             </span>
                           </td>
                           <td
-                            className={`px-8 py-5 text-right font-black font-mono text-base tracking-tighter ${isPos ? 'text-emerald-400' : 'text-red-400'}`}
+                            className={`px-8 py-5 text-right font-black font-mono text-base tracking-tighter ${isPos ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
                           >
                             {isPos ? '+' : '-'} {fmt(Math.abs(Number(m.valor)))}
                           </td>
@@ -244,7 +244,7 @@ export function ContasExtratoModal({
                                       );
                                     });
                                 }}
-                                className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center group/check ${m.conferido ? 'bg-emerald-500 border-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'border-border hover:border-primary/50'}`}
+                                className={`w-10 h-10 rounded-xl border-2 transition-all flex items-center justify-center group/check ${m.conferido ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-primary-foreground shadow-lg shadow-[hsl(var(--success)/0.2)]' : 'border-border hover:border-primary/50'}`}
                               >
                                 {m.conferido ? (
                                   <X className="w-5 h-5 font-black" />

@@ -180,7 +180,7 @@ export default function ContratoDigitalModal({
 
         {/* Header */}
         <div className="flex items-center gap-2.5 mb-6">
-          <div className="bg-blue-500/10 text-blue-500 dark:text-blue-400 p-2 rounded-lg">
+          <div className="bg-[var(--ui-color-info-soft)] text-[hsl(var(--info))] p-2 rounded-lg">
             <Signature size={22} />
           </div>
           <div>
@@ -192,7 +192,7 @@ export default function ContratoDigitalModal({
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 text-sm p-3 rounded-lg mb-5">
+          <div className="bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))] text-sm p-3 rounded-lg mb-5">
             {error}
           </div>
         )}
@@ -297,8 +297,8 @@ export default function ContratoDigitalModal({
             <div
               className={`p-4 rounded-xl border flex items-center justify-between ${
                 contrato.statusAssinatura === 'assinado'
-                  ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
-                  : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400'
+                  ? 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success))]/20 text-[hsl(var(--success))]'
+                  : 'bg-[var(--ui-color-warning-soft)] border-[hsl(var(--warning))]/20 text-[hsl(38_92%_35%)]'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -345,7 +345,7 @@ export default function ContratoDigitalModal({
 
               {contrato.statusAssinatura === 'assinado' && (
                 <div className="border-t border-border pt-3 mt-2 space-y-3">
-                  <div className="flex justify-between text-green-600 dark:text-green-400">
+                  <div className="flex justify-between text-[hsl(var(--success))]">
                     <span className="flex items-center gap-1">
                       <ShieldCheck size={16} /> Validade Jurídica:
                     </span>

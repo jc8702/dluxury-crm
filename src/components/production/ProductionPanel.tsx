@@ -225,12 +225,12 @@ const ProductionPanel: React.FC = () => {
   };
 
   const colunas: { id: StatusCol; label: string; color: string }[] = [
-    { id: 'AGUARDANDO', label: 'Aguardando', color: '#6b7280' },
-    { id: 'PRODUCAO', label: 'Produção / Corte', color: '#f59e0b' },
-    { id: 'MONTAGEM', label: 'Montagem / Acabamento', color: '#3b82f6' },
-    { id: 'INSPECAO', label: 'Inspeção Final', color: '#ec4899' },
-    { id: 'PRONTO', label: 'Pronto p/ Entrega', color: '#10b981' },
-    { id: 'FINALIZADO', label: 'Finalizado', color: '#059669' },
+    { id: 'AGUARDANDO', label: 'Aguardando', color: 'hsl(var(--muted-foreground))' },
+    { id: 'PRODUCAO', label: 'Produção / Corte', color: 'hsl(38_92%_35%)' },
+    { id: 'MONTAGEM', label: 'Montagem / Acabamento', color: 'hsl(var(--info))' },
+    { id: 'INSPECAO', label: 'Inspeção Final', color: '#E1306C' },
+    { id: 'PRONTO', label: 'Pronto p/ Entrega', color: 'hsl(var(--success))' },
+    { id: 'FINALIZADO', label: 'Finalizado', color: 'hsl(var(--success))' },
   ];
 
   const handleVerMapaCorte = (op: OrdemProducao) => {
@@ -297,7 +297,7 @@ const ProductionPanel: React.FC = () => {
                 <span>TAREFAS</span>
                 <span
                   className="font-bold"
-                  style={{ color: progress === 100 ? 'var(--color-success, #10b981)' : col.color }}
+                  style={{ color: progress === 100 ? 'hsl(var(--success))' : col.color }}
                 >
                   {progress}%
                 </span>
@@ -307,7 +307,7 @@ const ProductionPanel: React.FC = () => {
                   className="h-full transition-all duration-300"
                   style={{
                     width: `${progress}%`,
-                    backgroundColor: progress === 100 ? 'var(--color-success, #10b981)' : col.color,
+                    backgroundColor: progress === 100 ? 'hsl(var(--success))' : col.color,
                   }}
                 />
               </div>

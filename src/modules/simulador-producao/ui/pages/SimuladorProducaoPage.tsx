@@ -710,7 +710,11 @@ export default function SimuladorProducaoPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-2">
-                <StrategyCard title="FLUXO CONTÍNUO" result={result.flow} accent="text-[#10B981]" />
+                <StrategyCard
+                  title="FLUXO CONTÍNUO"
+                  result={result.flow}
+                  accent="text-[hsl(var(--success))]"
+                />
                 <StrategyCard title="LOTE SEPARADO" result={result.batch} accent="text-accent" />
               </div>
 

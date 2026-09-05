@@ -97,12 +97,12 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
     return (
       <div
         style={{
-          background: '#0D2137',
+          background: 'hsl(var(--primary))',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
+          color: 'hsl(var(--primary-foreground))',
         }}
       >
         <div className="animate-pulse">Aguarde, carregando sua proposta...</div>
@@ -113,19 +113,21 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
     return (
       <div
         style={{
-          background: '#0D2137',
+          background: 'hsl(var(--primary))',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
+          color: 'hsl(var(--primary-foreground))',
           padding: '2rem',
         }}
       >
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-          <XCircle size={64} color="#EF4444" style={{ marginBottom: '1.5rem' }} />
+          <XCircle size={64} color="hsl(var(--destructive))" style={{ marginBottom: '1.5rem' }} />
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Ops! Algo deu errado.</h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: '1.6' }}>{error}</p>
+          <p style={{ color: 'hsl(var(--primary-foreground) / 0.7)', lineHeight: '1.6' }}>
+            {error}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="btn-secondary"
@@ -141,12 +143,12 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
     return (
       <div
         style={{
-          background: '#0D2137',
+          background: 'hsl(var(--primary))',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
+          color: 'hsl(var(--primary-foreground))',
           padding: '2rem',
         }}
       >
@@ -158,22 +160,22 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   width: '100px',
                   height: '100px',
                   borderRadius: '50%',
-                  background: 'rgba(16, 185, 129, 0.1)',
+                  background: 'hsl(var(--success) / 0.12)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 2rem',
-                  border: '2px solid #10B981',
+                  border: '2px solid hsl(var(--success))',
                 }}
               >
-                <CheckCircle2 size={50} color="#10B981" />
+                <CheckCircle2 size={50} color="hsl(var(--success))" />
               </div>
               <h1
                 style={{
                   fontSize: '2.5rem',
                   fontWeight: '800',
                   marginBottom: '1rem',
-                  color: '#E2AC00',
+                  color: 'hsl(var(--accent))',
                 }}
               >
                 Proposta Aprovada!
@@ -181,7 +183,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               <p
                 style={{
                   fontSize: '1.1rem',
-                  color: 'rgba(255,255,255,0.8)',
+                  color: 'hsl(var(--primary-foreground) / 0.85)',
                   marginBottom: '2rem',
                 }}
               >
@@ -190,16 +192,16 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               </p>
               <div
                 style={{
-                  background: 'hsl(var(--surface-hover))',
+                  background: 'hsl(var(--primary-foreground) / 0.08)',
                   padding: '1.5rem',
                   borderRadius: 'var(--radius-lg)',
-                  border: '1px dashed rgba(255,255,255,0.2)',
+                  border: '1px dashed hsl(var(--primary-foreground) / 0.25)',
                 }}
               >
                 <p
                   style={{
                     fontSize: '0.8rem',
-                    color: 'rgba(255,255,255,0.4)',
+                    color: 'hsl(var(--primary-foreground) / 0.5)',
                     margin: '0 0 0.5rem 0',
                   }}
                 >
@@ -209,7 +211,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   style={{
                     fontFamily: 'monospace',
                     fontSize: '0.75rem',
-                    color: 'hsl(var(--primary))',
+                    color: 'hsl(var(--accent))',
                   }}
                 >
                   ID: {quotation.id}
@@ -222,11 +224,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
             </>
           ) : (
             <>
-              <AlertCircle size={80} color="#F59E0B" style={{ marginBottom: '2rem' }} />
+              <AlertCircle size={80} color="hsl(var(--accent))" style={{ marginBottom: '2rem' }} />
               <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '1rem' }}>
                 Revisão Solicitada
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)' }}>
+              <p style={{ color: 'hsl(var(--primary-foreground) / 0.85)' }}>
                 Sua solicitação foi enviada para nossa equipe comercial interna. Em breve entraremos
                 em contato.
               </p>
@@ -239,18 +241,18 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
   return (
     <div
       style={{
-        background: '#F8FAFC',
+        background: 'hsl(var(--background))',
         minHeight: '100vh',
-        color: '#0D2137',
-        fontFamily: 'Inter, sans-serif',
+        color: 'hsl(var(--foreground))',
+        fontFamily: "'Source Sans 3', Inter, sans-serif",
       }}
     >
       {/* Header Premium */}
       <header
         style={{
-          background: '#0D2137',
+          background: 'hsl(var(--primary))',
           padding: '1.5rem 2rem',
-          color: 'white',
+          color: 'hsl(var(--primary-foreground))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -262,7 +264,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div
             style={{
-              background: '#E2AC00',
+              background: 'hsl(var(--accent))',
               width: '40px',
               height: '40px',
               borderRadius: '8px',
@@ -271,7 +273,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               justifyContent: 'center',
               fontWeight: '900',
               fontSize: '1.5rem',
-              color: '#0D2137',
+              color: 'hsl(var(--primary))',
             }}
           >
             D
@@ -283,13 +285,13 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
         <div
           style={{
             fontSize: '0.85rem',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'hsl(var(--primary-foreground) / 0.7)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
           }}
         >
-          <ShieldCheck size={16} color="#10B981" /> Proposta Digital Segura
+          <ShieldCheck size={16} color="hsl(var(--success))" /> Proposta Digital Segura
         </div>
       </header>
 
@@ -302,8 +304,8 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
             <div>
               <span
                 style={{
-                  background: '#E2AC0020',
-                  color: '#E2AC00',
+                  background: 'hsl(var(--accent) / 0.12)',
+                  color: 'hsl(var(--accent))',
                   padding: '0.4rem 0.8rem',
                   borderRadius: '4px',
                   fontSize: '0.75rem',
@@ -318,7 +320,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               </h1>
               <p
                 style={{
-                  color: '#64748B',
+                  color: 'hsl(var(--muted-foreground))',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
@@ -355,7 +357,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   flexDirection: 'column',
                   gap: '0.3rem',
                   marginTop: '0.5rem',
-                  color: '#64748B',
+                  color: 'hsl(var(--muted-foreground))',
                   fontSize: '0.9rem',
                 }}
               >
@@ -390,7 +392,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 fontSize: '1.2rem',
                 fontWeight: '800',
                 marginBottom: '1.5rem',
-                borderBottom: '2px solid #E2E8F0',
+                borderBottom: '2px solid hsl(var(--border))',
                 paddingBottom: '0.5rem',
               }}
             >
@@ -398,17 +400,17 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
             </h3>
             <div
               style={{
-                background: 'white',
+                background: 'hsl(var(--card))',
                 borderRadius: '12px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                boxShadow: '0 4px 20px hsl(var(--foreground) / 0.05)',
                 overflow: 'hidden',
               }}
             >
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead
                   style={{
-                    background: '#F8FAFC',
-                    color: '#64748B',
+                    background: 'hsl(var(--surface-hover))',
+                    color: 'hsl(var(--muted-foreground))',
                     fontSize: '0.75rem',
                     textTransform: 'uppercase',
                   }}
@@ -423,12 +425,24 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 </thead>
                 <tbody>
                   {quotation.itens?.map((item: any) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <tr key={item.id} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
                       <td style={{ padding: '1.2rem 1.5rem' }}>
-                        <div style={{ fontWeight: '700', fontSize: '1rem', color: '#1E293B' }}>
+                        <div
+                          style={{
+                            fontWeight: '700',
+                            fontSize: '1rem',
+                            color: 'hsl(var(--foreground))',
+                          }}
+                        >
                           {item.descricao}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.2rem' }}>
+                        <div
+                          style={{
+                            fontSize: '0.8rem',
+                            color: 'hsl(var(--muted-foreground))',
+                            marginTop: '0.2rem',
+                          }}
+                        >
                           {item.ambiente} | {item.largura_cm}x{item.altura_cm}cm
                         </div>
                       </td>
@@ -453,7 +467,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
 
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'hsl(var(--surface-hover))',
                   padding: '2rem 1.5rem',
                   display: 'flex',
                   justifyContent: 'flex-end',
@@ -468,7 +482,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   }}
                 >
                   <div
-                    style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      color: 'hsl(var(--muted-foreground))',
+                    }}
                   >
                     <span>Subtotal</span>
                     <span>
@@ -480,7 +498,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                   </div>
                   {quotation.adicional_urgencia_pct > 0 && (
                     <div
-                      style={{ display: 'flex', justifyContent: 'space-between', color: '#EF4444' }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        color: 'hsl(var(--destructive))',
+                      }}
                     >
                       <span>Adicional Urgência</span>
                       <span>+{quotation.adicional_urgencia_pct}%</span>
@@ -492,14 +514,14 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                       justifyContent: 'space-between',
                       fontSize: '1.5rem',
                       fontWeight: '900',
-                      color: '#0D2137',
+                      color: 'hsl(var(--foreground))',
                       marginTop: '0.5rem',
                       paddingTop: '0.5rem',
-                      borderTop: '2px solid #CBD5E1',
+                      borderTop: '2px solid hsl(var(--border))',
                     }}
                   >
                     <span>T O T A L</span>
-                    <span style={{ color: '#E2AC00' }}>
+                    <span style={{ color: 'hsl(var(--accent))' }}>
                       R${' '}
                       {Number(quotation.valor_final).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
@@ -528,16 +550,22 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               </h3>
               <div
                 style={{
-                  background: 'white',
+                  background: 'hsl(var(--card))',
                   padding: '1.5rem',
                   borderRadius: '12px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid hsl(var(--border))',
                 }}
               >
-                <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>
+                <p style={{ margin: 0, fontWeight: '700', color: 'hsl(var(--foreground))' }}>
                   {quotation.condicao?.nome || 'A combinar'}
                 </p>
-                <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>
+                <p
+                  style={{
+                    margin: '0.5rem 0 0',
+                    fontSize: '0.85rem',
+                    color: 'hsl(var(--muted-foreground))',
+                  }}
+                >
                   Prazos sujeitos a aprovação de crédito.
                 </p>
               </div>
@@ -557,16 +585,22 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               </h3>
               <div
                 style={{
-                  background: 'white',
+                  background: 'hsl(var(--card))',
                   padding: '1.5rem',
                   borderRadius: '12px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid hsl(var(--border))',
                 }}
               >
-                <p style={{ margin: 0, fontWeight: '700', color: '#1E293B' }}>
+                <p style={{ margin: 0, fontWeight: '700', color: 'hsl(var(--foreground))' }}>
                   {quotation.prazo_entrega_dias || 45} dias úteis
                 </p>
-                <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#64748B' }}>
+                <p
+                  style={{
+                    margin: '0.5rem 0 0',
+                    fontSize: '0.85rem',
+                    color: 'hsl(var(--muted-foreground))',
+                  }}
+                >
                   Após a medição final e aprovação técnica.
                 </p>
               </div>
@@ -580,12 +614,12 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
               </h3>
               <div
                 style={{
-                  background: 'rgba(226, 172, 0, 0.05)',
+                  background: 'hsl(var(--accent) / 0.06)',
                   padding: '1.5rem',
                   borderRadius: '12px',
-                  border: '1px solid rgba(226, 172, 0, 0.2)',
+                  border: '1px solid hsl(var(--accent) / 0.25)',
                   fontSize: '0.9rem',
-                  color: '#665c3b',
+                  color: 'hsl(40 100% 22%)',
                   lineHeight: '1.6',
                 }}
               >
@@ -596,13 +630,17 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
 
           {/* Ações Finais */}
           <section
-            style={{ borderTop: '2px solid #E2E8F0', paddingTop: '3rem', marginTop: '1rem' }}
+            style={{
+              borderTop: '2px solid hsl(var(--border))',
+              paddingTop: '3rem',
+              marginTop: '1rem',
+            }}
           >
             <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
               <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '1rem' }}>
                 Pronto para começar seu projeto?
               </h2>
-              <p style={{ color: '#64748B', marginBottom: '2.5rem' }}>
+              <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: '2.5rem' }}>
                 Ao aprovar esta proposta, você concorda com as condições descritas acima e autoriza
                 o início das etapas técnicas.
               </p>
@@ -616,7 +654,7 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                       padding: '1rem 2.5rem',
                       fontSize: '1.1rem',
                       borderRadius: '30px',
-                      boxShadow: '0 10px 15px -3px rgba(226, 172, 0, 0.3)',
+                      boxShadow: '0 10px 15px -3px hsl(var(--primary) / 0.3)',
                     }}
                   >
                     APROVAR AGORA
@@ -635,11 +673,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 <div
                   className="animate-fade-in"
                   style={{
-                    background: 'white',
+                    background: 'hsl(var(--card))',
                     padding: '2rem',
                     borderRadius: '16px',
-                    border: '2px solid #E2AC00',
-                    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                    border: '2px solid hsl(var(--accent))',
+                    boxShadow: '0 20px 25px -5px hsl(var(--foreground) / 0.1)',
                   }}
                 >
                   <h4 style={{ margin: '0 0 1.5rem' }}>Assinatura Digital</h4>
@@ -672,11 +710,11 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                 <div
                   className="animate-fade-in"
                   style={{
-                    background: 'white',
+                    background: 'hsl(var(--card))',
                     padding: '2rem',
                     borderRadius: '16px',
-                    border: '2px solid #EF4444',
-                    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                    border: '2px solid hsl(var(--destructive))',
+                    boxShadow: '0 20px 25px -5px hsl(var(--foreground) / 0.1)',
                   }}
                 >
                   <h4 style={{ margin: '0 0 1.5rem' }}>O que deseja revisar?</h4>
@@ -693,9 +731,9 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
                     <button
                       onClick={handleReject}
                       className="btn-primary"
-                      style={{ flex: 1, background: '#EF4444', height: '50px' }}
+                      style={{ flex: 1, background: 'hsl(var(--destructive))', height: '50px' }}
                     >
-                      ENVIAR SOLICITAÃ‡ÃƒO
+                      ENVIAR SOLICITAÇÃO
                     </button>
                     <button onClick={() => setAction('idle')} className="btn-secondary">
                       Voltar
@@ -710,14 +748,14 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
 
       <footer
         style={{
-          background: '#0D2137',
+          background: 'hsl(var(--primary))',
           padding: '3rem 2rem',
-          color: 'rgba(255,255,255,0.4)',
+          color: 'hsl(var(--primary-foreground) / 0.55)',
           textAlign: 'center',
           fontSize: '0.8rem',
         }}
       >
-        <p>Â© {new Date().getFullYear()} D'Luxury CRM Industrial. Todos os direitos reservados.</p>
+        <p>© {new Date().getFullYear()} D'Luxury CRM Industrial. Todos os direitos reservados.</p>
         <p style={{ marginTop: '0.5rem' }}>
           Este documento é eletrônico e possui validade jurídica respaldada pelos termos de uso da
           plataforma.
@@ -725,52 +763,26 @@ const AprovacaoPage: React.FC<AprovacaoPageProps> = ({ token: propToken }) => {
       </footer>
 
       <style>{`
-        .btn-primary {
-            background: #E2AC00;
-            color: #0D2137;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
-        .btn-primary:hover {
-            background: #f5ba00;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: #F1F5F9;
-            color: #475569;
-            border: 1px solid #E2E8F0;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-secondary:hover {
-            background: #E2E8F0;
-        }
         .form-group label {
             display: block;
             font-size: 0.85rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            color: #475569;
+            color: hsl(var(--muted-foreground));
         }
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 0.8rem;
-            border: 1.5px solid #E2E8F0;
+            border: 1.5px solid hsl(var(--border));
             border-radius: 8px;
             font-family: inherit;
             transition: border-color 0.2s;
+            background: hsl(var(--card));
+            color: hsl(var(--foreground));
         }
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             outline: none;
-            border-color: #E2AC00;
+            border-color: hsl(var(--primary));
         }
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out;

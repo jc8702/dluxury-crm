@@ -352,7 +352,7 @@ const SKUPage: React.FC = () => {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded border-border bg-background text-orange-500 focus:ring-orange-500 focus:ring-offset-background"
+                  className="rounded border-border bg-background text-[hsl(38_92%_35%)] focus:ring-[hsl(38_92%_35%)] focus:ring-offset-background"
                   checked={calcModoChapa}
                   onChange={(e) => setCalcModoChapa(e.target.checked)}
                 />

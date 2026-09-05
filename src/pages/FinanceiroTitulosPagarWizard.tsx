@@ -365,9 +365,9 @@ export default function FinanceiroTitulosPagarWizard({
           className="animate-fade-in"
           style={{
             padding: '1rem',
-            border: '1px solid var(--warning, #f59e0b)',
+            border: '1px solid hsl(var(--warning) / 0.5)',
             borderRadius: 'var(--radius-md)',
-            background: 'rgba(245,158,11,0.08)',
+            background: 'hsl(var(--warning) / 0.08)',
           }}
         >
           <div
@@ -376,7 +376,7 @@ export default function FinanceiroTitulosPagarWizard({
               alignItems: 'center',
               gap: '0.5rem',
               marginBottom: '0.75rem',
-              color: 'var(--warning, #f59e0b)',
+              color: 'hsl(var(--warning))',
               fontWeight: 700,
               fontSize: '0.9rem',
             }}
@@ -491,7 +491,7 @@ export default function FinanceiroTitulosPagarWizard({
               padding: '1.25rem',
               border: '1px dashed hsl(var(--border))',
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(255,255,255,0.02)',
+              background: 'hsl(var(--muted) / 0.5)',
             }}
           >
             <div

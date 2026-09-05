@@ -141,10 +141,11 @@ export default function FinanceiroTitulosReceberPage() {
   };
 
   const getStatusStyle = (status: string, vencimento: string) => {
-    if (status === 'pago') return { background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' };
+    if (status === 'pago')
+      return { background: 'hsl(var(--success) / 0.15)', color: 'hsl(var(--success))' };
     if (new Date(vencimento) < new Date())
-      return { background: 'rgba(239, 68, 68, 0.15)', color: 'hsl(var(--destructive))' };
-    return { background: 'rgba(245, 158, 11, 0.15)', color: 'hsl(var(--warning))' };
+      return { background: 'hsl(var(--destructive) / 0.15)', color: 'hsl(var(--destructive))' };
+    return { background: 'hsl(var(--warning) / 0.15)', color: 'hsl(var(--warning))' };
   };
 
   return (
@@ -182,22 +183,22 @@ export default function FinanceiroTitulosReceberPage() {
           {
             label: 'Total a Receber',
             value: stats.totalAberto,
-            color: 'text-blue-400',
-            border: 'border-blue-500/50',
+            color: 'text-[hsl(var(--info))]',
+            border: 'border-[hsl(var(--info))]/50',
             icon: ArrowDownLeft,
           },
           {
             label: 'Total Recebido',
             value: stats.totalRecebido,
-            color: 'text-emerald-400',
-            border: 'border-emerald-500/50',
+            color: 'text-[hsl(var(--success))]',
+            border: 'border-[hsl(var(--success))]/50',
             icon: CheckCircle,
           },
           {
             label: 'Em Atraso',
             value: stats.totalVencido,
-            color: 'text-red-400',
-            border: 'border-red-500/50',
+            color: 'text-[hsl(var(--destructive))]',
+            border: 'border-[hsl(var(--destructive))]/50',
             icon: Calendar,
           },
         ].map((stat, i) => (
@@ -220,7 +221,7 @@ export default function FinanceiroTitulosReceberPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02]">
+              <tr className="border-b border-border bg-muted/50">
                 <th className="px-6 py-4 text-xs font-black tracking-widest text-muted-foreground uppercase">
                   Título
                 </th>
@@ -241,7 +242,7 @@ export default function FinanceiroTitulosReceberPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <TableSkeleton rows={5} cols={6} />
               ) : rows.length === 0 ? (
@@ -275,7 +276,7 @@ export default function FinanceiroTitulosReceberPage() {
                         onClick={() =>
                           setExpandedGroups((prev) => ({ ...prev, [cid]: !prev[cid] }))
                         }
-                        className="bg-white/[0.03] cursor-pointer hover:bg-white/[0.05] transition-colors border-l-4 border-primary"
+                        className="bg-muted/50 cursor-pointer hover:bg-muted transition-colors border-l-4 border-primary"
                       >
                         <td colSpan={2} className="px-6 py-4">
                           <div className="flex items-center gap-4">
@@ -288,7 +289,7 @@ export default function FinanceiroTitulosReceberPage() {
                               {clientName.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-black tracking-tight text-lg text-white">
+                              <div className="font-black tracking-tight text-lg text-foreground">
                                 {clientName}
                               </div>
                               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
@@ -306,7 +307,7 @@ export default function FinanceiroTitulosReceberPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-[10px] font-black tracking-widest text-red-400/70 hover:text-red-400 transition-colors uppercase flex items-center gap-1 ml-auto group"
+                            className="text-[10px] font-black tracking-widest text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] transition-colors uppercase flex items-center gap-1 ml-auto group"
                             onClick={async (e) => {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
@@ -332,7 +333,7 @@ export default function FinanceiroTitulosReceberPage() {
                       {/* Detail Rows */}
                       {isExpanded &&
                         groupRows.map((r) => (
-                          <tr key={r.id} className="hover:bg-white/[0.02] transition-colors group">
+                          <tr key={r.id} className="hover:bg-muted/30 transition-colors group">
                             <td className="px-6 py-4 pl-20">
                               <span className="font-mono font-bold text-primary tracking-tighter text-sm opacity-80 group-hover:opacity-100">
                                 #{r.numero_titulo}
@@ -343,7 +344,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 Lançamento Direto
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-right font-black text-white italic">
+                            <td className="px-6 py-4 text-right font-black text-foreground italic">
                               R${' '}
                               {Number(r.valor_original).toLocaleString('pt-BR', {
                                 minimumFractionDigits: 2,
@@ -377,7 +378,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
                                   title="Editar"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -389,7 +390,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-20 transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-muted-foreground hover:bg-[var(--ui-color-success-soft)] hover:text-[hsl(var(--success))] disabled:opacity-20 transition-all"
                                   title="Baixar Título"
                                   disabled={r.status === 'pago'}
                                   onClick={(e) => {
@@ -402,7 +403,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-muted-foreground hover:bg-[var(--ui-color-danger-soft)] hover:text-[hsl(var(--destructive))] transition-all"
                                   title="Excluir"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -414,7 +415,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all"
                                   title="Recibo"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -426,7 +427,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-[#25D366] hover:bg-[#25D366]/20 transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-[#25D366] hover:bg-[#25D366]/20 transition-all"
                                   title="WhatsApp"
                                   onClick={async (e) => {
                                     e.stopPropagation();
@@ -449,7 +450,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 <Button
                                   variant="secondary"
                                   size="sm"
-                                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-primary hover:bg-primary/20 disabled:opacity-20 transition-all"
+                                  className="p-2 rounded-lg bg-muted border border-border text-primary hover:bg-primary/20 disabled:opacity-20 transition-all"
                                   title="Simular Antecipação"
                                   disabled={r.status === 'pago'}
                                   onClick={(e) => {
@@ -471,7 +472,7 @@ export default function FinanceiroTitulosReceberPage() {
           </table>
         </div>
         {/* Footer with items count */}
-        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-black text-muted-foreground uppercase tracking-widest">
+        <div className="px-6 py-4 border-t border-border bg-muted/50 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-black text-muted-foreground uppercase tracking-widest">
           <div>
             Exibindo <span className="text-white font-black">{rows.length}</span> de{' '}
             <span className="text-white font-black">{total}</span> títulos industriais
@@ -549,7 +550,7 @@ export default function FinanceiroTitulosReceberPage() {
                       {diasParaVencer} dias
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-red-400">
+                  <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
                     <span className="text-[11px] font-bold uppercase tracking-wider">
                       Desconto Bancário
                     </span>
@@ -557,7 +558,7 @@ export default function FinanceiroTitulosReceberPage() {
                       - R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-red-400">
+                  <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
                     <span className="text-[11px] font-bold uppercase tracking-wider">
                       Taxas Administrativas (0.5%)
                     </span>
@@ -565,7 +566,7 @@ export default function FinanceiroTitulosReceberPage() {
                       - R$ {taxaFixa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+                  <div className="pt-4 border-t border-border flex justify-between items-end">
                     <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">
                       Valor Líquido
                     </span>
@@ -626,18 +627,18 @@ export default function FinanceiroTitulosReceberPage() {
 
             return (
               <div className="space-y-6">
-                <div className="p-6 rounded-xl space-y-3 bg-emerald-500/5 border border-emerald-500/20">
+                <div className="p-6 rounded-xl space-y-3 bg-[var(--ui-color-success-soft)] border border-[hsl(var(--success))]/20">
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                       Valor Original
                     </span>
-                    <span className="font-bold text-white italic text-lg tracking-tighter">
+                    <span className="font-bold text-foreground italic text-lg tracking-tighter">
                       R$ {valorAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   {atraso > 0 && (
                     <>
-                      <div className="flex justify-between items-center text-red-400">
+                      <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
                         <span className="text-[11px] font-bold uppercase tracking-wider">
                           Multa (2% - {atraso} dias)
                         </span>
@@ -645,7 +646,7 @@ export default function FinanceiroTitulosReceberPage() {
                           + R$ {valorMulta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center text-red-400">
+                      <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
                         <span className="text-[11px] font-bold uppercase tracking-wider">
                           Juros (1%/mês)
                         </span>
@@ -655,11 +656,11 @@ export default function FinanceiroTitulosReceberPage() {
                       </div>
                     </>
                   )}
-                  <div className="pt-4 border-t border-white/10 flex justify-between items-end">
-                    <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.2em]">
+                  <div className="pt-4 border-t border-border flex justify-between items-end">
+                    <span className="text-[11px] font-black text-[hsl(var(--success))] uppercase tracking-[0.2em]">
                       Valor Total
                     </span>
-                    <span className="text-3xl font-black text-emerald-400 italic tracking-tighter">
+                    <span className="text-3xl font-black text-[hsl(var(--success))] italic tracking-tighter">
                       R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -802,7 +803,7 @@ export default function FinanceiroTitulosReceberPage() {
             />
           </div>
 
-          <div className="flex gap-4 justify-end pt-6 border-t border-white/5">
+          <div className="flex gap-4 justify-end pt-6 border-t border-border">
             <Button variant="outline" onClick={() => setEditModal(null)}>
               CANCELAR
             </Button>
@@ -845,7 +846,7 @@ export default function FinanceiroTitulosReceberPage() {
             </div>
 
             {/* Body do Drawer com Scroll */}
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-muted/30">
               <FinanceiroTitulosReceberWizard
                 isDrawer={true}
                 onClose={() => setIsWizardOpen(false)}

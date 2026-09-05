@@ -110,7 +110,7 @@ const Dashboard: React.FC = () => {
     instagram: { label: 'Instagram', color: '#e1306c' },
     google: { label: 'Google', color: 'var(--ui-color-info)' },
     feira: { label: 'Feira', color: 'var(--ui-color-gold-400)' },
-    passante: { label: 'Passante', color: '#8b5cf6' },
+    passante: { label: 'Passante', color: 'var(--ui-color-primary)' },
     outro: { label: 'Outro', color: 'var(--ui-text-muted)' },
   };
 

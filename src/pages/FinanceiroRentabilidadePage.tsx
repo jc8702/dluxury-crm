@@ -1,30 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  TrendingUp, TrendingDown, AlertTriangle, DollarSign, 
-  Target, Users, ArrowLeft, Activity, Percent, Clock,
-  ArrowUpRight, CheckCircle, Edit3, X, Save
+import {
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  DollarSign,
+  Target,
+  Users,
+  ArrowLeft,
+  Activity,
+  Percent,
+  Clock,
+  ArrowUpRight,
+  CheckCircle,
+  Edit3,
+  X,
+  Save,
 } from 'lucide-react';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  Legend, ResponsiveContainer, PieChart, Pie, Cell 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import { rentabilidadeService } from '../services/rentabilidadeService.js';
-import type { KPIRentabilidade, ProjetoRentabilidade, AlertaRentabilidade, ClienteRentabilidade, GraficoMargemDado } from '../services/rentabilidadeService.js';
+import type {
+  KPIRentabilidade,
+  ProjetoRentabilidade,
+  AlertaRentabilidade,
+  ClienteRentabilidade,
+  GraficoMargemDado,
+} from '../services/rentabilidadeService.js';
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const fmt = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const COLORS = ['#28A745', '#0D66CC', '#E2AC00', '#DC3545', '#00A99D', '#17A2B8'];
 
 export default function FinanceiroRentabilidadePage() {
   const [periodo, setPeriodo] = useState('mes');
   const [buscaCliente, setBuscaCliente] = useState('');
-  
+
   const [kpis, setKpis] = useState<KPIRentabilidade | null>(null);
   const [projetos, setProjetos] = useState<ProjetoRentabilidade[]>([]);
   const [alertas, setAlertas] = useState<AlertaRentabilidade[]>([]);
   const [clientes, setClientes] = useState<ClienteRentabilidade[]>([]);
   const [graficoDados, setGraficoDados] = useState<GraficoMargemDado[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<ProjetoRentabilidade | null>(null);
   const [saving, setSaving] = useState(false);
@@ -49,7 +77,7 @@ export default function FinanceiroRentabilidadePage() {
         rentabilidadeService.getProjetos(buscaCliente || undefined),
         rentabilidadeService.getAlertas(),
         rentabilidadeService.getPorCliente(),
-        rentabilidadeService.getGraficoMargem()
+        rentabilidadeService.getGraficoMargem(),
       ]);
 
       setKpis(kpiRes);
@@ -87,7 +115,7 @@ export default function FinanceiroRentabilidadePage() {
         tempo_horas_real: parseFloat(tempoHoras) || 0,
         custo_retrabalho: parseFloat(costRetrabalho) || 0,
         custo_desperdicio_material: parseFloat(costDesperdicio) || 0,
-        descricao_desvios: desviosDesc
+        descricao_desvios: desviosDesc,
       });
 
       if (res.success) {
@@ -103,36 +131,41 @@ export default function FinanceiroRentabilidadePage() {
   };
 
   // Filtrar mais lucrativos & prejuízos
-  const lucrativos = projetos.filter(p => p.status === 'lucrativo').slice(0, 5);
-  const prejuizados = projetos.filter(p => p.status === 'prejuizo').slice(0, 5);
+  const lucrativos = projetos.filter((p) => p.status === 'lucrativo').slice(0, 5);
+  const prejuizados = projetos.filter((p) => p.status === 'prejuizo').slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-amber-500/30">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-[var(--ui-color-warning-soft)]">
       <div className="max-w-[1600px] mx-auto animate-in fade-in duration-700 space-y-8">
-        
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Link to="/financeiro" className="text-muted-foreground hover:text-primary-foreground transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+              <Link
+                to="/financeiro"
+                className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
+              >
                 <ArrowLeft size={14} /> Voltar ao Financeiro
               </Link>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none mt-2">
-              Rentabilidade & <span className="text-amber-500">Margem Real</span>
+              Rentabilidade & <span className="text-[hsl(38_92%_35%)]">Margem Real</span>
             </h1>
             <p className="text-muted-foreground mt-2 text-sm max-w-2xl leading-relaxed">
-              Análise comparativa real vs. orçado das OPs concluídas para identificar perdas invisíveis, desvios operacionais e calibrar o pricing.
+              Análise comparativa real vs. orçado das OPs concluídas para identificar perdas
+              invisíveis, desvios operacionais e calibrar o pricing.
             </p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Período</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                Período
+              </label>
               <select
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
-                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 font-bold"
+                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] font-bold"
               >
                 <option value="mes">Último Mês</option>
                 <option value="trimestre">Último Trimestre</option>
@@ -140,13 +173,15 @@ export default function FinanceiroRentabilidadePage() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Filtro Cliente</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                Filtro Cliente
+              </label>
               <input
                 type="text"
                 placeholder="Filtrar por nome..."
                 value={buscaCliente}
                 onChange={(e) => setBuscaCliente(e.target.value)}
-                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-amber-500 w-44 font-semibold text-foreground placeholder:text-muted-foreground"
+                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] w-44 font-semibold text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -154,8 +189,11 @@ export default function FinanceiroRentabilidadePage() {
 
         {loading && !kpis ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-20">
-            {[1, 2, 3, 4].map(n => (
-              <div key={n} className="h-32 bg-surface/50 border border-border rounded-2xl animate-pulse" />
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className="h-32 bg-surface/50 border border-border rounded-2xl animate-pulse"
+              />
             ))}
           </div>
         ) : (
@@ -168,16 +206,16 @@ export default function FinanceiroRentabilidadePage() {
                   value={fmt(kpis.receita_total)}
                   pct={kpis.variacao_receita}
                   icon={DollarSign}
-                  color="text-sky-400"
-                  borderColor="border-sky-500/20"
+                  color="text-[hsl(var(--info))]"
+                  borderColor="border-[hsl(var(--info))]/20"
                 />
                 <KPICard
                   title="Custos Reais"
                   value={fmt(kpis.custo_total)}
                   pct={kpis.variacao_custos}
                   icon={TrendingDown}
-                  color="text-rose-400"
-                  borderColor="border-rose-500/20"
+                  color="text-[hsl(var(--destructive))]"
+                  borderColor="border-[hsl(var(--destructive))]/20"
                   inverse={true}
                 />
                 <KPICard
@@ -185,16 +223,16 @@ export default function FinanceiroRentabilidadePage() {
                   value={fmt(kpis.margem_total)}
                   pct={kpis.variacao_margem}
                   icon={TrendingUp}
-                  color="text-emerald-400"
-                  borderColor="border-emerald-500/20"
+                  color="text-[hsl(var(--success))]"
+                  borderColor="border-[hsl(var(--success))]/20"
                 />
                 <KPICard
                   title="Margem Média %"
                   value={`${kpis.margem_media_percentual.toFixed(1)}%`}
                   pct={kpis.variacao_margem_percentual}
                   icon={Percent}
-                  color="text-violet-400"
-                  borderColor="border-violet-500/20"
+                  color="text-[hsl(var(--primary))]"
+                  borderColor="border-[hsl(var(--primary))]/20"
                   isAbs={true}
                 />
               </div>
@@ -202,15 +240,24 @@ export default function FinanceiroRentabilidadePage() {
 
             {/* Alertas Críticos */}
             {alertas.length > 0 && (
-              <div className="p-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/[0.02] flex items-start gap-4">
-                <AlertTriangle className="text-amber-500 w-6 h-6 shrink-0 mt-0.5" />
+              <div className="p-5 rounded-2xl border border-[hsl(var(--warning))]/20 bg-[var(--ui-color-warning-soft)] flex items-start gap-4">
+                <AlertTriangle className="text-[hsl(38_92%_35%)] w-6 h-6 shrink-0 mt-0.5" />
                 <div className="space-y-2 flex-1">
-                  <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider">Desvios de Margem Detectados</h3>
+                  <h3 className="text-sm font-bold text-[hsl(38_92%_35%)] uppercase tracking-wider">
+                    Desvios de Margem Detectados
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-foreground">
                     {alertas.slice(0, 4).map((alerta, i) => (
-                      <div key={i} className="flex justify-between items-center py-1 border-b border-slate-900">
-                        <span className="font-semibold text-foreground">{alerta.numero_op} - {alerta.cliente}</span>
-                        <span className="font-bold text-rose-500">+{alerta.variacao_percentual.toFixed(1)}% de desvio</span>
+                      <div
+                        key={i}
+                        className="flex justify-between items-center py-1 border-b border-border"
+                      >
+                        <span className="font-semibold text-foreground">
+                          {alerta.numero_op} - {alerta.cliente}
+                        </span>
+                        <span className="font-bold text-[hsl(var(--destructive))]">
+                          +{alerta.variacao_percentual.toFixed(1)}% de desvio
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -224,20 +271,71 @@ export default function FinanceiroRentabilidadePage() {
               <div className="col-span-12 lg:col-span-8 glass p-6 md:p-8 rounded-2xl border border-border min-h-[400px]">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="text-lg font-bold uppercase tracking-tight italic">Evolução de Margem</h3>
-                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Margem Estimada vs. Margem Real</p>
+                    <h3 className="text-lg font-bold uppercase tracking-tight italic">
+                      Evolução de Margem
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                      Margem Estimada vs. Margem Real
+                    </p>
                   </div>
                 </div>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={graficoDados}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                      <XAxis dataKey="mes" stroke="rgba(255,255,255,0.2)" fontSize={10} axisLine={false} tickLine={false} />
-                      <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px', color: '#fff' }} />
-                      <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }} />
-                      <Line type="monotone" dataKey="margem_estimada" name="Margem Estimada" stroke="#6366f1" strokeWidth={3} dot={false} />
-                      <Line type="monotone" dataKey="margem_real" name="Margem Real" stroke="#10b981" strokeWidth={3} dot={false} strokeDasharray="5 5" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="hsl(var(--border))"
+                      />
+                      <XAxis
+                        dataKey="mes"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={10}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={10}
+                        tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--popover))',
+                          borderColor: 'hsl(var(--border))',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          color: 'hsl(var(--popover-foreground))',
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        height={36}
+                        wrapperStyle={{
+                          fontSize: '10px',
+                          textTransform: 'uppercase',
+                          fontWeight: 'bold',
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="margem_estimada"
+                        name="Margem Estimada"
+                        stroke="#0D66CC"
+                        strokeWidth={3}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="margem_real"
+                        name="Margem Real"
+                        stroke="#28A745"
+                        strokeWidth={3}
+                        dot={false}
+                        strokeDasharray="5 5"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -245,10 +343,14 @@ export default function FinanceiroRentabilidadePage() {
 
               {/* Pie Chart: Clientes Rentabilidade */}
               <div className="col-span-12 lg:col-span-4 glass p-6 md:p-8 rounded-2xl border border-border flex flex-col">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-center mb-6 italic">Top Clientes por Margem</h3>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-center mb-6 italic">
+                  Top Clientes por Margem
+                </h3>
                 <div className="h-[220px] flex justify-center">
                   {clientes.length === 0 ? (
-                    <div className="flex items-center text-xs text-muted-foreground">Sem dados históricos</div>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      Sem dados históricos
+                    </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -265,8 +367,20 @@ export default function FinanceiroRentabilidadePage() {
                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }} />
-                        <Legend verticalAlign="bottom" iconType="circle" iconSize={6} wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', paddingTop: '10px' }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            borderColor: 'hsl(var(--border))',
+                            borderRadius: '12px',
+                            fontSize: '10px',
+                          }}
+                        />
+                        <Legend
+                          verticalAlign="bottom"
+                          iconType="circle"
+                          iconSize={6}
+                          wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', paddingTop: '10px' }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
@@ -279,58 +393,94 @@ export default function FinanceiroRentabilidadePage() {
               {/* Lucrativos */}
               <div className="glass p-6 rounded-2xl border border-border">
                 <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
-                  <CheckCircle className="text-emerald-500 w-5 h-5" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest italic">Top 5 Mais Lucrativos</h3>
+                  <CheckCircle className="text-[hsl(var(--success))] w-5 h-5" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest italic">
+                    Top 5 Mais Lucrativos
+                  </h3>
                 </div>
                 <div className="space-y-4">
                   {lucrativos.length === 0 ? (
-                    <div className="text-xs text-muted-foreground py-6 text-center">Nenhum projeto altamente lucrativo</div>
-                  ) : lucrativos.map((p, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-slate-900 hover:border-border hover:bg-surface/60 transition-all group">
-                      <div>
-                        <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                          {p.numero_op}
-                          <button onClick={() => abrirEdicao(p)} className="p-1 text-muted-foreground hover:text-amber-500 rounded transition-all cursor-pointer">
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.cliente}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-black text-emerald-400">{p.margem_percentual.toFixed(1)}%</div>
-                        <div className="text-[9px] text-muted-foreground font-mono mt-0.5">{fmt(p.margem_real)}</div>
-                      </div>
+                    <div className="text-xs text-muted-foreground py-6 text-center">
+                      Nenhum projeto altamente lucrativo
                     </div>
-                  ))}
+                  ) : (
+                    lucrativos.map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-border hover:border-border hover:bg-surface/60 transition-all group"
+                      >
+                        <div>
+                          <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                            {p.numero_op}
+                            <button
+                              onClick={() => abrirEdicao(p)}
+                              className="p-1 text-muted-foreground hover:text-[hsl(38_92%_35%)] rounded transition-all cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">
+                            {p.cliente}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-[hsl(var(--success))]">
+                            {p.margem_percentual.toFixed(1)}%
+                          </div>
+                          <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
+                            {fmt(p.margem_real)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
               {/* Prejuízos */}
               <div className="glass p-6 rounded-2xl border border-border">
                 <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
-                  <AlertTriangle className="text-rose-500 w-5 h-5" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest italic text-rose-500">Margem Negativa / Alerta</h3>
+                  <AlertTriangle className="text-[hsl(var(--destructive))] w-5 h-5" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest italic text-[hsl(var(--destructive))]">
+                    Margem Negativa / Alerta
+                  </h3>
                 </div>
                 <div className="space-y-4">
                   {prejuizados.length === 0 ? (
-                    <div className="text-xs text-muted-foreground py-6 text-center">Nenhum projeto operando no vermelho</div>
-                  ) : prejuizados.map((p, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-slate-900 hover:border-border hover:bg-surface/60 transition-all group">
-                      <div>
-                        <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
-                          {p.numero_op}
-                          <button onClick={() => abrirEdicao(p)} className="p-1 text-muted-foreground hover:text-amber-500 rounded transition-all cursor-pointer">
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.cliente}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-black text-rose-500">{p.margem_percentual.toFixed(1)}%</div>
-                        <div className="text-[9px] text-muted-foreground font-mono mt-0.5">{fmt(p.margem_real)}</div>
-                      </div>
+                    <div className="text-xs text-muted-foreground py-6 text-center">
+                      Nenhum projeto operando no vermelho
                     </div>
-                  ))}
+                  ) : (
+                    prejuizados.map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-border hover:border-border hover:bg-surface/60 transition-all group"
+                      >
+                        <div>
+                          <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                            {p.numero_op}
+                            <button
+                              onClick={() => abrirEdicao(p)}
+                              className="p-1 text-muted-foreground hover:text-[hsl(38_92%_35%)] rounded transition-all cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">
+                            {p.cliente}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-[hsl(var(--destructive))]">
+                            {p.margem_percentual.toFixed(1)}%
+                          </div>
+                          <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
+                            {fmt(p.margem_real)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -338,7 +488,8 @@ export default function FinanceiroRentabilidadePage() {
             {/* Clientes Table */}
             <div className="glass p-6 md:p-8 rounded-2xl border border-border">
               <h3 className="text-sm font-bold uppercase tracking-widest mb-6 italic flex items-center gap-2">
-                <Users className="text-amber-500 w-4.5 h-4.5" /> Métricas de Margem por Cliente
+                <Users className="text-[hsl(38_92%_35%)] w-4.5 h-4.5" /> Métricas de Margem por
+                Cliente
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
@@ -356,29 +507,55 @@ export default function FinanceiroRentabilidadePage() {
                   <tbody>
                     {clientes.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-muted-foreground font-medium">Nenhum cliente com pedidos concluídos</td>
-                      </tr>
-                    ) : clientes.map((cli, i) => (
-                      <tr key={i} className="border-b border-slate-900 hover:bg-surface/20 transition-colors">
-                        <td className="py-3.5 px-4 font-semibold text-foreground">{cli.cliente}</td>
-                        <td className="py-3.5 px-4 text-center font-bold text-foreground">{cli.total_pedidos}</td>
-                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.total_vendido)}</td>
-                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.total_custos_reais)}</td>
-                        <td className="py-3.5 px-4 text-right text-foreground font-mono">{fmt(cli.margem_total)}</td>
-                        <td className={`py-3.5 px-4 text-right font-bold ${cli.margem_media_percentual >= 30 ? 'text-emerald-400' : cli.margem_media_percentual > 0 ? 'text-amber-400' : 'text-rose-500'}`}>
-                          {cli.margem_media_percentual.toFixed(1)}%
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          <span className={`px-2.5 py-1 rounded text-[10px] font-black ${
-                            cli.score_rentabilidade >= 8 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                            cli.score_rentabilidade >= 5 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                          }`}>
-                            {cli.score_rentabilidade}/10
-                          </span>
+                        <td
+                          colSpan={7}
+                          className="py-8 text-center text-muted-foreground font-medium"
+                        >
+                          Nenhum cliente com pedidos concluídos
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      clientes.map((cli, i) => (
+                        <tr
+                          key={i}
+                          className="border-b border-border hover:bg-surface/20 transition-colors"
+                        >
+                          <td className="py-3.5 px-4 font-semibold text-foreground">
+                            {cli.cliente}
+                          </td>
+                          <td className="py-3.5 px-4 text-center font-bold text-foreground">
+                            {cli.total_pedidos}
+                          </td>
+                          <td className="py-3.5 px-4 text-right text-foreground font-mono">
+                            {fmt(cli.total_vendido)}
+                          </td>
+                          <td className="py-3.5 px-4 text-right text-foreground font-mono">
+                            {fmt(cli.total_custos_reais)}
+                          </td>
+                          <td className="py-3.5 px-4 text-right text-foreground font-mono">
+                            {fmt(cli.margem_total)}
+                          </td>
+                          <td
+                            className={`py-3.5 px-4 text-right font-bold ${cli.margem_media_percentual >= 30 ? 'text-[hsl(var(--success))]' : cli.margem_media_percentual > 0 ? 'text-[hsl(38_92%_35%)]' : 'text-[hsl(var(--destructive))]'}`}
+                          >
+                            {cli.margem_media_percentual.toFixed(1)}%
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span
+                              className={`px-2.5 py-1 rounded text-[10px] font-black ${
+                                cli.score_rentabilidade >= 8
+                                  ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success))]/20'
+                                  : cli.score_rentabilidade >= 5
+                                    ? 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(var(--warning))]/20'
+                                    : 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/20'
+                              }`}
+                            >
+                              {cli.score_rentabilidade}/10
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -394,36 +571,49 @@ export default function FinanceiroRentabilidadePage() {
             {/* Modal Header */}
             <div className="p-6 border-b border-border flex justify-between items-center bg-surface/50">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Ajuste de Rentabilidade</span>
-                <h3 className="text-lg font-black text-foreground uppercase">{editingProject.numero_op} - {editingProject.cliente}</h3>
+                <span className="text-[10px] font-bold text-[hsl(38_92%_35%)] uppercase tracking-widest">
+                  Ajuste de Rentabilidade
+                </span>
+                <h3 className="text-lg font-black text-foreground uppercase">
+                  {editingProject.numero_op} - {editingProject.cliente}
+                </h3>
               </div>
-              <button onClick={() => setEditingProject(null)} className="p-2 text-muted-foreground hover:text-primary-foreground rounded-lg hover:bg-muted cursor-pointer">
+              <button
+                onClick={() => setEditingProject(null)}
+                className="p-2 text-muted-foreground hover:text-primary rounded-lg hover:bg-muted cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={salvarCustos} className="p-6 space-y-4 text-xs font-semibold text-foreground">
-              
+            <form
+              onSubmit={salvarCustos}
+              className="p-6 space-y-4 text-xs font-semibold text-foreground"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1.5 text-muted-foreground">Custo Material Real (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">
+                    Custo Material Real (R$)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={costMat}
                     onChange={(e) => setCostMat(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-muted-foreground">Custo Mão de Obra Real (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">
+                    Custo Mão de Obra Real (R$)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={costMao}
                     onChange={(e) => setCostMao(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
                   />
                 </div>
               </div>
@@ -436,17 +626,19 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.01"
                     value={costRetrabalho}
                     onChange={(e) => setCostRetrabalho(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-muted-foreground">Desperdício Material (R$)</label>
+                  <label className="block mb-1.5 text-muted-foreground">
+                    Desperdício Material (R$)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={costDesperdicio}
                     onChange={(e) => setCostDesperdicio(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
@@ -456,19 +648,21 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.1"
                     value={tempoHoras}
                     onChange={(e) => setTempoHoras(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block mb-1.5 text-muted-foreground">Descrição de Desvios / Motivo do Ajuste</label>
+                <label className="block mb-1.5 text-muted-foreground">
+                  Descrição de Desvios / Motivo do Ajuste
+                </label>
                 <textarea
                   rows={3}
                   placeholder="Ex: Retrabalho de montagem por erro de medição na cozinha, desperdício de 1 chapa de MDF 18mm..."
                   value={desviosDesc}
                   onChange={(e) => setDesviosDesc(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-amber-500 text-xs font-semibold placeholder:text-muted-foreground resize-none"
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] text-xs font-semibold placeholder:text-muted-foreground resize-none"
                 />
               </div>
 
@@ -483,12 +677,11 @@ export default function FinanceiroRentabilidadePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2.5 bg-amber-500 text-black hover:bg-amber-400 font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 bg-[hsl(var(--warning))] text-black hover:bg-[hsl(var(--warning))]/90 font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar Ajustes'}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
@@ -508,28 +701,46 @@ interface KPICardProps {
   isAbs?: boolean;
 }
 
-function KPICard({ title, value, pct, icon: Icon, color, borderColor, inverse = false, isAbs = false }: KPICardProps) {
+function KPICard({
+  title,
+  value,
+  pct,
+  icon: Icon,
+  color,
+  borderColor,
+  inverse = false,
+  isAbs = false,
+}: KPICardProps) {
   let positiveChange = pct > 0;
   if (inverse) positiveChange = !positiveChange;
 
   return (
-    <div className={`glass p-6 rounded-2xl border ${borderColor} flex flex-col justify-between hover:border-slate-700/80 transition-all`}>
+    <div
+      className={`glass p-6 rounded-2xl border ${borderColor} flex flex-col justify-between hover:border-border transition-all`}
+    >
       <div className="flex justify-between items-start">
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{title}</span>
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          {title}
+        </span>
         <div className={`p-2 bg-surface rounded-lg ${color}`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-black font-mono tracking-tight text-foreground">{value}</span>
+        <span className="text-2xl font-black font-mono tracking-tight text-foreground">
+          {value}
+        </span>
       </div>
-      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-slate-900 flex items-center gap-1">
+      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-border flex items-center gap-1">
         {pct === 0 ? (
           <span className="text-muted-foreground">-</span>
         ) : positiveChange ? (
-          <span className="text-emerald-400">↑ {isAbs ? '' : '+'}{pct.toFixed(1)}%</span>
+          <span className="text-[hsl(var(--success))]">
+            ↑ {isAbs ? '' : '+'}
+            {pct.toFixed(1)}%
+          </span>
         ) : (
-          <span className="text-rose-500">↓ {pct.toFixed(1)}%</span>
+          <span className="text-[hsl(var(--destructive))]">↓ {pct.toFixed(1)}%</span>
         )}
         <span>vs. Período Anterior</span>
       </div>

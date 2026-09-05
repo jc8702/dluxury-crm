@@ -401,7 +401,7 @@ const Inventory: React.FC = () => {
       )}
 
       {/* 💡 Consultas de Estoque Inteligentes com Dlux */}
-      <Card className="bg-gradient-to-br from-primary/5 via-violet-500/5 to-transparent border-primary/20 animate-fade-in">
+      <Card className="bg-gradient-to-br from-primary/5 via-secondary/5 to-transparent border-primary/20 animate-fade-in">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">💡</span>

@@ -632,7 +632,7 @@ export default function SimuladorCortePage() {
             y: parseFloat(matchOld[2]),
             largura: 45,
             altura: 80,
-            cor: '#EF4444',
+            cor: '#DC3545',
             label: 'Atual',
           });
           items.push({
@@ -642,7 +642,7 @@ export default function SimuladorCortePage() {
             y: parseFloat(matchNew[2]),
             largura: 45,
             altura: 80,
-            cor: '#10B981',
+            cor: '#28A745',
             label: 'Proposto',
           });
           setGhostPreview(items);
@@ -661,7 +661,7 @@ export default function SimuladorCortePage() {
             largura: layoutAtual.chapa.largura,
             altura: layoutAtual.chapa.altura,
             zHeight: novoZ,
-            cor: '#10B981',
+            cor: '#28A745',
           });
         }
       }
@@ -1038,7 +1038,7 @@ export default function SimuladorCortePage() {
                           onClick={() => setModoExibicao('verificacao')}
                           className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
                             modoExibicao === 'verificacao'
-                              ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30'
+                              ? 'bg-[#DC3545]/20 text-[#DC3545] border border-[#DC3545]/30'
                               : 'text-[#6B7280] hover:text-white'
                           }`}
                         >
@@ -1081,7 +1081,7 @@ export default function SimuladorCortePage() {
                       </button>
                       <button
                         onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#28A745]/15 text-[#28A745]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
                       >
                         SOBRAS
                       </button>
@@ -1166,13 +1166,13 @@ export default function SimuladorCortePage() {
                       onClick={handleExportRelatorioSeguranca}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
                     >
-                      <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
+                      <ShieldAlert size={14} className="text-[#DC3545]" /> SEGURANÇA
                     </button>
                     <button
                       onClick={handleExportEtiquetas}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
                     >
-                      <Box size={14} className="text-[#10B981]" /> ETIQUETAS
+                      <Box size={14} className="text-[#28A745]" /> ETIQUETAS
                     </button>
                   </div>
 
@@ -1225,7 +1225,7 @@ export default function SimuladorCortePage() {
                           Vertical
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-1.5 bg-[#EF4444] rounded block" /> G01 Percurso
+                          <span className="w-2.5 h-1.5 bg-[#DC3545] rounded block" /> G01 Percurso
                           de Corte
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1233,7 +1233,7 @@ export default function SimuladorCortePage() {
                           Out
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem
+                          <span className="w-2.5 h-1.5 bg-[#28A745] rounded block" /> Usinagem
                           Concluída
                         </div>
                       </div>

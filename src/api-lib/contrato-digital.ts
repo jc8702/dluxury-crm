@@ -37,7 +37,7 @@ function gerarHTMLContrato(quotation: any, cliente: any, itens: any[]): string {
         .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
         .header p { margin: 5px 0 0 0; color: #666; font-size: 14px; }
         .section { margin-bottom: 30px; }
-        .section h2 { font-size: 18px; border-left: 4px solid #3B82F6; padding-left: 10px; margin-bottom: 15px; }
+        .section h2 { font-size: 18px; border-left: 4px solid #0D66CC; padding-left: 10px; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { background: #f3f4f6; padding: 10px; border: 1px solid #ddd; font-weight: bold; font-size: 14px; text-align: left; }
         .total-box { margin-top: 20px; text-align: right; font-size: 16px; font-weight: bold; background: #f3f4f6; padding: 15px; border-radius: 4px; }

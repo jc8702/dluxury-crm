@@ -2,15 +2,15 @@ import { useMemo } from 'react';
 import type { Prospeccao } from './useProspeccaoHook';
 
 export const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  novo_contato: { label: 'Novo Contato', color: '#6366f1', bg: '#eef2ff' },
-  primeiro_contato_feito: { label: '1º Contato Feito', color: '#0ea5e9', bg: '#e0f2fe' },
-  aguardando_retorno: { label: 'Aguard. Retorno', color: '#f59e0b', bg: '#fef3c7' },
-  visita_agendada: { label: 'Visita Agendada', color: '#8b5cf6', bg: '#f5f3ff' },
-  proposta_enviada: { label: 'Proposta Enviada', color: '#3b82f6', bg: '#eff6ff' },
-  negociacao: { label: 'Negociação', color: '#f97316', bg: '#fff7ed' },
-  ganho: { label: 'Ganho ✓', color: '#22c55e', bg: '#f0fdf4' },
-  perdido: { label: 'Perdido', color: '#ef4444', bg: '#fef2f2' },
-  desqualificado: { label: 'Desqualificado', color: '#94a3b8', bg: '#f8fafc' },
+  novo_contato: { label: 'Novo Contato', color: '#0D66CC', bg: '#E0EFFF' },
+  primeiro_contato_feito: { label: '1º Contato Feito', color: '#17A2B8', bg: '#E0F2FE' },
+  aguardando_retorno: { label: 'Aguard. Retorno', color: '#FFC107', bg: '#FFF3CD' },
+  visita_agendada: { label: 'Visita Agendada', color: '#0D66CC', bg: '#E0EFFF' },
+  proposta_enviada: { label: 'Proposta Enviada', color: '#17A2B8', bg: '#E0F7FA' },
+  negociacao: { label: 'Negociação', color: '#E2AC00', bg: '#FFF8E0' },
+  ganho: { label: 'Ganho ✓', color: '#28A745', bg: '#E6F4EA' },
+  perdido: { label: 'Perdido', color: '#DC3545', bg: '#FBE9EB' },
+  desqualificado: { label: 'Desqualificado', color: '#6B7280', bg: '#F5F5F5' },
 };
 
 export const ORIGENS = [

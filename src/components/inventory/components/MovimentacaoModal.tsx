@@ -122,10 +122,10 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               id: 'entrada',
               label: 'Entrada',
               icon: <ArrowUpCircle size={18} />,
-              color: '#10b981',
+              color: '#28A745',
             },
-            { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#ef4444' },
-            { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#3b82f6' },
+            { id: 'saida', label: 'Saída', icon: <ArrowDownCircle size={18} />, color: '#DC3545' },
+            { id: 'ajuste', label: 'Ajuste', icon: <Settings2 size={18} />, color: '#0D66CC' },
           ].map((t) => (
             <button
               key={t.id}
@@ -134,7 +134,8 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({ material, onClose
               className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-none cursor-pointer text-sm font-bold transition-all"
               style={{
                 background: tipo === t.id ? t.color : 'transparent',
-                color: tipo === t.id ? '#1a1a2e' : 'hsl(var(--muted-foreground))',
+                color:
+                  tipo === t.id ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
               }}
             >
               {t.icon} {t.label}

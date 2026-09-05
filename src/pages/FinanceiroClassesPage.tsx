@@ -236,14 +236,14 @@ function TreeNode({
           alignItems: 'center',
           gap: '0.5rem',
           padding: `0.55rem 1rem 0.55rem ${1 + depth * 1.5}rem`,
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          background: depth === 0 ? 'rgba(255,255,255,0.04)' : 'transparent',
+          borderBottom: '1px solid hsl(var(--border))',
+          background: depth === 0 ? 'hsl(var(--muted) / 0.5)' : 'transparent',
           transition: '0.15s',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'hsl(var(--muted) / 0.7)')}
         onMouseLeave={(e) =>
           (e.currentTarget.style.background =
-            depth === 0 ? 'rgba(255,255,255,0.04)' : 'transparent')
+            depth === 0 ? 'hsl(var(--muted) / 0.5)' : 'transparent')
         }
       >
         {/* Expand toggle */}
@@ -588,7 +588,7 @@ export default function FinanceiroClassesPage() {
               <div
                 style={{
                   padding: '0.75rem 1rem',
-                  background: 'rgba(34,197,94,0.08)',
+                  background: 'hsl(var(--success) / 0.08)',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   color: 'hsl(var(--success))',
@@ -614,7 +614,7 @@ export default function FinanceiroClassesPage() {
               <div
                 style={{
                   padding: '0.75rem 1rem',
-                  background: 'rgba(239,68,68,0.08)',
+                  background: 'hsl(var(--destructive) / 0.08)',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   color: 'hsl(var(--destructive))',
@@ -703,11 +703,11 @@ export default function FinanceiroClassesPage() {
                 <select
                   className="input-base"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'hsl(var(--muted) / 0.5)',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                     padding: '0.75rem',
-                    color: 'white',
+                    color: 'hsl(var(--foreground))',
                     width: '100%',
                     outline: 'none',
                   }}
@@ -720,10 +720,10 @@ export default function FinanceiroClassesPage() {
                     }))
                   }
                 >
-                  <option value="receita" style={{ background: '#1e293b' }}>
+                  <option value="receita" style={{ background: 'hsl(var(--card))' }}>
                     Receita
                   </option>
-                  <option value="despesa" style={{ background: '#1e293b' }}>
+                  <option value="despesa" style={{ background: 'hsl(var(--card))' }}>
                     Despesa
                   </option>
                 </select>
@@ -743,21 +743,21 @@ export default function FinanceiroClassesPage() {
                 <select
                   className="input-base"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'hsl(var(--muted) / 0.5)',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                     padding: '0.75rem',
-                    color: 'white',
+                    color: 'hsl(var(--foreground))',
                     width: '100%',
                     outline: 'none',
                   }}
                   value={modal.natureza || 'devedora'}
                   onChange={(e) => setModal((m) => ({ ...m, natureza: e.target.value }))}
                 >
-                  <option value="credora" style={{ background: '#1e293b' }}>
+                  <option value="credora" style={{ background: 'hsl(var(--card))' }}>
                     Credora (Receita)
                   </option>
-                  <option value="devedora" style={{ background: '#1e293b' }}>
+                  <option value="devedora" style={{ background: 'hsl(var(--card))' }}>
                     Devedora (Despesa)
                   </option>
                 </select>

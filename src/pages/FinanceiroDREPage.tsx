@@ -92,25 +92,23 @@ export default function FinanceiroDREPage() {
     sectionKey?: string;
   }) => (
     <div
-      className={`glass border-l-4 ${colorClass} p-6 rounded-r-2xl mb-4 transition-all hover:bg-white/[0.04] group`}
+      className={`glass border-l-4 ${colorClass} p-6 rounded-r-2xl mb-4 transition-all hover:bg-muted/50 group`}
     >
       <div className="flex justify-between items-center">
         <div>
-          <div className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-1">{label}</div>
-          {sublabel && (
-            <div className="text-xs text-[var(--ui-text-secondary)] opacity-60">{sublabel}</div>
-          )}
+          <div className="text-xs font-semibold text-muted-foreground mb-1">{label}</div>
+          {sublabel && <div className="text-xs text-muted-foreground opacity-60">{sublabel}</div>}
         </div>
         <div className="text-right flex items-center gap-8">
           {margin !== undefined && (
             <div
-              className={`text-xs font-semibold ${margin >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+              className={`text-xs font-semibold ${margin >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
             >
               {fmtPct(margin)} MARGEM
             </div>
           )}
           <div
-            className={`text-xl font-bold tracking-tight ${isNegative ? 'text-red-500' : 'text-white'}`}
+            className={`text-xl font-bold tracking-tight ${isNegative ? 'text-[hsl(var(--destructive))]' : 'text-foreground'}`}
           >
             {isNegative ? '(' : ''}
             {fmt(Math.abs(value))}
@@ -148,7 +146,7 @@ export default function FinanceiroDREPage() {
         {label}
       </span>
       <span
-        className={`text-xs font-black italic tracking-tight ${isNegative ? 'text-red-400' : 'text-emerald-400'}`}
+        className={`text-xs font-black italic tracking-tight ${isNegative ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--success))]'}`}
       >
         {isNegative ? '-' : '+'} {fmt(Math.abs(value))}
       </span>
@@ -238,18 +236,18 @@ export default function FinanceiroDREPage() {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 opacity-20">
           <div className="lg:col-span-8 space-y-4">
-            <div className="h-20 bg-white/5 rounded-xl animate-pulse" />
-            <div className="h-60 bg-white/5 rounded-xl animate-pulse" />
-            <div className="h-60 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-20 bg-muted rounded-xl animate-pulse" />
+            <div className="h-60 bg-muted rounded-xl animate-pulse" />
+            <div className="h-60 bg-muted rounded-xl animate-pulse" />
           </div>
           <div className="lg:col-span-4 space-y-4">
-            <div className="h-96 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-96 bg-muted rounded-xl animate-pulse" />
           </div>
         </div>
       ) : !data ? (
         <div className="glass p-20 rounded-2xl text-center">
-          <TrendingDown className="w-16 h-16 text-[var(--ui-text-secondary)] mx-auto mb-4 opacity-20" />
-          <p className="text-sm font-semibold text-[var(--ui-text-secondary)]">
+          <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
+          <p className="text-sm font-semibold text-muted-foreground">
             Sem dados operacionais para o período
           </p>
         </div>
@@ -262,7 +260,7 @@ export default function FinanceiroDREPage() {
             <Block
               label="RECEITA BRUTA TOTAL"
               value={data.receita_bruta}
-              colorClass="border-emerald-500"
+              colorClass="border-[hsl(var(--success))]"
               sectionKey="receitas"
               sublabel="Consolidação de Vendas e Serviços Industriais"
             >
@@ -271,11 +269,11 @@ export default function FinanceiroDREPage() {
               ))}
             </Block>
 
-            <div className="p-5 px-8 mb-8 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex justify-between items-center group transition-all hover:bg-emerald-500/15">
-              <span className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.3em] italic flex items-center gap-2">
+            <div className="p-5 px-8 mb-8 bg-[var(--ui-color-success-soft)] rounded-2xl border border-[hsl(var(--success))]/20 flex justify-between items-center group transition-all hover:bg-[var(--ui-color-success-soft)]/70">
+              <span className="text-[11px] font-black text-[hsl(var(--success))] uppercase tracking-[0.3em] italic flex items-center gap-2">
                 <Minus className="w-4 h-4 opacity-40 rotate-90" /> RECEITA LÍQUIDA OPERACIONAL
               </span>
-              <span className="text-2xl font-black text-emerald-500 italic tracking-tighter">
+              <span className="text-2xl font-black text-[hsl(var(--success))] italic tracking-tighter">
                 {fmt(data.receita_liquida)}
               </span>
             </div>
@@ -285,7 +283,7 @@ export default function FinanceiroDREPage() {
             <Block
               label="MATÉRIA-PRIMA & MÃÆO DE OBRA"
               value={data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0}
-              colorClass="border-orange-500"
+              colorClass="border-[hsl(38_92%_35%)]"
               isNegative
               sectionKey="custos"
               sublabel="Custos Diretos Atribuíveis (Classes 2.1 e 2.2)"
@@ -296,10 +294,16 @@ export default function FinanceiroDREPage() {
             </Block>
 
             <div
-              className={`p-5 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.lucro_bruto >= 0 ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}
+              className={`p-5 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.lucro_bruto >= 0 ? 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success))]/20' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/20'}`}
             >
               <span className="text-[11px] font-black uppercase tracking-[0.3em] italic flex flex-col">
-                <span className={data.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                <span
+                  className={
+                    data.lucro_bruto >= 0
+                      ? 'text-[hsl(var(--success))]'
+                      : 'text-[hsl(var(--destructive))]'
+                  }
+                >
                   LUCRO BRUTO INDUSTRIAL
                 </span>
                 <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-widest mt-1">
@@ -307,7 +311,7 @@ export default function FinanceiroDREPage() {
                 </span>
               </span>
               <span
-                className={`text-2xl font-black italic tracking-tighter ${data.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                className={`text-2xl font-black italic tracking-tighter ${data.lucro_bruto >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
               >
                 {fmt(data.lucro_bruto)}
               </span>
@@ -321,7 +325,7 @@ export default function FinanceiroDREPage() {
                 data.detalhes?.despesas_operacionais?.reduce((s: any, r: any) => s + r.valor, 0) ||
                 0
               }
-              colorClass="border-red-500"
+              colorClass="border-[hsl(var(--destructive))]"
               isNegative
               sectionKey="despesasOp"
               sublabel="Apoio de Vendas, Fretes e Marketing"
@@ -339,7 +343,7 @@ export default function FinanceiroDREPage() {
                   0,
                 ) || 0
               }
-              colorClass="border-red-500"
+              colorClass="border-[hsl(var(--destructive))]"
               isNegative
               sectionKey="despesasAdmin"
               sublabel="Custos Fixos de Gestão e Suporte"
@@ -350,10 +354,12 @@ export default function FinanceiroDREPage() {
             </Block>
 
             <div
-              className={`p-6 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.ebitda >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-red-500/10 border-red-500/20'}`}
+              className={`p-6 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.ebitda >= 0 ? 'bg-[var(--ui-color-primary-50)] border-primary/20' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/20'}`}
             >
               <span className="text-[11px] font-black uppercase tracking-[0.3em] italic flex flex-col">
-                <span className={data.ebitda >= 0 ? 'text-primary' : 'text-red-500'}>
+                <span
+                  className={data.ebitda >= 0 ? 'text-primary' : 'text-[hsl(var(--destructive))]'}
+                >
                   EBITDA (LAJIDA)
                 </span>
                 <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-widest mt-1">
@@ -361,7 +367,7 @@ export default function FinanceiroDREPage() {
                 </span>
               </span>
               <span
-                className={`text-3xl font-black italic tracking-tighter ${data.ebitda >= 0 ? 'text-primary' : 'text-red-500'}`}
+                className={`text-3xl font-black italic tracking-tighter ${data.ebitda >= 0 ? 'text-primary' : 'text-[hsl(var(--destructive))]'}`}
               >
                 {fmt(data.ebitda)}
               </span>
@@ -374,34 +380,40 @@ export default function FinanceiroDREPage() {
               value={data.detalhes?.resultado_financeiro?.saldo || 0}
               colorClass={
                 data.detalhes?.resultado_financeiro?.saldo >= 0
-                  ? 'border-emerald-500'
-                  : 'border-red-500'
+                  ? 'border-[hsl(var(--success))]'
+                  : 'border-[hsl(var(--destructive))]'
               }
               isNegative={(data.detalhes?.resultado_financeiro?.saldo || 0) < 0}
               sublabel="Impacto de Juros, Taxas e Rendimentos"
             />
 
             <div
-              className={`p-10 px-12 mt-12 rounded-[2rem] border-2 flex flex-col md:flex-row justify-between items-center relative overflow-hidden transition-all ${data.lucro_liquido >= 0 ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-red-500/5 border-red-500/30'}`}
+              className={`p-10 px-12 mt-12 rounded-[2rem] border-2 flex flex-col md:flex-row justify-between items-center relative overflow-hidden transition-all ${data.lucro_liquido >= 0 ? 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success))]/30' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/30'}`}
             >
               {/* Background Glow */}
               <div
-                className={`absolute -right-20 -top-20 w-64 h-64 blur-[120px] rounded-full opacity-20 ${data.lucro_liquido >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                className={`absolute -right-20 -top-20 w-64 h-64 blur-[120px] rounded-full opacity-20 ${data.lucro_liquido >= 0 ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive))]'}`}
               />
 
               <div className="z-10 text-center md:text-left mb-6 md:mb-0">
                 <div className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2 opacity-60">
                   LUCRO LÍQUIDO OPERACIONAL
                 </div>
-                <div className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">
+                <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic">
                   Margem Líquida Final:{' '}
-                  <span className={data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                  <span
+                    className={
+                      data.lucro_liquido >= 0
+                        ? 'text-[hsl(var(--success))]'
+                        : 'text-[hsl(var(--destructive))]'
+                    }
+                  >
                     {fmtPct(data.margem_liquida)}
                   </span>
                 </div>
               </div>
               <div
-                className={`z-10 text-6xl font-black italic tracking-tighter ${data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                className={`z-10 text-6xl font-black italic tracking-tighter ${data.lucro_liquido >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
               >
                 {fmt(data.lucro_liquido)}
               </div>
@@ -411,7 +423,7 @@ export default function FinanceiroDREPage() {
           {/* Sidebar de Inteligência Financeira */}
           <div className="lg:col-span-4 space-y-8 sticky top-8">
             <div className="glass p-8 rounded-2xl border border-border space-y-8">
-              <div className="text-sm font-semibold text-[var(--ui-text-secondary)] flex items-center gap-2">
+              <div className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" /> Painel de Margens
               </div>
 
@@ -419,8 +431,8 @@ export default function FinanceiroDREPage() {
                 {
                   label: 'Margem Bruta',
                   value: data.margem_bruta,
-                  color: 'text-orange-500',
-                  bg: 'bg-orange-500',
+                  color: 'text-[hsl(38_92%_35%)]',
+                  bg: 'bg-[hsl(38_92%_35%)]',
                 },
                 {
                   label: 'Margem EBITDA',
@@ -431,15 +443,19 @@ export default function FinanceiroDREPage() {
                 {
                   label: 'Margem Líquida',
                   value: data.margem_liquida,
-                  color: data.margem_liquida >= 0 ? 'text-emerald-500' : 'text-red-500',
-                  bg: data.margem_liquida >= 0 ? 'bg-emerald-500' : 'bg-red-500',
+                  color:
+                    data.margem_liquida >= 0
+                      ? 'text-[hsl(var(--success))]'
+                      : 'text-[hsl(var(--destructive))]',
+                  bg:
+                    data.margem_liquida >= 0
+                      ? 'bg-[hsl(var(--success))]'
+                      : 'bg-[hsl(var(--destructive))]',
                 },
               ].map((m, i) => (
                 <div key={i} className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <span className="text-xs font-semibold text-[var(--ui-text-secondary)]">
-                      {m.label}
-                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground">{m.label}</span>
                     <span className={`text-lg font-bold tracking-tight ${m.color}`}>
                       {fmtPct(m.value)}
                     </span>
@@ -455,22 +471,20 @@ export default function FinanceiroDREPage() {
             </div>
 
             <div className="glass p-8 rounded-2xl border border-border space-y-6">
-              <div className="text-sm font-semibold text-[var(--ui-text-secondary)]">
-                Resumo Executivo
-              </div>
+              <div className="text-sm font-semibold text-muted-foreground">Resumo Executivo</div>
               {[
                 {
                   label: 'Receita Bruta',
                   value: data.receita_bruta,
                   icon: <TrendingUp className="w-4 h-4" />,
-                  color: 'text-emerald-500',
+                  color: 'text-[hsl(var(--success))]',
                 },
                 {
                   label: 'Custos Diretos',
                   value:
                     data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0,
                   icon: <Minus className="w-4 h-4" />,
-                  color: 'text-orange-500',
+                  color: 'text-[hsl(38_92%_35%)]',
                 },
                 {
                   label: 'Total Despesas',
@@ -484,13 +498,16 @@ export default function FinanceiroDREPage() {
                       0,
                     ) || 0),
                   icon: <TrendingDown className="w-4 h-4" />,
-                  color: 'text-red-500',
+                  color: 'text-[hsl(var(--destructive))]',
                 },
                 {
                   label: 'Resultado',
                   value: data.lucro_liquido,
                   icon: null,
-                  color: data.lucro_liquido >= 0 ? 'text-emerald-500' : 'text-red-500',
+                  color:
+                    data.lucro_liquido >= 0
+                      ? 'text-[hsl(var(--success))]'
+                      : 'text-[hsl(var(--destructive))]',
                 },
               ].map((item, i) => (
                 <div
@@ -499,7 +516,7 @@ export default function FinanceiroDREPage() {
                 >
                   <div className={`flex items-center gap-3 ${item.color} text-xs font-semibold`}>
                     {item.icon}
-                    <span className="text-[var(--ui-text-secondary)] group-hover:text-foreground transition-colors">
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
                       {item.label}
                     </span>
                   </div>
@@ -510,10 +527,10 @@ export default function FinanceiroDREPage() {
               ))}
             </div>
 
-            <div className="glass p-6 rounded-2xl border border-primary/20 bg-primary/5 text-center relative overflow-hidden">
+            <div className="glass p-6 rounded-2xl border border-primary/20 bg-[var(--ui-color-primary-50)] text-center relative overflow-hidden">
               <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
               <div className="text-xs font-semibold text-primary mb-2">Modo de Apuração</div>
-              <div className="text-lg font-bold text-white tracking-tight flex items-center justify-center gap-2">
+              <div className="text-lg font-bold text-foreground tracking-tight flex items-center justify-center gap-2">
                 {regime === 'competencia' ? (
                   <TrendingUp className="w-5 h-5 text-primary" />
                 ) : (

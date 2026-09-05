@@ -48,11 +48,11 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
     try {
       const respId = responsavelId === '' ? null : responsavelId;
       const res = await kanbanService.updateCardDetails(card.id, respId, nota.trim() || undefined);
-      
+
       onUpdate(res.etapa);
       setHistorico(res.historico);
       setNota('');
-      
+
       // Se não digitou nota e só alterou responsável, podemos notificar sucesso
       if (!nota.trim()) {
         alert('Responsável atualizado com sucesso!');
@@ -77,17 +77,28 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
   };
 
   const getPrioridadeBadge = (prioridade: number) => {
-    if (prioridade === 1) return { text: 'Urgente', class: 'bg-destructive/20 text-destructive border-destructive/30' };
-    if (prioridade === 9) return { text: 'Baixa', class: 'bg-green-500/20 text-green-500 border-green-500/30' };
-    return { text: 'Normal', class: 'bg-amber-500/20 text-amber-500 border-amber-500/30' };
+    if (prioridade === 1)
+      return { text: 'Urgente', class: 'bg-destructive/20 text-destructive border-destructive/30' };
+    if (prioridade === 9)
+      return {
+        text: 'Baixa',
+        class:
+          'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]',
+      };
+    return {
+      text: 'Normal',
+      class:
+        'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border-[hsl(var(--warning)/0.3)]',
+    };
   };
 
   const prioridadeBadge = getPrioridadeBadge(card.prioridade);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-      <div className={`relative w-full max-h-[90vh] overflow-hidden flex flex-row rounded-2xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in duration-200 transition-all duration-300 ${chatAtivo ? 'max-w-5xl' : 'max-w-2xl'}`}>
-        
+      <div
+        className={`relative w-full max-h-[90vh] overflow-hidden flex flex-row rounded-2xl border border-border bg-card shadow-2xl animate-in fade-in zoom-in duration-200 transition-all duration-300 ${chatAtivo ? 'max-w-5xl' : 'max-w-2xl'}`}
+      >
         {/* Coluna da Esquerda: Detalhes da OP */}
         <div className="flex-1 flex flex-col min-w-0 max-h-[90vh]">
           {/* Header */}
@@ -97,7 +108,9 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                 <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                   {card.numero_op}
                 </span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${prioridadeBadge.class}`}>
+                <span
+                  className={`text-xs font-semibold px-2 py-0.5 rounded border ${prioridadeBadge.class}`}
+                >
                   {prioridadeBadge.text}
                 </span>
               </div>
@@ -148,7 +161,15 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                 </span>
                 <div className="flex items-center gap-1 text-sm font-semibold text-foreground mt-0.5">
                   <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className={card.data_conclusao === null && card.data_prazo && new Date(card.data_prazo) < new Date() ? 'text-destructive font-bold' : ''}>
+                  <span
+                    className={
+                      card.data_conclusao === null &&
+                      card.data_prazo &&
+                      new Date(card.data_prazo) < new Date()
+                        ? 'text-destructive font-bold'
+                        : ''
+                    }
+                  >
                     {formatarData(card.data_prazo)}
                   </span>
                 </div>
@@ -217,14 +238,12 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                     <div key={h.id} className="relative text-xs space-y-1">
                       {/* Marcador na linha do tempo */}
                       <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-border border-2 border-card" />
-                      
+
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                         <span className="font-semibold text-foreground/80">
                           {h.usuario_nome || 'Usuário desconhecido'}
                         </span>
-                        <span>
-                          {new Date(h.timestamp_movimento).toLocaleString('pt-BR')}
-                        </span>
+                        <span>{new Date(h.timestamp_movimento).toLocaleString('pt-BR')}</span>
                       </div>
 
                       {h.status_anterior !== h.status_novo ? (
@@ -239,9 +258,7 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                           </span>
                         </p>
                       ) : (
-                        <p className="text-muted-foreground">
-                          Adicionou um comentário na etapa.
-                        </p>
+                        <p className="text-muted-foreground">Adicionou um comentário na etapa.</p>
                       )}
 
                       {h.nota && (
@@ -263,8 +280,8 @@ export default function KanbanCardDetail({ card, onClose, onUpdate }: KanbanCard
                 type="button"
                 onClick={() => setChatAtivo(!chatAtivo)}
                 className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  chatAtivo 
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.15)] border border-transparent' 
+                  chatAtivo
+                    ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.9)] text-white border border-transparent'
                     : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                 }`}
               >

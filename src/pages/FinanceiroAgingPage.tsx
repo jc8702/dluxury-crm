@@ -285,7 +285,7 @@ export default function FinanceiroAgingPage() {
                               width: '32px',
                               height: '32px',
                               borderRadius: '50%',
-                              background: 'rgba(239, 68, 68, 0.1)',
+                              background: 'hsl(var(--destructive) / 0.1)',
                               color: 'hsl(var(--destructive))',
                               display: 'flex',
                               alignItems: 'center',

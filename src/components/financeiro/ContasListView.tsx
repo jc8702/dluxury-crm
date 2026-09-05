@@ -110,7 +110,7 @@ export function ContasListView({
           </Button>
           <Button
             variant="outline"
-            className="h-12 px-6 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+            className="h-12 px-6 border-[hsl(var(--info)/0.3)] text-[hsl(var(--info))] hover:bg-[var(--ui-color-info-soft)]"
             onClick={onTransfer}
             disabled={contas.length < 2}
           >
@@ -118,7 +118,7 @@ export function ContasListView({
           </Button>
           <Button
             variant="outline"
-            className="h-12 px-6 border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+            className="h-12 px-6 border-[hsl(var(--warning)/0.3)] text-[hsl(38_92%_35%)] hover:bg-[var(--ui-color-warning-soft)]"
             onClick={onFechamento}
           >
             <Lock className="w-4 h-4 mr-2" /> FECHAMENTOS
@@ -166,14 +166,14 @@ export function ContasListView({
                 className="glass group hover:border-primary/40 transition-all duration-500 rounded-2xl overflow-hidden flex flex-col h-full border border-border relative"
               >
                 <div
-                  className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-10 transition-opacity group-hover:opacity-20 ${isPos ? 'bg-emerald-500' : 'bg-red-500'}`}
+                  className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-10 transition-opacity group-hover:opacity-20 ${isPos ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive))]'}`}
                 />
                 <div className="p-8 flex-1 relative z-10">
                   <div className="flex justify-between items-start mb-8">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${c.tipo === 'caixa' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' : c.tipo === 'aplicacao' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}
+                          className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${c.tipo === 'caixa' ? 'bg-[var(--ui-color-warning-soft)] border-[hsl(var(--warning)/0.3)] text-[hsl(38_92%_35%)]' : c.tipo === 'aplicacao' ? 'bg-[var(--ui-color-info-soft)] border-[hsl(var(--info)/0.3)] text-[hsl(var(--info))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))]'}`}
                         >
                           {c.tipo?.replace(/_/g, ' ')}
                         </span>
@@ -198,7 +198,7 @@ export function ContasListView({
                         <ChevronRight className="w-3 h-3 text-primary opacity-50" />
                       </div>
                       <div
-                        className={`text-4xl font-black tracking-tighter italic ${isPos ? 'text-emerald-400' : 'text-red-400'}`}
+                        className={`text-4xl font-black tracking-tighter italic ${isPos ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
                       >
                         {fmt(Number(c.saldo_atual || 0))}
                       </div>
@@ -239,7 +239,7 @@ export function ContasListView({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-12 h-12 rounded-2xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all"
+                    className="w-12 h-12 rounded-2xl text-muted-foreground hover:bg-[var(--ui-color-danger-soft)] hover:text-[hsl(var(--destructive))] transition-all"
                     onClick={() => onDelete(c.id, c.nome)}
                     title="EXCLUIR CONTA"
                   >
@@ -259,9 +259,9 @@ export function ContasListView({
         size="md"
       >
         <div className="space-y-8 p-4">
-          <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[2rem] flex gap-4 items-start">
-            <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
-            <p className="text-[11px] text-blue-200/70 font-medium leading-relaxed uppercase tracking-wider">
+          <div className="bg-[var(--ui-color-info-soft)] border border-[hsl(var(--info)/0.2)] p-6 rounded-[2rem] flex gap-4 items-start">
+            <Info className="w-6 h-6 text-[hsl(var(--info))] shrink-0 mt-1" />
+            <p className="text-[11px] text-[hsl(var(--info))]/70 font-medium leading-relaxed uppercase tracking-wider">
               <strong>Transferência entre contas:</strong> O valor será debitado da origem e
               creditado no destino instantaneamente.
             </p>
@@ -348,7 +348,7 @@ export function ContasListView({
             />
           </div>
           {transferErro && (
-            <div className="flex items-center gap-4 p-5 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs font-black uppercase tracking-widest italic">
+            <div className="flex items-center gap-4 p-5 bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.3)] rounded-2xl text-[hsl(var(--destructive))] text-xs font-black uppercase tracking-widest italic">
               <AlertCircle className="w-5 h-5 shrink-0" /> {transferErro}
             </div>
           )}
@@ -379,14 +379,14 @@ export function ContasListView({
         size="lg"
       >
         <div className="space-y-10 p-4">
-          <div className="bg-orange-500/5 border border-orange-500/20 p-8 rounded-[2.5rem] flex gap-6 items-start relative overflow-hidden">
-            <div className="absolute -right-10 -top-10 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />
-            <AlertCircle className="w-10 h-10 text-orange-500 shrink-0 mt-1 animate-pulse" />
+          <div className="bg-[var(--ui-color-warning-soft)] border border-[hsl(var(--warning)/0.2)] p-8 rounded-[2.5rem] flex gap-6 items-start relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-[var(--ui-color-warning-soft)] blur-3xl rounded-full" />
+            <AlertCircle className="w-10 h-10 text-[hsl(38_92%_35%)] shrink-0 mt-1 animate-pulse" />
             <div className="relative z-10">
-              <h4 className="text-base font-black text-orange-400 mb-2 italic uppercase tracking-widest">
+              <h4 className="text-base font-black text-[hsl(38_92%_35%)] mb-2 italic uppercase tracking-widest">
                 PROTOCOLO DE SEGURANÇA
               </h4>
-              <p className="text-xs text-orange-200/60 font-medium leading-relaxed uppercase tracking-widest">
+              <p className="text-xs text-[hsl(38_92%_35%)]/60 font-medium leading-relaxed uppercase tracking-widest">
                 O fechamento de período <strong>BLOQUEIA</strong> permanentemente qualquer alteração
                 em lançamentos retroativos.
               </p>
@@ -475,14 +475,14 @@ export function ContasListView({
                         </td>
                         <td className="px-8 py-5">
                           <span
-                            className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border ${f.status === 'fechado' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}
+                            className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border ${f.status === 'fechado' ? 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]'}`}
                           >
                             {f.status}
                           </span>
                         </td>
                         <td className="px-8 py-5 text-right">
                           <button
-                            className="text-[10px] font-black text-primary hover:text-white uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
+                            className="text-[10px] font-black text-primary hover:text-foreground uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
                             onClick={() => onReabrirFechamento?.(f)}
                           >
                             REABRIR CICLO

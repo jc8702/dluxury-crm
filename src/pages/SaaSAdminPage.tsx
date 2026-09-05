@@ -256,9 +256,11 @@ export default function SaaSAdminPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Tenants Ativos
             </span>
-            <div className="text-2xl font-bold font-display text-emerald-500">{activeTenants}</div>
+            <div className="text-2xl font-bold font-display text-[hsl(var(--success))]">
+              {activeTenants}
+            </div>
           </div>
-          <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-500">
+          <div className="p-3 rounded-lg bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))]">
             <CheckCircle2 className="h-6 w-6" />
           </div>
         </div>
@@ -286,9 +288,11 @@ export default function SaaSAdminPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Inadimplentes (Overdue)
             </span>
-            <div className="text-2xl font-bold font-display text-rose-500">{pendingPayments}</div>
+            <div className="text-2xl font-bold font-display text-[hsl(var(--destructive))]">
+              {pendingPayments}
+            </div>
           </div>
-          <div className="p-3 rounded-lg bg-rose-500/10 text-rose-500">
+          <div className="p-3 rounded-lg bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))]">
             <AlertTriangle className="h-6 w-6" />
           </div>
         </div>
@@ -390,10 +394,10 @@ export default function SaaSAdminPage() {
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
                             tenant.planoTier === 'enterprise'
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                              ? 'bg-[var(--ui-color-primary-50)] text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20'
                               : tenant.planoTier === 'pro'
                                 ? 'bg-primary/10 text-primary border-primary/20'
-                                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                                : 'bg-muted text-muted-foreground border-border'
                           }`}
                         >
                           {tenant.planoTier.toUpperCase()}
@@ -428,19 +432,19 @@ export default function SaaSAdminPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                             tenant.status === 'ativo'
-                              ? 'bg-emerald-500/10 text-emerald-400'
+                              ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))]'
                               : tenant.status === 'inativo'
-                                ? 'bg-rose-500/10 text-rose-400'
-                                : 'bg-amber-500/10 text-amber-400'
+                                ? 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))]'
+                                : 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)]'
                           }`}
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
                               tenant.status === 'ativo'
-                                ? 'bg-emerald-400'
+                                ? 'bg-[hsl(var(--success))]'
                                 : tenant.status === 'inativo'
-                                  ? 'bg-rose-400'
-                                  : 'bg-amber-400'
+                                  ? 'bg-[hsl(var(--destructive))]'
+                                  : 'bg-[hsl(38_92%_35%)]'
                             }`}
                           />
                           {tenant.status.toUpperCase()}

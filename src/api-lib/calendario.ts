@@ -109,7 +109,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
           data_evento: dateStr,
           hora_evento: timeStr,
           tipo_evento: tipoEventoMapped,
-          cor_categoria: e.cor || '#d4af37',
+          cor_categoria: e.cor || '#E2AC00',
           concluido: false,
           cliente_nome: e.cliente_nome || undefined,
         });
@@ -140,7 +140,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
             descricao: `Ordem de produção com status: ${op.status}`,
             data_evento: op.data_prazo,
             tipo_evento: 'prazo_entrega',
-            cor_categoria: '#DC2626', // Vermelho
+            cor_categoria: '#DC3545', // Vermelho D'Luxury
             concluido: op.status === 'concluído',
             operacao_prod_id: op.id,
           });
@@ -180,7 +180,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
               descricao: `Prazo contratual calculado de entrega do pedido`,
               data_evento: formattedDate,
               tipo_evento: 'quotation',
-              cor_categoria: '#3B82F6', // Azul
+              cor_categoria: '#0D66CC', // Azul D'Luxury
               concluido: false,
               quotation_id: b.id,
             });
@@ -216,7 +216,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
           quotation_id, operacao_prod_id, cor_categoria, notificacao_dias_antes, tenant_id
         ) VALUES (
           ${user.id}::uuid, ${tipo_evento}, ${titulo}, ${descricao || null}, ${data_evento}, ${hora_evento || null}, 
-          ${quotation_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${cor_categoria || '#3B82F6'}, ${notificacao_dias_antes || 0}, ${tenantId}::uuid
+          ${quotation_id || null}::uuid, ${operacao_prod_id || null}::uuid, ${cor_categoria || '#0D66CC'}, ${notificacao_dias_antes || 0}, ${tenantId}::uuid
         ) RETURNING *
       `;
 
@@ -265,7 +265,7 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
       const values = sql.join(
         usuarios.map(
           (u: any) =>
-            sql`(${u.id}::uuid, 'quotation', ${`Entrega Pedido: ${quotation.numero_orcamento}`}, ${`Prazo contratual de entrega para o cliente ${quotation.cliente_nome || ''}`}, ${formattedDate}, ${quotation_id}::uuid, '#3B82F6', 3, ${tenantId}::uuid)`,
+            sql`(${u.id}::uuid, 'quotation', ${`Entrega Pedido: ${quotation.numero_orcamento}`}, ${`Prazo contratual de entrega para o cliente ${quotation.cliente_nome || ''}`}, ${formattedDate}, ${quotation_id}::uuid, '#0D66CC', 3, ${tenantId}::uuid)`,
         ),
         sql`, `,
       );

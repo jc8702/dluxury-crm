@@ -79,7 +79,7 @@ export const eventosCalendario = pgTable('eventos_calendario', {
   operacaoProdId: uuid('operacao_prod_id').references(() => ordensProd.id, {
     onDelete: 'set null',
   }),
-  corCategoria: varchar('cor_categoria', { length: 20 }).default('#3B82F6'),
+  corCategoria: varchar('cor_categoria', { length: 20 }).default('#0D66CC'),
   concluido: boolean('concluido').default(false),
   notificacaoDiasAntes: integer('notificacao_dias_antes').default(0),
   notificacaoEnviada: boolean('notificacao_enviada').default(false),

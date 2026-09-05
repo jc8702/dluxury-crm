@@ -128,8 +128,8 @@ function FeatureGuard({ feature }: { feature: string }) {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          backgroundColor: '#FAFAFA',
-          color: '#3E2723',
+          backgroundColor: 'hsl(var(--background))',
+          color: 'hsl(var(--foreground))',
           gap: '16px',
           padding: '32px',
           fontFamily: "'DM Sans', sans-serif",
@@ -141,8 +141,7 @@ function FeatureGuard({ feature }: { feature: string }) {
         </h2>
         <p
           style={{
-            color: '#3E2723',
-            opacity: 0.6,
+            color: 'hsl(var(--muted-foreground))',
             maxWidth: '450px',
             fontSize: '14px',
             lineHeight: '1.6',
@@ -153,8 +152,8 @@ function FeatureGuard({ feature }: { feature: string }) {
         <button
           onClick={() => (window.location.hash = '#/configuracoes')}
           style={{
-            background: '#4A6B5E',
-            color: '#fff',
+            background: 'hsl(var(--primary))',
+            color: 'hsl(var(--primary-foreground))',
             border: 'none',
             padding: '10px 24px',
             borderRadius: '8px',

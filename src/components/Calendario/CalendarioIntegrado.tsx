@@ -33,7 +33,7 @@ export default function CalendarioIntegrado() {
   const [formDescricao, setFormDescricao] = useState('');
   const [formTipo, setFormTipo] = useState<TipoEventoType>('tarefa');
   const [formHora, setFormHora] = useState('');
-  const [formCor, setFormCor] = useState('#10B981'); // Verde default para tarefas
+  const [formCor, setFormCor] = useState('#28A745'); // Verde default para tarefas
   const [formDiasAntes, setFormDiasAntes] = useState(0);
 
   // Carregar eventos ao alterar a data selecionada ou o filtro
@@ -89,7 +89,7 @@ export default function CalendarioIntegrado() {
   const abrirModalCriacao = (dia: Date) => {
     setDiaSelecionadoParaCriar(dia);
     // Definir cor de acordo com o tipo
-    setFormCor('#10B981'); // Verde
+    setFormCor('#28A745'); // Verde
     setFormTipo('tarefa');
     setFormTitulo('');
     setFormDescricao('');
@@ -140,10 +140,10 @@ export default function CalendarioIntegrado() {
   const handleTipoChange = (tipo: TipoEventoType) => {
     setFormTipo(tipo);
     if (tipo === 'tarefa')
-      setFormCor('#10B981'); // Verde
+      setFormCor('#28A745'); // Verde
     else if (tipo === 'lembrete_compra')
-      setFormCor('#F59E0B'); // Âmbar
-    else if (tipo === 'reuniao') setFormCor('#8B5CF6'); // Roxo
+      setFormCor('#FFC107'); // Âmbar
+    else if (tipo === 'reuniao') setFormCor('#0D66CC'); // Azul primário
   };
 
   return (
@@ -373,7 +373,7 @@ export default function CalendarioIntegrado() {
                     Cor Visual
                   </label>
                   <div className="flex items-center gap-2 mt-2">
-                    {['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#DC2626'].map((c) => (
+                    {['#28A745', '#0D66CC', '#FFC107', '#00A99D', '#DC3545'].map((c) => (
                       <button
                         key={c}
                         type="button"

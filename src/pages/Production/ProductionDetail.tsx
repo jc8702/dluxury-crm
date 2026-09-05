@@ -106,22 +106,22 @@ const STATUS_META: Record<
     border: '#CCCCCC',
     bucket: 'PENDING',
   },
-  PAUSED: { label: 'PAUSADO', bg: '#FBE9EB', fg: '#B02A37', border: '#F0A8AE', bucket: 'PAUSED' },
+  PAUSED: { label: 'PAUSADO', bg: '#FBE9EB', fg: '#DC3545', border: '#F0A8AE', bucket: 'PAUSED' },
   IN_PROGRESS: {
     label: 'EM PRODUÇÃO',
     bg: '#E0EFFF',
-    fg: '#0D5FB8',
+    fg: '#0D66CC',
     border: '#99C5F0',
     bucket: 'IN_PROGRESS',
   },
   PRODUCAO: {
     label: 'EM PRODUÇÃO',
     bg: '#E0EFFF',
-    fg: '#0D5FB8',
+    fg: '#0D66CC',
     border: '#99C5F0',
     bucket: 'IN_PROGRESS',
   },
-  CORTE: { label: 'CORTE', bg: '#E0EFFF', fg: '#0D5FB8', border: '#99C5F0', bucket: 'IN_PROGRESS' },
+  CORTE: { label: 'CORTE', bg: '#E0EFFF', fg: '#0D66CC', border: '#99C5F0', bucket: 'IN_PROGRESS' },
   MONTAGEM: {
     label: 'MONTAGEM',
     bg: '#EDE7F6',
@@ -146,7 +146,7 @@ const STATUS_META: Record<
   COMPLETED: {
     label: 'CONCLUÍDO',
     bg: '#E6F4EA',
-    fg: '#1E7E34',
+    fg: '#28A745',
     border: '#A8D5B6',
     bucket: 'COMPLETED',
   },
@@ -160,14 +160,14 @@ const STATUS_META: Record<
   FINALIZADO: {
     label: 'CONCLUÍDO',
     bg: '#E6F4EA',
-    fg: '#1E7E34',
+    fg: '#28A745',
     border: '#A8D5B6',
     bucket: 'COMPLETED',
   },
   CANCELLED: {
     label: 'CANCELADO',
     bg: '#FBE9EB',
-    fg: '#B02A37',
+    fg: '#DC3545',
     border: '#F0A8AE',
     bucket: 'CANCELLED',
   },
@@ -254,7 +254,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       const url = await QRCode.toDataURL(qrPayload, {
         width: 220,
         margin: 1,
-        color: { dark: '#0D5FB8', light: '#FFFFFF' },
+        color: { dark: '#0D66CC', light: '#FFFFFF' },
       });
       setQrDataUrl(url);
 
@@ -504,7 +504,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                 gap: '8px',
               }}
             >
-              <Hammer size={22} color={'#0D5FB8'} /> Ordem #{order.op_id}
+              <Hammer size={22} color={'#0D66CC'} /> Ordem #{order.op_id}
             </h1>
             <p
               style={{
@@ -1033,7 +1033,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
                 alignItems: 'center',
                 gap: 6,
                 fontSize: '12px',
-                color: '#0D5FB8',
+                color: '#0D66CC',
                 fontWeight: 600,
                 textDecoration: 'none',
               }}

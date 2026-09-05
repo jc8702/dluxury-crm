@@ -108,11 +108,23 @@ export default function NotificacoesPage() {
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'critica':
-        return { text: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-500/10' };
+        return {
+          text: 'text-[hsl(var(--destructive))]',
+          border: 'border-[hsl(var(--destructive))]/30',
+          bg: 'bg-[var(--ui-color-danger-soft)]',
+        };
       case 'alta':
-        return { text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' };
+        return {
+          text: 'text-[hsl(38_92%_35%)]',
+          border: 'border-[hsl(38_92%_35%)]/30',
+          bg: 'bg-[var(--ui-color-warning-soft)]',
+        };
       case 'normal':
-        return { text: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' };
+        return {
+          text: 'text-[hsl(var(--info))]',
+          border: 'border-[hsl(var(--info))]/30',
+          bg: 'bg-[var(--ui-color-info-soft)]',
+        };
       default:
         return { text: 'text-muted-foreground', border: 'border-border', bg: 'bg-muted/10' };
     }
@@ -188,22 +200,22 @@ export default function NotificacoesPage() {
           {
             label: 'Risco Crítico',
             value: stats.criticas,
-            color: 'text-red-400',
-            border: 'border-red-500/30',
+            color: 'text-[hsl(var(--destructive))]',
+            border: 'border-[hsl(var(--destructive))]/30',
             desc: 'Cobranças e estoques zerados',
           },
           {
             label: 'Urgências (Alta)',
             value: stats.altas,
-            color: 'text-amber-400',
-            border: 'border-amber-500/30',
+            color: 'text-[hsl(38_92%_35%)]',
+            border: 'border-[hsl(38_92%_35%)]/30',
             desc: 'Prazos e garantias',
           },
           {
             label: 'Total Histórico',
             value: stats.total,
-            color: 'text-blue-400',
-            border: 'border-blue-500/30',
+            color: 'text-[hsl(var(--info))]',
+            border: 'border-[hsl(var(--info))]/30',
             desc: 'Notificações no cache atual',
           },
         ].map((card, i) => (
@@ -236,7 +248,7 @@ export default function NotificacoesPage() {
                 onClick={() => setFilter('não_lidas')}
               >
                 <div
-                  className={`w-2.5 h-2.5 rounded-full mr-3 ${filter === 'não_lidas' ? 'bg-black' : 'bg-primary'}`}
+                  className={`w-2.5 h-2.5 rounded-full mr-3 ${filter === 'não_lidas' ? 'bg-[hsl(var(--accent-foreground))]' : 'bg-primary'}`}
                 />
                 Não Lidas ({stats.naoLidas})
               </Button>
@@ -262,9 +274,9 @@ export default function NotificacoesPage() {
             <CardContent className="flex flex-col gap-2 p-4 pt-0">
               {[
                 { val: 'todas', label: 'Todos os Alertas', color: 'bg-muted-foreground' },
-                { val: 'critica', label: 'Crítico', color: 'bg-red-500' },
-                { val: 'alta', label: 'Alto', color: 'bg-amber-500' },
-                { val: 'normal', label: 'Normal', color: 'bg-blue-500' },
+                { val: 'critica', label: 'Crítico', color: 'bg-[hsl(var(--destructive))]' },
+                { val: 'alta', label: 'Alto', color: 'bg-[hsl(38_92%_35%)]' },
+                { val: 'normal', label: 'Normal', color: 'bg-[hsl(var(--info))]' },
               ].map((item) => (
                 <Button
                   key={item.val}
@@ -292,7 +304,7 @@ export default function NotificacoesPage() {
                 </div>
               ) : filteredNotificacoes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[500px] gap-6 text-center">
-                  <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                  <div className="w-20 h-20 bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] rounded-full flex items-center justify-center border border-[hsl(var(--success))]/20 shadow-inner">
                     <CheckCircle className="w-10 h-10" />
                   </div>
                   <div>
@@ -330,16 +342,16 @@ export default function NotificacoesPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start gap-4 mb-1">
                             <div className="flex flex-wrap items-center gap-3 min-w-0">
-                              <h4 className="text-sm font-semibold tracking-tight text-white truncate max-w-[400px]">
+                              <h4 className="text-sm font-semibold tracking-tight text-foreground truncate max-w-[400px]">
                                 {n.titulo}
                               </h4>
                               <span
                                 className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
                                   n.prioridade === 'critica'
-                                    ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                    ? 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))]'
                                     : n.prioridade === 'alta'
-                                      ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                                      : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                      ? 'bg-[var(--ui-color-warning-soft)] border-[hsl(38_92%_35%)]/20 text-[hsl(38_92%_35%)]'
+                                      : 'bg-[var(--ui-color-info-soft)] border-[hsl(var(--info))]/20 text-[hsl(var(--info))]'
                                 }`}
                               >
                                 {n.prioridade}

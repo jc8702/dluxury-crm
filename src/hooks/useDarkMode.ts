@@ -7,13 +7,10 @@ export interface UseDarkModeReturn {
 }
 
 export function useDarkMode(): UseDarkModeReturn {
-  const { theme, toggleTheme, setTheme } = useTheme();
-  const isDark = theme === 'dark';
-
   return {
-    isDark,
-    toggle: toggleTheme,
-    setDark: (value: boolean) => setTheme(value ? 'dark' : 'light'),
+    isDark: false,
+    toggle: () => {},
+    setDark: (_value: boolean) => {},
   };
 }
 

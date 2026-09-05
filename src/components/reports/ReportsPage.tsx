@@ -32,7 +32,7 @@ import {
   Cell,
 } from 'recharts';
 
-const COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#6366f1'];
+const COLORS = ['#0D66CC', '#00A99D', '#E2AC00', '#DC3545', '#28A745', '#17A2B8'];
 
 const ReportsPage: React.FC = () => {
   const { info: toastInfo } = useToast();
@@ -125,9 +125,9 @@ const ReportsPage: React.FC = () => {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                <Bar dataKey="Valor Venda" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Custo Insumos" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Margem Líquida" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Valor Venda" fill="#0D66CC" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Custo Insumos" fill="#DC3545" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Margem Líquida" fill="#28A745" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -174,8 +174,8 @@ const ReportsPage: React.FC = () => {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                <Bar dataKey="Qtd Necessária" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Qtd Estoque" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Qtd Necessária" fill="#E2AC00" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Qtd Estoque" fill="#28A745" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

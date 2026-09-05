@@ -47,9 +47,9 @@ export default function KanbanColumn({
         };
       case 'concluido':
         return {
-          icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
-          border: 'border-t-4 border-t-green-500',
-          bg: 'bg-green-500/5',
+          icon: <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" />,
+          border: 'border-t-4 border-t-[hsl(var(--success))]',
+          bg: 'bg-[hsl(var(--success)/0.05)]',
         };
     }
   };

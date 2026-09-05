@@ -661,7 +661,7 @@ export async function runInitDB() {
       hora_evento TIME,
       quotation_id UUID,
       operacao_prod_id UUID REFERENCES ordens_prod(id) ON DELETE SET NULL,
-      cor_categoria VARCHAR(20) DEFAULT '#3B82F6',
+      cor_categoria VARCHAR(20) DEFAULT '#0D66CC',
       concluido BOOLEAN DEFAULT FALSE,
       notificacao_dias_antes INTEGER DEFAULT 0,
       notificacao_enviada BOOLEAN DEFAULT FALSE,
@@ -678,7 +678,7 @@ export async function runInitDB() {
     sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS operacao_prod_id UUID`,
   ).catch(() => {});
   await safeSql(
-    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS cor_categoria VARCHAR(20) DEFAULT '#3B82F6'`,
+    sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS cor_categoria VARCHAR(20) DEFAULT '#0D66CC'`,
   ).catch(() => {});
   await safeSql(
     sql`ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS notificacao_dias_antes INTEGER DEFAULT 0`,

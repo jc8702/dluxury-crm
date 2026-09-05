@@ -88,80 +88,72 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   FATTO OS — Dual Theme Design System
-   Light Mode: Fatto OS Premium (Off-White, Louro Freijó, Verde Laca, Dourado)
-   Dark Mode:  D'Luxury Classic (Slate 950, Amber 500/600)
+   D'LUXURY CRM — Design System
+   Paleta oficial (HSL channel triplets):
+   - background  #FAFAFA  →  0 0% 98%
+   - surface     #FFFFFF  →  0 0% 100%
+   - text        #1A1A1A  →  0 0% 10%
+   - primary     #0D66CC  → 212 100% 41%
+   - secondary   #00A99D  → 176 100% 33%
+   - accent      #E2AC00  →  44 100% 44%
+   - error       #DC3545  → 354 70% 53%
+   - success     #28A745  → 134 61% 41%
+   - warning     #FFC107  →  45 100% 51%
+   - info        #17A2B8  → 191 78% 42%
    ═══════════════════════════════════════════════════════════════ */
-
-/*
-   LIGHT MODE — Fatto OS Premium:
-   - Off-White      #F9F8F6  →  40 15% 97%
-   - Louro Freijó   #8B5A2B  →  24 55% 36%
-   - Verde Laca     #1C2E24  → 153 25% 15%
-   - Dourado Latão  #D4AF37  →  45 67% 52%
-   - Ébano          #0F1713  → 150 22% 7%
-
-   DARK MODE — D'Luxury Classic:
-   - Slate 950      #020617  → 222 47% 4%
-   - Slate 900      #0F172A  → 222 47% 11%
-   - Slate 50       #F8FAFC  → 210 40% 98%
-   - Slate 400      #94A3B8  → 215 16% 57%
-   - Amber 500      #F59E0B  →  38 92% 50%
-   - Amber 600      #D97706  →  32 95% 44%
-*/
 
 :root,
 .light,
 [data-theme='light'] {
   /* ─── Surfaces ─── */
-  --background: 40 15% 97%;
-  --foreground: 153 25% 15%;
+  --background: 0 0% 98%;
+  --foreground: 0 0% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 153 25% 15%;
+  --card-foreground: 0 0% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 153 25% 15%;
+  --popover-foreground: 0 0% 10%;
 
-  /* ─── Brand: Louro Freijó como ação primária ─── */
-  --primary: 24 55% 36%;
+  /* ─── Brand: Azul D'Luxury como ação primária ─── */
+  --primary: 212 100% 41%;
   --primary-foreground: 0 0% 100%;
-  --primary-glow: 24 55% 42%;
-  --primary-hover: 24 55% 30%;
+  --primary-glow: 212 100% 48%;
+  --primary-hover: 212 100% 35%;
 
   /* ─── Neutrals ─── */
-  --secondary: 40 10% 93%;
-  --secondary-foreground: 153 25% 15%;
-  --muted: 40 10% 94%;
-  --muted-foreground: 153 12% 46%;
-  --accent: 45 67% 52%;
-  --accent-foreground: 150 22% 7%;
+  --secondary: 176 100% 33%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 44 100% 44%;
+  --accent-foreground: 0 0% 10%;
 
   /* ─── Semantic ─── */
-  --destructive: 0 72% 51%;
+  --destructive: 354 70% 53%;
   --destructive-foreground: 0 0% 100%;
-  --success: 155 45% 38%;
-  --warning: 38 92% 50%;
-  --info: 210 80% 52%;
+  --success: 134 61% 41%;
+  --warning: 45 100% 51%;
+  --info: 191 78% 42%;
 
   /* ─── Borders & Inputs ─── */
-  --border: 40 10% 85%;
-  --input: 40 10% 87%;
-  --ring: 24 55% 36%;
+  --border: 0 0% 88%;
+  --input: 0 0% 90%;
+  --ring: 212 100% 41%;
   --radius: 0.625rem;
 
   /* ─── Layered surfaces ─── */
   --surface: 0 0% 100%;
   --surface-elevated: 0 0% 100%;
-  --surface-hover: 40 10% 95%;
+  --surface-hover: 0 0% 95%;
 
-  /* ─── Sidebar (Verde Laca Musgo fundo) ─── */
-  --sidebar-background: 153 25% 15%;
-  --sidebar-foreground: 40 15% 80%;
-  --sidebar-primary: 45 67% 52%;
-  --sidebar-primary-foreground: 150 22% 7%;
-  --sidebar-accent: 153 20% 20%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 153 20% 20%;
-  --sidebar-ring: 45 67% 52%;
+  /* ─── Sidebar ─── */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 0 0% 30%;
+  --sidebar-primary: 212 100% 41%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 212 100% 96%;
+  --sidebar-accent-foreground: 212 100% 30%;
+  --sidebar-border: 0 0% 90%;
+  --sidebar-ring: 212 100% 41%;
 
   /* ─── UI Variables Compatibility (Globals & Tokens) ─── */
   --ui-bg: hsl(var(--background));
@@ -173,30 +165,92 @@
   --ui-border: hsl(var(--border));
   --ui-color-primary: hsl(var(--primary));
   --ui-color-success: hsl(var(--success));
+  --ui-color-warning: hsl(var(--warning));
+  --ui-color-danger: hsl(var(--destructive));
+  --ui-color-info: hsl(var(--info));
+  --ui-color-accent: hsl(var(--accent));
+  --ui-color-secondary: hsl(var(--secondary));
   --ui-bg-subtle: hsl(var(--surface-hover));
   --ui-border-strong: hsl(var(--border));
-  --ui-color-danger: hsl(var(--destructive));
 
-  /* ─── UI Color Scales (Badges, CardStat, Chips) ─── */
-  --ui-color-navy-50: #f0f3f7;
-  --ui-color-navy-100: #e3e7ec;
-  --ui-color-navy-700: #141a23;
-  --ui-color-navy-800: #0d1117;
-  --ui-color-teal-50: #e6faf8;
-  --ui-color-teal-200: #7ee0d4;
-  --ui-color-teal-500: hsl(var(--success));
-  --ui-color-teal-700: #006b66;
-  --ui-color-gold-50: #faf3e0;
-  --ui-color-gold-100: #f5e6b8;
-  --ui-color-gold-400: hsl(var(--accent));
-  --ui-color-gold-500: #c49400;
-  --ui-color-gold-700: #6e5500;
+  /* ─── UI Color Scales (badges, chips, status) — D'Luxury ─── */
+  --ui-color-primary-50: #e6f1fc;
+  --ui-color-primary-100: #cce3f9;
+  --ui-color-primary-200: #99c7f3;
+  --ui-color-primary-300: #66abed;
+  --ui-color-primary-400: #338fe7;
+  --ui-color-primary-500: hsl(var(--primary));
+  --ui-color-primary-600: #0a52a3;
+  --ui-color-primary-700: #083d7a;
+  --ui-color-primary-800: #052952;
+  --ui-color-primary-900: #031429;
+  --ui-color-secondary-50: #e0f7f5;
+  --ui-color-secondary-100: #b3ebe5;
+  --ui-color-secondary-200: #80dcd2;
+  --ui-color-secondary-300: #4dcdbe;
+  --ui-color-secondary-400: #1abeab;
+  --ui-color-secondary-500: hsl(var(--secondary));
+  --ui-color-secondary-600: #008b84;
+  --ui-color-secondary-700: #006b66;
+  --ui-color-secondary-800: #004d47;
+  --ui-color-secondary-900: #002e2b;
+  --ui-color-accent-50: #fdf6df;
+  --ui-color-accent-100: #faebb0;
+  --ui-color-accent-200: #f5dd80;
+  --ui-color-accent-300: #f0cf50;
+  --ui-color-accent-400: #ebc120;
+  --ui-color-accent-500: hsl(var(--accent));
+  --ui-color-accent-600: #b38900;
+  --ui-color-accent-700: #856700;
+  --ui-color-accent-800: #564400;
+  --ui-color-accent-900: #2b2200;
   --ui-color-neutral-0: hsl(0 0% 100%);
   --ui-color-neutral-50: #fafafa;
-  --ui-color-success-soft: #dcfce7;
-  --ui-color-warning-soft: #fef3c7;
-  --ui-color-danger-soft: #fee2e2;
-  --ui-color-info-soft: #dbeafe;
+  --ui-color-neutral-100: #f4f4f5;
+  --ui-color-neutral-200: #e4e4e7;
+  --ui-color-neutral-300: #d4d4d8;
+  --ui-color-neutral-400: #a1a1aa;
+  --ui-color-neutral-500: #71717a;
+  --ui-color-neutral-600: #52525b;
+  --ui-color-neutral-700: #3f3f46;
+  --ui-color-neutral-800: #27272a;
+  --ui-color-neutral-900: #1a1a1a;
+  --ui-color-success-soft: #d8f0dd;
+  --ui-color-warning-soft: #fff4cf;
+  --ui-color-danger-soft: #fde2e4;
+  --ui-color-info-soft: #d3eef4;
+  --ui-color-teal-50: #e0f7f5;
+  --ui-color-teal-100: #b3ebe5;
+  --ui-color-teal-200: #80dcd2;
+  --ui-color-teal-300: #4dcdbe;
+  --ui-color-teal-400: #1abeab;
+  --ui-color-teal-500: hsl(var(--secondary));
+  --ui-color-teal-600: #008b84;
+  --ui-color-teal-700: #006b66;
+  --ui-color-teal-800: #004d47;
+  --ui-color-teal-900: #002e2b;
+  --ui-color-gold-50: #fdf6df;
+  --ui-color-gold-100: #faebb0;
+  --ui-color-gold-200: #f5dd80;
+  --ui-color-gold-300: #f0cf50;
+  --ui-color-gold-400: #ebc120;
+  --ui-color-gold-500: hsl(var(--accent));
+  --ui-color-gold-600: #b38900;
+  --ui-color-gold-700: #856700;
+  --ui-color-gold-800: #564400;
+  --ui-color-gold-900: #2b2200;
+  --ui-color-navy-50: #e6f1fc;
+  --ui-color-navy-100: #cce3f9;
+  --ui-color-navy-200: #99c7f3;
+  --ui-color-navy-300: #66abed;
+  --ui-color-navy-400: #338fe7;
+  --ui-color-navy-500: hsl(var(--primary));
+  --ui-color-navy-600: #0a52a3;
+  --ui-color-navy-700: #083d7a;
+  --ui-color-navy-800: #052952;
+  --ui-color-navy-900: #031429;
+  --ui-shadow-glow-gold: 0 0 0 3px hsl(44 100% 44% / 0.12);
+  --ui-bg-app: hsl(var(--background));
 
   /* ─── UI Actions ─── */
   --ui-action-primary: hsl(var(--primary));
@@ -206,11 +260,14 @@
   --ui-action-secondary-hover: hsl(var(--surface-hover));
   --ui-action-secondary-fg: hsl(var(--secondary-foreground));
   --ui-action-accent: hsl(var(--accent));
-  --ui-action-accent-hover: hsl(45 67% 45%);
+  --ui-action-accent-hover: hsl(44 100% 38%);
   --ui-action-accent-fg: hsl(var(--accent-foreground));
   --ui-action-danger: hsl(var(--destructive));
-  --ui-action-danger-hover: hsl(0 72% 45%);
+  --ui-action-danger-hover: hsl(354 70% 47%);
   --ui-action-danger-fg: hsl(var(--destructive-foreground));
+  --ui-action-success: hsl(var(--success));
+  --ui-action-warning: hsl(var(--warning));
+  --ui-action-info: hsl(var(--info));
 
   /* ─── UI Focus ─── */
   --ui-focus-ring: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.4);
@@ -246,9 +303,9 @@
   --ui-radius-full: 9999px;
 
   /* ─── UI Shadows ─── */
-  --ui-shadow-1: 0 1px 2px 0 rgb(13 17 23 / 0.04), 0 1px 1px 0 rgb(13 17 23 / 0.03);
-  --ui-shadow-2: 0 4px 8px -2px rgb(13 17 23 / 0.06), 0 2px 4px -2px rgb(13 17 23 / 0.04);
-  --ui-shadow-3: 0 12px 24px -4px rgb(13 17 23 / 0.1), 0 4px 8px -2px rgb(13 17 23 / 0.06);
+  --ui-shadow-1: 0 1px 2px 0 rgb(26 26 26 / 0.04), 0 1px 1px 0 rgb(26 26 26 / 0.03);
+  --ui-shadow-2: 0 4px 8px -2px rgb(26 26 26 / 0.06), 0 2px 4px -2px rgb(26 26 26 / 0.04);
+  --ui-shadow-3: 0 12px 24px -4px rgb(26 26 26 / 0.1), 0 4px 8px -2px rgb(26 26 26 / 0.06);
 
   /* ─── UI Z-index ─── */
   --ui-z-sticky: 80;
@@ -260,177 +317,16 @@
   --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ─── Decorative ─── */
-  --gradient-primary: linear-gradient(135deg, hsl(24 55% 36%), hsl(45 67% 52%));
-  --gradient-surface: linear-gradient(180deg, hsl(40 15% 97%), hsl(40 10% 94%));
+  --gradient-primary: linear-gradient(135deg, hsl(212 100% 41%), hsl(44 100% 44%));
+  --gradient-surface: linear-gradient(180deg, hsl(0 0% 98%), hsl(0 0% 96%));
   --gradient-glow: none;
 
-  /* ─── Shadows (soft, warm-tinted) ─── */
-  --shadow-sm: 0 1px 3px 0 rgb(15 23 19 / 0.04), 0 1px 2px -1px rgb(15 23 19 / 0.04);
-  --shadow-md: 0 4px 6px -1px rgb(15 23 19 / 0.06), 0 2px 4px -2px rgb(15 23 19 / 0.04);
-  --shadow-lg: 0 10px 25px -3px rgb(15 23 19 / 0.08), 0 4px 6px -4px rgb(15 23 19 / 0.04);
-  --shadow-primary: 0 4px 14px 0 rgb(139 90 43 / 0.2);
-  --shadow-glow: 0 0 0 3px rgb(139 90 43 / 0.12);
-}
-
-.dark,
-[data-theme='dark'] {
-  /* ─── Surfaces (Premium Zinc) ─── */
-  --background: 240 5% 3%;
-  --foreground: 0 0% 98%;
-  --card: 240 5% 6%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 5% 6%;
-  --popover-foreground: 0 0% 98%;
-
-  /* ─── Brand: Dourado D'Luxury ─── */
-  --primary: 45 93% 47%;
-  --primary-foreground: 240 5% 3%;
-  --primary-glow: 45 93% 52%;
-  --primary-hover: 45 93% 40%;
-
-  /* ─── Neutrals (Zinc tones) ─── */
-  --secondary: 240 5% 10%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 5% 12%;
-  --muted-foreground: 240 5% 60%;
-  --accent: 45 93% 40%;
-  --accent-foreground: 0 0% 98%;
-
-  /* ─── Semantic ─── */
-  --destructive: 0 72% 55%;
-  --destructive-foreground: 0 0% 98%;
-  --success: 142 76% 36%;
-  --warning: 38 92% 50%;
-  --info: 210 80% 60%;
-
-  /* ─── Borders & Inputs ─── */
-  --border: 240 5% 12%;
-  --input: 240 5% 14%;
-  --ring: 45 93% 47%;
-  --radius: 0.75rem; /* Mais arredondado */
-
-  /* ─── Layered surfaces ─── */
-  --surface: 240 5% 6%;
-  --surface-elevated: 240 5% 10%;
-  --surface-hover: 240 5% 14%;
-
-  /* ─── Sidebar ─── */
-  --sidebar-background: 240 5% 3%;
-  --sidebar-foreground: 240 5% 60%;
-  --sidebar-primary: 45 93% 47%;
-  --sidebar-primary-foreground: 240 5% 3%;
-  --sidebar-accent: 240 5% 10%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 240 5% 12%;
-  --sidebar-ring: 45 93% 47%;
-
-  /* ─── UI Variables Compatibility (Globals & Tokens) ─── */
-  --ui-bg: hsl(var(--background));
-  --ui-surface: hsl(var(--surface));
-  --ui-surface-hover: hsl(var(--surface-hover));
-  --ui-text-primary: hsl(var(--foreground));
-  --ui-text-secondary: hsl(var(--muted-foreground));
-  --ui-text-muted: hsl(var(--muted-foreground));
-  --ui-border: hsl(var(--border));
-  --ui-color-primary: hsl(var(--primary));
-  --ui-color-success: hsl(var(--success));
-  --ui-bg-subtle: hsl(var(--surface-hover));
-  --ui-border-strong: hsl(var(--border));
-  --ui-color-danger: hsl(var(--destructive));
-
-  /* ─── UI Color Scales (Dark mode overrides) ─── */
-  --ui-color-navy-50: #1d242e;
-  --ui-color-navy-100: #141a23;
-  --ui-color-navy-700: #c2cad3;
-  --ui-color-navy-800: #e3e7ec;
-  --ui-color-teal-50: #002e2b;
-  --ui-color-teal-200: #004d47;
-  --ui-color-teal-500: hsl(var(--success));
-  --ui-color-teal-700: #7ee0d4;
-  --ui-color-gold-50: #1f1700;
-  --ui-color-gold-100: #423300;
-  --ui-color-gold-400: hsl(var(--primary));
-  --ui-color-gold-500: hsl(var(--primary));
-  --ui-color-gold-700: #fae7a3;
-  --ui-color-neutral-0: hsl(240 5% 3%);
-  --ui-color-neutral-50: #18181b;
-  --ui-color-success-soft: #052e16;
-  --ui-color-warning-soft: #422006;
-  --ui-color-danger-soft: #450a0a;
-  --ui-color-info-soft: #0c1929;
-
-  /* ─── UI Actions ─── */
-  --ui-action-primary: hsl(var(--primary));
-  --ui-action-primary-hover: hsl(var(--primary-hover));
-  --ui-action-primary-fg: hsl(var(--primary-foreground));
-  --ui-action-secondary: hsl(var(--secondary));
-  --ui-action-secondary-hover: hsl(var(--surface-hover));
-  --ui-action-secondary-fg: hsl(var(--secondary-foreground));
-  --ui-action-accent: hsl(var(--accent));
-  --ui-action-accent-hover: hsl(45 93% 35%);
-  --ui-action-accent-fg: hsl(var(--accent-foreground));
-  --ui-action-danger: hsl(var(--destructive));
-  --ui-action-danger-hover: hsl(0 72% 48%);
-  --ui-action-danger-fg: hsl(var(--destructive-foreground));
-
-  /* ─── UI Focus ─── */
-  --ui-focus-ring: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.5);
-  --ui-focus-ring-danger: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive) / 0.5);
-  --ui-shadow-focus: 0 0 0 3px hsl(var(--primary) / 0.3);
-  --ui-shadow-danger-focus: 0 0 0 3px hsl(var(--destructive) / 0.3);
-
-  /* ─── UI Typography ─── */
-  --ui-font-sans: 'Source Sans 3', 'DM Sans', system-ui, -apple-system, sans-serif;
-  --ui-text-xs: 0.75rem;
-  --ui-text-sm: 0.875rem;
-  --ui-text-base: 0.875rem;
-  --ui-text-lg: 1rem;
-  --ui-text-xl: 1.125rem;
-  --ui-text-2xl: 1.375rem;
-  --ui-tracking-wide: 0.04em;
-
-  /* ─── UI Space (4px grid) ─── */
-  --ui-space-0: 0;
-  --ui-space-1: 4px;
-  --ui-space-2: 8px;
-  --ui-space-3: 12px;
-  --ui-space-4: 16px;
-  --ui-space-6: 24px;
-  --ui-space-8: 32px;
-  --ui-space-10: 40px;
-
-  /* ─── UI Radius ─── */
-  --ui-radius-xs: 4px;
-  --ui-radius-sm: 6px;
-  --ui-radius-md: 8px;
-  --ui-radius-lg: 12px;
-  --ui-radius-full: 9999px;
-
-  /* ─── UI Shadows ─── */
-  --ui-shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-  --ui-shadow-2: 0 4px 12px -2px rgb(0 0 0 / 0.4);
-  --ui-shadow-3: 0 12px 30px -4px rgb(0 0 0 / 0.6);
-
-  /* ─── UI Z-index ─── */
-  --ui-z-sticky: 80;
-  --ui-z-modal: 110;
-
-  /* ─── UI Motion ─── */
-  --ui-duration-fast: 120ms;
-  --ui-duration-base: 180ms;
-  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* ─── Decorative ─── */
-  --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 93% 40%));
-  --gradient-surface: linear-gradient(180deg, hsl(240 5% 6%), hsl(240 5% 4%));
-  --gradient-glow: none;
-
-  /* ─── Shadows (soft with slight glow) ─── */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
-  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 12px 30px -4px rgb(0 0 0 / 0.7), 0 6px 12px -4px rgb(0 0 0 / 0.5);
-  --shadow-primary: 0 4px 14px 0 rgb(234 179 8 / 0.15);
-  --shadow-glow: 0 0 0 2px rgb(234 179 8 / 0.1);
+  /* ─── Shadows (soft, neutral-tinted) ─── */
+  --shadow-sm: 0 1px 3px 0 rgb(26 26 26 / 0.04), 0 1px 2px -1px rgb(26 26 26 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(26 26 26 / 0.06), 0 2px 4px -2px rgb(26 26 26 / 0.04);
+  --shadow-lg: 0 10px 25px -3px rgb(26 26 26 / 0.08), 0 4px 6px -4px rgb(26 26 26 / 0.04);
+  --shadow-primary: 0 4px 14px 0 rgb(13 102 204 / 0.2);
+  --shadow-glow: 0 0 0 3px rgb(13 102 204 / 0.12);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -472,7 +368,7 @@
     line-height: 1.3;
   }
 
-  /* Scrollbar — thin, warm */
+  /* Scrollbar — thin, neutral */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -514,7 +410,7 @@
     color: transparent;
   }
 
-  /* Glass effect — warm tinted */
+  /* Glass effect — neutral tinted */
   .glass {
     background: hsl(var(--card) / 0.85);
     backdrop-filter: blur(12px);
@@ -556,7 +452,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer components {
-  /* ─── Dense Table Style (Calcme-inspired, warm-tinted) ─── */
+  /* ─── Dense Table Style ─── */
   .table-dense th,
   .table-dense td {
     padding-top: 0.625rem;
@@ -590,7 +486,7 @@
   }
   .menu-item.active {
     background: hsl(var(--sidebar-accent));
-    color: hsl(var(--primary));
+    color: hsl(var(--sidebar-primary));
     font-weight: 600;
   }
   .menu-item.active::before {
@@ -602,7 +498,7 @@
     height: 18px;
     width: 3px;
     border-radius: 2px;
-    background: hsl(var(--primary));
+    background: hsl(var(--sidebar-primary));
   }
 
   /* ─── Badges (Pill-shaped status indicators) ─── */
@@ -620,28 +516,36 @@
     letter-spacing: 0.01em;
   }
   .badge-success {
-    background: hsl(155 19% 35% / 0.12);
-    color: hsl(155 19% 35%);
+    background: hsl(var(--success) / 0.12);
+    color: hsl(var(--success));
   }
   .badge-warning {
-    background: hsl(38 92% 50% / 0.12);
-    color: hsl(30 80% 40%);
+    background: hsl(var(--warning) / 0.15);
+    color: hsl(38 92% 35%);
   }
   .badge-destructive {
-    background: hsl(0 72% 51% / 0.1);
-    color: hsl(0 65% 45%);
+    background: hsl(var(--destructive) / 0.12);
+    color: hsl(var(--destructive));
   }
   .badge-info {
-    background: hsl(210 80% 52% / 0.1);
-    color: hsl(210 70% 42%);
+    background: hsl(var(--info) / 0.12);
+    color: hsl(var(--info));
   }
   .badge-neutral {
-    background: hsl(16 18% 81% / 0.35);
-    color: hsl(12 27% 19%);
+    background: hsl(0 0% 92%);
+    color: hsl(0 0% 20%);
   }
   .badge-primary {
     background: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
+  }
+  .badge-accent {
+    background: hsl(var(--accent) / 0.15);
+    color: hsl(40 100% 28%);
+  }
+  .badge-secondary {
+    background: hsl(var(--secondary) / 0.12);
+    color: hsl(var(--secondary));
   }
 
   /* ─── Skeleton Loading ─── */

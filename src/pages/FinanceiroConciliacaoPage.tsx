@@ -484,11 +484,11 @@ export default function FinanceiroConciliacaoPage() {
                         style={{
                           background:
                             txn.status === 'matched'
-                              ? 'rgba(34,197,94,0.04)'
+                              ? 'hsl(var(--success) / 0.04)'
                               : txn.status === 'manual'
-                                ? 'rgba(59,130,246,0.04)'
+                                ? 'hsl(var(--info) / 0.04)'
                                 : txn.status === 'ignored'
-                                  ? 'rgba(0,0,0,0.1)'
+                                  ? 'hsl(var(--muted) / 0.5)'
                                   : 'transparent',
                           opacity: txn.status === 'ignored' ? 0.5 : 1,
                         }}
@@ -621,8 +621,8 @@ export default function FinanceiroConciliacaoPage() {
                             colSpan={7}
                             style={{
                               padding: '0.75rem 1.5rem',
-                              background: 'rgba(59,130,246,0.06)',
-                              borderBottom: '2px solid rgba(59,130,246,0.2)',
+                              background: 'hsl(var(--info) / 0.06)',
+                              borderBottom: '2px solid hsl(var(--info) / 0.2)',
                             }}
                           >
                             <div

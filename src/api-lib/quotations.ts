@@ -1579,7 +1579,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                       ) VALUES ${dsql.join(
                         usuarios.rows.map(
                           (u: any) =>
-                            dsql`(${tenantId}::uuid, ${u.id}::uuid, 'prazo_entrega', ${`Prazo de Entrega OP: ${numeroOp}`}, ${`Ordem de Produção gerada a partir do Orçamento ${exists.numeroOrcamento}`}, ${dataPrazo.toISOString().split('T')[0]}, ${newOpId}::uuid, '#DC2626', FALSE, 3)`,
+                            dsql`(${tenantId}::uuid, ${u.id}::uuid, 'prazo_entrega', ${`Prazo de Entrega OP: ${numeroOp}`}, ${`Ordem de Produção gerada a partir do Orçamento ${exists.numeroOrcamento}`}, ${dataPrazo.toISOString().split('T')[0]}, ${newOpId}::uuid, '#DC3545', FALSE, 3)`,
                         ),
                         dsql`, `,
                       )}

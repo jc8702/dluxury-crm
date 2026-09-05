@@ -366,7 +366,7 @@ const EngineeringPage: React.FC = () => {
         )}
       </div>
 
-      <Card className="bg-gradient-to-br from-primary/10 to-teal-500/5 border border-primary/15 p-6">
+      <Card className="bg-gradient-to-br from-primary/10 to-secondary/5 border border-primary/15 p-6">
         <CardContent className="flex flex-col gap-4 p-0">
           <div className="flex items-center gap-2">
             <Zap size={20} className="text-primary" />

@@ -346,33 +346,33 @@ const FinanceiroFormasPage: React.FC = () => {
             <select
               className="input-base"
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'hsl(var(--muted) / 0.5)',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
                 padding: '0.75rem',
-                color: 'white',
+                color: 'hsl(var(--foreground))',
                 width: '100%',
                 outline: 'none',
               }}
               value={form.tipo}
               onChange={(e) => setForm({ ...form, tipo: e.target.value })}
             >
-              <option value="pix" style={{ background: '#1e293b' }}>
+              <option value="pix" style={{ background: 'hsl(var(--card))' }}>
                 PIX
               </option>
-              <option value="dinheiro" style={{ background: '#1e293b' }}>
+              <option value="dinheiro" style={{ background: 'hsl(var(--card))' }}>
                 Dinheiro
               </option>
-              <option value="credito" style={{ background: '#1e293b' }}>
+              <option value="credito" style={{ background: 'hsl(var(--card))' }}>
                 Cartão de Crédito
               </option>
-              <option value="debito" style={{ background: '#1e293b' }}>
+              <option value="debito" style={{ background: 'hsl(var(--card))' }}>
                 Cartão de Débito
               </option>
-              <option value="boleto" style={{ background: '#1e293b' }}>
+              <option value="boleto" style={{ background: 'hsl(var(--card))' }}>
                 Boleto
               </option>
-              <option value="transferência" style={{ background: '#1e293b' }}>
+              <option value="transferência" style={{ background: 'hsl(var(--card))' }}>
                 Transferência Bancária / TED
               </option>
             </select>

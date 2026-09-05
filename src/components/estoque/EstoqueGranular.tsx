@@ -142,18 +142,20 @@ export default function EstoqueGranular() {
   };
 
   const obterCorStatus = (status_alerta: string) => {
-    if (status_alerta === 'critica') return 'border-red-500/20 bg-red-500/10 text-red-400';
-    if (status_alerta === 'alerta') return 'border-yellow-500/20 bg-yellow-500/10 text-yellow-400';
-    return 'border-green-500/20 bg-green-500/10 text-green-400';
+    if (status_alerta === 'critica')
+      return 'border-[hsl(var(--destructive)/0.2)] bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))]';
+    if (status_alerta === 'alerta')
+      return 'border-[hsl(var(--warning)/0.2)] bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)]';
+    return 'border-[hsl(var(--success)/0.2)] bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))]';
   };
 
   const obterIconeAlerta = (tipo: string) => {
     const iconesMap: Record<string, React.ReactNode> = {
-      minimo_atingido: <TrendingDown size={16} className="text-orange-400" />,
-      maximo_excedido: <AlertTriangle size={16} className="text-yellow-400" />,
-      em_falta: <XCircle size={16} className="text-red-500" />,
-      vencimento_proximo: <AlertCircle size={16} className="text-red-400" />,
-      muito_atrasado: <Truck size={16} className="text-blue-400" />,
+      minimo_atingido: <TrendingDown size={16} className="text-[hsl(38_92%_35%)]" />,
+      maximo_excedido: <AlertTriangle size={16} className="text-[hsl(38_92%_35%)]" />,
+      em_falta: <XCircle size={16} className="text-[hsl(var(--destructive))]" />,
+      vencimento_proximo: <AlertCircle size={16} className="text-[hsl(var(--destructive))]" />,
+      muito_atrasado: <Truck size={16} className="text-[hsl(var(--info))]" />,
     };
     return iconesMap[tipo] || <AlertTriangle size={16} />;
   };
@@ -178,24 +180,24 @@ export default function EstoqueGranular() {
       {alertas.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {alertas.filter((a) => a.severidade === 'critica').length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-              <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
+            <div className="bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.3)] rounded-lg p-4">
+              <h3 className="text-[hsl(var(--destructive))] font-bold mb-2 flex items-center gap-2">
                 <XCircle size={18} />
                 {alertas.filter((a) => a.severidade === 'critica').length} Críticos (Estoque Zerado)
               </h3>
-              <ul className="divide-y divide-red-500/10 max-h-40 overflow-y-auto">
+              <ul className="divide-y divide-[hsl(var(--destructive)/0.1)] max-h-40 overflow-y-auto">
                 {alertas
                   .filter((a) => a.severidade === 'critica')
                   .map((a) => (
                     <li
                       key={a.id}
-                      className="py-2 text-sm text-red-300 flex justify-between items-center"
+                      className="py-2 text-sm text-[hsl(var(--destructive))]/80 flex justify-between items-center"
                     >
                       <span>
                         <strong className="text-foreground">{a.sku_codigo}</strong> -{' '}
                         {a.descricao || 'Material'}
                       </span>
-                      <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs">
+                      <span className="bg-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] px-2 py-0.5 rounded text-xs">
                         Falta
                       </span>
                     </li>
@@ -205,12 +207,12 @@ export default function EstoqueGranular() {
           )}
 
           {alertas.filter((a) => a.severidade !== 'critica').length > 0 && (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-              <h3 className="text-yellow-400 font-bold mb-2 flex items-center gap-2">
+            <div className="bg-[var(--ui-color-warning-soft)] border border-[hsl(var(--warning)/0.2)] rounded-lg p-4">
+              <h3 className="text-[hsl(38_92%_35%)] font-bold mb-2 flex items-center gap-2">
                 <AlertTriangle size={18} />
                 {alertas.filter((a) => a.severidade !== 'critica').length} Alertas (Mínimo Atingido)
               </h3>
-              <ul className="divide-y divide-yellow-500/10 max-h-40 overflow-y-auto text-sm text-yellow-200">
+              <ul className="divide-y divide-[hsl(var(--warning)/0.1)] max-h-40 overflow-y-auto text-sm text-[hsl(38_92%_35%)]/80">
                 {alertas
                   .filter((a) => a.severidade !== 'critica')
                   .map((a) => (
@@ -220,7 +222,7 @@ export default function EstoqueGranular() {
                         <strong className="text-foreground">{a.sku_codigo}</strong> -{' '}
                         {a.descricao || 'Material'}
                       </span>
-                      <span className="text-xs text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded">
+                      <span className="text-xs text-[hsl(38_92%_35%)] bg-[var(--ui-color-warning-soft)] px-2 py-0.5 rounded">
                         {a.quantidade_atual} un (Mín: {a.limite_alerta})
                       </span>
                     </li>
@@ -241,7 +243,7 @@ export default function EstoqueGranular() {
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && carregarEstoque()}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-zinc-700"
+            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -259,7 +261,7 @@ export default function EstoqueGranular() {
 
           <button
             onClick={carregarEstoque}
-            className="p-2.5 bg-background border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-zinc-700 transition"
+            className="p-2.5 bg-background border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary transition"
             title="Atualizar dados"
           >
             <RefreshCw size={18} />
@@ -283,7 +285,7 @@ export default function EstoqueGranular() {
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-border rounded-lg text-muted-foreground">
-          <ClipboardList size={40} className="mx-auto mb-3 text-zinc-600" />
+          <ClipboardList size={40} className="mx-auto mb-3 text-muted-foreground" />
           <p>Nenhum item localizado com os critérios selecionados.</p>
         </div>
       ) : (
@@ -292,11 +294,19 @@ export default function EstoqueGranular() {
             <thead>
               <tr className="border-b border-border bg-card/50 text-muted-foreground">
                 <th className="p-4 font-semibold">SKU / Material</th>
-                <th className="p-4 font-semibold text-center bg-green-500/5">Disponível</th>
-                <th className="p-4 font-semibold text-center bg-blue-500/5">Trânsito</th>
-                <th className="p-4 font-semibold text-center bg-yellow-500/5">Provisionado</th>
-                <th className="p-4 font-semibold text-center bg-red-500/5">Defeito</th>
-                <th className="p-4 font-semibold text-center bg-gray-500/5">Vencido</th>
+                <th className="p-4 font-semibold text-center bg-[var(--ui-color-success-soft)]">
+                  Disponível
+                </th>
+                <th className="p-4 font-semibold text-center bg-[var(--ui-color-info-soft)]">
+                  Trânsito
+                </th>
+                <th className="p-4 font-semibold text-center bg-[var(--ui-color-warning-soft)]">
+                  Provisionado
+                </th>
+                <th className="p-4 font-semibold text-center bg-[var(--ui-color-danger-soft)]">
+                  Defeito
+                </th>
+                <th className="p-4 font-semibold text-center bg-muted">Vencido</th>
                 <th className="p-4 font-semibold text-center font-bold">Total</th>
                 <th className="p-4 font-semibold text-right">Valor Estoque</th>
                 <th className="p-4 font-semibold text-center">Status</th>
@@ -315,22 +325,22 @@ export default function EstoqueGranular() {
                     </span>
                     <span className="text-muted-foreground text-xs">{item.descricao}</span>
                   </td>
-                  <td className="p-4 text-center bg-green-500/5 text-green-400 font-bold">
+                  <td className="p-4 text-center bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] font-bold">
                     {item.quantidade_disponivel}{' '}
-                    <span className="text-[10px] text-green-600 font-normal">
+                    <span className="text-[10px] text-[hsl(var(--success))]/70 font-normal">
                       {item.unidade_medida}
                     </span>
                   </td>
-                  <td className="p-4 text-center bg-blue-500/5 text-blue-400">
+                  <td className="p-4 text-center bg-[var(--ui-color-info-soft)] text-[hsl(var(--info))]">
                     {item.quantidade_em_transito > 0 ? item.quantidade_em_transito : '-'}
                   </td>
-                  <td className="p-4 text-center bg-yellow-500/5 text-yellow-400 font-medium">
+                  <td className="p-4 text-center bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] font-medium">
                     {item.quantidade_provisionado > 0 ? item.quantidade_provisionado : '-'}
                   </td>
-                  <td className="p-4 text-center bg-red-500/5 text-red-400">
+                  <td className="p-4 text-center bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))]">
                     {item.quantidade_defeituoso > 0 ? item.quantidade_defeituoso : '-'}
                   </td>
-                  <td className="p-4 text-center bg-gray-500/5 text-muted-foreground">
+                  <td className="p-4 text-center bg-muted text-muted-foreground">
                     {item.quantidade_vencido > 0 ? item.quantidade_vencido : '-'}
                   </td>
                   <td className="p-4 text-center font-bold text-foreground">
@@ -378,27 +388,27 @@ export default function EstoqueGranular() {
 
             {/* Grid dos 5 status detalhados */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-              <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg text-center">
+              <div className="bg-[var(--ui-color-success-soft)] border border-[hsl(var(--success)/0.2)] p-3 rounded-lg text-center">
                 <span className="text-muted-foreground text-xs block mb-1">Disponível</span>
-                <span className="text-xl font-bold text-green-400">
+                <span className="text-xl font-bold text-[hsl(var(--success))]">
                   {itemSelecionado.quantidade_disponivel}
                 </span>
               </div>
-              <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg text-center">
+              <div className="bg-[var(--ui-color-info-soft)] border border-[hsl(var(--info)/0.2)] p-3 rounded-lg text-center">
                 <span className="text-muted-foreground text-xs block mb-1">Trânsito</span>
-                <span className="text-xl font-bold text-blue-400">
+                <span className="text-xl font-bold text-[hsl(var(--info))]">
                   {itemSelecionado.quantidade_em_transito}
                 </span>
               </div>
-              <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg text-center">
+              <div className="bg-[var(--ui-color-warning-soft)] border border-[hsl(var(--warning)/0.2)] p-3 rounded-lg text-center">
                 <span className="text-muted-foreground text-xs block mb-1">Provisionado</span>
-                <span className="text-xl font-bold text-yellow-400">
+                <span className="text-xl font-bold text-[hsl(38_92%_35%)]">
                   {itemSelecionado.quantidade_provisionado}
                 </span>
               </div>
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-center">
+              <div className="bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.2)] p-3 rounded-lg text-center">
                 <span className="text-muted-foreground text-xs block mb-1">Defeito</span>
-                <span className="text-xl font-bold text-red-400">
+                <span className="text-xl font-bold text-[hsl(var(--destructive))]">
                   {itemSelecionado.quantidade_defeituoso}
                 </span>
               </div>
@@ -454,7 +464,7 @@ export default function EstoqueGranular() {
                     <span>Carregando histórico...</span>
                   </div>
                 ) : historicoMovimentos.length === 0 ? (
-                  <p className="text-zinc-600 text-xs text-center py-6">
+                  <p className="text-muted-foreground text-xs text-center py-6">
                     Nenhuma movimentação registrada.
                   </p>
                 ) : (
@@ -465,7 +475,7 @@ export default function EstoqueGranular() {
                         className="flex justify-between items-start text-xs border-b border-border pb-2"
                       >
                         <div>
-                          <span className="font-semibold text-zinc-200 block">
+                          <span className="font-semibold text-foreground block">
                             {formatarTipoMovimento(mov.tipo || mov.tipo_movimento)}
                           </span>
                           <span className="text-muted-foreground block mt-0.5">
@@ -474,7 +484,7 @@ export default function EstoqueGranular() {
                         </div>
                         <div className="text-right">
                           <span
-                            className={`font-bold block ${mov.tipo === 'entrada' ? 'text-green-400' : 'text-red-400'}`}
+                            className={`font-bold block ${mov.tipo === 'entrada' ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'}`}
                           >
                             {mov.tipo === 'entrada' ? '+' : '-'}
                             {mov.quantidade || mov.quantidade_movimento}
@@ -513,7 +523,7 @@ export default function EstoqueGranular() {
             <h2 className="text-xl font-bold text-foreground mb-6">Registrar Movimentação</h2>
 
             {erroMov && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-4">
+              <div className="bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] text-sm p-3 rounded-lg mb-4">
                 {erroMov}
               </div>
             )}
@@ -601,7 +611,7 @@ export default function EstoqueGranular() {
                   onChange={(e) => setMovItem({ ...movItem, motivo: e.target.value })}
                   placeholder="Justificativa para esta movimentação..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none placeholder-zinc-650"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground focus:outline-none placeholder-muted-foreground"
                 />
               </div>
             </div>

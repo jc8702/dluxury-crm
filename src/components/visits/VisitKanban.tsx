@@ -86,10 +86,10 @@ const VisitKanban: React.FC = () => {
         {columns.map((col) => {
           const borderClass =
             col.id === 'agendado'
-              ? 'border-l-blue-500'
+              ? 'border-l-[hsl(var(--info))]'
               : col.id === 'realizado'
                 ? 'border-l-success'
-                : 'border-l-amber-500';
+                : 'border-l-[hsl(38_92%_35%)]';
           const count = visits.filter((v) => v.status === col.id).length;
           return (
             <Card key={col.id} className={`border-l-4 ${borderClass}`}>

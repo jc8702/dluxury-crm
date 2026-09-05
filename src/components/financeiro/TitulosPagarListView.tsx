@@ -119,7 +119,7 @@ export function TitulosPagarListView({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
           <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
-            <ArrowUpRight className="text-red-500 w-5 h-5" /> Títulos a Pagar
+            <ArrowUpRight className="text-[hsl(var(--destructive))] w-5 h-5" /> Títulos a Pagar
           </h1>
           <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
             Gestão Industrial de Saídas & Compromissos
@@ -130,7 +130,7 @@ export function TitulosPagarListView({
             <Button
               variant="primary"
               size="md"
-              className="italic tracking-widest font-black text-[11px] bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-950/20"
+              className="italic tracking-widest font-black text-[11px] bg-[hsl(38_92%_35%)] hover:bg-[hsl(38_92%_30%)] text-white shadow-lg shadow-[hsl(38_92%_35%)]/20"
               onClick={onLoteOpen}
             >
               <Layers className="w-4 h-4" /> PAGAR {selectedIds.size} EM LOTE
@@ -139,7 +139,7 @@ export function TitulosPagarListView({
           <Button
             variant="outline"
             size="md"
-            className="italic tracking-widest font-black text-[11px] text-white border-white/20 hover:bg-white/10"
+            className="italic tracking-widest font-black text-[11px] text-foreground border-border/20 hover:bg-muted"
             onClick={onSelectAll}
           >
             <CheckSquare className="w-4 h-4" /> SELECIONAR ABERTOS
@@ -148,7 +148,7 @@ export function TitulosPagarListView({
             <Button
               variant="outline"
               size="md"
-              className="italic font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase"
+              className="italic font-black text-[hsl(var(--destructive))] hover:bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.3)] transition-all uppercase"
               onClick={onClearSelection}
             >
               LIMPAR ({selectedIds.size})
@@ -157,7 +157,7 @@ export function TitulosPagarListView({
           <Button
             variant="danger"
             size="md"
-            className="italic tracking-widest font-black text-[11px] bg-red-600 border-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
+            className="italic tracking-widest font-black text-[11px] bg-[hsl(var(--destructive))] border-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.9)] shadow-lg shadow-[hsl(var(--destructive)/0.2)]"
             onClick={onNewWizard}
           >
             <Plus className="w-4 h-4" /> NOVO PAGAMENTO
@@ -170,25 +170,25 @@ export function TitulosPagarListView({
           {
             label: 'Total a Pagar',
             value: stats.totalAberto,
-            color: 'text-red-500',
-            bg: 'bg-red-500/10',
-            border: 'border-red-500/20',
+            color: 'text-[hsl(var(--destructive))]',
+            bg: 'bg-[var(--ui-color-danger-soft)]',
+            border: 'border-[hsl(var(--destructive)/0.2)]',
             icon: ArrowUpRight,
           },
           {
             label: 'Total Pago',
             value: stats.totalPago,
-            color: 'text-emerald-500',
-            bg: 'bg-emerald-500/10',
-            border: 'border-emerald-500/20',
+            color: 'text-[hsl(var(--success))]',
+            bg: 'bg-[var(--ui-color-success-soft)]',
+            border: 'border-[hsl(var(--success)/0.2)]',
             icon: CheckCircle,
           },
           {
             label: 'Total Vencido',
             value: stats.totalVencido,
-            color: 'text-red-600',
-            bg: 'bg-red-600/15',
-            border: 'border-red-600/30',
+            color: 'text-[hsl(var(--destructive))]',
+            bg: 'bg-[hsl(var(--destructive)/0.08)]',
+            border: 'border-[hsl(var(--destructive)/0.3)]',
             icon: Calendar,
           },
         ].map((stat, i) => (
@@ -197,14 +197,14 @@ export function TitulosPagarListView({
             className={`glass p-6 rounded-2xl border ${stat.border} ${stat.bg} relative overflow-hidden group hover:scale-[1.02] transition-all duration-500`}
           >
             <div className="flex justify-between items-start mb-4">
-              <span className="text-xs font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider group-hover:text-white transition-colors">
+              <span className="text-xs font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider group-hover:text-foreground transition-colors">
                 {stat.label}
               </span>
               <stat.icon
                 className={`w-5 h-5 ${stat.color} opacity-80 group-hover:scale-110 transition-transform`}
               />
             </div>
-            <div className="text-2xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
+            <div className="text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
               R$ {stat.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <div
@@ -214,11 +214,11 @@ export function TitulosPagarListView({
         ))}
       </div>
 
-      <div className="glass rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+      <div className="glass rounded-2xl border border-border/40 overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-white/[0.03] border-b border-white/5">
+              <tr className="bg-muted/30 border-b border-border">
                 <th className="w-12 px-6 py-5">
                   <div className="flex items-center justify-center">
                     <button
@@ -249,7 +249,7 @@ export function TitulosPagarListView({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="p-0">
@@ -289,7 +289,7 @@ export function TitulosPagarListView({
                     <React.Fragment key={sid}>
                       <tr
                         onClick={() => onToggleGroup(sid)}
-                        className="bg-white/[0.02] cursor-pointer hover:bg-white/[0.05] transition-all border-l-4 border-red-500 group"
+                        className="bg-muted/20 cursor-pointer hover:bg-muted/40 transition-all border-l-4 border-[hsl(var(--destructive))] group"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center">
@@ -302,11 +302,11 @@ export function TitulosPagarListView({
                         </td>
                         <td colSpan={2} className="px-4 py-4">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 font-black italic">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.2)] flex items-center justify-center text-[hsl(var(--destructive))] font-black italic">
                               {supplierName.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-black text-white italic tracking-tight uppercase">
+                              <div className="text-sm font-black text-foreground italic tracking-tight uppercase">
                                 {supplierName}
                               </div>
                               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -316,7 +316,7 @@ export function TitulosPagarListView({
                           </div>
                         </td>
                         <td className="text-right px-4 py-4">
-                          <div className="text-lg font-black text-red-500 italic tracking-tighter">
+                          <div className="text-lg font-black text-[hsl(var(--destructive))] italic tracking-tighter">
                             R$ {totalGroup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </div>
                         </td>
@@ -324,7 +324,7 @@ export function TitulosPagarListView({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-[10px] font-black text-red-400 hover:bg-red-400/10 border-red-400/30 transition-all uppercase italic flex items-center gap-2 ml-auto"
+                            className="text-[10px] font-black text-[hsl(var(--destructive))] hover:bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.3)] transition-all uppercase italic flex items-center gap-2 ml-auto"
                             onClick={(e: any) => {
                               e.stopPropagation();
                               onDeleteBatch(sid);
@@ -340,7 +340,7 @@ export function TitulosPagarListView({
                           return (
                             <tr
                               key={r.id}
-                              className={`hover:bg-white/[0.03] transition-colors ${isSelected ? 'bg-primary/5' : ''}`}
+                              className={`hover:bg-muted/30 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}
                             >
                               <td className="px-6 py-4">
                                 <div className="flex items-center justify-center">
@@ -349,19 +349,19 @@ export function TitulosPagarListView({
                                       e.stopPropagation();
                                       onToggleSelect(r.id);
                                     }}
-                                    className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${isSelected ? 'bg-primary border-primary text-black' : 'border-white/20 text-transparent hover:border-primary/50'}`}
+                                    className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border text-transparent hover:border-primary/50'}`}
                                   >
                                     <CheckSquare className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               </td>
-                              <td className="px-4 py-4 font-mono text-xs font-black text-red-400 tracking-widest italic">
+                              <td className="px-4 py-4 font-mono text-xs font-black text-[hsl(var(--destructive))] tracking-widest italic">
                                 {r.numero_titulo}
                               </td>
                               <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase italic tracking-widest">
                                 Compromisso Individual
                               </td>
-                              <td className="text-right px-4 py-4 font-black text-white italic tracking-tighter">
+                              <td className="text-right px-4 py-4 font-black text-foreground italic tracking-tighter">
                                 R${' '}
                                 {Number(r.valor_original).toLocaleString('pt-BR', {
                                   minimumFractionDigits: 2,
@@ -375,7 +375,7 @@ export function TitulosPagarListView({
                               </td>
                               <td className="px-4 py-4">
                                 <span
-                                  className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest italic ${r.status === 'pago' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : new Date(r.data_vencimento) < new Date() ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}
+                                  className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest italic ${r.status === 'pago' ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]' : new Date(r.data_vencimento) < new Date() ? 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.2)]' : 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(var(--warning)/0.2)]'}`}
                                 >
                                   {r.status === 'pago'
                                     ? 'LIQUIDADO'
@@ -389,7 +389,7 @@ export function TitulosPagarListView({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="p-2.5 rounded-xl border border-white/10"
+                                    className="p-2.5 rounded-xl border border-border"
                                     onClick={() => onEdit(r)}
                                     title="Manutenção"
                                   >
@@ -398,7 +398,7 @@ export function TitulosPagarListView({
                                   <Button
                                     variant="primary"
                                     size="sm"
-                                    className={`p-2.5 rounded-xl transition-all ${r.status === 'pago' ? 'opacity-20 cursor-not-allowed text-muted-foreground' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'}`}
+                                    className={`p-2.5 rounded-xl transition-all ${r.status === 'pago' ? 'opacity-20 cursor-not-allowed text-muted-foreground' : 'bg-[var(--ui-color-success-soft)] border border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.2)]'}`}
                                     onClick={() => r.status !== 'pago' && onBaixa(r)}
                                     disabled={r.status === 'pago'}
                                     title="Efetivar Pagamento"
@@ -408,7 +408,7 @@ export function TitulosPagarListView({
                                   <Button
                                     variant="danger"
                                     size="sm"
-                                    className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
+                                    className="p-2.5 rounded-xl bg-[var(--ui-color-danger-soft)] border border-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] hover:bg-[var(--ui-color-danger-soft)] transition-all"
                                     onClick={() => onDelete(r.id)}
                                     title="Excluir"
                                   >
@@ -434,16 +434,16 @@ export function TitulosPagarListView({
               )}
             </tbody>
           </table>
-          <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic">
+          <div className="px-6 py-4 border-t border-border bg-muted/20 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic">
             <div>
-              Exibindo <span className="text-white">{rows.length}</span> de{' '}
-              <span className="text-white">{total}</span> compromissos operacionais
+              Exibindo <span className="text-foreground">{rows.length}</span> de{' '}
+              <span className="text-foreground">{total}</span> compromissos operacionais
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white"
+                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-foreground"
                 disabled={page === 1}
                 onClick={() => onPageChange(page - 1)}
               >
@@ -452,7 +452,7 @@ export function TitulosPagarListView({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-white"
+                className="h-9 px-4 rounded-lg disabled:opacity-20 hover:text-primary transition-colors uppercase font-black italic text-foreground"
                 disabled={page * perPage >= total}
                 onClick={() => onPageChange(page + 1)}
               >
@@ -493,7 +493,7 @@ export function TitulosPagarListView({
                 <X size={20} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-950/20">
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-muted/30">
               <FinanceiroTitulosPagarWizard
                 isDrawer={true}
                 onClose={onWizardClose}

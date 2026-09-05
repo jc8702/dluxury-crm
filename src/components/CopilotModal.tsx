@@ -15,7 +15,6 @@ export default function CopilotModal() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // LISTENER GLOBAL - Escuta o evento disparado pelo Dashboard/Inventory
   useEffect(() => {
     const handleOpenChat = (event: any) => {
       const query = event.detail?.query;
@@ -23,7 +22,6 @@ export default function CopilotModal() {
         setIsOpen(true);
         setMessages([]);
         setInput('');
-        // Enviar a query automaticamente
         setTimeout(() => {
           document.getElementById('copilot-input')?.focus();
           handleSendMessage(query);
@@ -35,7 +33,6 @@ export default function CopilotModal() {
     return () => window.removeEventListener('dlux-open-chat', handleOpenChat);
   }, []);
 
-  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -83,34 +80,36 @@ export default function CopilotModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl h-[70vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-2xl h-[70vh] bg-card rounded-xl shadow-2xl flex flex-col overflow-hidden border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-[var(--ui-color-navy-900)] to-[var(--ui-color-teal-600)]">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary to-secondary">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[var(--ui-color-gold-500)]">
-              <Sparkles size={20} className="text-white" />
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-accent">
+              <Sparkles size={20} className="text-accent-foreground" />
             </div>
             <div>
-              <h2 className="font-semibold text-white">Dlux Copilot</h2>
-              <p className="text-xs text-gray-300">Consultoria & Insights Inteligentes</p>
+              <h2 className="font-semibold text-primary-foreground">Dlux Copilot</h2>
+              <p className="text-xs text-primary-foreground/80">
+                Consultoria & Insights Inteligentes
+              </p>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="text-gray-300 hover:text-white transition-colors"
+            className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
           {messages.length === 0 && !loading && (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <Sparkles size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-400 text-sm">Olá! Sou o Dlux Copilot.</p>
-                <p className="text-gray-400 text-xs mt-1">
+                <Sparkles size={48} className="mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">Olá! Sou o Dlux Copilot.</p>
+                <p className="text-muted-foreground text-xs mt-1">
                   Faça uma pergunta sobre marcenaria, engenharia ou operações.
                 </p>
               </div>
@@ -125,8 +124,8 @@ export default function CopilotModal() {
               <div
                 className={`max-w-md px-4 py-3 rounded-lg ${
                   msg.role === 'user'
-                    ? 'bg-[var(--ui-color-teal-600)] text-white'
-                    : 'bg-white text-gray-900 border border-gray-200'
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-card text-foreground border border-border'
                 }`}
               >
                 {msg.role === 'assistant' ? (
@@ -140,9 +139,9 @@ export default function CopilotModal() {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 px-4 py-3 rounded-lg flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin text-[var(--ui-color-teal-600)]" />
-                <span className="text-sm text-gray-600">Processando sua pergunta...</span>
+              <div className="bg-card border border-border px-4 py-3 rounded-lg flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-secondary" />
+                <span className="text-sm text-muted-foreground">Processando sua pergunta...</span>
               </div>
             </div>
           )}
@@ -151,7 +150,7 @@ export default function CopilotModal() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 p-4 bg-white">
+        <div className="border-t border-border p-4 bg-card">
           <div className="flex gap-2">
             <input
               id="copilot-input"
@@ -160,19 +159,19 @@ export default function CopilotModal() {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !loading && handleSendMessage()}
               placeholder="Digite sua pergunta..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ui-color-teal-600)] disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 bg-background text-foreground"
               disabled={loading}
               autoFocus
             />
             <button
               onClick={() => handleSendMessage()}
               disabled={loading || !input.trim()}
-              className="px-4 py-2 bg-[var(--ui-color-teal-600)] text-white rounded-lg hover:bg-[var(--ui-color-teal-700)] disabled:opacity-50 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
             >
               <Send size={16} />
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             💡 Dica: Pergunte sobre ergonomia, especificações técnicas, cálculos estruturais ou
             operações da fábrica.
           </p>

@@ -1,44 +1,44 @@
 {
   "$schema": "https://design-tokens.org/schema.json",
-  "name": "D'Luxury CRM UI Design System v2",
-  "version": "2.0.0",
-  "description": "Design System moderno — Navy/Teal/Gold. Compacto para desktop CRM.",
+  "name": "D'Luxury CRM Design System",
+  "version": "3.0.0",
+  "description": "Design System D'Luxury — paleta oficial: azul primário, teal secundário, dourado accent, off-white de fundo, branco de superfície, preto de texto e semânticas padronizadas.",
   "color": {
-    "navy": {
-      "50": "#f5f7fa",
-      "100": "#e3e7ec",
-      "200": "#c2cad3",
-      "300": "#8a96a4",
-      "400": "#5a6573",
-      "500": "#2f3743",
-      "600": "#1d242e",
-      "700": "#141a23",
-      "800": "#0d1117",
-      "900": "#060a10"
+    "primary": {
+      "50": "#e6f1fc",
+      "100": "#cce3f9",
+      "200": "#99c7f3",
+      "300": "#66abed",
+      "400": "#338fe7",
+      "500": "#0D66CC",
+      "600": "#0a52a3",
+      "700": "#083d7a",
+      "800": "#052952",
+      "900": "#031429"
     },
-    "teal": {
-      "50": "#e6faf8",
-      "100": "#b8f0e9",
-      "200": "#7ee0d4",
-      "300": "#3ecabc",
-      "400": "#00b3a6",
-      "500": "#00a99d",
+    "secondary": {
+      "50": "#e0f7f5",
+      "100": "#b3ebe5",
+      "200": "#80dcd2",
+      "300": "#4dcdbe",
+      "400": "#1abeab",
+      "500": "#00A99D",
       "600": "#008b84",
       "700": "#006b66",
       "800": "#004d47",
       "900": "#002e2b"
     },
-    "gold": {
-      "50": "#fdf6e1",
-      "100": "#fae7a3",
-      "200": "#f3d365",
-      "300": "#ecc130",
-      "400": "#e2ac00",
-      "500": "#c49400",
-      "600": "#9a7600",
-      "700": "#6e5500",
-      "800": "#423300",
-      "900": "#1f1700"
+    "accent": {
+      "50": "#fdf6df",
+      "100": "#faebb0",
+      "200": "#f5dd80",
+      "300": "#f0cf50",
+      "400": "#ebc120",
+      "500": "#E2AC00",
+      "600": "#b38900",
+      "700": "#856700",
+      "800": "#564400",
+      "900": "#2b2200"
     },
     "neutral": {
       "0": "#ffffff",
@@ -51,17 +51,17 @@
       "600": "#52525b",
       "700": "#3f3f46",
       "800": "#27272a",
-      "900": "#18181b"
+      "900": "#1a1a1a"
     },
     "semantic": {
-      "success": "#16a34a",
-      "success-soft": "#dcfce7",
-      "warning": "#d97706",
-      "warning-soft": "#fef3c7",
-      "danger": "#dc2626",
-      "danger-soft": "#fee2e2",
-      "info": "#2563eb",
-      "info-soft": "#dbeafe"
+      "error": "#DC3545",
+      "error-soft": "#fde2e4",
+      "success": "#28A745",
+      "success-soft": "#d8f0dd",
+      "warning": "#FFC107",
+      "warning-soft": "#fff4cf",
+      "info": "#17A2B8",
+      "info-soft": "#d3eef4"
     }
   },
   "spacing": {
@@ -92,11 +92,11 @@
     "containers": "12px"
   },
   "shadow": {
-    "depth-1": "0 1px 2px 0 rgb(13 17 23 / 0.04), 0 1px 1px 0 rgb(13 17 23 / 0.03)",
-    "depth-2": "0 4px 8px -2px rgb(13 17 23 / 0.06), 0 2px 4px -2px rgb(13 17 23 / 0.04)",
-    "depth-3": "0 12px 24px -4px rgb(13 17 23 / 0.10), 0 4px 8px -2px rgb(13 17 23 / 0.06)",
-    "focus": "0 0 0 3px rgb(0 169 157 / 0.20)",
-    "focus-danger": "0 0 0 3px rgb(220 38 38 / 0.20)"
+    "depth-1": "0 1px 2px 0 rgb(26 26 26 / 0.04), 0 1px 1px 0 rgb(26 26 26 / 0.03)",
+    "depth-2": "0 4px 8px -2px rgb(26 26 26 / 0.06), 0 2px 4px -2px rgb(26 26 26 / 0.04)",
+    "depth-3": "0 12px 24px -4px rgb(26 26 26 / 0.10), 0 4px 8px -2px rgb(26 26 26 / 0.06)",
+    "focus": "0 0 0 3px rgb(13 102 204 / 0.20)",
+    "focus-danger": "0 0 0 3px rgb(220 53 69 / 0.20)"
   },
   "typography": {
     "family": {

@@ -229,7 +229,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 onClick={alternarConclusao}
                 disabled={loading}
                 className={`
-                  flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-white transition-all
+                  flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-[hsl(var(--accent-foreground))] transition-all
                   ${evento.concluido ? 'bg-[var(--ui-color-warning)] hover:brightness-90' : 'bg-[var(--ui-color-success)] hover:brightness-90'}
                 `}
               >

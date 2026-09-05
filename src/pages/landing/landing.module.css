@@ -1,18 +1,23 @@
+/* Landing page — D'Luxury palette (azul primário + dourado accent) */
+
 :root {
-  --primary: #ff9500;
-  --primary-dark: #e68a00;
-  --bg-dark: #1a1a1a;
-  --bg-darker: #0a0a0a;
+  --primary: #0d66cc;
+  --primary-dark: #0a52a3;
+  --accent: #e2ac00;
+  --accent-dark: #b38900;
+  --bg-dark: #0d1117;
+  --bg-darker: #060a10;
+  --bg-card: #161b22;
   --text-primary: #ffffff;
   --text-secondary: #b8b8b8;
-  --border-color: #333333;
-  --success: #10b981;
+  --border-color: #27272a;
+  --success: #28a745;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ===== NAVBAR ===== */
 .navbar {
-  background: rgba(26, 26, 26, 0.95);
+  background: rgba(13, 17, 23, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
   padding: 16px 0;
@@ -33,7 +38,7 @@
 .logo {
   font-size: 20px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--accent);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -117,7 +122,7 @@
 
 .btnPrimary {
   background: var(--primary);
-  color: #000000;
+  color: #ffffff;
   font-size: 16px;
   font-weight: 600;
   padding: 14px 40px;
@@ -125,13 +130,13 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(13, 102, 204, 0.3);
 }
 
 .btnPrimary:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(255, 149, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(13, 102, 204, 0.4);
 }
 
 .btnPrimary:active {
@@ -151,7 +156,7 @@
 }
 
 .btnSecondary:hover {
-  background: rgba(255, 149, 0, 0.1);
+  background: rgba(13, 102, 204, 0.1);
   transform: translateY(-2px);
 }
 
@@ -172,7 +177,7 @@
 }
 
 .metricCard {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+  background: linear-gradient(135deg, #1a1f29 0%, #161b22 100%);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 24px;
@@ -183,7 +188,7 @@
 .metricCard:hover {
   border-color: var(--primary);
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(255, 149, 0, 0.2);
+  box-shadow: 0 12px 32px rgba(13, 102, 204, 0.2);
 }
 
 .metricLabel {
@@ -228,7 +233,7 @@
 
 .btnExplore {
   background: var(--primary);
-  color: #000000;
+  color: #ffffff;
   font-size: 16px;
   font-weight: 600;
   padding: 14px 40px;
@@ -252,7 +257,7 @@
 }
 
 .moduleItem {
-  background: rgba(255, 149, 0, 0.05);
+  background: rgba(13, 102, 204, 0.05);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
@@ -262,7 +267,7 @@
 
 .moduleItem:hover {
   border-color: var(--primary);
-  background: rgba(255, 149, 0, 0.1);
+  background: rgba(13, 102, 204, 0.1);
 }
 
 .moduleItem strong {

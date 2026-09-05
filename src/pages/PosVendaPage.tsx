@@ -207,9 +207,9 @@ const PosVendaPage: React.FC = () => {
                   <span
                     className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
                       c.prioridade === 'urgente'
-                        ? 'bg-destructive/10 text-destructive border border-destructive/20'
+                        ? 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/20'
                         : c.prioridade === 'alta'
-                          ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                          ? 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(38_92%_35%)]/20'
                           : 'bg-primary/10 text-primary border border-primary/20'
                     }`}
                   >

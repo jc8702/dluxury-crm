@@ -32,7 +32,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
     objetivo: 'outro',
     status_visita: 'agendado',
     responsavel_id: '',
-    cor: '#3B82F6',
+    cor: '#0D66CC',
   });
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
         objetivo: eventToEdit.objetivo || 'outro',
         status_visita: eventToEdit.status_visita || 'agendado',
         responsavel_id: eventToEdit.responsavel_id || '',
-        cor: eventToEdit.cor || '#d4af37',
+        cor: eventToEdit.cor || '#E2AC00',
       });
     } else {
       const now = new Date();
@@ -90,7 +90,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
         objetivo: 'outro',
         status_visita: 'agendado',
         responsavel_id: 'admin',
-        cor: eventToEdit?.tipo === 'visita' ? '#00A99D' : '#d4af37',
+        cor: eventToEdit?.tipo === 'visita' ? '#00A99D' : '#E2AC00',
       });
     }
   }, [eventToEdit, isOpen]);
@@ -164,7 +164,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'rgba(212, 175, 55, 0.05)',
+            background: 'hsla(var(--accent) / 0.05)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -206,9 +206,9 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             }}
           >
             {[
-              { id: 'compromisso', label: 'COMPROMISSO', color: '#d4af37' },
+              { id: 'compromisso', label: 'COMPROMISSO', color: '#E2AC00' },
               { id: 'visita', label: 'VISITA TÉCNICA', color: '#00A99D' },
-              { id: 'reuniao', label: 'REUNIÃO', color: '#3B82F6' },
+              { id: 'reuniao', label: 'REUNIÃO', color: '#0D66CC' },
             ].map((t) => (
               <button
                 key={t.id}

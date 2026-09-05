@@ -20,9 +20,9 @@ const NotificationBell: React.FC = () => {
       setLoading(true);
       const [list, count] = await Promise.all([
         api.notificacoes.list(unreadCount > 0).catch(() => []),
-        api.notificacoes.getCount().catch(() => 0)
+        api.notificacoes.getCount().catch(() => 0),
       ]);
-      
+
       setNotifications(Array.isArray(list) ? list : []);
       setUnreadCount(typeof count === 'number' ? count : 0);
     } catch (error) {
@@ -53,8 +53,8 @@ const NotificationBell: React.FC = () => {
   const handleMarkAsRead = async (id: string, url_destino?: string) => {
     try {
       await api.notificacoes.markRead(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
       if (url_destino) {
         window.location.hash = url_destino; // Ou setActiveTab se passar via props
       }
@@ -65,19 +65,27 @@ const NotificationBell: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critica': return '#EF4444';
-      case 'alta': return '#F59E0B';
-      case 'normal': return '#3B82F6';
-      default: return '#6B7280';
+      case 'critica':
+        return 'hsl(var(--destructive))';
+      case 'alta':
+        return 'hsl(38_92%_35%)';
+      case 'normal':
+        return 'hsl(var(--info))';
+      default:
+        return 'hsl(var(--muted-foreground))';
     }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'estoque_critico': return <ShoppingCart size={16} />;
-      case 'prazo_projeto': return <Calendar size={16} />;
-      case 'orcamento_sem_resposta': return <FileText size={16} />;
-      default: return <Info size={16} />;
+      case 'estoque_critico':
+        return <ShoppingCart size={16} />;
+      case 'prazo_projeto':
+        return <Calendar size={16} />;
+      case 'orcamento_sem_resposta':
+        return <FileText size={16} />;
+      default:
+        return <Info size={16} />;
     }
   };
 
@@ -99,61 +107,74 @@ const NotificationBell: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          transition: 'background 0.2s'
+          transition: 'background 0.2s',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
       >
         <Bell size={22} color={unreadCount > 0 ? 'hsl(var(--primary))' : 'currentColor'} />
         {unreadCount > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '4px',
-            right: '4px',
-            background: '#EF4444',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            minWidth: '16px',
-            height: '16px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 4px',
-            border: '2px solid var(--sidebar-bg)'
-          }}>
+          <span
+            style={{
+              position: 'absolute',
+              top: '4px',
+              right: '4px',
+              background: 'hsl(var(--destructive))',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              minWidth: '16px',
+              height: '16px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              border: '2px solid var(--sidebar-bg)',
+            }}
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          right: 0,
-          marginTop: '8px',
-          width: '320px',
-          background: 'var(--card-bg)',
-          border: '1px solid hsl(var(--border))',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: 'var(--shadow-lg)',
-          zIndex: 1000,
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid hsl(var(--border))',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'rgba(255,255,255,0.02)'
-          }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '8px',
+            width: '320px',
+            background: 'var(--card-bg)',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-lg)',
+            zIndex: 1000,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 16px',
+              borderBottom: '1px solid hsl(var(--border))',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'hsl(var(--muted) / 0.5)',
+            }}
+          >
             <h3 style={{ fontSize: '0.875rem', fontWeight: '700', margin: 0 }}>Notificações</h3>
             <button
               onClick={() => api.notificacoes.markAllRead().then(() => fetchNotifications())}
-              style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'hsl(var(--primary))',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                fontWeight: '500',
+              }}
             >
               Marcar lidas
             </button>
@@ -161,12 +182,18 @@ const NotificationBell: React.FC = () => {
 
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {notifications.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
+              <div
+                style={{
+                  padding: '32px 16px',
+                  textAlign: 'center',
+                  color: 'hsl(var(--muted-foreground))',
+                }}
+              >
                 <CheckCircle size={32} style={{ marginBottom: '8px', opacity: 0.2 }} />
                 <p style={{ fontSize: '0.8rem', margin: 0 }}>Nenhum alerta pendente</p>
               </div>
             ) : (
-              notifications.map(n => (
+              notifications.map((n) => (
                 <div
                   key={n.id}
                   onClick={() => handleMarkAsRead(n.id, n.url_destino)}
@@ -175,27 +202,55 @@ const NotificationBell: React.FC = () => {
                     borderBottom: '1px solid hsl(var(--border))',
                     cursor: 'pointer',
                     transition: 'background 0.2s',
-                    position: 'relative'
+                    position: 'relative',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = 'hsl(var(--muted) / 0.5)')
+                  }
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                 >
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <div style={{
-                      marginTop: '2px',
-                      color: getPriorityColor(n.prioridade)
-                    }}>
+                    <div
+                      style={{
+                        marginTop: '2px',
+                        color: getPriorityColor(n.prioridade),
+                      }}
+                    >
                       {getIcon(n.tipo)}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '0.8rem', fontWeight: '700', margin: '0 0 2px 0', color: 'var(--text)' }}>
+                      <p
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: '700',
+                          margin: '0 0 2px 0',
+                          color: 'var(--text)',
+                        }}
+                      >
                         {n.titulo}
                       </p>
-                      <p style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', margin: 0, lineHeight: '1.4' }}>
+                      <p
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'hsl(var(--muted-foreground))',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}
+                      >
                         {n.mensagem}
                       </p>
-                      <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginTop: '4px' }}>
-                        {new Date(n.criado_em!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          color: 'hsl(var(--muted-foreground))',
+                          display: 'block',
+                          marginTop: '4px',
+                        }}
+                      >
+                        {new Date(n.criado_em!).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </span>
                     </div>
                   </div>
@@ -203,19 +258,22 @@ const NotificationBell: React.FC = () => {
               ))
             )}
           </div>
-          
+
           <button
-            onClick={() => { setIsOpen(false); window.location.hash = '/notificacoes'; }}
+            onClick={() => {
+              setIsOpen(false);
+              window.location.hash = '/notificacoes';
+            }}
             style={{
               width: '100%',
               padding: '10px',
-              background: 'rgba(255,255,255,0.02)',
+              background: 'hsl(var(--muted) / 0.5)',
               border: 'none',
               borderTop: '1px solid hsl(var(--border))',
               color: 'hsl(var(--muted-foreground))',
               fontSize: '0.75rem',
               cursor: 'pointer',
-              fontWeight: '500'
+              fontWeight: '500',
             }}
           >
             Ver todas

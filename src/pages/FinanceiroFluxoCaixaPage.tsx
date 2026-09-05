@@ -191,7 +191,7 @@ export default function FinanceiroFluxoCaixaPage() {
                   border: 'none',
                   cursor: 'pointer',
                   borderRadius: '8px',
-                  background: regime === r ? '#6366f1' : 'transparent',
+                  background: regime === r ? 'hsl(var(--secondary))' : 'transparent',
                   color: regime === r ? 'white' : 'hsl(var(--muted-foreground))',
                   transition: '0.2s',
                 }}
@@ -477,7 +477,7 @@ export default function FinanceiroFluxoCaixaPage() {
                           style={{
                             cursor: 'pointer',
                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                            background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                            background: isSelected ? 'hsl(var(--secondary) / 0.08)' : 'transparent',
                             borderLeft: isSelected
                               ? '4px solid hsl(var(--primary))'
                               : '4px solid transparent',

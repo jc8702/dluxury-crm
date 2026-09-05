@@ -10,15 +10,16 @@ export const generateOrcamentoPDF = (
 ) => {
   const doc = new jsPDF();
 
-  // Cores
-  const primaryColor: [number, number, number] = [212, 175, 55]; // Dourado (#d4af37)
-  const secondaryColor: [number, number, number] = [30, 41, 59]; // Dark text (#1e293b)
+  // Cores D'Luxury
+  const primaryColor: [number, number, number] = [13, 102, 204]; // Azul D'Luxury (#0D66CC)
+  const accentColor: [number, number, number] = [226, 172, 0]; // Dourado D'Luxury (#E2AC00)
+  const textColor: [number, number, number] = [26, 26, 26]; // Texto principal (#1A1A1A)
 
   // HEADER
-  doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, 210, 40, 'F');
 
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(24);
   doc.text("D'LUXURY", 15, 20);
   doc.setFontSize(10);
@@ -26,7 +27,7 @@ export const generateOrcamentoPDF = (
   doc.text('Móveis Sob Medida & Ambientes Planejados', 15, 28);
 
   doc.setFontSize(16);
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setTextColor(255, 255, 255);
   doc.text('PROPOSTA COMERCIAL', 120, 20);
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -34,7 +35,7 @@ export const generateOrcamentoPDF = (
   doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 160, 28);
 
   // DADOS DO CLIENTE E PROJETO
-  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.setFontSize(14);
   doc.text('DADOS DO CLIENTE', 15, 55);
 
@@ -75,7 +76,7 @@ export const generateOrcamentoPDF = (
     head: [['Ambiente', 'Descrição', 'Medidas (L x A x P)', 'Material', 'Acabamento', 'Valor']],
     body: tableData.length > 0 ? tableData : [['Nenhum item detalhado', '', '', '', '', '']],
     theme: 'grid',
-    headStyles: { fillColor: secondaryColor, textColor: 255 },
+    headStyles: { fillColor: primaryColor, textColor: 255 },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     styles: { fontSize: 9, cellPadding: 4 },
   });
@@ -112,7 +113,7 @@ export const generateOrcamentoPDF = (
 
   // CONDIÇÃO DE PAGAMENTO E PRAZO
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.setFontSize(10);
 
   const condicaoStr = condicaoPagamento ? condicaoPagamento.nome : 'À Vista';

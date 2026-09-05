@@ -218,8 +218,8 @@ export default function FinanceiroTitulosReceberWizard({
         </div>
 
         {/* Taxa Financeira â Sempre disponível para ajuste manual */}
-        <div className="animate-fade-in p-4 border border-amber-500/30 rounded-xl bg-amber-500/5">
-          <div className="flex items-center gap-2 mb-3 text-amber-400 font-black text-xs uppercase tracking-widest">
+        <div className="animate-fade-in p-4 border border-[hsl(var(--warning))]/30 rounded-xl bg-[var(--ui-color-warning-soft)]">
+          <div className="flex items-center gap-2 mb-3 text-[hsl(38_92%_35%)] font-black text-xs uppercase tracking-widest">
             <AlertCircle size={16} /> CUSTO FINANCEIRO / TAXAS (%)
           </div>
           <div className="grid grid-cols-2 gap-4 items-end">
@@ -232,7 +232,7 @@ export default function FinanceiroTitulosReceberWizard({
               value={taxaFinanceira}
               onChange={(e) => setTaxaFinanceira(Number(e.target.value))}
             />
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-right">
+            <div className="p-3 rounded-xl bg-muted/30 border border-border text-right">
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                 VALOR TOTAL COM TAXAS
               </div>
@@ -288,7 +288,7 @@ export default function FinanceiroTitulosReceberWizard({
         </div>
 
         {formData.showRateio && (
-          <div className="animate-fade-in p-5 border border-dashed border-white/10 rounded-xl bg-white/[0.01] space-y-4">
+          <div className="animate-fade-in p-5 border border-dashed border-border rounded-xl bg-muted/30 space-y-4">
             <div className="text-xs font-black uppercase tracking-widest text-muted-foreground flex justify-between items-center">
               DISTRIBUIÇÃO POR PROJETO
               <Button
@@ -367,7 +367,7 @@ export default function FinanceiroTitulosReceberWizard({
                 />
                 <Button
                   variant="outline"
-                  className="h-10 w-10 p-0 text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-500/10 flex items-center justify-center text-lg font-bold"
+                  className="h-10 w-10 p-0 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] border-[hsl(var(--destructive))]/20 hover:bg-[var(--ui-color-danger-soft)] flex items-center justify-center text-lg font-bold"
                   onClick={() => {
                     const newR = formData.rateios.filter((_: any, i: number) => i !== idx);
                     setFormData({ ...formData, rateios: newR });
@@ -406,7 +406,7 @@ export default function FinanceiroTitulosReceberWizard({
         {preview.map((p, i) => (
           <div
             key={i}
-            className="p-4 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center border-l-4 border-l-primary"
+            className="p-4 bg-muted/30 border border-border rounded-xl flex justify-between items-center border-l-4 border-l-primary"
           >
             <div>
               <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">
@@ -427,9 +427,9 @@ export default function FinanceiroTitulosReceberWizard({
             </div>
           </div>
         ))}
-        <div className="mt-6 p-5 border border-dashed border-white/10 flex justify-between items-center bg-white/[0.01] rounded-xl">
+        <div className="mt-6 p-5 border border-dashed border-border flex justify-between items-center bg-muted/30 rounded-xl">
           <div>
-            <div className="text-xs font-black uppercase tracking-widest text-white">
+            <div className="text-xs font-black uppercase tracking-widest text-foreground">
               TOTAL A RECEBER
             </div>
             {taxaFinanceira > 0 && (
@@ -461,7 +461,7 @@ export default function FinanceiroTitulosReceberWizard({
       <div className={isDrawer ? 'animate-pop-in' : 'glass p-8 md:p-12 animate-pop-in'}>
         {/* Stepper â 3 passos */}
         <div className="flex justify-between mb-12 relative">
-          <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-white/5 z-0" />
+          <div className="absolute top-[15px] left-0 right-0 h-[2px] bg-border z-0" />
           {[1, 2, 3].map((s) => (
             <div key={s} className="z-10 flex flex-col items-center gap-2">
               <div
@@ -513,7 +513,7 @@ export default function FinanceiroTitulosReceberWizard({
           ) : (
             <Button
               variant="primary"
-              className="px-6 uppercase font-black italic text-xs tracking-widest bg-emerald-500 hover:bg-emerald-600 border-emerald-500 hover:border-emerald-600 text-black shadow-lg shadow-emerald-500/20"
+              className="px-6 uppercase font-black italic text-xs tracking-widest bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 border-[hsl(var(--success))] hover:border-[hsl(var(--success))]/90 text-black shadow-lg shadow-[hsl(var(--success))]/20"
               disabled={loading}
               onClick={handleSave}
             >

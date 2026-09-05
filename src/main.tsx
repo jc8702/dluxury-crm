@@ -35,7 +35,7 @@ const rootElement = document.getElementById('root');
 
 if (!rootElement) {
   document.body.innerHTML = `
-    <div style="color:#E2AC00;background:#0D1117;height:100vh;
+    <div style="color:#E2AC00;background:hsl(0 0% 98%);height:100vh;
     display:flex;align-items:center;justify-content:center;
     font-family:sans-serif;font-size:18px;text-align:center;padding:20px;">
       Erro crítico de inicialização: elemento #root não encontrado.<br/>
