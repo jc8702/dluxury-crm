@@ -140,7 +140,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {error && (
-            <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px' }}>{error}</p>
+            <p style={{ color: 'hsl(var(--destructive))', fontSize: '13px', marginBottom: '16px' }}>
+              {error}
+            </p>
           )}
 
           <button
