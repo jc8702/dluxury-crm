@@ -24,9 +24,16 @@ dist-ssr
 *.sw?
 
 .vercel
+# Environment variables - NUNCA commitar secrets (protege deploy GitHub)
 .env
 .env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env*.local
+!.env.example
+!.env.sample
 
 # Scratch / Debug
 scratch/
@@ -90,7 +97,4 @@ migrate-db.ts
 migrate-estoque.ts
 create-user.ts
 
-.vercel
-
 supabase/.temp/
-.vercel

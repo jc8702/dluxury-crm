@@ -228,8 +228,8 @@ export default function FinanceiroRentabilidadePage() {
                 />
                 <KPICard
                   title="Margem Média %"
-                  value={`${kpis.margem_media_percentual.toFixed(1)}%`}
-                  pct={kpis.variacao_margem_percentual}
+                  value={`${(kpis.margem_media_percentual ?? 0).toFixed(1)}%`}
+                  pct={kpis.variacao_margem_percentual ?? 0}
                   icon={Percent}
                   color="text-[hsl(var(--primary))]"
                   borderColor="border-[hsl(var(--primary))]/20"
@@ -425,10 +425,10 @@ export default function FinanceiroRentabilidadePage() {
                         </div>
                         <div className="text-right">
                           <div className="text-xs font-black text-[hsl(var(--success))]">
-                            {p.margem_percentual.toFixed(1)}%
+                            {(p.margem_percentual ?? 0).toFixed(1)}%
                           </div>
                           <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
-                            {fmt(p.margem_real)}
+                            {fmt(p.margem_real ?? 0)}
                           </div>
                         </div>
                       </div>
@@ -472,10 +472,10 @@ export default function FinanceiroRentabilidadePage() {
                         </div>
                         <div className="text-right">
                           <div className="text-xs font-black text-[hsl(var(--destructive))]">
-                            {p.margem_percentual.toFixed(1)}%
+                            {(p.margem_percentual ?? 0).toFixed(1)}%
                           </div>
                           <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
-                            {fmt(p.margem_real)}
+                            {fmt(p.margem_real ?? 0)}
                           </div>
                         </div>
                       </div>
@@ -536,9 +536,9 @@ export default function FinanceiroRentabilidadePage() {
                             {fmt(cli.margem_total)}
                           </td>
                           <td
-                            className={`py-3.5 px-4 text-right font-bold ${cli.margem_media_percentual >= 30 ? 'text-[hsl(var(--success))]' : cli.margem_media_percentual > 0 ? 'text-[hsl(38_92%_35%)]' : 'text-[hsl(var(--destructive))]'}`}
+                            className={`py-3.5 px-4 text-right font-bold ${(cli.margem_media_percentual ?? 0) >= 30 ? 'text-[hsl(var(--success))]' : (cli.margem_media_percentual ?? 0) > 0 ? 'text-[hsl(38_92%_35%)]' : 'text-[hsl(var(--destructive))]'}`}
                           >
-                            {cli.margem_media_percentual.toFixed(1)}%
+                            {(cli.margem_media_percentual ?? 0).toFixed(1)}%
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <span
@@ -711,7 +711,8 @@ function KPICard({
   inverse = false,
   isAbs = false,
 }: KPICardProps) {
-  let positiveChange = pct > 0;
+  const safePct = pct ?? 0;
+  let positiveChange = safePct > 0;
   if (inverse) positiveChange = !positiveChange;
 
   return (
@@ -732,15 +733,15 @@ function KPICard({
         </span>
       </div>
       <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-border flex items-center gap-1">
-        {pct === 0 ? (
+        {safePct === 0 ? (
           <span className="text-muted-foreground">-</span>
         ) : positiveChange ? (
           <span className="text-[hsl(var(--success))]">
             ↑ {isAbs ? '' : '+'}
-            {pct.toFixed(1)}%
+            {safePct.toFixed(1)}%
           </span>
         ) : (
-          <span className="text-[hsl(var(--destructive))]">↓ {pct.toFixed(1)}%</span>
+          <span className="text-[hsl(var(--destructive))]">↓ {safePct.toFixed(1)}%</span>
         )}
         <span>vs. Período Anterior</span>
       </div>

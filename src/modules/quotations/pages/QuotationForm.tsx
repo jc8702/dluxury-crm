@@ -140,8 +140,10 @@ export default function QuotationForm() {
       );
       const result = await res.json();
       if (result.success) {
-        setOrcamentosRecentes(result.data);
-        setPagination(result.pagination);
+        setOrcamentosRecentes(result.data || []);
+        if (result.pagination) {
+          setPagination(result.pagination);
+        }
       }
     } catch (err) {
       console.error('Erro ao carregar orçamentos:', err);

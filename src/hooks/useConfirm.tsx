@@ -36,9 +36,9 @@ export const useConfirm = () => {
     promise?.resolve(true);
   };
 
-  const ConfirmationDialog = () => (
+  const ConfirmationDialogElement = (
     <ConfirmDialog isOpen={isOpen} onClose={handleClose} onConfirm={handleConfirm} {...config} />
   );
 
-  return [ConfirmationDialog, confirm] as const;
+  return [ConfirmationDialogElement, confirm] as const;
 };

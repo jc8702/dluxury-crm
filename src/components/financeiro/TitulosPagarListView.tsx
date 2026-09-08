@@ -251,11 +251,7 @@ export function TitulosPagarListView({
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-0">
-                    <TableSkeleton rows={8} cols={7} />
-                  </td>
-                </tr>
+                <TableSkeleton rows={8} cols={7} />
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-20 text-center">

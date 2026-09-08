@@ -43,7 +43,7 @@ export default function FinanceiroAgingPage() {
     '0-30 Dias',
     'A Vencer',
   ];
-  const _summarySorted = [...data.summary].sort(
+  const _summarySorted = [...(data.summary || [])].sort(
     (a, b) => faixasPrioridade.indexOf(a.faixa) - faixasPrioridade.indexOf(b.faixa),
   );
 
@@ -109,7 +109,7 @@ export default function FinanceiroAgingPage() {
     }
   };
 
-  const totalVencido = data.details.reduce((sum, d) => sum + Number(d.valor_aberto), 0);
+  const totalVencido = (data.details || []).reduce((sum, d) => sum + Number(d.valor_aberto), 0);
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -196,7 +196,7 @@ export default function FinanceiroAgingPage() {
       {/* Grid de Faixas */}
       <div className="grid-5" style={{ gap: '1rem', marginBottom: '2.5rem' }}>
         {faixasPrioridade.map((faixa) => {
-          const item = data.summary.find((s) => s.faixa === faixa);
+          const item = (data.summary || []).find((s) => s.faixa === faixa);
           const total = Number(item?.total || 0);
           const isLate = faixa !== 'A Vencer';
 
@@ -259,7 +259,7 @@ export default function FinanceiroAgingPage() {
             <tbody>
               {loading ? (
                 <TableSkeleton rows={3} cols={6} />
-              ) : data.details.length === 0 ? (
+              ) : (data.details || []).length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: 0 }}>
                     <div
@@ -271,7 +271,7 @@ export default function FinanceiroAgingPage() {
                   </td>
                 </tr>
               ) : (
-                data.details.map((t, i) => {
+                (data.details || []).map((t, i) => {
                   const diasAtraso = Math.floor(
                     (new Date().getTime() - new Date(t.data_vencimento).getTime()) /
                       (1000 * 60 * 60 * 24),

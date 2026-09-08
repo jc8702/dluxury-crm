@@ -38,8 +38,15 @@ export default function PCPKanbanBoard() {
     setLoading(true);
     setError(null);
     try {
-      const data = await kanbanService.getBoard(filtros);
-      setBoardData(data || { a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] });
+      const data: any = await kanbanService.getBoard(filtros);
+      // Defesa contra mock que retorna array ou formato inesperado
+      if (Array.isArray(data)) {
+        setBoardData({ a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] });
+      } else if (data && typeof data === 'object' && 'a_fazer' in data) {
+        setBoardData(data as KanbanBoardData);
+      } else {
+        setBoardData({ a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] });
+      }
     } catch (err: any) {
       console.error('Erro ao carregar Kanban Board:', err);
       setError(err.message || 'Erro ao carregar o painel Kanban de produção.');
@@ -59,7 +66,7 @@ export default function PCPKanbanBoard() {
   const handleCardDrop = async (
     cardId: number,
     novoStatus: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido',
-    statusAnterior: string
+    statusAnterior: string,
   ) => {
     // 1. OTIMISTIC UPDATE: Mover localmente na UI imediatamente
     let cardMovido: KanbanCardType | null = null;
@@ -69,14 +76,14 @@ export default function PCPKanbanBoard() {
     // Achar o card no status anterior
     const colAnterior = statusAnterior as keyof KanbanBoardData;
     const idx = newBoard[colAnterior]?.findIndex((c) => c.id === cardId);
-    
+
     if (idx !== undefined && idx !== -1 && newBoard[colAnterior]) {
       const list = [...newBoard[colAnterior]];
       const [removed] = list.splice(idx, 1);
       newBoard[colAnterior] = list;
-      
+
       cardMovido = { ...removed, status_kanban: novoStatus, updated_at: new Date().toISOString() };
-      
+
       const colNova = novoStatus as keyof KanbanBoardData;
       if (newBoard[colNova]) {
         newBoard[colNova] = [...newBoard[colNova], cardMovido];
@@ -103,22 +110,22 @@ export default function PCPKanbanBoard() {
     // Substituir o card atualizado no estado local do board
     const newBoard = { ...boardData };
     const col = updatedCard.status_kanban as keyof KanbanBoardData;
-    
+
     if (newBoard[col]) {
       newBoard[col] = newBoard[col].map((c) => (c.id === updatedCard.id ? updatedCard : c));
     }
-    
+
     setBoardData(newBoard);
     if (selectedCard?.id === updatedCard.id) {
       setSelectedCard(updatedCard);
     }
   };
 
-  const totalCards = 
-    boardData.a_fazer.length + 
-    boardData.em_progresso.length + 
-    boardData.bloqueado.length + 
-    boardData.concluido.length;
+  const totalCards =
+    (boardData?.a_fazer?.length || 0) +
+    (boardData?.em_progresso?.length || 0) +
+    (boardData?.bloqueado?.length || 0) +
+    (boardData?.concluido?.length || 0);
 
   return (
     <div className="space-y-6">

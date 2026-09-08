@@ -39,6 +39,9 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 300,
   },
   server: {
+    watch: {
+      ignored: ['**/AppData/**', '**/Cookies/**', 'C:/Users/jc-pr/AppData/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

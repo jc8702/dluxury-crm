@@ -65,7 +65,7 @@ export default function FinancePage() {
         }).then((r) => r.json()),
       ]);
       if (dashRes.success) setStats(dashRes.data);
-      if (cgRes.success) setCapitalGiroHistorico(cgRes.data);
+      if (cgRes.success) setCapitalGiroHistorico(Array.isArray(cgRes.data) ? cgRes.data : []);
     } catch (err) {
       console.error('Erro ao carregar dados financeiros:', err);
     } finally {

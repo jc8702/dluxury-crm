@@ -42,7 +42,7 @@ export default function SaaSAdminPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPlano, setFilterPlano] = useState<string>('all');
-  const { addToast } = useToast();
+  const { error: toastError, success: toastSuccess } = useToast();
 
   // Estados dos Modais
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -77,11 +77,11 @@ export default function SaaSAdminPage() {
       if (json.success) {
         setTenants(json.data);
       } else {
-        addToast(json.error || 'Erro ao carregar tenants.', 'error');
+        toastError(json.error || 'Erro ao carregar tenants.');
       }
     } catch (err) {
       console.error(err);
-      addToast('Erro de conexão ao buscar tenants.', 'error');
+      toastError('Erro de conexão ao buscar tenants.');
     } finally {
       setLoading(false);
     }
@@ -135,15 +135,15 @@ export default function SaaSAdminPage() {
 
       const json = await res.json();
       if (json.success) {
-        addToast('Tenant e Assinatura atualizados com sucesso.', 'success');
+        toastSuccess('Tenant e Assinatura atualizados com sucesso.');
         setIsEditModalOpen(false);
         fetchTenants();
       } else {
-        addToast(json.error || 'Erro ao atualizar dados.', 'error');
+        toastError(json.error || 'Erro ao atualizar dados.');
       }
     } catch (err) {
       console.error(err);
-      addToast('Erro ao salvar edições.', 'error');
+      toastError('Erro ao salvar edições.');
     } finally {
       setSubmittingEdit(false);
     }
@@ -183,14 +183,14 @@ export default function SaaSAdminPage() {
 
       const json = await res.json();
       if (json.success) {
-        addToast(`Usuário cadastrado com sucesso no tenant ${selectedTenant.nome}.`, 'success');
+        toastSuccess(`Usuário cadastrado com sucesso no tenant ${selectedTenant.nome}.`);
         setIsUserModalOpen(false);
       } else {
-        addToast(json.error || 'Erro ao cadastrar usuário.', 'error');
+        toastError(json.error || 'Erro ao cadastrar usuário.');
       }
     } catch (err) {
       console.error(err);
-      addToast('Erro ao criar usuário.', 'error');
+      toastError('Erro ao criar usuário.');
     } finally {
       setSubmittingUser(false);
     }

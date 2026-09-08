@@ -41,7 +41,7 @@ export interface Metrics {
 }
 
 export function useProspeccaoHook() {
-  const { showToast } = useToast();
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   const [leads, setLeads] = useState<Prospeccao[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,11 +72,11 @@ export function useProspeccaoHook() {
       if (leadsRes.success) setLeads(leadsRes.data || []);
       if (metricsRes.success) setMetrics(metricsRes.data);
     } catch {
-      showToast('Erro ao carregar prospecções', 'error');
+      toastError('Erro ao carregar prospecções');
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterTemp, search, showToast]);
+  }, [filterStatus, filterTemp, search, toastError]);
 
   useEffect(() => {
     fetchAll();
@@ -92,7 +92,7 @@ export function useProspeccaoHook() {
           body: JSON.stringify(data),
         }).then((r) => r.json());
         if (!r.success) throw new Error(r.error);
-        showToast('Prospecção atualizada!', 'success');
+        toastSuccess('Prospecção atualizada!');
       } else {
         const r = await fetch('/api/prospeccao', {
           method: 'POST',
@@ -100,13 +100,13 @@ export function useProspeccaoHook() {
           body: JSON.stringify(data),
         }).then((r) => r.json());
         if (!r.success) throw new Error(r.error);
-        showToast('Lead criado com sucesso!', 'success');
+        toastSuccess('Lead criado com sucesso!');
       }
       setShowModal(false);
       setEditTarget(null);
       fetchAll();
     } catch (e: any) {
-      showToast(e.message || 'Erro ao salvar', 'error');
+      toastError(e.message || 'Erro ao salvar');
     }
   };
 
@@ -118,10 +118,10 @@ export function useProspeccaoHook() {
         headers: { Authorization: `Bearer ${localStorage.getItem('dluxury_token')}` },
       }).then((r) => r.json());
       if (!r.success) throw new Error(r.error);
-      showToast('Lead removido', 'info');
+      toastInfo('Lead removido');
       fetchAll();
     } catch (e: any) {
-      showToast(e.message || 'Erro ao excluir', 'error');
+      toastError(e.message || 'Erro ao excluir');
     }
   };
 
@@ -136,10 +136,10 @@ export function useProspeccaoHook() {
         body: JSON.stringify({ status: newStatus }),
       }).then((r) => r.json());
       if (!r.success) throw new Error(r.error);
-      showToast(`Status alterado`, 'success');
+      toastSuccess(`Status alterado`);
       fetchAll();
     } catch (e: any) {
-      showToast(e.message || 'Erro', 'error');
+      toastError(e.message || 'Erro');
     }
   };
 
