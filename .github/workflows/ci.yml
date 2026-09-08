@@ -23,6 +23,11 @@ jobs:
 
       - name: Run unit tests
         run: npm test -- --run
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          APP_JWT_SECRET: test-jwt-secret-32chars-minimum-for-ci
+          APP_INIT_KEY: test-init-key-32chars-minimum-for-ci
+          NODE_ENV: test
 
       - name: Build
         run: npm run build

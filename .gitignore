@@ -98,3 +98,8 @@ migrate-estoque.ts
 create-user.ts
 
 supabase/.temp/
+
+# Audit artefatos (gerados localmente - nao commitar)
+audit-report.json
+playwright-*.txt
+apresentacao-canvas*.html
