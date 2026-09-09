@@ -43,13 +43,18 @@ export default function FinanceiroRecorrentesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [recsRes, clsRes, fornsRes, ctsRes, fmsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.financeiro.contasRecorrentes.list(),
         api.financeiro.classesFinanceiras.list(),
         api.suppliers.list(),
         api.financeiro.contasInternas.list(),
         api.financeiro.formasPagamento.list(),
       ]);
+      const [recsRes, clsRes, fornsRes, ctsRes, fmsRes] = results.map((r) =>
+        r.status === 'fulfilled' ? r.value : []
+      );
+      if (results[0].status === 'rejected') console.error('contasRecorrentes.list falhou', results[0].reason);
+      if (results[1].status === 'rejected') console.error('classesFinanceiras.list falhou', results[1].reason);
       setRows(normalizeList(recsRes));
       setClasses(normalizeList(clsRes));
       setFornecedores(normalizeList(fornsRes));
@@ -89,6 +94,18 @@ export default function FinanceiroRecorrentesPage() {
   };
 
   const save = async () => {
+    if (!form.descricao.trim()) {
+      error('Descrição é obrigatória');
+      return;
+    }
+    if (!form.classe_financeira_id) {
+      error('Selecione uma Classe Financeira');
+      return;
+    }
+    if (!form.valor || Number(form.valor) <= 0) {
+      error('Informe um valor maior que zero');
+      return;
+    }
     try {
       if (editing) {
         await api.financeiro.contasRecorrentes.update({ id: editing.id, ...form });
@@ -96,7 +113,7 @@ export default function FinanceiroRecorrentesPage() {
         await api.financeiro.contasRecorrentes.create(form);
       }
       setIsOpen(false);
-      load();
+      await load();
       success('Configuração salva com sucesso!');
     } catch (e: any) {
       error(e.message || 'Erro ao salvar');
@@ -299,20 +316,24 @@ export default function FinanceiroRecorrentesPage() {
 
           <div className="form-group">
             <label className="mb-2 block text-sm font-medium text-foreground/90">
-              Classe Financeira
+              Classe Financeira <span className="text-destructive">*</span>
             </label>
             <select
               className="input-base"
               value={form.classe_financeira_id}
               onChange={(e) => setForm({ ...form, classe_financeira_id: e.target.value })}
+              required
             >
               <option value="">Selecione...</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.nome.toUpperCase()}
+                  {c.nome.toUpperCase()} ({c.codigo})
                 </option>
               ))}
             </select>
+            {classes.length === 0 && (
+              <p className="text-xs text-destructive mt-1">Nenhuma classe encontrada — cadastre em Financeiro &gt; Classes</p>
+            )}
           </div>
 
           <div className="form-group">

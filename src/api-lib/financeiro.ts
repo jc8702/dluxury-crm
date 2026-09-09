@@ -1529,7 +1529,7 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
 
     return await sql.begin(async (tx) => {
       const contas =
-        await tx`SELECT id, tipo, dia_vencimento, descricao, valor, cliente_id, fornecedor_id, classe_financeira_id, forma_pagamento_id, conta_bancaria_id FROM contas_recorrentes WHERE ativa = true AND deletado = false AND tenant_id = ${tenantId}`;
+        await tx`SELECT id, tipo, dia_vencimento, descricao, valor, fornecedor_id, classe_financeira_id, forma_pagamento_id, conta_bancaria_id FROM contas_recorrentes WHERE ativa = true AND deletado = false AND tenant_id = ${tenantId}`;
 
       // Build entries for each account in memory
       const receberEntries: Array<{
@@ -1641,7 +1641,7 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
 
   if (req.method === 'GET') {
     const result =
-      await sql`SELECT id, descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, cliente_id, ativa, deletado, created_at, updated_at FROM contas_recorrentes WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY dia_vencimento ASC`;
+      await sql`SELECT id, descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, ativa, deletado, criado_em, tenant_id FROM contas_recorrentes WHERE deletado = false AND tenant_id = ${tenantId} ORDER BY dia_vencimento ASC`;
     return res.status(200).json({ success: true, data: result });
   }
 
@@ -1650,23 +1650,51 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
     if (!f.descricao || !String(f.descricao).trim()) {
       return res.status(400).json({ success: false, error: 'O campo "Descrição" é obrigatório.' });
     }
-    const result = await sql`
-      INSERT INTO contas_recorrentes (descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, ativa, tenant_id)
-      VALUES (${f.descricao.trim()}, ${f.tipo || 'pagar'}, ${f.valor}, ${f.dia_vencimento || 1}, ${f.classe_financeira_id || null}, ${f.fornecedor_id || null}, ${f.forma_pagamento_id || null}, ${f.conta_bancaria_id || null}, ${f.ativa ?? true}, ${tenantId})
-      RETURNING *`;
-    return res.status(201).json({ success: true, data: result[0] });
+    if (!f.classe_financeira_id) {
+      return res.status(400).json({ success: false, error: 'Classe Financeira é obrigatória. Selecione uma classe.' });
+    }
+    if (!f.valor || Number(f.valor) <= 0) {
+      return res.status(400).json({ success: false, error: 'Valor deve ser maior que zero.' });
+    }
+    const dia = Number(f.dia_vencimento) || 1;
+    if (dia < 1 || dia > 31) {
+      return res.status(400).json({ success: false, error: 'Dia de vencimento deve ser entre 1 e 31.' });
+    }
+    try {
+      const result = await sql`
+        INSERT INTO contas_recorrentes (descricao, tipo, valor, dia_vencimento, classe_financeira_id, fornecedor_id, forma_pagamento_id, conta_bancaria_id, ativa, tenant_id)
+        VALUES (${f.descricao.trim()}, ${f.tipo || 'pagar'}, ${Number(f.valor)}, ${dia}, ${f.classe_financeira_id}, ${f.fornecedor_id || null}, ${f.forma_pagamento_id || null}, ${f.conta_bancaria_id || null}, ${f.ativa ?? true}, ${tenantId})
+        RETURNING *`;
+      return res.status(201).json({ success: true, data: result[0] });
+    } catch (e: any) {
+      if (e.message?.includes('classe_financeira_id')) {
+        return res.status(400).json({ success: false, error: 'Classe Financeira inválida ou não encontrada.' });
+      }
+      throw e;
+    }
   }
 
   if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
     const f = req.body;
+    // Validação parcial para update
+    if (f.classe_financeira_id === '') {
+      return res.status(400).json({ success: false, error: 'Classe Financeira não pode ser vazia.' });
+    }
     const result = await sql`
       UPDATE contas_recorrentes SET 
-        descricao = COALESCE(${f.descricao || null}, descricao),
+        descricao = COALESCE(${f.descricao !== undefined ? String(f.descricao).trim() || null : null}, descricao),
         tipo = COALESCE(${f.tipo || null}, tipo),
-        valor = COALESCE(${f.valor || null}, valor),
-        dia_vencimento = COALESCE(${f.dia_vencimento || null}, dia_vencimento),
+        valor = COALESCE(${f.valor !== undefined ? Number(f.valor) : null}, valor),
+        dia_vencimento = COALESCE(${f.dia_vencimento !== undefined ? Number(f.dia_vencimento) : null}, dia_vencimento),
+        classe_financeira_id = COALESCE(${f.classe_financeira_id || null}, classe_financeira_id),
+        fornecedor_id = COALESCE(${f.fornecedor_id || null}, fornecedor_id),
+        forma_pagamento_id = COALESCE(${f.forma_pagamento_id || null}, forma_pagamento_id),
+        conta_bancaria_id = COALESCE(${f.conta_bancaria_id || null}, conta_bancaria_id),
         ativa = COALESCE(${f.ativa ?? null}, ativa)
       WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *`;
+    if (result.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conta recorrente não encontrada.' });
+    }
     return res.status(200).json({ success: true, data: result[0] });
   }
 
