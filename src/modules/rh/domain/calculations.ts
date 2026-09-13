@@ -43,6 +43,73 @@ export function calcValorFaltas(faltasDias: number, salarioBase: number): number
   return round2(toNum(faltasDias) * calcValorDia(salarioBase));
 }
 
+/** Parse HH:MM → minutos desde 00:00, null se inválido */
+export function parseHoraToMinutos(hora: string | null | undefined): number | null {
+  if (!hora || typeof hora !== 'string') return null;
+  const m = hora.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+/** Formata minutos → HH:MM */
+export function formatMinutosToHora(minutos: number): string {
+  const m = Math.max(0, Math.round(toNum(minutos)));
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
+}
+
+/** calcula minutos de falta a partir de hora_saida e hora_retorno (ex: 13:00 → 14:34 = 94) */
+export function calcFaltaHorasMinutos(
+  horaSaida: string | null | undefined,
+  horaRetorno: string | null | undefined,
+): number {
+  const s = parseHoraToMinutos(horaSaida);
+  const r = parseHoraToMinutos(horaRetorno);
+  if (s === null || r === null) return 0;
+  let diff = r - s;
+  if (diff < 0) diff += 24 * 60; // cruza meia-noite
+  return Math.max(0, diff);
+}
+
+/** soma minutos de falta de várias presenças (campo horas_falta_minutos ou cálculo automático) */
+export function calcTotalFaltaMinutos(
+  presencas: Array<{
+    horas_falta_minutos?: number | null;
+    horasFaltaMinutos?: number | null;
+    hora_saida?: string | null;
+    horaSaida?: string | null;
+    hora_retorno?: string | null;
+    horaRetorno?: string | null;
+  }>,
+): number {
+  let total = 0;
+  for (const p of presencas) {
+    const explicit =
+      (p as any).horas_falta_minutos ??
+      (p as any).horasFaltaMinutos ??
+      (p as any).horas_falta ??
+      null;
+    if (explicit !== null && explicit !== undefined && Number(explicit) > 0) {
+      total += Number(explicit);
+    } else {
+      const hs = (p as any).hora_saida ?? (p as any).horaSaida ?? null;
+      const hr = (p as any).hora_retorno ?? (p as any).horaRetorno ?? null;
+      total += calcFaltaHorasMinutos(hs, hr);
+    }
+  }
+  return Math.round(total);
+}
+
+/** valorFaltaHoras = (minutos/60) * valorHora */
+export function calcValorFaltaHoras(minutos: number, salarioBase: number, divisor = 220): number {
+  const h = toNum(minutos) / 60;
+  return round2(h * calcValorHora(salarioBase, divisor));
+}
+
 /** valorHE = qtd * valorHora * (1 + adicional/100) */
 export function calcValorHE(
   qtd: number,
@@ -58,6 +125,7 @@ export function calcValorHE(
 export function calcLiquido(params: {
   salarioBase: number;
   valorFaltas: number;
+  valorFaltaHoras?: number;
   valorHorasExtras: number;
   bonusProducao: number;
   adiantamento: number;
@@ -66,6 +134,7 @@ export function calcLiquido(params: {
   const {
     salarioBase,
     valorFaltas,
+    valorFaltaHoras = 0,
     valorHorasExtras,
     bonusProducao,
     adiantamento,
@@ -73,7 +142,8 @@ export function calcLiquido(params: {
   } = params;
   return round2(
     toNum(salarioBase) -
-      toNum(valorFaltas) +
+      toNum(valorFaltas) -
+      toNum(valorFaltaHoras) +
       toNum(valorHorasExtras) +
       toNum(bonusProducao) -
       toNum(adiantamento) -
@@ -84,6 +154,7 @@ export function calcLiquido(params: {
 export function calcLiquidoPrevisto(params: {
   salarioBase: number;
   valorFaltas: number;
+  valorFaltaHoras?: number;
   valorHorasExtrasPrevisto: number;
   bonusProducao: number;
   adiantamento: number;
@@ -92,6 +163,7 @@ export function calcLiquidoPrevisto(params: {
   const {
     salarioBase,
     valorFaltas,
+    valorFaltaHoras = 0,
     valorHorasExtrasPrevisto,
     bonusProducao,
     adiantamento,
@@ -99,7 +171,8 @@ export function calcLiquidoPrevisto(params: {
   } = params;
   return round2(
     toNum(salarioBase) -
-      toNum(valorFaltas) +
+      toNum(valorFaltas) -
+      toNum(valorFaltaHoras) +
       toNum(valorHorasExtrasPrevisto) +
       toNum(bonusProducao) -
       toNum(adiantamento) -

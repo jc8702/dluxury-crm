@@ -88,12 +88,10 @@ async function ensureRhFeature(req: any, res: any): Promise<boolean> {
     // fallback: also check financeiro? rh is pro/enterprise per plano
     // allow pro/enterprise only
     if (tier !== 'pro' && tier !== 'enterprise') {
-      res
-        .status(403)
-        .json({
-          success: false,
-          error: 'Funcionalidade RH disponível apenas para planos Pro/Enterprise',
-        });
+      res.status(403).json({
+        success: false,
+        error: 'Funcionalidade RH disponível apenas para planos Pro/Enterprise',
+      });
       return false;
     }
   }
@@ -143,6 +141,17 @@ const presencaBulkSchema = z.object({
           'atestado',
         ]),
         observacao: z.string().optional().nullable(),
+        hora_saida: z
+          .string()
+          .regex(/^\d{1,2}:\d{2}$/, 'hora_saida deve ser HH:MM')
+          .optional()
+          .nullable(),
+        hora_retorno: z
+          .string()
+          .regex(/^\d{1,2}:\d{2}$/, 'hora_retorno deve ser HH:MM')
+          .optional()
+          .nullable(),
+        horas_falta_minutos: z.number().min(0).max(1440).optional().nullable(),
       }),
     )
     .min(1),
@@ -363,7 +372,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
         }
         const { inicio, fimExclusivo: fim } = calc.formatCompetenciaToRange(mes);
         const rows = await sql`
-          SELECT id, tenant_id, colaborador_id, data, status, observacao, created_at
+          SELECT id, tenant_id, colaborador_id, data, status, observacao, hora_saida, hora_retorno, horas_falta_minutos, created_at
           FROM presencas
           WHERE tenant_id = ${tenantId}::uuid
             AND colaborador_id = ${colaboradorId}::uuid
@@ -396,20 +405,25 @@ const handleRHCore: TenantHandler = async (req, res) => {
             await sql`SELECT id FROM colaboradores WHERE id = ${e.colaborador_id}::uuid AND tenant_id = ${tenantId}::uuid`
           )[0];
           if (!col)
-            return res
-              .status(400)
-              .json({
-                success: false,
-                error: `Colaborador ${e.colaborador_id} não pertence ao tenant`,
-              });
+            return res.status(400).json({
+              success: false,
+              error: `Colaborador ${e.colaborador_id} não pertence ao tenant`,
+            });
         }
-        // upsert em transação
+        // upsert em transação — cálculo automático horas_falta_minutos a partir de hora_saida/retorno
         const inserted: any[] = [];
         for (const e of entries) {
+          // cálculo automático se ambos horários fornecidos, senão usa explicit ou 0
+          let minutos = 0;
+          if (e.horas_falta_minutos !== undefined && e.horas_falta_minutos !== null) {
+            minutos = Math.max(0, Math.min(1440, Number(e.horas_falta_minutos) || 0));
+          } else if (e.hora_saida && e.hora_retorno) {
+            minutos = calc.calcFaltaHorasMinutos(e.hora_saida, e.hora_retorno);
+          }
           const r = await sql`
-            INSERT INTO presencas (tenant_id, colaborador_id, data, status, observacao)
-            VALUES (${tenantId}::uuid, ${e.colaborador_id}::uuid, ${e.data}::date, ${e.status}, ${e.observacao || null})
-            ON CONFLICT (tenant_id, colaborador_id, data) DO UPDATE SET status = EXCLUDED.status, observacao = EXCLUDED.observacao
+            INSERT INTO presencas (tenant_id, colaborador_id, data, status, observacao, hora_saida, hora_retorno, horas_falta_minutos)
+            VALUES (${tenantId}::uuid, ${e.colaborador_id}::uuid, ${e.data}::date, ${e.status}, ${e.observacao || null}, ${e.hora_saida || null}, ${e.hora_retorno || null}, ${minutos})
+            ON CONFLICT (tenant_id, colaborador_id, data) DO UPDATE SET status = EXCLUDED.status, observacao = EXCLUDED.observacao, hora_saida = EXCLUDED.hora_saida, hora_retorno = EXCLUDED.hora_retorno, horas_falta_minutos = EXCLUDED.horas_falta_minutos
             RETURNING *
           `;
           inserted.push(r[0]);
@@ -544,12 +558,14 @@ const handleRHCore: TenantHandler = async (req, res) => {
         for (const c of cols) {
           const salario = Number(c.salario_base);
           totalBruto += salario;
-          // faltas
+          // faltas (dias) + horas falta parciais
           const { inicio, fimExclusivo: fim } = calc.formatCompetenciaToRange(competencia);
           const presRows =
-            await sql`SELECT status FROM presencas WHERE tenant_id = ${tenantId}::uuid AND colaborador_id = ${c.id}::uuid AND data >= ${inicio}::date AND data < ${fim}::date`;
+            await sql`SELECT status, hora_saida, hora_retorno, horas_falta_minutos FROM presencas WHERE tenant_id = ${tenantId}::uuid AND colaborador_id = ${c.id}::uuid AND data >= ${inicio}::date AND data < ${fim}::date`;
           const faltasDias = calc.calcFaltasDias(presRows as any);
           const valorFaltas = calc.calcValorFaltas(faltasDias, salario);
+          const horasFaltaMinutos = calc.calcTotalFaltaMinutos(presRows as any[]);
+          const valorFaltaHoras = calc.calcValorFaltaHoras(horasFaltaMinutos, salario, divisor);
           const adiantamento = await sumAdiantamentosPendentes(tenantId, c.id, competencia);
           const horasQtd = 0;
           const horasPrev = 0;
@@ -560,6 +576,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
           const liquido = calc.calcLiquido({
             salarioBase: salario,
             valorFaltas,
+            valorFaltaHoras,
             valorHorasExtras: valorHE,
             bonusProducao: bonus,
             adiantamento,
@@ -568,6 +585,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
           const liquidoPrev = calc.calcLiquidoPrevisto({
             salarioBase: salario,
             valorFaltas,
+            valorFaltaHoras,
             valorHorasExtrasPrevisto: valorHEPrev,
             bonusProducao: bonus,
             adiantamento,
@@ -579,6 +597,8 @@ const handleRHCore: TenantHandler = async (req, res) => {
             diasTrabalhados: 30,
             faltasDias,
             valorFaltas,
+            horasFaltaMinutos,
+            valorFaltaHoras,
             horasExtrasQtd: horasQtd,
             horasExtrasPrevistas: horasPrev,
             valorHorasExtras: valorHE,
@@ -591,7 +611,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
             valorLiquidoPrevisto: liquidoPrev,
             tipo: c.tipo,
           });
-          totalDescontos += valorFaltas + adiantamento + outros;
+          totalDescontos += valorFaltas + valorFaltaHoras + adiantamento + outros;
           totalLiquido += liquido;
           totalHE += valorHE;
           totalBonus += bonus;
@@ -609,8 +629,8 @@ const handleRHCore: TenantHandler = async (req, res) => {
         // cria itens
         for (const it of itensPayload) {
           await sql`
-            INSERT INTO folha_itens (folha_id, colaborador_id, salario_base, dias_trabalhados, faltas_dias, valor_faltas, horas_extras_qtd, horas_extras_tipo, horas_extras_previstas, valor_horas_extras, valor_horas_extras_previsto, bonus_producao, adiantamento, outros_descontos, outros_descricao, valor_liquido, valor_liquido_previsto)
-            VALUES (${folha.id}::uuid, ${it.colaboradorId}::uuid, ${it.salarioBase}, ${it.diasTrabalhados}, ${it.faltasDias}, ${it.valorFaltas}, ${it.horasExtrasQtd}, '50', ${it.horasExtrasPrevistas}, ${it.valorHorasExtras}, ${it.valorHorasExtrasPrevisto}, ${it.bonusProducao}, ${it.adiantamento}, ${it.outrosDescontos}, ${it.outrosDescricao}, ${it.valorLiquido}, ${it.valorLiquidoPrevisto})
+            INSERT INTO folha_itens (folha_id, colaborador_id, salario_base, dias_trabalhados, faltas_dias, valor_faltas, horas_falta_minutos, valor_falta_horas, horas_extras_qtd, horas_extras_tipo, horas_extras_previstas, valor_horas_extras, valor_horas_extras_previsto, bonus_producao, adiantamento, outros_descontos, outros_descricao, valor_liquido, valor_liquido_previsto)
+            VALUES (${folha.id}::uuid, ${it.colaboradorId}::uuid, ${it.salarioBase}, ${it.diasTrabalhados}, ${it.faltasDias}, ${it.valorFaltas}, ${it.horasFaltaMinutos}, ${it.valorFaltaHoras}, ${it.horasExtrasQtd}, '50', ${it.horasExtrasPrevistas}, ${it.valorHorasExtras}, ${it.valorHorasExtrasPrevisto}, ${it.bonusProducao}, ${it.adiantamento}, ${it.outrosDescontos}, ${it.outrosDescricao}, ${it.valorLiquido}, ${it.valorLiquidoPrevisto})
           `;
         }
         // retorna folha com itens
@@ -668,23 +688,21 @@ const handleRHCore: TenantHandler = async (req, res) => {
           await sql`SELECT * FROM adiantamentos WHERE tenant_id = ${tenantId}::uuid AND competencia_desconto = ${folha.competencia} ORDER BY created_at DESC`;
         const presencas =
           await sql`SELECT * FROM presencas WHERE tenant_id = ${tenantId}::uuid AND data >= ${i2}::date AND data < ${f2}::date ORDER BY data ASC`;
-        return res
-          .status(200)
-          .json({
-            success: true,
-            data: {
-              folha: {
-                ...folha,
-                receita_ao_vivo: receitaAoVivo,
-                custos_ao_vivo: custosAoVivo,
-                lucro_ao_vivo: lucroAoVivo,
-                projetosEntregues,
-              },
-              itens,
-              adiantamentos,
-              presencas,
+        return res.status(200).json({
+          success: true,
+          data: {
+            folha: {
+              ...folha,
+              receita_ao_vivo: receitaAoVivo,
+              custos_ao_vivo: custosAoVivo,
+              lucro_ao_vivo: lucroAoVivo,
+              projetosEntregues,
             },
-          });
+            itens,
+            adiantamentos,
+            presencas,
+          },
+        });
       }
 
       // PUT /folhas/:id/itens/:itemId
@@ -709,6 +727,9 @@ const handleRHCore: TenantHandler = async (req, res) => {
         const divisor = await getDivisor(tenantId);
         const salario = Number(item.salario_base);
         const valorFaltas = Number(item.valor_faltas);
+        const valorFaltaHoras = Number(
+          (item as any).valor_falta_horas || (item as any).valorFaltaHoras || 0,
+        );
         const adiantamento = Number(item.adiantamento);
         const horasQtd =
           d.horas_extras_qtd !== undefined
@@ -732,6 +753,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
         const liquido = calc.calcLiquido({
           salarioBase: salario,
           valorFaltas,
+          valorFaltaHoras,
           valorHorasExtras: valorHE,
           bonusProducao: bonus,
           adiantamento,
@@ -740,6 +762,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
         const liquidoPrev = calc.calcLiquidoPrevisto({
           salarioBase: salario,
           valorFaltas,
+          valorFaltaHoras,
           valorHorasExtrasPrevisto: valorHEPrev,
           bonusProducao: bonus,
           adiantamento,
@@ -764,7 +787,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
         )[0];
         // recalcula totais folha
         const todos =
-          await sql`SELECT valor_liquido, valor_liquido_previsto, valor_horas_extras, bonus_producao, valor_faltas, adiantamento, outros_descontos FROM folha_itens WHERE folha_id = ${id}::uuid`;
+          await sql`SELECT valor_liquido, valor_liquido_previsto, valor_horas_extras, bonus_producao, valor_faltas, valor_falta_horas, adiantamento, outros_descontos FROM folha_itens WHERE folha_id = ${id}::uuid`;
         let totalBruto = 0,
           totalDescontos = 0,
           totalLiquido = 0,
@@ -776,7 +799,10 @@ const handleRHCore: TenantHandler = async (req, res) => {
         totalBruto = Number(sumSal[0]?.total || 0);
         for (const r of todos) {
           totalDescontos +=
-            Number(r.valor_faltas) + Number(r.adiantamento) + Number(r.outros_descontos);
+            Number(r.valor_faltas) +
+            Number((r as any).valor_falta_horas || 0) +
+            Number(r.adiantamento) +
+            Number(r.outros_descontos);
           totalLiquido += Number(r.valor_liquido);
           totalHE += Number(r.valor_horas_extras);
           totalBonus += Number(r.bonus_producao);
@@ -830,12 +856,14 @@ const handleRHCore: TenantHandler = async (req, res) => {
           const valorHE = calc.calcValorHE(horasQtd, salario, divisor, tipoHE);
           const valorHEPrev = calc.calcValorHE(horasPrev, salario, divisor, tipoHE);
           const valorFaltas = Number(it.valor_faltas);
+          const valorFaltaHoras = Number((it as any).valor_falta_horas || 0);
           const bonus = Number(it.bonus_producao);
           const adiantamento = Number(it.adiantamento);
           const outros = Number(it.outros_descontos);
           const liquido = calc.calcLiquido({
             salarioBase: salario,
             valorFaltas,
+            valorFaltaHoras,
             valorHorasExtras: valorHE,
             bonusProducao: bonus,
             adiantamento,
@@ -844,6 +872,7 @@ const handleRHCore: TenantHandler = async (req, res) => {
           const liquidoPrev = calc.calcLiquidoPrevisto({
             salarioBase: salario,
             valorFaltas,
+            valorFaltaHoras,
             valorHorasExtrasPrevisto: valorHEPrev,
             bonusProducao: bonus,
             adiantamento,
@@ -888,12 +917,10 @@ const handleRHCore: TenantHandler = async (req, res) => {
           await sql`SELECT id FROM classes_financeiras WHERE tenant_id=${tenantId}::uuid AND codigo='5.02' LIMIT 1`
         )[0];
         if (!conta || !forma || !classeFolha) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              error: 'Configure conta bancária, forma de pagamento e classes 5.01/5.02',
-            });
+          return res.status(400).json({
+            success: false,
+            error: 'Configure conta bancária, forma de pagamento e classes 5.01/5.02',
+          });
         }
         const vencimento = calc.quintoDiaUtilCompetencia(folha.competencia);
         // transação criar titulos
@@ -971,12 +998,10 @@ const handleRHCore: TenantHandler = async (req, res) => {
           await sql`SELECT tp.id, tp.status FROM folha_itens fi JOIN titulos_pagar tp ON fi.titulo_pagar_id = tp.id WHERE fi.folha_id=${id}::uuid`;
         for (const t of titulos)
           if (t.status === 'pago' || t.status === 'pago_parcial') {
-            return res
-              .status(400)
-              .json({
-                success: false,
-                error: 'Não é possível reabrir: existe título já baixado/pago',
-              });
+            return res.status(400).json({
+              success: false,
+              error: 'Não é possível reabrir: existe título já baixado/pago',
+            });
           }
         // also check lucros titles? Find by numero like RH-LUCRO-competencia
         const lucroTitulos =
@@ -1016,17 +1041,15 @@ const handleRHCore: TenantHandler = async (req, res) => {
           if (!item) return res.status(404).json({ success: false, error: 'Item não encontrado' });
           const folha = (await sql`SELECT * FROM folha_pagamentos WHERE id=${id}::uuid`)[0];
           // For now return JSON stub, frontend generates PDF; backend can return data
-          return res
-            .status(200)
-            .json({
-              success: true,
-              data: {
-                folha,
-                item,
-                message:
-                  'PDF geração via frontend jspdf. Use endpoint /api/rh/folhas/:id/recibo/:itemId/pdf para blob. Stub F2.',
-              },
-            });
+          return res.status(200).json({
+            success: true,
+            data: {
+              folha,
+              item,
+              message:
+                'PDF geração via frontend jspdf. Use endpoint /api/rh/folhas/:id/recibo/:itemId/pdf para blob. Stub F2.',
+            },
+          });
         }
       }
 

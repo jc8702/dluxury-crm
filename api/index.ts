@@ -143,18 +143,8 @@ export default async function handler(req: any, res: any) {
     const hostHeader = (req.headers && req.headers['host']) || '';
     req.tenantFromDomain = await resolveTenantByDomain(hostHeader);
 
-    // Verificar status de faturamento (Bloqueio 402 se inadimplente)
-    const { verifyBillingStatus } = await import('../src/api-lib/billing-middleware.js');
-    const allowedByBilling = await verifyBillingStatus(req, res);
-    if (!allowedByBilling) return;
-
-    // Verificar Feature Gates (Bloqueio 403 se funcionalidade ausente no plano)
-    const { verifyFeatureGate } = await import('../src/api-lib/feature-gate-middleware.js');
-    const allowedByFeatureGate = await verifyFeatureGate(req, res);
-    if (!allowedByFeatureGate) return;
-
     // ------------------------------------------------------------------------
-    // RESOLUÇÃO FORTE DE TENANT (com isMiddlewareEnabled)
+    // RESOLUÇÃO FORTE DE TENANT (com isMiddlewareEnabled) — deve vir ANTES de billing/feature
     // ------------------------------------------------------------------------
     const isPublicRoute =
       cleanUrl.startsWith('/api/auth') ||
@@ -189,6 +179,16 @@ export default async function handler(req: any, res: any) {
         req.tenantId = authedTenantId;
       }
     }
+
+    // Verificar status de faturamento (Bloqueio 402 se inadimplente) — agora com tenantId resolvido
+    const { verifyBillingStatus } = await import('../src/api-lib/billing-middleware.js');
+    const allowedByBilling = await verifyBillingStatus(req, res);
+    if (!allowedByBilling) return;
+
+    // Verificar Feature Gates (Bloqueio 403 se funcionalidade ausente no plano)
+    const { verifyFeatureGate } = await import('../src/api-lib/feature-gate-middleware.js');
+    const allowedByFeatureGate = await verifyFeatureGate(req, res);
+    if (!allowedByFeatureGate) return;
 
     // Auditoria LGPD intercepta mutations (POST/PATCH/PUT/DELETE)
     const { auditMiddleware } = await import('../src/api-lib/middleware/auditMiddleware.js');
@@ -260,6 +260,9 @@ export default async function handler(req: any, res: any) {
       return await handler(req, res);
     }
     if (cleanUrl.startsWith('/api/orcamentos') || cleanUrl.startsWith('/api/orcamento-tecnico')) {
+      res.setHeader('Deprecation', 'true');
+      res.setHeader('Sunset', 'Sat, 31 Jan 2027 23:59:59 GMT');
+      res.setHeader('Link', '</api/quotations>; rel="successor-version"');
       return res.status(410).json({
         success: false,
         error:

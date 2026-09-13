@@ -1,9 +1,9 @@
-import { sql, validateAuth } from './_db.js';
+import { sql } from './_db.js';
+import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
 
-export async function handleServicos(req: any, res: any) {
+const handleServicosCore: TenantHandler = async (req, res) => {
   try {
-    const { authorized, error } = validateAuth(req);
-    if (!authorized) return res.status(401).json({ success: false, error });
+    const tenantId = req.tenantId as string;
 
     const { action } = req.query;
 
@@ -14,16 +14,17 @@ export async function handleServicos(req: any, res: any) {
           FROM erp_skus
           WHERE atributos->>'categoria' IS NOT NULL
             AND ativo = true
+            AND tenant_id = ${tenantId}::uuid
           ORDER BY categoria ASC
         `;
         return res.status(200).json({
           success: true,
-          data: result.map((r: any) => r.categoria)
+          data: result.map((r: any) => r.categoria),
         });
       }
 
       const { categoria, q } = req.query;
-      let query = sql`SELECT * FROM erp_skus WHERE ativo = true`;
+      let query = sql`SELECT * FROM erp_skus WHERE ativo = true AND tenant_id = ${tenantId}::uuid`;
       const params: any[] = [];
       let paramIndex = 0;
 
@@ -43,8 +44,9 @@ export async function handleServicos(req: any, res: any) {
     if (req.method === 'POST') {
       const f = req.body;
       const result = await sql`
-        INSERT INTO erp_skus (sku_code, nome, unidade_medida, preco_base, atributos, ativo)
+        INSERT INTO erp_skus (tenant_id, sku_code, nome, unidade_medida, preco_base, atributos, ativo)
         VALUES (
+          ${tenantId}::uuid,
           ${f.sku_code},
           ${f.nome},
           ${f.unidade_medida || 'SV'},
@@ -53,7 +55,7 @@ export async function handleServicos(req: any, res: any) {
             categoria: f.categoria,
             descricao: f.descricao,
             moeda: f.moeda || 'BRL',
-            garantia_dias: f.garantia_dias || 90
+            garantia_dias: f.garantia_dias || 90,
           })},
           ${f.ativo !== false}
         )
@@ -76,20 +78,39 @@ export async function handleServicos(req: any, res: any) {
       const values: any[] = [];
       let idx = 1;
 
-      if (f.nome !== undefined) { sets.push(`nome = $${idx++}`); values.push(f.nome); }
-      if (f.preco_base !== undefined) { sets.push(`preco_base = $${idx++}`); values.push(f.preco_base); }
-      if (f.ativo !== undefined) { sets.push(`ativo = $${idx++}`); values.push(f.ativo); }
-      if (f.categoria !== undefined || f.descricao !== undefined || f.moeda !== undefined || f.garantia_dias !== undefined) {
-        const current = await sql`SELECT atributos FROM erp_skus WHERE id = ${id}`;
+      if (f.nome !== undefined) {
+        sets.push(`nome = $${idx++}`);
+        values.push(f.nome);
+      }
+      if (f.preco_base !== undefined) {
+        sets.push(`preco_base = $${idx++}`);
+        values.push(f.preco_base);
+      }
+      if (f.ativo !== undefined) {
+        sets.push(`ativo = $${idx++}`);
+        values.push(f.ativo);
+      }
+      if (
+        f.categoria !== undefined ||
+        f.descricao !== undefined ||
+        f.moeda !== undefined ||
+        f.garantia_dias !== undefined
+      ) {
+        const current =
+          await sql`SELECT atributos FROM erp_skus WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
+        if (!current[0])
+          return res.status(404).json({ success: false, error: 'Serviço não encontrado' });
         const attrs = current[0]?.atributos || {};
         sets.push(`atributos = $${idx++}`);
-        values.push(JSON.stringify({
-          ...attrs,
-          ...(f.categoria !== undefined ? { categoria: f.categoria } : {}),
-          ...(f.descricao !== undefined ? { descricao: f.descricao } : {}),
-          ...(f.moeda !== undefined ? { moeda: f.moeda } : {}),
-          ...(f.garantia_dias !== undefined ? { garantia_dias: f.garantia_dias } : {}),
-        }));
+        values.push(
+          JSON.stringify({
+            ...attrs,
+            ...(f.categoria !== undefined ? { categoria: f.categoria } : {}),
+            ...(f.descricao !== undefined ? { descricao: f.descricao } : {}),
+            ...(f.moeda !== undefined ? { moeda: f.moeda } : {}),
+            ...(f.garantia_dias !== undefined ? { garantia_dias: f.garantia_dias } : {}),
+          }),
+        );
       }
 
       if (sets.length === 0) {
@@ -99,16 +120,20 @@ export async function handleServicos(req: any, res: any) {
       values.push(id);
       const result = await sql`
         UPDATE erp_skus SET ${sql(sets.join(', '))}
-        WHERE id = ${id}
+        WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
         RETURNING *
       `;
+      if (!result[0])
+        return res
+          .status(404)
+          .json({ success: false, error: 'Serviço não encontrado ou pertence a outro tenant' });
       return res.status(200).json({ success: true, data: result[0] });
     }
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
       if (!id) return res.status(400).json({ success: false, error: 'id é obrigatório' });
-      await sql`UPDATE erp_skus SET ativo = false WHERE id = ${id}`;
+      await sql`UPDATE erp_skus SET ativo = false WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
       return res.status(200).json({ success: true });
     }
 
@@ -116,4 +141,8 @@ export async function handleServicos(req: any, res: any) {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-}
+};
+
+export const handleServicos = withTenant(handleServicosCore);
+// @deprecated alias para compatibilidade orcamento→quotation (opção B)
+export const handleServicosLegacy = handleServicos;

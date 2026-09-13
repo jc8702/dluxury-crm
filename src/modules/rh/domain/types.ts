@@ -38,6 +38,9 @@ export interface Presenca {
   data: string;
   status: StatusPresenca;
   observacao?: string | null;
+  horaSaida?: string | null; // HH:MM ex: '13:00'
+  horaRetorno?: string | null; // HH:MM ex: '14:34'
+  horasFaltaMinutos?: number; // calculado automático: horaRetorno - horaSaida em minutos (94 = 1h34)
   createdAt?: string;
 }
 
@@ -85,6 +88,8 @@ export interface FolhaItem {
   diasTrabalhados: number;
   faltasDias: number;
   valorFaltas: number;
+  horasFaltaMinutos?: number; // total minutos falta parcial no mês (ex: 97 = 1h37)
+  valorFaltaHoras?: number; // valor descontado por horas falta (minutos/60 * valorHora)
   horasExtrasQtd: number;
   horasExtrasTipo: TipoHE;
   horasExtrasPrevistas: number;

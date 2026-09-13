@@ -31,9 +31,17 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
       return true;
     }
 
-    const tenantId = auth.user.tenantId;
+    const tenantId = (req.tenantId as string) || auth.user.tenantId;
     if (!tenantId) {
       return true;
+    }
+    if (req.tenantId && auth.user.tenantId && req.tenantId !== auth.user.tenantId) {
+      logger.warn('[FEATURE_GATE] tenantId mismatch', {
+        reqTenant: req.tenantId,
+        authTenant: auth.user.tenantId,
+      });
+      res.status(403).json({ success: false, error: 'Inconsistência de tenant' });
+      return false;
     }
 
     // 1. Buscar o plano atual do tenant de forma robusta e dinâmica do banco de dados (Neon)
@@ -114,7 +122,13 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
     return true;
   } catch (err: any) {
     logger.error('[FEATURE_GATE_MIDDLEWARE_ERROR]', err);
-    // Em caso de falha de infraestrutura interna, deixa prosseguir para evitar paralisar o sistema
+    // Fail-closed para escritas, fail-open para leituras (evita paralisia total se Neon falhar)
+    if (method !== 'GET' && method !== 'OPTIONS') {
+      res
+        .status(503)
+        .json({ success: false, error: 'Serviço de planos indisponível, tente novamente' });
+      return false;
+    }
     return true;
   }
 }

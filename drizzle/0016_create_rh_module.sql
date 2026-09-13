@@ -1,4 +1,4 @@
--- Migration 0009: Cria módulo RH & Folha Simplificada
+-- Migration 0016: Cria módulo RH & Folha Simplificada (corrige header 0009→0016, refs _journal idx 9)
 -- Tabelas: colaboradores, folha_pagamentos, folha_itens, adiantamentos, presencas
 -- + tenant_configs.rh_divisor_hora + seed classes 5.01/5.02
 -- Idempotente: IF NOT EXISTS em todas as criações

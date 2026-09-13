@@ -36,7 +36,21 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
       return true;
     }
 
-    const tenantId = req.tenantId || auth.user?.tenantId; // fallback: tenantMiddleware pode não ter executado ainda
+    // Tenant já resolvido via resolveTenantRequest (api/index.ts) — usa req.tenantId como fonte da verdade
+    const tenantId = (req.tenantId as string) || auth.user?.tenantId;
+    if (!tenantId) {
+      logger.warn('[BILLING_MIDDLEWARE] tenantId ausente após resolução', { url: cleanUrl });
+      return true;
+    }
+    // Detecção de mismatch (defesa em profundidade)
+    if (req.tenantId && auth.user?.tenantId && req.tenantId !== auth.user.tenantId) {
+      logger.warn('[BILLING_MIDDLEWARE] tenantId mismatch', {
+        reqTenant: req.tenantId,
+        authTenant: auth.user.tenantId,
+      });
+      res.status(403).json({ success: false, error: 'Inconsistência de tenant detectada' });
+      return false;
+    }
 
     // Buscar a assinatura ativa do tenant
     const sub = (
@@ -82,7 +96,13 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
     return true;
   } catch (err: any) {
     logger.error('[BILLING_MIDDLEWARE_ERROR]', err);
-    // Em caso de falha de banco de dados no middleware, deixa passar para não parar a aplicação
+    // Fail-closed: em caso de falha de infra, bloqueia escrita para evitar bypass
+    if (method !== 'GET' && method !== 'OPTIONS') {
+      res
+        .status(503)
+        .json({ success: false, error: 'Serviço de faturamento indisponível, tente novamente' });
+      return false;
+    }
     return true;
   }
 }

@@ -21,6 +21,10 @@ interface CrmState {
   addOrcamento: (data: any) => Promise<void>;
   updateOrcamento: (id: string, data: any) => Promise<void>;
   removeOrcamento: (id: string) => Promise<void>;
+  /** @deprecated alias orcamento → quotation (opção B) — usar addQuotation */
+  addQuotation: (data: any) => Promise<void>;
+  updateQuotation: (id: string, data: any) => Promise<void>;
+  removeQuotation: (id: string) => Promise<void>;
 
   removeVisit: (id: string) => Promise<void>;
 
@@ -208,6 +212,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set((state) => ({ projects: state.projects.filter((p) => p.id !== id) }));
   },
 
+  addQuotation: async (data: any) => {
+    await api.quotations.create(data);
+    await get().reloadCRMData();
+  },
+  updateQuotation: async (id: string, data: any) => {
+    await api.quotations.update(id, data);
+    await get().reloadCRMData();
+  },
+  removeQuotation: async (id: string) => {
+    await api.quotations.delete(id);
+    set((state) => ({ quotations: state.quotations.filter((o) => o.id !== id) }));
+  },
+  // @deprecated aliases (opção B) — mantidos para compatibilidade com código legado que ainda chama addOrcamento
   addOrcamento: async (data: any) => {
     await api.quotations.create(data);
     await get().reloadCRMData();

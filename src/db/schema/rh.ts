@@ -91,6 +91,8 @@ export const folhaItens = pgTable('folha_itens', {
   diasTrabalhados: integer('dias_trabalhados').default(30),
   faltasDias: numeric('faltas_dias', { precision: 4, scale: 1 }).default('0'),
   valorFaltas: numeric('valor_faltas', { precision: 12, scale: 2 }).default('0'),
+  horasFaltaMinutos: integer('horas_falta_minutos').default(0),
+  valorFaltaHoras: numeric('valor_falta_horas', { precision: 12, scale: 2 }).default('0'),
   horasExtrasQtd: numeric('horas_extras_qtd', { precision: 6, scale: 2 }).default('0'),
   horasExtrasTipo: varchar('horas_extras_tipo', { length: 10 }).default('50'), // '50' | '100'
   horasExtrasPrevistas: numeric('horas_extras_previstas', { precision: 6, scale: 2 }).default('0'),
@@ -154,6 +156,9 @@ export const presencas = pgTable(
     data: date('data').notNull(),
     status: varchar('status', { length: 30 }).notNull(), // 'presente' | 'falta' | 'falta_justificada' | 'meio_periodo' | 'ferias' | 'atestado'
     observacao: text('observacao'),
+    horaSaida: varchar('hora_saida', { length: 5 }), // HH:MM ex: '13:00'
+    horaRetorno: varchar('hora_retorno', { length: 5 }), // HH:MM ex: '14:34'
+    horasFaltaMinutos: integer('horas_falta_minutos').default(0), // automático: retorno - saída em minutos
     createdAt: timestamp('created_at').defaultNow(),
   },
   (t) => ({

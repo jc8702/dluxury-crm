@@ -53,9 +53,9 @@ export function auditMiddleware(req: any, res: any, next: () => void): void {
   // ou inserida sequencialmente no fluxo de cada handler antes do res.json.
   // Para evitar bloquear a resposta do usuário, mantemos assíncrono.
   res.json = function (body: any) {
-    const tenantId = req.tenantId || req.tenantContext?.tenantId || req.user?.tenantId || '';
+    const tenantId = (req.tenantId as string) || '';
 
-    const userId = req.tenantUser?.id || req.tenantContext?.user?.id || req.user?.id || '';
+    const userId = (req.tenantUser?.id as string) || '';
 
     const actionMap: Record<string, string> = {
       POST: 'CREATE',

@@ -168,7 +168,8 @@ export async function resolveTenantByDomain(
 }
 
 /**
- * Registra uma ação no audit_log
+ * Registra uma ação no audit_log — compatível com schema legado (entity_type/entity_id) e novo (tenant_id/table_name/record_id)
+ * Mantém compatibilidade com chamadas legadas; quando tenantId é fornecido, preenche colunas novas para LGPD.
  */
 export async function auditLog(
   entity_type: string,
@@ -177,11 +178,43 @@ export async function auditLog(
   user_id: string | null,
   data_before: any = null,
   data_after: any = null,
+  tenantId?: string | null,
 ) {
   try {
+    // Detecta chamadas onde o 6º param é tenantId (string UUID) e data_after foi omitido como string tenant
+    // Fallback: se tenantId não fornecido, tenta usar null (coluna nullable até migração NOT NULL)
+    const safeTenant =
+      tenantId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(tenantId))
+        ? tenantId
+        : null;
+    const safeRecordId =
+      entity_id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(entity_id))
+        ? entity_id
+        : null;
+    const safeUserId =
+      user_id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(user_id))
+        ? user_id
+        : null;
     await sql`
-      INSERT INTO audit_logs (entity_type, entity_id, action, user_id, data_before, data_after)
-      VALUES (${entity_type}, ${entity_id}, ${action}, ${user_id}, ${JSON.stringify(data_before)}, ${JSON.stringify(data_after)})
+      INSERT INTO audit_logs (
+        tenant_id, user_id, action, table_name, record_id,
+        entity_type, entity_id, data_before, data_after,
+        retention_expires_at
+      ) VALUES (
+        ${safeTenant}::uuid,
+        ${safeUserId}::uuid,
+        ${action},
+        ${entity_type},
+        ${safeRecordId}::uuid,
+        ${entity_type},
+        ${entity_id},
+        ${JSON.stringify(data_before)}::jsonb,
+        ${JSON.stringify(data_after)}::jsonb,
+        CURRENT_TIMESTAMP + INTERVAL '90 days'
+      )
     `;
   } catch (e: any) {
     logger.error('Audit Log Error:', e.message);

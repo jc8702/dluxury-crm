@@ -18,6 +18,16 @@ function validateEnv(): EnvConfig {
     throw new Error('[config] APP_JWT_SECRET deve ter pelo menos 32 caracteres');
   }
 
+  const initKey = process.env.APP_INIT_KEY;
+  if (initKey && initKey.length < 32) {
+    throw new Error('[config] APP_INIT_KEY deve ter pelo menos 32 caracteres quando definido');
+  }
+  if (!initKey && process.env.NODE_ENV === 'production') {
+    console.warn(
+      '[config] APP_INIT_KEY não definido — /api/init-db ficará desprotegido se exposto',
+    );
+  }
+
   return {
     DATABASE_URL: process.env.DATABASE_URL!,
     APP_JWT_SECRET: jwtSecret,
