@@ -21,7 +21,7 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
       <h3 className="text-[#E2AC00] font-bold text-sm tracking-wider mb-3">PEÇAS NO LAYOUT</h3>
 
       {pecas.length === 0 ? (
-        <p className="text-[#6B7280] text-xs text-center py-4">NENHUMA PEÇA NO LAYOUT ATUAL</p>
+        <p className="text-[#6B7280] text-sm text-center py-4">NENHUMA PEÇA NO LAYOUT ATUAL</p>
       ) : (
         <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
           {pecas.map((peca, index) => {
@@ -47,8 +47,8 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
                     style={{ backgroundColor: cor }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-xs font-medium truncate">{peca.nome}</p>
-                    <p className="text-[#6B7280] text-[10px]">
+                    <p className="text-white text-sm font-medium truncate">{peca.nome}</p>
+                    <p className="text-[#6B7280] text-sm">
                       {peca.comprimento}×{peca.largura}×{peca.espessura}MM
                       {peca.rotacionada ? ' | 90°' : ''}
                     </p>
@@ -81,4 +81,3 @@ export default function PainelPecasRapido({ pecas, pecaSelecionada, onSelecionar
     </div>
   );
 }
-

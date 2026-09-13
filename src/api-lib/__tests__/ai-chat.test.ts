@@ -1,4 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.APP_JWT_SECRET || 'test-secret-key-for-jwt';
+function makeBearer(payload: any) {
+  return 'Bearer ' + jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
+}
+const VALID_BEARER = makeBearer({
+  id: 'test-user-id',
+  email: 'test@example.com',
+  role: 'admin',
+  tenantId: '11111111-1111-1111-1111-111111111111',
+});
 
 // Mocks do Banco de dados e dependências
 vi.mock('../_db.js', () => ({
@@ -7,13 +19,16 @@ vi.mock('../_db.js', () => ({
     if (query.includes('plano_tier') || query.includes('tenants')) {
       return [{ plano_tier: 'enterprise' }];
     }
+    if (query.includes('subscriptions')) {
+      return [];
+    }
     return [];
   }),
   validateAuth: (req?: any) => {
     const userId = req?.body?.context?.usuario_id || `usr-${Math.random()}`;
-    return { authorized: true, user: { tenantId: 'tenant-default', id: userId, email: 'test@example.com' } };
+    return { authorized: true, user: { tenantId: '11111111-1111-1111-1111-111111111111', id: userId, email: 'test@example.com' } };
   },
-  resolveTenantByDomain: vi.fn().mockResolvedValue({ id: 'tenant-default', nome: 'D\'Luxury', subdominio: 'dluxury' }),
+  resolveTenantByDomain: vi.fn().mockResolvedValue({ id: '11111111-1111-1111-1111-111111111111', nome: 'D\'Luxury', subdominio: 'dluxury' }),
 }));
 
 vi.mock('../financeiro.js', () => ({
@@ -246,6 +261,7 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -300,6 +316,7 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -345,6 +362,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -384,6 +402,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -422,6 +441,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -467,6 +487,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -503,6 +524,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
+      headers: { authorization: VALID_BEARER },
       socket: {
         remoteAddress: 'test-ip-' + Math.random()
       },
@@ -541,6 +563,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
       const req = {
         method: 'POST',
         url: '/api/ai/chat',
+        headers: { authorization: VALID_BEARER },
         socket: {
           remoteAddress: userId
         },

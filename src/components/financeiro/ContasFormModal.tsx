@@ -24,7 +24,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
     >
       <div className="space-y-8 p-4">
         <div className="space-y-1">
-          <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic">
+          <label className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-2 block italic">
             IDENTIFICAÇÃO OPERACIONAL
           </label>
           <Input
@@ -36,7 +36,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
               TIPO DE ATIVO
             </label>
             <div className="relative">
@@ -54,7 +54,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
               CÓDIGO BANCO
             </label>
             <Input
@@ -68,7 +68,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
               AGÊNCIA
             </label>
             <Input
@@ -79,7 +79,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
             />
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
               NÚMERO DA CONTA
             </label>
             <Input
@@ -93,7 +93,7 @@ export function ContasFormModal({ isOpen, editing, form, onClose, onFormChange, 
 
         {!editing && (
           <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 block italic text-center">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-3 block italic text-center">
               APORTE INICIAL DE CAPITAL
             </label>
             <div className="relative">

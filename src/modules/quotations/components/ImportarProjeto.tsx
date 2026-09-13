@@ -73,7 +73,7 @@ export function ImportarProjeto({
                 <p className="font-semibold text-[var(--ui-text-primary)] text-base">
                   CSV (SketchUp)
                 </p>
-                <p className="text-xs text-[var(--ui-text-secondary)] mt-1">
+                <p className="text-sm text-[var(--ui-text-secondary)] mt-1">
                   Clique para abrir o importador CutList Bridge / Report
                 </p>
               </div>
@@ -99,7 +99,7 @@ export function ImportarProjeto({
               <h3 className="text-lg font-semibold text-[var(--ui-text-primary)]">
                 Pronto para importar!
               </h3>
-              <div className="text-xs text-[var(--ui-text-secondary)] bg-[var(--ui-bg-subtle)] p-3 rounded-[var(--ui-radius-md)] border border-[var(--ui-border)] text-left space-y-1 min-w-[260px]">
+              <div className="text-sm text-[var(--ui-text-secondary)] bg-[var(--ui-bg-subtle)] p-3 rounded-[var(--ui-radius-md)] border border-[var(--ui-border)] text-left space-y-1 min-w-[260px]">
                 <div className="flex justify-between">
                   <span>Itens:</span>
                   <span className="text-[var(--ui-text-primary)] font-semibold">
@@ -126,7 +126,7 @@ export function ImportarProjeto({
           </div>
         )}
 
-        <div className="mt-4 flex items-start gap-2 p-3 bg-[var(--ui-bg-subtle)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)]">
+        <div className="mt-4 flex items-start gap-2 p-3 bg-[var(--ui-bg-subtle)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
           <AlertCircle size={14} className="shrink-0 mt-0.5" />
           <p>
             Importe listas de peças diretamente dos seus projetos 3D para economizar tempo e evitar

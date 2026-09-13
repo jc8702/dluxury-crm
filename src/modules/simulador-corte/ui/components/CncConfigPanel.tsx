@@ -27,10 +27,10 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 
       {/* SEÇÃO 1: FERRAMENTA */}
       <div className="border-b border-[#1F2937]/60 pb-2">
-        <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
+        <h4 className="text-white font-semibold text-xs tracking-wider mb-2 flex items-center gap-1">
           <Wrench size={12} className="text-[#6B7280]" /> FERRAMENTA
         </h4>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
           <ParamField label="Diâmetro" value={machine.diametroFerramenta} unit="mm" min={1} max={20} step={0.5}
             onChange={(v) => updateMachine('diametroFerramenta', v)} />
           <ParamField label="Comp. Útil" value={machine.comprimentoUtil} unit="mm" min={10} max={80} step={0.5}
@@ -50,10 +50,10 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 
       {/* SEÇÃO 2: EIXOS E ALTURAS */}
       <div className="border-b border-[#1F2937]/60 pb-2">
-        <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
+        <h4 className="text-white font-semibold text-xs tracking-wider mb-2 flex items-center gap-1">
           <ArrowUpDown size={12} className="text-[#6B7280]" /> EIXOS & MOVIMENTO
         </h4>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
           <ParamField label="SafeZ" value={machine.safeZ} unit="mm" min={5} max={machine.alturaMaximaZ} step={0.5}
             onChange={(v) => updateMachine('safeZ', v)} />
           <ParamField label="Z Máx" value={machine.alturaMaximaZ} unit="mm" min={50} max={400} step={5}
@@ -71,10 +71,10 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 
       {/* SEÇÃO 3: LIMITES FÍSICOS */}
       <div className="border-b border-[#1F2937]/60 pb-2">
-        <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
+        <h4 className="text-white font-semibold text-xs tracking-wider mb-2 flex items-center gap-1">
           <Gauge size={12} className="text-[#6B7280]" /> LIMITES FÍSICOS
         </h4>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
           <ParamField label="Limite X" value={machine.limiteX[1]} unit="mm" min={500} max={6000} step={50}
             onChange={(v) => updateMachine('limiteX', [machine.limiteX[0], v])} />
           <ParamField label="Limite Y" value={machine.limiteY[1]} unit="mm" min={500} max={4000} step={50}
@@ -84,7 +84,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 
       {/* SEÇÃO 4: POLÍTICA DE COLISÃO */}
       <div>
-        <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
+        <h4 className="text-white font-semibold text-xs tracking-wider mb-2 flex items-center gap-1">
           <Shield size={12} className="text-[#6B7280]" /> POLÍTICA DE COLISÃO
         </h4>
         <div className="flex flex-col gap-1.5">
@@ -111,8 +111,8 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
                   {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#E2AC00]" />}
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold block">{opt.label}</span>
-                  <p className="text-[#6B7280] text-[8px] leading-tight mt-0.5">{opt.desc}</p>
+                  <span className="text-sm font-bold block">{opt.label}</span>
+                  <p className="text-[#6B7280] text-sm leading-tight mt-0.5">{opt.desc}</p>
                 </div>
               </button>
             );
@@ -122,14 +122,14 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 
       {/* SEÇÃO 5: GARRAS (CLAMPS) */}
       <div className="border-t border-[#1F2937]/60 pt-2">
-        <h4 className="text-white font-semibold text-[10px] tracking-wider mb-2 flex items-center gap-1">
+        <h4 className="text-white font-semibold text-xs tracking-wider mb-2 flex items-center gap-1">
           <Gauge size={12} className="text-[#6B7280]" /> GARRAS (CLAMPS)
         </h4>
         <div className="space-y-1.5 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
           {config.fixture.clamps.map((clamp, idx) => (
             <div key={clamp.id} className="bg-[#0D1117]/60 border border-[#1F2937] rounded p-1.5">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[#6B7280] text-[8px] font-bold">{clamp.id.toUpperCase()}</span>
+                <span className="text-[#6B7280] text-sm font-bold">{clamp.id.toUpperCase()}</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -187,7 +187,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
             };
             onChange({ ...config, fixture: { clamps: [...config.fixture.clamps, novoClamp] } });
           }}
-          className="w-full mt-1.5 flex items-center justify-center gap-1 bg-[#1F2937] hover:bg-[#374151] text-[#E2AC00] text-[8px] font-bold py-1.5 rounded transition-all"
+          className="w-full mt-1.5 flex items-center justify-center gap-1 bg-[#1F2937] hover:bg-[#374151] text-[#E2AC00] text-sm font-bold py-1.5 rounded transition-all"
         >
           <Plus size={10} /> ADICIONAR GARRA
         </button>
@@ -229,7 +229,7 @@ function ClampField({
           const v = parseFloat(e.target.value);
           if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v)));
         }}
-        className="w-full bg-transparent text-white font-mono font-semibold outline-none text-[9px]"
+        className="w-full bg-transparent text-white font-mono font-semibold outline-none text-sm"
       />
     </div>
   );
@@ -266,9 +266,9 @@ function ParamField({
             const v = parseFloat(e.target.value);
             if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v)));
           }}
-          className="w-14 bg-transparent text-white text-right font-mono font-semibold outline-none text-[10px]"
+          className="w-14 bg-transparent text-white text-right font-mono font-semibold outline-none text-sm"
         />
-        <span className="text-[#4b5563] text-[8px]">{unit}</span>
+        <span className="text-[#4b5563] text-sm">{unit}</span>
       </div>
     </div>
   );

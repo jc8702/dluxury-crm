@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAuth, handleUsers } from '../auth.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { _resetRateLimitersForTests } from '../middleware/rateLimiter.js';
 
 vi.mock('../_db.js', () => ({
   sql: Object.assign(vi.fn(), { begin: undefined, query: vi.fn() }),
@@ -45,9 +46,10 @@ function mockRes() {
 }
 
 describe('handleAuth', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.mocked(sql).mockReset();
     vi.mocked(resolveTenantByDomain).mockReset();
+    await _resetRateLimitersForTests();
   });
 
   it('deve fazer login com credenciais válidas', async () => {

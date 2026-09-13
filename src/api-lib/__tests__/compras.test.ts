@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleCompras } from '../compras.js';
 
-vi.mock('../_db.js', () => ({
-  sql: vi.fn(),
-  validateAuth: vi.fn(),
-  extractAndVerifyToken: vi.fn(),
-}));
+vi.mock('../_db.js', async () => {
+  const { createMockSql } = await import('./helpers/mockSql.js');
+  return {
+    sql: createMockSql(),
+    validateAuth: vi.fn(),
+    extractAndVerifyToken: vi.fn(),
+  };
+});
 
 vi.mock('../middleware/tenantMiddleware.js', () => ({
   withTenant: (handler: any) => handler,

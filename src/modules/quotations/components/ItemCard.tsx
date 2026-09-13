@@ -208,12 +208,12 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                 <Package size={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-[var(--ui-text-primary)] font-semibold text-xl tracking-tight truncate leading-none">
+                <h3 className="text-[var(--ui-text-primary)] font-display font-semibold text-xl tracking-tight truncate leading-none">
                   {tituloExibicao}
                 </h3>
                 {subtituloExibicao && (
                   <div className="mt-2">
-                    <span className="text-[10px] text-[var(--ui-color-teal-700)] font-medium uppercase tracking-wide bg-[var(--ui-color-teal-50)] px-2 py-1 rounded border border-[var(--ui-color-teal-200)]">
+                    <span className="text-xs text-[var(--ui-color-teal-700)] font-medium uppercase tracking-wide bg-[var(--ui-color-teal-50)] px-2 py-1 rounded border border-[var(--ui-color-teal-200)]">
                       {subtituloExibicao}
                     </span>
                   </div>
@@ -268,7 +268,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
           {isEditing && (
             <div className="bg-background p-4 rounded-xl border border-border space-y-4">
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                   Vincular SKU Principal
                 </label>
                 <Controller
@@ -293,7 +293,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                  <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                     Nome Customizado
                   </label>
                   <Controller
@@ -311,7 +311,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                  <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                     Material
                   </label>
                   <Controller
@@ -334,7 +334,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-[9px] font-black text-muted-foreground uppercase block mb-1">
+              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
                 Quantidade
               </label>
               {isEditing ? (
@@ -355,34 +355,34 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
               ) : (
                 <span className="text-foreground font-black">
                   {item.quantidade}{' '}
-                  <span className="text-muted-foreground text-[10px]">
+                  <span className="text-muted-foreground text-sm">
                     {item.unidadeMedida || 'UN'}
                   </span>
                 </span>
               )}
             </div>
             <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-[9px] font-black text-muted-foreground uppercase block mb-1">
+              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
                 Largura
               </label>
               <span className="text-muted-foreground font-mono text-sm">
-                {item.largura || '-'} <span className="text-[10px]">mm</span>
+                {item.largura || '-'} <span className="text-sm">mm</span>
               </span>
             </div>
             <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-[9px] font-black text-muted-foreground uppercase block mb-1">
+              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
                 Altura
               </label>
               <span className="text-muted-foreground font-mono text-sm">
-                {item.altura || '-'} <span className="text-[10px]">mm</span>
+                {item.altura || '-'} <span className="text-sm">mm</span>
               </span>
             </div>
             <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-[9px] font-black text-muted-foreground uppercase block mb-1">
+              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
                 Espessura
               </label>
               <span className="text-muted-foreground font-mono text-sm">
-                {item.espessura || '-'} <span className="text-[10px]">mm</span>
+                {item.espessura || '-'} <span className="text-sm">mm</span>
               </span>
             </div>
           </div>
@@ -457,7 +457,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
             </div>
 
             <div className="flex justify-between items-center pt-2 border-t border-border">
-              <span className="text-muted-foreground text-[10px] font-black uppercase">
+              <span className="text-muted-foreground text-xs font-black uppercase">
                 Margem Real (%)
               </span>
               {isEditing ? (
@@ -467,7 +467,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                   render={({ field }) => (
                     <Input
                       type="number"
-                      className="text-right w-20 h-8 text-[10px] px-2 py-1 font-black font-mono bg-background border-border"
+                      className="text-right w-20 h-8 text-sm px-2 py-1 font-black font-mono bg-background border-border"
                       value={field.value}
                       onChange={(e) =>
                         handleRecalculatePrices(
@@ -489,7 +489,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
           <div className="flex justify-between items-end mt-auto pt-2 px-1">
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                 Total do Item
               </span>
               <span className="text-2xl font-black italic text-foreground leading-none mt-1">
@@ -506,7 +506,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
           item.metadata.fitaBorda?.sku ||
           item.metadata.ferragens?.length > 0) && (
           <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex flex-col gap-2">
-            <span className="text-[9px] font-medium text-[var(--ui-color-teal-700)] uppercase tracking-wide flex items-center gap-1">
+            <span className="text-xs font-medium text-[var(--ui-color-teal-700)] uppercase tracking-wide flex items-center gap-1">
               <Package size={12} /> Composição Dinâmica Ativa
             </span>
             <div className="flex flex-wrap gap-2">
@@ -537,7 +537,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
       {item.observacoes && !isEditing && (
         <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex gap-2">
           <div className="w-1 h-full bg-[var(--ui-color-teal-500)]/50 rounded-full" />
-          <p className="text-[var(--ui-text-xs)] text-[var(--ui-text-secondary)] italic leading-relaxed">
+          <p className="text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)] italic leading-relaxed">
             {item.observacoes}
           </p>
         </div>
@@ -545,14 +545,14 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
       {isEditing && (
         <div className="mt-4 pt-4 border-t border-[var(--ui-border)] space-y-4">
-          <h4 className="text-[10px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex items-center gap-2">
+          <h4 className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex items-center gap-2">
             <Package size={12} className="text-[var(--ui-color-teal-500)]" /> Composição Avançada de Materiais
           </h4>
 
           <div className="bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-md)] p-4 border border-[var(--ui-border)] space-y-4">
             {/* CHAPA */}
             <div className="space-y-2">
-              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Chapa / Material Base</span>
                 {watchAll.metadata?.chapa && (
                   <span className="text-[var(--ui-color-teal-700)] font-mono">
@@ -578,7 +578,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
             {/* FITA DE BORDA */}
             <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
-              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Fita de Borda</span>
                 {watchAll.metadata?.fitaBorda?.sku && (
                   <span className="text-[var(--ui-color-teal-700)] font-mono">
@@ -678,7 +678,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                         />
                       )}
                     />
-                    <span className="text-[10px] uppercase font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-text-primary)]">
+                    <span className="text-xs uppercase font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-text-primary)]">
                       {lado}
                     </span>
                   </label>
@@ -688,7 +688,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
             {/* FERRAGENS E ACESSÓRIOS */}
             <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
-              <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
                 <span>Ferragens e Acessórios</span>
               </label>
               {watchAll.metadata?.ferragens?.map((f: any, i: number) => (
@@ -696,7 +696,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                   key={i}
                   className="flex items-center gap-2 mb-2 bg-[var(--ui-bg-subtle)] p-2 rounded-[var(--ui-radius-sm)] border border-[var(--ui-border)]"
                 >
-                  <span className="flex-1 text-xs text-[var(--ui-text-primary)] truncate font-medium">
+                  <span className="flex-1 text-sm text-[var(--ui-text-primary)] truncate font-medium">
                     {f.sku?.nome || f.sku?.codigo}{' '}
                     <span className="text-[var(--ui-text-secondary)] font-mono ml-2">
                       R$ {Number(f.sku?.precoUnitario).toFixed(2)} un
@@ -753,7 +753,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
 
       {isEditing && (
         <div className="mt-4">
-          <label className="text-[9px] font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide block mb-1">
+          <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide block mb-1">
             Observações Internas
           </label>
           <Controller

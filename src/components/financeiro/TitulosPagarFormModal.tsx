@@ -45,7 +45,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
         <div className="space-y-6">
           <div className="glass p-6 rounded-xl space-y-3 bg-red-500/5 border border-red-500/20">
             <div className="flex justify-between items-center">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 Valor Original
               </span>
               <span className="font-bold text-white italic text-lg tracking-tighter">
@@ -55,7 +55,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
             {atraso > 0 && (
               <>
                 <div className="flex justify-between items-center text-red-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
+                  <span className="text-xs font-bold uppercase tracking-wider">
                     Multa (2% - {atraso} dias)
                   </span>
                   <span className="font-bold italic">
@@ -63,7 +63,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-red-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
+                  <span className="text-xs font-bold uppercase tracking-wider">
                     Juros (1%/mês)
                   </span>
                   <span className="font-bold italic">
@@ -73,7 +73,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
               </>
             )}
             <div className="pt-4 border-t border-white/10 flex justify-between items-end">
-              <span className="text-[11px] font-black text-red-500 uppercase tracking-[0.2em]">
+              <span className="text-xs font-black text-red-500 uppercase tracking-[0.2em]">
                 Total a Debitar
               </span>
               <span className="text-3xl font-black text-red-500 italic tracking-tighter">
@@ -82,7 +82,7 @@ export function BaixaModal({ baixaModal, contas, onClose, onConfirm }: BaixaProp
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
               Conta Bancária / Débito
             </label>
             <select id="conta-interna-id-pagar" className="input-base">
@@ -137,7 +137,7 @@ export function EditTituloModal({ editModal, onClose, onChange, onSave }: EditPr
             onChange={(e) => editModal && onChange({ ...editModal, numero_titulo: e.target.value })}
           />
           <div className="space-y-2">
-            <label className="mb-2 block text-sm font-medium text-foreground/90 uppercase tracking-widest text-muted-foreground text-[10px] ml-1">
+            <label className="mb-2 block text-sm font-medium text-foreground/90 uppercase tracking-widest text-muted-foreground text-xs ml-1">
               Status Operacional
             </label>
             <select
@@ -236,13 +236,13 @@ export function LoteModal({
       title={`Liquidação em Lote (${selectedCount} Títulos)`}
     >
       <div className="p-2 space-y-6">
-        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-[11px] font-bold text-orange-400 uppercase tracking-wider italic flex items-center gap-3">
+        <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs font-bold text-orange-400 uppercase tracking-wider italic flex items-center gap-3">
           <Layers className="w-5 h-5" /> Atenção: Os {selectedCount} títulos selecionados serão
           baixados pelo valor nominal.
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
               Conta Bancária Corporativa *
             </label>
             <select
@@ -261,7 +261,7 @@ export function LoteModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
                 Data da Liquidação
               </label>
               <input
@@ -272,7 +272,7 @@ export function LoteModal({
               />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 block ml-1">
                 Observação Interna
               </label>
               <input

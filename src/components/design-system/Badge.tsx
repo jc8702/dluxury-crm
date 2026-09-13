@@ -1,33 +1,22 @@
-import { cn } from '@/utils/cn';
+import { Badge as UIBadge } from '../ui/Badge';
+import type { BadgeProps as UIBadgeProps } from '../ui/Badge';
 
-type Tone = 'default' | 'success' | 'warning' | 'destructive' | 'info';
-
-const toneClasses: Record<Tone, string> = {
-  default: 'bg-muted text-muted-foreground',
-  success: 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))]',
-  warning: 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)]',
-  destructive: 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))]',
-  info: 'bg-[var(--ui-color-info-soft)] text-[hsl(var(--info))]',
+const toneMap: Record<string, UIBadgeProps['tone']> = {
+  default: 'neutral',
+  success: 'success',
+  warning: 'warning',
+  destructive: 'danger',
+  info: 'info',
 };
 
-export function Badge({
-  tone = 'default',
-  className,
-  children,
-}: {
-  tone?: Tone;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-        toneClasses[tone],
-        className,
-      )}
-    >
-      {children}
-    </span>
-  );
+export interface BadgeProps extends Omit<UIBadgeProps, 'tone'> {
+  tone?: 'default' | 'success' | 'warning' | 'destructive' | 'info' | UIBadgeProps['tone'];
+}
+
+/**
+ * Wrapper de compatibilidade — delega ao oficial src/components/ui/Badge.tsx
+ */
+export function Badge({ tone = 'default', ...props }: BadgeProps) {
+  const mapped = (toneMap[tone as string] ?? tone) as UIBadgeProps['tone'];
+  return <UIBadge tone={mapped} {...props} />;
 }

@@ -332,7 +332,7 @@ export default function FinanceiroRecorrentesPage() {
               ))}
             </select>
             {classes.length === 0 && (
-              <p className="text-xs text-destructive mt-1">Nenhuma classe encontrada — cadastre em Financeiro &gt; Classes</p>
+              <p className="text-sm text-destructive mt-1">Nenhuma classe encontrada — cadastre em Financeiro &gt; Classes</p>
             )}
           </div>
 

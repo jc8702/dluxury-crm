@@ -64,7 +64,7 @@ export const ImportadorEngenharia: React.FC<ImportadorProps> = ({ onImport }) =>
       </div>
       
       <h3 className="text-xl font-black text-foreground tracking-tight mb-2 uppercase">Importar do 3D</h3>
-      <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto mb-8">
+      <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto mb-8">
         Arraste um arquivo <strong className="text-foreground">.dae (Collada)</strong> do SketchUp ou clique para procurar.
       </p>
       

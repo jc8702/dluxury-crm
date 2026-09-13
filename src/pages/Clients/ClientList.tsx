@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Search, Edit3, Trash2, MessageCircle } from 'lucide-react';
 import { Button, Input, Select, Table, Badge, Card } from '../../components/ui';
+import Header from '../../components/layout/Header';
 import type { Client } from '../../types/entities';
 
 type SortKey = 'nome' | 'cidade' | 'status' | 'projetos';
@@ -175,25 +176,23 @@ export const ClientList: React.FC<ClientListProps> = ({
   ];
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in">
-      {/* Header */}
-      <header className="flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--ui-text-primary)]">Clientes</h1>
-          <div className="flex items-center gap-4 mt-1">
-            <p className="text-[var(--ui-text-secondary)]">
-              Gerencie sua base de clientes pessoa física
-            </p>
+    <div className="flex flex-col gap-4 animate-fade-in">
+      {/* Header consistente */}
+      <Header
+        title="Clientes"
+        subtitle="Gerencie sua base de clientes pessoa física"
+        actions={
+          <div className="flex items-center gap-3">
             <Badge tone="primary" className="font-semibold">
               {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
             </Badge>
+            <Button onClick={onCreate} className="gap-2 shadow-[var(--ui-shadow-1)] rounded-[var(--ui-radius-md)]">
+              <Plus size={16} />
+              Novo Cliente
+            </Button>
           </div>
-        </div>
-        <Button onClick={onCreate} className="gap-2 shadow-[var(--ui-shadow-primary)]">
-          <Plus size={16} />
-          Novo Cliente
-        </Button>
-      </header>
+        }
+      />
 
       {/* Main Content */}
       <Card className="p-0 overflow-hidden">

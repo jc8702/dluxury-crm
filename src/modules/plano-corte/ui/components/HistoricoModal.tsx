@@ -122,7 +122,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
                     <h4 className="font-bold text-foreground text-sm mb-1 tracking-tight group-hover:text-primary transition-colors">
                       {plano.nome}
                     </h4>
-                    <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                       <span className="flex items-center gap-1.5 px-2 py-0.5 bg-foreground/5 rounded-lg">
                         <Calendar size={10} className="text-primary" />
                         {new Date(plano.created_at).toLocaleDateString()}
@@ -145,7 +145,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
                       {plano.resultado?.aproveitamento_percentual?.toFixed(1)}
                       <span className="text-sm opacity-50">%</span>
                     </div>
-                    <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
+                    <div className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
                       Eficiência
                     </div>
                   </div>
@@ -164,7 +164,7 @@ export function HistoricoModal({ onLoadPlan, onFechar }: HistoricoModalProps) {
               <h3 className="text-sm font-bold uppercase tracking-widest mb-1">
                 Nenhum plano encontrado
               </h3>
-              <p className="text-xs text-muted-foreground max-w-xs text-center">
+              <p className="text-sm text-muted-foreground max-w-xs text-center">
                 Tente buscar por outro termo ou projeto.
               </p>
             </div>

@@ -126,11 +126,11 @@ export function SKUAutocomplete({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-muted-foreground truncate">
+                      <span className="font-mono text-sm font-bold text-muted-foreground truncate">
                         {sku.codigo}
                       </span>
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${sku.tipo === 'INDUSTRIAL' ? 'bg-primary/10 text-primary' : 'bg-info/10 text-info'}`}
+                        className={`text-sm font-bold px-1.5 py-0.5 rounded ${sku.tipo === 'INDUSTRIAL' ? 'bg-primary/10 text-primary' : 'bg-info/10 text-info'}`}
                       >
                         {sku.tipo}
                       </span>
@@ -138,7 +138,7 @@ export function SKUAutocomplete({
                     <div className="text-sm text-foreground font-medium mt-0.5 truncate">
                       {sku.nome}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-sm text-muted-foreground mt-1">
                       Custo Base: R$ {Number(sku.precoUnitario || 0).toFixed(2)}
                     </div>
                   </div>

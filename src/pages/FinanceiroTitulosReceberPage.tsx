@@ -153,7 +153,7 @@ export default function FinanceiroTitulosReceberPage() {
       <Button
         variant="ghost"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
@@ -292,7 +292,7 @@ export default function FinanceiroTitulosReceberPage() {
                               <div className="font-black tracking-tight text-lg text-foreground">
                                 {clientName}
                               </div>
-                              <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                              <div className="text-xs text-muted-foreground uppercase tracking-widest font-bold">
                                 {groupRows.length} títulos pendentes
                               </div>
                             </div>
@@ -307,7 +307,7 @@ export default function FinanceiroTitulosReceberPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-[10px] font-black tracking-widest text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] transition-colors uppercase flex items-center gap-1 ml-auto group"
+                            className="text-xs font-black tracking-widest text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] transition-colors uppercase flex items-center gap-1 ml-auto group"
                             onClick={async (e) => {
                               e.stopPropagation();
                               const isConfirmed = await confirmAction({
@@ -340,7 +340,7 @@ export default function FinanceiroTitulosReceberPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-[11px] text-muted-foreground font-medium italic">
+                              <span className="text-sm text-muted-foreground font-medium italic">
                                 Lançamento Direto
                               </span>
                             </td>
@@ -351,7 +351,7 @@ export default function FinanceiroTitulosReceberPage() {
                               })}
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                              <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
                                 <Calendar size={14} className="opacity-50" />
                                 {new Date(r.data_vencimento).toLocaleDateString()}
                               </div>
@@ -361,7 +361,7 @@ export default function FinanceiroTitulosReceberPage() {
                                 const style = getStatusStyle(r.status, r.data_vencimento);
                                 return (
                                   <span
-                                    className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-sm"
+                                    className="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase shadow-sm"
                                     style={style}
                                   >
                                     {r.status === 'pago'
@@ -481,7 +481,7 @@ export default function FinanceiroTitulosReceberPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-4 text-xs font-semibold"
+              className="h-9 px-4 text-sm font-semibold"
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
             >
@@ -490,7 +490,7 @@ export default function FinanceiroTitulosReceberPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-4 text-xs font-semibold"
+              className="h-9 px-4 text-sm font-semibold"
               disabled={page * perPage >= total}
               onClick={() => setPage(page + 1)}
             >
@@ -535,7 +535,7 @@ export default function FinanceiroTitulosReceberPage() {
 
                 <div className="p-6 rounded-xl space-y-3 bg-primary/5 border border-primary/20">
                   <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Valor Bruto
                     </span>
                     <span className="font-bold text-white italic text-lg tracking-tighter">
@@ -543,7 +543,7 @@ export default function FinanceiroTitulosReceberPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Prazo Industrial
                     </span>
                     <span className="font-bold text-primary italic uppercase tracking-tighter">
@@ -551,7 +551,7 @@ export default function FinanceiroTitulosReceberPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">
+                    <span className="text-xs font-bold uppercase tracking-wider">
                       Desconto Bancário
                     </span>
                     <span className="font-bold italic">
@@ -559,7 +559,7 @@ export default function FinanceiroTitulosReceberPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">
+                    <span className="text-xs font-bold uppercase tracking-wider">
                       Taxas Administrativas (0.5%)
                     </span>
                     <span className="font-bold italic">
@@ -567,7 +567,7 @@ export default function FinanceiroTitulosReceberPage() {
                     </span>
                   </div>
                   <div className="pt-4 border-t border-border flex justify-between items-end">
-                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">
+                    <span className="text-xs font-black text-primary uppercase tracking-[0.2em]">
                       Valor Líquido
                     </span>
                     <span className="text-3xl font-black text-primary italic tracking-tighter">
@@ -629,7 +629,7 @@ export default function FinanceiroTitulosReceberPage() {
               <div className="space-y-6">
                 <div className="p-6 rounded-xl space-y-3 bg-[var(--ui-color-success-soft)] border border-[hsl(var(--success))]/20">
                   <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Valor Original
                     </span>
                     <span className="font-bold text-foreground italic text-lg tracking-tighter">
@@ -639,7 +639,7 @@ export default function FinanceiroTitulosReceberPage() {
                   {atraso > 0 && (
                     <>
                       <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
-                        <span className="text-[11px] font-bold uppercase tracking-wider">
+                        <span className="text-xs font-bold uppercase tracking-wider">
                           Multa (2% - {atraso} dias)
                         </span>
                         <span className="font-bold italic">
@@ -647,7 +647,7 @@ export default function FinanceiroTitulosReceberPage() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-[hsl(var(--destructive))]">
-                        <span className="text-[11px] font-bold uppercase tracking-wider">
+                        <span className="text-xs font-bold uppercase tracking-wider">
                           Juros (1%/mês)
                         </span>
                         <span className="font-bold italic">
@@ -657,7 +657,7 @@ export default function FinanceiroTitulosReceberPage() {
                     </>
                   )}
                   <div className="pt-4 border-t border-border flex justify-between items-end">
-                    <span className="text-[11px] font-black text-[hsl(var(--success))] uppercase tracking-[0.2em]">
+                    <span className="text-xs font-black text-[hsl(var(--success))] uppercase tracking-[0.2em]">
                       Valor Total
                     </span>
                     <span className="text-3xl font-black text-[hsl(var(--success))] italic tracking-tighter">
@@ -667,7 +667,7 @@ export default function FinanceiroTitulosReceberPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
                     Conta Bancária de Destino
                   </label>
                   <select
@@ -741,7 +741,7 @@ export default function FinanceiroTitulosReceberPage() {
               }
             />
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
                 Status Operacional
               </label>
               <select

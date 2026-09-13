@@ -46,19 +46,19 @@ export default function SafetyAnalysisPanel({
           <ShieldAlert size={14} /> SEGURANÇA & AJUSTES
         </h3>
         <div className="flex gap-2">
-          <span className="bg-[#EF4444]/20 text-[#EF4444] px-1.5 py-0.5 rounded text-[9px] font-bold">{totalErros} E</span>
-          <span className="bg-[#F59E0B]/20 text-[#F59E0B] px-1.5 py-0.5 rounded text-[9px] font-bold">{totalWarnings} W</span>
+          <span className="bg-[#EF4444]/20 text-[#EF4444] px-1.5 py-0.5 rounded text-sm font-bold">{totalErros} E</span>
+          <span className="bg-[#F59E0B]/20 text-[#F59E0B] px-1.5 py-0.5 rounded text-sm font-bold">{totalWarnings} W</span>
         </div>
       </div>
 
       {diffs.length > 0 && (
         <div className="border-b border-[#1F2937]/60 pb-2">
-          <h4 className="text-[#10B981] font-bold text-[10px] flex items-center gap-1 mb-1.5">
+          <h4 className="text-[#10B981] font-bold text-sm flex items-center gap-1 mb-1.5">
             <CheckCircle size={12} /> AJUSTES APLICADOS ({diffs.length})
           </h4>
           <div className="space-y-0.5">
             {diffs.map((d, i) => (
-              <div key={i} className="flex items-center justify-between bg-[#0D1117]/60 rounded px-2 py-1 text-[9px] font-mono">
+              <div key={i} className="flex items-center justify-between bg-[#0D1117]/60 rounded px-2 py-1 text-sm font-mono">
                 <span className="text-[#6B7280]">{d.paramName}</span>
                 <div className="flex items-center gap-1">
                   <span className="text-[#EF4444]">{d.before}</span>
@@ -75,7 +75,7 @@ export default function SafetyAnalysisPanel({
       <div className="flex-1 space-y-2 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
         {issuesWithRecs.length === 0 ? (
           <div className="border border-dashed border-[#1F2937] rounded-xl flex items-center justify-center bg-[#0D1117]/40 p-4 text-center">
-            <p className="text-[#10B981] font-semibold text-[10px] tracking-wide">
+            <p className="text-[#10B981] font-semibold text-sm tracking-wide">
               <Shield size={14} className="inline-block mr-1" />
               NENHUMA ANOMALIA.<br/>SIMULAÇÃO SEGURA.
             </p>
@@ -100,13 +100,13 @@ export default function SafetyAnalysisPanel({
                 >
                   <div className="flex items-center gap-1.5">
                     <AlertTriangle size={12} className={isError ? 'text-[#EF4444] shrink-0' : 'text-[#F59E0B] shrink-0'} />
-                    <span className={`font-bold text-[10px] ${isError ? 'text-[#EF4444]' : 'text-[#F59E0B]'}`}>
+                    <span className={`font-bold text-sm ${isError ? 'text-[#EF4444]' : 'text-[#F59E0B]'}`}>
                       {issue.codigo}
                     </span>
-                    <span className="text-[#4b5563] text-[8px] font-mono ml-auto">{formatarTempo(issue.tempo)}</span>
+                    <span className="text-[#4b5563] text-sm font-mono ml-auto">{formatarTempo(issue.tempo)}</span>
                   </div>
-                  <p className="text-white font-medium text-[10px] leading-tight">{issue.mensagem}</p>
-                  <p className="text-[#6B7280] text-[8px] line-clamp-2">{issue.descricao}</p>
+                  <p className="text-white font-medium text-sm leading-tight">{issue.mensagem}</p>
+                  <p className="text-[#6B7280] text-sm line-clamp-2">{issue.descricao}</p>
                 </button>
 
                 {rec && (
@@ -123,20 +123,20 @@ export default function SafetyAnalysisPanel({
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className={`text-[9px] font-bold ${
+                          <span className={`text-sm font-bold ${
                             !blocked ? (acao === 'apply' ? 'text-[#10B981]' : 'text-[#E2AC00]') : 'text-[#EF4444]'
                           }`}>
                             {!blocked ? (acao === 'apply' ? 'AUTO' : 'SUGESTÃO') : 'BLOQUEIO'}
                           </span>
-                          <span className="text-[#6B7280] text-[8px]">
+                          <span className="text-[#6B7280] text-sm">
                             {blocked
                               ? `Política "${collisionPolicy === 'stop' ? 'Parar em Colisão' : collisionPolicy}" bloqueia ajuste automático`
                               : `${rec.paramName}: ${rec.oldValue} → ${rec.newValue}`}
                           </span>
                         </div>
-                        <p className="text-[#6B7280] text-[8px] leading-tight mt-0.5">{rec.explanation}</p>
+                        <p className="text-[#6B7280] text-sm leading-tight mt-0.5">{rec.explanation}</p>
                         {rec.tradeoff && (
-                          <p className="text-[#F59E0B] text-[8px] leading-tight mt-0.5 italic">{rec.tradeoff}</p>
+                          <p className="text-[#F59E0B] text-sm leading-tight mt-0.5 italic">{rec.tradeoff}</p>
                         )}
                       </div>
                     </div>
@@ -145,7 +145,7 @@ export default function SafetyAnalysisPanel({
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onPreviewRecommendation?.(iwr); }}
-                        className="flex items-center justify-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-[8px] font-bold py-1 px-1.5 rounded transition-all"
+                        className="flex items-center justify-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-sm font-bold py-1 px-1.5 rounded transition-all"
                         title="Visualizar na cena 3D"
                       >
                         <Eye size={10} /> 3D
@@ -155,7 +155,7 @@ export default function SafetyAnalysisPanel({
                           <button
                             type="button"
                             onClick={() => onApplyRecommendation(iwr)}
-                            className="flex-1 flex items-center justify-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-[8px] font-bold py-1 rounded transition-all"
+                            className="flex-1 flex items-center justify-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-sm font-bold py-1 rounded transition-all"
                           >
                             <CheckCircle size={10} /> APLICAR
                           </button>
@@ -163,7 +163,7 @@ export default function SafetyAnalysisPanel({
                           <button
                             type="button"
                             onClick={() => onApplyRecommendation(iwr)}
-                            className="flex-1 flex items-center justify-center gap-1 bg-[#E2AC00]/20 hover:bg-[#E2AC00]/30 text-[#E2AC00] text-[8px] font-bold py-1 rounded transition-all"
+                            className="flex-1 flex items-center justify-center gap-1 bg-[#E2AC00]/20 hover:bg-[#E2AC00]/30 text-[#E2AC00] text-sm font-bold py-1 rounded transition-all"
                           >
                             <HelpCircle size={10} /> APLICAR SUGESTÃO
                           </button>
@@ -174,7 +174,7 @@ export default function SafetyAnalysisPanel({
                           onClick={() => {
                             onChangeCollisionPolicy?.(collisionPolicy === 'stop' ? 'suggest' : 'auto');
                           }}
-                          className="flex-1 flex items-center justify-center gap-1 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] text-[8px] font-bold py-1 rounded transition-all"
+                          className="flex-1 flex items-center justify-center gap-1 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] text-sm font-bold py-1 rounded transition-all"
                           title="Altere a política de colisão no painel CNC para desbloquear ajustes"
                         >
                           <XCircle size={10} /> MUDAR POLÍTICA
@@ -192,8 +192,8 @@ export default function SafetyAnalysisPanel({
       {isRerunning && (
         <div className="absolute inset-0 bg-[#111827]/90 flex flex-col items-center justify-center gap-2 z-10 rounded-xl">
           <RotateCw size={20} className="text-[#E2AC00] animate-spin" />
-          <span className="text-[#E2AC00] font-bold text-[10px] animate-pulse">REEXECUTANDO SIMULAÇÃO...</span>
-          <span className="text-[#6B7280] text-[8px]">REAVALIANDO SEGURANÇA COM NOVOS PARÂMETROS</span>
+          <span className="text-[#E2AC00] font-bold text-sm animate-pulse">REEXECUTANDO SIMULAÇÃO...</span>
+          <span className="text-[#6B7280] text-sm">REAVALIANDO SEGURANÇA COM NOVOS PARÂMETROS</span>
         </div>
       )}
 
@@ -202,7 +202,7 @@ export default function SafetyAnalysisPanel({
           type="button"
           onClick={onRerunSimulation}
           disabled={isRerunning}
-          className="w-full flex items-center justify-center gap-1.5 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-[10px] py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-1.5 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-sm py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Cpu size={12} /> REEXECUTAR SIMULAÇÃO COM AJUSTES
         </button>

@@ -189,7 +189,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
               Mapa de Corte (PDF)
             </h3>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Escala 1:8 em formato A3 para montagem na fábrica.
             </p>
           </button>
@@ -206,7 +206,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
               Etiquetas (Térmica)
             </h3>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Etiquetas 100x50mm com QR Code e informações industriais.
             </p>
           </button>
@@ -223,7 +223,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
               Arquivo CNC (G-Code)
             </h3>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {activeSuperficie
                 ? `Chapa atual (Chapa ${activeChapaIdx + 1})`
                 : 'Selecione uma chapa no painel primeiro.'}
@@ -242,7 +242,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
             <h3 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">
               Lista de Peças (CSV)
             </h3>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Exportação bruta de peças para ERPs e planilhas externas.
             </p>
           </button>
@@ -251,7 +251,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
         {isExporting && (
           <div className="p-4 bg-primary/5 border border-primary/15 rounded-xl flex items-center justify-center gap-3">
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            <span className="text-xs font-bold text-primary">
+            <span className="text-sm font-bold text-primary">
               Gerando arquivos de exportação...
             </span>
           </div>

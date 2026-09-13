@@ -54,7 +54,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
                     {m.sku}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
                   {m.espessura || '?'}MM
                 </span>
               </div>
@@ -79,7 +79,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
 
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Espessura (mm)
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -88,7 +88,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
                     key={e}
                     type="button"
                     onClick={() => setManualEsp(e)}
-                    className={`h-9 rounded-lg text-xs font-bold border transition-all ${
+                    className={`h-9 rounded-lg text-sm font-bold border transition-all ${
                       manualEsp === e
                         ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                         : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
@@ -101,7 +101,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Tipo de Material
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -110,7 +110,7 @@ export const ModalMaterial = ({ materiais, onAddEstoque, onAddManual, onClose }:
                     key={t}
                     type="button"
                     onClick={() => setManualTipo(t)}
-                    className={`h-9 rounded-lg text-xs font-bold border transition-all ${
+                    className={`h-9 rounded-lg text-sm font-bold border transition-all ${
                       manualTipo === t
                         ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                         : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'

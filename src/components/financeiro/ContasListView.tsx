@@ -80,7 +80,7 @@ export function ContasListView({
       <Button
         variant="ghost"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
@@ -173,12 +173,12 @@ export function ContasListView({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${c.tipo === 'caixa' ? 'bg-[var(--ui-color-warning-soft)] border-[hsl(var(--warning)/0.3)] text-[hsl(38_92%_35%)]' : c.tipo === 'aplicacao' ? 'bg-[var(--ui-color-info-soft)] border-[hsl(var(--info)/0.3)] text-[hsl(var(--info))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))]'}`}
+                          className={`text-xs font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${c.tipo === 'caixa' ? 'bg-[var(--ui-color-warning-soft)] border-[hsl(var(--warning)/0.3)] text-[hsl(38_92%_35%)]' : c.tipo === 'aplicacao' ? 'bg-[var(--ui-color-info-soft)] border-[hsl(var(--info)/0.3)] text-[hsl(var(--info))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))]'}`}
                         >
                           {c.tipo?.replace(/_/g, ' ')}
                         </span>
                         {c.banco_codigo && (
-                          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             BCO: {c.banco_codigo}
                           </span>
                         )}
@@ -193,7 +193,7 @@ export function ContasListView({
                   </div>
                   <div className="space-y-6">
                     <div>
-                      <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-1 flex items-center gap-2">
+                      <div className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] italic mb-1 flex items-center gap-2">
                         SALDO DISPONÍVEL{' '}
                         <ChevronRight className="w-3 h-3 text-primary opacity-50" />
                       </div>
@@ -206,13 +206,13 @@ export function ContasListView({
                     {c.agencia && (
                       <div className="flex gap-4 pt-4 border-t border-border">
                         <div className="flex-1">
-                          <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             Agência
                           </div>
                           <div className="text-sm font-mono font-black">{c.agencia}</div>
                         </div>
                         <div className="flex-1">
-                          <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             Conta
                           </div>
                           <div className="text-sm font-mono font-black">{c.conta}</div>
@@ -224,14 +224,14 @@ export function ContasListView({
                 <div className="flex border-t border-border bg-muted/40 p-2 gap-2">
                   <Button
                     variant="ghost"
-                    className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest"
+                    className="flex-1 h-12 rounded-2xl text-xs font-black uppercase tracking-widest"
                     onClick={() => onEdit(c)}
                   >
                     <Edit2 className="w-3.5 h-3.5 text-muted-foreground" /> EDITAR
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+                    className="flex-1 h-12 rounded-2xl text-xs font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
                     onClick={() => onExtrato(c)}
                   >
                     <History className="w-4 h-4" /> EXTRATO
@@ -261,7 +261,7 @@ export function ContasListView({
         <div className="space-y-8 p-4">
           <div className="bg-[var(--ui-color-info-soft)] border border-[hsl(var(--info)/0.2)] p-6 rounded-[2rem] flex gap-4 items-start">
             <Info className="w-6 h-6 text-[hsl(var(--info))] shrink-0 mt-1" />
-            <p className="text-[11px] text-[hsl(var(--info))]/70 font-medium leading-relaxed uppercase tracking-wider">
+            <p className="text-xs text-[hsl(var(--info))]/70 font-medium leading-relaxed uppercase tracking-wider">
               <strong>Transferência entre contas:</strong> O valor será debitado da origem e
               creditado no destino instantaneamente.
             </p>
@@ -271,7 +271,7 @@ export function ContasListView({
               <ChevronRight className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
+              <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
                 CONTA ORIGEM
               </label>
               <select
@@ -290,7 +290,7 @@ export function ContasListView({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
+              <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic text-center">
                 CONTA DESTINO
               </label>
               <select
@@ -313,7 +313,7 @@ export function ContasListView({
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block italic text-center">
+              <label className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-2 block italic text-center">
                 VALOR DO REPASSE
               </label>
               <Input
@@ -325,7 +325,7 @@ export function ContasListView({
               />
             </div>
             <div className="flex flex-col justify-end">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+              <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
                 DATA DA OPERAÇÃO
               </label>
               <Input
@@ -338,7 +338,7 @@ export function ContasListView({
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
+            <label className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-2 block italic">
               MEMORIAL DESCRITIVO
             </label>
             <Input
@@ -394,7 +394,7 @@ export function ContasListView({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-muted/40 p-8 rounded-[2.5rem] border border-border shadow-inner">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
+              <label className="text-xs font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
                 MÊS DE REFERÊNCIA
               </label>
               <select
@@ -412,7 +412,7 @@ export function ContasListView({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
+              <label className="text-xs font-black text-muted-foreground mb-1 block tracking-[0.3em] italic ml-2">
                 ANO BASE
               </label>
               <select
@@ -445,13 +445,13 @@ export function ContasListView({
               <table className="w-full text-left">
                 <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    <th className="px-8 py-5 text-sm font-semibold text-[var(--ui-text-secondary)]">
                       Ciclo Mensal
                     </th>
-                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    <th className="px-8 py-5 text-sm font-semibold text-[var(--ui-text-secondary)]">
                       Status de Integridade
                     </th>
-                    <th className="px-8 py-5 text-xs font-semibold text-[var(--ui-text-secondary)] text-right">
+                    <th className="px-8 py-5 text-sm font-semibold text-[var(--ui-text-secondary)] text-right">
                       Ações de Gestor
                     </th>
                   </tr>
@@ -461,7 +461,7 @@ export function ContasListView({
                     <tr>
                       <td
                         colSpan={3}
-                        className="px-8 py-12 text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest italic opacity-50"
+                        className="px-8 py-12 text-center text-xs font-black text-muted-foreground uppercase tracking-widest italic opacity-50"
                       >
                         Nenhum ciclo fechado
                       </td>
@@ -475,14 +475,14 @@ export function ContasListView({
                         </td>
                         <td className="px-8 py-5">
                           <span
-                            className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border ${f.status === 'fechado' ? 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]'}`}
+                            className={`text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest border ${f.status === 'fechado' ? 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))]' : 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]'}`}
                           >
                             {f.status}
                           </span>
                         </td>
                         <td className="px-8 py-5 text-right">
                           <button
-                            className="text-[10px] font-black text-primary hover:text-foreground uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
+                            className="text-xs font-black text-primary hover:text-foreground uppercase tracking-widest italic underline decoration-primary/30 underline-offset-4"
                             onClick={() => onReabrirFechamento?.(f)}
                           >
                             REABRIR CICLO

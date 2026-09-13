@@ -116,7 +116,7 @@ export default function FinanceiroAgingPage() {
       <Button
         variant="ghost"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>

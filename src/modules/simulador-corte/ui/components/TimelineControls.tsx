@@ -99,7 +99,7 @@ export default function TimelineControls({
       </div>
 
       {/* 2. BARRA DE CONTROLES */}
-      <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
         {/* Controles de Reprodução */}
         <div className="flex items-center gap-2">
           <button
@@ -139,7 +139,7 @@ export default function TimelineControls({
         </div>
 
         {/* Marcador de Tempo Digital */}
-        <div className="flex items-center gap-1.5 font-mono text-white text-xs bg-[#0D1117] px-3 py-1.5 rounded-lg border border-[#1F2937]">
+        <div className="flex items-center gap-1.5 font-mono text-white text-sm bg-[#0D1117] px-3 py-1.5 rounded-lg border border-[#1F2937]">
           <span className="text-[#E2AC00] font-semibold">{formatarTempo(tempoAtual)}</span>
           <span className="text-[#4b5563]">/</span>
           <span className="text-[#9ca3af]">{formatarTempo(totalTempo)}</span>
@@ -153,7 +153,7 @@ export default function TimelineControls({
             <select
               value={velocidade}
               onChange={(e) => onVelocidadeChange(Number(e.target.value))}
-              className="bg-[#0D1117] border border-[#1F2937] text-white rounded-lg px-2 py-1 outline-none text-xs focus:border-[#E2AC00] font-medium"
+              className="bg-[#0D1117] border border-[#1F2937] text-white rounded-lg px-2 py-1 outline-none text-sm focus:border-[#E2AC00] font-medium"
             >
               <option value={0.25}>0.25x</option>
               <option value={0.5}>0.5x</option>

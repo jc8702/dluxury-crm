@@ -124,13 +124,13 @@ export const PainelRetalhos: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white/[0.02] border-b border-border/40">
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Material / SKU</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Dimensões (mm)</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Qtd</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Origem</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Data</th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Ações</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest">Material / SKU</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest">Dimensões (mm)</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest text-center">Qtd</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest">Origem</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest">Data</th>
+                <th className="px-6 py-4 text-xs font-black text-muted-foreground uppercase tracking-widest text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -155,39 +155,39 @@ export const PainelRetalhos: React.FC = () => {
                   <tr key={retalho.id} className="group hover:bg-white/[0.02] transition-all">
                     <td className="px-6 py-4">
                       <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{retalho.sku_chapa}</div>
-                      <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">{retalho.nome_material || 'MDF PADRÃO'}</div>
+                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-tight">{retalho.nome_material || 'MDF PADRÃO'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 text-[11px] font-black font-mono">
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 text-sm font-black font-mono">
                           {retalho.largura_mm} x {retalho.altura_mm}
                         </span>
-                        <span className="text-muted-foreground text-[10px] font-bold">{retalho.espessura_mm}mm</span>
+                        <span className="text-muted-foreground text-sm font-bold">{retalho.espessura_mm}mm</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="text-[12px] font-black text-foreground">{retalho.quantidade || 1}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-tight">
+                      <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-tight">
                         {retalho.origem === 'sobra_plano_corte' ? <History size={12} /> : <Package size={12} />}
                         {retalho.origem.replace('_', ' ')}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {retalho.disponivel ? (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-success uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-xs font-black text-success uppercase tracking-widest">
                           <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_hsl(var(--success))]" />
                           DISPONÍVEL
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest">
                           <div className="w-1.5 h-1.5 rounded-full bg-border" />
                           UTILIZADO
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-[11px] font-mono text-muted-foreground">
+                    <td className="px-6 py-4 text-sm font-mono text-muted-foreground">
                       {new Date(retalho.criado_em).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -217,7 +217,7 @@ export const PainelRetalhos: React.FC = () => {
       {/* RODAPÉ INFO */}
       <div className="glass p-4 flex items-center gap-3 rounded-xl border border-warning/20 border-l-4 border-l-warning bg-warning/5">
         <AlertTriangle size={18} className="text-warning shrink-0" />
-        <span className="text-[11px] text-muted-foreground font-semibold leading-tight">
+        <span className="text-sm text-muted-foreground font-semibold leading-tight">
           <span className="text-warning font-black uppercase mr-2">Política de Descarte:</span>
           Retalhos menores que 300x300mm são automaticamente removidos para otimização de espaço físico.
         </span>
@@ -228,11 +228,10 @@ export const PainelRetalhos: React.FC = () => {
 
 const StatCard: React.FC<{ label: string; value: string | number; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="glass p-5 min-w-[180px] flex-1 rounded-2xl border border-border/40 shadow-lg group hover:border-primary/20 transition-all">
-    <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-3">
+    <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-[0.1em] mb-3">
       {icon}
       {label}
     </div>
     <div className="text-2xl font-black text-foreground group-hover:text-primary transition-colors">{value}</div>
   </div>
 );
-

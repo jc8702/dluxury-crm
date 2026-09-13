@@ -37,6 +37,7 @@ import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
 import type { Project, ProjectStatus } from '../../context/CRMContext';
 import { formatCurrency } from '../../utils/calculations';
 import { Card, CardStat, CardTitle, Button, Badge } from '../ui';
+import Header from '../layout/Header';
 
 const Dashboard: React.FC = () => {
   const { projects, clients } = useCRM();
@@ -126,30 +127,26 @@ const Dashboard: React.FC = () => {
     .slice(0, 6);
 
   return (
-    <div className="ui-stack ui-gap-4 p-4 md:p-6 max-w-[1400px] ui-mx-auto">
-      {/* ── Header ── */}
-      <div className="ui-row-between flex-wrap ui-gap-3">
-        <div>
-          <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)]">
-            Painel Geral
-          </h1>
-          <p className="mt-0.5 text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)]">
-            Visão executiva — D'Luxury CRM
-          </p>
-        </div>
-        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-40 border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-3 py-2 bg-[var(--ui-surface)] text-[var(--ui-text-primary)] font-semibold text-sm">
-            <SelectValue placeholder="Período..." />
-          </SelectTrigger>
-          <SelectContent className="bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-2)]">
-            {periods.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="flex flex-col gap-4 max-w-[1440px] mx-auto">
+      {/* ── Header consistente ── */}
+      <Header
+        title="Painel Geral"
+        subtitle="Visão executiva — D'Luxury CRM"
+        actions={
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-40 border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] px-3 py-2 bg-[var(--ui-surface)] text-[var(--ui-text-primary)] font-semibold text-sm">
+              <SelectValue placeholder="Período..." />
+            </SelectTrigger>
+            <SelectContent className="bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-md)] shadow-[var(--ui-shadow-2)]">
+              {periods.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+      />
 
       {/* ── KPIs principais (5 stats) ── */}
       <section aria-label="Indicadores principais">

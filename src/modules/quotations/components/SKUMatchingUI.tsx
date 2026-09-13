@@ -101,7 +101,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
             <Search className="text-primary" size={22} />
             Mapeador SKU (PROMOB ↔ Estoque)
           </h2>
-          <p className="text-muted-foreground text-xs mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Mapeamento inteligente para sincronizar sua engenharia de projeto com o estoque detalhado.
           </p>
         </div>
@@ -156,10 +156,10 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                     <span className="font-mono text-foreground font-bold text-sm block">
                       {item.sku_procurado}
                     </span>
-                    <span className="text-muted-foreground text-xs block truncate max-w-md">
+                    <span className="text-muted-foreground text-sm block truncate max-w-md">
                       {item.descricao_original}
                     </span>
-                    <span className="text-muted-foreground/80 text-[10px] mt-1 block">
+                    <span className="text-muted-foreground/80 text-sm mt-1 block">
                       Quantidade no CSV: <strong>{item.quantidade}</strong>
                     </span>
                   </div>
@@ -167,15 +167,15 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
 
                 <div className="flex items-center gap-3">
                   {skuSel ? (
-                    <span className="text-xs font-semibold px-2.5 py-1 bg-muted border border-border rounded-lg text-muted-foreground flex items-center gap-1">
+                    <span className="text-sm font-semibold px-2.5 py-1 bg-muted border border-border rounded-lg text-muted-foreground flex items-center gap-1">
                       Mapeado para: <strong className="text-foreground font-mono">{skuSel}</strong>
                     </span>
                   ) : (
-                    <span className="text-xs font-semibold px-2.5 py-1 bg-orange-500/5 border border-orange-500/20 rounded-lg text-orange-500">
+                    <span className="text-sm font-semibold px-2.5 py-1 bg-orange-500/5 border border-orange-500/20 rounded-lg text-orange-500">
                       Requer Seleção
                     </span>
                   )}
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-sm">
                     {isExpandido ? '▲' : '▼'}
                   </span>
                 </div>
@@ -184,7 +184,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
               {/* Corpo de Seleção (Se expandido) */}
               {isExpandido && (
                 <div className="p-4 border-t border-border/60 bg-background/60 rounded-b-xl space-y-4">
-                  <div className="text-xs text-muted-foreground font-semibold mb-2">
+                  <div className="text-sm text-muted-foreground font-semibold mb-2">
                     ESCOLHA O ITEM DE ESTOQUE CORRESPONDENTE:
                   </div>
 
@@ -205,14 +205,14 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                         >
                           <div>
                             <span className="font-mono text-sm font-bold block">{sug.sku_interno}</span>
-                            <span className="text-muted-foreground text-[11px] block mt-0.5">{sug.nome}</span>
-                            <span className="text-muted-foreground/80 text-[10px] block mt-2">
+                            <span className="text-muted-foreground text-sm block mt-0.5">{sug.nome}</span>
+                            <span className="text-muted-foreground/80 text-sm block mt-2">
                               Estoque disponível: <strong className="text-muted-foreground">{sug.quantidade_disponivel}</strong>
                             </span>
                           </div>
 
                           <div className="text-right">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${
                               sug.tipo_match === 'exato'
                                 ? 'bg-success/10 text-success border border-success/20'
                                 : sug.tipo_match === 'fuzzy'
@@ -227,7 +227,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                     })}
 
                     {item.skus_encontrados.length === 0 && (
-                      <div className="col-span-2 text-muted-foreground text-xs py-2">
+                      <div className="col-span-2 text-muted-foreground text-sm py-2">
                         Nenhuma sugestão encontrada pelo algoritmo fuzzy.
                       </div>
                     )}
@@ -235,7 +235,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
 
                   {/* Override Manual (Campo de busca alternativo) */}
                   <div className="border-t border-border pt-4 mt-3">
-                    <label className="text-xs text-muted-foreground block mb-1.5">
+                    <label className="text-sm text-muted-foreground block mb-1.5">
                       Busca manual de item no estoque:
                     </label>
                     <div className="flex gap-2">
@@ -244,7 +244,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                         placeholder="Digite o SKU ou palavra-chave..."
                         value={query}
                         onChange={(e) => handleBuscarEstoque(item.sku_procurado, e.target.value)}
-                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded-lg text-foreground text-xs placeholder-muted-foreground/60 focus:outline-none focus:border-primary"
+                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded-lg text-foreground text-sm placeholder-muted-foreground/60 focus:outline-none focus:border-primary"
                       />
                     </div>
 
@@ -258,7 +258,7 @@ export default function SKUMatchingUI({ resultados, onConfirmar, onCancelar }: P
                               handleSelecionar(item.sku_procurado, s.sku_interno);
                               setSearchResults(prev => ({ ...prev, [item.sku_procurado]: [] }));
                             }}
-                            className="w-full text-left p-1.5 hover:bg-muted text-xs text-muted-foreground hover:text-foreground flex justify-between"
+                            className="w-full text-left p-1.5 hover:bg-muted text-sm text-muted-foreground hover:text-foreground flex justify-between"
                           >
                             <span><strong className="font-mono text-muted-foreground">{s.sku_interno}</strong> - {s.nome}</span>
                             <span className="text-success">{s.quantidade_disponivel} disp.</span>

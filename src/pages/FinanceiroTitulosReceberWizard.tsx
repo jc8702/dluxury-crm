@@ -133,7 +133,7 @@ export default function FinanceiroTitulosReceberWizard({
       <h3 className="text-xl font-bold text-white uppercase tracking-wider">Identificação</h3>
       <div className="flex flex-col gap-5">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Cliente / Origem
           </label>
           <select
@@ -150,7 +150,7 @@ export default function FinanceiroTitulosReceberWizard({
           </select>
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Classe Financeira
           </label>
           <select
@@ -197,7 +197,7 @@ export default function FinanceiroTitulosReceberWizard({
 
         {/* Forma de Recebimento */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Forma de Recebimento
           </label>
           <select
@@ -233,7 +233,7 @@ export default function FinanceiroTitulosReceberWizard({
               onChange={(e) => setTaxaFinanceira(Number(e.target.value))}
             />
             <div className="p-3 rounded-xl bg-muted/30 border border-border text-right">
-              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                 VALOR TOTAL COM TAXAS
               </div>
               <div className="text-xl font-black text-primary italic">
@@ -274,7 +274,7 @@ export default function FinanceiroTitulosReceberWizard({
             onChange={(e) => setFormData({ ...formData, data_base: e.target.value })}
           />
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
               Rateio por Projeto? (Opcional)
             </label>
             <Button
@@ -294,7 +294,7 @@ export default function FinanceiroTitulosReceberWizard({
               <Button
                 variant="primary"
                 size="sm"
-                className="px-3 py-1.5 uppercase font-black italic text-[9px]"
+                className="px-3 py-1.5 uppercase font-black italic text-xs"
                 onClick={() => {
                   const r = formData.rateios || [];
                   setFormData({
@@ -312,7 +312,7 @@ export default function FinanceiroTitulosReceberWizard({
             {(formData.rateios || []).map((r: any, idx: number) => (
               <div key={idx} className="grid grid-cols-[2fr_1.5fr_1fr_40px] gap-3 items-end">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block ml-1">
+                  <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                     Projeto
                   </label>
                   <select
@@ -334,7 +334,7 @@ export default function FinanceiroTitulosReceberWizard({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block ml-1">
+                  <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                     Classe
                   </label>
                   <select
@@ -357,7 +357,7 @@ export default function FinanceiroTitulosReceberWizard({
                 <Input
                   type="number"
                   label="Valor (R$)"
-                  className="h-10 text-xs font-bold"
+                  className="h-10 text-sm font-bold"
                   value={r.valor}
                   onChange={(e) => {
                     const newR = [...formData.rateios];
@@ -381,7 +381,7 @@ export default function FinanceiroTitulosReceberWizard({
         )}
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block ml-1">
             Descrição / Observação
           </label>
           <textarea
@@ -409,14 +409,14 @@ export default function FinanceiroTitulosReceberWizard({
             className="p-4 bg-muted/30 border border-border rounded-xl flex justify-between items-center border-l-4 border-l-primary"
           >
             <div>
-              <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">
+              <div className="text-xs font-black text-primary uppercase tracking-widest mb-1">
                 PARCELA {p.numero_parcela}
               </div>
               <div className="font-bold text-white text-sm">
                 {new Date(p.data_vencimento).toLocaleDateString('pt-BR')}
               </div>
               {taxaFinanceira > 0 && (
-                <div className="text-[10px] text-muted-foreground italic mt-0.5">
+                <div className="text-sm text-muted-foreground italic mt-0.5">
                   Base: R$ {(formData.valor_base / totalParcelas).toFixed(2)} + {taxaFinanceira}%
                   taxa
                 </div>
@@ -433,7 +433,7 @@ export default function FinanceiroTitulosReceberWizard({
               TOTAL A RECEBER
             </div>
             {taxaFinanceira > 0 && (
-              <div className="text-[10px] text-muted-foreground italic mt-1">
+              <div className="text-sm text-muted-foreground italic mt-1">
                 Inclui {taxaFinanceira}% de custo financeiro
               </div>
             )}

@@ -101,9 +101,9 @@ const Clients: React.FC = () => {
   };
 
   return (
-    <div className="ui-stack ui-gap-4 p-4 md:p-6 max-w-[1400px] ui-mx-auto">
-      {/* ── Stats (4 cards) — renderizado antes para o ClientList ter seu próprio header abaixo ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 ui-gap-3 auto-rows-fr">
+    <div className="flex flex-col gap-4 max-w-[1440px] mx-auto">
+      {/* ── Stats (4 cards) — spacing 12px (múltiplo 4) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-fr">
         <CardStat
           label="Total"
           value={stats.total}

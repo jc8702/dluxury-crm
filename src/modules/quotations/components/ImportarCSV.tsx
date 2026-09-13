@@ -275,7 +275,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
               </div>
 
               <div className="border border-border rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-muted/50 text-muted-foreground font-black uppercase tracking-widest">
                     <tr>
                       <th className="px-6 py-4">Item / Designação</th>
@@ -306,7 +306,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                               <span className="text-green-500 font-bold">
                                 {item.match_sugerido.nome}
                               </span>
-                              <span className="text-[10px] text-muted-foreground uppercase">
+                              <span className="text-xs text-muted-foreground uppercase">
                                 Reconhecido
                               </span>
                             </div>
@@ -315,7 +315,7 @@ export function ImportarCSV({ isOpen, onClose, onAddItems, orcamentoId }: Import
                               <span className="text-muted-foreground">
                                 {item.sku_informado || '-'}
                               </span>
-                              <span className="text-[10px] text-red-500/50 uppercase">
+                              <span className="text-xs text-red-500/50 uppercase">
                                 Não encontrado
                               </span>
                             </div>

@@ -33,12 +33,12 @@ export function CardChapa({ chapa, onAdicionar, jaAdicionada }: CardChapaProps) 
           <h4 className="m-0 text-sm font-bold text-[#FFA500] uppercase truncate pr-2">
             {chapa.material}
           </h4>
-          <span className="text-[10px] font-bold text-[#10B981] whitespace-nowrap">
+          <span className="text-sm font-bold text-[#10B981] whitespace-nowrap">
             R$ {chapa.preco.toFixed(0)}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] text-[#888] mb-2">
+        <div className="flex items-center gap-2 text-sm text-[#888] mb-2">
           <span className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
             {chapa.espessura}MM
           </span>
@@ -49,7 +49,7 @@ export function CardChapa({ chapa, onAdicionar, jaAdicionada }: CardChapaProps) 
 
         <Button
           variant={jaAdicionada ? 'secondary' : 'outline'}
-          className={`w-full py-1.5 h-auto text-[9px] uppercase tracking-widest ${
+          className={`w-full py-1.5 h-auto text-xs uppercase tracking-widest ${
             !jaAdicionada &&
             'hover:bg-[#FFA500] hover:text-black border-[#FFA500]/20 text-[#FFA500]'
           }`}

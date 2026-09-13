@@ -52,10 +52,10 @@ export function PainelPecasChapa({
             <Scissors size={20} />
           </div>
           <div>
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFA500]">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#FFA500]">
               Peças da Chapa
             </h3>
-            <p className="text-[9px] font-mono text-[#666]">{pecas.length} itens configurados</p>
+            <p className="text-sm font-mono text-[#666]">{pecas.length} itens configurados</p>
           </div>
         </div>
         <Button
@@ -74,10 +74,10 @@ export function PainelPecasChapa({
         <div className="px-4 py-2.5 bg-[#FFA500]/10 border-b border-[#FFA500]/20 flex items-center gap-2.5">
           <AlertTriangle size={14} className="text-[#FFA500] flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black text-[#FFA500] uppercase tracking-wider leading-tight">
+            <p className="text-xs font-black text-[#FFA500] uppercase tracking-wider leading-tight">
               Ãrea total das peças excede a chapa
             </p>
-            <p className="text-[8px] font-mono text-[#888] mt-0.5">
+            <p className="text-sm font-mono text-[#888] mt-0.5">
               {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² necessário Â·{' '}
               {areaInfo.areaChapa.toLocaleString()} mmÂ² disponível Â· ~{areaInfo.chapasEstimadas}{' '}
               chapas
@@ -85,7 +85,7 @@ export function PainelPecasChapa({
           </div>
           <div className="flex items-center gap-1.5 bg-black/30 px-2 py-1 rounded-md">
             <Layers size={10} className="text-[#FFA500]" />
-            <span className="text-[10px] font-black text-[#FFA500]">
+            <span className="text-sm font-black text-[#FFA500]">
               {areaInfo.chapasEstimadas}x
             </span>
           </div>
@@ -94,7 +94,7 @@ export function PainelPecasChapa({
 
       {areaInfo && !areaInfo.extrapolou && pecas.length > 0 && (
         <div className="px-4 py-2 bg-white/5 border-b border-[#333]">
-          <p className="text-[8px] font-mono text-[#555]">
+          <p className="text-sm font-mono text-[#555]">
             {areaInfo.areaTotalPecas.toLocaleString()} mmÂ² de {areaInfo.areaChapa.toLocaleString()}{' '}
             mmÂ² ({areaInfo.percentualArea.toFixed(0)}%)
           </p>
@@ -105,10 +105,10 @@ export function PainelPecasChapa({
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
         {pecas.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-2xl border border-dashed border-white/10 text-center">
-            <p className="text-xs text-[#666] font-medium mb-4">Nenhuma peça adicionada</p>
+            <p className="text-sm text-[#666] font-medium mb-4">Nenhuma peça adicionada</p>
             <Button
               onClick={onAddPeca}
-              className="bg-[#FFA500] text-black hover:bg-[#FFD700] px-4 py-2 h-auto text-[10px] font-black flex items-center gap-2 uppercase tracking-wider"
+              className="bg-[#FFA500] text-black hover:bg-[#FFD700] px-4 py-2 h-auto text-xs font-black flex items-center gap-2 uppercase tracking-wider"
             >
               <Plus size={14} /> Adicionar Primeira Peça
             </Button>
@@ -124,7 +124,7 @@ export function PainelPecasChapa({
                   type="text"
                   value={p.nome}
                   onChange={(e) => onUpdatePeca(p.id, { nome: e.target.value.toUpperCase() })}
-                  className="bg-transparent text-[11px] font-black text-white w-full focus:outline-none uppercase tracking-wider"
+                  className="bg-transparent text-xs font-black text-white w-full focus:outline-none uppercase tracking-wider"
                   placeholder="NOME DA PEÃ‡A"
                 />
                 <Button
@@ -139,7 +139,7 @@ export function PainelPecasChapa({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                  <label className="text-xs font-black text-[#444] uppercase tracking-tighter">
                     Largura (mm)
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
@@ -147,12 +147,12 @@ export function PainelPecasChapa({
                       type="number"
                       value={p.largura}
                       onChange={(e) => onUpdatePeca(p.id, { largura: Number(e.target.value) })}
-                      className="bg-transparent text-xs text-[#FFA500] font-black w-full focus:outline-none"
+                      className="bg-transparent text-sm text-[#FFA500] font-black w-full focus:outline-none"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                  <label className="text-xs font-black text-[#444] uppercase tracking-tighter">
                     Altura (mm)
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
@@ -160,14 +160,14 @@ export function PainelPecasChapa({
                       type="number"
                       value={p.altura}
                       onChange={(e) => onUpdatePeca(p.id, { altura: Number(e.target.value) })}
-                      className="bg-transparent text-xs text-[#FFA500] font-black w-full focus:outline-none"
+                      className="bg-transparent text-sm text-[#FFA500] font-black w-full focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Campo Material - Fase 2 */}
                 <div className="space-y-1 col-span-2">
-                  <label className="text-[9px] font-black text-[#444] uppercase tracking-tighter">
+                  <label className="text-xs font-black text-[#444] uppercase tracking-tighter">
                     Material / Acabamento
                   </label>
                   <div className="bg-[#111] p-2 rounded-lg border border-[#333] flex items-center">
@@ -177,7 +177,7 @@ export function PainelPecasChapa({
                       onChange={(e) =>
                         onUpdatePeca(p.id, { material: e.target.value.toUpperCase() })
                       }
-                      className="bg-transparent text-[10px] text-white/50 font-bold w-full focus:outline-none uppercase"
+                      className="bg-transparent text-xs text-white/50 font-bold w-full focus:outline-none uppercase"
                       placeholder="MDF BRANCO, GRAFITE, ETC."
                     />
                   </div>
@@ -186,17 +186,17 @@ export function PainelPecasChapa({
 
               <div className="mt-4 pt-4 border-t border-[#333] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <label className="text-[9px] font-black text-[#444] uppercase">Qtd</label>
+                  <label className="text-xs font-black text-[#444] uppercase">Qtd</label>
                   <input
                     type="number"
                     value={p.quantidade || 1}
                     onChange={(e) => onUpdatePeca(p.id, { quantidade: Number(e.target.value) })}
-                    className="bg-[#111] border border-[#333] rounded px-2 py-1 text-[10px] font-bold text-white w-12 text-center"
+                    className="bg-[#111] border border-[#333] rounded px-2 py-1 text-sm font-bold text-white w-12 text-center"
                   />
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer group/label">
-                  <span className="text-[9px] font-black text-[#444] uppercase group-hover/label:text-[#666]">
+                  <span className="text-xs font-black text-[#444] uppercase group-hover/label:text-[#666]">
                     Girar
                   </span>
                   <input
@@ -216,7 +216,7 @@ export function PainelPecasChapa({
       {pecas.length > 0 && (
         <div className="p-4 bg-[#222] border-t border-[#333]">
           {areaInfo && areaInfo.extrapolou && (
-            <p className="text-[8px] font-bold text-[#FFA500] uppercase tracking-wider text-center mb-2">
+            <p className="text-xs font-bold text-[#FFA500] uppercase tracking-wider text-center mb-2">
               A otimização distribuirá as peças em {areaInfo.chapasEstimadas} chapas
             </p>
           )}

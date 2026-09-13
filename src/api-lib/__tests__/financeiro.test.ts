@@ -116,7 +116,17 @@ vi.mock('../_db.js', () => {
       }
       return [];
     });
+    (txFn as any).join = vi.fn((chunks: any[], sep?: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { sql: dsql } = require('drizzle-orm');
+      return dsql.join(chunks as any, sep ?? dsql`, `);
+    });
     return await cb(txFn);
+  });
+  (sqlFn as any).join = vi.fn((chunks: any[], sep?: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { sql: dsql } = require('drizzle-orm');
+    return dsql.join(chunks as any, sep ?? dsql`, `);
   });
 
   return { sql: sqlFn, validateAuth: vi.fn(), _mockSqlStore: mockSqlStore };

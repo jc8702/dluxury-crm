@@ -1,12 +1,13 @@
-import { cn } from '@/utils/cn';
+import { forwardRef } from 'react';
+import { Card as UICard } from '../ui/Card';
+import type { CardProps as UICardProps } from '../ui/Card';
 
-export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn('rounded-lg border border-border bg-card p-4 shadow-sm', className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
+/**
+ * Wrapper de compatibilidade — delega ao oficial src/components/ui/Card.tsx
+ */
+export type CardProps = UICardProps;
+
+export const Card = forwardRef<HTMLDivElement, CardProps>((props, ref) => {
+  return <UICard ref={ref} {...props} />;
+});
+Card.displayName = 'Card';

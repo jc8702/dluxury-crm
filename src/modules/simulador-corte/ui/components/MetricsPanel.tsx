@@ -41,7 +41,7 @@ export default function MetricsPanel({
   const cavacosCm3 = (metrics.volumeRemovidoMm3 / 1000).toFixed(1);
 
   return (
-    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 w-full flex flex-col gap-4 text-xs">
+    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 w-full flex flex-col gap-4 text-sm">
       
       {/* 1. MÁQUINA EM TEMPO REAL (COORDENADAS E DADOS DO SPINDLE) */}
       <div className="border-b border-[#1F2937] pb-3">
@@ -50,22 +50,22 @@ export default function MetricsPanel({
         </h3>
         <div className="grid grid-cols-3 gap-2 mb-2">
           <div className="bg-[#0D1117] border border-[#1F2937] p-2 rounded-lg text-center font-mono">
-            <span className="text-[#6B7280] block text-[9px]">EIXO X</span>
+            <span className="text-[#6B7280] block text-sm">EIXO X</span>
             <span className="text-white text-sm font-semibold">{posicaoAtual.x.toFixed(1)}</span>
-            <span className="text-[#4b5563] text-[9px] ml-0.5">mm</span>
+            <span className="text-[#4b5563] text-sm ml-0.5">mm</span>
           </div>
           <div className="bg-[#0D1117] border border-[#1F2937] p-2 rounded-lg text-center font-mono">
-            <span className="text-[#6B7280] block text-[9px]">EIXO Y</span>
+            <span className="text-[#6B7280] block text-sm">EIXO Y</span>
             <span className="text-white text-sm font-semibold">{posicaoAtual.y.toFixed(1)}</span>
-            <span className="text-[#4b5563] text-[9px] ml-0.5">mm</span>
+            <span className="text-[#4b5563] text-sm ml-0.5">mm</span>
           </div>
           <div className="bg-[#0D1117] border border-[#1F2937] p-2 rounded-lg text-center font-mono">
-            <span className="text-[#6B7280] block text-[9px]">EIXO Z</span>
+            <span className="text-[#6B7280] block text-sm">EIXO Z</span>
             <span className="text-white text-sm font-semibold">{posicaoAtual.z.toFixed(1)}</span>
-            <span className="text-[#4b5563] text-[9px] ml-0.5">mm</span>
+            <span className="text-[#4b5563] text-sm ml-0.5">mm</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-[10px]">
+        <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center justify-between bg-[#0D1117] border border-[#1F2937] px-2.5 py-1.5 rounded-lg text-white font-mono">
             <span className="text-[#6B7280]">SPINDLE:</span>
             <span className={posicaoAtual.spindleOn ? 'text-[#10B981] font-bold' : 'text-[#EF4444] font-bold'}>
@@ -84,7 +84,7 @@ export default function MetricsPanel({
         <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider mb-2.5 flex items-center gap-1.5">
           <Gauge size={14} /> METRICAS DO CICLO
         </h3>
-        <div className="space-y-1.5 font-mono text-white text-[10px]">
+        <div className="space-y-1.5 font-mono text-white text-sm">
           <div className="flex justify-between items-center bg-[#0D1117]/40 px-2 py-1 rounded">
             <span className="text-[#6B7280]">Tempo de Ciclo Total:</span>
             <span className="font-bold">{formatarTempo(metrics.tempoTotal)}</span>
@@ -121,14 +121,14 @@ export default function MetricsPanel({
         <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider mb-2 flex items-center gap-1.5 justify-between">
           <span className="flex items-center gap-1.5"><Activity size={14} /> ANÁLISE DE SEGURANÇA</span>
           <div className="flex gap-2">
-            <span className="bg-[#EF4444]/20 text-[#EF4444] px-1.5 py-0.5 rounded text-[9px] font-bold">{metrics.numErros} E</span>
-            <span className="bg-[#F59E0B]/20 text-[#F59E0B] px-1.5 py-0.5 rounded text-[9px] font-bold">{metrics.numWarnings} W</span>
+            <span className="bg-[#EF4444]/20 text-[#EF4444] px-1.5 py-0.5 rounded text-sm font-bold">{metrics.numErros} E</span>
+            <span className="bg-[#F59E0B]/20 text-[#F59E0B] px-1.5 py-0.5 rounded text-sm font-bold">{metrics.numWarnings} W</span>
           </div>
         </h3>
 
         {program.issues.length === 0 ? (
           <div className="flex-1 border border-dashed border-[#1F2937] rounded-xl flex items-center justify-center bg-[#0D1117]/40 p-4 text-center">
-            <p className="text-[#10B981] font-semibold text-[10px] tracking-wide">NENHUMA ANOMALIA DETECTADA.<br/>CÓDIGO G-CODE INTEGRAL.</p>
+            <p className="text-[#10B981] font-semibold text-sm tracking-wide">NENHUMA ANOMALIA DETECTADA.<br/>CÓDIGO G-CODE INTEGRAL.</p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto max-h-[220px] custom-scrollbar border border-[#1F2937] rounded-lg bg-[#0D1117]/30 divide-y divide-[#1F2937] pr-1">
@@ -144,24 +144,24 @@ export default function MetricsPanel({
                     <span className="p-0.5 rounded bg-black/40">
                       <AlertTriangle size={12} className={isError ? 'text-[#EF4444]' : 'text-[#F59E0B]'} />
                     </span>
-                    <span className={`font-bold text-[10px] ${isError ? 'text-[#EF4444]' : 'text-[#F59E0B]'}`}>
+                    <span className={`font-bold text-sm ${isError ? 'text-[#EF4444]' : 'text-[#F59E0B]'}`}>
                       {issue.codigo}
                     </span>
-                    <span className="text-[#4b5563] text-[9px] font-mono ml-auto">
+                    <span className="text-[#4b5563] text-sm font-mono ml-auto">
                       {formatarTempo(issue.tempo)}
                     </span>
                   </div>
-                  <p className="text-white font-medium text-[10px] leading-tight group-hover:text-[#E2AC00] transition-colors">
+                  <p className="text-white font-medium text-sm leading-tight group-hover:text-[#E2AC00] transition-colors">
                     {issue.mensagem}
                   </p>
-                  <p className="text-[#6B7280] text-[9px] leading-normal truncate">
+                  <p className="text-[#6B7280] text-sm leading-normal truncate">
                     {issue.descricao}
                   </p>
                   <div className="flex gap-1.5 mt-1">
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); onJumpToIssue(issue.tempo, issue.posicao); }}
-                      className="flex items-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-[8px] font-bold py-1 px-2 rounded transition-all"
+                      className="flex items-center gap-1 bg-[#1F2937]/50 hover:bg-[#374151] text-[#6B7280] hover:text-white text-sm font-bold py-1 px-2 rounded transition-all"
                       title="PULAR PARA O ERRO NO CÓDIGO/CENA 3D"
                     >
                       <Crosshair size={10} /> JUMP
@@ -170,7 +170,7 @@ export default function MetricsPanel({
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onApplyRecommendation(matchingIwr); }}
-                        className="flex items-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-[8px] font-bold py-1 px-2 rounded transition-all"
+                        className="flex items-center gap-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 text-[#10B981] text-sm font-bold py-1 px-2 rounded transition-all"
                         title="CORRIGIR E FAZER O ERRO DESAPARECER"
                       >
                         <CheckCircle size={10} /> CORRIGIR

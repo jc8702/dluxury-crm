@@ -111,7 +111,7 @@ export function TitulosPagarListView({
       <Button
         variant="ghost"
         onClick={() => (window.location.hash = '#/financeiro')}
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 p-0 h-auto hover:bg-transparent"
       >
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
@@ -130,7 +130,7 @@ export function TitulosPagarListView({
             <Button
               variant="primary"
               size="md"
-              className="italic tracking-widest font-black text-[11px] bg-[hsl(38_92%_35%)] hover:bg-[hsl(38_92%_30%)] text-white shadow-lg shadow-[hsl(38_92%_35%)]/20"
+              className="italic tracking-widest font-black text-xs bg-[hsl(38_92%_35%)] hover:bg-[hsl(38_92%_30%)] text-white shadow-lg shadow-[hsl(38_92%_35%)]/20"
               onClick={onLoteOpen}
             >
               <Layers className="w-4 h-4" /> PAGAR {selectedIds.size} EM LOTE
@@ -139,7 +139,7 @@ export function TitulosPagarListView({
           <Button
             variant="outline"
             size="md"
-            className="italic tracking-widest font-black text-[11px] text-foreground border-border/20 hover:bg-muted"
+            className="italic tracking-widest font-black text-xs text-foreground border-border/20 hover:bg-muted"
             onClick={onSelectAll}
           >
             <CheckSquare className="w-4 h-4" /> SELECIONAR ABERTOS
@@ -157,7 +157,7 @@ export function TitulosPagarListView({
           <Button
             variant="danger"
             size="md"
-            className="italic tracking-widest font-black text-[11px] bg-[hsl(var(--destructive))] border-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.9)] shadow-lg shadow-[hsl(var(--destructive)/0.2)]"
+            className="italic tracking-widest font-black text-xs bg-[hsl(var(--destructive))] border-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.9)] shadow-lg shadow-[hsl(var(--destructive)/0.2)]"
             onClick={onNewWizard}
           >
             <Plus className="w-4 h-4" /> NOVO PAGAMENTO
@@ -229,22 +229,22 @@ export function TitulosPagarListView({
                     </button>
                   </div>
                 </th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-left px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Identificação
                 </th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-left px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Status Operacional
                 </th>
-                <th className="text-right px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-right px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Valor Bruto
                 </th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-left px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Vencimento
                 </th>
-                <th className="text-left px-4 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-left px-4 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Badges
                 </th>
-                <th className="text-center px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                <th className="text-center px-6 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground italic">
                   Comandos
                 </th>
               </tr>
@@ -305,7 +305,7 @@ export function TitulosPagarListView({
                               <div className="text-sm font-black text-foreground italic tracking-tight uppercase">
                                 {supplierName}
                               </div>
-                              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                              <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                 {groupRows.length} Títulos Industriais
                               </div>
                             </div>
@@ -320,7 +320,7 @@ export function TitulosPagarListView({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-[10px] font-black text-[hsl(var(--destructive))] hover:bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.3)] transition-all uppercase italic flex items-center gap-2 ml-auto"
+                            className="text-xs font-black text-[hsl(var(--destructive))] hover:bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive)/0.3)] transition-all uppercase italic flex items-center gap-2 ml-auto"
                             onClick={(e: any) => {
                               e.stopPropagation();
                               onDeleteBatch(sid);
@@ -354,7 +354,7 @@ export function TitulosPagarListView({
                               <td className="px-4 py-4 font-mono text-xs font-black text-[hsl(var(--destructive))] tracking-widest italic">
                                 {r.numero_titulo}
                               </td>
-                              <td className="px-4 py-4 text-[10px] font-bold text-muted-foreground uppercase italic tracking-widest">
+                              <td className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase italic tracking-widest">
                                 Compromisso Individual
                               </td>
                               <td className="text-right px-4 py-4 font-black text-foreground italic tracking-tighter">
@@ -364,14 +364,14 @@ export function TitulosPagarListView({
                                 })}
                               </td>
                               <td className="px-4 py-4">
-                                <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider italic">
+                                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider italic">
                                   <Calendar className="w-3.5 h-3.5 opacity-50 text-primary" />
                                   {new Date(r.data_vencimento).toLocaleDateString()}
                                 </div>
                               </td>
                               <td className="px-4 py-4">
                                 <span
-                                  className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest italic ${r.status === 'pago' ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]' : new Date(r.data_vencimento) < new Date() ? 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.2)]' : 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(var(--warning)/0.2)]'}`}
+                                  className={`px-3 py-1 rounded-full text-xs font-black tracking-widest italic ${r.status === 'pago' ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]' : new Date(r.data_vencimento) < new Date() ? 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.2)]' : 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(var(--warning)/0.2)]'}`}
                                 >
                                   {r.status === 'pago'
                                     ? 'LIQUIDADO'
@@ -430,7 +430,7 @@ export function TitulosPagarListView({
               )}
             </tbody>
           </table>
-          <div className="px-6 py-4 border-t border-border bg-muted/20 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] italic">
+          <div className="px-6 py-4 border-t border-border bg-muted/20 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-black text-muted-foreground uppercase tracking-[0.2em] italic">
             <div>
               Exibindo <span className="text-foreground">{rows.length}</span> de{' '}
               <span className="text-foreground">{total}</span> compromissos operacionais

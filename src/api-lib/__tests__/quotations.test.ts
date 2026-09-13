@@ -8,6 +8,7 @@ import {
 import { db } from '../drizzle-db.js';
 import { validateAuth } from '../_db.js';
 import { PgDialect } from 'drizzle-orm/pg-core';
+import { sql as drizzleSql } from 'drizzle-orm';
 
 // Mock do banco de dados e auxiliares
 vi.mock('../drizzle-db.js', () => {
@@ -48,10 +49,19 @@ vi.mock('../_db.js', () => ({
   auditLog: vi.fn().mockResolvedValue({}),
   validateAuth: vi.fn(),
   sql: Object.assign(vi.fn().mockResolvedValue([]), {
+    join: vi.fn((chunks: any[], sep?: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { sql: dsql } = require('drizzle-orm');
+      return dsql.join(chunks as any, sep ?? dsql`, `);
+    }),
     begin: vi.fn().mockImplementation(async (cb) =>
       cb(
         Object.assign(vi.fn().mockResolvedValue([]), {
-          // Mock any transaction methods if needed
+          join: vi.fn((chunks: any[], sep?: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { sql: dsql } = require('drizzle-orm');
+            return dsql.join(chunks as any, sep ?? dsql`, `);
+          }),
         }),
       ),
     ),
@@ -415,7 +425,7 @@ describe('Módulo de Orçamentos PRO', () => {
             return { rows: [{ id: 'forma-123' }] };
           }
           if (rawSql.includes('FROM materiais')) {
-            return { rows: [{ id: 'mat-123', estoque_atual: 10, preco_custo: 50.0 }] };
+            return { rows: [{ id: 'mat-123', sku: 'chp-mdf-15', estoque_atual: 10, preco_custo: 50.0 }] };
           }
           return { rows: [] };
         }),

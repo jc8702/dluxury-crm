@@ -18,7 +18,7 @@ export function ResumoFinanceiro({ resumo }: ResumoFinanceiroProps) {
       <div className="max-w-[1600px] mx-auto flex items-center justify-between">
         <div className="flex gap-12">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1 flex items-center gap-1">
+            <span className="text-xs uppercase font-black text-muted-foreground tracking-widest mb-1 flex items-center gap-1">
               <Calculator className="w-3 h-3" /> Custo Total (BOM)
             </span>
             <span className="text-2xl font-black text-foreground italic">
@@ -27,7 +27,7 @@ export function ResumoFinanceiro({ resumo }: ResumoFinanceiroProps) {
           </div>
 
           <div className="flex flex-col border-l border-border pl-12">
-            <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1 flex items-center gap-1">
+            <span className="text-xs uppercase font-black text-muted-foreground tracking-widest mb-1 flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-success" /> Margem Realizada
             </span>
             <div className="flex items-baseline gap-3">
@@ -43,7 +43,7 @@ export function ResumoFinanceiro({ resumo }: ResumoFinanceiroProps) {
 
         <div className="flex items-center gap-10">
           <div className="flex flex-col items-end">
-            <span className="text-[10px] uppercase font-black text-primary tracking-widest mb-1 flex items-center gap-1 justify-end">
+            <span className="text-xs uppercase font-black text-primary tracking-widest mb-1 flex items-center gap-1 justify-end">
               <DollarSign className="w-3 h-3" /> Valor Final de Venda
             </span>
             <span className="text-5xl font-black text-foreground italic tracking-tighter drop-shadow-sm">

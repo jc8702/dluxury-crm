@@ -86,7 +86,7 @@ export default function Layout() {
 
         {/* Banner: Trial */}
         {showTrialBanner && (
-          <div className="bg-warning/8 border-b border-warning/20 text-foreground px-4 md:px-8 py-2.5 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+          <div className="bg-warning/8 border-b border-warning/20 text-foreground px-4 md:px-6 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle size={16} className="text-warning shrink-0" />
               <span className="font-body">
@@ -97,7 +97,7 @@ export default function Layout() {
             </div>
             <button
               onClick={() => navigate('/checkout')}
-              className="btn btn-primary text-xs px-4 py-1.5 w-full sm:w-auto"
+              className="btn btn-primary text-xs px-4 py-1.5 w-full sm:w-auto rounded-[var(--ui-radius-md)]"
             >
               <CreditCard size={14} className="mr-1.5" />
               ATIVAR ASSINATURA
@@ -107,7 +107,7 @@ export default function Layout() {
 
         {/* Banner: Overdue */}
         {showOverdueWarning && (
-          <div className="bg-destructive/8 border-b border-destructive/20 text-foreground px-4 md:px-8 py-2.5 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+          <div className="bg-destructive/8 border-b border-destructive/20 text-foreground px-4 md:px-6 py-3 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle size={16} className="text-destructive shrink-0" />
               <span className="font-body">
@@ -116,7 +116,7 @@ export default function Layout() {
             </div>
             <button
               onClick={() => navigate('/checkout')}
-              className="btn btn-danger text-xs px-4 py-1.5 w-full sm:w-auto"
+              className="btn btn-danger text-xs px-4 py-1.5 w-full sm:w-auto rounded-[var(--ui-radius-md)]"
             >
               <CreditCard size={14} className="mr-1.5" />
               REGULARIZAR
@@ -125,8 +125,8 @@ export default function Layout() {
         )}
 
         {/* Main content card wrapper — white card on off-white background */}
-        <div className="flex-1 w-full max-w-[1440px] mx-auto p-3 sm:p-5 md:p-6 lg:p-8">
-          <div className="bg-card rounded-2xl border border-border/50 shadow-md min-h-full p-4 sm:p-6 md:p-8">
+        <div className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6">
+          <div className="bg-card rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] shadow-[var(--ui-shadow-1)] min-h-full p-4 md:p-6">
             <Outlet />
           </div>
         </div>

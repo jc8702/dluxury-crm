@@ -1,77 +1,45 @@
-import { forwardRef, InputHTMLAttributes } from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
+import { forwardRef } from 'react';
+import type { ReactNode } from 'react';
+import { Input as UIInput } from '../ui/Input';
+import type { InputProps as UIInputProps } from '../ui/Input';
 
-const inputVariants = cva(
-  'flex w-full rounded-xl border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
-  {
-    variants: {
-      variant: {
-        default: 'border-border focus:ring-ring',
-        error: 'border-destructive/50 focus:ring-destructive text-destructive-foreground',
-        success: 'border-success/50 focus:ring-success',
-      },
-      inputSize: {
-        sm: 'px-3 py-1.5 text-xs',
-        md: 'px-4 py-2.5 text-sm',
-        lg: 'px-5 py-3 text-base',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      inputSize: 'md',
-    },
-  },
-);
-
-export interface InputProps
-  extends InputHTMLAttributes<HTMLInputElement>, VariantProps<typeof inputVariants> {
-  label?: string;
+export interface InputProps extends Omit<UIInputProps, 'size' | 'invalid' | 'error' | 'hint'> {
+  variant?: 'default' | 'error' | 'success';
+  inputSize?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
   error?: string;
   helperText?: string;
+  hint?: ReactNode;
 }
 
+/**
+ * Wrapper compatível — delega ao oficial src/components/ui/Input.tsx
+ * Preserva regra de negócio: uppercase automático (exceto password/email)
+ */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, variant, inputSize, label, error, helperText, id, ...props }, ref) => {
-    const inputId = id || props.name;
-    const isInvalid = !!error;
+  ({ variant, inputSize, size, error, helperText, hint, onChange, type, ...props }, ref) => {
+    const mappedSize = size ?? inputSize;
+    const invalid = variant === 'error' || !!error;
+    const mappedHint = helperText ?? hint;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (type !== 'password' && type !== 'email' && typeof e.target.value === 'string') {
+        e.target.value = e.target.value.toUpperCase();
+      }
+      onChange?.(e as React.ChangeEvent<HTMLInputElement>);
+    };
 
     return (
-      <div className="w-full">
-        {label && (
-          <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-foreground/90">
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={cn(
-            inputVariants({ variant: isInvalid ? 'error' : variant, inputSize, className }),
-          )}
-          aria-invalid={isInvalid}
-          aria-describedby={isInvalid ? `${inputId}-error` : undefined}
-          {...props}
-          onChange={(e) => {
-            if (
-              props.type !== 'password' &&
-              props.type !== 'email' &&
-              typeof e.target.value === 'string'
-            ) {
-              e.target.value = e.target.value.toUpperCase();
-            }
-            props.onChange?.(e);
-          }}
-        />
-        {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-destructive">
-            {error}
-          </p>
-        )}
-        {helperText && !error && (
-          <p className="mt-1.5 text-xs text-muted-foreground">{helperText}</p>
-        )}
-      </div>
+      <UIInput
+        ref={ref}
+        size={mappedSize as UIInputProps['size']}
+        invalid={invalid}
+        error={error}
+        hint={mappedHint}
+        type={type}
+        onChange={handleChange}
+        {...props}
+      />
     );
   },
 );

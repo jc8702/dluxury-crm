@@ -69,13 +69,13 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
       <div className="space-y-6">
         {/* TIPO DE IMPORTAÃ‡ÃƒO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Tipo de Arquivo
           </label>
           <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => setTipo('planocorte')}
-              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
+              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'planocorte'
                   ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
@@ -86,7 +86,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             </button>
             <button
               onClick={() => setTipo('csv')}
-              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
+              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'csv'
                   ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
@@ -97,7 +97,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
             </button>
             <button
               onClick={() => setTipo('sketchup')}
-              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-xs font-bold border transition-all ${
+              className={`h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border transition-all ${
                 tipo === 'sketchup'
                   ? 'bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20'
                   : 'bg-white/5 border-border/40 text-muted-foreground hover:bg-white/10'
@@ -112,7 +112,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
         {/* DESCRIÃ‡ÃƒO DO FORMATO */}
         {tipo === 'planocorte' && (
           <div className="p-3 rounded-xl bg-foreground/5 border border-border/40">
-            <p className="text-[9px] font-bold text-muted-foreground leading-relaxed">
+            <p className="text-sm font-bold text-muted-foreground leading-relaxed">
               Formato: planilha com colunas Designação, Quantidade, Comprimento, Largura, Espessura.
               Suporta também Nome do Material, Identificação, e Bordas para fio de fita.
             </p>
@@ -121,7 +121,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
 
         {/* UPLOAD ARQUIVO */}
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Selecionar Arquivo
           </label>
           <div className="relative">
@@ -144,7 +144,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
                 {arquivo ? arquivo.name : 'Clique para selecionar'}
               </span>
               {arquivo && (
-                <span className="text-[10px] font-bold text-success uppercase mt-2 flex items-center gap-1">
+                <span className="text-xs font-bold text-success uppercase mt-2 flex items-center gap-1">
                   <CheckCircle2 size={10} />
                   {(arquivo.size / 1024).toFixed(1)} KB
                 </span>
@@ -157,7 +157,7 @@ export function ImportacaoModal({ onImportar, onFechar }: ImportacaoModalProps) 
         {erro && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3 text-destructive">
             <AlertTriangle size={18} />
-            <span className="text-xs font-bold tracking-tight">{erro}</span>
+            <span className="text-sm font-bold tracking-tight">{erro}</span>
           </div>
         )}
 

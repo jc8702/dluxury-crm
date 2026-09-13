@@ -810,7 +810,7 @@ export default function SimuladorCortePage() {
       <div className="flex gap-1 bg-[#1F2937] p-1 rounded-xl mb-6 w-fit">
         <button
           onClick={() => handleTrocarModo('rapida')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'rapida'
               ? 'bg-[#E2AC00] text-black'
               : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
@@ -821,7 +821,7 @@ export default function SimuladorCortePage() {
         </button>
         <button
           onClick={() => handleTrocarModo('carregar')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'carregar'
               ? 'bg-[#E2AC00] text-black'
               : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
@@ -846,7 +846,7 @@ export default function SimuladorCortePage() {
                   <button
                     key={i}
                     onClick={() => handlePredefChapa(i)}
-                    className={`text-[10px] text-left p-2 rounded-lg border transition-all ${
+                    className={`text-sm text-left p-2 rounded-lg border transition-all ${
                       chapaPredef === i
                         ? 'border-[#E2AC00] bg-[#E2AC00]/10 text-[#E2AC00]'
                         : 'border-[#1F2937] bg-[#1F2937]/50 text-[#6B7280] hover:border-[#374151]'
@@ -856,7 +856,7 @@ export default function SimuladorCortePage() {
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <label className="text-[#6B7280] block mb-1">COMPR. (MM)</label>
                   <input
@@ -866,7 +866,7 @@ export default function SimuladorCortePage() {
                       setChapaLargura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
                   />
                 </div>
                 <div>
@@ -878,7 +878,7 @@ export default function SimuladorCortePage() {
                       setChapaAltura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
                   />
                 </div>
                 <div>
@@ -890,7 +890,7 @@ export default function SimuladorCortePage() {
                       setChapaEspessura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
                   />
                 </div>
               </div>
@@ -901,7 +901,7 @@ export default function SimuladorCortePage() {
                 <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider">PEÇAS</h3>
                 <button
                   onClick={handleAddPeca}
-                  className="flex items-center gap-1 text-[10px] text-[#E2AC00] hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-sm text-[#E2AC00] hover:text-white transition-colors"
                 >
                   <Plus size={12} /> ADICIONAR
                 </button>
@@ -913,7 +913,7 @@ export default function SimuladorCortePage() {
                     className="bg-[#1F2937]/50 rounded-lg p-2.5 border border-[#1F2937]"
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[#6B7280] text-[10px] font-semibold">
+                      <span className="text-[#6B7280] text-sm font-semibold">
                         PEÇA {idx + 1}
                       </span>
                       <button
@@ -930,44 +930,44 @@ export default function SimuladorCortePage() {
                         handleUpdatePeca(peca.id, 'nome', e.target.value.toUpperCase())
                       }
                       placeholder="NOME DA PEÇA"
-                      className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2.5 py-1.5 text-white text-[11px] outline-none mb-1.5 focus:border-[#E2AC00]"
+                      className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2.5 py-1.5 text-white text-sm outline-none mb-1.5 focus:border-[#E2AC00]"
                     />
                     <div className="grid grid-cols-4 gap-1.5">
                       <div>
-                        <label className="text-[#6B7280] text-[9px] block">COMP.</label>
+                        <label className="text-[#6B7280] text-sm block">COMP.</label>
                         <input
                           type="number"
                           value={peca.comprimento}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-[9px] block">LARG.</label>
+                        <label className="text-[#6B7280] text-sm block">LARG.</label>
                         <input
                           type="number"
                           value={peca.largura}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'largura', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-[9px] block">ESP.</label>
+                        <label className="text-[#6B7280] text-sm block">ESP.</label>
                         <input
                           type="number"
                           value={peca.espessura}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'espessura', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-[9px] block">QTD</label>
+                        <label className="text-[#6B7280] text-sm block">QTD</label>
                         <input
                           type="number"
                           min={1}
@@ -979,7 +979,7 @@ export default function SimuladorCortePage() {
                               Math.max(1, Number(e.target.value)),
                             )
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-[11px] outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
                         />
                       </div>
                     </div>
@@ -989,7 +989,7 @@ export default function SimuladorCortePage() {
               <button
                 onClick={executarSimulacao}
                 disabled={processando}
-                className="w-full mt-3 flex items-center justify-center gap-2 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-xs py-2.5 rounded-lg transition-all disabled:opacity-50"
+                className="w-full mt-3 flex items-center justify-center gap-2 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-50"
               >
                 {processando ? (
                   <>
@@ -1016,7 +1016,7 @@ export default function SimuladorCortePage() {
                       <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
                         <button
                           onClick={() => setModoExibicao('layout')}
-                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'layout'
                               ? 'bg-[#1F2937] text-white'
                               : 'text-[#6B7280] hover:text-white'
@@ -1026,7 +1026,7 @@ export default function SimuladorCortePage() {
                         </button>
                         <button
                           onClick={() => setModoExibicao('simulacao')}
-                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'simulacao'
                               ? 'bg-[#E2AC00] text-black'
                               : 'text-[#6B7280] hover:text-white'
@@ -1036,7 +1036,7 @@ export default function SimuladorCortePage() {
                         </button>
                         <button
                           onClick={() => setModoExibicao('verificacao')}
-                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'verificacao'
                               ? 'bg-[#DC3545]/20 text-[#DC3545] border border-[#DC3545]/30'
                               : 'text-[#6B7280] hover:text-white'
@@ -1053,7 +1053,7 @@ export default function SimuladorCortePage() {
                         >
                           <ChevronLeft size={16} />
                         </button>
-                        <span className="text-white text-xs font-semibold min-w-[50px] text-center">
+                        <span className="text-white text-sm font-semibold min-w-[50px] text-center">
                           {indiceChapa + 1}/{layouts.length}
                         </span>
                         <button
@@ -1066,7 +1066,7 @@ export default function SimuladorCortePage() {
                     </div>
 
                     {/* Toggles de Visualização 3D */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-sm">
                       <button
                         onClick={() => setMostrarGrade(!mostrarGrade)}
                         className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
@@ -1158,19 +1158,19 @@ export default function SimuladorCortePage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleExportRelatorio}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
                     </button>
                     <button
                       onClick={handleExportRelatorioSeguranca}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <ShieldAlert size={14} className="text-[#DC3545]" /> SEGURANÇA
                     </button>
                     <button
                       onClick={handleExportEtiquetas}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
                       <Box size={14} className="text-[#28A745]" /> ETIQUETAS
                     </button>
@@ -1179,7 +1179,7 @@ export default function SimuladorCortePage() {
                   {/* TOGGLE CONFIGURAÇÃO CNC */}
                   <button
                     onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
-                    className={`flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${
+                    className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                       mostrarConfigCNC
                         ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
                         : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
@@ -1211,8 +1211,8 @@ export default function SimuladorCortePage() {
 
                   {/* Legenda CAM Toolpath */}
                   {mostrarCaminho && (
-                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
-                      <span className="text-white font-bold block mb-1.5 text-[10px]">
+                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-sm font-mono text-[#6B7280]">
+                      <span className="text-white font-bold block mb-1.5 text-sm">
                         LEGENDA DO PERCURSO DE CORTE:
                       </span>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -1266,7 +1266,7 @@ export default function SimuladorCortePage() {
                 <p className="text-[#6B7280] text-sm font-medium">
                   ADICIONE PEÇAS E CLIQUE EM "EXECUTAR NESTING"
                 </p>
-                <p className="text-[#6B7280] text-[11px] mt-1">
+                <p className="text-[#6B7280] text-sm mt-1">
                   A SIMULAÇÃO DE ROUTER 3D APARECERÁ AQUI
                 </p>
               </div>
@@ -1281,7 +1281,7 @@ export default function SimuladorCortePage() {
           {loadingPlanos && (
             <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
               <RotateCw size={32} className="text-[#374151] mx-auto mb-3 animate-spin" />
-              <p className="text-[#6B7280] text-xs">CARREGANDO PLANOS DE CORTE DO ESTOQUE...</p>
+              <p className="text-[#6B7280] text-sm">CARREGANDO PLANOS DE CORTE DO ESTOQUE...</p>
             </div>
           )}
 
@@ -1291,7 +1291,7 @@ export default function SimuladorCortePage() {
               <h2 className="text-white font-bold text-sm mb-2">
                 NENHUM PLANO DE CORTE DISPONÍVEL
               </h2>
-              <p className="text-[#6B7280] text-xs">
+              <p className="text-[#6B7280] text-sm">
                 CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE A "SIMULAÇÃO RÁPIDA".
               </p>
             </div>
@@ -1318,7 +1318,7 @@ export default function SimuladorCortePage() {
                       <p className="text-white font-semibold text-sm truncate group-hover:text-[#E2AC00] transition-colors">
                         {plano.nome}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-[#6B7280]">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-[#6B7280]">
                         <span>
                           {chaps.length} CHAPA{chaps.length > 1 ? 'S' : ''}
                         </span>
@@ -1342,7 +1342,7 @@ export default function SimuladorCortePage() {
                     <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
                       <button
                         onClick={() => setModoExibicao('layout')}
-                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'layout'
                             ? 'bg-[#1F2937] text-white'
                             : 'text-[#6B7280] hover:text-white'
@@ -1352,7 +1352,7 @@ export default function SimuladorCortePage() {
                       </button>
                       <button
                         onClick={() => setModoExibicao('simulacao')}
-                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'simulacao'
                             ? 'bg-[#E2AC00] text-black'
                             : 'text-[#6B7280] hover:text-white'
@@ -1362,7 +1362,7 @@ export default function SimuladorCortePage() {
                       </button>
                       <button
                         onClick={() => setModoExibicao('verificacao')}
-                        className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'verificacao'
                             ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30'
                             : 'text-[#6B7280] hover:text-white'
@@ -1373,7 +1373,7 @@ export default function SimuladorCortePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-[#6B7280] text-xs font-semibold truncate max-w-[200px]">
+                      <span className="text-[#6B7280] text-sm font-semibold truncate max-w-[200px]">
                         {planoAtivo.nome}
                       </span>
                       <button
@@ -1382,7 +1382,7 @@ export default function SimuladorCortePage() {
                       >
                         <ChevronLeft size={16} />
                       </button>
-                      <span className="text-white text-xs font-semibold min-w-[55px] text-center">
+                      <span className="text-white text-sm font-semibold min-w-[55px] text-center">
                         {indiceChapa + 1}/{layouts.length}
                       </span>
                       <button
@@ -1394,7 +1394,7 @@ export default function SimuladorCortePage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-[10px]">
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-sm">
                     <button
                       onClick={() => setMostrarGrade(!mostrarGrade)}
                       className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
@@ -1488,19 +1488,19 @@ export default function SimuladorCortePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportRelatorio}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
                   </button>
                   <button
                     onClick={handleExportRelatorioSeguranca}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
                   </button>
                   <button
                     onClick={handleExportEtiquetas}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-[11px] font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
                     <Box size={14} className="text-[#10B981]" /> ETIQUETAS
                   </button>
@@ -1509,7 +1509,7 @@ export default function SimuladorCortePage() {
                 {/* TOGGLE CONFIGURAÇÃO CNC */}
                 <button
                   onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
-                  className={`flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${
+                  className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                     mostrarConfigCNC
                       ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
                       : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
@@ -1540,8 +1540,8 @@ export default function SimuladorCortePage() {
                 )}
 
                 {mostrarCaminho && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-[9px] font-mono text-[#6B7280]">
-                    <span className="text-white font-bold block mb-1.5 text-[10px]">
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-sm font-mono text-[#6B7280]">
+                    <span className="text-white font-bold block mb-1.5 text-sm">
                       LEGENDA DO PERCURSO DE CORTE:
                     </span>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1589,7 +1589,7 @@ export default function SimuladorCortePage() {
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
                   <button
                     onClick={() => setPlanoAtivo(null)}
-                    className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-xs font-semibold py-2.5 rounded-lg transition-all"
+                    className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-sm font-semibold py-2.5 rounded-lg transition-all"
                   >
                     <Upload size={14} /> TROCAR PLANO
                   </button>

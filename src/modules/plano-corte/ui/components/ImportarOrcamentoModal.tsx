@@ -192,13 +192,13 @@ export function ImportarOrcamentoModal({ onImportar, onFechar }: ImportarOrcamen
                     <h4 className="font-bold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">
                       Orçamento #{o.numeroOrcamento || o.numero}
                     </h4>
-                    <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                    <p className="text-sm text-muted-foreground font-semibold mt-0.5">
                       Cliente: {o.clienteNome || o.cliente?.nome || 'N/A'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-success/15 text-success rounded-md border border-success/10">
+                  <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 bg-success/15 text-success rounded-md border border-success/10">
                     {o.status}
                   </span>
                   <div className="w-8 h-8 rounded-lg bg-foreground/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all">

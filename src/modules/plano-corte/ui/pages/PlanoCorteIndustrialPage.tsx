@@ -547,7 +547,7 @@ export default function PlanoCorteIndustrialPage() {
           <h2 className="mt-8 text-xl font-black tracking-[0.2em] uppercase text-white animate-pulse">
             Processando Inteligência Industrial
           </h2>
-          <p className="mt-2 text-[10px] font-bold text-[#888] uppercase tracking-widest">
+          <p className="mt-2 text-xs font-bold text-[#888] uppercase tracking-widest">
             Extraindo dados e otimizando layout...
           </p>
         </div>
@@ -561,10 +561,10 @@ export default function PlanoCorteIndustrialPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[10px] font-black tracking-[0.3em] text-[#FFA500] uppercase">
+              <h1 className="text-xs font-black tracking-[0.3em] text-[#FFA500] uppercase">
                 Industrial Intelligence
               </h1>
-              <div className="px-2 py-0.5 rounded bg-[#10B981]/10 text-[#10B981] text-[8px] font-black uppercase tracking-widest border border-[#10B981]/20">
+              <div className="px-2 py-0.5 rounded bg-[#10B981]/10 text-[#10B981] text-xs font-black uppercase tracking-widest border border-[#10B981]/20">
                 Live
               </div>
             </div>
@@ -581,7 +581,7 @@ export default function PlanoCorteIndustrialPage() {
         <div className="flex items-center gap-3">
           <label
             id="btn-importar-desenho"
-            className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-foreground/5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-foreground/10 cursor-pointer transition-all group"
+            className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-border bg-foreground/5 text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-foreground/10 cursor-pointer transition-all group"
           >
             <Upload
               size={16}
@@ -690,14 +690,14 @@ export default function PlanoCorteIndustrialPage() {
         {/* SIDEBAR ESQUERDA - BUSCA E ABAS */}
         <aside className="bg-card border-r border-border flex flex-col overflow-hidden p-6 gap-6">
           <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+            <span className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">
               Seleção de Material
             </span>
             <BuscaSKU onAdicionarChapa={handleAdicionarChapa} chapasSelecionadas={projeto.chapas} />
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4">
+            <span className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-4">
               Projeto por Chapas
             </span>
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2 max-h-[450px]">
@@ -743,7 +743,7 @@ export default function PlanoCorteIndustrialPage() {
 
               {resultadoAtivo && (
                 <div className="pt-6 border-t border-border space-y-4">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">
                     Ações da Chapa
                   </span>
 
@@ -751,10 +751,10 @@ export default function PlanoCorteIndustrialPage() {
                     <div className="px-4 py-3 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-3">
                       <AlertTriangle size={14} className="text-warning mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black text-warning uppercase tracking-wider">
+                        <p className="text-xs font-black text-warning uppercase tracking-wider">
                           {resultadoAtivo.chapas_necessarias} Chapas Necessárias
                         </p>
-                        <p className="text-[8px] text-muted-foreground mt-0.5 font-mono">
+                        <p className="text-sm text-muted-foreground mt-0.5 font-mono">
                           {resultadoAtivo.pecas_total_count || 0} peças distribuídas em{' '}
                           {resultadoAtivo.layouts.length} layouts
                           {resultadoAtivo.pecas_rejeitadas &&
@@ -769,13 +769,13 @@ export default function PlanoCorteIndustrialPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-[9px] font-black uppercase hover:bg-muted/50 transition-all text-foreground"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-xs font-black uppercase hover:bg-muted/50 transition-all text-foreground"
                     >
                       <Printer size={14} /> Mapa
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-[9px] font-black uppercase hover:bg-muted/50 transition-all text-foreground"
+                      className="flex items-center justify-center gap-2 p-3 h-auto rounded-xl bg-muted/30 border border-border text-xs font-black uppercase hover:bg-muted/50 transition-all text-foreground"
                     >
                       <FileText size={14} /> Etiquetas
                     </Button>
@@ -783,7 +783,7 @@ export default function PlanoCorteIndustrialPage() {
                   <Button
                     onClick={handleAprovarProducao}
                     disabled={loading}
-                    className="w-full h-12 bg-[#10B981] hover:bg-[#059669] text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
+                    className="w-full h-12 bg-[#10B981] hover:bg-[#059669] text-white font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#10B981]/10 disabled:opacity-30 flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -850,7 +850,7 @@ export default function PlanoCorteIndustrialPage() {
               {duplicateScrapsPayload.duplicados.map((dup: any, i: number) => (
                 <div
                   key={i}
-                  className="text-xs text-muted-foreground flex justify-between py-1 border-b border-border/10 last:border-0"
+                  className="text-sm text-muted-foreground flex justify-between py-1 border-b border-border/10 last:border-0"
                 >
                   <span>
                     {dup.largura_mm}x{dup.altura_mm} mm (Esp. {dup.espessura_mm}mm)

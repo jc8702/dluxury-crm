@@ -364,10 +364,10 @@ export default function QuotationForm() {
         <div className="max-w-6xl mx-auto space-y-6">
           <header className="flex flex-wrap justify-between items-end gap-4">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-[var(--ui-text-primary)]">
+              <h1 className="text-3xl lg:text-4xl font-display font-semibold tracking-tight text-[var(--ui-text-primary)]">
                 Orçamentos <span className="text-[var(--ui-color-teal-500)]">PRO</span>
               </h1>
-              <p className="text-[var(--ui-text-secondary)] mt-2">
+              <p className="text-[var(--ui-text-secondary)] mt-2 font-body text-sm">
                 Gestão de orçamentos industriais e cálculos de engenharia.
               </p>
             </div>
@@ -435,7 +435,7 @@ export default function QuotationForm() {
                 />
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-[var(--ui-text-secondary)] bg-[var(--ui-bg-subtle)] px-3 py-1 rounded-[var(--ui-radius-full)] border border-[var(--ui-border)]">
+                <span className="text-sm font-medium text-[var(--ui-text-secondary)] bg-[var(--ui-bg-subtle)] px-3 py-1 rounded-[var(--ui-radius-full)] border border-[var(--ui-border)]">
                   {pagination.total} TOTAL
                 </span>
               </div>
@@ -475,14 +475,14 @@ export default function QuotationForm() {
             <ArrowLeft size={20} />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-[var(--ui-text-primary)] flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl lg:text-3xl font-display font-semibold tracking-tight text-[var(--ui-text-primary)] flex flex-wrap items-center gap-2">
               <span>Orçamento</span>
               <span className="text-[var(--ui-color-teal-500)]">
                 {quotation?.numeroOrcamento || '...'}
               </span>
             </h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[var(--ui-text-secondary)] text-sm">Status:</span>
+              <span className="text-[var(--ui-text-secondary)] text-sm font-body">Status:</span>
               <Select
                 size="sm"
                 value={(quotation?.status || 'RASCUNHO').toLowerCase()}
@@ -627,7 +627,7 @@ export default function QuotationForm() {
         <div>
           <div className="flex flex-wrap justify-between items-center gap-3 px-1 mb-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--ui-text-primary)]">
+              <h2 className="text-lg font-display font-semibold flex items-center gap-2 text-[var(--ui-text-primary)]">
                 <Layers size={18} className="text-[var(--ui-color-warning)]" />
                 Itens do Projeto
               </h2>
@@ -667,7 +667,7 @@ export default function QuotationForm() {
               {searchTerm && (
                 <div className="absolute top-full right-0 mt-2 w-full bg-[var(--ui-surface)] border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] shadow-[var(--ui-shadow-3)] z-[var(--ui-z-modal)] overflow-hidden max-h-[400px] overflow-y-auto">
                   {skus.length === 0 ? (
-                    <div className="p-6 text-center text-[var(--ui-text-secondary)] text-xs italic">
+                    <div className="p-6 text-center text-[var(--ui-text-secondary)] text-sm italic">
                       Nenhum SKU encontrado para "{searchTerm}"
                     </div>
                   ) : (
@@ -690,12 +690,12 @@ export default function QuotationForm() {
                               {sku.nome}
                             </span>
                           </div>
-                          <span className="text-[10px] text-[var(--ui-text-secondary)] group-hover:text-white/80 font-mono">
+                          <span className="text-sm text-[var(--ui-text-secondary)] group-hover:text-white/80 font-mono">
                             {sku.codigo}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[10px] font-medium text-[var(--ui-text-secondary)] group-hover:text-white/80 uppercase">
+                          <span className="text-xs font-medium text-[var(--ui-text-secondary)] group-hover:text-white/80 uppercase">
                             {sku.tipo}
                           </span>
                           <Plus
@@ -719,7 +719,7 @@ export default function QuotationForm() {
               <p className="text-[var(--ui-text-primary)] font-semibold uppercase tracking-wide text-sm">
                 O orçamento está vazio
               </p>
-              <p className="text-[var(--ui-text-secondary)] text-xs mt-2">
+              <p className="text-[var(--ui-text-secondary)] text-sm mt-2">
                 Utilize a busca acima para adicionar módulos de engenharia.
               </p>
             </div>

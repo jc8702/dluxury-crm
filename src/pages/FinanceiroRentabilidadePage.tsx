@@ -159,13 +159,13 @@ export default function FinanceiroRentabilidadePage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">
                 Período
               </label>
               <select
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
-                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] font-bold"
+                className="bg-surface border border-border rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] font-bold"
               >
                 <option value="mes">Último Mês</option>
                 <option value="trimestre">Último Trimestre</option>
@@ -173,7 +173,7 @@ export default function FinanceiroRentabilidadePage() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">
                 Filtro Cliente
               </label>
               <input
@@ -181,7 +181,7 @@ export default function FinanceiroRentabilidadePage() {
                 placeholder="Filtrar por nome..."
                 value={buscaCliente}
                 onChange={(e) => setBuscaCliente(e.target.value)}
-                className="bg-surface border border-border rounded-lg text-xs px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] w-44 font-semibold text-foreground placeholder:text-muted-foreground"
+                className="bg-surface border border-border rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-[hsl(var(--warning))] w-44 font-semibold text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function FinanceiroRentabilidadePage() {
                   <h3 className="text-sm font-bold text-[hsl(38_92%_35%)] uppercase tracking-wider">
                     Desvios de Margem Detectados
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-xs text-foreground">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-sm text-foreground">
                     {alertas.slice(0, 4).map((alerta, i) => (
                       <div
                         key={i}
@@ -348,7 +348,7 @@ export default function FinanceiroRentabilidadePage() {
                 </h3>
                 <div className="h-[220px] flex justify-center">
                   {clientes.length === 0 ? (
-                    <div className="flex items-center text-xs text-muted-foreground">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       Sem dados históricos
                     </div>
                   ) : (
@@ -400,7 +400,7 @@ export default function FinanceiroRentabilidadePage() {
                 </div>
                 <div className="space-y-4">
                   {lucrativos.length === 0 ? (
-                    <div className="text-xs text-muted-foreground py-6 text-center">
+                    <div className="text-sm text-muted-foreground py-6 text-center">
                       Nenhum projeto altamente lucrativo
                     </div>
                   ) : (
@@ -410,7 +410,7 @@ export default function FinanceiroRentabilidadePage() {
                         className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-border hover:border-border hover:bg-surface/60 transition-all group"
                       >
                         <div>
-                          <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                          <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
                             {p.numero_op}
                             <button
                               onClick={() => abrirEdicao(p)}
@@ -419,15 +419,15 @@ export default function FinanceiroRentabilidadePage() {
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">
+                          <div className="text-xs text-muted-foreground font-semibold uppercase mt-0.5">
                             {p.cliente}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs font-black text-[hsl(var(--success))]">
+                          <div className="text-sm font-black text-[hsl(var(--success))]">
                             {(p.margem_percentual ?? 0).toFixed(1)}%
                           </div>
-                          <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
+                          <div className="text-sm text-muted-foreground font-mono mt-0.5">
                             {fmt(p.margem_real ?? 0)}
                           </div>
                         </div>
@@ -447,7 +447,7 @@ export default function FinanceiroRentabilidadePage() {
                 </div>
                 <div className="space-y-4">
                   {prejuizados.length === 0 ? (
-                    <div className="text-xs text-muted-foreground py-6 text-center">
+                    <div className="text-sm text-muted-foreground py-6 text-center">
                       Nenhum projeto operando no vermelho
                     </div>
                   ) : (
@@ -457,7 +457,7 @@ export default function FinanceiroRentabilidadePage() {
                         className="flex justify-between items-center p-3 rounded-xl bg-surface/30 border border-border hover:border-border hover:bg-surface/60 transition-all group"
                       >
                         <div>
-                          <div className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                          <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
                             {p.numero_op}
                             <button
                               onClick={() => abrirEdicao(p)}
@@ -466,15 +466,15 @@ export default function FinanceiroRentabilidadePage() {
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <div className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">
+                          <div className="text-xs text-muted-foreground font-semibold uppercase mt-0.5">
                             {p.cliente}
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs font-black text-[hsl(var(--destructive))]">
+                          <div className="text-sm font-black text-[hsl(var(--destructive))]">
                             {(p.margem_percentual ?? 0).toFixed(1)}%
                           </div>
-                          <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
+                          <div className="text-sm text-muted-foreground font-mono mt-0.5">
                             {fmt(p.margem_real ?? 0)}
                           </div>
                         </div>
@@ -492,7 +492,7 @@ export default function FinanceiroRentabilidadePage() {
                 Cliente
               </h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse">
+                <table className="w-full text-sm text-left border-collapse">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">Cliente</th>
@@ -542,7 +542,7 @@ export default function FinanceiroRentabilidadePage() {
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <span
-                              className={`px-2.5 py-1 rounded text-[10px] font-black ${
+                              className={`px-2.5 py-1 rounded text-sm font-black ${
                                 cli.score_rentabilidade >= 8
                                   ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success))]/20'
                                   : cli.score_rentabilidade >= 5
@@ -571,7 +571,7 @@ export default function FinanceiroRentabilidadePage() {
             {/* Modal Header */}
             <div className="p-6 border-b border-border flex justify-between items-center bg-surface/50">
               <div>
-                <span className="text-[10px] font-bold text-[hsl(38_92%_35%)] uppercase tracking-widest">
+                <span className="text-xs font-bold text-[hsl(38_92%_35%)] uppercase tracking-widest">
                   Ajuste de Rentabilidade
                 </span>
                 <h3 className="text-lg font-black text-foreground uppercase">
@@ -589,7 +589,7 @@ export default function FinanceiroRentabilidadePage() {
             {/* Modal Form */}
             <form
               onSubmit={salvarCustos}
-              className="p-6 space-y-4 text-xs font-semibold text-foreground"
+              className="p-6 space-y-4 text-sm font-semibold text-foreground"
             >
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -601,7 +601,7 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.01"
                     value={costMat}
                     onChange={(e) => setCostMat(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-sm font-bold"
                   />
                 </div>
                 <div>
@@ -613,7 +613,7 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.01"
                     value={costMao}
                     onChange={(e) => setCostMao(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-sm font-bold"
                   />
                 </div>
               </div>
@@ -626,7 +626,7 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.01"
                     value={costRetrabalho}
                     onChange={(e) => setCostRetrabalho(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-sm font-bold"
                   />
                 </div>
                 <div>
@@ -638,7 +638,7 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.01"
                     value={costDesperdicio}
                     onChange={(e) => setCostDesperdicio(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-sm font-bold"
                   />
                 </div>
                 <div>
@@ -648,7 +648,7 @@ export default function FinanceiroRentabilidadePage() {
                     step="0.1"
                     value={tempoHoras}
                     onChange={(e) => setTempoHoras(e.target.value)}
-                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-xs font-bold"
+                    className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] font-mono text-sm font-bold"
                   />
                 </div>
               </div>
@@ -662,7 +662,7 @@ export default function FinanceiroRentabilidadePage() {
                   placeholder="Ex: Retrabalho de montagem por erro de medição na cozinha, desperdício de 1 chapa de MDF 18mm..."
                   value={desviosDesc}
                   onChange={(e) => setDesviosDesc(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] text-xs font-semibold placeholder:text-muted-foreground resize-none"
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground focus:outline-none focus:border-[hsl(var(--warning))] text-sm font-semibold placeholder:text-muted-foreground resize-none"
                 />
               </div>
 
@@ -720,7 +720,7 @@ function KPICard({
       className={`glass p-6 rounded-2xl border ${borderColor} flex flex-col justify-between hover:border-border transition-all`}
     >
       <div className="flex justify-between items-start">
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
           {title}
         </span>
         <div className={`p-2 bg-surface rounded-lg ${color}`}>
@@ -732,7 +732,7 @@ function KPICard({
           {value}
         </span>
       </div>
-      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-border flex items-center gap-1">
+      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-2 pt-2 border-t border-border flex items-center gap-1">
         {safePct === 0 ? (
           <span className="text-muted-foreground">-</span>
         ) : positiveChange ? (

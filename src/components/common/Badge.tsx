@@ -1,31 +1,25 @@
-import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
+import { Badge as UIBadge } from '../ui/Badge';
+import type { BadgeProps as UIBadgeProps } from '../ui/Badge';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground border-border',
-        success: 'border-transparent bg-success/20 text-success border-success/30',
-        warning: 'border-transparent bg-warning/20 text-warning border-warning/30',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  },
-);
+const variantToTone: Record<string, UIBadgeProps['tone']> = {
+  default: 'primary',
+  secondary: 'teal',
+  destructive: 'danger',
+  outline: 'outline',
+  success: 'success',
+  warning: 'warning',
+};
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+export interface BadgeProps extends Omit<UIBadgeProps, 'tone' | 'variant'> {
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning';
+  tone?: UIBadgeProps['tone'];
+}
 
-export function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+/**
+ * Wrapper compatível — delega ao oficial src/components/ui/Badge.tsx
+ * Suporta `variant` legado (common) mapeado para `tone` do ui.
+ */
+export function Badge({ variant, tone, ...props }: BadgeProps) {
+  const mappedTone = tone ?? (variant ? variantToTone[variant] : undefined);
+  return <UIBadge tone={mappedTone} {...props} />;
 }

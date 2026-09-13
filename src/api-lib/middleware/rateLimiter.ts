@@ -42,3 +42,15 @@ export async function loginRateLimit(req: any, res: any): Promise<boolean> {
   const identifier = getClientIP(req) || 'unknown';
   return await applyRateLimit('login', identifier, res);
 }
+
+export async function _resetRateLimitersForTests(): Promise<void> {
+  await Promise.all(
+    Object.values(limiters).map(async (limiter: any) => {
+      for (const key of ['127.0.0.1', 'unknown']) {
+        try {
+          await limiter.delete(key);
+        } catch {}
+      }
+    }),
+  );
+}

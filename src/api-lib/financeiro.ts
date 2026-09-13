@@ -770,7 +770,7 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
           sql`, `,
         );
 
-        const titulos = await tx`
+        const titulosInseridos = await tx`
           INSERT INTO titulos_pagar (
             numero_titulo, fornecedor_id, pedido_compra_id,
             valor_original, valor_liquido, valor_aberto, 
@@ -781,7 +781,7 @@ async function handleTitulosPagar(req: any, res: any, tenantId: string, id?: str
           ) VALUES ${values}
           RETURNING *
         `;
-        return res.status(201).json({ success: true, data: titulos });
+        return res.status(201).json({ success: true, data: titulosInseridos });
       });
     } catch (err: any) {
       return res.status(400).json({ success: false, error: err.message });

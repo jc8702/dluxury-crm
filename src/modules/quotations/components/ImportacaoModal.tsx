@@ -134,7 +134,7 @@ export function ImportacaoModal({
         )}
       </div>
 
-      <div className="flex items-start gap-2 p-4 bg-warning/10 border border-warning/20 rounded-xl text-[11px] text-warning">
+      <div className="flex items-start gap-2 p-4 bg-warning/10 border border-warning/20 rounded-xl text-sm text-warning">
         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
           O parser utiliza extração de texto e padrões geométricos para identificar componentes.

@@ -101,7 +101,7 @@ export function ContasExtratoModal({
                 className={`glass p-6 rounded-2xl border-l-4 ${card.border} relative overflow-hidden`}
               >
                 {card.highlight && <div className="absolute inset-0 bg-primary/5" />}
-                <p className="text-xs font-semibold text-[var(--ui-text-secondary)] mb-3 flex items-center gap-2">
+                <p className="text-sm font-semibold text-[var(--ui-text-secondary)] mb-3 flex items-center gap-2">
                   {card.icon} {card.label}
                 </p>
                 <p className={`text-xl font-bold tracking-tight ${card.color}`}>
@@ -114,7 +114,7 @@ export function ContasExtratoModal({
 
           <div className="flex flex-col xl:flex-row gap-6 items-end bg-muted/20 p-8 rounded-[2.5rem] border border-border">
             <div className="flex-1 w-full space-y-2">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest italic ml-2">
                 PESQUISA DINÂMICA
               </label>
               <div className="relative">
@@ -128,7 +128,7 @@ export function ContasExtratoModal({
               </div>
             </div>
             <div className="w-full md:w-64 space-y-2">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest italic ml-2">
                 FLUXO
               </label>
               <div className="relative">
@@ -168,22 +168,22 @@ export function ContasExtratoModal({
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-card z-20">
                   <tr className="border-b border-border">
-                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    <th className="px-8 py-6 text-sm font-semibold text-[var(--ui-text-secondary)]">
                       Data de Efetivação
                     </th>
-                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    <th className="px-8 py-6 text-sm font-semibold text-[var(--ui-text-secondary)]">
                       Memorial / Descrição
                     </th>
-                    <th className="px-8 py-6 text-xs font-semibold text-[var(--ui-text-secondary)]">
+                    <th className="px-8 py-6 text-sm font-semibold text-[var(--ui-text-secondary)]">
                       Módulo Origem
                     </th>
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">
+                    <th className="px-8 py-6 text-xs font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">
                       Valor Operacional
                     </th>
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">
+                    <th className="px-8 py-6 text-xs font-black text-muted-foreground uppercase tracking-[0.3em] italic text-right">
                       Saldo Progressivo
                     </th>
-                    <th className="px-8 py-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic text-center">
+                    <th className="px-8 py-6 text-xs font-black text-muted-foreground uppercase tracking-[0.3em] italic text-center">
                       Auditoria
                     </th>
                   </tr>
@@ -193,7 +193,7 @@ export function ContasExtratoModal({
                     <tr>
                       <td colSpan={6} className="px-8 py-32 text-center">
                         <Info className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-                        <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] italic">
+                        <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.4em] italic">
                           Nenhum lançamento identificado para os filtros aplicados
                         </p>
                       </td>
@@ -213,12 +213,12 @@ export function ContasExtratoModal({
                             <div className="text-sm font-black italic tracking-tight group-hover:text-primary transition-colors">
                               {m.descricao || m.tipo}
                             </div>
-                            <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">
+                            <div className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">
                               {m.tipo}
                             </div>
                           </td>
                           <td className="px-8 py-5">
-                            <span className="text-[10px] font-black bg-primary/5 border border-primary/20 px-3 py-1 rounded-lg text-primary italic uppercase tracking-wider">
+                            <span className="text-xs font-black bg-primary/5 border border-primary/20 px-3 py-1 rounded-lg text-primary italic uppercase tracking-wider">
                               {m.origem}
                             </span>
                           </td>
@@ -227,7 +227,7 @@ export function ContasExtratoModal({
                           >
                             {isPos ? '+' : '-'} {fmt(Math.abs(Number(m.valor)))}
                           </td>
-                          <td className="px-8 py-5 text-right font-bold font-mono text-xs text-muted-foreground/60">
+                          <td className="px-8 py-5 text-right font-bold font-mono text-sm text-muted-foreground/60">
                             {fmt(Number(m.saldo_momento))}
                           </td>
                           <td className="px-8 py-5">

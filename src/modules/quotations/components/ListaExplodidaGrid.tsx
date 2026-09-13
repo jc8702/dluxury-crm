@@ -9,7 +9,7 @@ interface ListaExplodidaGridProps {
 export function ListaExplodidaGrid({ data, onUpdate }: ListaExplodidaGridProps) {
     return (
         <div className="overflow-hidden rounded-3xl border border-border bg-card/50">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="w-full text-sm text-left border-collapse">
                 <thead>
                     <tr className="bg-muted/80 text-muted-foreground uppercase tracking-widest font-black border-b border-border">
                         <th className="px-6 py-4">Componente</th>
@@ -25,10 +25,10 @@ export function ListaExplodidaGrid({ data, onUpdate }: ListaExplodidaGridProps) 
                         <tr key={comp.id} className="hover:bg-muted/30 transition-colors group">
                             <td className="px-6 py-4">
                                 <div className="font-bold text-foreground">{comp.componente?.nome || 'N/A'}</div>
-                                <div className="text-[10px] text-muted-foreground uppercase font-black">{comp.componente?.codigo}</div>
+                                <div className="text-xs text-muted-foreground uppercase font-black">{comp.componente?.codigo}</div>
                             </td>
                             <td className="px-6 py-4 text-center">
-                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-tighter ${
                                     comp.origem === 'BOM' ? 'bg-info/10 text-info border border-info/20' : 'bg-warning/10 text-warning border border-warning/20'
                                 }`}>
                                     {comp.origem}

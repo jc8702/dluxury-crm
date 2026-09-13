@@ -350,7 +350,7 @@ export function CanvasAvancado({
 
       {/* TOOLBAR - OPÇÕES DE VISUALIZAÇÃO */}
       <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-4 glass px-4 py-2 rounded-full z-10">
-        <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black italic text-primary uppercase tracking-wider">
+        <label className="flex items-center gap-2 cursor-pointer text-xs font-black italic text-primary uppercase tracking-wider">
           <input 
             type="checkbox" 
             checked={showGrid} 
@@ -360,7 +360,7 @@ export function CanvasAvancado({
           <Grid size={12} /> Grid
         </label>
         <div className="w-px h-4 bg-border" />
-        <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black italic text-primary uppercase tracking-wider">
+        <label className="flex items-center gap-2 cursor-pointer text-xs font-black italic text-primary uppercase tracking-wider">
           <input 
             type="checkbox" 
             checked={showMeasurements} 
@@ -375,7 +375,7 @@ export function CanvasAvancado({
       {rotBtnPos && !executionMode && (
         <button
           onClick={rotacionarPecaSelecionada}
-          className="absolute z-20 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-[10px] font-black italic flex items-center gap-2 shadow-lg animate-fade-in"
+          className="absolute z-20 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-black italic flex items-center gap-2 shadow-lg animate-fade-in"
           style={{
             left: `${rotBtnPos.left}px`,
             top: `${rotBtnPos.top}px`,
@@ -389,7 +389,7 @@ export function CanvasAvancado({
 
       {/* INFO ZOOM */}
       <div className="absolute bottom-6 left-6 glass px-4 py-2 rounded-full z-10 border border-primary/20">
-        <span className="text-[10px] font-black italic text-foreground tracking-widest flex items-center gap-2">
+        <span className="text-xs font-black italic text-foreground tracking-widest flex items-center gap-2">
           <Info size={12} className="text-primary" />
           ZOOM: {(viewport.zoom * 100).toFixed(0)}%
         </span>
@@ -414,29 +414,29 @@ export function CanvasAvancado({
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px]">
+                  <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground font-medium">DIMENSÕES</span>
                     <span className="font-bold text-foreground">{peca.largura} × {peca.altura} MM</span>
                   </div>
-                  <div className="flex justify-between items-center text-[10px]">
+                  <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground font-medium">POSIÇÃO</span>
                     <span className="font-bold text-foreground">X:{peca.x} Y:{peca.y}</span>
                   </div>
                   
                   {peca.rotacionada && (
-                    <div className="flex items-center gap-2 text-warning text-[10px] font-black italic pt-1 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-warning text-sm font-black italic pt-1 border-t border-border/50">
                       <RotateCw size={10} /> ROTACIONADA 90°
                     </div>
                   )}
                   
                   {peca.fio_de_fita && (
                     <div className="pt-2 border-t border-border/50">
-                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2">FIO DE FITA:</p>
+                      <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-2">FIO DE FITA:</p>
                       <div className="flex gap-2 flex-wrap">
-                        {peca.fio_de_fita.topo && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-500/50 text-red-500 bg-red-500/10">TOPO</span>}
-                        {peca.fio_de_fita.baixo && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/50 text-blue-500 bg-blue-500/10">BAIXO</span>}
-                        {peca.fio_de_fita.esquerda && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-500/50 text-green-500 bg-green-500/10">ESQ</span>}
-                        {peca.fio_de_fita.direita && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-500/50 text-amber-500 bg-amber-500/10">DIR</span>}
+                        {peca.fio_de_fita.topo && <span className="text-sm font-bold px-1.5 py-0.5 rounded border border-red-500/50 text-red-500 bg-red-500/10">TOPO</span>}
+                        {peca.fio_de_fita.baixo && <span className="text-sm font-bold px-1.5 py-0.5 rounded border border-blue-500/50 text-blue-500 bg-blue-500/10">BAIXO</span>}
+                        {peca.fio_de_fita.esquerda && <span className="text-sm font-bold px-1.5 py-0.5 rounded border border-green-500/50 text-green-500 bg-green-500/10">ESQ</span>}
+                        {peca.fio_de_fita.direita && <span className="text-sm font-bold px-1.5 py-0.5 rounded border border-amber-500/50 text-amber-500 bg-amber-500/10">DIR</span>}
                       </div>
                     </div>
                   )}
