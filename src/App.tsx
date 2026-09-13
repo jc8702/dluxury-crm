@@ -45,6 +45,8 @@ const FinanceFluxoCaixaPage = lazy(() => import('./pages/FinanceiroFluxoCaixaPag
 const FinanceRecorrentesPage = lazy(() => import('./pages/FinanceiroRecorrentesPage'));
 const FinanceConciliacaoPage = lazy(() => import('./pages/FinanceiroConciliacaoPage'));
 const FinanceRentabilidadePage = lazy(() => import('./pages/FinanceiroRentabilidadePage'));
+const RHPage = lazy(() => import('./pages/RHPage'));
+const RHFolhaDetalhePage = lazy(() => import('./pages/RHFolhaDetalhePage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const NotificacoesPage = lazy(() => import('./pages/NotificacoesPage'));
 const ComprasPage = lazy(() => import('./pages/ComprasPage'));
@@ -298,6 +300,12 @@ export default function App() {
                           path="financeiro/rentabilidade"
                           element={<FinanceRentabilidadePage />}
                         />
+                      </Route>
+
+                      {/* Rotas de RH & Folha (Pro e Enterprise) */}
+                      <Route element={<FeatureGuard feature="rh" />}>
+                        <Route path="rh" element={<RHPage />} />
+                        <Route path="rh/:id" element={<RHFolhaDetalhePage />} />
                       </Route>
 
                       {/* Rotas de Simulador CNC 3D (Enterprise) */}

@@ -66,6 +66,8 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
       cleanUrl.startsWith('/api/billings')
     ) {
       requiredFeature = 'financeiro';
+    } else if (cleanUrl.startsWith('/api/rh')) {
+      requiredFeature = 'rh';
     } else if (cleanUrl.startsWith('/api/whatsapp')) {
       requiredFeature = 'whatsapp';
     } else if (

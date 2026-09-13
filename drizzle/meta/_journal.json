@@ -64,6 +64,13 @@
       "when": 1780790400000,
       "tag": "0015_add_audit_log_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789046187818,
+      "tag": "0016_create_rh_module",
+      "breakpoints": true
     }
   ]
 }

@@ -1651,14 +1651,18 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
       return res.status(400).json({ success: false, error: 'O campo "Descrição" é obrigatório.' });
     }
     if (!f.classe_financeira_id) {
-      return res.status(400).json({ success: false, error: 'Classe Financeira é obrigatória. Selecione uma classe.' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Classe Financeira é obrigatória. Selecione uma classe.' });
     }
     if (!f.valor || Number(f.valor) <= 0) {
       return res.status(400).json({ success: false, error: 'Valor deve ser maior que zero.' });
     }
     const dia = Number(f.dia_vencimento) || 1;
     if (dia < 1 || dia > 31) {
-      return res.status(400).json({ success: false, error: 'Dia de vencimento deve ser entre 1 e 31.' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Dia de vencimento deve ser entre 1 e 31.' });
     }
     try {
       const result = await sql`
@@ -1668,7 +1672,9 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
       return res.status(201).json({ success: true, data: result[0] });
     } catch (e: any) {
       if (e.message?.includes('classe_financeira_id')) {
-        return res.status(400).json({ success: false, error: 'Classe Financeira inválida ou não encontrada.' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Classe Financeira inválida ou não encontrada.' });
       }
       throw e;
     }
@@ -1678,7 +1684,9 @@ async function handleContasRecorrentes(req: any, res: any, tenantId: string, id?
     const f = req.body;
     // Validação parcial para update
     if (f.classe_financeira_id === '') {
-      return res.status(400).json({ success: false, error: 'Classe Financeira não pode ser vazia.' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Classe Financeira não pode ser vazia.' });
     }
     const result = await sql`
       UPDATE contas_recorrentes SET 
@@ -1827,7 +1835,9 @@ export async function garantirSeedsFinanceiros(tenantId: string) {
         ('2.3.01', 'SIMPLES NACIONAL / DAS', 'despesa', 'devedora', true, ${tenantId}::uuid),
         ('2.3.02', 'TAXAS BANCARIAS', 'despesa', 'devedora', true, ${tenantId}::uuid),
         ('2.4.01', 'MATERIA-PRIMA', 'despesa', 'devedora', true, ${tenantId}::uuid),
-        ('2.4.02', 'FRETES E LOGISTICA', 'despesa', 'devedora', true, ${tenantId}::uuid)
+        ('2.4.02', 'FRETES E LOGISTICA', 'despesa', 'devedora', true, ${tenantId}::uuid),
+        ('5.01', 'Folha de Pagamento', 'analitica', 'devedora', true, ${tenantId}::uuid),
+        ('5.02', 'Distribuição de Lucros', 'analitica', 'devedora', true, ${tenantId}::uuid)
       ON CONFLICT (codigo, tenant_id) DO NOTHING
     `;
 

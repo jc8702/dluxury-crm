@@ -30,6 +30,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Target,
+  Briefcase,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -236,6 +237,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
     },
 
     {
+      id: 'rh',
+      path: 'rh',
+      label: 'RH & Folha',
+      icon: <Briefcase size={18} />,
+      roles: ['admin'],
+      group: 'ADMIN',
+      feature: 'rh',
+    },
+
+    {
       id: 'notifications',
       path: 'notificacoes',
       label: 'Notificações',
@@ -287,7 +298,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onCloseMobile: _onClose
       hasFeature((user as any).planoTier || 'basic', item.feature),
   );
 
-  const groups = ['COMERCIAL', 'OPERAÇÕES', 'FINANCEIRO', 'SISTEMA'];
+  const groups = ['COMERCIAL', 'OPERAÇÕES', 'FINANCEIRO', 'ADMIN', 'SISTEMA'];
 
   const renderMenuItem = (item: any, _isSubItem = false) => {
     const isActive =

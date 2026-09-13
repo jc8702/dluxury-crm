@@ -6,7 +6,8 @@ export type Feature =
   | 'export-xml'
   | 'api-integration'
   | 'advanced-reports'
-  | 'digital-signature';
+  | 'digital-signature'
+  | 'rh';
 
 type Tier = 'basic' | 'pro' | 'enterprise';
 
@@ -17,6 +18,7 @@ const FEATURE_MATRIX: Record<Feature, Tier[]> = {
   'api-integration': ['enterprise'],
   'advanced-reports': ['pro', 'enterprise'],
   'digital-signature': ['pro', 'enterprise'],
+  rh: ['pro', 'enterprise'],
 };
 
 const tierOrder: Record<Tier, number> = { basic: 0, pro: 1, enterprise: 2 };

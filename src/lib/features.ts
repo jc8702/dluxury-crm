@@ -13,7 +13,8 @@ export type Feature =
   | 'export-xml'
   | 'api-integration'
   | 'advanced-reports'
-  | 'digital-signature';
+  | 'digital-signature'
+  | 'rh';
 
 export const FEATURES: Record<PlanTier, string[]> = {
   basic: ['crm', 'quotations'],
@@ -29,6 +30,7 @@ export const FEATURES: Record<PlanTier, string[]> = {
     'whatsapp',
     'advanced-reports',
     'digital-signature',
+    'rh',
   ],
   enterprise: [
     'crm',
@@ -44,6 +46,7 @@ export const FEATURES: Record<PlanTier, string[]> = {
     'digital-signature',
     'export-xml',
     'api-integration',
+    'rh',
   ],
 };
 

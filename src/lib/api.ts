@@ -486,4 +486,37 @@ export const api = {
     update: (id: string, data: any) => apiCall<any>(`simulations?id=${id}`, 'PUT', data),
     delete: (id: string) => apiCall<any>(`simulations?id=${id}`, 'DELETE'),
   },
+  rh: {
+    colaboradores: {
+      list: () => apiCall<any[]>('rh/colaboradores'),
+      create: (data: any) => apiCall<any>('rh/colaboradores', 'POST', data),
+      update: (id: string, data: any) => apiCall<any>(`rh/colaboradores/${id}`, 'PATCH', data),
+      delete: (id: string) => apiCall<any>(`rh/colaboradores/${id}`, 'DELETE'),
+    },
+    presencas: {
+      list: (colaboradorId: string, mes: string) =>
+        apiCall<any[]>(`rh/presencas?colaborador_id=${colaboradorId}&mes=${mes}`),
+      listByMes: (mes: string) => apiCall<any[]>(`rh/presencas?mes=${mes}`),
+      upsertBulk: (presencas: any[]) => apiCall<any>('rh/presencas', 'PUT', { presencas }),
+    },
+    adiantamentos: {
+      list: (params?: { competencia?: string; status?: string }) => {
+        const qs = new URLSearchParams(params as any).toString();
+        return apiCall<any[]>(`rh/adiantamentos${qs ? `?${qs}` : ''}`);
+      },
+      create: (data: any) => apiCall<any>('rh/adiantamentos', 'POST', data),
+    },
+    folhas: {
+      list: () => apiCall<any[]>('rh/folhas'),
+      create: (competencia: string) => apiCall<any>('rh/folhas', 'POST', { competencia }),
+      get: (id: string) => apiCall<any>(`rh/folhas/${id}`),
+      updateItem: (folhaId: string, itemId: string, data: any) =>
+        apiCall<any>(`rh/folhas/${folhaId}/itens/${itemId}`, 'PUT', data),
+      fechar: (id: string) => apiCall<any>(`rh/folhas/${id}/fechar`, 'POST', {}),
+      reabrir: (id: string) => apiCall<any>(`rh/folhas/${id}/reabrir`, 'POST', {}),
+      recibo: (folhaId: string, itemId: string) =>
+        apiCall<any>(`rh/folhas/${folhaId}/recibo/${itemId}/pdf`),
+    },
+    dashboard: (mes: string) => apiCall<any>(`rh/dashboard?mes=${mes}`),
+  },
 };

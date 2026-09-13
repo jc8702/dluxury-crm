@@ -221,6 +221,10 @@ export default async function handler(req: any, res: any) {
       const { handleFinanceiro } = await import('../src/api-lib/financeiro.js');
       return await handleFinanceiro(req, res);
     }
+    if (cleanUrl.startsWith('/api/rh')) {
+      const { handleRH } = await import('../src/api-lib/rh.js');
+      return await handleRH(req, res);
+    }
     if (
       cleanUrl.startsWith('/api/estoque/items') ||
       cleanUrl.startsWith('/api/estoque/alertas') ||

@@ -8,6 +8,11 @@
 
 ## Histórico de Alterações
 
+- **[12/09/2026 - 21:15]:** Conclusão do Módulo RH & Folha de Pagamento Simplificada (Fases 1 a 6)
+  - **Fase 4 (Engine Folha + HE Prevista vs Real):** Criado `FolhaGrid.tsx` interativo com edição de HE prevista vs real, percentual (50%/100%), bônus de produção e outros descontos. Criado `LucroSociosCard.tsx` com visualização analítica da divisão 50/50 e apuração de lucro líquido. Refatorada `RHFolhaDetalhePage.tsx` com vinculação à API e ações de fechar/reabrir.
+  - **Fase 5 (Integração Financeira + Recibo PDF):** Criado componente `ReciboPreview.tsx` com geração/download de PDF via jsPDF + jspdf-autotable, visualização e impressão nativa. Integrado botão Recibo em cada linha da folha.
+  - **Fase 6 (Polimento, Segurança e Testes):** Adicionado registro de auditoria (`audit_logs`) em override de itens de folha. Criada suíte completa de testes unitários `rh.calculations.test.ts` (11 testes verdes) validando cálculos de dias/horas, faltas, HE, lucro distribuível e 5º dia útil. Expandido teste E2E `rh.spec.ts`.
+  - Arquivos modificados/criados: `src/modules/rh/components/FolhaGrid.tsx`, `src/modules/rh/components/LucroSociosCard.tsx`, `src/modules/rh/components/ReciboPreview.tsx`, `src/pages/RHFolhaDetalhePage.tsx`, `src/pages/RHPage.tsx`, `src/api-lib/rh.ts`, `src/modules/rh/domain/rh.calculations.test.ts`, `tests/e2e/rh.spec.ts`, `PLANO_RH.md`.
 - **[07/06/2026 - 22:58]:** Higienização de Repositório (`chore/repo-hygiene`)
   - Removido lixo versionado da raiz que serviam apenas como scripts one-off de debug, relatórios, backups (.sql, logs, etc.) que não tem uso em runtime.
   - Excluídos arquivos de teste órfãos ou testes isolados não utilizados (`migrate-db.ts`, `migrate-estoque.ts`, `create-user.ts`).
