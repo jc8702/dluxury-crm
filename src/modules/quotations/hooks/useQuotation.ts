@@ -92,36 +92,73 @@ export function useQuotation(orcamentoId?: string) {
     [orcamentoId, carregar],
   );
 
-  // ✅ INICIALIZAR NOVO RASCUNHO
-  const inicializar = useCallback(async (dados: any) => {
-    setLoading(true);
-    try {
-      const validated = createQuotationSchema.parse({
-        clientId: dados.clienteId || 0,
-        number: dados.numero || '',
-        description: dados.descricao || '',
-        marginPercentage: dados.margemLucroPercentual || 0,
-      });
-      const response = await fetch('/api/quotations', {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ header: { ...dados, ...validated }, itens: [] }),
-      });
-      const result = await response.json();
-      if (result.success) return result.data;
-      throw new Error(result.error);
-    } catch (err: any) {
-      if (err instanceof z.ZodError) {
-        console.error('❌ [useQuotation] Erro de validação:', err.errors);
-        toastError('Dados inválidos', err.errors.map((e: any) => e.message).join(', '));
+  // ✅ INICIALIZAR NOVO RASCUNHO (corrigido: permite criar sem cliente/número)
+  const inicializar = useCallback(
+    async (dados: any) => {
+      setLoading(true);
+      try {
+        // Validação leniente - rascunho pode ser criado sem cliente
+        let validatedData: any = {};
+        try {
+          validatedData = createQuotationSchema.parse({
+            clienteId: dados.clienteId ?? null,
+            clientId: dados.clienteId ? Number(dados.clienteId) || null : null,
+            number: dados.numero,
+            numero: dados.numero,
+            description: dados.descricao,
+            descricao: dados.descricao,
+            marginPercentage: dados.margemLucroPercentual,
+            margemLucroPercentual: dados.margemLucroPercentual,
+            validadeDias: dados.validadeDias,
+            taxaFinanceiraPercentual: dados.taxaFinanceiraPercentual,
+            descontoPercentual: dados.descontoPercentual,
+          });
+        } catch (e) {
+          // Se validação falhar, usa dados crus - backend fará validação própria
+          validatedData = {};
+        }
+
+        const headerPayload: any = {
+          clienteId: dados.clienteId || null,
+          projetoId: dados.projetoId || null,
+          validadeDias: dados.validadeDias ?? 15,
+          margemLucroPercentual: dados.margemLucroPercentual ?? 30,
+          taxaFinanceiraPercentual: dados.taxaFinanceiraPercentual ?? 0,
+          descontoPercentual: dados.descontoPercentual ?? 0,
+        };
+        // Normalizar clienteId vazio
+        if (headerPayload.clienteId === '' || headerPayload.clienteId === 0)
+          headerPayload.clienteId = null;
+
+        const response = await fetch('/api/quotations', {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ header: headerPayload, itens: dados.itens || [] }),
+        });
+        const result = await response.json();
+        if (result.success) return result.data;
+        // Propagar mensagem de erro do backend
+        const msg = result.error || `Erro HTTP ${response.status}`;
+        toastError(msg);
+        throw new Error(msg);
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          console.error('❌ [useQuotation] Erro de validação:', err.errors);
+          toastError('Dados inválidos', err.errors.map((e: any) => e.message).join(', '));
+          throw err;
+        }
+        console.error('❌ [useQuotation] Erro ao inicializar:', err);
+        // Não fazer double toast se já foi exibido
+        if (!err.message?.includes('Erro HTTP') && !err.message?.includes('Erro ao criar')) {
+          // mensagem já tratada acima; apenas relança
+        }
         throw err;
+      } finally {
+        setLoading(false);
       }
-      console.error('❌ [useQuotation] Erro ao inicializar:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [toastError],
+  );
 
   // ✅ ATUALIZAR CABEÇALHO (Header)
   const setHeader = useCallback(

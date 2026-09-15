@@ -54,30 +54,46 @@ export function ImportarProjeto({
         size="md"
       >
         {status === 'idle' && (
-          <div className="flex justify-center py-4">
-            <button
-              type="button"
-              onClick={() => {
-                setIsCSVModalOpen(true);
-                onClose();
-              }}
-              className="w-full border-2 border-dashed border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-8 flex flex-col items-center justify-center gap-3 hover:border-[var(--ui-color-success)]/50 hover:bg-[var(--ui-color-success-soft)] transition-colors group"
-            >
-              <div className="w-14 h-14 rounded-full bg-[var(--ui-bg-subtle)] flex items-center justify-center group-hover:scale-110 transition-transform">
-                <FileSpreadsheet
-                  size={28}
-                  className="text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-color-success)]"
-                />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-[var(--ui-text-primary)] text-base">
-                  CSV (SketchUp)
-                </p>
-                <p className="text-sm text-[var(--ui-text-secondary)] mt-1">
-                  Clique para abrir o importador CutList Bridge / Report
-                </p>
-              </div>
-            </button>
+          <div className="space-y-4 py-2">
+            <div className="bg-[var(--ui-color-info-soft)] border border-[var(--ui-color-info)]/20 rounded-[var(--ui-radius-md)] p-3 text-sm text-[var(--ui-text-secondary)]">
+              <p className="font-semibold text-[var(--ui-text-primary)] mb-1">
+                O que faz este botão?
+              </p>
+              <p>
+                Cria um orçamento a partir da lista de peças do seu projeto 3D. Exporte o relatório
+                do SketchUp (CutList), Promob ou similar em <strong>CSV</strong> e importe aqui — o
+                sistema converte automaticamente em itens orçáveis com dimensões, material e
+                quantidade.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCSVModalOpen(true);
+                  onClose();
+                }}
+                className="w-full border-2 border-dashed border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-8 flex flex-col items-center justify-center gap-3 hover:border-[var(--ui-color-success)]/50 hover:bg-[var(--ui-color-success-soft)] transition-colors group"
+              >
+                <div className="w-14 h-14 rounded-full bg-[var(--ui-bg-subtle)] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileSpreadsheet
+                    size={28}
+                    className="text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-color-success)]"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-[var(--ui-text-primary)] text-base">
+                    CSV (SketchUp) — CutList Bridge
+                  </p>
+                  <p className="text-sm text-[var(--ui-text-secondary)] mt-1">
+                    Clique para abrir o importador de CSV
+                  </p>
+                  <p className="text-xs text-[var(--ui-text-muted)] mt-1">
+                    Formatos: CutList Plus, SketchUp Report, Promob CSV
+                  </p>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 

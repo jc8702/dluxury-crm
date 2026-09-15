@@ -234,7 +234,10 @@ export default async function handler(req: any, res: any) {
       const { handleEstoqueGranular } = await import('../src/api-lib/estoque-granular.js');
       return await handleEstoqueGranular(req, res);
     }
-    if (cleanUrl.startsWith('/api/orcamentos/sku-matching')) {
+    if (
+      cleanUrl.startsWith('/api/orcamentos/sku-matching') ||
+      cleanUrl.startsWith('/api/quotations/sku-matching')
+    ) {
       const { handleEstoqueGranular } = await import('../src/api-lib/estoque-granular.js');
       return await handleEstoqueGranular(req, res);
     }

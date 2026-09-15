@@ -72,10 +72,44 @@ function statusBadge(status: string | undefined) {
   return <Badge tone={tone}>{STATUS_LABEL[s] ?? s}</Badge>;
 }
 
+function getQuotationIdFromUrl(): string | null {
+  // Suporta ?id=xxx#/quotations e #/quotations?id=xxx
+  const searchParams = new URLSearchParams(window.location.search);
+  const fromSearch = searchParams.get('id');
+  if (fromSearch) return fromSearch;
+  const hash = window.location.hash || '';
+  const hashQuery = hash.split('?')[1];
+  if (hashQuery) {
+    const hashParams = new URLSearchParams(hashQuery);
+    const fromHash = hashParams.get('id');
+    if (fromHash) return fromHash;
+  }
+  return null;
+}
+
+function getImportFlagFromUrl(): boolean {
+  const searchParams = new URLSearchParams(window.location.search);
+  if (searchParams.get('import') === 'true') return true;
+  const hash = window.location.hash || '';
+  const hashQuery = hash.split('?')[1];
+  if (hashQuery) {
+    const hashParams = new URLSearchParams(hashQuery);
+    if (hashParams.get('import') === 'true') return true;
+  }
+  return false;
+}
+
+function navigateToQuotation(id: string, withImport = false) {
+  const importQs = withImport ? '&import=true' : '';
+  // Preserva /#/quotations mas envia id via search (compatível com hash routing legado)
+  const base = window.location.pathname;
+  const newUrl = `${base}?id=${id}${importQs}#/quotations`;
+  window.location.href = newUrl;
+}
+
 export default function QuotationForm() {
   const { error: toastError, success: toastSuccess } = useToast();
-  const urlParams = new URLSearchParams(window.location.search);
-  const orcamentoId = urlParams.get('id');
+  const orcamentoId = getQuotationIdFromUrl();
 
   const {
     quotation,
@@ -100,6 +134,7 @@ export default function QuotationForm() {
   const [skus, setSkus] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [orcamentosRecentes, setOrcamentosRecentes] = useState<any[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [localComercial, setLocalComercial] = useState({
     margemLucroPercentual: 0,
@@ -130,41 +165,59 @@ export default function QuotationForm() {
   const fetchRecentes = useCallback(async () => {
     try {
       const token = localStorage.getItem('dluxury_token') || '';
-      const res = await fetch(
-        `/api/quotations?page=${pagination.page}&limit=${pagination.limit}&q=${searchQuery}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const qs = new URLSearchParams({
+        page: String(pagination.page),
+        limit: String(pagination.limit),
+        q: searchQuery,
+      }).toString();
+      const res = await fetch(`/api/quotations?${qs}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       const result = await res.json();
       if (result.success) {
         setOrcamentosRecentes(result.data || []);
         if (result.pagination) {
-          setPagination(result.pagination);
+          // Evita loop: só atualiza total/pages, mantém page/limit controlados localmente
+          setPagination((prev) => ({
+            ...prev,
+            total: result.pagination.total ?? prev.total,
+            pages: result.pagination.pages ?? prev.pages,
+            limit: result.pagination.limit ?? prev.limit,
+          }));
         }
+      } else {
+        console.warn('fetchRecentes: API retornou erro', result.error);
       }
     } catch (err) {
       console.error('Erro ao carregar orçamentos:', err);
     }
   }, [pagination.page, pagination.limit, searchQuery]);
 
+  // Carga inicial de clientes/skus e flag de importação
   useEffect(() => {
     api.clients.list().then(setClients).catch(console.error);
     api.engineering.list().then(setSkus).catch(console.error);
 
-    fetchRecentes();
-
-    const isImporting = urlParams.get('import') === 'true';
+    const isImporting = getImportFlagFromUrl();
     if (isImporting && orcamentoId) {
       setIsImportModalOpen(true);
-      const newUrl = window.location.pathname + window.location.hash;
+      const newUrl = window.location.pathname + window.location.hash.split('?')[0];
       const cleanUrl = orcamentoId ? `${newUrl}?id=${orcamentoId}` : newUrl;
-      window.history.replaceState({}, '', cleanUrl);
+      // Mantém ?id na search para compatibilidade mas remove &import
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}?id=${orcamentoId}#/quotations`,
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orcamentoId]);
+
+  // Refetch quando paginação ou busca muda (listagem + detalhe)
+  useEffect(() => {
+    fetchRecentes();
+  }, [fetchRecentes]);
 
   useEffect(() => {
     if (searchTerm.length > 2) {
@@ -183,28 +236,43 @@ export default function QuotationForm() {
   };
 
   const handleCreateDraft = async () => {
+    if (isCreating) return;
+    setIsCreating(true);
     try {
       const res = await inicializar({
         clienteId: null,
         margemLucroPercentual: 30,
         validadeDias: 15,
       });
-      window.location.href = `?id=${res.id}#/quotations`;
-    } catch (_err) {
-      toastError('Erro ao criar rascunho');
+      if (!res?.id) throw new Error('ID do orçamento não retornado');
+      toastSuccess('Orçamento criado com sucesso!');
+      navigateToQuotation(res.id, false);
+    } catch (err: any) {
+      console.error('handleCreateDraft error:', err);
+      toastError(err?.message || 'Erro ao criar rascunho');
+    } finally {
+      setIsCreating(false);
     }
   };
 
   const handleCreateAndImport = async () => {
+    if (isCreating) return;
+    setIsCreating(true);
     try {
       const res = await inicializar({
         clienteId: null,
         margemLucroPercentual: 30,
         validadeDias: 15,
       });
-      window.location.href = `?id=${res.id}&import=true#/quotations`;
-    } catch (_err) {
-      window.location.href = `?id=${res.id}&import=true#/quotations`;
+      if (!res?.id) throw new Error('ID do orçamento não retornado');
+      toastSuccess('Orçamento criado! Abrindo importação...');
+      navigateToQuotation(res.id, true);
+    } catch (err: any) {
+      console.error('handleCreateAndImport error:', err);
+      toastError(err?.message || 'Erro ao criar orçamento para importação');
+      // Não tenta navegar com ID inexistente (bug anterior usava res.id fora de escopo)
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -377,6 +445,9 @@ export default function QuotationForm() {
                 size="lg"
                 leftIcon={<Plus size={18} />}
                 onClick={handleCreateDraft}
+                isLoading={isCreating}
+                disabled={isCreating}
+                title="Criar um novo orçamento em branco"
               >
                 Novo Orçamento
               </Button>
@@ -385,6 +456,9 @@ export default function QuotationForm() {
                 size="lg"
                 leftIcon={<Upload size={18} />}
                 onClick={handleCreateAndImport}
+                isLoading={isCreating}
+                disabled={isCreating}
+                title="Criar orçamento e abrir importação de projeto (CSV SketchUp / CutList)"
               >
                 Importar Projeto
               </Button>
@@ -773,7 +847,11 @@ export default function QuotationForm() {
       <ImportarProjeto
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onAddItems={(items) => importItems(items)}
+        onAddItems={async (items) => {
+          const ok = await importItems(items);
+          if (ok) fetchRecentes();
+          return ok;
+        }}
         orcamentoId={orcamentoId || ''}
       />
 
