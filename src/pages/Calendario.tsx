@@ -3,7 +3,7 @@ import CalendarioIntegrado from '../components/Calendario/CalendarioIntegrado.ts
 
 export default function Calendario() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in">
+    <div className="flex flex-col gap-4 max-w-[1440px] mx-auto w-full animate-fade-in">
       <CalendarioIntegrado />
     </div>
   );

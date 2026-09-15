@@ -15,8 +15,13 @@ function getInitialTheme(): Theme {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (stored === 'light' || stored === 'dark') return stored;
-  } catch {}
-  if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  } catch {
+    // localStorage pode estar indisponível em SSR, modo privado ou sandbox.
+  }
+  if (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
     return 'dark';
   }
   return 'light';
@@ -47,7 +52,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(theme);
     try {
       window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch {}
+    } catch {
+      // A preferência visual continua funcionando mesmo sem persistência.
+    }
   }, [theme]);
 
   // Sincroniza com prefers-color-scheme quando não há preferência persistida (escuta mudanças do SO)
@@ -58,15 +65,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         const stored = window.localStorage.getItem(STORAGE_KEY);
         if (stored === 'light' || stored === 'dark') return; // respeita escolha persistida
-      } catch {}
+      } catch {
+        // Sem acesso ao storage, a mudança do sistema ainda pode ser aplicada.
+      }
       setThemeState(e.matches ? 'dark' : 'light');
     };
     // Safari <14 usa addListener
     if (typeof mql.addEventListener === 'function') mql.addEventListener('change', handler);
-    else (mql as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }).addListener(handler);
+    else
+      (
+        mql as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }
+      ).addListener(handler);
     return () => {
       if (typeof mql.removeEventListener === 'function') mql.removeEventListener('change', handler);
-      else (mql as unknown as { removeListener: (cb: (e: MediaQueryListEvent) => void) => void }).removeListener(handler);
+      else
+        (
+          mql as unknown as { removeListener: (cb: (e: MediaQueryListEvent) => void) => void }
+        ).removeListener(handler);
     };
   }, []);
 

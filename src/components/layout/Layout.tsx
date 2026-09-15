@@ -73,7 +73,7 @@ export default function Layout() {
       />
 
       {/* Main Content Area — off-white background with padded card */}
-      <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
+      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden relative flex flex-col">
         {/* Top bar for mobile */}
         <div className="lg:hidden flex items-center h-14 px-4 border-b border-border/50 shrink-0 bg-card">
           <button

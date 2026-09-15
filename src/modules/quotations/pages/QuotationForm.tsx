@@ -675,7 +675,7 @@ export default function QuotationForm() {
                       <button
                         key={`${sku.origem}-${sku.id}`}
                         type="button"
-                        className="w-full text-left px-4 py-3 hover:bg-[var(--ui-color-teal-500)] hover:text-white transition-colors flex justify-between items-center border-b border-[var(--ui-border)] last:border-b-0 group"
+                        className="w-full text-left px-4 py-3 hover:bg-[var(--ui-color-teal-500)] hover:text-[var(--ui-action-secondary-fg)] transition-colors flex justify-between items-center border-b border-[var(--ui-border)] last:border-b-0 group"
                         onClick={() => {
                           addItem(sku.id, 1);
                           setSearchTerm('');
@@ -686,21 +686,21 @@ export default function QuotationForm() {
                             <Badge tone={sku.origem === 'MODULO' ? 'primary' : 'neutral'} size="sm">
                               {sku.origem}
                             </Badge>
-                            <span className="text-sm font-semibold text-[var(--ui-text-primary)] group-hover:text-white truncate">
+                            <span className="text-sm font-semibold text-[var(--ui-text-primary)] group-hover:text-[var(--ui-action-secondary-fg)] truncate">
                               {sku.nome}
                             </span>
                           </div>
-                          <span className="text-sm text-[var(--ui-text-secondary)] group-hover:text-white/80 font-mono">
+                          <span className="text-sm text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-action-secondary-fg)]/80 font-mono">
                             {sku.codigo}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs font-medium text-[var(--ui-text-secondary)] group-hover:text-white/80 uppercase">
+                          <span className="text-xs font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-action-secondary-fg)]/80 uppercase">
                             {sku.tipo}
                           </span>
                           <Plus
                             size={14}
-                            className="text-[var(--ui-color-teal-500)] group-hover:text-white"
+                            className="text-[var(--ui-color-teal-500)] group-hover:text-[var(--ui-action-secondary-fg)]"
                           />
                         </div>
                       </button>

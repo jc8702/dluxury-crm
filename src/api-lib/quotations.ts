@@ -1474,35 +1474,31 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 }
 
                 if (allParts.length > 0) {
-                  // Batch lookup all materials by SKU
+                  // Batch lookup em sku_componente (estrutura granular real - materiais não existe)
                   const uniqueSkus = [...new Set(allParts.map((p) => p.sku))];
                   const skuChunks = uniqueSkus.map((s) => dsql`LOWER(${s})`);
-                  const skuWhere =
-                    skuChunks.length === 1 ? skuChunks[0] : dsql.join(skuChunks, dsql`, `);
                   const matRows = await tx.execute(dsql`
-                    SELECT id, LOWER(sku) as sku, estoque_atual, preco_custo::numeric as preco_custo
-                    FROM materiais
-                    WHERE LOWER(sku) IN (${dsql.join(skuChunks, dsql`, `)}) AND tenant_id = ${tenantId}::uuid
+                    SELECT id, codigo, LOWER(codigo) as sku, estoque_atual, preco_unitario::numeric as preco_custo
+                    FROM sku_componente
+                    WHERE LOWER(codigo) IN (${dsql.join(skuChunks, dsql`, `)}) AND tenant_id = ${tenantId}::uuid
                   `);
                   const matBySku = new Map<string, any>();
                   for (const row of matRows.rows) {
                     matBySku.set((row as any).sku, row);
                   }
 
-                  // Batch INSERT all movimentacoes
+                  // Batch INSERT em movimento_estoque_granular (sem decrementar saldo - reserva)
                   const movChunks = allParts
                     .filter((p) => matBySku.has(p.sku))
                     .map((p) => {
                       const mat = matBySku.get(p.sku)!;
-                      const custo = p.custoUnitario || Number(mat.preco_custo || 0);
-                      return dsql`(${mat.id}::uuid, 'saida_reserva', ${p.quantidade}, ${`Reserva automática OP ${p.opId} - Orçamento ${exists.numeroOrcamento}`}, ${id}::uuid, ${custo}, ${p.quantidade * custo}, ${mat.estoque_atual || 0}, ${mat.estoque_atual || 0}, 'SISTEMA', ${tenantId}::uuid)`;
+                      const saldo = Number(mat.estoque_atual || 0);
+                      return dsql`(${tenantId}::uuid, ${mat.codigo}, 'saida_reserva', ${p.quantidade}::int, ${saldo}::int, ${saldo}::int, ${`Reserva automática OP ${p.opId} - Orçamento ${exists.numeroOrcamento}`}, ${id}::uuid)`;
                     });
                   if (movChunks.length > 0) {
                     await tx.execute(dsql`
-                      INSERT INTO movimentacoes_estoque (
-                        material_id, tipo, quantidade, motivo, quotation_id,
-                        preco_unitario, valor_total, estoque_antes, estoque_depois,
-                        created_by, tenant_id
+                      INSERT INTO movimento_estoque_granular (
+                        tenant_id, sku_codigo, tipo_movimento, quantidade_movimento, saldo_anterior, saldo_novo, motivo_descricao, orcamento_id
                       ) VALUES ${dsql.join(movChunks, dsql`, `)}
                     `);
                   }

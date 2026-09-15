@@ -203,7 +203,7 @@ const Dashboard: React.FC = () => {
               <span className="text-[var(--ui-text-2xl)] font-semibold text-[var(--ui-text-primary)]">
                 {percentualMeta}%
               </span>
-              <span className="text-[10px] font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">
+              <span className="text-xs font-medium text-[var(--ui-text-muted)] uppercase tracking-wider">
                 atingido
               </span>
             </div>
@@ -312,7 +312,7 @@ const Dashboard: React.FC = () => {
               <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
                 Novo Cliente
               </p>
-              <p className="text-[11px] text-[var(--ui-text-muted)]">Cadastrar lead</p>
+              <p className="text-xs text-[var(--ui-text-muted)]">Cadastrar lead</p>
             </div>
           </Link>
           <Link
@@ -326,7 +326,7 @@ const Dashboard: React.FC = () => {
               <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
                 Novo Orçamento
               </p>
-              <p className="text-[11px] text-[var(--ui-text-muted)]">Criar proposta</p>
+              <p className="text-xs text-[var(--ui-text-muted)]">Criar proposta</p>
             </div>
           </Link>
           <Link
@@ -340,7 +340,7 @@ const Dashboard: React.FC = () => {
               <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
                 Plano de Corte
               </p>
-              <p className="text-[11px] text-[var(--ui-text-muted)]">Otimizar material</p>
+              <p className="text-xs text-[var(--ui-text-muted)]">Otimizar material</p>
             </div>
           </Link>
           <Link
@@ -354,7 +354,7 @@ const Dashboard: React.FC = () => {
               <p className="text-sm font-semibold text-[var(--ui-text-primary)] truncate">
                 Nova Despesa
               </p>
-              <p className="text-[11px] text-[var(--ui-text-muted)]">Lançar saída</p>
+              <p className="text-xs text-[var(--ui-text-muted)]">Lançar saída</p>
             </div>
           </Link>
         </div>

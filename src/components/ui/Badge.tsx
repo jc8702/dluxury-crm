@@ -29,7 +29,7 @@ const badgeVariants = cva(
         outline: 'bg-transparent text-[var(--ui-text-secondary)] border-[var(--ui-border-strong)]',
       },
       size: {
-        sm: 'text-[10px] px-1.5 py-0',
+        sm: 'text-[var(--ui-text-xs)] px-1.5 py-0',
         md: 'text-[var(--ui-text-xs)]',
         lg: 'text-[var(--ui-text-sm)] px-2.5 py-1',
       },
@@ -67,7 +67,7 @@ export function Badge({
           aria-label="Remover"
           className={cn(
             'ml-0.5 -mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full',
-            'hover:bg-black/10 transition-colors',
+            'hover:bg-[var(--ui-surface-hover)] transition-colors',
           )}
         >
           <X className="h-3 w-3" />
@@ -127,7 +127,7 @@ export function Chip({ active, className, children, ...props }: ChipProps) {
         'inline-flex items-center capitalize gap-1.5 h-7 px-3 rounded-[var(--ui-radius-full)]',
         'text-[var(--ui-text-xs)] font-medium border transition-colors',
         active
-          ? 'bg-[var(--ui-color-teal-500)] text-white border-[var(--ui-color-teal-500)]'
+          ? 'bg-[var(--ui-color-teal-500)] text-[var(--ui-action-secondary-fg)] border-[var(--ui-color-teal-500)]'
           : 'bg-[var(--ui-surface)] text-[var(--ui-text-secondary)] border-[var(--ui-border)] hover:border-[var(--ui-border-strong)]',
         className,
       )}

@@ -64,11 +64,11 @@ export default function CalendarioSemana({
               `}
               onClick={() => onDiaClick(dia)}
             >
-              <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">
+              <span className="text-xs uppercase font-bold tracking-wider opacity-60">
                 {dia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
               </span>
               <span className="text-xl font-extrabold">{dia.getDate()}</span>
-              <button className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[9px] font-semibold text-primary mt-1 transition-opacity">
+              <button className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-xs font-semibold text-primary mt-1 transition-opacity">
                 <PlusCircle className="w-3 h-3" />
                 Criar
               </button>
@@ -78,7 +78,7 @@ export default function CalendarioSemana({
             <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[300px]">
               {eventosDia.length === 0 ? (
                 <div
-                  className="h-full flex items-center justify-center border-2 border-dashed border-border/40 rounded-xl p-4 text-center text-[10px] text-muted-foreground/40 select-none cursor-pointer"
+                  className="h-full flex items-center justify-center border-2 border-dashed border-border/40 rounded-xl p-4 text-center text-xs text-muted-foreground/40 select-none cursor-pointer"
                   onClick={() => onDiaClick(dia)}
                 >
                   Sem compromissos
@@ -93,7 +93,7 @@ export default function CalendarioSemana({
                       backgroundColor: `${evento.cor_categoria}12`,
                     }}
                     className={`
-                      p-2.5 rounded-xl border text-[11px] cursor-pointer hover:shadow-sm transition flex flex-col gap-1.5
+                      p-2.5 rounded-xl border text-xs cursor-pointer hover:shadow-sm transition flex flex-col gap-1.5
                       ${evento.concluido ? 'opacity-55 bg-muted border-muted-foreground/30' : ''}
                     `}
                   >
@@ -103,12 +103,12 @@ export default function CalendarioSemana({
                       {evento.titulo}
                     </div>
                     {evento.cliente_nome && (
-                      <div className="text-[9px] text-primary/80 font-medium mt-0.5">
+                      <div className="text-xs text-primary/80 font-medium mt-0.5">
                         Cliente: {evento.cliente_nome}
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-[9px] text-muted-foreground mt-1">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
                       {evento.hora_evento ? (
                         <div className="flex items-center gap-1 font-mono">
                           <Clock className="w-2.5 h-2.5" />

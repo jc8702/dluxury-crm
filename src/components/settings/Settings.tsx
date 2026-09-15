@@ -7,6 +7,7 @@ import type { ConfiguracaoPrecificacao } from '../../types/entities';
 import { Button, Card, CardHeader, CardTitle } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { Modal, Badge, Input, CardSkeleton } from '../../components/common';
+import Header from '../../components/layout/Header';
 
 const Settings: React.FC = () => {
   const { user, systemUsers, loadSystemUsers } = useAuth();
@@ -190,15 +191,10 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in flex flex-col gap-8">
-      <header>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
-          Configurações do Sistema
-        </h2>
-        <p className="text-muted-foreground text-sm">Gerencie permissões e dados de acesso.</p>
-      </header>
+    <div className="flex flex-col gap-4 max-w-[1440px] mx-auto w-full animate-fade-in">
+      <Header title="Configurações do Sistema" subtitle="Gerencie permissões e dados de acesso." />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Meus Dados */}
         <Card className="glass">
           <CardHeader>
@@ -239,7 +235,7 @@ const Settings: React.FC = () => {
         </Card>
 
         {/* Gestão de Equipe */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
           <Card className="glass">
             <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-4">
               <CardTitle>Gestão de Equipe</CardTitle>

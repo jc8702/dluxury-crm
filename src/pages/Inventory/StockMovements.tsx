@@ -50,25 +50,25 @@ const TYPE_META: Record<
 > = {
   entrada: {
     label: 'ENTRADA',
-    bg: '#E6F4EA',
-    fg: '#1E7E34',
-    border: '#A8D5B6',
+    bg: 'hsl(var(--success) / 0.14)',
+    fg: 'hsl(var(--success))',
+    border: 'hsl(var(--success) / 0.35)',
     icon: <ArrowDownCircle size={12} />,
     sign: '+',
   },
   saida: {
     label: 'SAÍDA',
-    bg: '#FBE9EB',
-    fg: '#B02A37',
-    border: '#F0A8AE',
+    bg: 'hsl(var(--destructive) / 0.14)',
+    fg: 'hsl(var(--destructive))',
+    border: 'hsl(var(--destructive) / 0.35)',
     icon: <ArrowUpCircle size={12} />,
     sign: '-',
   },
   ajuste: {
     label: 'AJUSTE',
-    bg: '#FFF4E0',
-    fg: '#8A5A00',
-    border: '#F0CB7A',
+    bg: 'hsl(var(--warning) / 0.14)',
+    fg: 'hsl(var(--warning))',
+    border: 'hsl(var(--warning) / 0.35)',
     icon: <Settings2 size={12} />,
     sign: '=',
   },
@@ -329,7 +329,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           padding: '16px',
           fontSize: '12px',
           fontWeight: 600,
-          color: active ? '#0D5FB8' : '#666666',
+          color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -364,17 +364,17 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         flexDirection: 'column',
         gap: '32px',
         padding: '24px',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        color: '#1A1A1A',
+        fontFamily: 'var(--font-body)',
+        color: 'hsl(var(--foreground))',
       }}
     >
       <style>{`
         .ds-stock-movements input:focus, .ds-stock-movements select:focus {
-          border-color: #0D66CC !important;
-          box-shadow: 0 0 0 3px #E0EFFF;
+          border-color: hsl(var(--primary)) !important;
+          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
         }
         .ds-stock-movements table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-stock-movements table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .ds-stock-movements table tbody tr:hover { background: hsl(var(--surface-hover)); box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05); }
       `}</style>
 
       <header
@@ -398,9 +398,9 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               width: 36,
               height: 36,
               borderRadius: '8px',
-              border: `1px solid #E0E0E0`,
-              background: '#FFFFFF',
-              color: '#666666',
+              border: `1px solid hsl(var(--border))`,
+              background: 'hsl(var(--card))',
+              color: 'hsl(var(--muted-foreground))',
               cursor: 'pointer',
             }}
           >
@@ -411,19 +411,19 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               style={{
                 fontSize: '32px',
                 fontWeight: 700,
-                color: '#1A1A1A',
+                color: 'hsl(var(--foreground))',
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}
             >
-              <History size={26} color={'#0D5FB8'} />
+              <History size={26} color={'hsl(var(--primary))'} />
               Histórico de Movimentações
             </h1>
             <p
               style={{
-                color: '#666666',
+                color: 'hsl(var(--muted-foreground))',
                 fontSize: '14px',
                 margin: `4px 0 0 0`,
               }}
@@ -444,8 +444,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={onNewEntry}
               style={{
                 ...primaryBtnStyle,
-                background: '#28A745',
-                boxShadow: `0 4px 12px #28A74540`,
+                background: 'hsl(var(--success))',
+                boxShadow: `0 4px 12px hsl(var(--success) / 0.25)`,
               }}
             >
               <ArrowDownCircle size={16} /> + Entrada
@@ -456,8 +456,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={onNewExit}
               style={{
                 ...primaryBtnStyle,
-                background: '#DC3545',
-                boxShadow: `0 4px 12px #DC354540`,
+                background: 'hsl(var(--destructive))',
+                boxShadow: `0 4px 12px hsl(var(--destructive) / 0.25)`,
               }}
             >
               <ArrowUpCircle size={16} /> - Saída
@@ -476,27 +476,27 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
         <MetricCard
           icon={<TrendingUp size={16} />}
           label="Entradas"
-          accent={'#28A745'}
+          accent={'hsl(var(--success))'}
           value={metrics.entradas}
           subtitle={formatCurrency(metrics.valorEntradas)}
         />
         <MetricCard
           icon={<TrendingDown size={16} />}
           label="Saídas"
-          accent={'#DC3545'}
+          accent={'hsl(var(--destructive))'}
           value={metrics.saidas}
           subtitle={formatCurrency(metrics.valorSaidas)}
         />
         <MetricCard
           icon={<Settings2 size={16} />}
           label="Ajustes"
-          accent={'#FFC107'}
+          accent={'hsl(var(--warning))'}
           value={metrics.ajustes}
         />
         <MetricCard
           icon={<History size={16} />}
           label="Total Movimentos"
-          accent={'#0D5FB8'}
+          accent={'hsl(var(--primary))'}
           value={metrics.total}
         />
       </section>
@@ -515,7 +515,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 margin: `0 0 16px 0`,
                 fontSize: '16px',
                 fontWeight: 700,
-                color: '#1A1A1A',
+                color: 'hsl(var(--foreground))',
               }}
             >
               Movimentação Diária (últimos 14 dias)
@@ -525,7 +525,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 style={{
                   padding: '32px',
                   textAlign: 'center',
-                  color: '#666666',
+                  color: 'hsl(var(--muted-foreground))',
                   fontSize: '14px',
                 }}
               >
@@ -535,26 +535,39 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               <div style={{ width: '100%', height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke={'#E0E0E0'} strokeDasharray="3 3" />
-                    <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#666666' }} />
-                    <YAxis tick={{ fontSize: 11, fill: '#666666' }} />
+                    <CartesianGrid stroke={'hsl(var(--border))'} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="dia"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{
-                        background: '#FFFFFF',
-                        border: `1px solid #E0E0E0`,
+                        background: 'hsl(var(--card))',
+                        border: `1px solid hsl(var(--border))`,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontFamily: 'var(--font-body)',
                       }}
                     />
                     <Legend
                       wrapperStyle={{
                         fontSize: '12px',
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontFamily: 'var(--font-body)',
                       }}
                     />
-                    <Bar dataKey="entrada" name="Entradas" fill={'#28A745'} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="saida" name="Saídas" fill={'#DC3545'} radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="entrada"
+                      name="Entradas"
+                      fill={'hsl(var(--success))'}
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="saida"
+                      name="Saídas"
+                      fill={'hsl(var(--destructive))'}
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -569,7 +582,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 margin: `0 0 16px 0`,
                 fontSize: '16px',
                 fontWeight: 700,
-                color: '#1A1A1A',
+                color: 'hsl(var(--foreground))',
               }}
             >
               Saldo Líquido (últimos 14 dias)
@@ -579,7 +592,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 style={{
                   padding: '32px',
                   textAlign: 'center',
-                  color: '#666666',
+                  color: 'hsl(var(--muted-foreground))',
                   fontSize: '14px',
                 }}
               >
@@ -589,29 +602,32 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               <div style={{ width: '100%', height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke={'#E0E0E0'} strokeDasharray="3 3" />
-                    <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#666666' }} />
-                    <YAxis tick={{ fontSize: 11, fill: '#666666' }} />
+                    <CartesianGrid stroke={'hsl(var(--border))'} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="dia"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{
-                        background: '#FFFFFF',
-                        border: `1px solid #E0E0E0`,
+                        background: 'hsl(var(--card))',
+                        border: `1px solid hsl(var(--border))`,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontFamily: 'var(--font-body)',
                       }}
                     />
                     <Legend
                       wrapperStyle={{
                         fontSize: '12px',
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontFamily: 'var(--font-body)',
                       }}
                     />
                     <Line
                       type="monotone"
                       dataKey="liquido"
                       name="Líquido"
-                      stroke={'#0D66CC'}
+                      stroke={'hsl(var(--primary))'}
                       strokeWidth={2}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
@@ -627,7 +643,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
       {topMaterials.length > 0 && (
         <section
           style={{
-            background: '#FFFFFF',
+            background: 'hsl(var(--card))',
             borderRadius: '12px',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
             padding: '24px',
@@ -638,7 +654,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               margin: `0 0 16px 0`,
               fontSize: '16px',
               fontWeight: 700,
-              color: '#1A1A1A',
+              color: 'hsl(var(--foreground))',
             }}
           >
             Top materiais com mais movimento
@@ -654,8 +670,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               <div
                 key={idx}
                 style={{
-                  background: '#FAFAFA',
-                  border: `1px solid #E0E0E0`,
+                  background: 'hsl(var(--surface-hover))',
+                  border: `1px solid hsl(var(--border))`,
                   borderRadius: '8px',
                   padding: '8px',
                 }}
@@ -663,7 +679,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 <div
                   style={{
                     fontSize: '11px',
-                    color: '#666666',
+                    color: 'hsl(var(--muted-foreground))',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
@@ -675,7 +691,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: '#1A1A1A',
+                    color: 'hsl(var(--foreground))',
                     marginBottom: 4,
                   }}
                 >
@@ -684,7 +700,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
                   <span
                     style={{
-                      color: '#28A745',
+                      color: 'hsl(var(--success))',
                       fontWeight: 600,
                     }}
                   >
@@ -692,7 +708,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   </span>
                   <span
                     style={{
-                      color: '#DC3545',
+                      color: 'hsl(var(--destructive))',
                       fontWeight: 600,
                     }}
                   >
@@ -707,7 +723,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
 
       <section
         style={{
-          background: '#FFFFFF',
+          background: 'hsl(var(--card))',
           borderRadius: '12px',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           padding: '24px',
@@ -728,7 +744,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              color: '#666666',
+              color: 'hsl(var(--muted-foreground))',
               fontSize: '14px',
               fontWeight: 600,
             }}
@@ -753,7 +769,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#666666',
+                color: 'hsl(var(--muted-foreground))',
                 pointerEvents: 'none',
               }}
             />
@@ -803,7 +819,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
           </select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Calendar size={14} color={'#666666'} />
+            <Calendar size={14} color={'hsl(var(--muted-foreground))'} />
             <input
               type="date"
               value={dateFrom}
@@ -816,7 +832,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             />
             <span
               style={{
-                color: '#666666',
+                color: 'hsl(var(--muted-foreground))',
                 fontSize: '12px',
               }}
             >
@@ -840,14 +856,14 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: '#DC3545',
-                border: `1px solid #E0E0E0`,
+                color: 'hsl(var(--destructive))',
+                border: `1px solid hsl(var(--border))`,
                 borderRadius: '8px',
                 padding: `8px 16px`,
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontFamily: 'var(--font-body)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -864,7 +880,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             width: '100%',
             overflowX: 'auto',
             borderRadius: '8px',
-            border: `1px solid #E0E0E0`,
+            border: `1px solid hsl(var(--border))`,
           }}
         >
           <table
@@ -879,8 +895,8 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
             <thead>
               <tr
                 style={{
-                  background: '#FAFAFA',
-                  borderBottom: `2px solid #E0E0E0`,
+                  background: 'hsl(var(--surface-hover))',
+                  borderBottom: `2px solid hsl(var(--border))`,
                 }}
               >
                 <SortHeader k="data" label="Data" />
@@ -900,7 +916,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                     style={{
                       padding: '48px',
                       textAlign: 'center',
-                      color: '#666666',
+                      color: 'hsl(var(--muted-foreground))',
                     }}
                   >
                     Carregando movimentações…
@@ -913,7 +929,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                     style={{
                       padding: '48px',
                       textAlign: 'center',
-                      color: '#666666',
+                      color: 'hsl(var(--muted-foreground))',
                     }}
                   >
                     <History
@@ -932,11 +948,11 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                   const meta = TYPE_META[m.tipo as MovementType] || TYPE_META.ajuste;
                   const mat = materiais.find((x) => x.id === m.material_id);
                   return (
-                    <tr key={m.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                    <tr key={m.id} style={{ borderBottom: `1px solid hsl(var(--border))` }}>
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                           fontSize: '12px',
                           whiteSpace: 'nowrap',
                         }}
@@ -965,7 +981,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                         <div
                           style={{
                             fontWeight: 600,
-                            color: '#1A1A1A',
+                            color: 'hsl(var(--foreground))',
                           }}
                         >
                           {m.material_nome || mat?.nome || '—'}
@@ -973,7 +989,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                         <div
                           style={{
                             fontSize: '11px',
-                            color: '#666666',
+                            color: 'hsl(var(--muted-foreground))',
                             fontFamily: 'monospace',
                             marginTop: 2,
                           }}
@@ -987,10 +1003,10 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                             fontWeight: 700,
                             color:
                               m.tipo === 'entrada'
-                                ? '#28A745'
+                                ? 'hsl(var(--success))'
                                 : m.tipo === 'saida'
-                                  ? '#DC3545'
-                                  : '#1A1A1A',
+                                  ? 'hsl(var(--destructive))'
+                                  : 'hsl(var(--foreground))',
                           }}
                         >
                           {meta.sign}
@@ -1001,7 +1017,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: '#666666',
+                              color: 'hsl(var(--muted-foreground))',
                               marginTop: 2,
                             }}
                           >
@@ -1012,7 +1028,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                           maxWidth: 240,
                         }}
                       >
@@ -1023,7 +1039,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: '#0D5FB8',
+                              color: 'hsl(var(--primary))',
                               fontWeight: 600,
                               marginTop: 2,
                             }}
@@ -1035,7 +1051,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                           fontSize: '12px',
                         }}
                       >
@@ -1046,7 +1062,7 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                           fontFamily: 'monospace',
                           fontSize: '11px',
                           whiteSpace: 'nowrap',
@@ -1085,15 +1101,15 @@ export const StockMovements: React.FC<StockMovementsProps> = ({
                 key={n}
                 onClick={() => setPage(n)}
                 style={{
-                  background: n === safePage ? '#0D66CC' : '#FFFFFF',
-                  color: n === safePage ? '#FFFFFF' : '#1A1A1A',
-                  border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                  background: n === safePage ? 'hsl(var(--primary))' : 'hsl(var(--card))',
+                  color: n === safePage ? 'hsl(var(--card))' : 'hsl(var(--foreground))',
+                  border: `1px solid ${n === safePage ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`,
                   borderRadius: '8px',
                   padding: `4px 16px`,
                   fontSize: '14px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontFamily: 'var(--font-body)',
                   minWidth: 36,
                 }}
               >
@@ -1123,8 +1139,8 @@ const MetricCard: React.FC<{
 }> = ({ icon, label, value, subtitle, accent }) => (
   <div
     style={{
-      background: '#FFFFFF',
-      border: `1px solid #E0E0E0`,
+      background: 'hsl(var(--card))',
+      border: `1px solid hsl(var(--border))`,
       borderRadius: '12px',
       boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
       padding: '16px',
@@ -1151,7 +1167,7 @@ const MetricCard: React.FC<{
       <div
         style={{
           fontSize: '11px',
-          color: '#666666',
+          color: 'hsl(var(--muted-foreground))',
           fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.04em',
@@ -1163,14 +1179,16 @@ const MetricCard: React.FC<{
         style={{
           fontSize: '20px',
           fontWeight: 700,
-          color: '#1A1A1A',
+          color: 'hsl(var(--foreground))',
           lineHeight: 1.1,
         }}
       >
         {value.toLocaleString('pt-BR')}
       </div>
       {subtitle && (
-        <div style={{ fontSize: '11px', color: '#666666', marginTop: 2 }}>{subtitle}</div>
+        <div style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>
+          {subtitle}
+        </div>
       )}
     </div>
   </div>
@@ -1178,14 +1196,14 @@ const MetricCard: React.FC<{
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: '#FFFFFF',
-  border: `1px solid #E0E0E0`,
+  background: 'hsl(var(--card))',
+  border: `1px solid hsl(var(--border))`,
   borderRadius: '8px',
   padding: `8px 16px`,
   paddingLeft: '48px',
   fontSize: '14px',
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  color: '#1A1A1A',
+  fontFamily: 'var(--font-body)',
+  color: 'hsl(var(--foreground))',
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -1194,15 +1212,15 @@ const thStyle: React.CSSProperties = {
   padding: '16px',
   fontSize: '12px',
   fontWeight: 600,
-  color: '#666666',
+  color: 'hsl(var(--muted-foreground))',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   textAlign: 'left',
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  background: '#0D66CC',
-  color: '#FFFFFF',
+  background: 'hsl(var(--primary))',
+  color: 'hsl(var(--card))',
   border: 'none',
   borderRadius: '8px',
   padding: `8px 24px`,
@@ -1215,9 +1233,9 @@ const primaryBtnStyle: React.CSSProperties = {
 };
 
 const secondaryBtnStyle: React.CSSProperties = {
-  background: '#FFFFFF',
-  color: '#1A1A1A',
-  border: `1px solid #E0E0E0`,
+  background: 'hsl(var(--card))',
+  color: 'hsl(var(--foreground))',
+  border: `1px solid hsl(var(--border))`,
   borderRadius: '8px',
   padding: `8px 24px`,
   fontSize: '14px',
@@ -1230,16 +1248,16 @@ const secondaryBtnStyle: React.CSSProperties = {
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: '#FFFFFF',
-    color: '#1A1A1A',
-    border: `1px solid #E0E0E0`,
+    background: 'hsl(var(--card))',
+    color: 'hsl(var(--foreground))',
+    border: `1px solid hsl(var(--border))`,
     borderRadius: '8px',
     padding: `4px 16px`,
     fontSize: '14px',
     fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontFamily: 'var(--font-body)',
   };
 }
 

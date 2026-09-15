@@ -49,7 +49,9 @@ export async function _resetRateLimitersForTests(): Promise<void> {
       for (const key of ['127.0.0.1', 'unknown']) {
         try {
           await limiter.delete(key);
-        } catch {}
+        } catch {
+          // O reset é best-effort: o limiter pode não ter a chave persistida.
+        }
       }
     }),
   );

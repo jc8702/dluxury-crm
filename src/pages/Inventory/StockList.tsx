@@ -30,23 +30,23 @@ const STATUS_META: Record<
 > = {
   em_estoque: {
     label: 'EM ESTOQUE',
-    bg: '#E6F4EA',
-    fg: '#1E7E34',
-    border: '#A8D5B6',
+    bg: 'hsl(var(--success) / 0.14)',
+    fg: 'hsl(var(--success))',
+    border: 'hsl(var(--success) / 0.35)',
     icon: <CheckCircle2 size={12} />,
   },
   baixo: {
     label: 'BAIXO',
-    bg: '#FFF4E0',
-    fg: '#8A5A00',
-    border: '#F0CB7A',
+    bg: 'hsl(var(--warning) / 0.14)',
+    fg: 'hsl(var(--warning))',
+    border: 'hsl(var(--warning) / 0.35)',
     icon: <AlertTriangle size={12} />,
   },
   fora: {
     label: 'FORA DE ESTOQUE',
-    bg: '#FBE9EB',
-    fg: '#B02A37',
-    border: '#F0A8AE',
+    bg: 'hsl(var(--destructive) / 0.14)',
+    fg: 'hsl(var(--destructive))',
+    border: 'hsl(var(--destructive) / 0.35)',
     icon: <AlertTriangle size={12} />,
   },
 };
@@ -268,7 +268,7 @@ export const StockList: React.FC<StockListProps> = ({
           padding: '16px',
           fontSize: '12px',
           fontWeight: 600,
-          color: active ? '#0D5FB8' : '#666666',
+          color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           cursor: 'pointer',
@@ -303,17 +303,17 @@ export const StockList: React.FC<StockListProps> = ({
         flexDirection: 'column',
         gap: '32px',
         padding: '24px',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        color: '#1A1A1A',
+        fontFamily: 'var(--font-body)',
+        color: 'hsl(var(--foreground))',
       }}
     >
       <style>{`
         .ds-stock-list input:focus, .ds-stock-list select:focus {
-          border-color: #0D66CC !important;
-          box-shadow: 0 0 0 3px #E0EFFF;
+          border-color: hsl(var(--primary)) !important;
+           box-shadow: 0 0 0 3px hsl(var(--primary) / 0.16);
         }
         .ds-stock-list table tbody tr { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
-        .ds-stock-list table tbody tr:hover { background: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+         .ds-stock-list table tbody tr:hover { background: hsl(var(--surface-hover)); box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05); }
         .ds-stock-list .ds-row-actions { opacity: 0.7; transition: opacity 0.15s ease; }
         .ds-stock-list table tbody tr:hover .ds-row-actions { opacity: 1; }
       `}</style>
@@ -332,7 +332,7 @@ export const StockList: React.FC<StockListProps> = ({
             style={{
               fontSize: '32px',
               fontWeight: 700,
-              color: '#1A1A1A',
+              color: 'hsl(var(--foreground))',
               margin: 0,
               lineHeight: 1.2,
               display: 'flex',
@@ -340,12 +340,12 @@ export const StockList: React.FC<StockListProps> = ({
               gap: '8px',
             }}
           >
-            <Package size={28} color={'#0D5FB8'} />
+            <Package size={28} color={'hsl(var(--primary))'} />
             Estoque de Materiais
           </h1>
           <p
             style={{
-              color: '#666666',
+              color: 'hsl(var(--muted-foreground))',
               fontSize: '14px',
               margin: `4px 0 0 0`,
             }}
@@ -390,8 +390,8 @@ export const StockList: React.FC<StockListProps> = ({
               }}
               style={{
                 ...primaryBtnStyle,
-                background: '#28A745',
-                boxShadow: `0 4px 12px #28A74540`,
+                background: 'hsl(var(--success))',
+                boxShadow: `0 4px 12px hsl(var(--success) / 0.25)`,
               }}
             >
               <ArrowDownCircle size={16} /> + Entrada
@@ -420,8 +420,8 @@ export const StockList: React.FC<StockListProps> = ({
               type="button"
               onClick={() => setStatusFilter(active ? 'all' : key)}
               style={{
-                background: active ? meta.bg : '#FFFFFF',
-                border: `1px solid ${active ? meta.border : '#E0E0E0'}`,
+                background: active ? meta.bg : 'hsl(var(--card))',
+                border: `1px solid ${active ? meta.border : 'hsl(var(--border))'}`,
                 borderRadius: '12px',
                 padding: '16px',
                 cursor: 'pointer',
@@ -430,7 +430,7 @@ export const StockList: React.FC<StockListProps> = ({
                 alignItems: 'center',
                 gap: '8px',
                 boxShadow: active ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontFamily: 'var(--font-body)',
                 transition: 'all 0.15s ease',
               }}
               aria-pressed={active}
@@ -465,7 +465,7 @@ export const StockList: React.FC<StockListProps> = ({
                   style={{
                     fontSize: '24px',
                     fontWeight: 700,
-                    color: '#1A1A1A',
+                    color: 'hsl(var(--foreground))',
                     lineHeight: 1.1,
                   }}
                 >
@@ -477,8 +477,8 @@ export const StockList: React.FC<StockListProps> = ({
         })}
         <div
           style={{
-            background: '#FFFFFF',
-            border: `1px solid #E0E0E0`,
+            background: 'hsl(var(--card))',
+            border: `1px solid hsl(var(--border))`,
             borderRadius: '12px',
             padding: '16px',
             display: 'flex',
@@ -494,8 +494,8 @@ export const StockList: React.FC<StockListProps> = ({
               width: 32,
               height: 32,
               borderRadius: '8px',
-              background: '#F0F7FF',
-              color: '#0D5FB8',
+              background: 'hsl(var(--primary) / 0.12)',
+              color: 'hsl(var(--primary))',
             }}
           >
             <Tag size={16} />
@@ -504,7 +504,7 @@ export const StockList: React.FC<StockListProps> = ({
             <div
               style={{
                 fontSize: '11px',
-                color: '#666666',
+                color: 'hsl(var(--muted-foreground))',
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
@@ -516,7 +516,7 @@ export const StockList: React.FC<StockListProps> = ({
               style={{
                 fontSize: '18px',
                 fontWeight: 700,
-                color: '#1A1A1A',
+                color: 'hsl(var(--foreground))',
                 lineHeight: 1.1,
               }}
             >
@@ -528,7 +528,7 @@ export const StockList: React.FC<StockListProps> = ({
 
       <section
         style={{
-          background: '#FFFFFF',
+          background: 'hsl(var(--card))',
           borderRadius: '12px',
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           padding: '24px',
@@ -549,7 +549,7 @@ export const StockList: React.FC<StockListProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              color: '#666666',
+              color: 'hsl(var(--muted-foreground))',
               fontSize: '14px',
               fontWeight: 600,
             }}
@@ -574,7 +574,7 @@ export const StockList: React.FC<StockListProps> = ({
                 left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#666666',
+                color: 'hsl(var(--muted-foreground))',
                 pointerEvents: 'none',
               }}
             />
@@ -646,14 +646,14 @@ export const StockList: React.FC<StockListProps> = ({
               onClick={clearFilters}
               style={{
                 background: 'transparent',
-                color: '#DC3545',
-                border: `1px solid #E0E0E0`,
+                color: 'hsl(var(--destructive))',
+                border: `1px solid hsl(var(--border))`,
                 borderRadius: '8px',
                 padding: `8px 16px`,
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontFamily: 'var(--font-body)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -670,7 +670,7 @@ export const StockList: React.FC<StockListProps> = ({
             width: '100%',
             overflowX: 'auto',
             borderRadius: '8px',
-            border: `1px solid #E0E0E0`,
+            border: `1px solid hsl(var(--border))`,
           }}
         >
           <table
@@ -685,8 +685,8 @@ export const StockList: React.FC<StockListProps> = ({
             <thead>
               <tr
                 style={{
-                  background: '#FAFAFA',
-                  borderBottom: `2px solid #E0E0E0`,
+                  background: 'hsl(var(--surface-hover))',
+                  borderBottom: `2px solid hsl(var(--border))`,
                 }}
               >
                 <SortHeader k="sku" label="SKU" />
@@ -700,7 +700,7 @@ export const StockList: React.FC<StockListProps> = ({
                     padding: '16px',
                     fontSize: '12px',
                     fontWeight: 600,
-                    color: '#666666',
+                    color: 'hsl(var(--muted-foreground))',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     textAlign: 'right',
@@ -718,7 +718,7 @@ export const StockList: React.FC<StockListProps> = ({
                     style={{
                       padding: '48px',
                       textAlign: 'center',
-                      color: '#666666',
+                      color: 'hsl(var(--muted-foreground))',
                     }}
                   >
                     Carregando materiais…
@@ -731,7 +731,7 @@ export const StockList: React.FC<StockListProps> = ({
                     style={{
                       padding: '48px',
                       textAlign: 'center',
-                      color: '#666666',
+                      color: 'hsl(var(--muted-foreground))',
                     }}
                   >
                     <Package
@@ -751,13 +751,13 @@ export const StockList: React.FC<StockListProps> = ({
                   const estoqueAtual = Number(material.estoque_atual || 0);
                   const estoqueMin = Number(material.estoque_minimo || 0);
                   return (
-                    <tr key={material.id} style={{ borderBottom: `1px solid #E0E0E0` }}>
+                    <tr key={material.id} style={{ borderBottom: `1px solid hsl(var(--border))` }}>
                       <td style={{ padding: '16px' }}>
                         <div
                           style={{
                             fontFamily: 'monospace',
                             fontWeight: 700,
-                            color: '#0D5FB8',
+                            color: 'hsl(var(--primary))',
                             fontSize: '12px',
                           }}
                         >
@@ -768,7 +768,7 @@ export const StockList: React.FC<StockListProps> = ({
                         <div
                           style={{
                             fontWeight: 600,
-                            color: '#1A1A1A',
+                            color: 'hsl(var(--foreground))',
                           }}
                         >
                           {material.nome || 'Sem nome'}
@@ -777,7 +777,7 @@ export const StockList: React.FC<StockListProps> = ({
                           <div
                             style={{
                               fontSize: '12px',
-                              color: '#666666',
+                              color: 'hsl(var(--muted-foreground))',
                               marginTop: 2,
                             }}
                           >
@@ -788,7 +788,7 @@ export const StockList: React.FC<StockListProps> = ({
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                         }}
                       >
                         {categoria?.nome || '—'}
@@ -797,14 +797,14 @@ export const StockList: React.FC<StockListProps> = ({
                         <div
                           style={{
                             fontWeight: 700,
-                            color: '#1A1A1A',
+                            color: 'hsl(var(--foreground))',
                           }}
                         >
                           {estoqueAtual.toLocaleString('pt-BR')}{' '}
                           <span
                             style={{
                               fontWeight: 400,
-                              color: '#666666',
+                              color: 'hsl(var(--muted-foreground))',
                               fontSize: '11px',
                             }}
                           >
@@ -815,7 +815,7 @@ export const StockList: React.FC<StockListProps> = ({
                           <div
                             style={{
                               fontSize: '11px',
-                              color: '#666666',
+                              color: 'hsl(var(--muted-foreground))',
                               marginTop: 2,
                             }}
                           >
@@ -826,7 +826,7 @@ export const StockList: React.FC<StockListProps> = ({
                       <td
                         style={{
                           padding: '16px',
-                          color: '#666666',
+                          color: 'hsl(var(--muted-foreground))',
                           fontSize: '12px',
                         }}
                       >
@@ -835,7 +835,7 @@ export const StockList: React.FC<StockListProps> = ({
                             <MapPin size={11} /> {localizacao}
                           </span>
                         ) : (
-                          <span style={{ color: '#CCCCCC' }}>—</span>
+                          <span style={{ color: 'hsl(var(--muted-foreground))' }}>—</span>
                         )}
                       </td>
                       <td style={{ padding: '16px' }}>
@@ -867,7 +867,11 @@ export const StockList: React.FC<StockListProps> = ({
                               onClick={() => onEntry(material)}
                               aria-label={`Registrar entrada de ${material.nome}`}
                               title="Registrar entrada"
-                              style={iconBtn('#28A745', '#E6F4EA', '#A8D5B6')}
+                              style={iconBtn(
+                                'hsl(var(--success))',
+                                'hsl(var(--success) / 0.14)',
+                                'hsl(var(--success) / 0.35)',
+                              )}
                             >
                               <ArrowDownCircle size={12} />
                             </button>
@@ -878,7 +882,11 @@ export const StockList: React.FC<StockListProps> = ({
                               onClick={() => onEdit(material)}
                               aria-label={`Editar ${material.nome}`}
                               title="Editar"
-                              style={iconBtn('#0D5FB8', '#F0F7FF', '#E0EFFF')}
+                              style={iconBtn(
+                                'hsl(var(--primary))',
+                                'hsl(var(--primary) / 0.12)',
+                                'hsl(var(--primary) / 0.3)',
+                              )}
                             >
                               <Edit3 size={12} />
                             </button>
@@ -891,7 +899,11 @@ export const StockList: React.FC<StockListProps> = ({
                               }
                               aria-label={`Excluir ${material.nome}`}
                               title="Excluir"
-                              style={iconBtn('#DC3545', '#FBE9EB', '#F0A8AE')}
+                              style={iconBtn(
+                                'hsl(var(--destructive))',
+                                'hsl(var(--destructive) / 0.14)',
+                                'hsl(var(--destructive) / 0.35)',
+                              )}
                             >
                               <Trash2 size={12} />
                             </button>
@@ -928,15 +940,15 @@ export const StockList: React.FC<StockListProps> = ({
                 key={n}
                 onClick={() => setPage(n)}
                 style={{
-                  background: n === safePage ? '#0D66CC' : '#FFFFFF',
-                  color: n === safePage ? '#FFFFFF' : '#1A1A1A',
-                  border: `1px solid ${n === safePage ? '#0D66CC' : '#E0E0E0'}`,
+                  background: n === safePage ? 'hsl(var(--primary))' : 'hsl(var(--card))',
+                  color: n === safePage ? 'hsl(var(--card))' : 'hsl(var(--foreground))',
+                  border: `1px solid ${n === safePage ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`,
                   borderRadius: '8px',
                   padding: `4px 16px`,
                   fontSize: '14px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontFamily: 'var(--font-body)',
                   minWidth: 36,
                 }}
               >
@@ -959,21 +971,21 @@ export const StockList: React.FC<StockListProps> = ({
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: '#FFFFFF',
-  border: `1px solid #E0E0E0`,
+  background: 'hsl(var(--card))',
+  border: `1px solid hsl(var(--border))`,
   borderRadius: '8px',
   padding: `8px 16px`,
   paddingLeft: '48px',
   fontSize: '14px',
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  color: '#1A1A1A',
+  fontFamily: 'var(--font-body)',
+  color: 'hsl(var(--foreground))',
   outline: 'none',
   boxSizing: 'border-box',
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  background: '#0D66CC',
-  color: '#FFFFFF',
+  background: 'hsl(var(--primary))',
+  color: 'hsl(var(--card))',
   border: 'none',
   borderRadius: '8px',
   padding: `8px 24px`,
@@ -983,13 +995,13 @@ const primaryBtnStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '8px',
   cursor: 'pointer',
-  boxShadow: `0 4px 12px #0D66CC40`,
+  boxShadow: `0 4px 12px hsl(var(--primary) / 0.25)`,
 };
 
 const secondaryBtnStyle: React.CSSProperties = {
-  background: '#FFFFFF',
-  color: '#1A1A1A',
-  border: `1px solid #E0E0E0`,
+  background: 'hsl(var(--card))',
+  color: 'hsl(var(--foreground))',
+  border: `1px solid hsl(var(--border))`,
   borderRadius: '8px',
   padding: `8px 24px`,
   fontSize: '14px',
@@ -1013,22 +1025,22 @@ function iconBtn(color: string, bgHover: string, border: string): React.CSSPrope
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'background-color 0.15s ease',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontFamily: 'var(--font-body)',
   };
 }
 
 function paginationBtn(disabled: boolean): React.CSSProperties {
   return {
-    background: '#FFFFFF',
-    color: '#1A1A1A',
-    border: `1px solid #E0E0E0`,
+    background: 'hsl(var(--card))',
+    color: 'hsl(var(--foreground))',
+    border: `1px solid hsl(var(--border))`,
     borderRadius: '8px',
     padding: `4px 16px`,
     fontSize: '14px',
     fontWeight: 600,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1,
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontFamily: 'var(--font-body)',
   };
 }
 

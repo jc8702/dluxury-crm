@@ -2,7 +2,12 @@ import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import type { LayoutSimulacao, PecaSimulacao, SimulationProgram, CncConfig } from '../../domain/types';
+import type {
+  LayoutSimulacao,
+  PecaSimulacao,
+  SimulationProgram,
+  CncConfig,
+} from '../../domain/types';
 import Rulers3D from './Rulers3D';
 import CotasDim from './CotasDim';
 import ToolpathPreview from './ToolpathPreview';
@@ -11,7 +16,11 @@ import CncMachine3D from './CncMachine3D';
 import StockRemoval3D from './StockRemoval3D';
 import RiskZones3D from './RiskZones3D';
 import GhostPreview3D from './GhostPreview3D';
-import { obterEstadoNoInstante, obterFixturesPadrao, TOOL_DEFAULT } from '../../domain/simulationEngine';
+import {
+  obterEstadoNoInstante,
+  obterFixturesPadrao,
+  TOOL_DEFAULT,
+} from '../../domain/simulationEngine';
 import type { GhostPreviewItem } from '../../domain/types';
 
 interface CanvasSimulador3DProps {
@@ -35,9 +44,20 @@ interface CanvasSimulador3DProps {
 }
 
 const CORES = [
-  '#3B82F6', '#EF4444', '#10B981', '#8B5CF6',
-  '#F97316', '#06B6D4', '#EC4899', '#84CC16', '#14B8A6',
-  '#D946EF', '#F43F5E', '#0EA5E9', '#A855F7', '#22C55E',
+  '#3B82F6',
+  '#EF4444',
+  '#10B981',
+  '#8B5CF6',
+  '#F97316',
+  '#06B6D4',
+  '#EC4899',
+  '#84CC16',
+  '#14B8A6',
+  '#D946EF',
+  '#F43F5E',
+  '#0EA5E9',
+  '#A855F7',
+  '#22C55E',
 ];
 
 const GL_CONFIG = { antialias: true };
@@ -52,7 +72,13 @@ const CAMERA_CONFIG = {
 const ORBIT_MIN_DIST = 0.5;
 const ORBIT_MAX_DIST = 50;
 
-function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
+function PecaBlock({
+  peca,
+  cor,
+  escala,
+  selecionada,
+  onClick,
+}: {
   peca: PecaSimulacao;
   cor: string;
   escala: number;
@@ -70,9 +96,16 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
     <group>
       <mesh
         position={[px, py, pz]}
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
-        onPointerOut={() => { document.body.style.cursor = 'default'; }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        onPointerOver={() => {
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'default';
+        }}
       >
         <boxGeometry args={[c, e, l]} />
         <meshStandardMaterial
@@ -88,18 +121,20 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
         </lineSegments>
       </mesh>
       <Html position={[px, py + e + 0.04, pz]} center style={{ pointerEvents: 'none' }}>
-        <div style={{
-          background: selecionada ? '#E2AC00' : 'rgba(15,23,42,0.85)',
-          color: selecionada ? '#0f172a' : '#f8fafc',
-          fontSize: '11px',
-          padding: '2px 5px',
-          borderRadius: '4px',
-          whiteSpace: 'nowrap',
-          fontFamily: 'monospace',
-          fontWeight: 700,
-          border: selecionada ? '1px solid #E2AC00' : '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-        }}>
+        <div
+          style={{
+            background: selecionada ? '#E2AC00' : 'rgba(15,23,42,0.85)',
+            color: selecionada ? '#0f172a' : '#f8fafc',
+            fontSize: '11px',
+            padding: '2px 5px',
+            borderRadius: '4px',
+            whiteSpace: 'nowrap',
+            fontFamily: 'monospace',
+            fontWeight: 700,
+            border: selecionada ? '1px solid #E2AC00' : '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+          }}
+        >
           {peca.nome} {peca.comprimento}×{peca.largura}
         </div>
       </Html>
@@ -107,7 +142,11 @@ function PecaBlock({ peca, cor, escala, selecionada, onClick }: {
   );
 }
 
-function SceneContent({ layout, onSheetClick, mostrarStock }: {
+function SceneContent({
+  layout,
+  onSheetClick,
+  mostrarStock,
+}: {
   layout: LayoutSimulacao;
   onSheetClick: () => void;
   mostrarStock: boolean;
@@ -213,10 +252,13 @@ const Cena3D = React.memo(function Cena3D({
     onSelecionarPecaRef.current?.(null);
   }, [onSelecionarPecaRef]);
 
-  const handleClickPeca = useCallback((peca: PecaSimulacao) => {
-    setPecaSelecionada(peca.id);
-    onSelecionarPecaRef.current?.(peca);
-  }, [onSelecionarPecaRef]);
+  const handleClickPeca = useCallback(
+    (peca: PecaSimulacao) => {
+      setPecaSelecionada(peca.id);
+      onSelecionarPecaRef.current?.(peca);
+    },
+    [onSelecionarPecaRef],
+  );
 
   return (
     <>
@@ -274,12 +316,23 @@ const Cena3D = React.memo(function Cena3D({
 
       {/* 4. RÉGUAS E GRADES MILIMÉTRICAS */}
       {habilitarGrade && (
-        <Rulers3D sheetWidth={sheetW} sheetDepth={sheetD} escala={escala} cenaSize={Math.max(sheetW, sheetD)} habilitarGrade />
+        <Rulers3D
+          sheetWidth={sheetW}
+          sheetDepth={sheetD}
+          escala={escala}
+          cenaSize={Math.max(sheetW, sheetD)}
+          habilitarGrade
+        />
       )}
 
       {/* 5. COTAS DIMENSIONAIS */}
       {habilitarCotas && (
-        <CotasDim layout={layout} escala={escala} pecaSelecionada={pecaSelecionadaObj} cenaSize={Math.max(sheetW, sheetD)} />
+        <CotasDim
+          layout={layout}
+          escala={escala}
+          pecaSelecionada={pecaSelecionadaObj}
+          cenaSize={Math.max(sheetW, sheetD)}
+        />
       )}
 
       {/* 6. RETALHOS E SOBRAS DE CHAPA */}
@@ -312,7 +365,11 @@ const Cena3D = React.memo(function Cena3D({
   );
 });
 
-function GerenciadorCamera({ layout, focoPosicao, controlsRef }: {
+function GerenciadorCamera({
+  layout,
+  focoPosicao,
+  controlsRef,
+}: {
   layout: LayoutSimulacao | null;
   focoPosicao?: { x: number; y: number; z: number } | null;
   controlsRef: React.RefObject<any>;
@@ -444,8 +501,8 @@ export default function CanvasSimulador3D({
 
   if (!layout) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#0D1117] rounded-xl border border-[#1F2937]">
-        <p className="text-[#6B7280] text-sm">NENHUM LAYOUT CARREGADO</p>
+      <div className="w-full h-full flex items-center justify-center bg-background rounded-xl border border-border">
+        <p className="text-muted-foreground text-sm">NENHUM LAYOUT CARREGADO</p>
       </div>
     );
   }
@@ -457,16 +514,16 @@ export default function CanvasSimulador3D({
   const cz = sheetD / 2;
 
   return (
-    <div className="w-full h-full rounded-xl overflow-hidden border border-[#1F2937] bg-[#0D1117] relative">
+    <div className="w-full h-full rounded-xl overflow-hidden border border-border bg-background relative">
       <Canvas camera={CAMERA_CONFIG} gl={GL_CONFIG} onCreated={handleCreated}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[15, 20, 15]} intensity={0.8} />
         <directionalLight position={[-10, 10, -10]} intensity={0.3} />
-        
+
         {scene}
-        
+
         <GerenciadorCamera layout={layout} focoPosicao={focoPosicao} controlsRef={controlsRef} />
-        
+
         <OrbitControls
           ref={controlsRef}
           makeDefault

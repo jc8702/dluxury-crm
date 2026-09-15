@@ -41,7 +41,14 @@ import type {
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const COLORS = ['#28A745', '#0D66CC', '#E2AC00', '#DC3545', '#00A99D', '#17A2B8'];
+const COLORS = [
+  'hsl(var(--success))',
+  'hsl(var(--primary))',
+  'hsl(var(--accent))',
+  'hsl(var(--destructive))',
+  'hsl(var(--secondary))',
+  'hsl(var(--info))',
+];
 
 export default function FinanceiroRentabilidadePage() {
   const [periodo, setPeriodo] = useState('mes');
@@ -135,7 +142,7 @@ export default function FinanceiroRentabilidadePage() {
   const prejuizados = projetos.filter((p) => p.status === 'prejuizo').slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-[var(--ui-color-warning-soft)]">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 font-sans selection:bg-[hsl(var(--warning) / 0.14)]">
       <div className="max-w-[1600px] mx-auto animate-in fade-in duration-700 space-y-8">
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border">
@@ -149,7 +156,7 @@ export default function FinanceiroRentabilidadePage() {
               </Link>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none mt-2">
-              Rentabilidade & <span className="text-[hsl(38_92%_35%)]">Margem Real</span>
+              Rentabilidade & <span className="text-[hsl(var(--warning))]">Margem Real</span>
             </h1>
             <p className="text-muted-foreground mt-2 text-sm max-w-2xl leading-relaxed">
               Análise comparativa real vs. orçado das OPs concluídas para identificar perdas
@@ -240,10 +247,10 @@ export default function FinanceiroRentabilidadePage() {
 
             {/* Alertas Críticos */}
             {alertas.length > 0 && (
-              <div className="p-5 rounded-2xl border border-[hsl(var(--warning))]/20 bg-[var(--ui-color-warning-soft)] flex items-start gap-4">
-                <AlertTriangle className="text-[hsl(38_92%_35%)] w-6 h-6 shrink-0 mt-0.5" />
+              <div className="p-5 rounded-2xl border border-[hsl(var(--warning))]/20 bg-[hsl(var(--warning) / 0.14)] flex items-start gap-4">
+                <AlertTriangle className="text-[hsl(var(--warning))] w-6 h-6 shrink-0 mt-0.5" />
                 <div className="space-y-2 flex-1">
-                  <h3 className="text-sm font-bold text-[hsl(38_92%_35%)] uppercase tracking-wider">
+                  <h3 className="text-sm font-bold text-[hsl(var(--warning))] uppercase tracking-wider">
                     Desvios de Margem Detectados
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-sm text-foreground">
@@ -323,7 +330,7 @@ export default function FinanceiroRentabilidadePage() {
                         type="monotone"
                         dataKey="margem_estimada"
                         name="Margem Estimada"
-                        stroke="#0D66CC"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={3}
                         dot={false}
                       />
@@ -331,7 +338,7 @@ export default function FinanceiroRentabilidadePage() {
                         type="monotone"
                         dataKey="margem_real"
                         name="Margem Real"
-                        stroke="#28A745"
+                        stroke="hsl(var(--success))"
                         strokeWidth={3}
                         dot={false}
                         strokeDasharray="5 5"
@@ -414,7 +421,7 @@ export default function FinanceiroRentabilidadePage() {
                             {p.numero_op}
                             <button
                               onClick={() => abrirEdicao(p)}
-                              className="p-1 text-muted-foreground hover:text-[hsl(38_92%_35%)] rounded transition-all cursor-pointer"
+                              className="p-1 text-muted-foreground hover:text-[hsl(var(--warning))] rounded transition-all cursor-pointer"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
@@ -461,7 +468,7 @@ export default function FinanceiroRentabilidadePage() {
                             {p.numero_op}
                             <button
                               onClick={() => abrirEdicao(p)}
-                              className="p-1 text-muted-foreground hover:text-[hsl(38_92%_35%)] rounded transition-all cursor-pointer"
+                              className="p-1 text-muted-foreground hover:text-[hsl(var(--warning))] rounded transition-all cursor-pointer"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
@@ -488,7 +495,7 @@ export default function FinanceiroRentabilidadePage() {
             {/* Clientes Table */}
             <div className="glass p-6 md:p-8 rounded-2xl border border-border">
               <h3 className="text-sm font-bold uppercase tracking-widest mb-6 italic flex items-center gap-2">
-                <Users className="text-[hsl(38_92%_35%)] w-4.5 h-4.5" /> Métricas de Margem por
+                <Users className="text-[hsl(var(--warning))] w-4.5 h-4.5" /> Métricas de Margem por
                 Cliente
               </h3>
               <div className="overflow-x-auto">
@@ -536,7 +543,7 @@ export default function FinanceiroRentabilidadePage() {
                             {fmt(cli.margem_total)}
                           </td>
                           <td
-                            className={`py-3.5 px-4 text-right font-bold ${(cli.margem_media_percentual ?? 0) >= 30 ? 'text-[hsl(var(--success))]' : (cli.margem_media_percentual ?? 0) > 0 ? 'text-[hsl(38_92%_35%)]' : 'text-[hsl(var(--destructive))]'}`}
+                            className={`py-3.5 px-4 text-right font-bold ${(cli.margem_media_percentual ?? 0) >= 30 ? 'text-[hsl(var(--success))]' : (cli.margem_media_percentual ?? 0) > 0 ? 'text-[hsl(var(--warning))]' : 'text-[hsl(var(--destructive))]'}`}
                           >
                             {(cli.margem_media_percentual ?? 0).toFixed(1)}%
                           </td>
@@ -544,10 +551,10 @@ export default function FinanceiroRentabilidadePage() {
                             <span
                               className={`px-2.5 py-1 rounded text-sm font-black ${
                                 cli.score_rentabilidade >= 8
-                                  ? 'bg-[var(--ui-color-success-soft)] text-[hsl(var(--success))] border border-[hsl(var(--success))]/20'
+                                  ? 'bg-[hsl(var(--success) / 0.12)] text-[hsl(var(--success))] border border-[hsl(var(--success))]/20'
                                   : cli.score_rentabilidade >= 5
-                                    ? 'bg-[var(--ui-color-warning-soft)] text-[hsl(38_92%_35%)] border border-[hsl(var(--warning))]/20'
-                                    : 'bg-[var(--ui-color-danger-soft)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/20'
+                                    ? 'bg-[hsl(var(--warning) / 0.14)] text-[hsl(var(--warning))] border border-[hsl(var(--warning))]/20'
+                                    : 'bg-[hsl(var(--destructive) / 0.12)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/20'
                               }`}
                             >
                               {cli.score_rentabilidade}/10
@@ -571,7 +578,7 @@ export default function FinanceiroRentabilidadePage() {
             {/* Modal Header */}
             <div className="p-6 border-b border-border flex justify-between items-center bg-surface/50">
               <div>
-                <span className="text-xs font-bold text-[hsl(38_92%_35%)] uppercase tracking-widest">
+                <span className="text-xs font-bold text-[hsl(var(--warning))] uppercase tracking-widest">
                   Ajuste de Rentabilidade
                 </span>
                 <h3 className="text-lg font-black text-foreground uppercase">
@@ -677,7 +684,7 @@ export default function FinanceiroRentabilidadePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2.5 bg-[hsl(var(--warning))] text-black hover:bg-[hsl(var(--warning))]/90 font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 bg-[hsl(var(--warning))] text-foreground hover:bg-[hsl(var(--warning))]/90 font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar Ajustes'}
                 </button>

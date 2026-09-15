@@ -117,7 +117,7 @@ export default function FinanceiroDREPage() {
           {sectionKey && children && (
             <Button
               onClick={() => toggleSection(sectionKey)}
-              className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-black' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'}`}
+              className={`p-2 rounded-lg transition-colors ${expandedSections[sectionKey] ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'}`}
             >
               <TrendingUp
                 className={`w-4 h-4 transition-transform ${expandedSections[sectionKey] ? 'rotate-90' : ''}`}
@@ -164,7 +164,7 @@ export default function FinanceiroDREPage() {
   );
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto min-h-screen space-y-8 animate-fade-in">
+    <div className="flex flex-col gap-4 max-w-[1440px] mx-auto w-full animate-fade-in">
       <Button
         variant="ghost"
         onClick={() => (window.location.hash = '#/financeiro')}
@@ -173,8 +173,8 @@ export default function FinanceiroDREPage() {
         <ArrowLeft size={16} /> Voltar ao Painel Financeiro
       </Button>
 
-      {/* Header */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
+      {/* Header — responsivo, alinhado ao padrão 1440px */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div>
           <h1 className="text-[var(--ui-text-2xl)] font-semibold tracking-tight text-[var(--ui-text-primary)] flex items-center gap-3">
             <PieChart className="text-primary w-5 h-5" />
@@ -206,26 +206,28 @@ export default function FinanceiroDREPage() {
             </span>
           </Button>
 
-          {/* Filtro de Período Industrial */}
-          <div className="flex items-center gap-3 glass p-1 rounded-2xl border border-border">
+          {/* Filtro de Período Industrial — colapsa em mobile */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 glass p-1 rounded-2xl border border-border w-full sm:w-auto">
             <input
               type="date"
-              className="bg-transparent border-none text-sm font-semibold text-white px-4 py-2 focus:ring-0 w-40"
+              aria-label="Data início DRE"
+              className="bg-transparent border-none text-sm font-semibold text-foreground px-3 py-2 focus:ring-0 focus:border-primary focus:outline-none w-full sm:w-40 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/20"
               value={periodo.inicio}
               onChange={(e) => setPeriodo((p) => ({ ...p, inicio: e.target.value }))}
             />
-            <span className="text-sm font-semibold text-[var(--ui-text-secondary)] opacity-60">
+            <span className="hidden sm:inline text-sm font-semibold text-[var(--ui-text-secondary)] opacity-60">
               até
             </span>
             <input
               type="date"
-              className="bg-transparent border-none text-sm font-semibold text-white px-4 py-2 focus:ring-0 w-40"
+              aria-label="Data fim DRE"
+              className="bg-transparent border-none text-sm font-semibold text-foreground px-3 py-2 focus:ring-0 focus:border-primary focus:outline-none w-full sm:w-40 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/20"
               value={periodo.fim}
               onChange={(e) => setPeriodo((p) => ({ ...p, fim: e.target.value }))}
             />
             <Button
               variant="primary"
-              className="h-10 px-6 rounded-lg text-sm font-semibold flex items-center gap-2"
+              className="h-10 px-6 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 shrink-0"
               onClick={() => loadDRE(periodo.inicio, periodo.fim, regime)}
             >
               <Calendar className="w-4 h-4" /> Aplicar
@@ -234,7 +236,7 @@ export default function FinanceiroDREPage() {
         </div>
       </div>
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 opacity-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 opacity-20">
           <div className="lg:col-span-8 space-y-4">
             <div className="h-20 bg-muted rounded-xl animate-pulse" />
             <div className="h-60 bg-muted rounded-xl animate-pulse" />
@@ -245,14 +247,13 @@ export default function FinanceiroDREPage() {
           </div>
         </div>
       ) : !data ? (
-        <div className="glass p-20 rounded-2xl text-center">
-          <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-          <p className="text-sm font-semibold text-muted-foreground">
-            Sem dados operacionais para o período
-          </p>
+        <div className="empty-state">
+          <TrendingDown className="w-12 h-12" />
+          <p className="text-sm font-semibold">Sem dados operacionais para o período</p>
+          <p className="text-xs">Ajuste o filtro de período acima e tente novamente.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* DRE Principal */}
           <div className="lg:col-span-8">
             <Divider label="FLUXO DE ENTRADAS" />
@@ -269,7 +270,7 @@ export default function FinanceiroDREPage() {
               ))}
             </Block>
 
-            <div className="p-5 px-8 mb-8 bg-[var(--ui-color-success-soft)] rounded-2xl border border-[hsl(var(--success))]/20 flex justify-between items-center group transition-all hover:bg-[var(--ui-color-success-soft)]/70">
+            <div className="p-5 px-8 mb-8 bg-[hsl(var(--success) / 0.12)] rounded-2xl border border-[hsl(var(--success))]/20 flex justify-between items-center group transition-all hover:bg-[hsl(var(--success) / 0.12)]/70">
               <span className="text-xs font-black text-[hsl(var(--success))] uppercase tracking-[0.3em] italic flex items-center gap-2">
                 <Minus className="w-4 h-4 opacity-40 rotate-90" /> RECEITA LÍQUIDA OPERACIONAL
               </span>
@@ -283,7 +284,7 @@ export default function FinanceiroDREPage() {
             <Block
               label="MATÉRIA-PRIMA & MÃÆO DE OBRA"
               value={data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0}
-              colorClass="border-[hsl(38_92%_35%)]"
+              colorClass="border-[hsl(var(--warning))]"
               isNegative
               sectionKey="custos"
               sublabel="Custos Diretos Atribuíveis (Classes 2.1 e 2.2)"
@@ -294,7 +295,7 @@ export default function FinanceiroDREPage() {
             </Block>
 
             <div
-              className={`p-5 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.lucro_bruto >= 0 ? 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success))]/20' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/20'}`}
+              className={`p-5 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.lucro_bruto >= 0 ? 'bg-[hsl(var(--success) / 0.12)] border-[hsl(var(--success))]/20' : 'bg-[hsl(var(--destructive) / 0.12)] border-[hsl(var(--destructive))]/20'}`}
             >
               <span className="text-xs font-black uppercase tracking-[0.3em] italic flex flex-col">
                 <span
@@ -354,7 +355,7 @@ export default function FinanceiroDREPage() {
             </Block>
 
             <div
-              className={`p-6 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.ebitda >= 0 ? 'bg-[var(--ui-color-primary-50)] border-primary/20' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/20'}`}
+              className={`p-6 px-8 mb-8 rounded-2xl border flex justify-between items-center transition-all ${data.ebitda >= 0 ? 'bg-[hsl(var(--primary) / 0.12)] border-primary/20' : 'bg-[hsl(var(--destructive) / 0.12)] border-[hsl(var(--destructive))]/20'}`}
             >
               <span className="text-xs font-black uppercase tracking-[0.3em] italic flex flex-col">
                 <span
@@ -388,7 +389,7 @@ export default function FinanceiroDREPage() {
             />
 
             <div
-              className={`p-10 px-12 mt-12 rounded-[2rem] border-2 flex flex-col md:flex-row justify-between items-center relative overflow-hidden transition-all ${data.lucro_liquido >= 0 ? 'bg-[var(--ui-color-success-soft)] border-[hsl(var(--success))]/30' : 'bg-[var(--ui-color-danger-soft)] border-[hsl(var(--destructive))]/30'}`}
+              className={`p-10 px-12 mt-12 rounded-[2rem] border-2 flex flex-col md:flex-row justify-between items-center relative overflow-hidden transition-all ${data.lucro_liquido >= 0 ? 'bg-[hsl(var(--success) / 0.12)] border-[hsl(var(--success))]/30' : 'bg-[hsl(var(--destructive) / 0.12)] border-[hsl(var(--destructive))]/30'}`}
             >
               {/* Background Glow */}
               <div
@@ -420,8 +421,8 @@ export default function FinanceiroDREPage() {
             </div>
           </div>
 
-          {/* Sidebar de Inteligência Financeira */}
-          <div className="lg:col-span-4 space-y-8 sticky top-8">
+          {/* Sidebar de Inteligência Financeira — sticky com overflow seguro */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1 custom-scrollbar">
             <div className="glass p-8 rounded-2xl border border-border space-y-8">
               <div className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" /> Painel de Margens
@@ -431,8 +432,8 @@ export default function FinanceiroDREPage() {
                 {
                   label: 'Margem Bruta',
                   value: data.margem_bruta,
-                  color: 'text-[hsl(38_92%_35%)]',
-                  bg: 'bg-[hsl(38_92%_35%)]',
+                  color: 'text-[hsl(var(--warning))]',
+                  bg: 'bg-[hsl(var(--warning))]',
                 },
                 {
                   label: 'Margem EBITDA',
@@ -484,7 +485,7 @@ export default function FinanceiroDREPage() {
                   value:
                     data.detalhes?.custos_diretos?.reduce((s: any, r: any) => s + r.valor, 0) || 0,
                   icon: <Minus className="w-4 h-4" />,
-                  color: 'text-[hsl(38_92%_35%)]',
+                  color: 'text-[hsl(var(--warning))]',
                 },
                 {
                   label: 'Total Despesas',
@@ -527,7 +528,7 @@ export default function FinanceiroDREPage() {
               ))}
             </div>
 
-            <div className="glass p-6 rounded-2xl border border-primary/20 bg-[var(--ui-color-primary-50)] text-center relative overflow-hidden">
+            <div className="glass p-6 rounded-2xl border border-primary/20 bg-[hsl(var(--primary) / 0.12)] text-center relative overflow-hidden">
               <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
               <div className="text-sm font-semibold text-primary mb-2">Modo de Apuração</div>
               <div className="text-lg font-bold text-foreground tracking-tight flex items-center justify-center gap-2">

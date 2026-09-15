@@ -28,7 +28,7 @@ export default function PlanoCorteVisao({ pieces }: Props) {
             key={piece.id}
             className="rounded-xl border border-border bg-muted p-3 flex flex-col items-center gap-2"
           >
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold self-start">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold self-start">
               #{index + 1}
             </span>
 
@@ -60,7 +60,7 @@ export default function PlanoCorteVisao({ pieces }: Props) {
 
               {/* Dimension label in center */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-muted-foreground leading-tight text-center px-1">
+                <span className="text-xs font-bold text-muted-foreground leading-tight text-center px-1">
                   {piece.largura}×{piece.altura}
                 </span>
               </div>
@@ -68,13 +68,10 @@ export default function PlanoCorteVisao({ pieces }: Props) {
 
             {/* Info */}
             <div className="w-full text-center mt-1">
-              <div
-                className="text-[11px] font-bold text-foreground truncate w-full"
-                title={piece.nome}
-              >
+              <div className="text-xs font-bold text-foreground truncate w-full" title={piece.nome}>
                 {piece.nome}
               </div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 {(piece.quantidade ?? 1) > 1 ? `${piece.quantidade}x — ` : ''}
                 {formatEdgePattern(piece.fio_de_fita) || 'sem fita'}
               </div>

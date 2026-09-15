@@ -83,7 +83,7 @@ export default function CalendarioMes({
                     >
                       {data.getDate()}
                     </span>
-                    <span className="opacity-0 group-hover:opacity-100 text-[10px] font-semibold text-primary/70 transition-opacity">
+                    <span className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-primary/70 transition-opacity">
                       + Add
                     </span>
                   </div>
@@ -103,7 +103,7 @@ export default function CalendarioMes({
                           color: evento.cor_categoria,
                         }}
                         className={`
-                          px-2 py-0.5 rounded text-[10px] font-medium truncate hover:brightness-95 transition flex items-center justify-between gap-1
+                          px-2 py-0.5 rounded text-xs font-medium truncate hover:brightness-95 transition flex items-center justify-between gap-1
                           ${evento.concluido ? 'line-through opacity-50 bg-muted border-l-muted-foreground text-muted-foreground' : ''}
                         `}
                         title={evento.titulo}

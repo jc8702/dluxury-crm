@@ -16,7 +16,7 @@ const cardVariants = cva(
         flat: 'shadow-none',
         outlined: 'shadow-none bg-transparent',
         accent: cn(
-          'border-[var(--ui-color-teal-200)] bg-[var(--ui-color-teal-50)]',
+          'border-[hsl(var(--secondary)/0.20)] bg-[hsl(var(--secondary)/0.12)]',
           'shadow-[var(--ui-shadow-1)]',
         ),
       },
@@ -121,12 +121,12 @@ export interface CardStatProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const toneClasses: Record<NonNullable<CardStatProps['tone']>, string> = {
-  default: 'bg-[var(--ui-color-navy-50)] text-[var(--ui-color-navy-700)]',
-  success: 'bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)]',
-  warning: 'bg-[var(--ui-color-warning-soft)] text-[var(--ui-color-warning)]',
-  danger: 'bg-[var(--ui-color-danger-soft)] text-[var(--ui-color-danger)]',
-  info: 'bg-[var(--ui-color-info-soft)] text-[var(--ui-color-info)]',
-  accent: 'bg-[var(--ui-color-gold-50)] text-[var(--ui-color-gold-500)]',
+  default: 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]',
+  success: 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]',
+  warning: 'bg-[hsl(var(--warning)/0.14)] text-[hsl(var(--warning))]',
+  danger: 'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]',
+  info: 'bg-[hsl(var(--info)/0.12)] text-[hsl(var(--info))]',
+  accent: 'bg-[hsl(var(--accent)/0.14)] text-[hsl(var(--accent))]',
 };
 
 export const CardStat = forwardRef<HTMLDivElement, CardStatProps>(

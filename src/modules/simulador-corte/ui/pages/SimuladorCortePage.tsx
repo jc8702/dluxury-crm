@@ -786,7 +786,7 @@ export default function SimuladorCortePage() {
     <div className="page-container anim-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#E2AC00]/20 to-[#E2AC00]/5 border border-[#E2AC00]/20">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
             <Scissors className="text-[var(--ui-color-gold-400)]" size={22} />
           </div>
           <div>
@@ -800,20 +800,20 @@ export default function SimuladorCortePage() {
         </div>
         <button
           onClick={() => setTelaCheia(!telaCheia)}
-          className="btn bg-[#1F2937] hover:bg-[#374151] border border-[#374151] p-2 rounded-lg transition-all"
+          className="btn bg-muted hover:bg-muted/80 border border-border p-2 rounded-lg transition-all"
           title={telaCheia ? 'SAIR DE TELA CHEIA' : 'TELA CHEIA'}
         >
           {telaCheia ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
       </div>
 
-      <div className="flex gap-1 bg-[#1F2937] p-1 rounded-xl mb-6 w-fit">
+      <div className="flex gap-1 bg-muted p-1 rounded-xl mb-6 w-fit">
         <button
           onClick={() => handleTrocarModo('rapida')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'rapida'
-              ? 'bg-[#E2AC00] text-black'
-              : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
           }`}
         >
           <Zap size={14} />
@@ -823,8 +823,8 @@ export default function SimuladorCortePage() {
           onClick={() => handleTrocarModo('carregar')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
             modo === 'carregar'
-              ? 'bg-[#E2AC00] text-black'
-              : 'text-[#6B7280] hover:text-white hover:bg-[#374151]'
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
           }`}
         >
           <Upload size={14} />
@@ -837,7 +837,7 @@ export default function SimuladorCortePage() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-96 space-y-4 shrink-0">
             <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
-              <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider mb-3 flex items-center gap-2">
+              <h3 className="text-accent font-bold text-xs tracking-wider mb-3 flex items-center gap-2">
                 <Grid3x3 size={14} />
                 CONFIGURAÇÃO DA CHAPA
               </h3>
@@ -848,8 +848,8 @@ export default function SimuladorCortePage() {
                     onClick={() => handlePredefChapa(i)}
                     className={`text-sm text-left p-2 rounded-lg border transition-all ${
                       chapaPredef === i
-                        ? 'border-[#E2AC00] bg-[#E2AC00]/10 text-[#E2AC00]'
-                        : 'border-[#1F2937] bg-[#1F2937]/50 text-[#6B7280] hover:border-[#374151]'
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-border bg-muted/50 text-muted-foreground hover:border-border'
                     }`}
                   >
                     {c.label}
@@ -858,7 +858,7 @@ export default function SimuladorCortePage() {
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
-                  <label className="text-[#6B7280] block mb-1">COMPR. (MM)</label>
+                  <label className="text-muted-foreground block mb-1">COMPR. (MM)</label>
                   <input
                     type="number"
                     value={chapaLargura}
@@ -866,11 +866,11 @@ export default function SimuladorCortePage() {
                       setChapaLargura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-[#6B7280] block mb-1">LARG. (MM)</label>
+                  <label className="text-muted-foreground block mb-1">LARG. (MM)</label>
                   <input
                     type="number"
                     value={chapaAltura}
@@ -878,11 +878,11 @@ export default function SimuladorCortePage() {
                       setChapaAltura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                   />
                 </div>
                 <div>
-                  <label className="text-[#6B7280] block mb-1">ESP. (MM)</label>
+                  <label className="text-muted-foreground block mb-1">ESP. (MM)</label>
                   <input
                     type="number"
                     value={chapaEspessura}
@@ -890,7 +890,7 @@ export default function SimuladorCortePage() {
                       setChapaEspessura(Number(e.target.value));
                       setChapaPredef(DEFAULT_CHAPAS.length - 1);
                     }}
-                    className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#E2AC00]"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                   />
                 </div>
               </div>
@@ -898,27 +898,24 @@ export default function SimuladorCortePage() {
 
             <div className="bg-[var(--ui-surface)]/95 backdrop-blur-md border border-[var(--ui-border)] rounded-[var(--ui-radius-lg)] p-4 shadow-[var(--ui-shadow-1)]">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[#E2AC00] font-bold text-xs tracking-wider">PEÇAS</h3>
+                <h3 className="text-accent font-bold text-xs tracking-wider">PEÇAS</h3>
                 <button
                   onClick={handleAddPeca}
-                  className="flex items-center gap-1 text-sm text-[#E2AC00] hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-sm text-accent hover:text-foreground transition-colors"
                 >
                   <Plus size={12} /> ADICIONAR
                 </button>
               </div>
               <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                 {pecasInput.map((peca, idx) => (
-                  <div
-                    key={peca.id}
-                    className="bg-[#1F2937]/50 rounded-lg p-2.5 border border-[#1F2937]"
-                  >
+                  <div key={peca.id} className="bg-muted/50 rounded-lg p-2.5 border border-border">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[#6B7280] text-sm font-semibold">
+                      <span className="text-muted-foreground text-sm font-semibold">
                         PEÇA {idx + 1}
                       </span>
                       <button
                         onClick={() => handleRemovePeca(peca.id)}
-                        className="text-[#6B7280] hover:text-red-400 transition-colors"
+                        className="text-muted-foreground hover:text-destructive transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -930,44 +927,44 @@ export default function SimuladorCortePage() {
                         handleUpdatePeca(peca.id, 'nome', e.target.value.toUpperCase())
                       }
                       placeholder="NOME DA PEÇA"
-                      className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2.5 py-1.5 text-white text-sm outline-none mb-1.5 focus:border-[#E2AC00]"
+                      className="w-full bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground text-sm outline-none mb-1.5 focus:border-accent"
                     />
                     <div className="grid grid-cols-4 gap-1.5">
                       <div>
-                        <label className="text-[#6B7280] text-sm block">COMP.</label>
+                        <label className="text-muted-foreground text-sm block">COMP.</label>
                         <input
                           type="number"
                           value={peca.comprimento}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'comprimento', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-sm block">LARG.</label>
+                        <label className="text-muted-foreground text-sm block">LARG.</label>
                         <input
                           type="number"
                           value={peca.largura}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'largura', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-sm block">ESP.</label>
+                        <label className="text-muted-foreground text-sm block">ESP.</label>
                         <input
                           type="number"
                           value={peca.espessura}
                           onChange={(e) =>
                             handleUpdatePeca(peca.id, 'espessura', Number(e.target.value))
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </div>
                       <div>
-                        <label className="text-[#6B7280] text-sm block">QTD</label>
+                        <label className="text-muted-foreground text-sm block">QTD</label>
                         <input
                           type="number"
                           min={1}
@@ -979,7 +976,7 @@ export default function SimuladorCortePage() {
                               Math.max(1, Number(e.target.value)),
                             )
                           }
-                          className="w-full bg-[#0D1117] border border-[#1F2937] rounded-lg px-2 py-1 text-white text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </div>
                     </div>
@@ -989,7 +986,7 @@ export default function SimuladorCortePage() {
               <button
                 onClick={executarSimulacao}
                 disabled={processando}
-                className="w-full mt-3 flex items-center justify-center gap-2 bg-[#E2AC00] hover:bg-[#F5C200] text-black font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-50"
+                className="w-full mt-3 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-sm py-2.5 rounded-lg transition-all disabled:opacity-50"
               >
                 {processando ? (
                   <>
@@ -1007,19 +1004,19 @@ export default function SimuladorCortePage() {
           {layoutAtual && program && metrics ? (
             <div className="flex-1 flex flex-col gap-4 min-w-0">
               <div
-                className={`flex flex-col lg:flex-row gap-4 items-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}
+                className={`flex flex-col lg:flex-row gap-4 items-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-background' : ''}`}
               >
                 <div className="flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start">
                   {/* CONFIGURAÇÃO E ABAS DE MODO (PREVIEW vs SIMULAÇÃO vs VERIFICAÇÃO) */}
-                  <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+                  <div className="flex flex-col gap-2 bg-card border border-border rounded-xl p-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
+                      <div className="flex gap-1 bg-background p-1 rounded-lg border border-border">
                         <button
                           onClick={() => setModoExibicao('layout')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'layout'
-                              ? 'bg-[#1F2937] text-white'
-                              : 'text-[#6B7280] hover:text-white'
+                              ? 'bg-muted text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           PREVIEW LAYOUT
@@ -1028,8 +1025,8 @@ export default function SimuladorCortePage() {
                           onClick={() => setModoExibicao('simulacao')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'simulacao'
-                              ? 'bg-[#E2AC00] text-black'
-                              : 'text-[#6B7280] hover:text-white'
+                              ? 'bg-accent text-accent-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           SIMULAÇÃO CNC
@@ -1038,8 +1035,8 @@ export default function SimuladorCortePage() {
                           onClick={() => setModoExibicao('verificacao')}
                           className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                             modoExibicao === 'verificacao'
-                              ? 'bg-[#DC3545]/20 text-[#DC3545] border border-[#DC3545]/30'
-                              : 'text-[#6B7280] hover:text-white'
+                              ? 'bg-destructive/20 text-destructive border border-destructive/30'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           VERIFICAÇÃO CAM
@@ -1049,16 +1046,16 @@ export default function SimuladorCortePage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleNavegarChapa(-1)}
-                          className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                          className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                         >
                           <ChevronLeft size={16} />
                         </button>
-                        <span className="text-white text-sm font-semibold min-w-[50px] text-center">
+                        <span className="text-foreground text-sm font-semibold min-w-[50px] text-center">
                           {indiceChapa + 1}/{layouts.length}
                         </span>
                         <button
                           onClick={() => handleNavegarChapa(1)}
-                          className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                          className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                         >
                           <ChevronRight size={16} />
                         </button>
@@ -1066,49 +1063,49 @@ export default function SimuladorCortePage() {
                     </div>
 
                     {/* Toggles de Visualização 3D */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-sm">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60 text-sm">
                       <button
                         onClick={() => setMostrarGrade(!mostrarGrade)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         GRADE
                       </button>
                       <button
                         onClick={() => setMostrarCotas(!mostrarCotas)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         COTAS
                       </button>
                       <button
                         onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#28A745]/15 text-[#28A745]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-success/15 text-success' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         SOBRAS
                       </button>
 
-                      <span className="text-[#374151] font-bold">|</span>
+                      <span className="text-muted-foreground font-bold">|</span>
 
                       <button
                         onClick={() => setMostrarMaquina(!mostrarMaquina)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         MÁQUINA
                       </button>
                       <button
                         onClick={() => setMostrarStock(!mostrarStock)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         USINAGEM (STOCK)
                       </button>
                       <button
                         onClick={() => setMostrarClamps(!mostrarClamps)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         GARRAS
                       </button>
                       <button
                         onClick={() => setMostrarCaminho(!mostrarCaminho)}
-                        className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                        className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                       >
                         TOOLPATH
                       </button>
@@ -1116,7 +1113,7 @@ export default function SimuladorCortePage() {
                   </div>
 
                   {/* 3D CANVAS */}
-                  <div className="h-[460px] rounded-xl overflow-hidden border border-[#1F2937]">
+                  <div className="h-[460px] rounded-xl overflow-hidden border border-border">
                     <CanvasSimulador3D
                       layout={layoutAtual}
                       onSelecionarPeca={handleSelecionarPeca}
@@ -1158,21 +1155,21 @@ export default function SimuladorCortePage() {
                   <div className="flex gap-2">
                     <button
                       onClick={handleExportRelatorio}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
-                      <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
+                      <FileCheck size={14} className="text-accent" /> RELATÓRIO CNC
                     </button>
                     <button
                       onClick={handleExportRelatorioSeguranca}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
-                      <ShieldAlert size={14} className="text-[#DC3545]" /> SEGURANÇA
+                      <ShieldAlert size={14} className="text-destructive" /> SEGURANÇA
                     </button>
                     <button
                       onClick={handleExportEtiquetas}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                     >
-                      <Box size={14} className="text-[#28A745]" /> ETIQUETAS
+                      <Box size={14} className="text-success" /> ETIQUETAS
                     </button>
                   </div>
 
@@ -1181,8 +1178,8 @@ export default function SimuladorCortePage() {
                     onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
                     className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                       mostrarConfigCNC
-                        ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
-                        : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
+                        ? 'bg-accent/20 text-accent border border-accent/30'
+                        : 'bg-muted hover:bg-muted text-foreground border border-border'
                     }`}
                   >
                     <Settings size={14} />
@@ -1211,8 +1208,8 @@ export default function SimuladorCortePage() {
 
                   {/* Legenda CAM Toolpath */}
                   {mostrarCaminho && (
-                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-sm font-mono text-[#6B7280]">
-                      <span className="text-white font-bold block mb-1.5 text-sm">
+                    <div className="bg-card border border-border rounded-xl p-3 text-sm font-mono text-muted-foreground">
+                      <span className="text-foreground font-bold block mb-1.5 text-sm">
                         LEGENDA DO PERCURSO DE CORTE:
                       </span>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -1229,11 +1226,10 @@ export default function SimuladorCortePage() {
                           de Corte
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In /
-                          Out
+                          <span className="w-2.5 h-1.5 bg-accent rounded block" /> G01 Lead In / Out
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-1.5 bg-[#28A745] rounded block" /> Usinagem
+                          <span className="w-2.5 h-1.5 bg-success rounded block" /> Usinagem
                           Concluída
                         </div>
                       </div>
@@ -1260,13 +1256,13 @@ export default function SimuladorCortePage() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl flex items-center justify-center min-h-[500px]">
+            <div className="flex-1 bg-card border border-border rounded-xl flex items-center justify-center min-h-[500px]">
               <div className="text-center">
-                <Scissors size={48} className="text-[#374151] mx-auto mb-3" />
-                <p className="text-[#6B7280] text-sm font-medium">
+                <Scissors size={48} className="text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm font-medium">
                   ADICIONE PEÇAS E CLIQUE EM "EXECUTAR NESTING"
                 </p>
-                <p className="text-[#6B7280] text-sm mt-1">
+                <p className="text-muted-foreground text-sm mt-1">
                   A SIMULAÇÃO DE ROUTER 3D APARECERÁ AQUI
                 </p>
               </div>
@@ -1279,27 +1275,29 @@ export default function SimuladorCortePage() {
       {modo === 'carregar' && (
         <>
           {loadingPlanos && (
-            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
-              <RotateCw size={32} className="text-[#374151] mx-auto mb-3 animate-spin" />
-              <p className="text-[#6B7280] text-sm">CARREGANDO PLANOS DE CORTE DO ESTOQUE...</p>
+            <div className="bg-card border border-border rounded-xl p-8 text-center mb-6">
+              <RotateCw size={32} className="text-muted-foreground mx-auto mb-3 animate-spin" />
+              <p className="text-muted-foreground text-sm">
+                CARREGANDO PLANOS DE CORTE DO ESTOQUE...
+              </p>
             </div>
           )}
 
           {!planoAtivo && !loadingPlanos && planos.length === 0 && (
-            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-8 text-center mb-6">
-              <FileText size={40} className="text-[#374151] mx-auto mb-3" />
-              <h2 className="text-white font-bold text-sm mb-2">
+            <div className="bg-card border border-border rounded-xl p-8 text-center mb-6">
+              <FileText size={40} className="text-muted-foreground mx-auto mb-3" />
+              <h2 className="text-foreground font-bold text-sm mb-2">
                 NENHUM PLANO DE CORTE DISPONÍVEL
               </h2>
-              <p className="text-[#6B7280] text-sm">
+              <p className="text-muted-foreground text-sm">
                 CRIE UM PLANO NO MÓDULO "PLANO DE CORTE" OU USE A "SIMULAÇÃO RÁPIDA".
               </p>
             </div>
           )}
 
           {!planoAtivo && !loadingPlanos && planos.length > 0 && (
-            <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-6 mb-6">
-              <h3 className="text-white font-bold text-sm mb-4 tracking-wider">
+            <div className="bg-card border border-border rounded-xl p-6 mb-6">
+              <h3 className="text-foreground font-bold text-sm mb-4 tracking-wider">
                 SELECIONE UM PLANO DE CORTE PARA A CNC
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1313,16 +1311,16 @@ export default function SimuladorCortePage() {
                     <button
                       key={plano.id}
                       onClick={() => handleCarregarPlano(plano)}
-                      className="bg-[#1F2937]/50 hover:bg-[#1F2937] border border-[#374151] hover:border-[#E2AC00]/30 rounded-xl p-4 text-left transition-all duration-200 group"
+                      className="bg-muted/50 hover:bg-muted border border-border hover:border-accent/30 rounded-xl p-4 text-left transition-all duration-200 group"
                     >
-                      <p className="text-white font-semibold text-sm truncate group-hover:text-[#E2AC00] transition-colors">
+                      <p className="text-foreground font-semibold text-sm truncate group-hover:text-accent transition-colors">
                         {plano.nome}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-[#6B7280]">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <span>
                           {chaps.length} CHAPA{chaps.length > 1 ? 'S' : ''}
                         </span>
-                        <span className="text-[#10B981]">{apv.toFixed(1)}% APROV.</span>
+                        <span className="text-success">{apv.toFixed(1)}% APROV.</span>
                       </div>
                     </button>
                   );
@@ -1334,18 +1332,18 @@ export default function SimuladorCortePage() {
           {planoAtivo && layoutAtual && program && metrics && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
               <div
-                className={`flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-[#0D1117]' : ''}`}
+                className={`flex-1 flex flex-col gap-3 min-w-0 lg:sticky lg:top-4 lg:self-start ${telaCheia ? 'fixed inset-0 z-50 p-4 bg-background' : ''}`}
               >
                 {/* Cabeçalho de Navegação e Configurações */}
-                <div className="flex flex-col gap-2 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+                <div className="flex flex-col gap-2 bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex gap-1 bg-[#0D1117] p-1 rounded-lg border border-[#1F2937]">
+                    <div className="flex gap-1 bg-background p-1 rounded-lg border border-border">
                       <button
                         onClick={() => setModoExibicao('layout')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'layout'
-                            ? 'bg-[#1F2937] text-white'
-                            : 'text-[#6B7280] hover:text-white'
+                            ? 'bg-muted text-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         PREVIEW LAYOUT
@@ -1354,8 +1352,8 @@ export default function SimuladorCortePage() {
                         onClick={() => setModoExibicao('simulacao')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'simulacao'
-                            ? 'bg-[#E2AC00] text-black'
-                            : 'text-[#6B7280] hover:text-white'
+                            ? 'bg-accent text-accent-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         SIMULAÇÃO CNC
@@ -1364,8 +1362,8 @@ export default function SimuladorCortePage() {
                         onClick={() => setModoExibicao('verificacao')}
                         className={`px-3 py-1.5 rounded text-sm font-bold transition-all ${
                           modoExibicao === 'verificacao'
-                            ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30'
-                            : 'text-[#6B7280] hover:text-white'
+                            ? 'bg-destructive/20 text-destructive border border-destructive/30'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         VERIFICAÇÃO CAM
@@ -1373,70 +1371,70 @@ export default function SimuladorCortePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-[#6B7280] text-sm font-semibold truncate max-w-[200px]">
+                      <span className="text-muted-foreground text-sm font-semibold truncate max-w-[200px]">
                         {planoAtivo.nome}
                       </span>
                       <button
                         onClick={() => handleNavegarChapa(-1)}
-                        className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                        className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                       >
                         <ChevronLeft size={16} />
                       </button>
-                      <span className="text-white text-sm font-semibold min-w-[55px] text-center">
+                      <span className="text-foreground text-sm font-semibold min-w-[55px] text-center">
                         {indiceChapa + 1}/{layouts.length}
                       </span>
                       <button
                         onClick={() => handleNavegarChapa(1)}
-                        className="p-1.5 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-[#E2AC00] transition-all"
+                        className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-accent transition-all"
                       >
                         <ChevronRight size={16} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1F2937]/60 text-sm">
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60 text-sm">
                     <button
                       onClick={() => setMostrarGrade(!mostrarGrade)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarGrade ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       GRADE
                     </button>
                     <button
                       onClick={() => setMostrarCotas(!mostrarCotas)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarCotas ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       COTAS
                     </button>
                     <button
                       onClick={() => setMostrarRetalhos(!mostrarRetalhos)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarRetalhos ? 'bg-success/15 text-success' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       SOBRAS
                     </button>
 
-                    <span className="text-[#374151] font-bold">|</span>
+                    <span className="text-muted-foreground font-bold">|</span>
 
                     <button
                       onClick={() => setMostrarMaquina(!mostrarMaquina)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarMaquina ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       MÁQUINA
                     </button>
                     <button
                       onClick={() => setMostrarStock(!mostrarStock)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarStock ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       USINAGEM (STOCK)
                     </button>
                     <button
                       onClick={() => setMostrarClamps(!mostrarClamps)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarClamps ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       GARRAS
                     </button>
                     <button
                       onClick={() => setMostrarCaminho(!mostrarCaminho)}
-                      className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-[#E2AC00]/15 text-[#E2AC00]' : 'bg-[#1F2937]/45 text-[#6B7280]'}`}
+                      className={`px-2 py-1 rounded font-semibold ${mostrarCaminho ? 'bg-accent/15 text-accent' : 'bg-muted/45 text-muted-foreground'}`}
                     >
                       TOOLPATH
                     </button>
@@ -1445,7 +1443,7 @@ export default function SimuladorCortePage() {
 
                 {/* 3D CANVAS */}
                 <div
-                  className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-[#1F2937]`}
+                  className={`${telaCheia ? 'h-[calc(100vh-160px)]' : 'h-[460px]'} rounded-xl overflow-hidden border border-border`}
                 >
                   <CanvasSimulador3D
                     layout={layoutAtual}
@@ -1488,21 +1486,21 @@ export default function SimuladorCortePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportRelatorio}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
-                    <FileCheck size={14} className="text-[#E2AC00]" /> RELATÓRIO CNC
+                    <FileCheck size={14} className="text-accent" /> RELATÓRIO CNC
                   </button>
                   <button
                     onClick={handleExportRelatorioSeguranca}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
-                    <ShieldAlert size={14} className="text-[#EF4444]" /> SEGURANÇA
+                    <ShieldAlert size={14} className="text-destructive" /> SEGURANÇA
                   </button>
                   <button
                     onClick={handleExportEtiquetas}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] text-white text-sm font-bold py-2.5 rounded-lg transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-muted hover:bg-muted border border-border text-foreground text-sm font-bold py-2.5 rounded-lg transition-all"
                   >
-                    <Box size={14} className="text-[#10B981]" /> ETIQUETAS
+                    <Box size={14} className="text-success" /> ETIQUETAS
                   </button>
                 </div>
 
@@ -1511,8 +1509,8 @@ export default function SimuladorCortePage() {
                   onClick={() => setMostrarConfigCNC(!mostrarConfigCNC)}
                   className={`flex items-center justify-center gap-1.5 text-sm font-bold py-2 rounded-lg transition-all ${
                     mostrarConfigCNC
-                      ? 'bg-[#E2AC00]/20 text-[#E2AC00] border border-[#E2AC00]/30'
-                      : 'bg-[#1F2937] hover:bg-[#374151] text-white border border-[#374151]'
+                      ? 'bg-accent/20 text-accent border border-accent/30'
+                      : 'bg-muted hover:bg-muted text-foreground border border-border'
                   }`}
                 >
                   <Settings size={14} />
@@ -1540,8 +1538,8 @@ export default function SimuladorCortePage() {
                 )}
 
                 {mostrarCaminho && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 text-sm font-mono text-[#6B7280]">
-                    <span className="text-white font-bold block mb-1.5 text-sm">
+                  <div className="bg-card border border-border rounded-xl p-3 text-sm font-mono text-muted-foreground">
+                    <span className="text-foreground font-bold block mb-1.5 text-sm">
                       LEGENDA DO PERCURSO DE CORTE:
                     </span>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -1558,12 +1556,10 @@ export default function SimuladorCortePage() {
                         Corte
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-1.5 bg-[#E2AC00] rounded block" /> G01 Lead In /
-                        Out
+                        <span className="w-2.5 h-1.5 bg-accent rounded block" /> G01 Lead In / Out
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-1.5 bg-[#10B981] rounded block" /> Usinagem
-                        Concluída
+                        <span className="w-2.5 h-1.5 bg-success rounded block" /> Usinagem Concluída
                       </div>
                     </div>
                   </div>
@@ -1586,10 +1582,10 @@ export default function SimuladorCortePage() {
                   onExportarEtiqueta={handleExportarEtiquetaIndividual}
                 />
 
-                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+                <div className="bg-card border border-border rounded-xl p-4">
                   <button
                     onClick={() => setPlanoAtivo(null)}
-                    className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] text-white text-sm font-semibold py-2.5 rounded-lg transition-all"
+                    className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted text-foreground text-sm font-semibold py-2.5 rounded-lg transition-all"
                   >
                     <Upload size={14} /> TROCAR PLANO
                   </button>
@@ -1601,13 +1597,16 @@ export default function SimuladorCortePage() {
       )}
 
       {telaCheia && (
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setTelaCheia(false)} />
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+          onClick={() => setTelaCheia(false)}
+        />
       )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.45); border-radius: 4px; }
       `}</style>
     </div>
   );

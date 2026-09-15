@@ -403,6 +403,68 @@
   --ui-border-strong: hsl(var(--border));
   --ui-bg-app: hsl(var(--background));
 
+  /* Compatibilidade dos tokens legados com Dark Mode. */
+  --ui-color-success-soft: hsl(var(--success) / 0.16);
+  --ui-color-warning-soft: hsl(var(--warning) / 0.16);
+  --ui-color-danger-soft: hsl(var(--destructive) / 0.16);
+  --ui-color-info-soft: hsl(var(--info) / 0.16);
+  --ui-color-primary-50: hsl(var(--primary) / 0.14);
+  --ui-color-primary-100: hsl(var(--primary) / 0.24);
+  --ui-color-primary-200: hsl(var(--primary) / 0.38);
+  --ui-color-primary-300: hsl(var(--primary) / 0.55);
+  --ui-color-primary-400: hsl(var(--primary) / 0.72);
+  --ui-color-primary-600: hsl(var(--primary) / 0.82);
+  --ui-color-primary-700: hsl(var(--primary) / 0.68);
+  --ui-color-primary-800: hsl(var(--primary) / 0.52);
+  --ui-color-primary-900: hsl(var(--primary) / 0.36);
+  --ui-color-secondary-50: hsl(var(--secondary) / 0.14);
+  --ui-color-secondary-100: hsl(var(--secondary) / 0.24);
+  --ui-color-secondary-200: hsl(var(--secondary) / 0.38);
+  --ui-color-secondary-700: hsl(var(--secondary) / 0.78);
+  --ui-color-secondary-800: hsl(var(--secondary) / 0.62);
+  --ui-color-secondary-900: hsl(var(--secondary) / 0.46);
+  --ui-color-accent-50: hsl(var(--accent) / 0.14);
+  --ui-color-accent-100: hsl(var(--accent) / 0.24);
+  --ui-color-accent-200: hsl(var(--accent) / 0.38);
+  --ui-color-accent-700: hsl(var(--accent) / 0.78);
+  --ui-color-accent-800: hsl(var(--accent) / 0.62);
+  --ui-color-accent-900: hsl(var(--accent) / 0.46);
+  --ui-color-neutral-0: hsl(var(--foreground));
+  --ui-color-neutral-50: hsl(var(--surface-hover));
+  --ui-color-neutral-100: hsl(var(--surface-hover));
+  --ui-color-neutral-200: hsl(var(--border));
+  --ui-color-neutral-300: hsl(var(--border));
+  --ui-color-neutral-400: hsl(var(--muted-foreground));
+  --ui-color-neutral-500: hsl(var(--muted-foreground));
+  --ui-color-neutral-600: hsl(var(--foreground) / 0.72);
+  --ui-color-neutral-700: hsl(var(--foreground) / 0.82);
+  --ui-color-neutral-800: hsl(var(--foreground) / 0.9);
+  --ui-color-neutral-900: hsl(var(--foreground));
+  --ui-color-teal-50: hsl(var(--secondary) / 0.14);
+  --ui-color-teal-100: hsl(var(--secondary) / 0.24);
+  --ui-color-teal-200: hsl(var(--secondary) / 0.38);
+  --ui-color-teal-300: hsl(var(--secondary) / 0.55);
+  --ui-color-teal-400: hsl(var(--secondary) / 0.72);
+  --ui-color-teal-600: hsl(var(--secondary) / 0.82);
+  --ui-color-teal-700: hsl(var(--secondary) / 0.68);
+  --ui-color-teal-800: hsl(var(--secondary) / 0.52);
+  --ui-color-teal-900: hsl(var(--secondary) / 0.36);
+  --ui-color-gold-50: hsl(var(--accent) / 0.14);
+  --ui-color-gold-100: hsl(var(--accent) / 0.24);
+  --ui-color-gold-200: hsl(var(--accent) / 0.38);
+  --ui-color-gold-700: hsl(var(--accent) / 0.78);
+  --ui-color-gold-800: hsl(var(--accent) / 0.62);
+  --ui-color-gold-900: hsl(var(--accent) / 0.46);
+  --ui-color-navy-50: hsl(var(--primary) / 0.14);
+  --ui-color-navy-100: hsl(var(--primary) / 0.24);
+  --ui-color-navy-200: hsl(var(--primary) / 0.38);
+  --ui-color-navy-300: hsl(var(--primary) / 0.55);
+  --ui-color-navy-400: hsl(var(--primary) / 0.72);
+  --ui-color-navy-600: hsl(var(--primary) / 0.82);
+  --ui-color-navy-700: hsl(var(--primary) / 0.68);
+  --ui-color-navy-800: hsl(var(--primary) / 0.52);
+  --ui-color-navy-900: hsl(var(--primary) / 0.36);
+
   /* ─── UI Actions (dark) ─── */
   --ui-action-primary: hsl(var(--primary));
   --ui-action-primary-hover: hsl(var(--primary-hover));
@@ -422,7 +484,8 @@
 
   /* ─── UI Focus (dark) ─── */
   --ui-focus-ring: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary) / 0.45);
-  --ui-focus-ring-danger: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive) / 0.45);
+  --ui-focus-ring-danger:
+    0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--destructive) / 0.45);
   --ui-shadow-focus: 0 0 0 3px hsl(var(--primary) / 0.25);
   --ui-shadow-danger-focus: 0 0 0 3px hsl(var(--destructive) / 0.25);
   --ui-shadow-glow-gold: 0 0 0 3px hsl(var(--accent) / 0.18);
@@ -455,7 +518,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    font-family:
+      'Source Sans 3',
+      system-ui,
+      -apple-system,
+      sans-serif;
     letter-spacing: -0.01em;
     line-height: 1.6;
   }

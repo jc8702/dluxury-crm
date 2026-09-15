@@ -1,5 +1,13 @@
 import React, { useMemo } from 'react';
-import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, AlertTriangle, XOctagon } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  XOctagon,
+} from 'lucide-react';
 import type { SimulationProgram, SimulationIssue } from '../../domain/types';
 
 interface TimelineControlsProps {
@@ -58,7 +66,7 @@ export default function TimelineControls({
   };
 
   return (
-    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 w-full flex flex-col gap-3">
+    <div className="bg-card border border-border rounded-xl p-4 w-full flex flex-col gap-3">
       {/* 1. LINHA DO TEMPO (SCRUBBER) COM ISSUES */}
       <div className="relative w-full flex items-center pt-2">
         <input
@@ -68,7 +76,7 @@ export default function TimelineControls({
           step={0.1}
           value={tempoAtual}
           onChange={handleScrubberChange}
-          className="w-full h-2 rounded-lg bg-[#1F2937] accent-[#E2AC00] cursor-pointer outline-none transition-all duration-100"
+          className="w-full h-2 rounded-lg bg-muted accent-accent cursor-pointer outline-none transition-all duration-100"
         />
 
         {/* Marcadores de Colisões/Erros e Warnings em cima da timeline */}
@@ -84,14 +92,14 @@ export default function TimelineControls({
               style={{
                 left: `${marker.pct}%`,
                 backgroundColor: marker.color,
-                border: '1px solid #111827',
+                border: '1px solid hsl(var(--card))',
               }}
               title={`${marker.codigo}: ${marker.mensagem} (${formatarTempo(marker.tempo)})`}
             >
               {marker.severidade === 'error' ? (
-                <span className="w-1 h-1 bg-white rounded-full block" />
+                <span className="w-1 h-1 bg-card rounded-full block" />
               ) : (
-                <span className="w-1 h-1 bg-black rounded-full block" />
+                <span className="w-1 h-1 bg-background rounded-full block" />
               )}
             </button>
           ))}
@@ -104,7 +112,7 @@ export default function TimelineControls({
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleStep(-1)}
-            className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-all"
+            className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
             title="Recuar 1s"
           >
             <ChevronLeft size={16} />
@@ -112,15 +120,19 @@ export default function TimelineControls({
 
           <button
             onClick={() => onPlayingChange(!playing)}
-            className="p-2.5 bg-[#E2AC00] hover:bg-[#F5C200] text-black rounded-lg font-bold flex items-center justify-center transition-all"
+            className="p-2.5 bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-bold flex items-center justify-center transition-all"
             title={playing ? 'Pausar Simulação' : 'Iniciar Simulação'}
           >
-            {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+            {playing ? (
+              <Pause size={16} fill="currentColor" />
+            ) : (
+              <Play size={16} fill="currentColor" />
+            )}
           </button>
 
           <button
             onClick={() => handleStep(1)}
-            className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-all"
+            className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
             title="Avançar 1s"
           >
             <ChevronRight size={16} />
@@ -131,7 +143,7 @@ export default function TimelineControls({
               onPlayingChange(false);
               onTempoChange(0);
             }}
-            className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-all"
+            className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-all"
             title="Resetar Simulação"
           >
             <RotateCcw size={16} />
@@ -139,21 +151,21 @@ export default function TimelineControls({
         </div>
 
         {/* Marcador de Tempo Digital */}
-        <div className="flex items-center gap-1.5 font-mono text-white text-sm bg-[#0D1117] px-3 py-1.5 rounded-lg border border-[#1F2937]">
-          <span className="text-[#E2AC00] font-semibold">{formatarTempo(tempoAtual)}</span>
-          <span className="text-[#4b5563]">/</span>
-          <span className="text-[#9ca3af]">{formatarTempo(totalTempo)}</span>
+        <div className="flex items-center gap-1.5 font-mono text-foreground text-sm bg-background px-3 py-1.5 rounded-lg border border-border">
+          <span className="text-accent font-semibold">{formatarTempo(tempoAtual)}</span>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">{formatarTempo(totalTempo)}</span>
         </div>
 
         {/* Controles de velocidade e segurança */}
         <div className="flex items-center gap-4">
           {/* Multiplicador de Velocidade */}
           <div className="flex items-center gap-2">
-            <span className="text-[#6B7280]">VELOCIDADE:</span>
+            <span className="text-muted-foreground">VELOCIDADE:</span>
             <select
               value={velocidade}
               onChange={(e) => onVelocidadeChange(Number(e.target.value))}
-              className="bg-[#0D1117] border border-[#1F2937] text-white rounded-lg px-2 py-1 outline-none text-sm focus:border-[#E2AC00] font-medium"
+              className="bg-background border border-border text-foreground rounded-lg px-2 py-1 outline-none text-sm focus:border-accent font-medium"
             >
               <option value={0.25}>0.25x</option>
               <option value={0.5}>0.5x</option>
@@ -164,12 +176,12 @@ export default function TimelineControls({
           </div>
 
           {/* Habilitar parar em colisão */}
-          <label className="flex items-center gap-2 text-[#6B7280] cursor-pointer hover:text-white select-none transition-colors">
+          <label className="flex items-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
             <input
               type="checkbox"
               checked={stopOnCollision}
               onChange={(e) => onStopOnCollisionChange(e.target.checked)}
-              className="rounded bg-[#0D1117] border-[#1F2937] text-[#E2AC00] focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+              className="rounded bg-background border-border text-accent focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
             />
             PARAR EM COLISÃO
           </label>

@@ -113,11 +113,19 @@ async function mockAllAPIs(page: Page) {
     }
     // GETs — retorna payload compatível com o endpoint
     let data: any = [];
-    let extra: any = {};
+    const extra: any = {};
     if (url.includes('/api/prospeccao/metrics')) {
       data = {
         funil: [],
-        resumo: { total: 0, ganhos: 0, perdidos: 0, ativos: 0, taxaConversao: 0, cicloMedioDias: null, ticketMedio: null },
+        resumo: {
+          total: 0,
+          ganhos: 0,
+          perdidos: 0,
+          ativos: 0,
+          taxaConversao: 0,
+          cicloMedioDias: null,
+          ticketMedio: null,
+        },
         origens: [],
       };
     } else if (url.includes('/api/prospeccao')) {
@@ -127,9 +135,23 @@ async function mockAllAPIs(page: Page) {
     } else if (url.includes('/api/checkout/invoices')) {
       data = [];
     } else if (url.includes('/api/checkout')) {
-      data = { status: 'ativo', plano: 'enterprise', valor: 197, currentPeriodEnd: new Date().toISOString() };
+      data = {
+        status: 'ativo',
+        plano: 'enterprise',
+        valor: 197,
+        currentPeriodEnd: new Date().toISOString(),
+      };
     } else if (url.includes('/api/rentabilidade/kpi')) {
-      data = { receita_total: 0, custo_total: 0, margem_total: 0, margem_media_percentual: 0, variacao_receita: 0, variacao_custos: 0, variacao_margem: 0, variacao_margem_percentual: 0 };
+      data = {
+        receita_total: 0,
+        custo_total: 0,
+        margem_total: 0,
+        margem_media_percentual: 0,
+        variacao_receita: 0,
+        variacao_custos: 0,
+        variacao_margem: 0,
+        variacao_margem_percentual: 0,
+      };
     } else if (url.includes('/api/rentabilidade/projetos')) {
       data = { projetos: [] };
     } else if (url.includes('/api/rentabilidade/alertas')) {
@@ -139,7 +161,16 @@ async function mockAllAPIs(page: Page) {
     } else if (url.includes('/api/rentabilidade/grafico-margem')) {
       data = { dados: [] };
     } else if (url.includes('/api/rentabilidade')) {
-      data = { receita_total: 0, custo_total: 0, margem_total: 0, margem_media_percentual: 0, variacao_receita: 0, variacao_custos: 0, variacao_margem: 0, variacao_margem_percentual: 0 };
+      data = {
+        receita_total: 0,
+        custo_total: 0,
+        margem_total: 0,
+        margem_media_percentual: 0,
+        variacao_receita: 0,
+        variacao_custos: 0,
+        variacao_margem: 0,
+        variacao_margem_percentual: 0,
+      };
     } else if (url.includes('/api/kanban/board')) {
       data = { a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] };
     } else if (url.includes('/api/kanban')) {
@@ -151,7 +182,17 @@ async function mockAllAPIs(page: Page) {
       if (url.includes('capital_giro')) {
         data = [];
       } else if (url.includes('dashboard')) {
-        data = { a_pagar_30d: 0, vencidos_total: 0, capital_de_giro: 0, a_receber_30d: 0, proximos_vencimentos: [], top5_inadimplentes: [], despesas_por_classe: [], contas: [], saldo_total: 0 };
+        data = {
+          a_pagar_30d: 0,
+          vencidos_total: 0,
+          capital_de_giro: 0,
+          a_receber_30d: 0,
+          proximos_vencimentos: [],
+          top5_inadimplentes: [],
+          despesas_por_classe: [],
+          contas: [],
+          saldo_total: 0,
+        };
       } else if (url.includes('aging')) {
         data = { summary: [], details: [] };
       } else if (url.includes('rentabilidade')) {
@@ -165,7 +206,19 @@ async function mockAllAPIs(page: Page) {
       }
     } else if (url.includes('/api/estoque')) {
       data = [];
-    } else if (url.includes('/api/quotations') || url.includes('/api/production') || url.includes('/api/projects') || url.includes('/api/clients') || url.includes('/api/agenda') || url.includes('/api/notificacoes') || url.includes('/api/compras') || url.includes('/api/engineering') || url.includes('/api/skus') || url.includes('/api/reports') || url.includes('/api/finance')) {
+    } else if (
+      url.includes('/api/quotations') ||
+      url.includes('/api/production') ||
+      url.includes('/api/projects') ||
+      url.includes('/api/clients') ||
+      url.includes('/api/agenda') ||
+      url.includes('/api/notificacoes') ||
+      url.includes('/api/compras') ||
+      url.includes('/api/engineering') ||
+      url.includes('/api/skus') ||
+      url.includes('/api/reports') ||
+      url.includes('/api/finance')
+    ) {
       data = [];
     }
     // Se a URL contém paginação, retorna também pagination para evitar crash de leitura de `pagination.page`
@@ -199,7 +252,12 @@ test.describe('Auditoria completa — todas as rotas', () => {
           // Ignora falhas de recurso externo não crítico (grainy-gradients 404) — não é bug da aplicação
           if (text.includes('grainy-gradients.vercel.app') || text.includes('noise.svg')) return;
           // Ignora erro de otimização do Vite (504 Outdated Optimize Dep) — ambiente dev, não bug da aplicação
-          if (text.includes('Outdated Optimize Dep') || text.includes('@react-three_drei') || text.includes('Failed to fetch dynamically imported module') ) return;
+          if (
+            text.includes('Outdated Optimize Dep') ||
+            text.includes('@react-three_drei') ||
+            text.includes('Failed to fetch dynamically imported module')
+          )
+            return;
           if (text.includes('ErrorBoundary') && text.includes('SimuladorCortePage')) return;
           // Ignora warnings de API que já são mockados, mas mantém erros reais de JS
           consoleErrors.push(text);
@@ -266,7 +324,9 @@ test.describe('Auditoria completa — todas as rotas', () => {
         const order = new Map(ROUTES.map((r, i) => [`#/${r.route}`, i]));
         filtered.sort((a, b) => (order.get(a.route) ?? 999) - (order.get(b.route) ?? 999));
         fs.writeFileSync(REPORT_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
-      } catch {}
+      } catch {
+        // O relatório é auxiliar e não deve interromper a auditoria das rotas.
+      }
 
       // Soft assertion: não interrompe as próximas rotas, mas marca o teste como falho no relatório do Playwright
       expect
@@ -286,7 +346,9 @@ test.describe('Auditoria completa — todas as rotas', () => {
           if (Array.isArray(existing) && existing.length > results.length) {
             finalResults = existing;
           }
-        } catch {}
+        } catch {
+          // Ignora relatório anterior inválido e usa os resultados desta execução.
+        }
       }
       fs.writeFileSync(outPath, JSON.stringify(finalResults, null, 2), 'utf-8');
       console.log(`\n📄 Relatório de auditoria salvo em: ${outPath}\n`);

@@ -160,9 +160,9 @@ function EdgeToggle({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-md px-2 py-1 text-[10px] font-bold tracking-wider transition-all border ${
+      className={`rounded-md px-2 py-1 text-xs font-bold tracking-wider transition-all border ${
         active
-          ? 'bg-accent text-accent-foreground/15 text-accent border-[#E2AC00]/40'
+          ? 'bg-accent text-accent-foreground border-accent/40'
           : 'bg-background text-muted-foreground border-border hover:border-border'
       }`}
     >
@@ -314,7 +314,7 @@ export default function SimuladorProducaoPage() {
     <div className="page-container anim-fade-in">
       <div className="flex flex-col gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#E2AC00]/20 to-[#E2AC00]/5 border border-[#E2AC00]/20">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
             <Factory className="text-[var(--ui-color-gold-400)]" size={22} />
           </div>
           <div>
@@ -341,7 +341,7 @@ export default function SimuladorProducaoPage() {
                 <Sparkles size={14} />
                 CENÁRIO
               </h2>
-              <span className="text-[10px] uppercase text-muted-foreground tracking-wider">
+              <span className="text-xs uppercase text-muted-foreground tracking-wider">
                 {totalQtd} PEÇAS NO LOTE
               </span>
             </div>
@@ -350,7 +350,7 @@ export default function SimuladorProducaoPage() {
               <button
                 type="button"
                 onClick={() => setSourceMode('manual')}
-                className={`px-3 py-2 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
                   sourceMode === 'manual'
                     ? 'bg-accent text-accent-foreground'
                     : 'bg-muted text-muted-foreground hover:text-foreground'
@@ -361,7 +361,7 @@ export default function SimuladorProducaoPage() {
               <button
                 type="button"
                 onClick={() => setSourceMode('plano')}
-                className={`px-3 py-2 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
                   sourceMode === 'plano'
                     ? 'bg-accent text-accent-foreground'
                     : 'bg-muted text-muted-foreground hover:text-foreground'
@@ -373,13 +373,13 @@ export default function SimuladorProducaoPage() {
 
             {sourceMode === 'plano' && (
               <div className="space-y-2">
-                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                <label className="block text-xs uppercase tracking-wider text-muted-foreground">
                   PLANO CARREGADO
                 </label>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                 >
                   {loadingPlans && <option>CARREGANDO PLANOS...</option>}
                   {plans.length === 0 && !loadingPlans && (
@@ -395,7 +395,7 @@ export default function SimuladorProducaoPage() {
                   type="button"
                   onClick={loadPlanPieces}
                   disabled={!selectedPlan}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm py-2"
                 >
                   <Upload size={14} />
                   IMPORTAR PEÇAS DO PLANO
@@ -459,7 +459,7 @@ export default function SimuladorProducaoPage() {
               <button
                 type="button"
                 onClick={addPiece}
-                className="flex items-center gap-1 text-[11px] text-accent hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-xs text-accent hover:text-foreground transition-colors"
               >
                 <Plus size={12} />
                 ADICIONAR
@@ -477,7 +477,7 @@ export default function SimuladorProducaoPage() {
                 pieces.map((piece, index) => (
                   <div key={piece.id} className="rounded-xl border border-border bg-background p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                         PEÇA {index + 1}
                       </span>
                       <div className="flex items-center gap-2">
@@ -502,17 +502,17 @@ export default function SimuladorProducaoPage() {
 
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <label className="space-y-1">
-                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Nome
                         </span>
                         <input
                           value={piece.nome}
                           onChange={(e) => updatePiece(piece.id, 'nome', e.target.value)}
-                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </label>
                       <label className="space-y-1">
-                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Qtd
                         </span>
                         <input
@@ -522,14 +522,14 @@ export default function SimuladorProducaoPage() {
                           onChange={(e) =>
                             updatePiece(piece.id, 'quantidade', Math.max(1, Number(e.target.value)))
                           }
-                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </label>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <label className="space-y-1">
-                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Largura mm
                         </span>
                         <input
@@ -537,11 +537,11 @@ export default function SimuladorProducaoPage() {
                           min={1}
                           value={piece.largura}
                           onChange={(e) => updatePiece(piece.id, 'largura', Number(e.target.value))}
-                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </label>
                       <label className="space-y-1">
-                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                           Altura mm
                         </span>
                         <input
@@ -549,13 +549,13 @@ export default function SimuladorProducaoPage() {
                           min={1}
                           value={piece.altura}
                           onChange={(e) => updatePiece(piece.id, 'altura', Number(e.target.value))}
-                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00]"
+                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent"
                         />
                       </label>
                     </div>
 
                     <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                      <span className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
                         Fita de borda
                       </span>
                       <div className="flex flex-wrap gap-2">
@@ -604,7 +604,7 @@ export default function SimuladorProducaoPage() {
                           }
                         />
                       </div>
-                      <p className="mt-2 text-[10px] text-muted-foreground">
+                      <p className="mt-2 text-xs text-muted-foreground">
                         {formatEdgePattern(piece.fio_de_fita)}
                       </p>
                     </div>
@@ -688,7 +688,7 @@ export default function SimuladorProducaoPage() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-background border border-border px-3 py-2 text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">
                       MELHOR CENÁRIO
                     </div>
                     <div className="text-foreground font-bold">
@@ -735,14 +735,14 @@ export default function SimuladorProducaoPage() {
                     <ArrowRight size={14} />
                     ORDEM RECOMENDADA
                   </h2>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">
                     PRIMEIRAS PEÇAS PARA ALIMENTAR A LINHA
                   </span>
                 </div>
 
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="min-w-full text-left text-sm">
-                    <thead className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <thead className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                       <tr>
                         <th className="py-2 pr-3">#</th>
                         <th className="py-2 pr-3">PEÇA</th>
@@ -808,7 +808,7 @@ export default function SimuladorProducaoPage() {
       {/*** MODAL SALVAR ***/}
       {showSaveModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/70"
           onClick={() => setShowSaveModal(false)}
         >
           <div
@@ -827,7 +827,7 @@ export default function SimuladorProducaoPage() {
                 <X size={16} />
               </button>
             </div>
-            <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
               NOME DO CENÁRIO
             </label>
             <input
@@ -837,7 +837,7 @@ export default function SimuladorProducaoPage() {
                 if (e.key === 'Enter') handleSaveScenario();
               }}
               placeholder="EX: GUARDA-ROUPA CASAL 2P"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-[#E2AC00] mb-4"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm outline-none focus:border-accent mb-4"
               autoFocus
             />
             <div className="flex gap-2">
@@ -852,7 +852,7 @@ export default function SimuladorProducaoPage() {
                 type="button"
                 onClick={handleSaveScenario}
                 disabled={!scenarioName.trim() || saving}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold text-sm py-2"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm py-2"
               >
                 {saving ? (
                   'SALVANDO...'
@@ -870,7 +870,7 @@ export default function SimuladorProducaoPage() {
       {/*** MODAL CARREGAR ***/}
       {showLoadModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/70"
           onClick={() => setShowLoadModal(false)}
         >
           <div
@@ -900,13 +900,13 @@ export default function SimuladorProducaoPage() {
                 savedScenarios.map((scenario) => (
                   <div
                     key={scenario.id}
-                    className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:border-[#E2AC00]/50 transition-colors"
+                    className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:border-accent/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="text-foreground font-semibold text-sm truncate">
                         {scenario.nome}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         {scenario.pieces.length} PEÇA(S) ·{' '}
                         {scenario.created_at
                           ? new Date(scenario.created_at).toLocaleDateString('pt-BR')
@@ -942,7 +942,7 @@ export default function SimuladorProducaoPage() {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.45); border-radius: 4px; }
       `}</style>
     </div>
   );
@@ -951,11 +951,11 @@ export default function SimuladorProducaoPage() {
 function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 backdrop-blur-md p-4 shadow-[var(--ui-shadow-1)]">
-      <div className="text-[10px] uppercase tracking-wider text-[var(--ui-text-secondary)]">
+      <div className="text-xs uppercase tracking-wider text-[var(--ui-text-secondary)]">
         {label}
       </div>
       <div className="mt-2 text-xl font-extrabold text-foreground">{value}</div>
-      <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">{hint}</p>
+      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{hint}</p>
     </div>
   );
 }
@@ -973,9 +973,7 @@ function StrategyCard({
     <div className="rounded-[var(--ui-radius-lg)] border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 backdrop-blur-md p-4 shadow-[var(--ui-shadow-1)]">
       <div className="flex items-center justify-between mb-3">
         <h3 className={`font-bold text-sm ${accent}`}>{title}</h3>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          {result.id}
-        </span>
+        <span className="text-xs uppercase tracking-wider text-muted-foreground">{result.id}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
@@ -988,7 +986,7 @@ function StrategyCard({
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground mb-2">
           <span>SEQUÊNCIA</span>
           <span>{result.wipPeak} PEÇA(S) NO BUFFER</span>
         </div>
@@ -1000,15 +998,15 @@ function StrategyCard({
                   <div className="text-accent font-bold text-xs">
                     {index + 1}. {job.nome}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {job.largura}×{job.altura} mm
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] text-foreground font-semibold">
+                  <div className="text-xs text-foreground font-semibold">
                     {formatMinutes(job.cutProcessMinutes)}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {formatEdgePattern(job.fio_de_fita)}
                   </div>
                 </div>
@@ -1024,7 +1022,7 @@ function StrategyCard({
 function InfoChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-background px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1 text-foreground font-semibold">{value}</div>
     </div>
   );

@@ -50,7 +50,6 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
   sql: Object.assign(vi.fn().mockResolvedValue([]), {
     join: vi.fn((chunks: any[], sep?: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { sql: dsql } = require('drizzle-orm');
       return dsql.join(chunks as any, sep ?? dsql`, `);
     }),
@@ -58,7 +57,6 @@ vi.mock('../_db.js', () => ({
       cb(
         Object.assign(vi.fn().mockResolvedValue([]), {
           join: vi.fn((chunks: any[], sep?: any) => {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
             const { sql: dsql } = require('drizzle-orm');
             return dsql.join(chunks as any, sep ?? dsql`, `);
           }),
@@ -73,7 +71,13 @@ vi.mock('../middleware/tenantMiddleware.js', () => ({
 }));
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -99,7 +103,6 @@ describe('Módulo de Orçamentos PRO', () => {
         user: { id: `test-user-${Math.random()}` },
       };
     });
-
   });
 
   describe('Validação de Rate Limiting', () => {
@@ -424,8 +427,18 @@ describe('Módulo de Orçamentos PRO', () => {
           if (rawSql.includes('FROM formas_pagamento')) {
             return { rows: [{ id: 'forma-123' }] };
           }
-          if (rawSql.includes('FROM materiais')) {
-            return { rows: [{ id: 'mat-123', sku: 'chp-mdf-15', estoque_atual: 10, preco_custo: 50.0 }] };
+          if (rawSql.includes('FROM sku_componente')) {
+            return {
+              rows: [
+                {
+                  id: 'mat-123',
+                  codigo: 'CHP-MDF-15',
+                  sku: 'chp-mdf-15',
+                  estoque_atual: 10,
+                  preco_custo: 50.0,
+                },
+              ],
+            };
           }
           return { rows: [] };
         }),
@@ -507,7 +520,9 @@ describe('Módulo de Orçamentos PRO', () => {
 
       expect(sqlQueries.some((q) => q.includes('INSERT INTO titulos_receber'))).toBe(true);
       expect(sqlQueries.some((q) => q.includes('INSERT INTO ordens_prod'))).toBe(true);
-      expect(sqlQueries.some((q) => q.includes('INSERT INTO movimentacoes_estoque'))).toBe(true);
+      expect(sqlQueries.some((q) => q.includes('INSERT INTO movimento_estoque_granular'))).toBe(
+        true,
+      );
     });
   });
 

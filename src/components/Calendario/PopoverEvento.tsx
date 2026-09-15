@@ -105,7 +105,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span
-                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
+                className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
                 style={{
                   color: evento.cor_categoria,
                   borderColor: `${evento.cor_categoria}40`,
@@ -115,7 +115,7 @@ export default function PopoverEvento({ evento, onClose, onUpdate }: PopoverEven
                 {obterNomeTipo(evento.tipo_evento)}
               </span>
               {evento.concluido && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)] border border-[var(--ui-color-success)]/30">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--ui-color-success-soft)] text-[var(--ui-color-success)] border border-[var(--ui-color-success)]/30">
                   CONCLUÍDO
                 </span>
               )}
