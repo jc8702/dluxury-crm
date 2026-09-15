@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleCalendario } from '../calendario.js';
 
 vi.mock('../_db.js', () => ({
-  sql: vi.fn(),
+  sql: Object.assign(vi.fn(), {
+    join: vi.fn((fragments: any[], separator: any) => fragments.join(separator)),
+  }),
   validateAuth: vi.fn(),
 }));
 
@@ -36,7 +38,13 @@ function mockRes() {
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -214,7 +222,11 @@ describe('handleCalendario', () => {
         .mockResolvedValueOnce([{ id: 'u1' }, { id: 'u2' }]) // SELECT usuarios
         .mockResolvedValue([]); // INSERT eventos
 
-      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'orc-uuid' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: 'orc-uuid' },
+      });
       const res = mockRes();
       await handleCalendario(req, res);
 
@@ -329,7 +341,11 @@ describe('handleCalendario', () => {
         ])
         .mockResolvedValueOnce([{ id: 'u1' }])
         .mockResolvedValueOnce([{ id: 'auto-1' }]);
-      const req = mockReq({ method: 'POST', url: '/gerar-automatico', body: { quotation_id: 'q1' } });
+      const req = mockReq({
+        method: 'POST',
+        url: '/gerar-automatico',
+        body: { quotation_id: 'q1' },
+      });
       const res = mockRes();
       await handleCalendario(req, res);
       expect([200, 201]).toContain(res._s());

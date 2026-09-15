@@ -13,7 +13,9 @@ const mockAgendaService = vi.hoisted(() => ({
 }));
 
 vi.mock('../../modules/agenda/application/AgendaService.js', () => ({
-  AgendaService: vi.fn(function () { return mockAgendaService; }),
+  AgendaService: vi.fn(function () {
+    return mockAgendaService;
+  }),
 }));
 
 vi.mock('../_db.js', () => ({ sql: vi.fn(), validateAuth: vi.fn() }));
@@ -21,12 +23,20 @@ vi.mock('../_db.js', () => ({ sql: vi.fn(), validateAuth: vi.fn() }));
 const { validateAuth } = await import('../_db.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
-    _s: () => sc, _d: () => jd,
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
@@ -79,7 +89,11 @@ describe('handleAgenda', () => {
 
   it('deve mover visita (PATCH ?action=mover)', async () => {
     mockAgendaService.moverVisita.mockResolvedValue({ id: '1', status_visita: 'realizado' });
-    const req = { method: 'PATCH', query: { id: '1', action: 'mover' }, body: { status_visita: 'realizado' } };
+    const req = {
+      method: 'PATCH',
+      query: { id: '1', action: 'mover' },
+      body: { status_visita: 'realizado' },
+    };
     const res = mockRes();
     await handleAgenda(req, res);
     expect(res._s()).toBe(200);
@@ -87,11 +101,20 @@ describe('handleAgenda', () => {
 
   it('deve realizar visita (PATCH ?action=realizar)', async () => {
     mockAgendaService.realizarVisita.mockResolvedValue({ id: '1', resultado_visita: 'contratado' });
-    const req = { method: 'PATCH', query: { id: '1', action: 'realizar' }, body: { resultado_visita: 'contratado' } };
+    const req = {
+      method: 'PATCH',
+      query: { id: '1', action: 'realizar' },
+      body: { resultado_visita: 'contratado' },
+      tenantId: '00000000-0000-0000-0000-000000000000',
+    };
     const res = mockRes();
     await handleAgenda(req, res);
     expect(res._s()).toBe(200);
-    expect(mockAgendaService.realizarVisita).toHaveBeenCalledWith('1', 'contratado', '00000000-0000-0000-0000-000000000000');
+    expect(mockAgendaService.realizarVisita).toHaveBeenCalledWith(
+      '1',
+      'contratado',
+      '00000000-0000-0000-0000-000000000000',
+    );
   });
 
   it('deve atualizar evento de forma genérica (PUT)', async () => {
@@ -111,11 +134,18 @@ describe('handleAgenda', () => {
 
   it('deve remover evento (DELETE)', async () => {
     mockAgendaService.removerEvento.mockResolvedValue(true);
-    const req = { method: 'DELETE', query: { id: '1' } };
+    const req = {
+      method: 'DELETE',
+      query: { id: '1' },
+      tenantId: '00000000-0000-0000-0000-000000000000',
+    };
     const res = mockRes();
     await handleAgenda(req, res);
     expect(res._s()).toBe(200);
-    expect(mockAgendaService.removerEvento).toHaveBeenCalledWith('1', '00000000-0000-0000-0000-000000000000');
+    expect(mockAgendaService.removerEvento).toHaveBeenCalledWith(
+      '1',
+      '00000000-0000-0000-0000-000000000000',
+    );
   });
 
   it('deve retornar 400 no DELETE sem id', async () => {

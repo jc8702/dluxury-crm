@@ -24,11 +24,34 @@ function log(entry: LogEntry): void {
   method(JSON.stringify(output));
 }
 
+// Normaliza o segundo argumento (meta) antes de espalhar em log().
+// Sem isso: uma string vira {0:'a',1:'b',...} (spread de string) e um Error vira {}
+// (propriedades como message/stack não são enumeráveis), perdendo a informação real
+// do erro silenciosamente — os 49 call-sites de logger.error(msg, err) no código
+// dependiam disso funcionar e nunca funcionou de verdade.
+function normalizeMeta(meta: unknown): Record<string, any> | undefined {
+  if (meta === undefined || meta === null) return undefined;
+  if (meta instanceof Error) {
+    return { error: meta.message, stack: meta.stack, name: meta.name };
+  }
+  if (typeof meta === 'string') {
+    return { detail: meta };
+  }
+  if (typeof meta === 'object' && !Array.isArray(meta)) {
+    return meta as Record<string, any>;
+  }
+  return { detail: String(meta) };
+}
+
 export const logger = {
-  info: (message: string, meta?: Record<string, any>) => log({ level: 'info', message, ...meta }),
-  warn: (message: string, meta?: Record<string, any>) => log({ level: 'warn', message, ...meta }),
-  error: (message: string, meta?: Record<string, any>) => log({ level: 'error', message, ...meta }),
-  debug: (message: string, meta?: Record<string, any>) => {
-    if (process.env.NODE_ENV !== 'production') log({ level: 'debug', message, ...meta });
+  info: (message: string, meta?: unknown) =>
+    log({ level: 'info', message, ...normalizeMeta(meta) }),
+  warn: (message: string, meta?: unknown) =>
+    log({ level: 'warn', message, ...normalizeMeta(meta) }),
+  error: (message: string, meta?: unknown) =>
+    log({ level: 'error', message, ...normalizeMeta(meta) }),
+  debug: (message: string, meta?: unknown) => {
+    if (process.env.NODE_ENV !== 'production')
+      log({ level: 'debug', message, ...normalizeMeta(meta) });
   },
 };

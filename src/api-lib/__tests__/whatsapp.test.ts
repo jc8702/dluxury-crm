@@ -12,18 +12,39 @@ vi.mock('../middleware/tenantMiddleware.js', () => ({
   withTenant: (handler: any) => handler,
 }));
 
+// Este arquivo testa lógica de negócio do WhatsApp, não feature-gating.
+// Sem isso, requireFeature('whatsapp') consome o primeiro valor enfileirado em
+// mocks de `sql` destinados à lógica real do handler (ex: seedDefaultModelos),
+// e o `res.headersSent` deste arquivo (mockRes) não é implementado para permitir
+// que o guard de curto-circuito funcione corretamente.
+vi.mock('../middleware/featureGate.js', () => ({
+  requireFeature: () => async (_req: any, _res: any, next: any) => next(),
+}));
+
 const { sql } = await import('../_db.js');
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 const TEST_USER = { id: 'u1', email: 'u1@x.com', role: 'admin' as const, name: 'Test' };
 
 function mockRes() {
-  let sc = 200, jd: any = null, ended = false;
+  let sc = 200,
+    jd: any = null,
+    ended = false;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => { ended = true; return self; }),
-    _s: () => sc, _d: () => jd,
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
+    end: vi.fn(() => {
+      ended = true;
+      return self;
+    }),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
@@ -68,7 +89,11 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = mockReq({ method: 'GET', url: '/mensagens', query: { quotation_id: '00000000-0000-0000-0000-000000000001' } });
+      const req = mockReq({
+        method: 'GET',
+        url: '/mensagens',
+        query: { quotation_id: '00000000-0000-0000-0000-000000000001' },
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -90,7 +115,11 @@ describe('handleWhatsApp', () => {
         return [];
       });
 
-      const req = mockReq({ method: 'GET', url: '/mensagens', query: { operacao_prod_id: '00000000-0000-0000-0000-000000000002' } });
+      const req = mockReq({
+        method: 'GET',
+        url: '/mensagens',
+        query: { operacao_prod_id: '00000000-0000-0000-0000-000000000002' },
+      });
       const res = mockRes();
       await handleWhatsApp(req, res);
 
@@ -130,8 +159,8 @@ describe('handleWhatsApp', () => {
           quotation_id: '00000000-0000-0000-0000-000000000001',
           numero_telefone: '12345',
           conteudo_msg: 'Mensagem de teste',
-          tags: ['tag1']
-        }
+          tags: ['tag1'],
+        },
       });
       const res = mockRes();
       await handleWhatsApp(req, res);
@@ -161,8 +190,8 @@ describe('handleWhatsApp', () => {
           operacao_prod_id: '00000000-0000-0000-0000-000000000002',
           numero_telefone: '12345',
           conteudo_msg: 'Mensagem OP',
-          tags: 'string_tag' // teste tags não sendo array
-        }
+          tags: 'string_tag', // teste tags não sendo array
+        },
       });
       const res = mockRes();
       await handleWhatsApp(req, res);
@@ -187,8 +216,8 @@ describe('handleWhatsApp', () => {
         url: '/enviar-mensagem',
         body: {
           numero_telefone: '12345',
-          conteudo_msg: 'Mensagem em conversa existente'
-        }
+          conteudo_msg: 'Mensagem em conversa existente',
+        },
       });
       const res = mockRes();
       await handleWhatsApp(req, res);
@@ -205,7 +234,9 @@ describe('handleWhatsApp', () => {
         const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
         if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
         if (qStr.includes('SELECT * FROM modelos_msg_whatsapp')) {
-          return [{ id: 'm1', titulo: 'Mod 1', conteudo_template: 'Olá', tipo_acionador: 'medicao' }];
+          return [
+            { id: 'm1', titulo: 'Mod 1', conteudo_template: 'Olá', tipo_acionador: 'medicao' },
+          ];
         }
         return [];
       });
@@ -233,7 +264,8 @@ describe('handleWhatsApp', () => {
         if (qStr.includes('SELECT count(*)')) return [{ count: '1' }];
         if (qStr.includes('SELECT id FROM conversas_whatsapp')) return []; // sem conversa
         if (qStr.includes('INSERT INTO conversas_whatsapp')) return [{ id: 20 }];
-        if (qStr.includes('INSERT INTO mensagens_whatsapp')) return [{ id: 200, conteudo_msg: 'Msg' }];
+        if (qStr.includes('INSERT INTO mensagens_whatsapp'))
+          return [{ id: 200, conteudo_msg: 'Msg' }];
         return [];
       });
 
@@ -243,8 +275,8 @@ describe('handleWhatsApp', () => {
         body: {
           from_number: '12345',
           message_text: 'Simulação cliente respondendo',
-          quotation_id: '00000000-0000-0000-0000-000000000001'
-        }
+          quotation_id: '00000000-0000-0000-0000-000000000001',
+        },
       });
       const res = mockRes();
       await handleWhatsApp(req, res);
@@ -268,8 +300,8 @@ describe('handleWhatsApp', () => {
         url: '/webhook',
         body: {
           from_number: '12345',
-          message_text: 'Simulação em conversa existente'
-        }
+          message_text: 'Simulação em conversa existente',
+        },
       });
       const res = mockRes();
       await handleWhatsApp(req, res);

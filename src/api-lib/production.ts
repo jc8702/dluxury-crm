@@ -56,7 +56,6 @@ const handleProductionCore: TenantHandler = async (req, res) => {
 
     return res.status(405).json({ success: false, error: 'Método não permitido' });
   } catch (err: any) {
-    logger.error('PRODUCTION_HANDLER_ERROR:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };

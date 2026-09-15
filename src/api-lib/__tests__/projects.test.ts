@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleProjects, handleReports, handleEngineering, handleSKUs, handleSimulations } from '../projects.js';
+import {
+  handleProjects,
+  handleReports,
+  handleEngineering,
+  handleSKUs,
+  handleSimulations,
+} from '../projects.js';
 
 vi.mock('../_db.js', () => ({
   sql: vi.fn(),
@@ -11,26 +17,64 @@ vi.mock('../middleware/tenantMiddleware.js', () => ({
   withTenant: (handler: any) => handler,
 }));
 
+// O handler GET (listar/filtrar/buscar projetos) usa db.execute(drizzleSql(...)) do Drizzle
+// diretamente (não o `sql` tagged-template mockado acima). Sem este mock, `db` é `null`
+// neste ambiente de teste (sem DATABASE_URL) e a chamada quebra com TypeError.
+vi.mock('../drizzle-db.js', () => ({
+  db: {
+    execute: vi.fn(async () => ({
+      rows: [
+        {
+          id: '1',
+          ambiente: 'Cozinha',
+          status: 'lead',
+          tag: 'PRJ-123',
+          client_name: 'Cliente Teste',
+        },
+      ],
+    })),
+  },
+}));
+
 vi.mock('../_inventory.js', () => ({
   writeOffStockForProject: vi.fn(),
+  writeOffStockForProjectBatch: vi.fn(),
 }));
 
 const { sql, validateAuth, auditLog } = await import('../_db.js');
-const { writeOffStockForProject } = await import('../_inventory.js');
+const { writeOffStockForProject, writeOffStockForProjectBatch } = await import('../_inventory.js');
 
 function mockRes() {
-  let sc = 200, jd: any = null, ended = false;
+  let sc = 200,
+    jd: any = null,
+    ended = false;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
-    end: vi.fn(() => { ended = true; return self; }),
-    _s: () => sc, _d: () => jd,
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
+    end: vi.fn(() => {
+      ended = true;
+      return self;
+    }),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
 
 const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const TEST_USER = { id: 'u1', tenantId: TEST_TENANT_ID, role: 'admin', email: 't@e.com', name: 'Tester' };
+const TEST_USER = {
+  id: 'u1',
+  tenantId: TEST_TENANT_ID,
+  role: 'admin',
+  email: 't@e.com',
+  name: 'Tester',
+};
 
 function mockReq(overrides: any = {}): any {
   return {
@@ -50,9 +94,13 @@ describe('handleProjects', () => {
     vi.mocked(validateAuth).mockReset();
     vi.mocked(auditLog).mockReset();
     vi.mocked(writeOffStockForProject).mockReset();
+    vi.mocked(writeOffStockForProjectBatch).mockReset();
 
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
-
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
 
     // Configura mock dinâmico do sql para evitar que a infraestrutura consuma mocks de rotas
     vi.mocked(sql).mockImplementation(async (query: any) => {
@@ -65,7 +113,15 @@ describe('handleProjects', () => {
         return [{ count: '0' }];
       }
       if (qStr.includes('SELECT * FROM projects WHERE id =')) {
-        return [{ id: '1', ambiente: 'Cozinha', status: 'lead', tenant_id: '00000000-0000-0000-0000-000000000000', tag: 'PRJ-123' }];
+        return [
+          {
+            id: '1',
+            ambiente: 'Cozinha',
+            status: 'lead',
+            tenant_id: '00000000-0000-0000-0000-000000000000',
+            tag: 'PRJ-123',
+          },
+        ];
       }
       if (qStr.includes('INSERT INTO projects')) {
         return [{ id: '1', ambiente: 'Quarto', status: 'lead' }];
@@ -110,7 +166,11 @@ describe('handleProjects', () => {
   });
 
   it('deve criar projeto (POST)', async () => {
-    const req = mockReq({ method: 'POST', query: {}, body: { client_id: 'c1', ambiente: 'Quarto' } });
+    const req = mockReq({
+      method: 'POST',
+      query: {},
+      body: { client_id: 'c1', ambiente: 'Quarto' },
+    });
     const res = mockRes();
     await handleProjects(req, res);
     expect(res._s()).toBe(201);
@@ -133,7 +193,11 @@ describe('handleProjects', () => {
       return [];
     });
 
-    const req = mockReq({ method: 'POST', query: {}, body: { client_id: 'c1', ambiente: 'Cozinha', status: 'em_producao' } });
+    const req = mockReq({
+      method: 'POST',
+      query: {},
+      body: { client_id: 'c1', ambiente: 'Cozinha', status: 'em_producao' },
+    });
     const res = mockRes();
     await handleProjects(req, res);
 
@@ -141,7 +205,11 @@ describe('handleProjects', () => {
   });
 
   it('deve atualizar projeto (PUT)', async () => {
-    const req = mockReq({ method: 'PUT', query: { id: '1' }, body: { ambiente: 'Sala Modificada' } });
+    const req = mockReq({
+      method: 'PUT',
+      query: { id: '1' },
+      body: { ambiente: 'Sala Modificada' },
+    });
     const res = mockRes();
     await handleProjects(req, res);
     expect(res._s()).toBe(200);
@@ -185,9 +253,6 @@ describe('handleProjects', () => {
       if (qStr.includes('UPDATE projects')) {
         return [{ id: '1', status: 'concluido', tag: 'PRJ-123', ambiente: 'Cozinha' }];
       }
-      if (qStr.includes('SELECT id FROM erp_project_items')) {
-        return [{ id: 'item-1' }];
-      }
       return [];
     });
 
@@ -196,7 +261,12 @@ describe('handleProjects', () => {
     await handleProjects(req, res);
 
     expect(res._s()).toBe(200);
-    expect(vi.mocked(writeOffStockForProject)).toHaveBeenCalledWith('item-1', '00000000-0000-0000-0000-000000000000');
+    // Desde o refactor para baixa em lote, o handler chama writeOffStockForProjectBatch(projectId, tenantId)
+    // em vez de resolver itens individualmente — a função batch resolve os itens internamente.
+    expect(vi.mocked(writeOffStockForProjectBatch)).toHaveBeenCalledWith(
+      '1',
+      '00000000-0000-0000-0000-000000000000',
+    );
   });
 
   it('deve retornar 400 no PUT sem ID', async () => {
@@ -265,7 +335,11 @@ describe('handleReports', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
   });
 
   it('deve retornar relatorio de rentabilidade (GET ?type=fin-rentabilidade)', async () => {
@@ -313,14 +387,18 @@ describe('handleEngineering', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
 
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -359,9 +437,9 @@ describe('handleEngineering', () => {
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -379,8 +457,8 @@ describe('handleEngineering', () => {
       method: 'POST',
       body: {
         nome: 'Painel MDF',
-        regras_calculo: [{ valor_unitario: 100, quantidade: 2 }]
-      }
+        regras_calculo: [{ valor_unitario: 100, quantidade: 2 }],
+      },
     });
     const res = mockRes();
     await handleEngineering(req, res);
@@ -392,9 +470,9 @@ describe('handleEngineering', () => {
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -410,8 +488,8 @@ describe('handleEngineering', () => {
       query: { id: 'bom-1' },
       body: {
         nome: 'Armario Atualizado',
-        regras_calculo: [{ valor_unitario: 150, quantidade: 3 }]
-      }
+        regras_calculo: [{ valor_unitario: 150, quantidade: 3 }],
+      },
     });
     const res = mockRes();
     await handleEngineering(req, res);
@@ -423,9 +501,9 @@ describe('handleEngineering', () => {
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -444,7 +522,11 @@ describe('handleSKUs', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
   });
 
   it('deve gerar proximo codigo SKU quando não existir anterior no banco (GET ?action=next-code)', async () => {
@@ -458,7 +540,10 @@ describe('handleSKUs', () => {
 
   it('deve criar SKU (POST)', async () => {
     vi.mocked(sql).mockResolvedValueOnce([{ id: '1' }]);
-    const req = mockReq({ method: 'POST', body: { sku_code: 'CHP-0002', nome: 'MDF 6mm', preco_base: 30 } });
+    const req = mockReq({
+      method: 'POST',
+      body: { sku_code: 'CHP-0002', nome: 'MDF 6mm', preco_base: 30 },
+    });
     const res = mockRes();
     await handleSKUs(req, res);
     expect(res._s()).toBe(201);
@@ -466,7 +551,11 @@ describe('handleSKUs', () => {
 
   it('deve atualizar SKU (PATCH/PUT)', async () => {
     vi.mocked(sql).mockResolvedValueOnce([{ id: 'mat-1', nome: 'MDF 6mm Editado' }]);
-    const req = mockReq({ method: 'PATCH', query: { id: 'mat-1' }, body: { nome: 'MDF 6mm Editado' } });
+    const req = mockReq({
+      method: 'PATCH',
+      query: { id: 'mat-1' },
+      body: { nome: 'MDF 6mm Editado' },
+    });
     const res = mockRes();
     await handleSKUs(req, res);
     expect(res._s()).toBe(200);
@@ -485,14 +574,18 @@ describe('handleSimulations', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(validateAuth).mockReset();
-    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' }, error: null });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: true,
+      user: { id: 'u1', tenantId: '00000000-0000-0000-0000-000000000000' },
+      error: null,
+    });
 
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -517,9 +610,9 @@ describe('handleSimulations', () => {
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];
@@ -533,7 +626,7 @@ describe('handleSimulations', () => {
     const req = mockReq({
       method: 'PUT',
       query: { id: 'sim-123' },
-      body: { nome: 'Simulação Alterada', dados_simulacao: { x: 1 }, dados_input: { y: 2 } }
+      body: { nome: 'Simulação Alterada', dados_simulacao: { x: 1 }, dados_input: { y: 2 } },
     });
     const res = mockRes();
     await handleSimulations(req, res);
@@ -546,9 +639,9 @@ describe('handleSimulations', () => {
     vi.mocked(sql).mockImplementation(async (query: any) => {
       const qStr = (Array.isArray(query) ? query.join('') : String(query)).replace(/\s+/g, ' ');
       if (
-        qStr.includes('CREATE TABLE') || 
-        qStr.includes('ALTER TABLE') || 
-        qStr.includes('ADD CONSTRAINT') || 
+        qStr.includes('CREATE TABLE') ||
+        qStr.includes('ALTER TABLE') ||
+        qStr.includes('ADD CONSTRAINT') ||
         qStr.includes('DO $$')
       ) {
         return [];

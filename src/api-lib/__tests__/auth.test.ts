@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleAuth, handleUsers } from '../auth.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { _resetRateLimitersForTests } from '../middleware/rateLimiter.js';
 
 vi.mock('../_db.js', () => ({
   sql: Object.assign(vi.fn(), { begin: undefined, query: vi.fn() }),
@@ -10,6 +9,16 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
   resolveTenantByDomain: vi.fn(),
   auditLog: vi.fn(),
+}));
+
+// Este arquivo testa lógica de autenticação, não rate limiting — o RateLimiterMemory
+// é um singleton em memória compartilhado entre todos os testes do arquivo (chave = IP,
+// e o req mockado não define req.socket.remoteAddress, então todos os testes caem no
+// mesmo bucket '127.0.0.1'). Sem este mock, os primeiros ~15 testes esgotam a cota e os
+// testes seguintes recebem 429 independente do cenário que estão de fato testando.
+vi.mock('../middleware/rateLimiter.js', () => ({
+  loginRateLimit: vi.fn().mockResolvedValue(true),
+  applyRateLimit: vi.fn().mockResolvedValue(true),
 }));
 
 const { sql, resolveTenantByDomain } = await import('../_db.js');
@@ -46,10 +55,9 @@ function mockRes() {
 }
 
 describe('handleAuth', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(resolveTenantByDomain).mockReset();
-    await _resetRateLimitersForTests();
   });
 
   it('deve fazer login com credenciais válidas', async () => {

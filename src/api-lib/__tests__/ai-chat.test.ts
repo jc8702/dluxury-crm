@@ -1,16 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.APP_JWT_SECRET || 'test-secret-key-for-jwt';
-function makeBearer(payload: any) {
-  return 'Bearer ' + jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
-}
-const VALID_BEARER = makeBearer({
-  id: 'test-user-id',
-  email: 'test@example.com',
-  role: 'admin',
-  tenantId: '11111111-1111-1111-1111-111111111111',
-});
+// Este teste exercita o handler via router completo (api/index.ts), que por padrão
+// usa o novo tenantMiddleware (JWT real + tenant existente no banco). Os mocks abaixo
+// (validateAuth, resolveTenantByDomain) foram escritos para o fluxo LEGADO de resolução
+// de tenant. Force o fallback legado via a flag que o próprio router já suporta,
+// em vez de exigir um JWT real assinado + tenant real no banco só para testar
+// lógica de negócio do AI chat.
+process.env.NEW_TENANT_MIDDLEWARE = 'false';
 
 // Mocks do Banco de dados e dependências
 vi.mock('../_db.js', () => ({
@@ -19,16 +15,18 @@ vi.mock('../_db.js', () => ({
     if (query.includes('plano_tier') || query.includes('tenants')) {
       return [{ plano_tier: 'enterprise' }];
     }
-    if (query.includes('subscriptions')) {
-      return [];
-    }
     return [];
   }),
   validateAuth: (req?: any) => {
     const userId = req?.body?.context?.usuario_id || `usr-${Math.random()}`;
-    return { authorized: true, user: { tenantId: '11111111-1111-1111-1111-111111111111', id: userId, email: 'test@example.com' } };
+    return {
+      authorized: true,
+      user: { tenantId: 'tenant-default', id: userId, email: 'test@example.com' },
+    };
   },
-  resolveTenantByDomain: vi.fn().mockResolvedValue({ id: '11111111-1111-1111-1111-111111111111', nome: 'D\'Luxury', subdominio: 'dluxury' }),
+  resolveTenantByDomain: vi
+    .fn()
+    .mockResolvedValue({ id: 'tenant-default', nome: "D'Luxury", subdominio: 'dluxury' }),
 }));
 
 vi.mock('../financeiro.js', () => ({
@@ -44,13 +42,13 @@ vi.mock('../drizzle-db.js', () => ({
             {
               titulo: 'Folga de corrediça telescópica',
               conteudo: 'A folga padrão exigida para corrediça telescópica é de 13mm de cada lado.',
-              categoria: 'Ferragens'
-            }
-          ])
-        })
-      })
-    })
-  }
+              categoria: 'Ferragens',
+            },
+          ]),
+        }),
+      }),
+    }),
+  },
 }));
 
 // Mock da biblioteca oficial do Google GenAI
@@ -61,28 +59,74 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
   const responseMimeType = config.responseMimeType || '';
 
   // 1. Roteador Semântico (rotearAgente)
-  if (responseMimeType === 'application/json' && JSON.stringify(config.responseSchema).includes('agente_escolhido')) {
+  if (
+    responseMimeType === 'application/json' &&
+    JSON.stringify(config.responseSchema).includes('agente_escolhido')
+  ) {
     const textContent = typeof contents === 'string' ? contents : JSON.stringify(contents);
     const userMessageMatch = textContent.match(/Mensagem atual do usuário:\s*"([^"]+)"/i);
     const userMessage = userMessageMatch ? userMessageMatch[1] : textContent;
 
-    if (userMessage.toLowerCase().includes('folga') || userMessage.toLowerCase().includes('corrediça') || userMessage.toLowerCase().includes('marcenaria')) {
-      return { text: JSON.stringify({ agente_escolhido: 'marcenaria', confianca: 0.95, razao: 'Dúvida de marcenaria' }) };
+    if (
+      userMessage.toLowerCase().includes('folga') ||
+      userMessage.toLowerCase().includes('corrediça') ||
+      userMessage.toLowerCase().includes('marcenaria')
+    ) {
+      return {
+        text: JSON.stringify({
+          agente_escolhido: 'marcenaria',
+          confianca: 0.95,
+          razao: 'Dúvida de marcenaria',
+        }),
+      };
     }
-    if (userMessage.toLowerCase().includes('faturamento') || userMessage.toLowerCase().includes('fluxo de caixa') || userMessage.toLowerCase().includes('caixa')) {
-      return { text: JSON.stringify({ agente_escolhido: 'financeiro', confianca: 0.98, razao: 'Consulta financeira' }) };
+    if (
+      userMessage.toLowerCase().includes('faturamento') ||
+      userMessage.toLowerCase().includes('fluxo de caixa') ||
+      userMessage.toLowerCase().includes('caixa')
+    ) {
+      return {
+        text: JSON.stringify({
+          agente_escolhido: 'financeiro',
+          confianca: 0.98,
+          razao: 'Consulta financeira',
+        }),
+      };
     }
-    if (userMessage.toLowerCase().includes('estoque') || userMessage.toLowerCase().includes('chapas')) {
-      return { text: JSON.stringify({ agente_escolhido: 'producao', confianca: 0.92, razao: 'Estoque de chapas' }) };
+    if (
+      userMessage.toLowerCase().includes('estoque') ||
+      userMessage.toLowerCase().includes('chapas')
+    ) {
+      return {
+        text: JSON.stringify({
+          agente_escolhido: 'producao',
+          confianca: 0.92,
+          razao: 'Estoque de chapas',
+        }),
+      };
     }
-    if (userMessage.toUpperCase().includes('SKU') || userMessage.toUpperCase().includes('BALC-COZ')) {
-      return { text: JSON.stringify({ agente_escolhido: 'engenharia', confianca: 0.99, razao: 'Análise de SKU' }) };
+    if (
+      userMessage.toUpperCase().includes('SKU') ||
+      userMessage.toUpperCase().includes('BALC-COZ')
+    ) {
+      return {
+        text: JSON.stringify({
+          agente_escolhido: 'engenharia',
+          confianca: 0.99,
+          razao: 'Análise de SKU',
+        }),
+      };
     }
-    return { text: JSON.stringify({ agente_escolhido: 'marcenaria', confianca: 0.8, razao: 'Default' }) };
+    return {
+      text: JSON.stringify({ agente_escolhido: 'marcenaria', confianca: 0.8, razao: 'Default' }),
+    };
   }
 
   // 2. Formatador JSON Estruturado Final
-  if (responseMimeType === 'application/json' && JSON.stringify(config.responseSchema).includes('response')) {
+  if (
+    responseMimeType === 'application/json' &&
+    JSON.stringify(config.responseSchema).includes('response')
+  ) {
     const promptText = typeof contents === 'string' ? contents : JSON.stringify(contents);
     /* console.log('[MOCK_DEBUG] promptText:', promptText) */
 
@@ -96,32 +140,40 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
             headers: ['Parâmetro / Componente', 'Valor Identificado', 'Especificação / Status'],
             rows: [
               ['Categoria do móvel', 'Balcão', 'Especificação Padrão'],
-              ['Material da estrutura', 'MDF', 'MDF 18mm']
-            ]
+              ['Material da estrutura', 'MDF', 'MDF 18mm'],
+            ],
           },
-          suggestions: ['Verificar vão de estoque', 'Reforçar com travessa', 'Reduzir largura para 800mm']
-        })
+          suggestions: [
+            'Verificar vão de estoque',
+            'Reforçar com travessa',
+            'Reduzir largura para 800mm',
+          ],
+        }),
       };
     }
 
-    if (promptText.includes('INVALID-SKU-FORMAT') || promptText.includes('Não foi possível analisar o SKU')) {
+    if (
+      promptText.includes('INVALID-SKU-FORMAT') ||
+      promptText.includes('Não foi possível analisar o SKU')
+    ) {
       return {
         text: JSON.stringify({
           response: 'Não foi possível analisar o SKU devido ao formato inválido.',
           confidence: 100,
           sources: ['Validador SKU'],
-          suggestions: ['Consultar tabela de medidas padrão']
-        })
+          suggestions: ['Consultar tabela de medidas padrão'],
+        }),
       };
     }
 
     if (promptText.includes('13mm de cada lado')) {
       return {
         text: JSON.stringify({
-          response: 'De acordo com o RAG de marcenaria, a folga padrão exigida para corrediça telescópica é de 13mm de cada lado.',
+          response:
+            'De acordo com o RAG de marcenaria, a folga padrão exigida para corrediça telescópica é de 13mm de cada lado.',
           confidence: 90,
-          sources: ['RAG Marcenaria']
-        })
+          sources: ['RAG Marcenaria'],
+        }),
       };
     }
 
@@ -130,8 +182,8 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
         text: JSON.stringify({
           response: 'Fluxo de caixa do período atualizado.',
           confidence: 85,
-          sources: ['Banco de Dados ERP']
-        })
+          sources: ['Banco de Dados ERP'],
+        }),
       };
     }
 
@@ -141,8 +193,8 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
           response: 'O estoque de chapas de MDF está normal.',
           confidence: 90,
           sources: ['Banco de Dados ERP'],
-          suggestions: ['Ver materiais abaixo do mínimo']
-        })
+          suggestions: ['Ver materiais abaixo do mínimo'],
+        }),
       };
     }
 
@@ -150,24 +202,27 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
       text: JSON.stringify({
         response: 'Resposta formatada do assistente.',
         confidence: 80,
-        sources: ['Conhecimento Geral']
-      })
+        sources: ['Conhecimento Geral'],
+      }),
     };
   }
 
-  const normSystem = systemInstruction.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normSystem = systemInstruction
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
   // 3. Loop de Tools (texto livre / function calls)
   if (normSystem.includes('engenh')) {
     const promptText = typeof contents === 'string' ? contents : JSON.stringify(contents);
     if (promptText.includes('BALC-COZ-1200-2P-2G-MDF18')) {
       return {
-        text: `RELATÓRIO DE ENGENHARIA DE MÓVEIS\nSKU: BALC-COZ-1200-2P-2G-MDF18\nALERTAS DE SEGURANÇA:\n- Flambagem detectada no vão de 1200mm\n- Torção de Corrediça`
+        text: `RELATÓRIO DE ENGENHARIA DE MÓVEIS\nSKU: BALC-COZ-1200-2P-2G-MDF18\nALERTAS DE SEGURANÇA:\n- Flambagem detectada no vão de 1200mm\n- Torção de Corrediça`,
       };
     }
     if (promptText.includes('INVALID-SKU-FORMAT')) {
       return {
-        text: 'Não foi possível analisar o SKU devido ao formato inválido.'
+        text: 'Não foi possível analisar o SKU devido ao formato inválido.',
       };
     }
   }
@@ -177,22 +232,26 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
     // Se o modelo já recebeu o retorno da tool no histórico, responde final
     if (promptText.includes('13mm de cada lado')) {
       return {
-        text: 'A folga padrão exigida para corrediça telescópica é de 13mm de cada lado.'
+        text: 'A folga padrão exigida para corrediça telescópica é de 13mm de cada lado.',
       };
     }
     // Caso contrário, faz a chamada da tool
     return {
-      candidates: [{
-        content: {
-          role: 'model',
-          parts: [{
-            functionCall: {
-              name: 'ragConhecimentoTecnico',
-              args: { query: 'Qual é a folga necessária para instalar uma corrediça?' }
-            }
-          }]
-        }
-      }]
+      candidates: [
+        {
+          content: {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  name: 'ragConhecimentoTecnico',
+                  args: { query: 'Qual é a folga necessária para instalar uma corrediça?' },
+                },
+              },
+            ],
+          },
+        },
+      ],
     };
   }
 
@@ -202,17 +261,21 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
       return { text: 'Fluxo de caixa atualizado.' };
     }
     return {
-      candidates: [{
-        content: {
-          role: 'model',
-          parts: [{
-            functionCall: {
-              name: 'consultar_orcamentos',
-              args: { status: 'APROVADO', limite: 5 }
-            }
-          }]
-        }
-      }]
+      candidates: [
+        {
+          content: {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  name: 'consultar_orcamentos',
+                  args: { status: 'APROVADO', limite: 5 },
+                },
+              },
+            ],
+          },
+        },
+      ],
     };
   }
 
@@ -222,17 +285,21 @@ const mockGenerateContent = vi.fn().mockImplementation(async (params) => {
       return { text: 'estoque de chapas' };
     }
     return {
-      candidates: [{
-        content: {
-          role: 'model',
-          parts: [{
-            functionCall: {
-              name: 'buscar_materiais',
-              args: { termo: 'chapa', limite: 5 }
-            }
-          }]
-        }
-      }]
+      candidates: [
+        {
+          content: {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  name: 'buscar_materiais',
+                  args: { termo: 'chapa', limite: 5 },
+                },
+              },
+            ],
+          },
+        },
+      ],
     };
   }
 
@@ -243,9 +310,9 @@ vi.mock('@google/genai', () => {
   return {
     GoogleGenAI: class {
       models = {
-        generateContent: mockGenerateContent
+        generateContent: mockGenerateContent,
       };
-    }
+    },
   };
 });
 
@@ -261,17 +328,16 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'Analise o SKU BALC-COZ-1200-2P-2G-MDF18',
         conversation_history: [],
         context: {
-          data_atual: '2026-05-21T12:00:00.000Z'
-        }
-      }
+          data_atual: '2026-05-21T12:00:00.000Z',
+        },
+      },
     };
 
     let responseStatus = 200;
@@ -287,7 +353,7 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -303,30 +369,48 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
     expect(data.text).toContain('Torção de Corrediça');
 
     expect(data.table_data).toBeDefined();
-    expect(data.table_data.headers).toEqual(['Parâmetro / Componente', 'Valor Identificado', 'Especificação / Status']);
-    expect(data.table_data.rows.some((row: any) => row[0] === 'Categoria do móvel' && row[1] === 'Balcão')).toBe(true);
-    expect(data.table_data.rows.some((row: any) => row[0] === 'Material da estrutura' && row[1] === 'MDF')).toBe(true);
+    expect(data.table_data.headers).toEqual([
+      'Parâmetro / Componente',
+      'Valor Identificado',
+      'Especificação / Status',
+    ]);
+    expect(
+      data.table_data.rows.some(
+        (row: any) => row[0] === 'Categoria do móvel' && row[1] === 'Balcão',
+      ),
+    ).toBe(true);
+    expect(
+      data.table_data.rows.some(
+        (row: any) => row[0] === 'Material da estrutura' && row[1] === 'MDF',
+      ),
+    ).toBe(true);
 
     expect(data.suggestions).toBeDefined();
     expect(data.suggestions.length).toBeGreaterThan(0);
-    expect(data.suggestions.some((s: string) => s.toLowerCase().includes('estoque') || s.toLowerCase().includes('vão') || s.toLowerCase().includes('corrediça'))).toBe(true);
+    expect(
+      data.suggestions.some(
+        (s: string) =>
+          s.toLowerCase().includes('estoque') ||
+          s.toLowerCase().includes('vão') ||
+          s.toLowerCase().includes('corrediça'),
+      ),
+    ).toBe(true);
   });
 
   it('deve lidar graciosamente com SKUs inválidos ou desconhecidos', async () => {
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'Analise o sku INVALID-SKU-FORMAT',
         conversation_history: [],
         context: {
-          data_atual: '2026-05-21T12:00:00.000Z'
-        }
-      }
+          data_atual: '2026-05-21T12:00:00.000Z',
+        },
+      },
     };
 
     let responseStatus = 200;
@@ -342,7 +426,7 @@ describe('Integração do Analisador de SKU com AI Chat (Serviço Gemini de Prod
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -362,17 +446,16 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'Qual é a folga necessária para instalar uma corrediça?',
         conversation_history: [],
         context: {
-          data_atual: '2026-05-21T12:00:00.000Z'
-        }
-      }
+          data_atual: '2026-05-21T12:00:00.000Z',
+        },
+      },
     };
 
     let responseStatus = 200;
@@ -388,7 +471,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -402,17 +485,16 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'Qual é o faturamento e fluxo de caixa deste mês?',
         conversation_history: [],
         context: {
-          data_atual: '2026-05-21T12:00:00.000Z'
-        }
-      }
+          data_atual: '2026-05-21T12:00:00.000Z',
+        },
+      },
     };
 
     let responseStatus = 200;
@@ -428,7 +510,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -441,17 +523,16 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'Como está o estoque de chapas de MDF?',
         conversation_history: [],
         context: {
-          data_atual: '2026-05-21T12:00:00.000Z'
-        }
-      }
+          data_atual: '2026-05-21T12:00:00.000Z',
+        },
+      },
     };
 
     let responseStatus = 200;
@@ -467,7 +548,7 @@ describe('Arquitetura Multi-Agente & RAG de Marcenaria (Serviço Gemini de Produ
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -487,15 +568,14 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: '   ',
         conversation_history: [],
-        context: {}
-      }
+        context: {},
+      },
     };
 
     let responseStatus = 200;
@@ -511,7 +591,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -524,15 +604,14 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
     const req = {
       method: 'POST',
       url: '/api/ai/chat',
-      headers: { authorization: VALID_BEARER },
       socket: {
-        remoteAddress: 'test-ip-' + Math.random()
+        remoteAddress: 'test-ip-' + Math.random(),
       },
       body: {
         message: 'A'.repeat(4001),
         conversation_history: [],
-        context: {}
-      }
+        context: {},
+      },
     };
 
     let responseStatus = 200;
@@ -548,7 +627,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
         return res;
       },
       setHeader: () => {},
-      end: () => res
+      end: () => res,
     };
 
     await handler(req, res);
@@ -563,17 +642,16 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
       const req = {
         method: 'POST',
         url: '/api/ai/chat',
-        headers: { authorization: VALID_BEARER },
         socket: {
-          remoteAddress: userId
+          remoteAddress: userId,
         },
         body: {
           message: 'Olá, IA',
           conversation_history: [],
           context: {
-            usuario_id: userId
-          }
-        }
+            usuario_id: userId,
+          },
+        },
       };
 
       let responseStatus = 200;
@@ -589,7 +667,7 @@ describe('Validações de Entrada e Controle de Rate Limit (Serviço Gemini de P
           return res;
         },
         setHeader: () => {},
-        end: () => res
+        end: () => res,
       };
 
       await handler(req, res);

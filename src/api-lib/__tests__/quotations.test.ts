@@ -8,7 +8,6 @@ import {
 import { db } from '../drizzle-db.js';
 import { validateAuth } from '../_db.js';
 import { PgDialect } from 'drizzle-orm/pg-core';
-import { sql as drizzleSql } from 'drizzle-orm';
 
 // Mock do banco de dados e auxiliares
 vi.mock('../drizzle-db.js', () => {
@@ -49,17 +48,11 @@ vi.mock('../_db.js', () => ({
   auditLog: vi.fn().mockResolvedValue({}),
   validateAuth: vi.fn(),
   sql: Object.assign(vi.fn().mockResolvedValue([]), {
-    join: vi.fn((chunks: any[], sep?: any) => {
-      const { sql: dsql } = require('drizzle-orm');
-      return dsql.join(chunks as any, sep ?? dsql`, `);
-    }),
+    join: vi.fn((fragments: any[], separator: any) => fragments.join(separator)),
     begin: vi.fn().mockImplementation(async (cb) =>
       cb(
         Object.assign(vi.fn().mockResolvedValue([]), {
-          join: vi.fn((chunks: any[], sep?: any) => {
-            const { sql: dsql } = require('drizzle-orm');
-            return dsql.join(chunks as any, sep ?? dsql`, `);
-          }),
+          // Mock any transaction methods if needed
         }),
       ),
     ),
@@ -427,17 +420,9 @@ describe('Módulo de Orçamentos PRO', () => {
           if (rawSql.includes('FROM formas_pagamento')) {
             return { rows: [{ id: 'forma-123' }] };
           }
-          if (rawSql.includes('FROM sku_componente')) {
+          if (rawSql.includes('FROM materiais')) {
             return {
-              rows: [
-                {
-                  id: 'mat-123',
-                  codigo: 'CHP-MDF-15',
-                  sku: 'chp-mdf-15',
-                  estoque_atual: 10,
-                  preco_custo: 50.0,
-                },
-              ],
+              rows: [{ id: 'mat-123', sku: 'chp-mdf-15', estoque_atual: 10, preco_custo: 50.0 }],
             };
           }
           return { rows: [] };
@@ -520,9 +505,7 @@ describe('Módulo de Orçamentos PRO', () => {
 
       expect(sqlQueries.some((q) => q.includes('INSERT INTO titulos_receber'))).toBe(true);
       expect(sqlQueries.some((q) => q.includes('INSERT INTO ordens_prod'))).toBe(true);
-      expect(sqlQueries.some((q) => q.includes('INSERT INTO movimento_estoque_granular'))).toBe(
-        true,
-      );
+      expect(sqlQueries.some((q) => q.includes('INSERT INTO movimentacoes_estoque'))).toBe(true);
     });
   });
 
