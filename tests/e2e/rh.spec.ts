@@ -315,16 +315,16 @@ test.describe('Módulo RH & Folha (F3)', () => {
   test('carrega pagina RH', async ({ page }) => {
     await page.goto('/#/rh');
     await expect(page.getByTestId('rh-page')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('RH & Folha')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RH & Folha' })).toBeVisible();
   });
 
   test('tabs colaborador/presenca/folhas/adiantamento visiveis', async ({ page }) => {
     await page.goto('/#/rh');
     await expect(page.getByTestId('rh-tabs')).toBeVisible();
-    await expect(page.getByTestId('tab-colaboradores')).toBeVisible();
-    await expect(page.getByTestId('tab-presencas')).toBeVisible();
-    await expect(page.getByTestId('tab-folhas')).toBeVisible();
-    await expect(page.getByTestId('tab-adiantamentos')).toBeVisible();
+    await expect(page.getByTestId('rh-tabs').getByTestId('tab-colaboradores')).toBeVisible();
+    await expect(page.getByTestId('rh-tabs').getByTestId('tab-presencas')).toBeVisible();
+    await expect(page.getByTestId('rh-tabs').getByTestId('tab-folhas')).toBeVisible();
+    await expect(page.getByTestId('rh-tabs').getByTestId('tab-adiantamentos')).toBeVisible();
   });
 
   test('cria colaborador via modal', async ({ page }) => {
