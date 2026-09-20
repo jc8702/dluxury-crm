@@ -10,7 +10,7 @@ test.describe('Autenticação', () => {
     await page.fill('input[type="password"], input[name="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"], button:has-text("Entrar"), button:has-text("Login")');
 
-    await page.waitForURL(/\/(dashboard|home|app)/, { timeout: 10000 });
+    await page.waitForURL(/\/(dashboard|home|app|painel)/, { timeout: 10000 });
     expect(page.url()).not.toContain('/login');
   });
 
@@ -29,7 +29,7 @@ test.describe('Autenticação', () => {
     await page.fill('input[type="email"]', TEST_EMAIL);
     await page.fill('input[type="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/\/(dashboard|home|app)/);
+    await page.waitForURL(/\/(dashboard|home|app|painel)/);
 
     const logoutBtn = page
       .locator('button:has-text("Sair"), button:has-text("Logout"), [aria-label="logout"]')
