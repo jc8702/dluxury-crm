@@ -123,6 +123,8 @@ export async function handleRetalhos(req: any, res: any) {
           .where(and(eq(retalhosEstoque.id, id), eq(retalhosEstoque.tenantId, tenantId)))
           .returning();
 
+        if (!atualizado)
+          return res.status(404).json({ success: false, error: 'Retalho não encontrado' });
         return res.status(200).json({ success: true, data: atualizado });
       }
 

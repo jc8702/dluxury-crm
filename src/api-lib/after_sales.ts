@@ -90,6 +90,8 @@ export async function handleAfterSales(req: any, res: any) {
         WHERE id = ${id} AND tenant_id = ${tenantId}
         RETURNING *
       `;
+      if (!resultado)
+        return res.status(404).json({ success: false, error: 'Chamado não encontrado' });
       return res.status(200).json({ success: true, data: resultado });
     }
 

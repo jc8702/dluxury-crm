@@ -15,19 +15,24 @@ const handleComprasCore: TenantHandler = async (req, res) => {
       if (method === 'GET') {
         if (id) {
           const pedido = (
-            await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.id = ${id} AND p.tenant_id = ${tenantId}`
+            await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id::text = f.id::text AND f.tenant_id = ${tenantId} WHERE p.id = ${id}::uuid AND p.tenant_id = ${tenantId}::uuid`
           )[0];
           const itens =
             await sql`SELECT id, pedido_id, material_id, sku, descricao, quantidade_pedida, quantidade_recebida, unidade, preco_unitario, subtotal, status_item, created_at, updated_at FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId} ORDER BY id ASC`;
           return res.status(200).json({ success: true, data: { ...pedido, itens } });
         }
         if (req.query.fornecedor_id) {
-          const result =
-            await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.fornecedor_id = ${req.query.fornecedor_id} AND p.status != 'cancelado' AND p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
+          const fornecedorIdRaw = String(req.query.fornecedor_id);
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            fornecedorIdRaw,
+          );
+          const result = isUuid
+            ? await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id::text = f.id::text AND f.tenant_id = ${tenantId} WHERE p.fornecedor_id::text = ${fornecedorIdRaw} AND p.status != 'cancelado' AND p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`
+            : await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id::text = f.id::text AND f.tenant_id = ${tenantId} WHERE p.fornecedor_id::text = ${fornecedorIdRaw} AND p.status != 'cancelado' AND p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
           return res.status(200).json({ success: true, data: result });
         }
         const result =
-          await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id = f.id AND f.tenant_id = ${tenantId} WHERE p.tenant_id = ${tenantId} ORDER BY p.created_at DESC`;
+          await sql`SELECT p.*, f.nome as fornecedor_nome FROM pedidos_compra p LEFT JOIN fornecedores f ON p.fornecedor_id::text = f.id::text AND f.tenant_id = ${tenantId} WHERE p.tenant_id = ${tenantId}::uuid ORDER BY p.created_at DESC`;
         return res.status(200).json({ success: true, data: result });
       }
 
@@ -37,8 +42,8 @@ const handleComprasCore: TenantHandler = async (req, res) => {
           return res
             .status(400)
             .json({ success: false, error: 'id é obrigatório para deletar pedido' });
-        await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id} AND tenant_id = ${tenantId}`;
-        await sql`DELETE FROM pedidos_compra WHERE id = ${id} AND tenant_id = ${tenantId}`;
+        await sql`DELETE FROM pedido_compra_itens WHERE pedido_id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
+        await sql`DELETE FROM pedidos_compra WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
         return res.status(200).json({ success: true });
       }
 

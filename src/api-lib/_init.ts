@@ -404,9 +404,10 @@ export async function runInitDB() {
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS chamados_garantia (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
       projeto_id TEXT, -- Alterado para TEXT para compatibilidade
       cliente_id TEXT, -- Alterado para TEXT para compatibilidade
-      numero TEXT UNIQUE NOT NULL,
+      numero TEXT NOT NULL,
       titulo TEXT NOT NULL,
       descricao TEXT NOT NULL,
       tipo TEXT NOT NULL,
@@ -425,6 +426,9 @@ export async function runInitDB() {
     )
   `);
 
+  await safeSql(
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS chamados_garantia_tenant_numero ON chamados_garantia (tenant_id, numero)`,
+  );
   await safeSql(sql`
     CREATE TABLE IF NOT EXISTS historico_chamado (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

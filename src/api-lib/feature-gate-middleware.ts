@@ -76,6 +76,16 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
       requiredFeature = 'financeiro';
     } else if (cleanUrl.startsWith('/api/rh')) {
       requiredFeature = 'rh';
+    } else if (
+      cleanUrl.startsWith('/api/estoque') ||
+      cleanUrl.startsWith('/api/forn') ||
+      cleanUrl.startsWith('/api/compras') ||
+      cleanUrl.startsWith('/api/chapas') ||
+      cleanUrl.startsWith('/api/engenharia') ||
+      cleanUrl.startsWith('/api/skus') ||
+      cleanUrl.startsWith('/api/retalhos')
+    ) {
+      requiredFeature = 'estoque';
     } else if (cleanUrl.startsWith('/api/whatsapp')) {
       requiredFeature = 'whatsapp';
     } else if (
