@@ -456,6 +456,12 @@ export async function runInitDB() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await safeSql(
+    sql`ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
+  );
+  await safeSql(
+    sql`ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`,
+  );
 
   // 18. Calendar Table
   await safeSql(sql`

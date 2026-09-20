@@ -262,6 +262,11 @@ export default async function handler(req: any, res: any) {
       const { default: handler } = await import('./orcamentos/exportar-pdf.js');
       return await handler(req, res);
     }
+    if (cleanUrl.startsWith('/api/quotation-tecnico')) {
+      // Compatibilidade: frontend antigo chama /api/quotation-tecnico?type=config — redireciona para quotations
+      const { handleQuotations } = await import('../src/api-lib/quotations.js');
+      return await handleQuotations(req, res);
+    }
     if (cleanUrl.startsWith('/api/orcamentos') || cleanUrl.startsWith('/api/orcamento-tecnico')) {
       res.setHeader('Deprecation', 'true');
       res.setHeader('Sunset', 'Sat, 31 Jan 2027 23:59:59 GMT');

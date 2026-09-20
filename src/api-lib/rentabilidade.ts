@@ -93,7 +93,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
       let queryStr = `
         SELECT 
           cr.id,
-          cr.quotation_id,
+          cr.orcamento_id as quotation_id,
           op.op_id as numero_op,
           o.numero_orcamento,
           c.nome as cliente,
@@ -120,7 +120,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           END as status
         FROM custos_reais_op cr
         JOIN ordens_producao op ON cr.operacao_prod_id = op.id
-        JOIN quotations o ON cr.quotation_id = o.id
+        JOIN quotations o ON cr.orcamento_id = o.id
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE cr.tenant_id = $1::uuid
       `;
@@ -167,7 +167,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
     if (method === 'GET' && url.includes('/alertas')) {
       const alertas = await sql`
         SELECT 
-          cr.quotation_id,
+          cr.orcamento_id as quotation_id,
           op.numero_op,
           c.nome as cliente,
           CASE 
@@ -179,7 +179,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           cr.descricao_desvios
         FROM custos_reais_op cr
         JOIN ordens_prod op ON cr.operacao_prod_id = op.id
-        JOIN quotations o ON cr.quotation_id = o.id
+        JOIN quotations o ON cr.orcamento_id = o.id
         LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
         WHERE cr.tenant_id = ${tenantId}::uuid
           AND (
@@ -211,7 +211,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
         SELECT 
           c.nome as cliente,
           c.id as cliente_id,
-          COUNT(DISTINCT cr.quotation_id) as total_pedidos,
+          COUNT(DISTINCT cr.orcamento_id) as total_pedidos,
           COALESCE(SUM(cr.valor_venda), 0) as total_vendido,
           COALESCE(SUM(cr.custo_total_real), 0) as total_custos_reais,
           COALESCE(SUM(cr.margem_real), 0) as margem_total,
@@ -222,7 +222,7 @@ const handleRentabilidadeCore: TenantHandler = async (req, res) => {
           MAX(cr.data_conclusao_op) as ultimo_pedido_data
         FROM clients c
         JOIN quotations o ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-        JOIN custos_reais_op cr ON o.id = cr.quotation_id
+        JOIN custos_reais_op cr ON o.id = cr.orcamento_id
         WHERE c.tenant_id = ${tenantId}::uuid
         GROUP BY c.nome, c.id
         ORDER BY margem_total DESC
@@ -419,7 +419,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
       // Inserir registro inicial
       await sql`
         INSERT INTO custos_reais_op (
-          tenant_id, operacao_prod_id, quotation_id,
+          tenant_id, operacao_prod_id, orcamento_id,
           custo_material_estimado, custo_mao_obra_estimada, tempo_horas_estimado,
           custo_material_real, custo_mao_obra_real, tempo_horas_real,
           custo_total_estimado, custo_total_real, variacao_custo, variacao_percentual,
@@ -448,7 +448,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
       // Calcular estatísticas agregadas do cliente
       const stats = await sql`
         SELECT 
-          COUNT(DISTINCT cr.quotation_id) as total_pedidos,
+          COUNT(DISTINCT cr.orcamento_id) as total_pedidos,
           SUM(cr.valor_venda) as total_vendido,
           SUM(cr.custo_total_real) as total_custos_reais,
           SUM(cr.margem_real) as margem_total,
@@ -457,7 +457,7 @@ export async function autoCreateCustosReaisOP(opId: string, tenantId: string) {
           SUM(CASE WHEN cr.margem_percentual_real < 0 THEN 1 ELSE 0 END) as operacoes_prejuizadas,
           MAX(cr.data_conclusao_op) as ultimo_pedido_data
         FROM custos_reais_op cr
-        JOIN quotations o ON cr.quotation_id = o.id
+        JOIN quotations o ON cr.orcamento_id = o.id
         WHERE o.cliente_id::text = ${clienteId}::text AND cr.tenant_id = ${tenantId}::uuid
       `;
 
