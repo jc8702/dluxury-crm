@@ -125,9 +125,9 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
             op.status,
             c.nome as cliente_nome
           FROM ordens_prod op
-          JOIN quotations o ON op.quotation_id = o.id
+          LEFT JOIN quotations o ON op.orcamento_id::text = o.id::text AND o.tenant_id = op.tenant_id
           LEFT JOIN clients c ON o.cliente_id::text = c.id::text AND c.tenant_id = o.tenant_id
-          WHERE o.tenant_id = ${tenantId}::uuid
+          WHERE op.tenant_id = ${tenantId}::uuid
             AND op.data_prazo IS NOT NULL
             AND EXTRACT(MONTH FROM op.data_prazo) = ${mesNum}
             AND EXTRACT(YEAR FROM op.data_prazo) = ${anoNum}

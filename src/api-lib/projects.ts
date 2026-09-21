@@ -125,7 +125,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
                  c.nome as client_name
           FROM projects p
           LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
-          WHERE p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
+          WHERE p.tenant_id = ${tenantId}
           AND (p.tag ILIKE ${'%' + q + '%'} OR p.ambiente ILIKE ${'%' + q + '%'} OR c.nome ILIKE ${'%' + q + '%'})
           ORDER BY p.updated_at DESC
           LIMIT 10
@@ -138,7 +138,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
                  o.valor_final as valor_orcamento_atual
           FROM projects p
           LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
-          WHERE p.client_id = ${client_id} AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
+          WHERE p.client_id = ${client_id} AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else if (status) {
@@ -149,7 +149,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
                  o.valor_final as valor_orcamento_atual
           FROM projects p
           LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
-          WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
+          WHERE TRIM(UPPER(p.status)) = TRIM(UPPER(${status})) AND p.tenant_id = ${tenantId}
           ORDER BY p.created_at DESC
         `;
       } else {
@@ -166,7 +166,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
           FROM projects p
           LEFT JOIN clients c ON p.client_id = c.id::text AND c.tenant_id = ${tenantId}
           LEFT JOIN latest_quot o ON p.id::text = o.projeto_id::text
-          WHERE p.deleted_at IS NULL AND p.tenant_id = ${tenantId}
+          WHERE p.tenant_id = ${tenantId}
           ORDER BY p.updated_at DESC
         `;
       }
@@ -278,7 +278,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
 const handleReportsCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
+    const _user = req.tenantUser;
     const { type, projectId } = req.query || {};
     let result;
     if (type === 'fin-rentabilidade') {
@@ -327,7 +327,7 @@ const handleReportsCore: TenantHandler = async (req, res) => {
 const handleEngineeringCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
+    const _user = req.tenantUser;
 
     // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
     await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
@@ -423,7 +423,7 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      let {
+      const {
         nome,
         codigo_modelo,
         descricao,
@@ -537,7 +537,7 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
 const handleSKUsCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
+    const _user = req.tenantUser;
 
     if (req.method === 'GET') {
       if (req.query.action === 'next-code') {
@@ -605,7 +605,7 @@ const handleSimulationsCore: TenantHandler = async (req, res) => {
     await requireFeature('simulator')(req, res, () => {});
     if (res.headersSent) return;
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
+    const _user = req.tenantUser;
 
     // Migração: garantir colunas adicionais para cenários de produção
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(

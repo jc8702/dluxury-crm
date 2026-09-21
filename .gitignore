@@ -104,3 +104,4 @@ audit-report.json
 playwright-*.txt
 apresentacao-canvas*.html
 apresentacao-*.html
+.env*
