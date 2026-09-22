@@ -32,8 +32,22 @@ export class AsaasService {
     body?: any,
   ): Promise<T> {
     if (!this.apiKey) {
-      logger.warn('[ASAAS_SERVICE] Chave ASAAS_API_KEY ausente. Simulando resposta.');
-      return this.simulateFallback<T>(path, method, body);
+      const isProduction =
+        process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+      if (isProduction) {
+        logger.error('[ASAAS_SERVICE] ASAAS_API_KEY ausente em produção. Recusando requisição.');
+        throw new Error('Serviço de pagamento indisponível: ASAAS_API_KEY não configurada. (503)');
+      }
+      if (process.env.ASAAS_MOCK === 'true') {
+        logger.warn(
+          '[ASAAS_SERVICE] Chave ASAAS_API_KEY ausente. ASAAS_MOCK=true — simulando resposta.',
+        );
+        return this.simulateFallback<T>(path, method, body);
+      }
+      logger.error('[ASAAS_SERVICE] ASAAS_API_KEY ausente e ASAAS_MOCK não habilitado.');
+      throw new Error(
+        'Serviço de pagamento indisponível: ASAAS_API_KEY não configurada. Defina ASAAS_MOCK=true para simulação local.',
+      );
     }
 
     const url = `${this.baseUrl}${path}`;

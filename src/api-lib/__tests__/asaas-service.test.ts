@@ -22,6 +22,9 @@ describe('AsaasService', () => {
   describe('Sem ASAAS_API_KEY (Simulação Fallback)', () => {
     beforeEach(() => {
       delete process.env.ASAAS_API_KEY;
+      delete process.env.NODE_ENV;
+      delete process.env.VERCEL_ENV;
+      process.env.ASAAS_MOCK = 'true';
     });
 
     it('deve simular criarCliente no fallback', async () => {
@@ -51,6 +54,93 @@ describe('AsaasService', () => {
       const res = await service.consultarStatusAssinatura('sub_mock_123');
       expect(res.status).toBe('ACTIVE');
       expect(res.nextDueDate).toBeDefined();
+    });
+  });
+
+  describe('S-03: Produção sem chave deve rejeitar (sem simulação)', () => {
+    it('em production sem ASAAS_API_KEY deve lançar erro (não simular)', async () => {
+      delete process.env.ASAAS_API_KEY;
+      delete process.env.ASAAS_MOCK;
+      process.env.NODE_ENV = 'production';
+
+      const service = new AsaasService();
+      await expect(
+        service.criarCliente({
+          name: 'Cliente',
+          email: 'test@test.com',
+          externalReference: 't-1',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('em production sem chave, criarAssinatura deve lançar erro', async () => {
+      delete process.env.ASAAS_API_KEY;
+      delete process.env.ASAAS_MOCK;
+      process.env.NODE_ENV = 'production';
+
+      const service = new AsaasService();
+      await expect(
+        service.criarAssinatura({
+          customer: 'cus_x',
+          plano: 'pro',
+          valor: 197,
+          externalReference: 't-1',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('em production sem chave, consultarStatusAssinatura deve lançar erro', async () => {
+      delete process.env.ASAAS_API_KEY;
+      delete process.env.ASAAS_MOCK;
+      process.env.NODE_ENV = 'production';
+
+      const service = new AsaasService();
+      await expect(service.consultarStatusAssinatura('sub_x')).rejects.toThrow();
+    });
+
+    it('fora de production sem ASAAS_MOCK deve lançar erro (não simular)', async () => {
+      delete process.env.ASAAS_API_KEY;
+      delete process.env.ASAAS_MOCK;
+      process.env.NODE_ENV = 'development';
+
+      const service = new AsaasService();
+      await expect(
+        service.criarCliente({
+          name: 'Cliente',
+          email: 'test@test.com',
+          externalReference: 't-1',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('em production com VERCEL_ENV=production sem chave deve lançar erro', async () => {
+      delete process.env.ASAAS_API_KEY;
+      delete process.env.ASAAS_MOCK;
+      delete process.env.NODE_ENV;
+      process.env.VERCEL_ENV = 'production';
+
+      const service = new AsaasService();
+      await expect(
+        service.criarCliente({
+          name: 'Cliente',
+          email: 'test@test.com',
+          externalReference: 't-1',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('fora de production com ASAAS_MOCK=true deve simular (comportamento permitido)', async () => {
+      delete process.env.ASAAS_API_KEY;
+      process.env.ASAAS_MOCK = 'true';
+      process.env.NODE_ENV = 'development';
+
+      const service = new AsaasService();
+      const res = await service.criarCliente({
+        name: 'Cliente',
+        email: 'test@test.com',
+        externalReference: 't-1',
+      });
+      expect(res.id).toContain('cus_mock_');
     });
   });
 
@@ -122,18 +212,22 @@ describe('AsaasService', () => {
       vi.mocked(fetch).mockResolvedValueOnce(mockFetchResponse as any);
 
       const service = new AsaasService();
-      await expect(service.criarCliente({
-        name: 'Erro',
-        email: 'erro@exemplo.com',
-        externalReference: 'tenant-err',
-      })).rejects.toThrow('Erro na API do Asaas: 400 - Parâmetros inválidos');
+      await expect(
+        service.criarCliente({
+          name: 'Erro',
+          email: 'erro@exemplo.com',
+          externalReference: 'tenant-err',
+        }),
+      ).rejects.toThrow('Erro na API do Asaas: 400 - Parâmetros inválidos');
     });
 
     it('deve relançar erro se fetch falhar (erro de conexao)', async () => {
       vi.mocked(fetch).mockRejectedValueOnce(new Error('Connection timeout'));
 
       const service = new AsaasService();
-      await expect(service.consultarStatusAssinatura('sub_err')).rejects.toThrow('Connection timeout');
+      await expect(service.consultarStatusAssinatura('sub_err')).rejects.toThrow(
+        'Connection timeout',
+      );
     });
   });
 });
