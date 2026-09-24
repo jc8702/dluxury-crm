@@ -13,26 +13,21 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
   const cleanUrl = url.split('?')[0];
 
   // Ignorar rotas de infraestrutura, auth, signup, checkout e webhooks
-  if (
+  const isPublicRoute =
     cleanUrl.startsWith('/api/auth') ||
     cleanUrl.startsWith('/api/signup') ||
     cleanUrl.startsWith('/api/checkout') ||
     cleanUrl.startsWith('/api/init-db') ||
     cleanUrl.startsWith('/api/ping') ||
-    cleanUrl.startsWith('/api/webhooks')
-  ) {
-    return true;
-  }
-
-  // Apenas operações de escrita são bloqueadas
-  if (method === 'GET' || method === 'OPTIONS') {
+    cleanUrl.startsWith('/api/webhooks');
+  if (isPublicRoute) {
     return true;
   }
 
   try {
     const auth = validateAuth(req);
     // Se a rota for protegida e a validação falhar, deixa o validador de auth do próprio handler lidar com isso (retornando 401)
-    if (!auth.authorized || !auth.user) {
+    if (!auth?.authorized || !auth?.user) {
       return true;
     }
 
@@ -61,6 +56,11 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
       LIMIT 1
     `
     )[0];
+
+    // Apenas operações de escrita são bloqueadas (modo Somente Leitura)
+    if (method === 'GET' || method === 'OPTIONS') {
+      return true;
+    }
 
     // Se não houver assinatura cadastrada, assume-se plano básico e deixa passar (ou pode ser criado um default)
     if (!sub) {
@@ -95,14 +95,20 @@ export async function verifyBillingStatus(req: any, res: any): Promise<boolean> 
 
     return true;
   } catch (err: any) {
-    logger.error('[BILLING_MIDDLEWARE_ERROR]', err);
-    // Fail-closed: em caso de falha de infra, bloqueia escrita para evitar bypass
-    if (method !== 'GET' && method !== 'OPTIONS') {
-      res
-        .status(503)
-        .json({ success: false, error: 'Serviço de faturamento indisponível, tente novamente' });
-      return false;
+    if (isPublicRoute) {
+      return true;
     }
-    return true;
+    logger.error('[BILLING_MIDDLEWARE_ERROR]', {
+      middleware: 'billing',
+      method,
+      path: cleanUrl,
+      errorName: err?.name,
+      errorCode: err?.code,
+      errorMessage: String(err?.message ?? '').slice(0, 300),
+    });
+    res
+      .status(503)
+      .json({ success: false, error: 'Serviço de faturamento indisponível, tente novamente' });
+    return false;
   }
 }

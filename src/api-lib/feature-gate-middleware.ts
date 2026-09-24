@@ -12,15 +12,15 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
   const cleanUrl = url.split('?')[0];
 
   // Ignorar rotas de infraestrutura básica, login, signup, checkout e webhooks
-  if (
+  const isPublicRoute =
     (cleanUrl.startsWith('/api/auth') && req.query.action !== 'register') ||
     cleanUrl.startsWith('/api/signup') ||
     cleanUrl.startsWith('/api/checkout') ||
     cleanUrl.startsWith('/api/init-db') ||
     cleanUrl.startsWith('/api/ping') ||
     cleanUrl.startsWith('/api/resolve-dominio') ||
-    cleanUrl.startsWith('/api/webhooks')
-  ) {
+    cleanUrl.startsWith('/api/webhooks');
+  if (isPublicRoute) {
     return true;
   }
 
@@ -121,14 +121,20 @@ export async function verifyFeatureGate(req: any, res: any): Promise<boolean> {
 
     return true;
   } catch (err: any) {
-    logger.error('[FEATURE_GATE_MIDDLEWARE_ERROR]', err);
-    // Fail-closed para escritas, fail-open para leituras (evita paralisia total se Neon falhar)
-    if (method !== 'GET' && method !== 'OPTIONS') {
-      res
-        .status(503)
-        .json({ success: false, error: 'Serviço de planos indisponível, tente novamente' });
-      return false;
+    if (isPublicRoute) {
+      return true;
     }
-    return true;
+    logger.error('[FEATURE_GATE_MIDDLEWARE_ERROR]', {
+      middleware: 'feature-gate',
+      method,
+      path: cleanUrl,
+      errorName: err?.name,
+      errorCode: err?.code,
+      errorMessage: String(err?.message ?? '').slice(0, 300),
+    });
+    res
+      .status(503)
+      .json({ success: false, error: 'Serviço de planos indisponível, tente novamente' });
+    return false;
   }
 }
