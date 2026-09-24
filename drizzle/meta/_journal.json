@@ -78,6 +78,13 @@
       "when": 1789250000000,
       "tag": "0017_add_rh_horas_falta",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790121600000,
+      "tag": "0018_add_token_expira_em",
+      "breakpoints": true
     }
   ]
 }

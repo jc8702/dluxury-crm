@@ -4,4 +4,5 @@ export const RATE_LIMITS = {
   search: { points: 10, duration: 60 },
   export: { points: 5, duration: 3600 },
   passwordReset: { points: 3, duration: 3600 },
+  aprovacao: { points: 30, duration: 600 },
 } as const;

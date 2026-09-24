@@ -40,6 +40,7 @@ export const quotations = pgTable(
     status: varchar('status', { length: 20 }).default('RASCUNHO'),
     arquivoSketchupUrl: text('arquivo_sketchup_url'),
     tokenAprovacao: varchar('token_aprovacao', { length: 255 }),
+    tokenExpiraEm: timestamp('token_expira_em', { withTimezone: true }),
     urlAprovacao: text('url_aprovacao'),
     aprovadoEm: timestamp('aprovado_em'),
     aprovadoIp: varchar('aprovado_ip', { length: 45 }),

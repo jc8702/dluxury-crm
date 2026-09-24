@@ -7,6 +7,7 @@ const limiters = {
   search: new RateLimiterMemory(RATE_LIMITS.search),
   export: new RateLimiterMemory(RATE_LIMITS.export),
   passwordReset: new RateLimiterMemory(RATE_LIMITS.passwordReset),
+  aprovacao: new RateLimiterMemory(RATE_LIMITS.aprovacao),
 };
 
 type LimiterType = keyof typeof limiters;
@@ -41,6 +42,11 @@ export async function applyRateLimit(
 export async function loginRateLimit(req: any, res: any): Promise<boolean> {
   const identifier = getClientIP(req) || 'unknown';
   return await applyRateLimit('login', identifier, res);
+}
+
+export async function aprovacaoRateLimit(req: any, res: any): Promise<boolean> {
+  const identifier = getClientIP(req) || 'unknown';
+  return await applyRateLimit('aprovacao', identifier, res);
 }
 
 export async function _resetRateLimitersForTests(): Promise<void> {

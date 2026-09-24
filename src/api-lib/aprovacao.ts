@@ -2,9 +2,40 @@ import { validateAuth } from './_db.js';
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems, clientes } from '../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
+import { aprovacaoRateLimit } from './middleware/rateLimiter.js';
 
 // Refatorado para usar quotations via Drizzle ORM
 // Features afetadas: /aprovar/[token] (rota publica).
+
+const TTL_DIAS_DEFAULT = 15;
+const ERRO_TOKEN = 'Proposta não encontrada ou link expirado';
+
+function aprovarTtlDias(): number {
+  const raw = Number(process.env.APROVACAO_TTL_DIAS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : TTL_DIAS_DEFAULT;
+}
+
+function nomePublico(nome?: string | null): string {
+  if (!nome) return '';
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return '';
+  if (partes.length === 1) return partes[0];
+  return `${partes[0]} ${partes[partes.length - 1][0]}.`;
+}
+
+function emailMascarado(email?: string | null): string {
+  if (!email) return '';
+  const at = email.indexOf('@');
+  if (at <= 0) return '***';
+  return `***@${email.slice(at + 1)}`;
+}
+
+function telefoneMascarado(telefone?: string | null): string {
+  if (!telefone) return '';
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length < 4) return '****';
+  return `(**) *****-${digitos.slice(-4)}`;
+}
 
 export async function handleAprovacao(req: any, res: any) {
   try {
@@ -13,11 +44,12 @@ export async function handleAprovacao(req: any, res: any) {
 
     // Rota pública para buscar orçamento pelo token
     if (method === 'GET' && token) {
+      const allowed = await aprovacaoRateLimit(req, res);
+      if (!allowed) return res;
+
       const orcList = await db
         .select({
           id: quotations.id,
-          cliente_id: quotations.clienteId,
-          projeto_id: quotations.projetoId,
           numero: quotations.numeroOrcamento,
           status: quotations.status,
           valor_base: quotations.valorTotalCusto,
@@ -31,10 +63,8 @@ export async function handleAprovacao(req: any, res: any) {
           materiais_consumidos: quotations.materiaisConsumidos,
           created_at: quotations.createdAt,
           updated_at: quotations.updatedAt,
-          token_aprovacao: quotations.tokenAprovacao,
-          url_aprovacao: quotations.urlAprovacao,
+          token_expira_em: quotations.tokenExpiraEm,
           aprovado_em: quotations.aprovadoEm,
-          aprovado_ip: quotations.aprovadoIp,
           aprovado_nome: quotations.aprovadoNome,
           recusado_em: quotations.recusadoEm,
           motivo_recusa: quotations.motivoRecusa,
@@ -49,10 +79,11 @@ export async function handleAprovacao(req: any, res: any) {
         .limit(1);
 
       const orc = orcList[0];
-      if (!orc)
-        return res
-          .status(404)
-          .json({ success: false, error: 'Proposta não encontrada ou link expirado' });
+      const naoEncontrado = { success: false, error: ERRO_TOKEN };
+      if (!orc) return res.status(404).json(naoEncontrado);
+
+      const expira = orc.token_expira_em ? new Date(orc.token_expira_em) : null;
+      if (!expira || expira.getTime() <= Date.now()) return res.status(410).json(naoEncontrado);
 
       // Buscar itens do orçamento usando Drizzle
       const itmsRows = await db
@@ -86,7 +117,33 @@ export async function handleAprovacao(req: any, res: any) {
 
       const condicao = null; // Mapeado para null por compatibilidade (condições comeciais vêm em observações)
 
-      return res.status(200).json({ success: true, data: { ...orc, itens: itms, condicao } });
+      const publico = {
+        id: orc.id,
+        numero: orc.numero,
+        status: orc.status,
+        valor_base: orc.valor_base,
+        taxa_mensal: orc.taxa_mensal,
+        condicao_pagamento_id: orc.condicao_pagamento_id,
+        valor_final: orc.valor_final,
+        prazo_entrega_dias: orc.prazo_entrega_dias,
+        prazo_tipo: orc.prazo_tipo,
+        adicional_urgencia_pct: orc.adicional_urgencia_pct,
+        observacoes: orc.observacoes,
+        materiais_consumidos: orc.materiais_consumidos,
+        created_at: orc.created_at,
+        updated_at: orc.updated_at,
+        aprovado_em: orc.aprovado_em,
+        aprovado_nome: orc.aprovado_nome,
+        recusado_em: orc.recusado_em,
+        motivo_recusa: orc.motivo_recusa,
+        cliente_nome: nomePublico(orc.cliente_nome),
+        cliente_email: emailMascarado(orc.cliente_email),
+        cliente_telefone: telefoneMascarado(orc.cliente_telefone),
+        itens: itms,
+        condicao,
+      };
+
+      return res.status(200).json({ success: true, data: publico });
     }
 
     // Gerar link (Protegido)
@@ -98,6 +155,7 @@ export async function handleAprovacao(req: any, res: any) {
 
       const { quotation_id } = req.body;
       const newToken = crypto.randomUUID();
+      const expiraEm = new Date(Date.now() + aprovarTtlDias() * 24 * 60 * 60 * 1000);
       const origin = req.headers.origin || 'https://dluxury-crm.vercel.app';
       const url = `${origin}/aprovar/${newToken}`;
 
@@ -105,6 +163,7 @@ export async function handleAprovacao(req: any, res: any) {
         .update(quotations)
         .set({
           tokenAprovacao: newToken,
+          tokenExpiraEm: expiraEm,
           urlAprovacao: url,
           status: 'enviado',
           updatedAt: new Date(),

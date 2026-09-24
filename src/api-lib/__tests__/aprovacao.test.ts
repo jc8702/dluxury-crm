@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleAprovacao } from '../aprovacao.js';
+import { _resetRateLimitersForTests } from '../middleware/rateLimiter.js';
 
 vi.mock('../_db.js', () => ({
   sql: vi.fn(),
@@ -10,16 +11,30 @@ vi.mock('../drizzle-db.js', () => ({
   db: {
     select: vi.fn(),
     update: vi.fn(),
-  }
+  },
 }));
 
 const { sql, validateAuth } = await import('../_db.js');
 const { db } = await import('../drizzle-db.js');
 
+const EM_FUTURO = () => new Date(Date.now() + 24 * 60 * 60 * 1000);
+const EM_PASSADO = () => new Date(Date.now() - 24 * 60 * 60 * 1000);
+
 function mockDrizzleChain(resolveValue: any = []) {
   const chain: any = {};
-  const methods = ['select', 'from', 'leftJoin', 'innerJoin', 'where', 'limit', 'orderBy', 'update', 'set', 'returning'];
-  methods.forEach(method => {
+  const methods = [
+    'select',
+    'from',
+    'leftJoin',
+    'innerJoin',
+    'where',
+    'limit',
+    'orderBy',
+    'update',
+    'set',
+    'returning',
+  ];
+  methods.forEach((method) => {
     chain[method] = vi.fn().mockImplementation(() => chain);
   });
   chain.then = vi.fn().mockImplementation((onFulfilled) => {
@@ -29,21 +44,39 @@ function mockDrizzleChain(resolveValue: any = []) {
 }
 
 function mockRes() {
-  let sc = 200, jd: any = null;
+  let sc = 200,
+    jd: any = null;
   const self: any = {
-    status: vi.fn((c: number) => { sc = c; return self; }),
-    json: vi.fn((d: any) => { jd = d; return self; }),
+    status: vi.fn((c: number) => {
+      sc = c;
+      return self;
+    }),
+    json: vi.fn((d: any) => {
+      jd = d;
+      return self;
+    }),
     end: vi.fn(() => self),
-    _s: () => sc, _d: () => jd,
+    setHeader: vi.fn(() => self),
+    _s: () => sc,
+    _d: () => jd,
   };
   return self;
 }
 
 describe('handleAprovacao', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await _resetRateLimitersForTests();
+  });
+
+  afterEach(() => {
+    delete process.env.APROVACAO_TTL_DIAS;
+  });
 
   it('deve buscar orçamento por token público (GET)', async () => {
-    const orcChain = mockDrizzleChain([{ id: '1', numero: 'PRO-001', cliente_nome: 'João' }]);
+    const orcChain = mockDrizzleChain([
+      { id: '1', numero: 'PRO-001', cliente_nome: 'João', token_expira_em: EM_FUTURO() },
+    ]);
     const itemsChain = mockDrizzleChain([]);
     vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itemsChain);
 
@@ -66,10 +99,18 @@ describe('handleAprovacao', () => {
 
   it('deve gerar link de aprovação (POST /gerar)', async () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
-    const updateChain = mockDrizzleChain([{ id: '1', token_aprovacao: 'new-token', status: 'enviado' }]);
+    const updateChain = mockDrizzleChain([
+      { id: '1', token_aprovacao: 'new-token', status: 'enviado' },
+    ]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { quotation_id: '1' }, headers: { origin: 'http://test.com' } };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: { origin: 'http://test.com' },
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);
@@ -80,7 +121,13 @@ describe('handleAprovacao', () => {
     const updateChain = mockDrizzleChain([{ id: '1', numero: 'PRO-001' }]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = { method: 'POST', url: '/api/aprovacao/aprovar', query: { token: 'abc' }, body: { nome: 'João' }, headers: { 'x-forwarded-for': '127.0.0.1' } };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/aprovar',
+      query: { token: 'abc' },
+      body: { nome: 'João' },
+      headers: { 'x-forwarded-for': '127.0.0.1' },
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);
@@ -90,7 +137,12 @@ describe('handleAprovacao', () => {
     const updateChain = mockDrizzleChain([]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = { method: 'POST', url: '/api/aprovacao/recusar', query: { token: 'abc' }, body: { motivo: 'Preço alto' } };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/recusar',
+      query: { token: 'abc' },
+      body: { motivo: 'Preço alto' },
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);
@@ -116,9 +168,19 @@ describe('handleAprovacao', () => {
   });
 
   it('POST /gerar deve retornar 401 quando auth falha', async () => {
-    vi.mocked(validateAuth).mockReturnValue({ authorized: false, user: null, error: 'Token inválido' });
+    vi.mocked(validateAuth).mockReturnValue({
+      authorized: false,
+      user: null,
+      error: 'Token inválido',
+    });
 
-    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { quotation_id: '1' }, headers: {} };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: {},
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(401);
@@ -127,10 +189,23 @@ describe('handleAprovacao', () => {
 
   it('POST /gerar deve usar origin default quando header ausente', async () => {
     vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
-    const updateChain = mockDrizzleChain([{ id: '1', token_aprovacao: 'tok', url_aprovacao: 'https://dluxury-crm.vercel.app/aprovar/tok', status: 'enviado' }]);
+    const updateChain = mockDrizzleChain([
+      {
+        id: '1',
+        token_aprovacao: 'tok',
+        url_aprovacao: 'https://dluxury-crm.vercel.app/aprovar/tok',
+        status: 'enviado',
+      },
+    ]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { quotation_id: '1' }, headers: {} };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: {},
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);
@@ -188,7 +263,9 @@ describe('handleAprovacao', () => {
   });
 
   it('GET /token deve mapear items com campos opcionais null e parseFloat fallback 0', async () => {
-    const orcChain = mockDrizzleChain([{ id: 'q1', tenant_id: 't1', numero: 'PRO-002' }]);
+    const orcChain = mockDrizzleChain([
+      { id: 'q1', tenant_id: 't1', numero: 'PRO-002', token_expira_em: EM_FUTURO() },
+    ]);
     const itemsChain = mockDrizzleChain([
       {
         id: 'i1',
@@ -228,7 +305,9 @@ describe('handleAprovacao', () => {
   });
 
   it('GET /token deve preferir skuDescricao sobre nomeCustomizado para descrição', async () => {
-    const orcChain = mockDrizzleChain([{ id: 'q1', tenant_id: 't1', numero: 'PRO-003' }]);
+    const orcChain = mockDrizzleChain([
+      { id: 'q1', tenant_id: 't1', numero: 'PRO-003', token_expira_em: EM_FUTURO() },
+    ]);
     const itemsChain = mockDrizzleChain([
       {
         id: 'i1',
@@ -287,7 +366,13 @@ describe('handleAprovacao', () => {
     const updateChain = mockDrizzleChain([{ id: '1', token_aprovacao: 'tok', status: 'enviado' }]);
     vi.mocked(db.update).mockReturnValueOnce(updateChain);
 
-    const req = { method: 'POST', url: '/api/aprovacao/gerar', query: {}, body: { quotation_id: '1' }, headers: { origin: 'https://app.com' } };
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: { origin: 'https://app.com' },
+    };
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(200);
@@ -315,5 +400,152 @@ describe('handleAprovacao', () => {
     const res = mockRes();
     await handleAprovacao(req, res);
     expect(res._s()).toBe(405);
+  });
+
+  it('S-04: token expirado deve retornar 410', async () => {
+    const orcChain = mockDrizzleChain([
+      { id: 'q1', tenant_id: 't1', numero: 'PRO-EXP', token_expira_em: EM_PASSADO() },
+    ]);
+    vi.mocked(db.select).mockReturnValueOnce(orcChain);
+
+    const req = { method: 'GET', query: { token: 'expirado' } };
+    const res = mockRes();
+    await handleAprovacao(req, res);
+    expect(res._s()).toBe(410);
+    expect(res._d().success).toBe(false);
+    expect(typeof res._d().error).toBe('string');
+  });
+
+  it('S-04: token sem token_expira_em (NULL) deve retornar 410', async () => {
+    const orcChain = mockDrizzleChain([
+      { id: 'q1', tenant_id: 't1', numero: 'PRO-NULL', token_expira_em: null },
+    ]);
+    vi.mocked(db.select).mockReturnValueOnce(orcChain);
+
+    const req = { method: 'GET', query: { token: 'sem-expiracao' } };
+    const res = mockRes();
+    await handleAprovacao(req, res);
+    expect(res._s()).toBe(410);
+  });
+
+  it('S-04: 404 (inexistente) e 410 (expirado) devem ter resposta idêntica em formato', async () => {
+    const orcInexistente = mockDrizzleChain([]);
+    vi.mocked(db.select).mockReturnValueOnce(orcInexistente);
+    const req404 = { method: 'GET', query: { token: 'nao-existe' } };
+    const res404 = mockRes();
+    await handleAprovacao(req404, res404);
+
+    const orcExpirado = mockDrizzleChain([
+      { id: 'q1', tenant_id: 't1', numero: 'PRO-EXP', token_expira_em: EM_PASSADO() },
+    ]);
+    vi.mocked(db.select).mockReturnValueOnce(orcExpirado);
+    const req410 = { method: 'GET', query: { token: 'expirado' } };
+    const res410 = mockRes();
+    await handleAprovacao(req410, res410);
+
+    expect(res404._s()).toBe(404);
+    expect(res410._s()).toBe(410);
+    expect(Object.keys(res410._d())).toEqual(Object.keys(res404._d()));
+    expect(res410._d().success).toBe(res404._d().success);
+    expect(typeof res410._d().error).toBe(typeof res404._d().error);
+  });
+
+  it('S-04: resposta pública não contém e-mail/telefone completos nem campos internos', async () => {
+    const orcChain = mockDrizzleChain([
+      {
+        id: 'q1',
+        tenant_id: 't1',
+        numero: 'PRO-PII',
+        status: 'enviado',
+        valor_final: '1000.00',
+        cliente_nome: 'João da Silva',
+        cliente_email: 'joao.silva@gmail.com',
+        cliente_telefone: '(11) 98888-1234',
+        token_expira_em: EM_FUTURO(),
+        token_aprovacao: 'tok-secreto-nao-expor',
+        url_aprovacao: 'https://ex.com/aprovar/tok-secreto-nao-expor',
+        aprovado_ip: '203.0.113.10',
+      },
+    ]);
+    const itemsChain = mockDrizzleChain([]);
+    vi.mocked(db.select).mockReturnValueOnce(orcChain).mockReturnValueOnce(itemsChain);
+
+    const req = { method: 'GET', query: { token: 'abc' } };
+    const res = mockRes();
+    await handleAprovacao(req, res);
+    expect(res._s()).toBe(200);
+
+    const body = JSON.stringify(res._d());
+    expect(body).not.toContain('joao.silva@gmail.com');
+    expect(body).not.toContain('98888-1234');
+    expect(body).not.toContain('tok-secreto-nao-expor');
+    expect(body).not.toContain('203.0.113.10');
+
+    const data = res._d().data;
+    expect(data.cliente_email).toBe('***@gmail.com');
+    expect(data.cliente_telefone).toBe('(**) *****-1234');
+    expect(data.cliente_nome).toBe('João S.');
+    expect(data.valor_final).toBe('1000.00');
+    expect(Array.isArray(data.itens)).toBe(true);
+    expect(data).not.toHaveProperty('token_aprovacao');
+    expect(data).not.toHaveProperty('url_aprovacao');
+    expect(data).not.toHaveProperty('aprovado_ip');
+    expect(data).not.toHaveProperty('tenant_id');
+    expect(data).not.toHaveProperty('cliente_id');
+    expect(data).not.toHaveProperty('projeto_id');
+  });
+
+  it('S-04: POST /gerar deve definir token_expira_em com TTL padrão de 15 dias', async () => {
+    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+    const updateChain = mockDrizzleChain([
+      { id: '1', token_aprovacao: 'new-token', status: 'enviado' },
+    ]);
+    vi.mocked(db.update).mockReturnValueOnce(updateChain);
+
+    const antes = Date.now();
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: { origin: 'http://test.com' },
+    };
+    const res = mockRes();
+    await handleAprovacao(req, res);
+    expect(res._s()).toBe(200);
+
+    const setArgs = updateChain.set.mock.calls[0][0];
+    expect(setArgs.tokenExpiraEm).toBeInstanceOf(Date);
+    const ttlMs = setArgs.tokenExpiraEm.getTime() - antes;
+    const quinzeDias = 15 * 24 * 60 * 60 * 1000;
+    expect(ttlMs).toBeGreaterThanOrEqual(quinzeDias - 5000);
+    expect(ttlMs).toBeLessThanOrEqual(quinzeDias + 5000);
+  });
+
+  it('S-04: POST /gerar deve respeitar APROVACAO_TTL_DIAS', async () => {
+    process.env.APROVACAO_TTL_DIAS = '3';
+    vi.mocked(validateAuth).mockReturnValue({ authorized: true, user: { id: 'u1' }, error: null });
+    const updateChain = mockDrizzleChain([
+      { id: '1', token_aprovacao: 'new-token', status: 'enviado' },
+    ]);
+    vi.mocked(db.update).mockReturnValueOnce(updateChain);
+
+    const antes = Date.now();
+    const req = {
+      method: 'POST',
+      url: '/api/aprovacao/gerar',
+      query: {},
+      body: { quotation_id: '1' },
+      headers: { origin: 'http://test.com' },
+    };
+    const res = mockRes();
+    await handleAprovacao(req, res);
+    expect(res._s()).toBe(200);
+
+    const setArgs = updateChain.set.mock.calls[0][0];
+    const ttlMs = setArgs.tokenExpiraEm.getTime() - antes;
+    const tresDias = 3 * 24 * 60 * 60 * 1000;
+    expect(ttlMs).toBeGreaterThanOrEqual(tresDias - 5000);
+    expect(ttlMs).toBeLessThanOrEqual(tresDias + 5000);
   });
 });
