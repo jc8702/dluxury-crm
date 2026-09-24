@@ -22,9 +22,32 @@ vi.mock('../middleware/rateLimiter.js', () => ({
 }));
 
 const { sql, resolveTenantByDomain } = await import('../_db.js');
+const { __clearUserSessionCache } = await import('../middleware/tenantMiddleware.js');
 const { TENANT_MASTER_ID } = await import('../../types/tenant.js');
 
 const JWT_SECRET = process.env.APP_JWT_SECRET || 'test-secret-key-for-jwt';
+
+/**
+ * S-05: middleware consulta users (ativo, token_version) por requisição.
+ * Fixture default: usuário ativo, token_version=0 (JWT legado sem claim = 0).
+ * Apenas satisfaz a nova consulta — asserções dos testes permanecem intactas.
+ */
+function installUserSessionSqlMock() {
+  vi.mocked(sql).mockImplementation(async (strings: any) => {
+    const text = Array.isArray(strings) ? strings.join('?') : String(strings);
+    if (text.includes('FROM users')) {
+      return [
+        {
+          id: 'session-user',
+          tenant_id: TENANT_MASTER_ID,
+          ativo: true,
+          token_version: 0,
+        },
+      ];
+    }
+    return [];
+  });
+}
 
 function makeBearer(payload: any) {
   return 'Bearer ' + jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
@@ -58,6 +81,8 @@ describe('handleAuth', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(resolveTenantByDomain).mockReset();
+    __clearUserSessionCache();
+    installUserSessionSqlMock();
   });
 
   it('deve fazer login com credenciais válidas', async () => {
@@ -305,6 +330,8 @@ describe('handleUsers', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(resolveTenantByDomain).mockReset();
+    __clearUserSessionCache();
+    installUserSessionSqlMock();
   });
 
   it('deve listar usuários', async () => {

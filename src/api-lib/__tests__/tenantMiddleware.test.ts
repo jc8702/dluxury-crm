@@ -16,11 +16,34 @@ vi.mock('@sentry/node', () => ({
 }));
 
 const { sql, resolveTenantByDomain } = await import('../_db.js');
-const { withTenant, resolveTenantRequest } = await import('../middleware/tenantMiddleware.js');
+const { withTenant, resolveTenantRequest, __clearUserSessionCache } =
+  await import('../middleware/tenantMiddleware.js');
 const { withTenantSql, tenantExists } = await import('../db/withTenant.js');
 const { TENANT_MASTER_ID, isTenantId, asTenantId } = await import('../../types/tenant.js');
 
 const JWT_SECRET = process.env.APP_JWT_SECRET || 'test-secret-key-for-jwt';
+
+/**
+ * S-05: o middleware consulta users (ativo, token_version) por requisição.
+ * Fixture default: usuário ativo com token_version=0 (claim ausente no JWT legado = 0).
+ * Não altera asserções — apenas satisfaz a nova consulta de sessão.
+ */
+function installUserSessionSqlMock() {
+  vi.mocked(sql).mockImplementation(async (strings: any) => {
+    const text = Array.isArray(strings) ? strings.join('?') : String(strings);
+    if (text.includes('FROM users')) {
+      return [
+        {
+          id: 'session-user',
+          tenant_id: TENANT_MASTER_ID,
+          ativo: true,
+          token_version: 0,
+        },
+      ];
+    }
+    return [];
+  });
+}
 
 function makeToken(payload: any, opts: jwt.SignOptions = {}) {
   return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h', ...opts });
@@ -82,6 +105,8 @@ describe('withTenant middleware', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
     vi.mocked(resolveTenantByDomain).mockReset();
+    __clearUserSessionCache();
+    installUserSessionSqlMock();
   });
 
   it('returns 401 when Authorization header is missing', async () => {
@@ -322,6 +347,8 @@ describe('withTenantSql', () => {
 describe('resolveTenantRequest', () => {
   beforeEach(() => {
     vi.mocked(sql).mockReset();
+    __clearUserSessionCache();
+    installUserSessionSqlMock();
   });
 
   it('returns ok=true with augmented req on valid token + master tenant', async () => {

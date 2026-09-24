@@ -60,6 +60,8 @@ export interface JwtPayload {
   tenantId: string;
   planoTier?: PlanoTier;
   subdominio?: string;
+  /** S-05: deve casar com users.token_version; ausente = token antigo (rejeitado). */
+  token_version?: number;
   iat?: number;
   exp?: number;
 }

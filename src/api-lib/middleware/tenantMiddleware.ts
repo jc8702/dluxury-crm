@@ -109,6 +109,66 @@ interface VerifyResult {
     | 'INVALID_TENANT_CLAIM';
 }
 
+// S-05: sessão de usuário (id, tenant_id, ativo, token_version) com cache em memória de 30s.
+interface UserSessionRow {
+  id: string;
+  tenant_id: string;
+  ativo: boolean | null;
+  token_version: number | null;
+}
+
+const USER_SESSION_TTL_MS = 30_000;
+const userSessionCache = new Map<string, { data: UserSessionRow | null; expires: number }>();
+
+/** Testes: zera o cache entre casos. Também usada por auth.ts ao invalidar sessão. */
+export function __clearUserSessionCache(userId?: string): void {
+  if (userId !== undefined) {
+    userSessionCache.delete(userId);
+  } else {
+    userSessionCache.clear();
+  }
+}
+
+async function loadUserSession(userId: string, tenantId: TenantId): Promise<UserSessionRow | null> {
+  const now = Date.now();
+  const cached = userSessionCache.get(userId);
+  if (cached && cached.expires > now) {
+    return cached.data;
+  }
+  const rows = await sql`
+    SELECT id, tenant_id, ativo, token_version
+    FROM users
+    WHERE id = ${userId}::uuid AND tenant_id = ${tenantId}::uuid
+    LIMIT 1
+  `;
+  const data = ((Array.isArray(rows) ? rows[0] : undefined) as UserSessionRow | undefined) ?? null;
+  if (userSessionCache.size > 5000) {
+    for (const [key, entry] of userSessionCache) {
+      if (entry.expires <= now) userSessionCache.delete(key);
+    }
+  }
+  userSessionCache.set(userId, { data, expires: now + USER_SESSION_TTL_MS });
+  return data;
+}
+
+type UserSessionReason = 'USER_NOT_FOUND' | 'USER_INACTIVE' | 'TOKEN_VERSION_MISMATCH';
+
+async function validateUserSession(
+  payload: JwtPayload,
+  tenantId: TenantId,
+): Promise<{ ok: true } | { ok: false; reason: UserSessionReason }> {
+  const user = await loadUserSession(payload.id, tenantId);
+  if (!user) return { ok: false, reason: 'USER_NOT_FOUND' };
+  if (user.ativo === false) return { ok: false, reason: 'USER_INACTIVE' };
+  // Claim ausente (token pré-S-05) equivale a 0; divergência real ainda rejeita.
+  const claimVersion = typeof payload.token_version === 'number' ? payload.token_version : 0;
+  const dbVersion = user.token_version ?? 0;
+  if (claimVersion !== dbVersion) {
+    return { ok: false, reason: 'TOKEN_VERSION_MISMATCH' };
+  }
+  return { ok: true };
+}
+
 function verifyToken(token: string): VerifyResult {
   try {
     const decoded = jwt.verify(token, JWT_SECRET!, { algorithms: ['HS256'] });
@@ -132,7 +192,12 @@ function verifyToken(token: string): VerifyResult {
 }
 
 function reasonToStatus(
-  reason: VerifyResult['reason'] | 'TENANT_NOT_FOUND' | 'TENANT_DOMAIN_MISMATCH' | 'ROLE_DENIED',
+  reason:
+    | VerifyResult['reason']
+    | 'TENANT_NOT_FOUND'
+    | 'TENANT_DOMAIN_MISMATCH'
+    | 'ROLE_DENIED'
+    | UserSessionReason,
 ): {
   status: number;
   error: string;
@@ -141,6 +206,9 @@ function reasonToStatus(
     case 'MISSING_TOKEN':
     case 'INVALID_TOKEN':
     case 'EXPIRED_TOKEN':
+    case 'USER_NOT_FOUND':
+    case 'USER_INACTIVE':
+    case 'TOKEN_VERSION_MISMATCH':
       return { status: 401, error: 'Sessão inválida ou expirada. Faça login novamente.' };
     case 'MISSING_TENANT_CLAIM':
     case 'INVALID_TENANT_CLAIM':
@@ -203,6 +271,23 @@ export function withTenant(
         req,
       );
       const { status, error } = reasonToStatus('TENANT_NOT_FOUND');
+      return sendError(res, status, error);
+    }
+
+    // 3b. S-05: usuário deve existir, estar ativo e token_version deve casar
+    const session = await validateUserSession(payload, tenantId);
+    if (!session.ok) {
+      logSuspicious(
+        {
+          reason:
+            session.reason === 'USER_NOT_FOUND' ? 'TENANT_NOT_FOUND' : 'CROSS_TENANT_READ_ATTEMPT',
+          tenantId,
+          userId: payload.id,
+          extra: { sessionReason: session.reason },
+        },
+        req,
+      );
+      const { status, error } = reasonToStatus(session.reason);
       return sendError(res, status, error);
     }
 
@@ -287,6 +372,10 @@ export async function resolveTenantRequest(
   const exists = await tenantExists(sql as any, tenantId);
   if (!exists) {
     return { ok: false, ...reasonToStatus('TENANT_NOT_FOUND') };
+  }
+  const session = await validateUserSession(payload, tenantId);
+  if (!session.ok) {
+    return { ok: false, ...reasonToStatus(session.reason) };
   }
   if (options.requireRoles && options.requireRoles.length > 0) {
     if (!options.requireRoles.includes(payload.role)) {

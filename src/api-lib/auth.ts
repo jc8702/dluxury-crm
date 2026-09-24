@@ -1,7 +1,11 @@
 import { sql } from './_db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
+import {
+  withTenant,
+  type TenantHandler,
+  __clearUserSessionCache,
+} from './middleware/tenantMiddleware.js';
 import { withTenantSql } from './db/withTenant.js';
 import { loginRateLimit } from './middleware/rateLimiter.js';
 
@@ -9,6 +13,9 @@ const JWT_SECRET: string = process.env.APP_JWT_SECRET ?? '';
 if (!JWT_SECRET) {
   throw new Error('APP_JWT_SECRET environment variable is required');
 }
+
+// S-05: sessão curta (decisão do usuário: 8 horas; era 7d).
+const JWT_EXPIRES_IN = '8h';
 
 // =====================================================================
 // Public: login (does NOT need a tenant context — user is acquiring one)
@@ -31,7 +38,7 @@ async function handleLogin(req: any, res: any): Promise<any> {
   const tenantFromDomain = req.tenantFromDomain;
   if (tenantFromDomain) {
     const users = await sql`
-      SELECT u.id, u.name, u.email, u.role, u.password_hash, u.tenant_id, t.plano_tier
+      SELECT u.id, u.name, u.email, u.role, u.password_hash, u.tenant_id, u.token_version, u.ativo, t.plano_tier
       FROM users u
       JOIN tenants t ON u.tenant_id = t.id
       WHERE u.email = ${normalizedEmail} AND u.tenant_id = ${tenantFromDomain.id}::uuid
@@ -42,6 +49,9 @@ async function handleLogin(req: any, res: any): Promise<any> {
         .json({ success: false, error: 'Usuário não encontrado neste domínio' });
     }
     const user = users[0];
+    if (user.ativo === false) {
+      return res.status(401).json({ success: false, error: 'Usuário inativo' });
+    }
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ success: false, error: 'Senha incorreta' });
@@ -55,8 +65,9 @@ async function handleLogin(req: any, res: any): Promise<any> {
       name: String(user.name),
       tenantId,
       planoTier,
+      token_version: Number(user.token_version ?? 0),
     };
-    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     return res.status(200).json({
       success: true,
       data: {
@@ -76,7 +87,7 @@ async function handleLogin(req: any, res: any): Promise<any> {
 
   // Fallback: login sem domínio específico (dev / domínio principal)
   const users = await sql`
-    SELECT u.id, u.name, u.email, u.role, u.password_hash, u.tenant_id, t.plano_tier
+    SELECT u.id, u.name, u.email, u.role, u.password_hash, u.tenant_id, u.token_version, u.ativo, t.plano_tier
     FROM users u
     JOIN tenants t ON u.tenant_id = t.id
     WHERE u.email = ${normalizedEmail}
@@ -85,6 +96,9 @@ async function handleLogin(req: any, res: any): Promise<any> {
     return res.status(401).json({ success: false, error: 'Usuário não encontrado' });
   }
   const user = users[0];
+  if (user.ativo === false) {
+    return res.status(401).json({ success: false, error: 'Usuário inativo' });
+  }
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
     return res.status(401).json({ success: false, error: 'Senha incorreta' });
@@ -98,8 +112,9 @@ async function handleLogin(req: any, res: any): Promise<any> {
     name: String(user.name),
     tenantId,
     planoTier,
+    token_version: Number(user.token_version ?? 0),
   };
-  const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   return res.status(200).json({
     success: true,
     data: {
@@ -224,10 +239,12 @@ const usersUpdateHandler: TenantHandler = async (req, res) => {
   if (password) {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
+    // S-05: troca de senha invalida tokens antigos (token_version + limpa cache).
     await tdb.query`
-      UPDATE users SET password_hash = ${hash}
+      UPDATE users SET password_hash = ${hash}, token_version = token_version + 1
       WHERE id = ${targetId}::uuid AND tenant_id = ${tdb.tenantId}::uuid
     `;
+    __clearUserSessionCache(String(targetId));
   }
   const result = await tdb.query`
     UPDATE users SET
@@ -249,9 +266,11 @@ const usersDeleteHandler: TenantHandler = async (req, res) => {
   }
   const { id } = req.query;
   const tdb = withTenantSql({ tenantId: req.tenantId }, sql as any);
+  // S-05: remove a linha e invalida o cache de sessão (token antigo → 401).
   await tdb.query`
     DELETE FROM users WHERE id = ${id}::uuid AND tenant_id = ${tdb.tenantId}::uuid
   `;
+  if (id) __clearUserSessionCache(String(id));
   return res.status(200).json({ success: true });
 };
 
