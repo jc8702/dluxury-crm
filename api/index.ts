@@ -153,6 +153,7 @@ export default async function handler(req: any, res: any) {
       cleanUrl.startsWith('/api/init-db') ||
       cleanUrl.startsWith('/api/webhooks') ||
       cleanUrl.startsWith('/api/resolve-dominio') ||
+      cleanUrl.startsWith('/api/aprovacao') ||
       cleanUrl.startsWith('/api/ping');
 
     const { isMiddlewareEnabled, resolveTenantRequest } =

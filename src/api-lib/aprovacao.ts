@@ -151,7 +151,7 @@ export async function handleAprovacao(req: any, res: any) {
       const auth = validateAuth(req);
       if (!auth.authorized)
         return res.status(401).json({ success: false, error: auth.error || 'Não autorizado' });
-      const tenantId = req.tenantId; // injetado por tenantMiddleware
+      const tenantId = req.tenantId || auth.user?.tenantId; // injetado por tenantMiddleware (rota pública: fallback para o JWT)
 
       const { quotation_id } = req.body;
       const newToken = crypto.randomUUID();
