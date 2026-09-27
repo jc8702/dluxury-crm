@@ -115,7 +115,7 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
 
       // Helper para executar raw SQL através do Drizzle ORM e retornar rows
       const execSql = (strings: TemplateStringsArray, ...values: any[]) =>
-        db.execute(drizzleSql(strings as any, ...values)).then((r) => r.rows);
+        db.execute(drizzleSql(strings as any, ...values)).then((r: any) => r.rows);
 
       let query;
       if (q) {
@@ -278,7 +278,6 @@ const handleProjectsCore: TenantHandler = async (req, res) => {
 const handleReportsCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
     const { type, projectId } = req.query || {};
     let result;
     if (type === 'fin-rentabilidade') {
@@ -327,8 +326,6 @@ const handleReportsCore: TenantHandler = async (req, res) => {
 const handleEngineeringCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
-
     // Garantia de infra: cria tabela e colunas se não existirem (v5 schema fix)
     await sql`CREATE TABLE IF NOT EXISTS erp_product_bom (id UUID PRIMARY KEY DEFAULT gen_random_uuid())`;
     await sql`ALTER TABLE erp_product_bom ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(
@@ -423,18 +420,20 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      let {
+      const {
         nome,
-        codigo_modelo,
+        codigo_modelo: _codigoModelo,
         descricao,
         largura_padrao,
         altura_padrao,
         profundidade_padrao,
         horas_mo_padrao,
         valor_hora_padrao,
-        valor_total,
+        valor_total: _valorTotal,
         regras_calculo,
       } = req.body;
+      let codigo_modelo = _codigoModelo;
+      let valor_total = _valorTotal;
 
       if (!nome) {
         return res.status(400).json({ success: false, error: 'Nome é obrigatório' });
@@ -537,7 +536,6 @@ const handleEngineeringCore: TenantHandler = async (req, res) => {
 const handleSKUsCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
 
     if (req.method === 'GET') {
       if (req.query.action === 'next-code') {
@@ -605,7 +603,6 @@ const handleSimulationsCore: TenantHandler = async (req, res) => {
     await requireFeature('simulator')(req, res, () => {});
     if (res.headersSent) return;
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
 
     // Migração: garantir colunas adicionais para cenários de produção
     await sql`ALTER TABLE erp_simulations ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE`.catch(

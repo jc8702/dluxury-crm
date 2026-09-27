@@ -2,7 +2,14 @@ import { jsPDF } from 'jspdf';
 import type { ProductionPieceInput, ProductionSimulationResult } from '../../domain/types';
 import { formatEdgePattern, formatMinutes } from '../../domain/productionEngine';
 
-function drawTable(doc: jsPDF, headers: string[], rows: string[][], startY: number, colWidths: number[], pageW: number) {
+function drawTable(
+  doc: jsPDF,
+  headers: string[],
+  rows: string[][],
+  startY: number,
+  colWidths: number[],
+  pageW: number,
+) {
   const rowH = 6;
   const headerH = 7;
   let y = startY;
@@ -69,14 +76,25 @@ export async function exportarRelatorioProducao(
 
   doc.setFontSize(9);
   doc.setTextColor(156, 163, 175);
-  doc.text(`GERADO EM ${new Date().toLocaleDateString('pt-BR')} ÀS ${new Date().toLocaleTimeString('pt-BR')}`, pageW / 2, 84, { align: 'center' });
+  doc.text(
+    `GERADO EM ${new Date().toLocaleDateString('pt-BR')} ÀS ${new Date().toLocaleTimeString('pt-BR')}`,
+    pageW / 2,
+    84,
+    { align: 'center' },
+  );
 
   doc.setDrawColor(55, 65, 81);
   doc.line(40, 92, 170, 92);
 
   const summaryData = [
-    { label: 'ESTRATÉGIA', value: result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO' },
-    { label: 'GARGALO', value: result.bottleneck === 'coladeira' ? 'COLADEIRA DE FITA' : 'ESQUADREJADEIRA' },
+    {
+      label: 'ESTRATÉGIA',
+      value: result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO',
+    },
+    {
+      label: 'GARGALO',
+      value: result.bottleneck === 'coladeira' ? 'COLADEIRA DE FITA' : 'ESQUADREJADEIRA',
+    },
     { label: 'TEMPO TOTAL', value: formatMinutes(result.recommended.makespanMinutes) },
     { label: 'PEÇAS NO LOTE', value: `${result.totalPieces}` },
     { label: 'METROS DE FITA', value: `${result.totalEdgeMeters.toFixed(2)} M` },
@@ -216,10 +234,14 @@ export async function exportarRelatorioProducao(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(209, 213, 219);
-  doc.text(result.recommended.id === 'fluxo_continuo'
-    ? 'O FLUXO CONTÍNUO ENTREGA MENOR TEMPO TOTAL PORQUE SOBREPÕE CORTE E FITA, REDUZINDO FILA E ESPERA.'
-    : 'O LOTE SEPARADO É MELHOR NESTE CENÁRIO PORQUE CONCENTRA SETUPS DE FITA DE BORDA E EVITA TROCAS FREQUENTES DE PADRÃO.',
-    [15, 55], 154, { maxWidth: 180 });
+  doc.text(
+    result.recommended.id === 'fluxo_continuo'
+      ? 'O FLUXO CONTÍNUO ENTREGA MENOR TEMPO TOTAL PORQUE SOBREPÕE CORTE E FITA, REDUZINDO FILA E ESPERA.'
+      : 'O LOTE SEPARADO É MELHOR NESTE CENÁRIO PORQUE CONCENTRA SETUPS DE FITA DE BORDA E EVITA TROCAS FREQUENTES DE PADRÃO.',
+    15,
+    154,
+    { maxWidth: 180 },
+  );
 
   // ---- PÁGINA 4: Ordem recomendada passo a passo ----
   doc.addPage();
@@ -235,7 +257,11 @@ export async function exportarRelatorioProducao(
 
   doc.setFontSize(6);
   doc.setTextColor(156, 163, 175);
-  doc.text(`ESTRATÉGIA: ${result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO'} · TOTAL: ${formatMinutes(result.recommended.makespanMinutes)}`, 15, 22);
+  doc.text(
+    `ESTRATÉGIA: ${result.recommended.id === 'fluxo_continuo' ? 'FLUXO CONTÍNUO' : 'LOTE SEPARADO'} · TOTAL: ${formatMinutes(result.recommended.makespanMinutes)}`,
+    15,
+    22,
+  );
 
   const orderHeaders = ['#', 'PEÇA', 'DIMENSÃO', 'CORTE', 'FITA', 'SETUP', 'FITA BORDA'];
   const orderColWidths = [6, 42, 22, 14, 14, 14, 22];
@@ -257,6 +283,9 @@ export async function exportarRelatorioProducao(
   doc.setTextColor(75, 85, 99);
   doc.text(`D'LUXURY MÓVEIS — MÓDULO PRODUÇÃO · ${nome}`, pageW / 2, 290, { align: 'center' });
 
-  const safeNome = nome.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const safeNome = nome
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '');
   doc.save(`relatorio-producao-${safeNome}.pdf`);
 }

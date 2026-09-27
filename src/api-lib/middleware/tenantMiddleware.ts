@@ -73,6 +73,8 @@ interface ResponseLike {
   status(code: number): ResponseLike;
   json(body: unknown): unknown;
   end(): unknown;
+  setHeader?(name: string, value: string | number | string[]): unknown;
+  headersSent?: boolean;
 }
 
 export type TenantHandler = (

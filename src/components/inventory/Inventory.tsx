@@ -11,7 +11,7 @@ import { Button, Card } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
 import { Input, Badge } from '../../components/common';
 import EstoqueGranular from '../estoque/EstoqueGranular';
-import SKUPage from '../skus/SKUPage';
+import type { Material } from '../../types/entities';
 
 type MainTab = 'materials' | 'history' | 'granular' | 'skus';
 
@@ -334,7 +334,7 @@ const Inventory: React.FC = () => {
                   movimentacoes.map((mov) => (
                     <tr key={mov.id} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4 text-muted-foreground">
-                        {new Date(mov.criado_em).toLocaleString('pt-BR')}
+                        {new Date(mov.created_at).toLocaleString('pt-BR')}
                       </td>
                       <td className="p-4">
                         <div className="font-semibold text-foreground">{mov.material_nome}</div>

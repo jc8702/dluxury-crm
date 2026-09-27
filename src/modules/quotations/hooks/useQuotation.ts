@@ -97,12 +97,12 @@ export function useQuotation(orcamentoId?: string) {
     async (dados: any) => {
       setLoading(true);
       try {
-        // Validação leniente - rascunho pode ser criado sem cliente
-        let validatedData: any = {};
+        // Validação leniente - rascunho pode ser criado sem cliente (o backend valida os dados crus)
         try {
-          validatedData = createQuotationSchema.parse({
+          createQuotationSchema.parse({
             clienteId: dados.clienteId ?? null,
-            clientId: dados.clienteId ? Number(dados.clienteId) || null : null,
+            // clients.id é UUID — não converter com Number() (gerava NaN).
+            clientId: dados.clienteId ?? null,
             number: dados.numero,
             numero: dados.numero,
             description: dados.descricao,
@@ -113,9 +113,8 @@ export function useQuotation(orcamentoId?: string) {
             taxaFinanceiraPercentual: dados.taxaFinanceiraPercentual,
             descontoPercentual: dados.descontoPercentual,
           });
-        } catch (e) {
-          // Se validação falhar, usa dados crus - backend fará validação própria
-          validatedData = {};
+        } catch {
+          // Se validação falhar, segue com dados crus - backend fará validação própria
         }
 
         const headerPayload: any = {
@@ -143,8 +142,9 @@ export function useQuotation(orcamentoId?: string) {
         throw new Error(msg);
       } catch (err: any) {
         if (err instanceof z.ZodError) {
-          console.error('❌ [useQuotation] Erro de validação:', err.errors);
-          toastError('Dados inválidos', err.errors.map((e: any) => e.message).join(', '));
+          // Zod 4: `.issues` substitui o antigo `.errors`.
+          console.error('❌ [useQuotation] Erro de validação:', err.issues);
+          toastError('Dados inválidos', err.issues.map((e: any) => e.message).join(', '));
           throw err;
         }
         console.error('❌ [useQuotation] Erro ao inicializar:', err);

@@ -3,30 +3,35 @@ import { exportarCNC, salvarArquivoCNC } from './ExportarCNC.js';
 import type { LayoutChapa } from '../../domain/entities/CuttingPlan';
 
 const mockLayout: LayoutChapa = {
+  tipo: 'chapa_inteira',
   chapa_sku: 'CHP-MDF-15-BRANCO',
   largura_original_mm: 2750,
   altura_original_mm: 1850,
-  espessura_mm: 15,
-  aproveitamento_pct: 78.5,
+  espacos_livres: [],
+  area_aproveitada_mm2: 0,
+  area_desperdicada_mm2: 0,
   pecas_posicionadas: [
     {
+      id: 'peca-1',
       nome: 'Lateral Armário',
+      rotacionavel: false,
       largura: 600,
       altura: 1800,
       x: 50,
       y: 50,
-      rotacao: 0,
+      rotacionada: false,
     },
     {
+      id: 'peca-2',
       nome: 'Prateleira',
+      rotacionavel: false,
       largura: 800,
       altura: 250,
       x: 700,
       y: 50,
-      rotacao: 0,
+      rotacionada: false,
     },
   ],
-  retalhos_gerados: [],
 };
 
 describe('exportarCNC', () => {

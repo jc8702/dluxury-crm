@@ -15,6 +15,7 @@ export interface KanbanCardType {
   environment: string;
   data_inicio: string | null;
   data_conclusao: string | null;
+  data_prazo: string | null;
   responsavel_id: string | null;
   responsavel_nome: string | null;
   created_at: string;
@@ -51,8 +52,10 @@ export const kanbanService = {
   }): Promise<KanbanBoardData> {
     const params = new URLSearchParams();
     if (filtros) {
-      if (filtros.filtro_responsavel) params.append('filtro_responsavel', filtros.filtro_responsavel);
-      if (filtros.filtro_prioridade !== undefined) params.append('filtro_prioridade', String(filtros.filtro_prioridade));
+      if (filtros.filtro_responsavel)
+        params.append('filtro_responsavel', filtros.filtro_responsavel);
+      if (filtros.filtro_prioridade !== undefined)
+        params.append('filtro_prioridade', String(filtros.filtro_prioridade));
       if (filtros.filtro_ambiente) params.append('filtro_ambiente', filtros.filtro_ambiente);
       if (filtros.busca) params.append('busca', filtros.busca);
     }
@@ -67,13 +70,13 @@ export const kanbanService = {
     etapaKanbanId: number,
     novoStatus: 'a_fazer' | 'em_progresso' | 'bloqueado' | 'concluido',
     statusAnterior: string,
-    nota?: string
+    nota?: string,
   ): Promise<any> {
     return apiCall<any>('kanban/move-card', 'POST', {
       etapa_kanban_id: etapaKanbanId,
       novo_status: novoStatus,
       status_anterior: statusAnterior,
-      nota
+      nota,
     });
   },
 
@@ -83,13 +86,17 @@ export const kanbanService = {
   async updateCardDetails(
     etapaKanbanId: number,
     responsavelId: string | null,
-    nota?: string
+    nota?: string,
   ): Promise<{ etapa: KanbanCardType; historico: MovimentoKanbanType[] }> {
-    return apiCall<{ etapa: KanbanCardType; historico: MovimentoKanbanType[] }>('kanban/card-details', 'PATCH', {
-      etapa_kanban_id: etapaKanbanId,
-      responsavel_id: responsavelId,
-      nota
-    });
+    return apiCall<{ etapa: KanbanCardType; historico: MovimentoKanbanType[] }>(
+      'kanban/card-details',
+      'PATCH',
+      {
+        etapa_kanban_id: etapaKanbanId,
+        responsavel_id: responsavelId,
+        nota,
+      },
+    );
   },
 
   /**
@@ -97,5 +104,5 @@ export const kanbanService = {
    */
   async getCardHistory(etapaKanbanId: number): Promise<MovimentoKanbanType[]> {
     return apiCall<MovimentoKanbanType[]>(`kanban/card-history?id=${etapaKanbanId}`);
-  }
+  },
 };

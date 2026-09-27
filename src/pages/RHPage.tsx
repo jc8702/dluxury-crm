@@ -230,7 +230,7 @@ export default function RHPage() {
       </div>
 
       {tab === 'colaboradores' && (
-        <Card data-testid="tab-colaboradores">
+        <Card data-testid="tabpanel-colaboradores">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Colaboradores</CardTitle>
             <Button
@@ -319,7 +319,7 @@ export default function RHPage() {
       )}
 
       {tab === 'presencas' && (
-        <div className="space-y-4" data-testid="tab-presencas">
+        <div className="space-y-4" data-testid="tabpanel-presencas">
           <div className="flex items-center gap-3">
             <Input
               type="month"
@@ -340,7 +340,7 @@ export default function RHPage() {
       )}
 
       {tab === 'folhas' && (
-        <Card data-testid="tab-folhas">
+        <Card data-testid="tabpanel-folhas">
           <CardHeader>
             <CardTitle>Folhas</CardTitle>
           </CardHeader>
@@ -419,7 +419,7 @@ export default function RHPage() {
       )}
 
       {tab === 'adiantamentos' && (
-        <Card data-testid="tab-adiantamentos">
+        <Card data-testid="tabpanel-adiantamentos">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Adiantamentos</CardTitle>
             <div className="flex items-center gap-2">

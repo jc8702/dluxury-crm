@@ -101,7 +101,7 @@ const EngineeringPage: React.FC = () => {
   }, []);
 
   const handleDimensaoModuloChange = (campo: string, valor: number) => {
-    setFormData((prev) => {
+    setFormData((prev: any) => {
       const novoFormData = { ...prev, [campo]: valor };
       const L = Number(novoFormData.largura_padrao) || 0;
       const A = Number(novoFormData.altura_padrao) || 0;

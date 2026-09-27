@@ -93,15 +93,13 @@ export default function Rulers3D({
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([
-                    tick.pos, 0.002, 0,
-                    tick.pos, 0.002, -h,
-                  ])}
-                  itemSize={3}
+                  args={[new Float32Array([tick.pos, 0.002, 0, tick.pos, 0.002, -h]), 3]}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} linewidth={isMajor ? 2 : 1} />
+              <lineBasicMaterial
+                color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR}
+                linewidth={isMajor ? 2 : 1}
+              />
             </lineSegments>
             {isMajor && (
               <Html
@@ -109,13 +107,15 @@ export default function Rulers3D({
                 center
                 style={{ pointerEvents: 'none', transform: 'translateY(-2px)' }}
               >
-                <span style={{
-                  color: LABEL_COLOR,
-                  fontSize,
-                  fontFamily: 'monospace',
-                  fontWeight: 600,
-                  textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
-                }}>
+                <span
+                  style={{
+                    color: LABEL_COLOR,
+                    fontSize,
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
+                  }}
+                >
                   {tick.label}
                 </span>
               </Html>
@@ -134,15 +134,13 @@ export default function Rulers3D({
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([
-                    0, 0.002, tick.pos,
-                    -h, 0.002, tick.pos,
-                  ])}
-                  itemSize={3}
+                  args={[new Float32Array([0, 0.002, tick.pos, -h, 0.002, tick.pos]), 3]}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR} linewidth={isMajor ? 2 : 1} />
+              <lineBasicMaterial
+                color={isMajor ? TICK_MAJOR_COLOR : TICK_COLOR}
+                linewidth={isMajor ? 2 : 1}
+              />
             </lineSegments>
             {isMajor && (
               <Html
@@ -150,13 +148,15 @@ export default function Rulers3D({
                 center
                 style={{ pointerEvents: 'none', transform: 'translateX(-2px)' }}
               >
-                <span style={{
-                  color: LABEL_COLOR,
-                  fontSize,
-                  fontFamily: 'monospace',
-                  fontWeight: 600,
-                  textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
-                }}>
+                <span
+                  style={{
+                    color: LABEL_COLOR,
+                    fontSize,
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    textShadow: '0 0 3px #000, 0 1px 2px #000, 0 0 8px rgba(255,255,255,0.2)',
+                  }}
+                >
                   {tick.label}
                 </span>
               </Html>
@@ -171,12 +171,17 @@ export default function Rulers3D({
           <bufferGeometry>
             <bufferAttribute
               attach="attributes-position"
-              count={2}
-              array={new Float32Array([
-                tick.pos, 0.002, sheetDepth,
-                tick.pos, 0.002, sheetDepth + rulerConfig.tickHeight,
-              ])}
-              itemSize={3}
+              args={[
+                new Float32Array([
+                  tick.pos,
+                  0.002,
+                  sheetDepth,
+                  tick.pos,
+                  0.002,
+                  sheetDepth + rulerConfig.tickHeight,
+                ]),
+                3,
+              ]}
             />
           </bufferGeometry>
           <lineBasicMaterial color={TICK_COLOR} />
@@ -189,12 +194,17 @@ export default function Rulers3D({
           <bufferGeometry>
             <bufferAttribute
               attach="attributes-position"
-              count={2}
-              array={new Float32Array([
-                sheetWidth, 0.002, tick.pos,
-                sheetWidth + rulerConfig.tickHeight, 0.002, tick.pos,
-              ])}
-              itemSize={3}
+              args={[
+                new Float32Array([
+                  sheetWidth,
+                  0.002,
+                  tick.pos,
+                  sheetWidth + rulerConfig.tickHeight,
+                  0.002,
+                  tick.pos,
+                ]),
+                3,
+              ]}
             />
           </bufferGeometry>
           <lineBasicMaterial color={TICK_COLOR} />
@@ -210,12 +220,7 @@ export default function Rulers3D({
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([
-                    0, 0.001, line.z,
-                    sheetWidth, 0.001, line.z,
-                  ])}
-                  itemSize={3}
+                  args={[new Float32Array([0, 0.001, line.z, sheetWidth, 0.001, line.z]), 3]}
                 />
               </bufferGeometry>
               <lineBasicMaterial
@@ -231,12 +236,7 @@ export default function Rulers3D({
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([
-                    line.x, 0.001, 0,
-                    line.x, 0.001, sheetDepth,
-                  ])}
-                  itemSize={3}
+                  args={[new Float32Array([line.x, 0.001, 0, line.x, 0.001, sheetDepth]), 3]}
                 />
               </bufferGeometry>
               <lineBasicMaterial

@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
+import Header from '../../components/layout/Header';
 
 export type QuotationStatus =
   | 'RASCUNHO'
@@ -34,6 +35,7 @@ export interface Quotation {
   validadeDias?: number;
   status: QuotationStatus;
   valorTotalVenda?: number;
+  itens?: unknown[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -251,57 +253,15 @@ export const QuotationList: React.FC<QuotationListProps> = ({
         .ds-quotation-list table tbody tr:hover .ds-row-actions { opacity: 1; }
       `}</style>
 
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '32px',
-              fontWeight: 700,
-              color: '#1A1A1A',
-              margin: 0,
-              lineHeight: 1.2,
-            }}
-          >
-            Orçamentos
-          </h1>
-          <p
-            style={{
-              color: '#666666',
-              fontSize: '14px',
-              margin: `4px 0 0 0`,
-            }}
-          >
-            Gestão de propostas industriais e cálculos de engenharia
-          </p>
-        </div>
-        <Button
-          onClick={onCreate}
-          style={{
-            background: '#0D66CC',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '8px',
-            padding: `8px 24px`,
-            fontSize: '14px',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: `0 4px 12px #0D66CC40`,
-            cursor: 'pointer',
-          }}
-        >
-          <Plus size={16} /> Novo Orçamento
-        </Button>
-      </header>
+      <Header
+        title="Orçamentos"
+        subtitle="Gestão de propostas industriais e cálculos de engenharia"
+        actions={
+          <Button onClick={onCreate} className="gap-2">
+            <Plus size={16} /> Novo Orçamento
+          </Button>
+        }
+      />
 
       <section
         style={{

@@ -62,12 +62,23 @@ const handleProductionCore: TenantHandler = async (req, res) => {
 
 // --- 2. LÓGICA DE NEGÓCIO ---
 
+// O frontend usa 'FINALIZADO'; dados legados podem ter 'FINALIZADA'.
+// Normalizamos para 'FINALIZADO' e aceitamos ambos como estado final.
+const FINALIZED_STATUSES = ['FINALIZADO', 'FINALIZADA'];
+
+function normalizeProductionStatus(status?: string): string {
+  if (!status) return status || '';
+  if (status === 'FINALIZADA') return 'FINALIZADO';
+  if (status === 'PENDENTE') return 'AGUARDANDO';
+  return status;
+}
+
 /**
  * Sincroniza as previsões de entrega de toda a fila ativa
  */
 async function syncQueueForecasting(tenantId: string) {
   const allOps =
-    await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE status != 'FINALIZADA' AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
+    await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE status NOT IN ('FINALIZADO', 'FINALIZADA') AND tenant_id = ${tenantId} ORDER BY created_at ASC`;
   if (allOps.length === 0) return;
 
   const previstos = calcularPrevisaoEntrega(allOps as any);
@@ -94,7 +105,9 @@ async function listOPs(res: any, tenantId: string) {
     await sql`SELECT id, op_id, produto, pecas, status, data_inicio, data_fim, metadata, checklist, tempo_previsto_corte, tempo_previsto_montagem, data_prevista_entrega, visita_id, projeto_id, quotation_id, created_at, updated_at FROM ordens_producao WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
 
   // Auto-sync: se detectarmos OPs ativas sem previsão, força o cálculo global
-  const precisaSincronizar = ops.some((o) => o.status !== 'FINALIZADA' && !o.data_prevista_entrega);
+  const precisaSincronizar = ops.some(
+    (o: any) => !FINALIZED_STATUSES.includes(o.status) && !o.data_prevista_entrega,
+  );
   if (precisaSincronizar) {
     /* logger.info('AUTO-SYNC: Detectadas OPs sem previsão. Sincronizando fila...'); */
     await syncQueueForecasting(tenantId);
@@ -134,7 +147,7 @@ async function createOP(req: any, res: any, tenantId: string, user: any) {
     const checklistToSave =
       Array.isArray(checklist) && checklist.length > 0 ? checklist : defaultChecklist;
 
-    const initialStatus = req.body.status || 'PENDENTE';
+    const initialStatus = normalizeProductionStatus(req.body.status) || 'AGUARDANDO';
 
     const [novaOP] = await sql`
       INSERT INTO ordens_producao (op_id, produto, pecas, status, metadata, checklist, visita_id, projeto_id, quotation_id, tenant_id)
@@ -237,7 +250,8 @@ async function deleteOP(req: any, res: any, tenantId: string, user: any) {
  * Atualiza o status da OP e gerencia os tempos de produção
  */
 async function updateOPStatus(req: any, res: any, tenantId: string) {
-  const { op_id, status } = req.body;
+  const { op_id } = req.body;
+  const status = normalizeProductionStatus(req.body.status);
 
   // Busca estado atual
   const [op] =
@@ -309,7 +323,7 @@ async function updateOPStatus(req: any, res: any, tenantId: string) {
   }
 
   // Se finalizou
-  if (status === 'FINALIZADA') {
+  if (status === 'FINALIZADO') {
     data_fim = new Date();
   } else {
     // Se saiu de FINALIZADA (reabriu), reseta fim
@@ -347,9 +361,9 @@ async function getProductionMetrics(res: any, tenantId: string) {
   const agora = Date.now();
 
   const finalizadas = allOps.filter(
-    (o) => o.status === 'FINALIZADA' && o.data_inicio && o.data_fim,
+    (o: any) => FINALIZED_STATUSES.includes(o.status) && o.data_inicio && o.data_fim,
   );
-  const pendentes = allOps.filter((o) => o.status !== 'FINALIZADA');
+  const pendentes = allOps.filter((o: any) => !FINALIZED_STATUSES.includes(o.status));
 
   // Cálculo de Lead Time Médio em minutos (histórico)
   const tempos = finalizadas.map((o) => {
@@ -374,8 +388,10 @@ async function getProductionMetrics(res: any, tenantId: string) {
   const metrics = {
     totalOPs: allOps.length,
     finalizadas: finalizadas.length,
-    emProducao: allOps.filter((o: any) => o.status !== 'PENDENTE' && o.status !== 'FINALIZADA')
-      .length,
+    emProducao: allOps.filter(
+      (o: any) =>
+        !['PENDENTE', 'AGUARDANDO'].includes(o.status) && !FINALIZED_STATUSES.includes(o.status),
+    ).length,
     leadTimeMedio: parseFloat(leadTimeMedio.toFixed(2)),
     taxaEficiencia: allOps.length > 0 ? (finalizadas.length / allOps.length) * 100 : 0,
     // Previsão

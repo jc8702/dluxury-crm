@@ -1,5 +1,6 @@
 import { sql, validateAuth } from './_db.js';
-import { PlanTier, hasFeature, PLAN_LIMITS } from '../lib/features.js';
+import { hasFeature, PLAN_LIMITS } from '../lib/features.js';
+import type { PlanTier } from '../lib/features.js';
 import { logger } from './logger.js';
 
 /**

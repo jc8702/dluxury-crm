@@ -32,6 +32,7 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
   const mapearParaDominio = (): ResultadoOtimizacao => {
     const layouts: LayoutChapa[] = resultado.grupos.flatMap((g) =>
       g.superficies.map((s, idx) => ({
+        tipo: 'chapa_inteira' as const,
         chapa_sku: g.sku,
         indice_chapa: idx,
         largura_original_mm: s.largura,
@@ -39,8 +40,9 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
         area_aproveitada_mm2: (s.aproveitamentoPct / 100) * (s.largura * s.altura),
         area_desperdicada_mm2: (1 - s.aproveitamentoPct / 100) * (s.largura * s.altura),
         pecas_posicionadas: s.pecasPositionadas.map((p) => ({
-          peca_id: p.pecaId,
+          id: p.pecaId,
           nome: p.descricao,
+          rotacionavel: false,
           x: p.x,
           y: p.y,
           largura: p.largura,
@@ -52,9 +54,11 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
     );
 
     return {
-      chapas_necessarias: layouts.length,
-      aproveitamento_percentual: resultado.aproveitamentoGeral,
       layouts,
+      retalhos_utilizados: 0,
+      chapas_novas_utilizadas: layouts.length,
+      aproveitamento_percentual: resultado.aproveitamentoGeral,
+      economia_retalhos_mm2: 0,
       tempo_calculo_ms: 0,
     };
   };
@@ -143,13 +147,15 @@ export const ExportacaoModal: React.FC<ExportacaoModalProps> = ({
     setIsExporting(true);
     try {
       const layout: LayoutChapa = {
+        tipo: 'chapa_inteira',
         chapa_sku: 'CHAPA', // Placeholder
         indice_chapa: activeChapaIdx,
         largura_original_mm: activeSuperficie.largura,
         altura_original_mm: activeSuperficie.altura,
         pecas_posicionadas: activeSuperficie.pecasPositionadas.map((p) => ({
-          peca_id: p.pecaId,
+          id: p.pecaId,
           nome: p.descricao,
+          rotacionavel: false,
           x: p.x,
           y: p.y,
           largura: p.largura,

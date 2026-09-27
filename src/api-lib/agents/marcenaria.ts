@@ -74,7 +74,10 @@ export async function ragConhecimentoTecnico(query: string, apiKey: string): Pro
     }
 
     return results
-      .map((r) => `### Tópico: ${r.titulo} (Categoria: ${r.categoria})\n${r.conteudo}`)
+      .map(
+        (r: { titulo: string; conteudo: string; categoria: string }) =>
+          `### Tópico: ${r.titulo} (Categoria: ${r.categoria})\n${r.conteudo}`,
+      )
       .join('\n\n');
   } catch (err: any) {
     logger.error('RAG Error:', err);

@@ -229,7 +229,9 @@ export default async function handler(req: any, res: any) {
     // Recalcular totais do orçamento
     if (itensInseridos.length > 0) {
       try {
-        await recalcularOrcamento(orcamento_id);
+        const tenantIdRecalculo =
+          (req as any).tenantId || (req as any).user?.tenantId || orcamento_id;
+        await recalcularOrcamento(orcamento_id, tenantIdRecalculo);
         /* console.log(`💰 [IMPORTAÇÃO] Orçamento recalculado com sucesso.`) */
       } catch (recalcErr) {
         console.error('❌ [IMPORTAÇÃO] Erro no recalculo:', recalcErr);

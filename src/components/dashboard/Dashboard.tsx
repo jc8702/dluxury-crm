@@ -34,15 +34,24 @@ import {
 
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useFinanceStore as useFinance } from '../../stores/useFinanceStore';
-import type { Project, ProjectStatus } from '../../context/CRMContext';
+import type { Project, ProjectStatus } from '../../types/entities';
 import { formatCurrency } from '../../utils/calculations';
 import { Card, CardStat, CardTitle, Button, Badge } from '../ui';
 import Header from '../layout/Header';
 
 const Dashboard: React.FC = () => {
   const { projects, clients } = useCRM();
-  const { billings, totalPeriodo, currentMeta, selectedPeriod, setSelectedPeriod, setMonthlyGoal } =
+  const { billings, monthlyGoals, selectedPeriod, setSelectedPeriod, setMonthlyGoal } =
     useFinance();
+  // Derivados do período selecionado (o store guarda os dados brutos).
+  const currentMeta = monthlyGoals[selectedPeriod] || 0;
+  const totalPeriodo = React.useMemo(
+    () =>
+      billings
+        .filter((b) => b.data && b.data.startsWith(selectedPeriod) && b.tipo !== 'saida')
+        .reduce((acc, b) => acc + (Number(b.valor) || 0), 0),
+    [billings, selectedPeriod],
+  );
   const [editGoal, setEditGoal] = React.useState(false);
   const [goalValue, setGoalValue] = React.useState('');
 
@@ -274,7 +283,7 @@ const Dashboard: React.FC = () => {
                     color: 'var(--ui-text-primary)',
                     fontSize: 12,
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value) => formatCurrency(Number(value))}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', marginTop: '10px' }} />
                 <Bar
@@ -498,7 +507,7 @@ const Dashboard: React.FC = () => {
 
       {/* ── Modal: editar meta ── */}
       <Modal
-        isOpen={editGoal}
+        open={editGoal}
         onClose={() => setEditGoal(false)}
         title="Definir Meta Mensal"
         size="sm"

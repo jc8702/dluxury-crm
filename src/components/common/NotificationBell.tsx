@@ -247,7 +247,7 @@ const NotificationBell: React.FC = () => {
                           marginTop: '4px',
                         }}
                       >
-                        {new Date(n.criado_em!).toLocaleTimeString([], {
+                        {new Date((n as any).criado_em || n.created_at!).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}

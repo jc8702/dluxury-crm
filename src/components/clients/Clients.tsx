@@ -7,7 +7,7 @@ import type { Client } from '../../types/entities';
 import type { ClientFormData } from '../../validators';
 import { ClientList } from '../../pages/Clients/ClientList';
 import { ClientForm } from '../../pages/Clients/ClientForm';
-import { Button, Modal, CardStat } from '../ui';
+import { Modal, CardStat } from '../ui';
 import { ConfirmDialog } from '../ui/Modal';
 
 const Clients: React.FC = () => {
@@ -151,16 +151,6 @@ const Clients: React.FC = () => {
         }
         size="lg"
         placement="right"
-        footer={
-          <>
-            <Button variant="ghost" onClick={handleCloseModal}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit" form="client-form">
-              {editingClient ? 'Salvar alterações' : 'Cadastrar cliente'}
-            </Button>
-          </>
-        }
       >
         <ClientForm
           key={editingClient?.id || 'new'}

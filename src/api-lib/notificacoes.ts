@@ -8,13 +8,13 @@ import { logger } from './logger.js';
 const handleNotificacoesCore: TenantHandler = async (req, res) => {
   try {
     const { method } = req;
+    const url = req.url || '';
     const { id } = req.query;
 
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
 
     if (method === 'GET') {
-      if (req.url.includes('contar')) {
+      if (url.includes('contar')) {
         await gerarNotificacoesAutomaticas(tenantId).catch(logger.error);
         const count =
           await sql`SELECT count(*) FROM notificacoes WHERE lida = false AND tenant_id = ${tenantId}`;
@@ -31,7 +31,7 @@ const handleNotificacoesCore: TenantHandler = async (req, res) => {
     }
 
     if (method === 'PUT' || method === 'PATCH') {
-      if (req.url.includes('marcar-todas')) {
+      if (url.includes('marcar-todas')) {
         await sql`UPDATE notificacoes SET lida = true, data_leitura = NOW() WHERE lida = false AND tenant_id = ${tenantId}`;
         return res.status(200).json({ success: true });
       }
@@ -39,7 +39,7 @@ const handleNotificacoesCore: TenantHandler = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    if (method === 'POST' && req.url.includes('gerar')) {
+    if (method === 'POST' && url.includes('gerar')) {
       const stats = await gerarNotificacoesAutomaticas(tenantId);
       return res.status(200).json({ success: true, stats });
     }

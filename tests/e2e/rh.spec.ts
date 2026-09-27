@@ -315,7 +315,7 @@ test.describe('Módulo RH & Folha (F3)', () => {
   test('carrega pagina RH', async ({ page }) => {
     await page.goto('/#/rh');
     await expect(page.getByTestId('rh-page')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('RH & Folha')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RH & Folha' })).toBeVisible();
   });
 
   test('tabs colaborador/presenca/folhas/adiantamento visiveis', async ({ page }) => {
@@ -376,7 +376,7 @@ test.describe('Módulo RH & Folha (F3)', () => {
   });
 
   test('detalhe da folha: exibe grid, card de socios e abre modal de recibo', async ({ page }) => {
-    await page.goto('/#/rh/folhas/f1');
+    await page.goto('/#/rh/f1');
     await expect(page.getByTestId('rh-folha-detalhe')).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId('folha-grid')).toBeVisible();
     await expect(page.getByTestId('lucro-socios-card')).toBeVisible();

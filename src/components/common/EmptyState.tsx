@@ -8,10 +8,11 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+  const TypedIcon = Icon as React.ComponentType<{ className?: string }>;
   return (
     <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-border bg-card/50">
       <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
-        <Icon className="w-8 h-8 text-muted-foreground" />
+        <TypedIcon className="w-8 h-8 text-muted-foreground" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-muted-foreground max-w-sm mb-6">{description}</p>

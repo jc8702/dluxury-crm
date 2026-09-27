@@ -21,6 +21,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Button } from '../../components/ui';
+import Header from '../../components/layout/Header';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
@@ -487,87 +488,30 @@ export const ProductionList: React.FC<ProductionListProps> = ({
         .ds-production-list .ds-kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
       `}</style>
 
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '32px',
-              fontWeight: 700,
-              color: '#1A1A1A',
-              margin: 0,
-              lineHeight: 1.2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <Hammer size={28} color={'#0D5FB8'} />
-            Ordens de Produção
-          </h1>
-          <p
-            style={{
-              color: '#666666',
-              fontSize: '14px',
-              margin: `4px 0 0 0`,
-            }}
-          >
-            Acompanhe o fluxo fabril,Cutting Plan e status das OPs em tempo real.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Button
-            onClick={() => {
-              fetchOrders();
-              onRefresh?.();
-            }}
-            style={{
-              background: '#FFFFFF',
-              color: '#1A1A1A',
-              border: `1px solid #E0E0E0`,
-              borderRadius: '8px',
-              padding: `8px 24px`,
-              fontSize: '14px',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-            }}
-            aria-label="Atualizar lista"
-          >
-            <RefreshCw size={16} /> Atualizar
-          </Button>
-          {onCreate && (
+      <Header
+        title="Ordens de Produção"
+        subtitle="Acompanhe o fluxo fabril, Cutting Plan e status das OPs em tempo real."
+        actions={
+          <>
             <Button
-              onClick={onCreate}
-              style={{
-                background: '#0D66CC',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                padding: `8px 24px`,
-                fontSize: '14px',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: `0 4px 12px #0D66CC40`,
-                cursor: 'pointer',
+              variant="outline"
+              onClick={() => {
+                fetchOrders();
+                onRefresh?.();
               }}
+              className="gap-2"
+              aria-label="Atualizar lista"
             >
-              <Plus size={16} /> Nova OP
+              <RefreshCw size={16} /> Atualizar
             </Button>
-          )}
-        </div>
-      </header>
+            {onCreate && (
+              <Button onClick={onCreate} className="gap-2">
+                <Plus size={16} /> Nova OP
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <section
         style={{

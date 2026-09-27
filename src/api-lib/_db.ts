@@ -12,8 +12,10 @@ let _neonInstance: any = null;
 
 // Interface para satisfazer o TypeScript no Vercel/Financeiro
 interface SqlClient {
-  (strings: any, ...values: any[]): Promise<any>;
+  (strings: any, ...values: any[]): Promise<any[]>;
   begin: (callback: (tx: any) => Promise<any>) => Promise<any>;
+  join: (values: any[], separator?: any) => any;
+  query: (strings: any, ...values: any[]) => Promise<any[]>;
 }
 
 const sqlInstance = (strings: any, ...values: any[]) => {

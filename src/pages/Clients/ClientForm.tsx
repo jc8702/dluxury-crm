@@ -1,5 +1,6 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, X, Check } from 'lucide-react';
 import { Button, Input, Select, Textarea } from '../../components/ui';
@@ -52,7 +53,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
     setValue,
     watch,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<ClientFormData>({
+    // O schema usa `.transform()` (telefone), então o tipo de entrada difere do de saída.
+  } = useForm<z.input<typeof clientSchema>, any, ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       nome: initialData?.nome || '',
@@ -106,6 +108,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSubmit, o
 
   return (
     <form
+      id="client-form"
       onSubmit={handleSubmit(handleFormSubmit)}
       className="flex flex-col gap-5 text-[var(--ui-text-primary)]"
       noValidate

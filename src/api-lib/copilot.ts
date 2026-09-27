@@ -481,7 +481,7 @@ async function handleSuggestBOM(entities: Entities, originalMessage: string) {
 
   if (analise.avisos.length > 0) {
     report += `\n⚠️ **Avisos de Engenharia:**\n`;
-    analise.avisos.forEach((av) => (report += `- ${av}\n`));
+    analise.avisos.forEach((av: string) => (report += `- ${av}\n`));
   }
 
   report += `\n> **Ação Recomendada:** Deseja que eu gere os documentos de produção e o orçamento formal para este projeto?`;
@@ -505,6 +505,8 @@ async function handleAnalyzeStock(tenantId: string) {
   return { message: report };
 }
 
+// @todo: handler de 'GET_LAST_SKU' — aguardando mapeamento de intent no parseIntent
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function handleGetLast(tenantId: string) {
   const sku = await SKUService.getLast(tenantId);
   if (!sku) return { message: 'Nenhum item encontrado no banco de dados.' };
@@ -513,13 +515,6 @@ async function handleGetLast(tenantId: string) {
 
 async function handleSearch(entities: Entities, tenantId: string) {
   const r = await SKUService.search(entities, tenantId);
-  if (!r || !r.length) return { message: 'Nenhum item encontrado.' };
-  return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join('\n') };
-}
-
-async function handleListByFamilia(entities: Entities, tenantId: string) {
-  if (!entities.familia) return { message: 'Qual família deseja listar?' };
-  const r = await SKUService.listByFamilia(entities.familia, tenantId);
   if (!r || !r.length) return { message: 'Nenhum item encontrado.' };
   return { message: r.map((s: any) => `${s.skuId} - ${s.descricao}`).join('\n') };
 }
@@ -588,7 +583,6 @@ async function generateChatResponse(payload: any, tenantId: string) {
 const handleAICopilotCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
     if (req.method !== 'POST') return res.status(405).end();
 
     const { skill, payload } = req.body;

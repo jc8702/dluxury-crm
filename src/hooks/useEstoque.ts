@@ -34,68 +34,70 @@ export function useEstoque() {
   }, []);
 
   const buscarMaterial = useCallback(async (id: string) => {
-    return api.estoque.get(id);
+    // Não há endpoint de leitura única — filtra a listagem em memória.
+    const materiais = await api.estoque.list();
+    return materiais.find((m: any) => String(m.id) === String(id)) ?? null;
   }, []);
 
   const criarMaterial = useCallback(
     async (data: any) => {
       await api.estoque.create(data);
-      await reloadData();
+      await reloadInventoryData();
     },
-    [reloadData],
+    [reloadInventoryData],
   );
 
   const editarMaterial = useCallback(
     async (id: string, data: any) => {
       await api.estoque.update(id, data);
-      await reloadData();
+      await reloadInventoryData();
     },
-    [reloadData],
+    [reloadInventoryData],
   );
 
   const registrarEntrada = useCallback(
     async (materialId: string, quantidade: number, motivo: string, precoUnitario?: number) => {
-      await api.estoque.movimentacoes.create({
+      await api.estoque.addMovimentacao({
         material_id: materialId,
         tipo: 'entrada',
         quantidade,
         motivo,
         preco_unitario: precoUnitario,
       });
-      await reloadData();
+      await reloadInventoryData();
     },
-    [reloadData],
+    [reloadInventoryData],
   );
 
   const registrarSaida = useCallback(
     async (materialId: string, quantidade: number, motivo: string, projetoId?: string) => {
-      await api.estoque.movimentacoes.create({
+      await api.estoque.addMovimentacao({
         material_id: materialId,
         tipo: 'saida',
         quantidade,
         motivo,
         projeto_id: projetoId,
       });
-      await reloadData();
+      await reloadInventoryData();
     },
-    [reloadData],
+    [reloadInventoryData],
   );
 
   const registrarAjuste = useCallback(
     async (materialId: string, estoqueNovo: number, motivo: string) => {
-      await api.estoque.movimentacoes.create({
+      await api.estoque.addMovimentacao({
         material_id: materialId,
         tipo: 'ajuste',
         quantidade: estoqueNovo,
         motivo,
       });
-      await reloadData();
+      await reloadInventoryData();
     },
-    [reloadData],
+    [reloadInventoryData],
   );
 
   const listarMovimentacoes = useCallback(async (materialId?: string) => {
-    return api.estoque.movimentacoes.list(materialId);
+    return api.estoque.getMovimentacoes(materialId);
   }, []);
 
   const listarAbaixoMinimo = useCallback(async () => {

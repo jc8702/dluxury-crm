@@ -2,7 +2,7 @@ import { pgTable, uuid, varchar, text, timestamp, customType } from 'drizzle-orm
 import { tenants } from './tenants.js';
 
 // Mapeamento customizado de vetor de dimensão 768 para pgvector do Neon
-const vector768 = customType<{ data: number[] }>({
+const vector768 = customType<{ data: number[]; driverData: string }>({
   dataType() {
     return 'vector(768)';
   },
@@ -11,8 +11,11 @@ const vector768 = customType<{ data: number[] }>({
   },
   fromDriver(value: string) {
     if (typeof value !== 'string') return [];
-    return value.substring(1, value.length - 1).split(',').map(Number);
-  }
+    return value
+      .substring(1, value.length - 1)
+      .split(',')
+      .map(Number);
+  },
 });
 
 export const conhecimentoMarcenaria = pgTable('conhecimento_marcenaria', {

@@ -32,7 +32,7 @@ import {
 } from 'recharts';
 
 import type { KPIFinanceiro, CapitalGiroHistorico } from '../modules/financeiro/domain/types';
-import { Button, Card, Badge, Input } from '../components/ui';
+import { Button, Card, Badge } from '../components/ui';
 
 // ────────────────────────────────────────────────────────────────────────────────
 // UTILS
@@ -383,7 +383,7 @@ export default function FinancePage() {
                         Nenhum vencimento próximo
                       </div>
                     ) : (
-                      stats.proximos_vencimentos.map((v, i) => (
+                      (stats.proximos_vencimentos ?? []).map((v, i) => (
                         <div
                           key={i}
                           className="flex justify-between items-center p-3 rounded-[var(--ui-radius-md)] bg-muted border border-border hover:bg-muted/50 transition-colors group"

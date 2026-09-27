@@ -31,8 +31,8 @@ describe('_inventory', () => {
       await reserveStockForProject('item-1', 'tenant-1');
 
       expect(sql).toHaveBeenCalledTimes(1);
-      expect(sql.mock.calls[0][0][0]).toContain('INSERT INTO erp_inventory');
-      expect(sql.mock.calls[0][0].join('')).toContain('ON CONFLICT');
+      expect((sql as any).mock.calls[0][0][0]).toContain('INSERT INTO erp_inventory');
+      expect((sql as any).mock.calls[0][0].join('')).toContain('ON CONFLICT');
     });
 
     it('deve propagar o erro se o banco falhar', async () => {
@@ -53,11 +53,11 @@ describe('_inventory', () => {
       await writeOffStockForProject('item-1', 'tenant-1');
 
       expect(sql).toHaveBeenCalledTimes(1);
-      expect(sql.mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
-      expect(sql.mock.calls[0][0].join('')).toContain(
+      expect((sql as any).mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
+      expect((sql as any).mock.calls[0][0].join('')).toContain(
         'estoque_atual = ei.estoque_atual - cr.quantidade_com_perda',
       );
-      expect(sql.mock.calls[0][0].join('')).toContain(
+      expect((sql as any).mock.calls[0][0].join('')).toContain(
         'estoque_reservado = ei.estoque_reservado - cr.quantidade_com_perda',
       );
     });
@@ -77,8 +77,8 @@ describe('_inventory', () => {
       await writeOffStockForProjectBatch('proj-1', 'tenant-1');
 
       expect(sql).toHaveBeenCalledTimes(1);
-      expect(sql.mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
-      expect(sql.mock.calls[0][0].join('')).toContain('JOIN erp_project_items pi');
+      expect((sql as any).mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
+      expect((sql as any).mock.calls[0][0].join('')).toContain('JOIN erp_project_items pi');
     });
 
     it('deve propagar erro', async () => {
@@ -95,8 +95,8 @@ describe('_inventory', () => {
       await releaseStockForProject('item-1', 'tenant-1');
 
       expect(sql).toHaveBeenCalledTimes(1);
-      expect(sql.mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
-      expect(sql.mock.calls[0][0].join('')).toContain(
+      expect((sql as any).mock.calls[0][0][0]).toContain('UPDATE erp_inventory');
+      expect((sql as any).mock.calls[0][0].join('')).toContain(
         'estoque_reservado = ei.estoque_reservado - cr.quantidade_com_perda',
       );
     });

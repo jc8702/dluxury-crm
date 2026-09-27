@@ -10,22 +10,47 @@ const handleClientsCore: TenantHandler = async (req, res) => {
     const tenantId = req.tenantId;
     const user = req.tenantUser;
     if (req.method === 'GET') {
-      const result =
-        await sql`SELECT id, nome, cpf, telefone, email, endereco, bairro, city as cidade, uf, tipo_imovel, comodos_interesse, origem, observacoes, status, created_at, razao_social, cnpj, municipio, situacao_cadastral FROM clients WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`.catch(
-          async () => {
-            // Fallback para coluna cidade legada
-            return await sql`SELECT id, nome, cpf, telefone, email, endereco, bairro, cidade, uf, tipo_imovel, comodos_interesse, origem, observacoes, status, created_at, razao_social, cnpj, municipio, situacao_cadastral FROM clients WHERE deleted_at IS NULL AND tenant_id = ${tenantId} ORDER BY created_at DESC`;
-          },
-        );
+      const result = await sql`
+        SELECT 
+          id, nome, cpf, telefone, email, endereco, bairro,
+          COALESCE(cidade, municipio) as cidade,
+          uf, tipo_imovel, comodos_interesse, origem, observacoes, 
+          status, created_at, razao_social, cnpj, municipio, situacao_cadastral
+        FROM clients 
+        WHERE deleted_at IS NULL AND tenant_id = ${tenantId} 
+        ORDER BY created_at DESC
+      `;
       return res.status(200).json({ success: true, data: result });
     }
     if (req.method === 'POST') {
       const f = req.body;
-      const comodosStr = Array.isArray(f.comodos_interesse)
-        ? f.comodos_interesse.join(', ')
-        : f.comodos_interesse || '';
-      const cnpjVal = f.cnpj?.trim() ? f.cnpj.trim() : null;
-      const cpfVal = f.cpf?.trim() ? f.cpf.trim() : null;
+
+      // Normaliza: aceita camelCase (frontend) e snake_case (legado)
+      const nome = f.nome || f.razao_social || '';
+      const telefone = f.telefone || '';
+      const email = f.email?.trim() || null;
+      const endereco = f.endereco || f.logradouro || null;
+      const bairro = f.bairro || null;
+      const cidade = f.cidade || f.municipio || null;
+      const uf = f.uf || null;
+      const tipoImovel = f.tipo_imovel || f.tipoImovel || 'casa';
+      const origem = f.origem || 'indicacao';
+      const observacoes = f.observacoes || f.historico || null;
+      const status = f.status || 'ativo';
+      const situacao = status === 'ativo' ? 'ATIVA' : 'INATIVA';
+
+      // Normaliza array de cômodos
+      const comodosRaw = f.comodos_interesse || f.comodosInteresse || [];
+      const comodosStr = Array.isArray(comodosRaw) ? comodosRaw.join(', ') : comodosRaw || null;
+
+      const cpfVal = f.cpf?.trim() || null;
+      const cnpjVal = f.cnpj?.trim() || null;
+
+      if (!nome || nome.trim().length < 3) {
+        return res
+          .status(422)
+          .json({ success: false, error: 'O nome do cliente deve ter pelo menos 3 caracteres.' });
+      }
 
       const result = await sql`
         INSERT INTO clients (
@@ -33,11 +58,11 @@ const handleClientsCore: TenantHandler = async (req, res) => {
           tipo_imovel, comodos_interesse, origem, observacoes, status, 
           razao_social, cnpj, municipio, situacao_cadastral, tenant_id
         ) VALUES (
-          ${f.nome || ''}, ${cpfVal}, ${f.telefone || ''}, ${f.email || ''}, 
-          ${f.endereco || ''}, ${f.bairro || ''}, ${f.cidade || ''}, ${f.uf || ''}, 
-          ${f.tipo_imovel || 'casa'}, ${comodosStr}, ${f.origem || 'indicacao'}, 
-          ${f.observacoes || ''}, ${f.status || 'ativo'}, ${f.razao_social || f.nome || ''}, 
-          ${cnpjVal}, ${f.cidade || ''}, ${f.status === 'ativo' ? 'ATIVA' : 'INATIVA'}, ${tenantId}
+          ${nome}, ${cpfVal}, ${telefone}, ${email}, 
+          ${endereco}, ${bairro}, ${cidade}, ${uf}, 
+          ${tipoImovel}, ${comodosStr}, ${origem}, 
+          ${observacoes}, ${status}, ${nome}, 
+          ${cnpjVal}, ${cidade}, ${situacao}, ${tenantId}
         ) RETURNING *
       `;
       await auditLog('clients', result[0].id, 'CREATE', user?.id, null, result[0]);
@@ -46,36 +71,46 @@ const handleClientsCore: TenantHandler = async (req, res) => {
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const { id } = req.query;
       const f = req.body;
-      const comodosStr = Array.isArray(f.comodos_interesse)
-        ? f.comodos_interesse.join(', ')
-        : f.comodos_interesse || null;
 
       const before = await sql`SELECT * FROM clients WHERE id = ${id} AND tenant_id = ${tenantId}`;
       if (!before.length)
         return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
 
-      const cnpjVal = f.cnpj?.trim() ? f.cnpj.trim() : null;
-      const cpfVal = f.cpf?.trim() ? f.cpf.trim() : null;
+      // Normaliza: aceita camelCase (frontend) e snake_case (legado)
+      const cidade = f.cidade ?? f.municipio ?? undefined;
+      const tipoImovel = f.tipo_imovel ?? f.tipoImovel ?? undefined;
+      const comodosRaw = f.comodos_interesse ?? f.comodosInteresse ?? undefined;
+      const comodosStr =
+        comodosRaw !== undefined
+          ? Array.isArray(comodosRaw)
+            ? comodosRaw.join(', ')
+            : comodosRaw
+          : undefined;
+
+      const cpfVal = f.cpf?.trim() || undefined;
+      const cnpjVal = f.cnpj?.trim() || undefined;
+      const situacao =
+        f.status === 'ativo' ? 'ATIVA' : f.status === 'inativo' ? 'INATIVA' : undefined;
 
       const result = await sql`
         UPDATE clients SET 
-          nome = COALESCE(${f.nome}, nome), 
-          cpf = COALESCE(${cpfVal}, cpf), 
-          telefone = COALESCE(${f.telefone}, telefone), 
-          email = COALESCE(${f.email}, email), 
-          endereco = COALESCE(${f.endereco}, endereco), 
-          bairro = COALESCE(${f.bairro}, bairro), 
-          cidade = COALESCE(${f.cidade}, cidade), 
-          uf = COALESCE(${f.uf}, uf), 
-          tipo_imovel = COALESCE(${f.tipo_imovel}, tipo_imovel), 
-          comodos_interesse = COALESCE(${comodosStr}, comodos_interesse), 
-          origem = COALESCE(${f.origem}, origem), 
-          observacoes = COALESCE(${f.observacoes}, observacoes), 
-          status = COALESCE(${f.status}, status), 
-          razao_social = COALESCE(${f.razao_social}, razao_social),
-          cnpj = COALESCE(${cnpjVal}, cnpj),
-          municipio = COALESCE(${f.cidade}, municipio),
-          situacao_cadastral = COALESCE(${f.status === 'ativo' ? 'ATIVA' : f.status === 'inactive' ? 'INATIVA' : null}, situacao_cadastral)
+          nome              = COALESCE(${f.nome ?? null}, nome), 
+          cpf               = COALESCE(${cpfVal ?? null}, cpf), 
+          telefone          = COALESCE(${f.telefone ?? null}, telefone), 
+          email             = COALESCE(${f.email ?? null}, email), 
+          endereco          = COALESCE(${f.endereco ?? f.logradouro ?? null}, endereco), 
+          bairro            = COALESCE(${f.bairro ?? null}, bairro), 
+          cidade            = COALESCE(${cidade ?? null}, cidade), 
+          uf                = COALESCE(${f.uf ?? null}, uf), 
+          tipo_imovel       = COALESCE(${tipoImovel ?? null}, tipo_imovel), 
+          comodos_interesse = COALESCE(${comodosStr ?? null}, comodos_interesse), 
+          origem            = COALESCE(${f.origem ?? null}, origem), 
+          observacoes       = COALESCE(${f.observacoes ?? f.historico ?? null}, observacoes), 
+          status            = COALESCE(${f.status ?? null}, status), 
+          razao_social      = COALESCE(${f.razao_social ?? f.nome ?? null}, razao_social),
+          cnpj              = COALESCE(${cnpjVal ?? null}, cnpj),
+          municipio         = COALESCE(${cidade ?? null}, municipio),
+          situacao_cadastral = COALESCE(${situacao ?? null}, situacao_cadastral)
         WHERE id = ${id} AND tenant_id = ${tenantId} RETURNING *
       `;
 
@@ -91,13 +126,13 @@ const handleClientsCore: TenantHandler = async (req, res) => {
         return res.status(404).json({ success: false, error: 'Cliente não encontrado' });
       await sql`UPDATE clients SET deleted_at = CURRENT_TIMESTAMP WHERE id = ${id} AND tenant_id = ${tenantId}`;
       await sql`UPDATE projects SET deleted_at = CURRENT_TIMESTAMP WHERE (client_id = ${id} OR client_id::text = ${id}) AND tenant_id = ${tenantId}`;
-      // Soft delete quotations do cliente usando Drizzle
-      const clienteIdNum = !isNaN(Number(id)) ? Number(id) : null;
-      if (clienteIdNum !== null) {
+      // Soft delete quotations do cliente usando Drizzle (clients.id é UUID)
+      const clienteIdStr = typeof id === 'string' && id ? id : null;
+      if (clienteIdStr !== null) {
         await db
           .update(quotations)
           .set({ deletedAt: new Date() })
-          .where(and(eq(quotations.clienteId, clienteIdNum), eq(quotations.tenantId, tenantId)));
+          .where(and(eq(quotations.clienteId, clienteIdStr), eq(quotations.tenantId, tenantId)));
       }
       await auditLog('clients', id, 'DELETE', user?.id, before[0], { status: 'deleted' });
       return res.status(200).json({ success: true });
@@ -122,7 +157,6 @@ const handleClientsCore: TenantHandler = async (req, res) => {
 const handleKanbanCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
     if (req.method === 'GET') {
       const result = await sql`
         SELECT 
@@ -185,7 +219,6 @@ const handleKanbanCore: TenantHandler = async (req, res) => {
 const handleGoalsCore: TenantHandler = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    const user = req.tenantUser;
     if (req.method === 'GET') {
       const result =
         await sql`SELECT period, amount FROM monthly_goals WHERE tenant_id = ${tenantId} ORDER BY period ASC`;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const createQuotationSchema = z.object({
-  clientId: z.number().positive().nullable().optional(),
+  clientId: z.union([z.number(), z.string()]).nullable().optional(),
   clienteId: z.union([z.number(), z.string(), z.null()]).optional(),
   number: z.string().optional(),
   numero: z.string().optional(),

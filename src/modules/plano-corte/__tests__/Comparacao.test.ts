@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { MaxRectsOptimizer, type Peca } from '../domain/services/MaxRectsOptimizer';
+import { MaxRectsOptimizer } from '../domain/services/MaxRectsOptimizer';
+import type { Peca } from '../domain/types';
 import { GuillotineOptimizer } from '../domain/services/GuillotineOptimizer';
 import { HybridOptimizer } from '../domain/services/HybridOptimizer';
 
@@ -9,13 +10,12 @@ import { HybridOptimizer } from '../domain/services/HybridOptimizer';
  */
 
 describe('Comparação de Otimizadores', () => {
-  
   it('MaxRects: Melhor aproveitamento, mais lento', () => {
     const pecas: Peca[] = [
       { id: 'p1', nome: 'P1', largura: 450, altura: 350, rotacionavel: true },
       { id: 'p2', nome: 'P2', largura: 480, altura: 380, rotacionavel: true },
       { id: 'p3', nome: 'P3', largura: 520, altura: 420, rotacionavel: true },
-      { id: 'p4', nome: 'P4', largura: 350, altura: 300, rotacionavel: true }
+      { id: 'p4', nome: 'P4', largura: 350, altura: 300, rotacionavel: true },
     ];
 
     const initMax = performance.now();
@@ -30,7 +30,7 @@ describe('Comparação de Otimizadores', () => {
 
     // MaxRects deve ter melhor aproveitamento
     expect(resultMax.aproveitamento).toBeGreaterThanOrEqual(resultGuil.aproveitamento);
-    
+
     // Guillotine e MaxRects concluidos (desabilitado expect de tempo rigido devido a CPU jitter no Vitest)
     expect(tempoGuil).toBeGreaterThanOrEqual(0);
   });
@@ -41,7 +41,7 @@ describe('Comparação de Otimizadores', () => {
       nome: `P${i}`,
       largura: 200 + Math.random() * 400,
       altura: 200 + Math.random() * 400,
-      rotacionavel: true
+      rotacionavel: true,
     }));
 
     const initMax = performance.now();
@@ -56,17 +56,19 @@ describe('Comparação de Otimizadores', () => {
 
     // Hybrid deve ter aproveitamento >= MaxRects (tem 10 iterações)
     expect(resultHybrid.aproveitamento).toBeGreaterThanOrEqual(resultMax.aproveitamento * 0.95);
-    
+
     // Hybrid pode ser mais lento (múltiplas iterações) mas mais robusto
     // Esse é o trade-off intencional
-    expect(resultHybrid.pecas_posicionadas.length).toBeGreaterThanOrEqual(resultMax.pecas_posicionadas.length);
+    expect(resultHybrid.pecas_posicionadas.length).toBeGreaterThanOrEqual(
+      resultMax.pecas_posicionadas.length,
+    );
   });
 
   it('Casos extremos: Peças muito diferentes de tamanho', () => {
     const pecas: Peca[] = [
       { id: 'p1', nome: 'Gigante', largura: 2000, altura: 1500, rotacionavel: true },
       { id: 'p2', nome: 'Média', largura: 500, altura: 400, rotacionavel: true },
-      { id: 'p3', nome: 'Minúscula', largura: 100, altura: 100, rotacionavel: true }
+      { id: 'p3', nome: 'Minúscula', largura: 100, altura: 100, rotacionavel: true },
     ];
 
     const max = new MaxRectsOptimizer(2750, 1830, 3);

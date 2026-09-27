@@ -47,7 +47,8 @@ const handleCalendarioCore: TenantHandler = async (req, res) => {
 
       const dbEventos = await sql(queryStr as any, ...params);
 
-      const eventosList = dbEventos.map((e: any) => ({
+      // Lista heterogênea (eventos manuais, OPs, orçamentos) — shape varia por origem.
+      const eventosList: any[] = dbEventos.map((e: any) => ({
         id: `manual-${e.id}`,
         titulo: e.titulo,
         descricao: e.descricao || '',

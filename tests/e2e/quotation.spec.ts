@@ -1,33 +1,34 @@
 import { test, expect } from '@playwright/test';
-
-const TEST_EMAIL = process.env.TEST_USER_EMAIL || 'test@dluxury.com';
-const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || 'TestPassword123!';
+import { mockAuthenticatedSession, mockApiCrud } from './helpers/auth';
+import { setupFormApiMock } from './helpers/formApi';
 
 test.describe('Orçamentos', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_EMAIL);
-    await page.fill('input[type="password"]', TEST_PASSWORD);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/(dashboard|home|app)/);
+    // Cobertura ampla primeiro; os mocks específicos (auth/orçamentos) registrados
+    // depois têm prioridade no Playwright.
+    await mockApiCrud(page, '**/api/**');
+    await mockAuthenticatedSession(page);
+    setupFormApiMock(page);
   });
 
   test('usuário consegue navegar até orçamentos', async ({ page }) => {
-    const quotationLink = page
-      .locator('a:has-text("Orçamento"), a[href*="quotation"], a[href*="orcamento"]')
-      .first();
-    if (await quotationLink.isVisible()) {
-      await quotationLink.click();
-    } else {
-      await page.goto('/quotations');
-    }
+    await page.goto('/#/painel');
+    await expect(page.getByRole('link', { name: 'Painel Geral' })).toBeVisible({ timeout: 10000 });
 
-    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 5000 });
+    await page.getByRole('link', { name: 'Orçamentos' }).first().click();
+
+    await expect(page).toHaveURL(/#\/quotations/, { timeout: 5000 });
+    await expect(page.getByRole('button', { name: /novo orçamento/i }).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('página de orçamentos carrega sem erro', async ({ page }) => {
-    await page.goto('/quotations');
-    const errorEl = page.locator('[class*="error-boundary"], text=Something went wrong');
-    await expect(errorEl).not.toBeVisible({ timeout: 5000 });
+    await page.goto('/#/quotations');
+    await expect(page.locator('[class*="error-boundary"]')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Something went wrong')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /novo orçamento/i }).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

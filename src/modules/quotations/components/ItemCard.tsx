@@ -28,7 +28,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
     if (typeof meta === 'string') {
       try {
         parsed = JSON.parse(meta);
-      } catch (e) {
+      } catch {
         parsed = {};
       }
     }
@@ -75,7 +75,7 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
     getValues,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(quotationItemSchema),
+    resolver: zodResolver(quotationItemSchema) as any,
     defaultValues,
   });
 
@@ -263,342 +263,385 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
           </div>
         </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-7 space-y-4">
-          {isEditing && (
-            <div className="bg-background p-4 rounded-xl border border-border space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  Vincular SKU Principal
-                </label>
-                <Controller
-                  name="skuCodigo"
-                  control={control}
-                  render={({ field }) => (
-                    <SKUAutocomplete
-                      onSelect={(sku) => {
-                        field.onChange(sku.codigo);
-                        setValue('skuId', sku.id);
-                        setValue('skuDescricao', sku.nome);
-                        setValue('skuTipo', (sku as any).tipo);
-                        const cost = Number(sku.precoUnitario) || 0;
-                        handleRecalculatePrices('cost', cost, getValues());
-                      }}
-                      value={field.value}
-                      error={errors.skuCodigo?.message as string}
-                    />
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 lg:col-span-7 space-y-4">
+            {isEditing && (
+              <div className="bg-background p-4 rounded-xl border border-border space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                    Nome Customizado
+                    Vincular SKU Principal
                   </label>
                   <Controller
-                    name="nomeCustomizado"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        type="text"
-                        size="md"
-                        className="w-full font-medium"
-                        invalid={!!errors.nomeCustomizado}
-                        {...field}
-                      />
-                    )}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                    Material
-                  </label>
-                  <Controller
-                    name="material"
+                    name="skuCodigo"
                     control={control}
                     render={({ field }) => (
                       <SKUAutocomplete
-                        placeholder="Buscar material..."
+                        onSelect={(sku) => {
+                          field.onChange(sku.codigo);
+                          setValue('skuId', sku.id);
+                          setValue('skuDescricao', sku.nome);
+                          setValue('skuTipo', (sku as any).tipo);
+                          const cost = Number(sku.precoUnitario) || 0;
+                          handleRecalculatePrices('cost', cost, getValues());
+                        }}
                         value={field.value}
-                        onChange={field.onChange}
-                        onSelect={(sku) => field.onChange(sku.nome)}
-                        error={errors.material?.message as string}
+                        error={errors.skuCodigo?.message as string}
                       />
                     )}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                      Nome Customizado
+                    </label>
+                    <Controller
+                      name="nomeCustomizado"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          type="text"
+                          size="md"
+                          className="w-full font-medium"
+                          invalid={!!errors.nomeCustomizado}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                      Material
+                    </label>
+                    <Controller
+                      name="material"
+                      control={control}
+                      render={({ field }) => (
+                        <SKUAutocomplete
+                          placeholder="Buscar material..."
+                          value={field.value}
+                          onChange={field.onChange}
+                          onSelect={(sku) => field.onChange(sku.nome)}
+                          error={errors.material?.message as string}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-muted p-3 rounded-xl border border-border">
+                <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
+                  Quantidade
+                </label>
+                {isEditing ? (
+                  <Controller
+                    name="quantidade"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        size="sm"
+                        className="w-full"
+                        invalid={!!errors.quantidade}
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    )}
+                  />
+                ) : (
+                  <span className="text-foreground font-black">
+                    {item.quantidade}{' '}
+                    <span className="text-muted-foreground text-sm">
+                      {item.unidadeMedida || 'UN'}
+                    </span>
+                  </span>
+                )}
+              </div>
+              <div className="bg-muted p-3 rounded-xl border border-border">
+                <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
+                  Largura
+                </label>
+                <span className="text-muted-foreground font-mono text-sm">
+                  {item.largura || '-'} <span className="text-sm">mm</span>
+                </span>
+              </div>
+              <div className="bg-muted p-3 rounded-xl border border-border">
+                <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
+                  Altura
+                </label>
+                <span className="text-muted-foreground font-mono text-sm">
+                  {item.altura || '-'} <span className="text-sm">mm</span>
+                </span>
+              </div>
+              <div className="bg-muted p-3 rounded-xl border border-border">
+                <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
+                  Espessura
+                </label>
+                <span className="text-muted-foreground font-mono text-sm">
+                  {item.espessura || '-'} <span className="text-sm">mm</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-3">
+            <div className="bg-muted/50 rounded-2xl p-4 border border-border flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-muted-foreground text-xs font-bold uppercase tracking-tighter">
+                    Custo Unitário
+                  </span>
+                </div>
+                {isEditing ? (
+                  <Controller
+                    name="custoUnitarioCalculado"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        className="w-24 h-8 text-right font-mono text-sm px-2 py-1"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleRecalculatePrices(
+                            'cost',
+                            parseFloat(e.target.value) || 0,
+                            getValues(),
+                          )
+                        }
+                      />
+                    )}
+                  />
+                ) : (
+                  <span className="text-muted-foreground font-mono text-sm">
+                    R$ {Number(item.custoUnitarioCalculado || 0).toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5" />
+                  <span className="text-foreground text-xs font-bold uppercase tracking-tighter">
+                    Preço de Venda
+                  </span>
+                </div>
+                {isEditing ? (
+                  <Controller
+                    name="precoVendaUnitario"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        className="border-primary/50 text-right w-24 text-sm font-mono text-primary h-8 px-2 py-1 font-black"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleRecalculatePrices(
+                            'price',
+                            parseFloat(e.target.value) || 0,
+                            getValues(),
+                          )
+                        }
+                      />
+                    )}
+                  />
+                ) : (
+                  <span className="text-primary font-mono font-black">
+                    R$ {Number(item.precoVendaUnitario || 0).toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-border">
+                <span className="text-muted-foreground text-xs font-black uppercase">
+                  Margem Real (%)
+                </span>
+                {isEditing ? (
+                  <Controller
+                    name="margemLucro"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        className="text-right w-20 h-8 text-sm px-2 py-1 font-black font-mono bg-background border-border"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleRecalculatePrices(
+                            'margin',
+                            parseFloat(e.target.value) || 0,
+                            getValues(),
+                          )
+                        }
+                      />
+                    )}
+                  />
+                ) : (
+                  <Badge tone={Number(item.margemLucro) >= 30 ? 'success' : 'danger'}>
+                    {Number(item.margemLucro || 0).toFixed(1)}%
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-end mt-auto pt-2 px-1">
+              <div className="flex flex-col">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  Total do Item
+                </span>
+                <span className="text-2xl font-black italic text-foreground leading-none mt-1">
+                  R$ {precoTotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {!isEditing &&
+          item.metadata &&
+          (item.metadata.chapa ||
+            item.metadata.fitaBorda?.sku ||
+            item.metadata.ferragens?.length > 0) && (
+            <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex flex-col gap-2">
+              <span className="text-xs font-medium text-[var(--ui-color-teal-700)] uppercase tracking-wide flex items-center gap-1">
+                <Package size={12} /> Composição Dinâmica Ativa
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {item.metadata.chapa && (
+                  <Badge tone="neutral">
+                    Chapa:{' '}
+                    <span className="font-semibold text-[var(--ui-text-primary)]">
+                      {item.metadata.chapa.codigo}
+                    </span>
+                  </Badge>
+                )}
+                {item.metadata.fitaBorda?.sku && (
+                  <Badge tone="neutral">
+                    Fita:{' '}
+                    <span className="font-semibold text-[var(--ui-text-primary)]">
+                      {item.metadata.fitaBorda.sku.codigo}
+                    </span>{' '}
+                    (
+                    {Object.entries(item.metadata.fitaBorda.lados || {})
+                      .filter(([_, v]) => v)
+                      .map(([k]) => k[0].toUpperCase())
+                      .join(',')}
+                    )
+                  </Badge>
+                )}
+                {item.metadata.ferragens?.map((f: any, i: number) => (
+                  <Badge key={i} tone="neutral">
+                    {f.quantidade}x{' '}
+                    <span className="font-semibold text-[var(--ui-text-primary)]">
+                      {f.sku.codigo}
+                    </span>
+                  </Badge>
+                ))}
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
-                Quantidade
-              </label>
-              {isEditing ? (
-                <Controller
-                  name="quantidade"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      size="sm"
-                      className="w-full"
-                      invalid={!!errors.quantidade}
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  )}
-                />
-              ) : (
-                <span className="text-foreground font-black">
-                  {item.quantidade}{' '}
-                  <span className="text-muted-foreground text-sm">
-                    {item.unidadeMedida || 'UN'}
-                  </span>
-                </span>
-              )}
-            </div>
-            <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
-                Largura
-              </label>
-              <span className="text-muted-foreground font-mono text-sm">
-                {item.largura || '-'} <span className="text-sm">mm</span>
-              </span>
-            </div>
-            <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
-                Altura
-              </label>
-              <span className="text-muted-foreground font-mono text-sm">
-                {item.altura || '-'} <span className="text-sm">mm</span>
-              </span>
-            </div>
-            <div className="bg-muted p-3 rounded-xl border border-border">
-              <label className="text-xs font-black text-muted-foreground uppercase block mb-1">
-                Espessura
-              </label>
-              <span className="text-muted-foreground font-mono text-sm">
-                {item.espessura || '-'} <span className="text-sm">mm</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-12 lg:col-span-5 flex flex-col gap-3">
-          <div className="bg-muted/50 rounded-2xl p-4 border border-border flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground text-xs font-bold uppercase tracking-tighter">
-                  Custo Unitário
-                </span>
-              </div>
-              {isEditing ? (
-                <Controller
-                  name="custoUnitarioCalculado"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      className="w-24 h-8 text-right font-mono text-sm px-2 py-1"
-                      value={field.value}
-                      onChange={(e) =>
-                        handleRecalculatePrices(
-                          'cost',
-                          parseFloat(e.target.value) || 0,
-                          getValues(),
-                        )
-                      }
-                    />
-                  )}
-                />
-              ) : (
-                <span className="text-muted-foreground font-mono text-sm">
-                  R$ {Number(item.custoUnitarioCalculado || 0).toFixed(2)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5" />
-                <span className="text-foreground text-xs font-bold uppercase tracking-tighter">
-                  Preço de Venda
-                </span>
-              </div>
-              {isEditing ? (
-                <Controller
-                  name="precoVendaUnitario"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      className="border-primary/50 text-right w-24 text-sm font-mono text-primary h-8 px-2 py-1 font-black"
-                      value={field.value}
-                      onChange={(e) =>
-                        handleRecalculatePrices(
-                          'price',
-                          parseFloat(e.target.value) || 0,
-                          getValues(),
-                        )
-                      }
-                    />
-                  )}
-                />
-              ) : (
-                <span className="text-primary font-mono font-black">
-                  R$ {Number(item.precoVendaUnitario || 0).toFixed(2)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center pt-2 border-t border-border">
-              <span className="text-muted-foreground text-xs font-black uppercase">
-                Margem Real (%)
-              </span>
-              {isEditing ? (
-                <Controller
-                  name="margemLucro"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      className="text-right w-20 h-8 text-sm px-2 py-1 font-black font-mono bg-background border-border"
-                      value={field.value}
-                      onChange={(e) =>
-                        handleRecalculatePrices(
-                          'margin',
-                          parseFloat(e.target.value) || 0,
-                          getValues(),
-                        )
-                      }
-                    />
-                  )}
-                />
-              ) : (
-                <Badge tone={Number(item.margemLucro) >= 30 ? 'success' : 'danger'}>
-                  {Number(item.margemLucro || 0).toFixed(1)}%
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-between items-end mt-auto pt-2 px-1">
-            <div className="flex flex-col">
-              <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                Total do Item
-              </span>
-              <span className="text-2xl font-black italic text-foreground leading-none mt-1">
-                R$ {precoTotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {!isEditing &&
-        item.metadata &&
-        (item.metadata.chapa ||
-          item.metadata.fitaBorda?.sku ||
-          item.metadata.ferragens?.length > 0) && (
-          <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex flex-col gap-2">
-            <span className="text-xs font-medium text-[var(--ui-color-teal-700)] uppercase tracking-wide flex items-center gap-1">
-              <Package size={12} /> Composição Dinâmica Ativa
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {item.metadata.chapa && (
-                <Badge tone="neutral">
-                  Chapa: <span className="font-semibold text-[var(--ui-text-primary)]">{item.metadata.chapa.codigo}</span>
-                </Badge>
-              )}
-              {item.metadata.fitaBorda?.sku && (
-                <Badge tone="neutral">
-                  Fita: <span className="font-semibold text-[var(--ui-text-primary)]">{item.metadata.fitaBorda.sku.codigo}</span> (
-                  {Object.entries(item.metadata.fitaBorda.lados || {})
-                    .filter(([_, v]) => v)
-                    .map(([k]) => k[0].toUpperCase())
-                    .join(',')}
-                  )
-                </Badge>
-              )}
-              {item.metadata.ferragens?.map((f: any, i: number) => (
-                <Badge key={i} tone="neutral">
-                  {f.quantidade}x <span className="font-semibold text-[var(--ui-text-primary)]">{f.sku.codigo}</span>
-                </Badge>
-              ))}
-            </div>
+        {item.observacoes && !isEditing && (
+          <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex gap-2">
+            <div className="w-1 h-full bg-[var(--ui-color-teal-500)]/50 rounded-full" />
+            <p className="text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)] italic leading-relaxed">
+              {item.observacoes}
+            </p>
           </div>
         )}
 
-      {item.observacoes && !isEditing && (
-        <div className="mt-4 pt-4 border-t border-[var(--ui-border)] flex gap-2">
-          <div className="w-1 h-full bg-[var(--ui-color-teal-500)]/50 rounded-full" />
-          <p className="text-[var(--ui-text-sm)] text-[var(--ui-text-secondary)] italic leading-relaxed">
-            {item.observacoes}
-          </p>
-        </div>
-      )}
+        {isEditing && (
+          <div className="mt-4 pt-4 border-t border-[var(--ui-border)] space-y-4">
+            <h4 className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex items-center gap-2">
+              <Package size={12} className="text-[var(--ui-color-teal-500)]" /> Composição Avançada
+              de Materiais
+            </h4>
 
-      {isEditing && (
-        <div className="mt-4 pt-4 border-t border-[var(--ui-border)] space-y-4">
-          <h4 className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex items-center gap-2">
-            <Package size={12} className="text-[var(--ui-color-teal-500)]" /> Composição Avançada de Materiais
-          </h4>
+            <div className="bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-md)] p-4 border border-[var(--ui-border)] space-y-4">
+              {/* CHAPA */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+                  <span>Chapa / Material Base</span>
+                  {watchAll.metadata?.chapa && (
+                    <span className="text-[var(--ui-color-teal-700)] font-mono">
+                      R$ {Number(watchAll.metadata.chapa.precoUnitario).toFixed(2)} / m²
+                    </span>
+                  )}
+                </label>
+                <Controller
+                  name="metadata.chapa"
+                  control={control}
+                  render={({ field }) => (
+                    <SKUAutocomplete
+                      placeholder="Buscar chapa de MDF..."
+                      value={field.value?.codigo || ''}
+                      onSelect={(sku) => {
+                        field.onChange(sku);
+                        triggerCostRecalculation({ ...getValues('metadata'), chapa: sku });
+                      }}
+                    />
+                  )}
+                />
+              </div>
 
-          <div className="bg-[var(--ui-bg-subtle)] rounded-[var(--ui-radius-md)] p-4 border border-[var(--ui-border)] space-y-4">
-            {/* CHAPA */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
-                <span>Chapa / Material Base</span>
-                {watchAll.metadata?.chapa && (
-                  <span className="text-[var(--ui-color-teal-700)] font-mono">
-                    R$ {Number(watchAll.metadata.chapa.precoUnitario).toFixed(2)} / m²
-                  </span>
-                )}
-              </label>
-              <Controller
-                name="metadata.chapa"
-                control={control}
-                render={({ field }) => (
-                  <SKUAutocomplete
-                    placeholder="Buscar chapa de MDF..."
-                    value={field.value?.codigo || ''}
-                    onSelect={(sku) => {
-                      field.onChange(sku);
-                      triggerCostRecalculation({ ...getValues('metadata'), chapa: sku });
-                    }}
-                  />
-                )}
-              />
-            </div>
+              {/* FITA DE BORDA */}
+              <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
+                <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+                  <span>Fita de Borda</span>
+                  {watchAll.metadata?.fitaBorda?.sku && (
+                    <span className="text-[var(--ui-color-teal-700)] font-mono">
+                      R$ {Number(watchAll.metadata.fitaBorda.sku.precoUnitario).toFixed(2)} / ML
+                    </span>
+                  )}
+                </label>
 
-            {/* FITA DE BORDA */}
-            <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
-              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
-                <span>Fita de Borda</span>
-                {watchAll.metadata?.fitaBorda?.sku && (
-                  <span className="text-[var(--ui-color-teal-700)] font-mono">
-                    R$ {Number(watchAll.metadata.fitaBorda.sku.precoUnitario).toFixed(2)} / ML
-                  </span>
-                )}
-              </label>
-
-              <Controller
-                name="metadata.fitaBorda.sku"
-                control={control}
-                render={({ field }) => (
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <SKUAutocomplete
-                        placeholder="Buscar fita de borda..."
-                        categoria="BRD"
-                        value={field.value?.codigo || ''}
-                        onChange={(val) => {
-                          if (!val) {
+                <Controller
+                  name="metadata.fitaBorda.sku"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <SKUAutocomplete
+                          placeholder="Buscar fita de borda..."
+                          categoria="BRD"
+                          value={field.value?.codigo || ''}
+                          onChange={(val) => {
+                            if (!val) {
+                              field.onChange(null);
+                              const metadata = getValues('metadata') || {};
+                              triggerCostRecalculation({
+                                ...metadata,
+                                fitaBorda: {
+                                  sku: null,
+                                  lados: {
+                                    topo: false,
+                                    base: false,
+                                    esquerda: false,
+                                    direita: false,
+                                  },
+                                },
+                              });
+                            }
+                          }}
+                          onSelect={(sku) => {
+                            field.onChange(sku);
+                            const metadata = getValues('metadata') || {};
+                            triggerCostRecalculation({
+                              ...metadata,
+                              fitaBorda: { ...metadata.fitaBorda, sku },
+                            });
+                          }}
+                        />
+                      </div>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="icon"
+                          onClick={() => {
                             field.onChange(null);
                             const metadata = getValues('metadata') || {};
                             triggerCostRecalculation({
@@ -613,163 +656,136 @@ export function ItemCard({ item, onUpdate, onDelete, isEditingExternal }: ItemCa
                                 },
                               },
                             });
-                          }
-                        }}
-                        onSelect={(sku) => {
-                          field.onChange(sku);
-                          const metadata = getValues('metadata') || {};
-                          triggerCostRecalculation({
-                            ...metadata,
-                            fitaBorda: { ...metadata.fitaBorda, sku },
-                          });
-                        }}
-                      />
+                          }}
+                          aria-label="Remover fita de borda"
+                          title="Remover fita de borda"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
                     </div>
-                    {field.value && (
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="icon"
-                        onClick={() => {
-                          field.onChange(null);
-                          const metadata = getValues('metadata') || {};
-                          triggerCostRecalculation({
-                            ...metadata,
-                            fitaBorda: {
-                              sku: null,
-                              lados: { topo: false, base: false, esquerda: false, direita: false },
-                            },
-                          });
-                        }}
-                        aria-label="Remover fita de borda"
-                        title="Remover fita de borda"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              />
+                  )}
+                />
 
-              <div className="flex gap-4 mt-2">
-                {['topo', 'base', 'esquerda', 'direita'].map((lado) => (
-                  <label key={lado} className="flex items-center gap-1.5 cursor-pointer group">
+                <div className="flex gap-4 mt-2">
+                  {['topo', 'base', 'esquerda', 'direita'].map((lado) => (
+                    <label key={lado} className="flex items-center gap-1.5 cursor-pointer group">
+                      <Controller
+                        name={`metadata.fitaBorda.lados.${lado}` as any}
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            type="checkbox"
+                            className="w-3 h-3 accent-[var(--ui-color-teal-500)]"
+                            checked={!!field.value}
+                            onChange={(e) => {
+                              field.onChange(e.target.checked);
+                              const metadata = getValues('metadata') || {};
+                              const fitaBorda = metadata.fitaBorda || {};
+                              const lados = fitaBorda.lados || {};
+                              triggerCostRecalculation({
+                                ...metadata,
+                                fitaBorda: {
+                                  ...fitaBorda,
+                                  lados: { ...lados, [lado]: e.target.checked },
+                                },
+                              });
+                            }}
+                          />
+                        )}
+                      />
+                      <span className="text-xs uppercase font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-text-primary)]">
+                        {lado}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* FERRAGENS E ACESSÓRIOS */}
+              <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
+                <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
+                  <span>Ferragens e Acessórios</span>
+                </label>
+                {watchAll.metadata?.ferragens?.map((f: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 mb-2 bg-[var(--ui-bg-subtle)] p-2 rounded-[var(--ui-radius-sm)] border border-[var(--ui-border)]"
+                  >
+                    <span className="flex-1 text-sm text-[var(--ui-text-primary)] truncate font-medium">
+                      {f.sku?.nome || f.sku?.codigo}{' '}
+                      <span className="text-[var(--ui-text-secondary)] font-mono ml-2">
+                        R$ {Number(f.sku?.precoUnitario).toFixed(2)} un
+                      </span>
+                    </span>
                     <Controller
-                      name={`metadata.fitaBorda.lados.${lado}` as any}
+                      name={`metadata.ferragens.${i}.quantidade` as any}
                       control={control}
                       render={({ field }) => (
-                        <input
-                          type="checkbox"
-                          className="w-3 h-3 accent-[var(--ui-color-teal-500)]"
-                          checked={!!field.value}
-                          onChange={(e) => {
-                            field.onChange(e.target.checked);
-                            const metadata = getValues('metadata') || {};
-                            const fitaBorda = metadata.fitaBorda || {};
-                            const lados = fitaBorda.lados || {};
-                            triggerCostRecalculation({
-                              ...metadata,
-                              fitaBorda: {
-                                ...fitaBorda,
-                                lados: { ...lados, [lado]: e.target.checked },
-                              },
-                            });
+                        <Input
+                          type="number"
+                          size="sm"
+                          className="w-16 text-center font-mono"
+                          value={field.value}
+                          onChange={(e: any) => {
+                            field.onChange(Number(e.target.value));
+                            setTimeout(() => triggerCostRecalculation(getValues('metadata')), 0);
                           }}
                         />
                       )}
                     />
-                    <span className="text-xs uppercase font-medium text-[var(--ui-text-secondary)] group-hover:text-[var(--ui-text-primary)]">
-                      {lado}
-                    </span>
-                  </label>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newF = [...(watchAll.metadata?.ferragens || [])].filter(
+                          (_, idx) => idx !== i,
+                        );
+                        triggerCostRecalculation({ ...getValues('metadata'), ferragens: newF });
+                      }}
+                      aria-label="Remover"
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
                 ))}
-              </div>
-            </div>
 
-            {/* FERRAGENS E ACESSÓRIOS */}
-            <div className="space-y-2 border-t border-[var(--ui-border)] pt-4">
-              <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide flex justify-between">
-                <span>Ferragens e Acessórios</span>
-              </label>
-              {watchAll.metadata?.ferragens?.map((f: any, i: number) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 mb-2 bg-[var(--ui-bg-subtle)] p-2 rounded-[var(--ui-radius-sm)] border border-[var(--ui-border)]"
-                >
-                  <span className="flex-1 text-sm text-[var(--ui-text-primary)] truncate font-medium">
-                    {f.sku?.nome || f.sku?.codigo}{' '}
-                    <span className="text-[var(--ui-text-secondary)] font-mono ml-2">
-                      R$ {Number(f.sku?.precoUnitario).toFixed(2)} un
-                    </span>
-                  </span>
-                  <Controller
-                    name={`metadata.ferragens.${i}.quantidade` as any}
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        type="number"
-                        size="sm"
-                        className="w-16 text-center font-mono"
-                        value={field.value}
-                        onChange={(e: any) => {
-                          field.onChange(Number(e.target.value));
-                          setTimeout(() => triggerCostRecalculation(getValues('metadata')), 0);
-                        }}
-                      />
-                    )}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const newF = [...(watchAll.metadata?.ferragens || [])].filter(
-                        (_, idx) => idx !== i,
-                      );
-                      triggerCostRecalculation({ ...getValues('metadata'), ferragens: newF });
-                    }}
-                    aria-label="Remover"
-                  >
-                    <Trash2 size={12} />
-                  </Button>
-                </div>
-              ))}
-
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <SKUAutocomplete
-                    placeholder="Buscar corrediça, dobradiça..."
-                    onSelect={(sku) => {
-                      const metadata = getValues('metadata') || {};
-                      const newF = [...(metadata.ferragens || []), { sku, quantidade: 1 }];
-                      triggerCostRecalculation({ ...metadata, ferragens: newF });
-                    }}
-                  />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <SKUAutocomplete
+                      placeholder="Buscar corrediça, dobradiça..."
+                      onSelect={(sku) => {
+                        const metadata = getValues('metadata') || {};
+                        const newF = [...(metadata.ferragens || []), { sku, quantidade: 1 }];
+                        triggerCostRecalculation({ ...metadata, ferragens: newF });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {isEditing && (
-        <div className="mt-4">
-          <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide block mb-1">
-            Observações Internas
-          </label>
-          <Controller
-            name="observacoes"
-            control={control}
-            render={({ field }) => (
-              <Textarea
-                rows={3}
-                placeholder="Notas sobre este item..."
-                className="min-h-[64px]"
-                {...field}
-              />
-            )}
-          />
-        </div>
-      )}
+        {isEditing && (
+          <div className="mt-4">
+            <label className="text-xs font-medium text-[var(--ui-text-secondary)] uppercase tracking-wide block mb-1">
+              Observações Internas
+            </label>
+            <Controller
+              name="observacoes"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  rows={3}
+                  placeholder="Notas sobre este item..."
+                  className="min-h-[64px]"
+                  {...field}
+                />
+              )}
+            />
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -48,7 +48,9 @@ const FinanceiroContasPage = () => {
           });
           if (ok) {
             await api.financeiro.fechamentos.save({ ...f, status: 'aberto' });
-            h.fetchFechamentos();
+            h.setFechamentos((prev: any[]) =>
+              prev.map((x) => (x.id === f.id ? { ...f, status: 'aberto' } : x)),
+            );
           }
         }}
       />

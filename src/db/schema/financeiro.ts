@@ -1,4 +1,14 @@
-import { pgTable, uuid, varchar, numeric, timestamp, boolean, integer, text } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  numeric,
+  timestamp,
+  boolean,
+  integer,
+  text,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 import { tenants } from './tenants.js';
 
 // ──────────────────────────────────────────
@@ -12,7 +22,8 @@ export const classesFinanceiras = pgTable('classes_financeiras', {
   nome: varchar('nome', { length: 255 }).notNull(),
   tipo: varchar('tipo', { length: 20 }).notNull(), // 'sintetica' | 'analitica'
   natureza: varchar('natureza', { length: 20 }).notNull(), // 'credora' | 'devedora'
-  pai_id: uuid('pai_id').references(() => classesFinanceiras.id),
+  // Auto-referência exige anotação de retorno (AnyPgColumn).
+  pai_id: uuid('pai_id').references((): AnyPgColumn => classesFinanceiras.id),
   ativa: boolean('ativa').default(true),
   dt_limite: timestamp('dt_limite'),
   permite_lancamento: boolean('permite_lancamento').default(true),
@@ -64,7 +75,9 @@ export const titulosReceber = pgTable('titulos_receber', {
   data_competencia: timestamp('data_competencia').notNull(),
   data_pagamento: timestamp('data_pagamento'),
 
-  classe_financeira_id: uuid('classe_financeira_id').references(() => classesFinanceiras.id).notNull(),
+  classe_financeira_id: uuid('classe_financeira_id')
+    .references(() => classesFinanceiras.id)
+    .notNull(),
   centro_custo_id: uuid('centro_custo_id'),
   forma_recebimento_id: uuid('forma_recebimento_id').notNull(),
 
@@ -72,7 +85,9 @@ export const titulosReceber = pgTable('titulos_receber', {
   parcela: integer('parcela').notNull(),
   total_parcelas: integer('total_parcelas').notNull(),
   taxa_financeira: numeric('taxa_financeira', { precision: 5, scale: 2 }).default('0'),
-  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default('0'),
+  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default(
+    '0',
+  ),
   observacoes: text('observacoes'),
 
   created_at: timestamp('created_at').defaultNow(),
@@ -109,16 +124,22 @@ export const titulosPagar = pgTable('titulos_pagar', {
   data_competencia: timestamp('data_competencia').notNull(),
   data_pagamento: timestamp('data_pagamento'),
 
-  classe_financeira_id: uuid('classe_financeira_id').references(() => classesFinanceiras.id).notNull(),
+  classe_financeira_id: uuid('classe_financeira_id')
+    .references(() => classesFinanceiras.id)
+    .notNull(),
   centro_custo_id: uuid('centro_custo_id'),
   forma_pagamento_id: uuid('forma_pagamento_id').notNull(),
-  conta_bancaria_id: uuid('conta_bancaria_id').references(() => contasInternas.id).notNull(),
+  conta_bancaria_id: uuid('conta_bancaria_id')
+    .references(() => contasInternas.id)
+    .notNull(),
 
   status: varchar('status', { length: 30 }).notNull(),
   parcela: integer('parcela').notNull(),
   total_parcelas: integer('total_parcelas').notNull(),
   taxa_financeira: numeric('taxa_financeira', { precision: 5, scale: 2 }).default('0'),
-  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default('0'),
+  valor_custo_financeiro: numeric('valor_custo_financeiro', { precision: 15, scale: 2 }).default(
+    '0',
+  ),
   tipo_despesa: varchar('tipo_despesa', { length: 30 }),
   observacoes: text('observacoes'),
 
@@ -163,7 +184,9 @@ export const baixas = pgTable('baixas', {
   valor_multa: numeric('valor_multa', { precision: 15, scale: 2 }).default('0'),
   valor_desconto: numeric('valor_desconto', { precision: 15, scale: 2 }).default('0'),
   data_baixa: timestamp('data_baixa').notNull(),
-  conta_interna_id: uuid('conta_interna_id').references(() => contasInternas.id).notNull(),
+  conta_interna_id: uuid('conta_interna_id')
+    .references(() => contasInternas.id)
+    .notNull(),
   observacoes: text('observacoes'),
   created_at: timestamp('created_at').defaultNow(),
   created_by: uuid('created_by'),
@@ -211,7 +234,9 @@ export const contasRecorrentes = pgTable('contas_recorrentes', {
   tipo: varchar('tipo', { length: 20 }).notNull(), // 'receita' | 'despesa'
   valor: numeric('valor', { precision: 15, scale: 2 }).notNull(),
   dia_vencimento: integer('dia_vencimento').notNull(),
-  classe_financeira_id: uuid('classe_financeira_id').references(() => classesFinanceiras.id).notNull(),
+  classe_financeira_id: uuid('classe_financeira_id')
+    .references(() => classesFinanceiras.id)
+    .notNull(),
   fornecedor_id: integer('fornecedor_id'),
   forma_pagamento_id: uuid('forma_pagamento_id').references(() => formasPagamento.id),
   conta_bancaria_id: uuid('conta_bancaria_id').references(() => contasInternas.id),

@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/ui';
+import { api } from '../../lib/api';
 
 interface Metrics {
   totalOPs: number;

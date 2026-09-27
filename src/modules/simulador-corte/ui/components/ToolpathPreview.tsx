@@ -9,11 +9,11 @@ interface ToolpathPreviewProps {
 }
 
 // CORES INDUSTRIAIS DO TOOLPATH (Padrão CAM)
-const COR_RAPIDO = '#4B5563';       // Cinza médio tracejado para G00
-const COR_MERGULHO = '#F97316';     // Laranja para mergulhos e retração (Z vertical)
-const COR_CORTE = '#EF4444';        // Vermelho para corte linear (G01)
-const COR_LEAD = '#E2AC00';         // Amarelo para lead-in/lead-out suaves
-const COR_CONCLUIDO = '#10B981';    // Verde para indicar caminhos já usinados
+const COR_RAPIDO = '#4B5563'; // Cinza médio tracejado para G00
+const COR_MERGULHO = '#F97316'; // Laranja para mergulhos e retração (Z vertical)
+const COR_CORTE = '#EF4444'; // Vermelho para corte linear (G01)
+const COR_LEAD = '#E2AC00'; // Amarelo para lead-in/lead-out suaves
+const COR_CONCLUIDO = '#10B981'; // Verde para indicar caminhos já usinados
 
 export default function ToolpathPreview({
   program,
@@ -21,7 +21,6 @@ export default function ToolpathPreview({
   mostrarCaminho,
   escala,
 }: ToolpathPreviewProps) {
-  
   // Mapeia e divide os segmentos do SimulationProgram para renderização
   const segmentosRender = useMemo(() => {
     if (!mostrarCaminho) return [];
@@ -49,7 +48,8 @@ export default function ToolpathPreview({
         cmd.segments.forEach((s) => {
           let cor = COR_CORTE;
           if (s.tipo === 'rapid') cor = COR_RAPIDO;
-          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move') cor = COR_MERGULHO;
+          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move')
+            cor = COR_MERGULHO;
           else if (s.tipo === 'lead_in' || s.tipo === 'lead_out') cor = COR_LEAD;
 
           list.push({
@@ -63,9 +63,10 @@ export default function ToolpathPreview({
       } else if (concluidoTotalmente) {
         // Comando totalmente executado e cortado
         cmd.segments.forEach((s) => {
-          const cor = s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
-            ? COR_CONCLUIDO
-            : COR_RAPIDO;
+          const cor =
+            s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
+              ? COR_CONCLUIDO
+              : COR_RAPIDO;
 
           list.push({
             from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
@@ -89,7 +90,8 @@ export default function ToolpathPreview({
 
           let cor = COR_CORTE;
           if (s.tipo === 'rapid') cor = COR_RAPIDO;
-          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move') cor = COR_MERGULHO;
+          else if (s.tipo === 'plunge' || s.tipo === 'retract' || s.tipo === 'safe_move')
+            cor = COR_MERGULHO;
           else if (s.tipo === 'lead_in' || s.tipo === 'lead_out') cor = COR_LEAD;
 
           if (accSegTempo > tempoNoCmd) {
@@ -103,9 +105,10 @@ export default function ToolpathPreview({
             });
           } else if (accSegTempo + segDur <= tempoNoCmd) {
             // Segmento concluído deste comando ativo
-            const concluidoCor = s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
-              ? COR_CONCLUIDO
-              : COR_RAPIDO;
+            const concluidoCor =
+              s.tipo === 'cutting' || s.tipo === 'lead_in' || s.tipo === 'lead_out'
+                ? COR_CONCLUIDO
+                : COR_RAPIDO;
 
             list.push({
               from: [s.from.x / escala, s.from.z / escala, s.from.y / escala],
@@ -156,12 +159,10 @@ export default function ToolpathPreview({
           <bufferGeometry>
             <bufferAttribute
               attach="attributes-position"
-              count={2}
-              array={new Float32Array([
-                r.from[0], r.from[1], r.from[2],
-                r.to[0], r.to[1], r.to[2],
-              ])}
-              itemSize={3}
+              args={[
+                new Float32Array([r.from[0], r.from[1], r.from[2], r.to[0], r.to[1], r.to[2]]),
+                3,
+              ]}
             />
           </bufferGeometry>
           <lineBasicMaterial

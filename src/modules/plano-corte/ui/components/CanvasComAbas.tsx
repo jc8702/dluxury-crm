@@ -18,8 +18,8 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
   const chapasNecessarias = resultado?.chapas_necessarias || 1;
   const extrapolou = chapasNecessarias > 1;
   const pecasRejeitadas = resultado?.pecas_rejeitadas || [];
-  const totalPecas = resultado?.pecas_total_count || 0;
-  const pecasPosicionadasAgora = resultado?.layouts?.reduce((s, l) => s + l.pecas_posicionadas.length, 0) || 0;
+  const pecasPosicionadasAgora =
+    resultado?.layouts?.reduce((s, l) => s + l.pecas_posicionadas.length, 0) || 0;
 
   React.useEffect(() => {
     setLayoutIndex(0);
@@ -29,14 +29,25 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-card text-muted-foreground border border-border rounded-3xl min-h-[500px]">
         <Box size={64} className="mb-6 opacity-20" />
-        <h3 className="text-sm font-black uppercase tracking-[0.4em] opacity-40">Aguardando Seleção de Chapa</h3>
+        <h3 className="text-sm font-black uppercase tracking-[0.4em] opacity-40">
+          Aguardando Seleção de Chapa
+        </h3>
       </div>
     );
   }
 
-  const defaultLayout = { 
-    pecas_posicionadas: [], 
-    sobra_retalhos: [] 
+  const defaultLayout = {
+    ...layoutAtual,
+    tipo: 'chapa_inteira' as const,
+    chapa_sku: chapaAtiva.sku_chapa,
+    retalho_id: undefined,
+    indice_chapa: layoutIndex,
+    largura_original_mm: chapaAtiva.largura_mm,
+    altura_original_mm: chapaAtiva.altura_mm,
+    pecas_posicionadas: [],
+    espacos_livres: [],
+    area_aproveitada_mm2: 0,
+    area_desperdicada_mm2: 0,
   };
 
   return (
@@ -46,7 +57,8 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
         <div className="px-8 py-3 bg-[#FFA500]/10 border-b border-[#FFA500]/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
           <AlertTriangle size={16} className="text-[#FFA500] flex-shrink-0" />
           <span className="text-xs font-bold text-[#FFA500] uppercase tracking-wider">
-            Extrapolação: {chapasNecessarias} chapas necessárias ({pecasPosicionadasAgora} peças alocadas{pecasRejeitadas.length > 0 ? `, ${pecasRejeitadas.length} não couberam` : ''})
+            Extrapolação: {chapasNecessarias} chapas necessárias ({pecasPosicionadasAgora} peças
+            alocadas{pecasRejeitadas.length > 0 ? `, ${pecasRejeitadas.length} não couberam` : ''})
           </span>
         </div>
       )}
@@ -55,13 +67,21 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
       <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
-            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Material Ativo</span>
-            <span className="text-sm font-black text-primary uppercase tracking-wider">{chapaAtiva.nome_exibicao}</span>
+            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">
+              Material Ativo
+            </span>
+            <span className="text-sm font-black text-primary uppercase tracking-wider">
+              {chapaAtiva.nome_exibicao}
+            </span>
           </div>
           <div className="w-px h-8 bg-border" />
           <div className="flex flex-col">
-            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Dimensões Chapa</span>
-            <span className="text-sm font-bold text-foreground font-mono">{chapaAtiva.largura_mm} × {chapaAtiva.altura_mm} mm</span>
+            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">
+              Dimensões Chapa
+            </span>
+            <span className="text-sm font-bold text-foreground font-mono">
+              {chapaAtiva.largura_mm} × {chapaAtiva.altura_mm} mm
+            </span>
           </div>
         </div>
 
@@ -92,15 +112,23 @@ export function CanvasComAbas({ chapaAtiva, resultado }: CanvasComAbasProps) {
               <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">
                 {totalLayouts > 1 ? `Aproveitamento (Chapa ${layoutIndex + 1})` : 'Aproveitamento'}
               </span>
-              <span className={`text-xl font-black italic ${extrapolou ? 'text-accent' : 'text-success'}`}>
+              <span
+                className={`text-xl font-black italic ${extrapolou ? 'text-accent' : 'text-success'}`}
+              >
                 {layoutAtual ? layoutAtual.aproveitamento_percentual.toFixed(1) : '0.0'}%
               </span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Peças</span>
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">
+                Peças
+              </span>
               <span className="text-xl font-black text-foreground italic">
                 {layoutAtual?.pecas_posicionadas.length || 0}
-                {totalLayouts > 1 && <span className="text-muted-foreground text-sm ml-1">/ {pecasPosicionadasAgora}</span>}
+                {totalLayouts > 1 && (
+                  <span className="text-muted-foreground text-sm ml-1">
+                    / {pecasPosicionadasAgora}
+                  </span>
+                )}
               </span>
             </div>
           </div>

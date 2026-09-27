@@ -22,7 +22,8 @@ export const quotations = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
     numeroOrcamento: varchar('numero_orcamento', { length: 30 }).unique().notNull(),
-    clienteId: integer('cliente_id').references(() => clientes.id),
+    // FK real é UUID (clients.id é uuid); integer quebrava o vínculo orçamento↔cliente.
+    clienteId: uuid('cliente_id').references(() => clientes.id),
     projetoId: uuid('projeto_id').references(() => planosDeCorte.id),
     dataOrcamento: timestamp('data_orcamento').defaultNow(),
     validadeDias: integer('validade_dias').default(15),

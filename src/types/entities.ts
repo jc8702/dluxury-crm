@@ -51,6 +51,9 @@ export type Project = {
   visitaId?: string;
   orcamentoId?: string;
   ordem_producao_id?: string | null;
+  // Campos crus (snake_case) vindos da API, usados em telas de Kanban.
+  visita_id?: string;
+  quotation_id?: string;
   created_at?: string;
   updated_at?: string;
 };

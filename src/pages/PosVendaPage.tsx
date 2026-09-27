@@ -241,7 +241,7 @@ const PosVendaPage: React.FC = () => {
       )}
 
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Abrir Novo Chamado de Garantia"
         size="lg"

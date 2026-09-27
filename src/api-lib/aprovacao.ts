@@ -63,7 +63,7 @@ export async function handleAprovacao(req: any, res: any) {
         )
         .orderBy(quotationItems.createdAt);
 
-      const itms = itmsRows.map((item) => ({
+      const itms = itmsRows.map((item: any) => ({
         id: item.id,
         quotation_id: item.quotationId,
         descricao: item.skuDescricao || item.nomeCustomizado || 'Item',

@@ -216,7 +216,6 @@ const ProjectKanban: React.FC = () => {
       </div>
 
       <KanbanBoard
-        title="Gestão de Projetos"
         items={kanbanItems}
         columns={columns}
         onMove={handleMove}

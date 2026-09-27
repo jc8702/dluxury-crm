@@ -173,7 +173,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
             min={500}
             max={6000}
             step={50}
-            onChange={(v) => updateMachine('limiteX', [machine.limiteX[0], v])}
+            onChange={(v) => updateMachine('limiteX', v)}
           />
           <ParamField
             label="Limite Y"
@@ -182,7 +182,7 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
             min={500}
             max={4000}
             step={50}
-            onChange={(v) => updateMachine('limiteY', [machine.limiteY[0], v])}
+            onChange={(v) => updateMachine('limiteY', v)}
           />
         </div>
       </div>
@@ -348,7 +348,6 @@ export default function CncConfigPanel({ config, onChange }: CncConfigPanelProps
 function ClampField({
   label,
   value,
-  unit,
   min,
   max,
   onChange,

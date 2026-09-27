@@ -25,11 +25,13 @@ export const ReciboPreview: React.FC<ReciboPreviewProps> = ({ folhaId, itemId, o
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get(`/rh/folhas/${folhaId}/recibo/${itemId}/pdf`);
-        if (res.success && res.data) {
-          setData(res.data);
+        const res = await api.rh.folhas.recibo(folhaId, itemId);
+        // apiCall já desembrula `{ success, data }` → `res` chega como payload puro
+        const payload = res?.data ?? res;
+        if (payload?.folha || payload?.item) {
+          setData(payload);
         } else {
-          setError(res.error || 'Erro ao obter dados do recibo');
+          setError(res?.error || 'Erro ao obter dados do recibo');
         }
       } catch (err: any) {
         setError(err.message || 'Falha ao carregar recibo de pagamento');

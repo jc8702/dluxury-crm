@@ -1,15 +1,15 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { DragControls } from '@react-three/drei';
 import type { FixtureDefinition } from '../../domain/types';
 
 interface CncMachine3DProps {
-  x: number;             // Posição física X em mm
-  y: number;             // Posição física Y (profundidade de corte/avanço) em mm
-  z: number;             // Posição física Z (profundidade/altura vertical) em mm
+  x: number; // Posição física X em mm
+  y: number; // Posição física Y (profundidade de corte/avanço) em mm
+  z: number; // Posição física Z (profundidade/altura vertical) em mm
   escala: number;
-  sheetWidth: number;    // Largura escalada da chapa
-  sheetDepth: number;    // Profundidade escalada da chapa
+  sheetWidth: number; // Largura escalada da chapa
+  sheetDepth: number; // Profundidade escalada da chapa
   fixtures: FixtureDefinition[];
   spindleOn: boolean;
   rpm: number;
@@ -27,7 +27,6 @@ export default function CncMachine3D({
   sheetDepth,
   fixtures,
   spindleOn,
-  rpm,
   mostrarMaquina = true,
   mostrarClamps = true,
   onClampDragEnd,
@@ -37,10 +36,6 @@ export default function CncMachine3D({
   const toolX = x / escala;
   const toolZ = y / escala;
   const toolY = z / escala;
-
-  // Dimensões do Spindle
-  const spindleH = 0.5;
-  const spindleR = 0.08;
 
   // Clamps 3D
   const clamps3D = useMemo(() => {
@@ -65,7 +60,9 @@ export default function CncMachine3D({
             <meshStandardMaterial color="#1E293B" roughness={0.85} metalness={0.4} />
           </mesh>
           <lineSegments position={[sheetWidth / 2, -0.16, sheetDepth / 2]}>
-            <edgesGeometry args={[new THREE.BoxGeometry(sheetWidth + 1.2, 0.3, sheetDepth + 1.2)]} />
+            <edgesGeometry
+              args={[new THREE.BoxGeometry(sheetWidth + 1.2, 0.3, sheetDepth + 1.2)]}
+            />
             <lineBasicMaterial color="#334155" />
           </lineSegments>
 
@@ -74,7 +71,10 @@ export default function CncMachine3D({
             <cylinderGeometry args={[0.02, 0.02, sheetDepth + 1.0, 8]} />
             <meshStandardMaterial color="#E2E8F0" roughness={0.15} metalness={0.95} />
           </mesh>
-          <mesh position={[sheetWidth + 0.45, -0.14, sheetDepth / 2]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh
+            position={[sheetWidth + 0.45, -0.14, sheetDepth / 2]}
+            rotation={[Math.PI / 2, 0, 0]}
+          >
             <cylinderGeometry args={[0.02, 0.02, sheetDepth + 1.0, 8]} />
             <meshStandardMaterial color="#E2E8F0" roughness={0.15} metalness={0.95} />
           </mesh>
@@ -97,7 +97,8 @@ export default function CncMachine3D({
           {/* Travessa Horizontal Principal Eixo X (Viga de alumínio estrutural) */}
           <mesh position={[0, 0.2, 0]}>
             <boxGeometry args={[sheetWidth + 1.0, 0.28, 0.16]} />
-            <meshStandardMaterial color="#EA580C" roughness={0.3} metalness={0.2} /> {/* Laranja industrial */}
+            <meshStandardMaterial color="#EA580C" roughness={0.3} metalness={0.2} />{' '}
+            {/* Laranja industrial */}
           </mesh>
 
           {/* Placa metálica decorativa na viga */}
@@ -156,14 +157,25 @@ export default function CncMachine3D({
             <group position={[0, -0.15, 0]}>
               {/* Luz indicadora de operação (Ponto de luz na ponta da ferramenta) */}
               {spindleOn && (
-                <pointLight position={[0, -0.22, 0]} intensity={1.8} distance={1.5} color="#00FFFF" />
+                <pointLight
+                  position={[0, -0.22, 0]}
+                  intensity={1.8}
+                  distance={1.5}
+                  color="#00FFFF"
+                />
               )}
 
               {/* Fresa de metal duro (Dourada) */}
               <group rotation={[0, spindleOn ? Date.now() * 0.05 : 0, 0]}>
                 <mesh position={[0, -0.2, 0]}>
                   <cylinderGeometry args={[0.012, 0.012, 0.14, 8]} />
-                  <meshStandardMaterial color="#FBBF24" emissive="#D97706" emissiveIntensity={spindleOn ? 0.25 : 0} metalness={0.9} roughness={0.1} />
+                  <meshStandardMaterial
+                    color="#FBBF24"
+                    emissive="#D97706"
+                    emissiveIntensity={spindleOn ? 0.25 : 0}
+                    metalness={0.9}
+                    roughness={0.1}
+                  />
                 </mesh>
               </group>
 
@@ -282,11 +294,14 @@ export default function CncMachine3D({
             return (
               <DragControls
                 key={clamp.id}
-                onDragEnd={(matrix) => {
-                  const pos = new THREE.Vector3().setFromMatrixPosition(matrix);
-                  const mmX = Math.round((pos.x - clamp.w / 2) * escala);
-                  const mmY = Math.round((pos.z - clamp.d / 2) * escala);
-                  onClampDragEnd(clamp.id, mmX, mmY);
+                onDragEnd={() => {
+                  // A posição final efetiva é resolvida pelo grupo clampMeshes;
+                  // usamos a posição atual do grampo como referência do callback.
+                  onClampDragEnd(
+                    clamp.id,
+                    Math.round(clamp.x * escala),
+                    Math.round(clamp.z * escala),
+                  );
                 }}
               >
                 {clampMeshes}

@@ -52,7 +52,7 @@ const handleMatchSKUsCore: TenantHandler = async (req, res) => {
       const resultsComercial = await db.execute(comercialSql);
 
       const combined = [
-        ...resultsIndustrial.map((it) => ({ ...it, tipo: 'INDUSTRIAL' })),
+        ...resultsIndustrial.map((it: any) => ({ ...it, tipo: 'INDUSTRIAL' })),
         ...resultsComercial.rows.map((r: any) => ({
           id: r.id,
           codigo: r.codigo,

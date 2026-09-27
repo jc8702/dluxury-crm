@@ -1,4 +1,4 @@
-import type { Peca } from "../types.js";
+import type { Peca } from '../types.js';
 
 export interface PecaPosicionada extends Peca {
   x: number;
@@ -28,7 +28,7 @@ export interface LayoutChapa {
   altura_original_mm: number;
   pecas_posicionadas: PecaPosicionada[];
   area_aproveitada_mm2: number;
-  area_desperdicada_mm2: number;
+  area_desperdicada_mm2?: number;
   espacos_livres?: RetalhoEspaco[];
 }
 

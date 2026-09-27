@@ -170,7 +170,7 @@ export async function provisionarTenant(params: {
         planoTier: plano,
         subdominio: subNormalized,
       },
-      JWT_SECRET,
+      JWT_SECRET as string,
       { expiresIn: '7d' },
     );
 

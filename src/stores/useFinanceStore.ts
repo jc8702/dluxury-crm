@@ -65,7 +65,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       set({
         billings,
         condicoesPagamento,
-        monthlyGoals: goalsData || {},
+        monthlyGoals: (goalsData as Record<string, number>) || {},
       });
     } catch (error) {
       console.error('Falha ao carregar dados do Financeiro:', error);

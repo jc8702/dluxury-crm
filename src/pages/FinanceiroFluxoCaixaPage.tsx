@@ -299,18 +299,10 @@ export default function FinanceiroFluxoCaixaPage() {
                   PROJEÇÃO DE DISPONIBILIDADE
                 </CardTitle>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Button
-                    onClick={() => setViewMode('chart')}
-                    variant={viewMode === 'chart' ? 'primary' : 'outline'}
-                    size="sm"
-                  >
+                  <Button onClick={() => setViewMode('chart')} variant="primary" size="sm">
                     <Grid size={16} />
                   </Button>
-                  <Button
-                    onClick={() => setViewMode('table')}
-                    variant={viewMode === 'table' ? 'primary' : 'outline'}
-                    size="sm"
-                  >
+                  <Button onClick={() => setViewMode('table')} variant="outline" size="sm">
                     <List size={16} />
                   </Button>
                 </div>
@@ -385,11 +377,7 @@ export default function FinanceiroFluxoCaixaPage() {
                   * Clique na linha para selecionar o período
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Button
-                    onClick={() => setViewMode('chart')}
-                    variant={viewMode === 'chart' ? 'primary' : 'outline'}
-                    size="sm"
-                  >
+                  <Button onClick={() => setViewMode('chart')} variant="outline" size="sm">
                     <Grid size={16} />
                   </Button>
                   <Button

@@ -252,7 +252,7 @@ describe('handleProduction', () => {
       mockMigrations();
       vi.mocked(sql)
         .mockResolvedValueOnce([{ id: '1', op_id: 'OP-001', produto: 'Armário' }])
-        .mockResolvedValueOnce(Promise.resolve());
+        .mockResolvedValueOnce([]);
       const req = mockReq({ method: 'DELETE', url: '/api/production', query: { op_id: 'OP-001' } });
       const res = mockRes();
       await handleProduction(req, res);

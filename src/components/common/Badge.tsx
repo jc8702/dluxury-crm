@@ -3,15 +3,21 @@ import type { BadgeProps as UIBadgeProps } from '../ui/Badge';
 
 const variantToTone: Record<string, UIBadgeProps['tone']> = {
   default: 'primary',
+  primary: 'primary',
   secondary: 'teal',
+  teal: 'teal',
   destructive: 'danger',
+  danger: 'danger',
+  info: 'info',
+  neutral: 'neutral',
+  accent: 'accent',
   outline: 'outline',
   success: 'success',
   warning: 'warning',
 };
 
 export interface BadgeProps extends Omit<UIBadgeProps, 'tone' | 'variant'> {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning';
+  variant?: string;
   tone?: UIBadgeProps['tone'];
 }
 

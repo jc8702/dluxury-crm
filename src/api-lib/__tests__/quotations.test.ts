@@ -49,7 +49,7 @@ vi.mock('../_db.js', () => ({
   validateAuth: vi.fn(),
   sql: Object.assign(vi.fn().mockResolvedValue([]), {
     join: vi.fn((fragments: any[], separator: any) => fragments.join(separator)),
-    begin: vi.fn().mockImplementation(async (cb) =>
+    begin: vi.fn().mockImplementation(async (cb: any) =>
       cb(
         Object.assign(vi.fn().mockResolvedValue([]), {
           // Mock any transaction methods if needed
@@ -89,7 +89,7 @@ describe('Módulo de Orçamentos PRO', () => {
     vi.clearAllMocks();
     _resetRateLimit();
     // Retorna um ID aleatório por padrão para que os testes não compartilhem a mesma quota de rate limit
-    vi.mocked(validateAuth).mockImplementation(() => {
+    vi.mocked(validateAuth as any).mockImplementation(() => {
       return {
         authorized: true,
         tenantId: '00000000-0000-0000-0000-000000000000',
@@ -101,7 +101,7 @@ describe('Módulo de Orçamentos PRO', () => {
   describe('Validação de Rate Limiting', () => {
     it('deve bloquear requisições após o limite de 100 requisições por janela', async () => {
       const rateLimitUser = `rate-limit-user-${Date.now()}`;
-      vi.mocked(validateAuth).mockReturnValue({
+      vi.mocked(validateAuth as any).mockReturnValue({
         authorized: true,
         tenantId: '00000000-0000-0000-0000-000000000000',
         user: { id: rateLimitUser },
@@ -124,6 +124,7 @@ describe('Módulo de Orçamentos PRO', () => {
           responseData = data;
           return res;
         },
+        end: () => res,
       };
 
       // Simular 100 requisições bem sucedidas
@@ -162,6 +163,7 @@ describe('Módulo de Orçamentos PRO', () => {
           responseData = data;
           return res;
         },
+        end: () => res,
       };
 
       await handleQuotations(req, res);
@@ -193,6 +195,7 @@ describe('Módulo de Orçamentos PRO', () => {
           responseData = data;
           return res;
         },
+        end: () => res,
       };
 
       await handleQuotations(req, res);
@@ -224,6 +227,7 @@ describe('Módulo de Orçamentos PRO', () => {
           responseData = data;
           return res;
         },
+        end: () => res,
       };
 
       await handleQuotations(req, res);
@@ -236,21 +240,21 @@ describe('Módulo de Orçamentos PRO', () => {
 
   describe('Explosão de BOM (explodirBOM)', () => {
     it('deve lançar erro caso o skuEngId seja inválido ou vazio', async () => {
-      await expect(explodirBOM('not-a-uuid', 1)).rejects.toThrow('SKU inválido');
+      await expect(explodirBOM('not-a-uuid', 1, TEST_TENANT_ID)).rejects.toThrow('SKU inválido');
     });
 
     it('deve lançar erro caso a quantidade seja negativa', async () => {
-      await expect(explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', -1)).rejects.toThrow(
-        'Quantidade inválida',
-      );
+      await expect(
+        explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', -1, TEST_TENANT_ID),
+      ).rejects.toThrow('Quantidade inválida');
     });
 
     it('deve lançar erro se o SKU de engenharia não existir no banco de dados', async () => {
       vi.mocked(db.query.skuEngenharia.findFirst).mockResolvedValue(null);
 
-      await expect(explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 1)).rejects.toThrow(
-        'SKU de Engenharia não encontrado',
-      );
+      await expect(
+        explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 1, TEST_TENANT_ID),
+      ).rejects.toThrow('SKU de Engenharia não encontrado');
     });
 
     it('deve retornar array vazio se não houver componentes na BOM recursiva', async () => {
@@ -260,7 +264,7 @@ describe('Módulo de Orçamentos PRO', () => {
       });
       vi.mocked(db.execute).mockResolvedValue({ rows: [] } as any);
 
-      const result = await explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 1);
+      const result = await explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 1, TEST_TENANT_ID);
       expect(result).toEqual([]);
     });
 
@@ -281,7 +285,7 @@ describe('Módulo de Orçamentos PRO', () => {
         ],
       } as any);
 
-      const result = await explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 2);
+      const result = await explodirBOM('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', 2, TEST_TENANT_ID);
       expect(result).toHaveLength(1);
       expect(result[0].skuComponenteId).toBe('comp-1');
       expect(result[0].quantidadeCalculada).toBe(5.0); // 2.5 * qtdItem (2)
@@ -292,7 +296,9 @@ describe('Módulo de Orçamentos PRO', () => {
 
   describe('Recalculo de Quotation (recalcularOrcamento)', () => {
     it('deve falhar se o ID de orçamento for inválido', async () => {
-      await expect(recalcularOrcamento('not-uuid')).rejects.toThrow('ID de orçamento inválido');
+      await expect(recalcularOrcamento('not-uuid', TEST_TENANT_ID)).rejects.toThrow(
+        'ID de orçamento inválido',
+      );
     });
 
     it('deve falhar se o orçamento não for encontrado', async () => {
@@ -313,13 +319,13 @@ describe('Módulo de Orçamentos PRO', () => {
           },
         },
       };
-      vi.mocked(db.transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
         return callback(mockTx as any);
       });
 
-      await expect(recalcularOrcamento('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2')).rejects.toThrow(
-        'Orçamento 3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2 não encontrado',
-      );
+      await expect(
+        recalcularOrcamento('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2', TEST_TENANT_ID),
+      ).rejects.toThrow('Orçamento 3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2 não encontrado');
     });
 
     it('deve recalcular valores considerando taxas operacionais de configuracoes_precificacao', async () => {
@@ -358,11 +364,14 @@ describe('Módulo de Orçamentos PRO', () => {
         where: vi.fn().mockReturnThis(),
       };
 
-      vi.mocked(db.transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
         return callback(mockTx as any);
       });
 
-      const result = await recalcularOrcamento('3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2');
+      const result = await recalcularOrcamento(
+        '3bcc2b2c-68cc-48f8-ba20-bafba6b1fca2',
+        TEST_TENANT_ID,
+      );
       expect(result.itensAtualizados).toBe(1);
       // Custo base: 100
       // Custo ajustado: 100 * 1.10 (perda) * 1.20 (fabrica) * 1.05 (instalacao) = 138.60
@@ -385,7 +394,7 @@ describe('Módulo de Orçamentos PRO', () => {
       try {
         // sqlToQuery gera a query Postgres parametrizada { sql: string, params: any[] }
         return dialect.sqlToQuery(query).sql;
-      } catch (e) {
+      } catch {
         // Fallback robusto caso não seja um objeto SQL compilável
         if (query.sql) return query.sql;
         if (Array.isArray(query.queryChunks)) {
@@ -463,7 +472,7 @@ describe('Módulo de Orçamentos PRO', () => {
         where: vi.fn().mockReturnThis(),
       };
 
-      vi.mocked(db.transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
         return callback(mockTx as any);
       });
 
@@ -490,6 +499,7 @@ describe('Módulo de Orçamentos PRO', () => {
           return res;
         },
         json: () => res,
+        end: () => res,
       };
 
       await handleQuotations(req, res);
@@ -575,7 +585,7 @@ describe('Módulo de Orçamentos PRO', () => {
         },
       };
 
-      vi.mocked(db.transaction).mockImplementation(async (cb) => cb(mockTxPadrao));
+      vi.mocked(db.transaction).mockImplementation(async (cb: any) => cb(mockTxPadrao));
     });
 
     it('deve explodir BOM no GET (?action=explode)', async () => {
@@ -631,7 +641,7 @@ describe('Módulo de Orçamentos PRO', () => {
     it('deve listar orçamentos no GET geral', async () => {
       vi.mocked(db.select).mockReturnValue(db as any);
       vi.mocked(db.from).mockReturnValue(db as any);
-      vi.mocked(db.where).mockImplementation((cond: any) => {
+      vi.mocked(db.where).mockImplementation(() => {
         return db as any;
       });
       vi.mocked(db.orderBy).mockReturnValue(db as any);

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import {
   Download,
@@ -9,9 +9,7 @@ import {
   Loader2,
   FileText,
   LayoutDashboard,
-  Calendar,
   Layers,
-  CheckCircle,
 } from 'lucide-react';
 import { reportService } from '../../services/reportService';
 import { api } from '../../lib/api';
@@ -27,12 +25,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
-
-const COLORS = ['#0D66CC', '#00A99D', '#E2AC00', '#DC3545', '#28A745', '#17A2B8'];
 
 const ReportsPage: React.FC = () => {
   const { info: toastInfo } = useToast();
@@ -241,7 +234,7 @@ const ReportsPage: React.FC = () => {
                     >
                       {projects.map((p) => (
                         <option key={p.id} value={p.id} className="bg-[var(--ui-surface)]">
-                          {p.cliente_name || 'N/A'} - {p.ambiente}
+                          {p.clientName || 'N/A'} - {p.ambiente}
                         </option>
                       ))}
                     </select>

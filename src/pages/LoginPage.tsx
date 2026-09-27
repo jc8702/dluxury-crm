@@ -119,7 +119,10 @@ const LoginPage: React.FC = () => {
             </div>
 
             {error && (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-semibold animate-in zoom-in-95">
+              <div
+                role="alert"
+                className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-semibold animate-in zoom-in-95"
+              >
                 <Activity className="w-5 h-5" />
                 {error}
               </div>

@@ -20,22 +20,25 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
   const fontSize = `${Math.max(12, 16 * labelScale)}px`;
 
   // Cotas externas da chapa
-  const sheetDims = useMemo(() => [
-    {
-      label: `${layout.chapa.largura}MM`,
-      start: [0, DIM_EXT_OFFSET + 0.05, -0.12] as const,
-      end: [sheetW, DIM_EXT_OFFSET + 0.05, -0.12] as const,
-      mid: [sheetW / 2, DIM_EXT_OFFSET + 0.08, -0.12] as const,
-      rot: [0, 0, 0] as const,
-    },
-    {
-      label: `${layout.chapa.altura}MM`,
-      start: [-0.12, DIM_EXT_OFFSET + 0.05, 0] as const,
-      end: [-0.12, DIM_EXT_OFFSET + 0.05, sheetD] as const,
-      mid: [-0.12, DIM_EXT_OFFSET + 0.08, sheetD / 2] as const,
-      rot: [0, -Math.PI / 2, 0] as const,
-    },
-  ], [sheetW, sheetD, layout.chapa.largura, layout.chapa.altura]);
+  const sheetDims = useMemo(
+    () => [
+      {
+        label: `${layout.chapa.largura}MM`,
+        start: [0, DIM_EXT_OFFSET + 0.05, -0.12] as const,
+        end: [sheetW, DIM_EXT_OFFSET + 0.05, -0.12] as const,
+        mid: [sheetW / 2, DIM_EXT_OFFSET + 0.08, -0.12] as const,
+        rot: [0, 0, 0] as const,
+      },
+      {
+        label: `${layout.chapa.altura}MM`,
+        start: [-0.12, DIM_EXT_OFFSET + 0.05, 0] as const,
+        end: [-0.12, DIM_EXT_OFFSET + 0.05, sheetD] as const,
+        mid: [-0.12, DIM_EXT_OFFSET + 0.08, sheetD / 2] as const,
+        rot: [0, -Math.PI / 2, 0] as const,
+      },
+    ],
+    [sheetW, sheetD, layout.chapa.largura, layout.chapa.altura],
+  );
 
   // Cota do comprimento da peça selecionada (quando hover/selected)
   const pecaDim = useMemo(() => {
@@ -60,8 +63,12 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
     <group>
       {/* Sheet dimension lines */}
       {sheetDims.map((dim, i) => {
-        const sx = dim.start[0], sy = dim.start[1], sz = dim.start[2];
-        const ex = dim.end[0], ey = dim.end[1], ez = dim.end[2];
+        const sx = dim.start[0],
+          sy = dim.start[1],
+          sz = dim.start[2];
+        const ex = dim.end[0],
+          ey = dim.end[1],
+          ez = dim.end[2];
         return (
           <group key={`dim-${i}`}>
             {/* Main line */}
@@ -69,9 +76,7 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([sx, sy, sz, ex, ey, ez])}
-                  itemSize={3}
+                  args={[new Float32Array([sx, sy, sz, ex, ey, ez]), 3]}
                 />
               </bufferGeometry>
               <lineBasicMaterial color={DIM_COLOR} transparent opacity={0.6} />
@@ -82,9 +87,7 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([sx, sy - 0.05, sz, sx, sy + 0.05, sz])}
-                  itemSize={3}
+                  args={[new Float32Array([sx, sy - 0.05, sz, sx, sy + 0.05, sz]), 3]}
                 />
               </bufferGeometry>
               <lineBasicMaterial color={DIM_COLOR} transparent opacity={0.6} />
@@ -93,26 +96,30 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([ex, ey - 0.05, ez, ex, ey + 0.05, ez])}
-                  itemSize={3}
+                  args={[new Float32Array([ex, ey - 0.05, ez, ex, ey + 0.05, ez]), 3]}
                 />
               </bufferGeometry>
               <lineBasicMaterial color={DIM_COLOR} transparent opacity={0.6} />
             </lineSegments>
 
             {/* Label */}
-            <Html position={[dim.mid[0], dim.mid[1], dim.mid[2]]} center style={{ pointerEvents: 'none' }}>
-              <span style={{
-                color: DIM_COLOR,
-                fontSize,
-                fontFamily: 'monospace',
-                fontWeight: 600,
-                textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-                background: 'rgba(13,17,23,0.7)',
-                padding: '1px 4px',
-                borderRadius: '2px',
-              }}>
+            <Html
+              position={[dim.mid[0], dim.mid[1], dim.mid[2]]}
+              center
+              style={{ pointerEvents: 'none' }}
+            >
+              <span
+                style={{
+                  color: DIM_COLOR,
+                  fontSize,
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                  background: 'rgba(13,17,23,0.7)',
+                  padding: '1px 4px',
+                  borderRadius: '2px',
+                }}
+              >
                 {dim.label}
               </span>
             </Html>
@@ -128,12 +135,17 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
             <bufferGeometry>
               <bufferAttribute
                 attach="attributes-position"
-                count={2}
-                array={new Float32Array([
-                  pecaDim.px, pecaDim.pe + 0.04, pecaDim.pz - 0.04,
-                  pecaDim.px + pecaDim.pc, pecaDim.pe + 0.04, pecaDim.pz - 0.04,
-                ])}
-                itemSize={3}
+                args={[
+                  new Float32Array([
+                    pecaDim.px,
+                    pecaDim.pe + 0.04,
+                    pecaDim.pz - 0.04,
+                    pecaDim.px + pecaDim.pc,
+                    pecaDim.pe + 0.04,
+                    pecaDim.pz - 0.04,
+                  ]),
+                  3,
+                ]}
               />
             </bufferGeometry>
             <lineBasicMaterial color={DIM_ACTIVE_COLOR} transparent opacity={0.8} />
@@ -143,12 +155,17 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
             <bufferGeometry>
               <bufferAttribute
                 attach="attributes-position"
-                count={2}
-                array={new Float32Array([
-                  pecaDim.px + pecaDim.pc + 0.04, pecaDim.pe + 0.04, pecaDim.pz,
-                  pecaDim.px + pecaDim.pc + 0.04, pecaDim.pe + 0.04, pecaDim.pz + pecaDim.pl,
-                ])}
-                itemSize={3}
+                args={[
+                  new Float32Array([
+                    pecaDim.px + pecaDim.pc + 0.04,
+                    pecaDim.pe + 0.04,
+                    pecaDim.pz,
+                    pecaDim.px + pecaDim.pc + 0.04,
+                    pecaDim.pe + 0.04,
+                    pecaDim.pz + pecaDim.pl,
+                  ]),
+                  3,
+                ]}
               />
             </bufferGeometry>
             <lineBasicMaterial color={DIM_ACTIVE_COLOR} transparent opacity={0.8} />
@@ -159,17 +176,19 @@ export default function CotasDim({ layout, escala, pecaSelecionada, cenaSize }: 
             center
             style={{ pointerEvents: 'none' }}
           >
-            <span style={{
-              color: DIM_ACTIVE_COLOR,
-              fontSize,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-              background: 'rgba(13,17,23,0.8)',
-              padding: '2px 6px',
-              borderRadius: '3px',
-              border: '1px solid rgba(226,172,0,0.3)',
-            }}>
+            <span
+              style={{
+                color: DIM_ACTIVE_COLOR,
+                fontSize,
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                background: 'rgba(13,17,23,0.8)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                border: '1px solid rgba(226,172,0,0.3)',
+              }}
+            >
               {pecaDim.label}
             </span>
           </Html>

@@ -259,7 +259,7 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
       setQrDataUrl(url);
 
       try {
-        const plans = await api.production.cutting_plan_list();
+        const plans = await api.cuttingPlan.list();
         const match = (plans || []).find(
           (p: any) => p.op_id === normalized.op_id || p.projeto_id === normalized.projeto_id,
         );
@@ -294,13 +294,12 @@ export const ProductionDetail: React.FC<ProductionDetailProps> = ({ opId, onBack
   }, [order?.status, checklist]);
 
   const statusMeta = order ? STATUS_META[order.status] || STATUS_META.PENDING : null;
-  const isCompleted = order && (order.status === 'COMPLETED' || order.status === 'FINALIZADO');
-  const isPaused = order && (order.status === 'PAUSED' || order.status === 'CANCELLED');
+  const isCompleted = !!order && (order.status === 'COMPLETED' || order.status === 'FINALIZADO');
+  const isPaused = !!order && (order.status === 'PAUSED' || order.status === 'CANCELLED');
   const isRunning =
-    order &&
+    !!order &&
     (order.status === 'IN_PROGRESS' ||
       order.status === 'PRODUCAO' ||
-      order.status === 'CORTE' ||
       order.status === 'MONTAGEM' ||
       order.status === 'PINTURA' ||
       order.status === 'INSPECAO' ||

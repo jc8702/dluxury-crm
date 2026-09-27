@@ -1,7 +1,7 @@
 import { db } from './drizzle-db.js';
 import { quotations, quotationItems, quotationBom } from '../db/schema/quotations.js';
 import { skuEngenharia, skuComponente } from '../db/schema/skus.js';
-import { eq, sql as dsql, and, inArray, or, ilike, asc } from 'drizzle-orm';
+import { eq, sql as dsql, and, inArray, or, ilike } from 'drizzle-orm';
 import { auditLog, sql } from './_db.js';
 import { garantirSeedsFinanceiros } from './financeiro.js';
 import { withTenant, type TenantHandler } from './middleware/tenantMiddleware.js';
@@ -65,6 +65,16 @@ interface CreateOrcamentoPayload {
   itens: Array<{
     skuEngenhariaId: string;
     quantidade: number;
+    nomeCustomizado?: string;
+    largura?: string | number;
+    altura?: string | number;
+    espessura?: string | number;
+    material?: string;
+    observacoes?: string;
+    custoUnitarioCalculado?: number;
+    precoVendaUnitario?: number;
+    precoVendaSobrescrito?: number | null;
+    margemLucro?: number;
   }>;
 }
 
@@ -177,7 +187,7 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
 
   logger.info(`🔄 [RECALCULO] Iniciando para orçamento: ${orcId}`);
 
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: any) => {
     // Buscar configurações de precificação do tenant para taxas industriais/tributárias
     const configPrec = await tx.execute(dsql`
       SELECT 
@@ -239,7 +249,7 @@ export async function recalcularOrcamento(orcId: string, tenantId: string) {
       let custoUnitario = 0;
 
       if (item.bom && item.bom.length > 0) {
-        custoUnitario = item.bom.reduce((sum, comp) => {
+        custoUnitario = item.bom.reduce((sum: number, comp: any) => {
           const qtdComp = Number(comp.quantidadeAjustada || comp.quantidadeCalculada || 0);
           const custoComp = Number(comp.custoUnitario || 0);
           return sum + qtdComp * custoComp;
@@ -368,6 +378,31 @@ const payloadValidators = {
       itens: itens.map((it: any) => ({
         skuEngenhariaId: it.skuEngenhariaId,
         quantidade: Number(it.quantidade),
+        nomeCustomizado: it.nomeCustomizado
+          ? validators.sanitizeString(it.nomeCustomizado)
+          : undefined,
+        largura: it.largura !== undefined && it.largura !== null ? String(it.largura) : undefined,
+        altura: it.altura !== undefined && it.altura !== null ? String(it.altura) : undefined,
+        espessura:
+          it.espessura !== undefined && it.espessura !== null ? String(it.espessura) : undefined,
+        material: it.material ? validators.sanitizeString(it.material) : undefined,
+        observacoes: it.observacoes ? validators.sanitizeString(it.observacoes, 1000) : undefined,
+        custoUnitarioCalculado:
+          it.custoUnitarioCalculado !== undefined && it.custoUnitarioCalculado !== null
+            ? Number(it.custoUnitarioCalculado)
+            : undefined,
+        precoVendaUnitario:
+          it.precoVendaUnitario !== undefined && it.precoVendaUnitario !== null
+            ? Number(it.precoVendaUnitario)
+            : undefined,
+        precoVendaSobrescrito:
+          it.precoVendaSobrescrito !== undefined && it.precoVendaSobrescrito !== null
+            ? Number(it.precoVendaSobrescrito)
+            : undefined,
+        margemLucro:
+          it.margemLucro !== undefined && it.margemLucro !== null
+            ? Number(it.margemLucro)
+            : undefined,
       })),
     };
   },
@@ -451,7 +486,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
   }
 
   const { method } = req;
-  const url = new URL(req.url, 'http://localhost');
+  const url = new URL(req.url || '', 'http://localhost');
   const id = url.searchParams.get('id');
   const action = url.searchParams.get('action');
 
@@ -549,12 +584,12 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
           ]);
 
           const results = [
-            ...comps.map((c) => ({
+            ...comps.map((c: any) => ({
               ...c,
               precoUnitario: Number(c.precoUnitario || 0),
               tipo: 'COMPONENTE',
             })),
-            ...engs.map((e) => ({
+            ...engs.map((e: any) => ({
               ...e,
               precoUnitario: 0,
               tipo: 'ENGENHARIA',
@@ -580,7 +615,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
             where: and(eq(quotations.id, id), eq(quotations.tenantId, tenantId)),
             with: {
               itens: {
-                orderBy: (itens, { asc }) => [asc(itens.createdAt), asc(itens.id)],
+                orderBy: (itens: any, { asc }: any) => [asc(itens.createdAt), asc(itens.id)],
                 with: {
                   skuEngenharia: true,
                   skuComponente: true,
@@ -664,7 +699,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
 
         // 2. Executar criação em transação atômica
         const result = await withRetry(async () => {
-          return await db.transaction(async (tx) => {
+          return await db.transaction(async (tx: any) => {
             // Criar cabeçalho
             const [newOrc] = await tx
               .insert(quotations)
@@ -672,9 +707,11 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 clienteId: validated.header.clienteId,
                 projetoId: validated.header.projetoId,
                 validadeDias: validated.header.validadeDias,
-                margemLucroPercentual: validated.header.margemLucroPercentual.toString(),
-                taxaFinanceiraPercentual: validated.header.taxaFinanceiraPercentual.toString(),
-                descontoPercentual: validated.header.descontoPercentual.toString(),
+                margemLucroPercentual: (validated.header.margemLucroPercentual ?? 0).toString(),
+                taxaFinanceiraPercentual: (
+                  validated.header.taxaFinanceiraPercentual ?? 0
+                ).toString(),
+                descontoPercentual: (validated.header.descontoPercentual ?? 0).toString(),
                 numeroOrcamento: `PRO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(
                   Math.random() * 9999,
                 )
@@ -695,6 +732,31 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                   quotationId: newOrc.id,
                   skuEngenhariaId: itemData.skuEngenhariaId,
                   quantidade: itemData.quantidade.toString(),
+                  nomeCustomizado: itemData.nomeCustomizado,
+                  largura: itemData.largura,
+                  altura: itemData.altura,
+                  espessura: itemData.espessura,
+                  material: itemData.material,
+                  observacoes: itemData.observacoes,
+                  custoUnitarioCalculado:
+                    itemData.custoUnitarioCalculado !== undefined &&
+                    itemData.custoUnitarioCalculado !== null
+                      ? itemData.custoUnitarioCalculado.toFixed(2)
+                      : undefined,
+                  precoVendaUnitario:
+                    itemData.precoVendaUnitario !== undefined &&
+                    itemData.precoVendaUnitario !== null
+                      ? itemData.precoVendaUnitario.toFixed(2)
+                      : undefined,
+                  precoVendaSobrescrito:
+                    itemData.precoVendaSobrescrito !== undefined &&
+                    itemData.precoVendaSobrescrito !== null
+                      ? itemData.precoVendaSobrescrito.toFixed(2)
+                      : undefined,
+                  margemLucro:
+                    itemData.margemLucro !== undefined && itemData.margemLucro !== null
+                      ? itemData.margemLucro.toFixed(4)
+                      : undefined,
                 })
                 .returning();
 
@@ -703,7 +765,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
 
               if (componentes.length > 0) {
                 await tx.insert(quotationBom).values(
-                  componentes.map((c) => ({
+                  componentes.map((c: any) => ({
                     quotationItemId: newItem.id,
                     skuComponenteId: c.skuComponenteId,
                     quantidadeCalculada: c.quantidadeCalculada.toString(),
@@ -803,7 +865,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
           if (action === 'add-item') {
             const { skuId, quantidade } = req.body;
 
-            await db.transaction(async (tx) => {
+            await db.transaction(async (tx: any) => {
               // Verificar se é um módulo (Engenharia)
               const isEng = await tx.query.skuEngenharia.findFirst({
                 where: and(eq(skuEngenharia.id, skuId), eq(skuEngenharia.tenantId, tenantId)),
@@ -822,7 +884,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                 const comps = await explodirBOM(skuId, 1, tenantId);
                 if (comps.length > 0) {
                   await tx.insert(quotationBom).values(
-                    comps.map((c) => ({
+                    comps.map((c: any) => ({
                       quotationItemId: newItem.id,
                       skuComponenteId: c.skuComponenteId,
                       quantidadeCalculada: c.quantidadeCalculada.toString(),
@@ -896,7 +958,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                     and(inArray(skuComponente.id, skuArray), eq(skuComponente.tenantId, tenantId)),
                   );
 
-                componentes.forEach((c) => skuMap.set(c.id, { ...c, tipo: 'COMPONENTE' }));
+                componentes.forEach((c: any) => skuMap.set(c.id, { ...c, tipo: 'COMPONENTE' }));
 
                 logger.debug(`✅ ${componentes.length} SKUs encontrados na tabela de componentes`);
 
@@ -921,7 +983,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               }
 
               // 4. Executar importação em transação
-              const report = await db.transaction(async (tx) => {
+              const report = await db.transaction(async (tx: any) => {
                 const stats = { success: 0, failed: 0, errors: [] as string[] };
 
                 // Preparar batch de inserções
@@ -1090,7 +1152,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
             if (typeof margem !== 'number') throw new Error('Margem inválida');
 
             // Atualizar cabeçalho e resetar overrides sob transação
-            await db.transaction(async (tx) => {
+            await db.transaction(async (tx: any) => {
               await tx
                 .update(quotations)
                 .set({ margemLucroPercentual: margem.toString() })
@@ -1121,7 +1183,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               throw new Error('Nenhum item selecionado');
 
             // Aplicar atualizações em lote buscando todos de uma vez
-            await db.transaction(async (tx) => {
+            await db.transaction(async (tx: any) => {
               const items = await tx
                 .select()
                 .from(quotationItems)
@@ -1169,7 +1231,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
           if (action === 'update-sku') {
             const { itemId, skuId, tipo } = req.body;
 
-            await db.transaction(async (tx) => {
+            await db.transaction(async (tx: any) => {
               const item = await tx.query.quotationItems.findFirst({
                 where: eq(quotationItems.id, itemId),
               });
@@ -1182,7 +1244,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
 
                 if (comps.length > 0) {
                   await tx.insert(quotationBom).values(
-                    comps.map((c) => ({
+                    comps.map((c: any) => ({
                       quotationItemId: itemId,
                       skuComponenteId: c.skuComponenteId,
                       quantidadeCalculada: c.quantidadeCalculada.toString(),
@@ -1240,7 +1302,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               JSON.stringify(updates, null, 2),
             );
 
-            await db.transaction(async (tx) => {
+            await db.transaction(async (tx: any) => {
               // Buscar item atual para comparar SKU
               const oldItem = await tx.query.quotationItems.findFirst({
                 where: eq(quotationItems.id, itemId),
@@ -1273,7 +1335,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
 
                 if (comps.length > 0) {
                   await tx.insert(quotationBom).values(
-                    comps.map((c) => ({
+                    comps.map((c: any) => ({
                       quotationItemId: itemId,
                       skuComponenteId: c.skuComponenteId,
                       quantidadeCalculada: c.quantidadeCalculada.toString(),
@@ -1343,7 +1405,7 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
               existsStatusUpper === 'FECHADA';
 
             if (exists && !wasAlreadyApproved) {
-              await db.transaction(async (tx) => {
+              await db.transaction(async (tx: any) => {
                 // 1. Atualizar status e cabeçalho do orçamento
                 const finalBody = { ...req.body, updatedAt: new Date() };
                 await tx
@@ -1477,8 +1539,6 @@ const handleQuotationsCore: TenantHandler = async (req, res) => {
                   // Batch lookup all materials by SKU
                   const uniqueSkus = [...new Set(allParts.map((p) => p.sku))];
                   const skuChunks = uniqueSkus.map((s) => dsql`LOWER(${s})`);
-                  const skuWhere =
-                    skuChunks.length === 1 ? skuChunks[0] : dsql.join(skuChunks, dsql`, `);
                   const matRows = await tx.execute(dsql`
                     SELECT id, LOWER(sku) as sku, estoque_atual, preco_custo::numeric as preco_custo
                     FROM materiais

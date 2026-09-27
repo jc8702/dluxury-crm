@@ -1,4 +1,4 @@
-import type { FioDeFita } from '../../../plano-corte/domain/types';
+import type { FioDeFita } from '../../plano-corte/domain/types';
 
 export interface ProductionPieceInput {
   id: string;

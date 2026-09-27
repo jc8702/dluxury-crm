@@ -11,7 +11,9 @@ export { CardBody as CardContent } from '@/components/ui';
 // ✅ Migrado — re-exportado do novo Design System
 export { Modal } from '@/components/ui';
 export { Input } from '@/components/ui';
-export { Badge } from '@/components/ui';
+// Exporta o wrapper compatível (aceita `variant` legado), não o Badge do ui.
+export { Badge } from './Badge';
+export type { BadgeProps } from './Badge';
 export {
   Select,
   SelectGroup,

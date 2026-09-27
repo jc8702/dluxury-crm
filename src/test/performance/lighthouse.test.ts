@@ -58,8 +58,8 @@ describe('Lighthouse Performance Benchmark', () => {
         }
       }
 
-      const perfScore = runnerResult.lhr.categories.performance.score * 100;
-      const a11yScore = runnerResult.lhr.categories.accessibility.score * 100;
+      const perfScore = (runnerResult?.lhr.categories.performance.score ?? 0) * 100;
+      const a11yScore = (runnerResult?.lhr.categories.accessibility.score ?? 0) * 100;
 
       expect(perfScore).toBeGreaterThanOrEqual(90);
       expect(a11yScore).toBeGreaterThanOrEqual(90);

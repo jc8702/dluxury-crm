@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { X, Calendar, MapPin, Clock, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { useCrmStore as useCRM } from '../../stores/useCrmStore';
 import { useEscClose } from '../../hooks/useEscClose';
 import { Card } from '../common';
 
@@ -16,7 +15,6 @@ interface ModalEventoProps {
 const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, eventToEdit }) => {
   const { error: toastError } = useToast();
   useEscClose(isOpen ? onClose : () => {});
-  const { clients: ctxClients } = useCRM();
   const [clientsList, setClientsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -123,7 +121,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await api.events.remove(eventToEdit.id);
+      await api.agenda.delete(eventToEdit.id);
       onSave();
       onClose();
     } catch (error: any) {
@@ -319,7 +317,7 @@ const ModalEvento: React.FC<ModalEventoProps> = ({ isOpen, onClose, onSave, even
             </div>
 
             {formData.tipo === 'visita' && (
-              <Card variant="primary" padding="md" className="animate-fade-in flex flex-col gap-4">
+              <Card variant="accent" padding="md" className="animate-fade-in flex flex-col gap-4">
                 <div>
                   <label className="label-base" style={{ color: 'hsl(var(--primary))' }}>
                     OBJETIVO

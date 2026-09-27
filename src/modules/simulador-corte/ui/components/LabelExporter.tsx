@@ -1,6 +1,14 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import type { LayoutSimulacao, SimulationProgram, SimulationMetrics, CncConfig, SetupDiff, IssueWithRecommendation } from '../../domain/types';
+import type {
+  LayoutSimulacao,
+  SimulationProgram,
+  SimulationMetrics,
+  CncConfig,
+  SetupDiff,
+  IssueWithRecommendation,
+  PecaSimulacao,
+} from '../../domain/types';
 
 /**
  * Exporta um relatório técnico em formato PDF com os dados de simulação CNC e métricas de ciclo.
@@ -9,7 +17,7 @@ export async function exportarRelatorioCNC(
   layout: LayoutSimulacao,
   program: SimulationProgram,
   metrics: SimulationMetrics,
-  nomePlano: string = 'Simulação CNC'
+  nomePlano: string = 'Simulação CNC',
 ) {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -24,7 +32,7 @@ export async function exportarRelatorioCNC(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(226, 172, 0); // Amarelo/Âmbar (#E2AC00)
-  doc.text("RELATÓRIO DE SIMULAÇÃO CNC", 14, 16);
+  doc.text('RELATÓRIO DE SIMULAÇÃO CNC', 14, 16);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -43,14 +51,22 @@ export async function exportarRelatorioCNC(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.text(`Chapa Selecionada: ${layout.chapa.sku}`, 18, 58);
-  doc.text(`Dimensões MDF: ${layout.chapa.largura} x ${layout.chapa.altura} x ${layout.chapa.espessura} mm`, 18, 64);
-  doc.text(`Aproveitamento Nominal: ${layout.aproveitamento_percentual.toFixed(1)}% | Peças Posicionadas: ${layout.pecas.length} UN`, 18, 69);
+  doc.text(
+    `Dimensões MDF: ${layout.chapa.largura} x ${layout.chapa.altura} x ${layout.chapa.espessura} mm`,
+    18,
+    64,
+  );
+  doc.text(
+    `Aproveitamento Nominal: ${layout.aproveitamento_percentual.toFixed(1)}% | Peças Posicionadas: ${layout.pecas.length} UN`,
+    18,
+    69,
+  );
 
   // 1. MÉTRICAS DO CICLO CNC (Seção central)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(226, 172, 0);
-  doc.text("1. PARÂMETROS E MÉTRICAS DE EXECUÇÃO", 14, 84);
+  doc.text('1. PARÂMETROS E MÉTRICAS DE EXECUÇÃO', 14, 84);
   doc.line(14, 86, 196, 86);
 
   // Colunas de métricas
@@ -114,7 +130,7 @@ export async function exportarRelatorioCNC(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(226, 172, 0);
-  doc.text("2. VERIFICAÇÃO DE SEGURANÇA E SETUP", 14, 130);
+  doc.text('2. VERIFICAÇÃO DE SEGURANÇA E SETUP', 14, 130);
   doc.line(14, 132, 196, 132);
 
   if (program.issues.length === 0) {
@@ -123,9 +139,13 @@ export async function exportarRelatorioCNC(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(22, 101, 52); // Verde escuro
-    doc.text("NENHUM ERRO OU COLISÃO DETECTADOS.", 20, 144);
+    doc.text('NENHUM ERRO OU COLISÃO DETECTADOS.', 20, 144);
     doc.setFont('helvetica', 'normal');
-    doc.text("O percurso de corte está seguro e validado para execução no chão de fábrica.", 20, 148);
+    doc.text(
+      'O percurso de corte está seguro e validado para execução no chão de fábrica.',
+      20,
+      148,
+    );
   } else {
     let issueY = 138;
     program.issues.forEach((issue) => {
@@ -136,7 +156,11 @@ export async function exportarRelatorioCNC(
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(isError ? 153 : 146, isError ? 27 : 64, isError ? 27 : 14);
-      doc.text(`[${issue.codigo}] ${issue.mensagem} (${formatarTempo(issue.tempo)})`, 18, issueY + 5);
+      doc.text(
+        `[${issue.codigo}] ${issue.mensagem} (${formatarTempo(issue.tempo)})`,
+        18,
+        issueY + 5,
+      );
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
@@ -148,11 +172,11 @@ export async function exportarRelatorioCNC(
   }
 
   // 3. TABELA DE PEÇAS A SEREM IDENTIFICADAS
-  const pecasY = Math.max(165, 145 + (program.issues.length * 17) + 15);
+  const pecasY = Math.max(165, 145 + program.issues.length * 17 + 15);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(226, 172, 0);
-  doc.text("3. COMPONENTES DO NESTING DE CORTE", 14, pecasY);
+  doc.text('3. COMPONENTES DO NESTING DE CORTE', 14, pecasY);
   doc.line(14, pecasY + 2, 196, pecasY + 2);
 
   // Tabela simples de peças
@@ -160,11 +184,11 @@ export async function exportarRelatorioCNC(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(17, 24, 39);
-  doc.text("ID Peça", 16, currentY);
-  doc.text("Nome da Peça / SKU", 32, currentY);
-  doc.text("Comprimento", 100, currentY);
-  doc.text("Largura", 130, currentY);
-  doc.text("Posição (X, Y)", 160, currentY);
+  doc.text('ID Peça', 16, currentY);
+  doc.text('Nome da Peça / SKU', 32, currentY);
+  doc.text('Comprimento', 100, currentY);
+  doc.text('Largura', 130, currentY);
+  doc.text('Posição (X, Y)', 160, currentY);
   doc.line(14, currentY + 2, 196, currentY + 2);
 
   doc.setFont('helvetica', 'normal');
@@ -189,7 +213,7 @@ export async function exportarRelatorioCNC(
  */
 export async function exportarEtiquetasCNC(
   layout: LayoutSimulacao,
-  nomePlano: string = 'Simulação CNC'
+  nomePlano: string = 'Simulação CNC',
 ) {
   // Configuração de etiqueta térmica industrial (100x50mm)
   const doc = new jsPDF({
@@ -258,9 +282,9 @@ export async function exportarEtiquetasCNC(
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(6);
       doc.setTextColor(156, 163, 175);
-      doc.text("SCAN RASTREAMENTO", 82, 34, { align: 'center' });
+      doc.text('SCAN RASTREAMENTO', 82, 34, { align: 'center' });
     } catch (err) {
-      console.warn("Erro ao gerar código QR na etiqueta:", err);
+      console.warn('Erro ao gerar código QR na etiqueta:', err);
     }
   }
 
@@ -298,7 +322,7 @@ export async function exportarEtiquetasCNC(
       doc.text(`${esp.largura} x ${esp.altura} mm`, 5, 26);
 
       // Cálculo de metragem quadrada do retalho
-      const areaM2 = (esp.largura * esp.altura / 1e6).toFixed(2);
+      const areaM2 = ((esp.largura * esp.altura) / 1e6).toFixed(2);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
@@ -306,7 +330,7 @@ export async function exportarEtiquetasCNC(
       doc.text(`Área Útil: ${areaM2} m²`, 5, 32);
       doc.text(`Espessura: ${layout.chapa.espessura}mm`, 5, 36);
       doc.text(`Coordenadas: X:${esp.x} Y:${esp.y}`, 5, 41);
-      doc.text("Retornar ao estoque físico.", 5, 46);
+      doc.text('Retornar ao estoque físico.', 5, 46);
 
       // QR Code do Retalho
       try {
@@ -330,9 +354,9 @@ export async function exportarEtiquetasCNC(
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6);
         doc.setTextColor(16, 185, 129);
-        doc.text("RETALHO CADASTRADO", 82, 34, { align: 'center' });
+        doc.text('RETALHO CADASTRADO', 82, 34, { align: 'center' });
       } catch (err) {
-        console.warn("Erro ao gerar QR code do retalho:", err);
+        console.warn('Erro ao gerar QR code do retalho:', err);
       }
     }
   }
@@ -353,11 +377,17 @@ export interface SafetyReportData {
 export async function exportarRelatorioSeguranca(
   report: SafetyReportData,
   nomePlano: string = 'Simulação CNC',
-  dataSimulacao?: { tempoTotal: number; distanciaTotal: number }
+  dataSimulacao?: { tempoTotal: number; distanciaTotal: number },
 ) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const { config, diffs, issuesWithRecs, totalErrors, totalWarnings, totalResolved, totalBlocked } = report;
-  const fmtTempo = (seg: number) => `${Math.floor(seg / 60).toString().padStart(2, '0')}:${Math.floor(seg % 60).toString().padStart(2, '0')} min`;
+  const { config, diffs, issuesWithRecs, totalErrors, totalWarnings, totalResolved, totalBlocked } =
+    report;
+  const fmtTempo = (seg: number) =>
+    `${Math.floor(seg / 60)
+      .toString()
+      .padStart(2, '0')}:${Math.floor(seg % 60)
+      .toString()
+      .padStart(2, '0')} min`;
 
   // Cabeçalho
   doc.setFillColor(17, 24, 39);
@@ -365,7 +395,7 @@ export async function exportarRelatorioSeguranca(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(226, 172, 0);
-  doc.text("RELATÓRIO DE SEGURANÇA CNC", 14, 16);
+  doc.text('RELATÓRIO DE SEGURANÇA CNC', 14, 16);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(156, 163, 175);
@@ -374,21 +404,41 @@ export async function exportarRelatorioSeguranca(
 
   // Sumário executivo
   const summaryY = 45;
-  doc.setFillColor(totalErrors > 0 ? 254 : 240, totalErrors > 0 ? 242 : 253, totalErrors > 0 ? 242 : 244);
+  doc.setFillColor(
+    totalErrors > 0 ? 254 : 240,
+    totalErrors > 0 ? 242 : 253,
+    totalErrors > 0 ? 242 : 244,
+  );
   doc.rect(14, summaryY, 182, 24, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(totalErrors > 0 ? 153 : 22, totalErrors > 0 ? 27 : 101, totalErrors > 0 ? 27 : 52);
-  doc.text(totalErrors > 0
-    ? `⚠ ${totalErrors} ERRO(S) DETECTADO(S) — INTERVENÇÃO RECOMENDADA`
-    : `✓ NENHUM ERRO — SIMULAÇÃO SEGURA`, 18, summaryY + 7);
+  doc.setTextColor(
+    totalErrors > 0 ? 153 : 22,
+    totalErrors > 0 ? 27 : 101,
+    totalErrors > 0 ? 27 : 52,
+  );
+  doc.text(
+    totalErrors > 0
+      ? `⚠ ${totalErrors} ERRO(S) DETECTADO(S) — INTERVENÇÃO RECOMENDADA`
+      : `✓ NENHUM ERRO — SIMULAÇÃO SEGURA`,
+    18,
+    summaryY + 7,
+  );
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(75, 85, 99);
-  doc.text(`Warnings: ${totalWarnings} | Resolvíveis: ${totalResolved} | Bloqueados: ${totalBlocked}`, 18, summaryY + 16);
+  doc.text(
+    `Warnings: ${totalWarnings} | Resolvíveis: ${totalResolved} | Bloqueados: ${totalBlocked}`,
+    18,
+    summaryY + 16,
+  );
 
   if (dataSimulacao) {
-    doc.text(`Tempo total: ${fmtTempo(dataSimulacao.tempoTotal)} | Distância: ${(dataSimulacao.distanciaTotal / 1000).toFixed(2)} m`, 18, summaryY + 22);
+    doc.text(
+      `Tempo total: ${fmtTempo(dataSimulacao.tempoTotal)} | Distância: ${(dataSimulacao.distanciaTotal / 1000).toFixed(2)} m`,
+      18,
+      summaryY + 22,
+    );
   }
 
   // 1. Diffs aplicados
@@ -397,7 +447,7 @@ export async function exportarRelatorioSeguranca(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(16, 185, 129);
-    doc.text("AJUSTES AUTOMÁTICOS APLICADOS", 14, yPos);
+    doc.text('AJUSTES AUTOMÁTICOS APLICADOS', 14, yPos);
     doc.line(14, yPos + 1, 196, yPos + 1);
     yPos += 8;
 
@@ -415,7 +465,7 @@ export async function exportarRelatorioSeguranca(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(226, 172, 0);
-  doc.text("POLÍTICA DE COLISÃO", 14, yPos);
+  doc.text('POLÍTICA DE COLISÃO', 14, yPos);
   doc.line(14, yPos + 1, 196, yPos + 1);
   yPos += 8;
   doc.setFont('helvetica', 'normal');
@@ -427,14 +477,18 @@ export async function exportarRelatorioSeguranca(
     suggest: 'SUGERIR AJUSTE — Exibe recomendações e aguarda confirmação',
     auto: 'AUTO-AJUSTAR SEGURO — Aplica correções automáticas',
   };
-  doc.text(`Política atual: ${policyLabels[config.machine.collisionPolicy] || config.machine.collisionPolicy}`, 18, yPos);
+  doc.text(
+    `Política atual: ${policyLabels[config.machine.collisionPolicy] || config.machine.collisionPolicy}`,
+    18,
+    yPos,
+  );
   yPos += 10;
 
   // 3. Configuração da máquina
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(226, 172, 0);
-  doc.text("CONFIGURAÇÃO DA MÁQUINA", 14, yPos);
+  doc.text('CONFIGURAÇÃO DA MÁQUINA', 14, yPos);
   doc.line(14, yPos + 1, 196, yPos + 1);
   yPos += 8;
 
@@ -461,7 +515,10 @@ export async function exportarRelatorioSeguranca(
   let colX = 18;
   let colIdx = 0;
   params.forEach(([label, value]) => {
-    if (colIdx > 0 && colIdx % 2 === 0) { colX = 18; yPos += 5; }
+    if (colIdx > 0 && colIdx % 2 === 0) {
+      colX = 18;
+      yPos += 5;
+    }
     doc.text(`${label}: ${value}`, colX, yPos);
     colX += 95;
     colIdx++;
@@ -483,13 +540,16 @@ export async function exportarRelatorioSeguranca(
       doc.setTextColor(75, 85, 99);
       doc.text(`${c.id}: X=${c.x} Y=${c.y} ${c.largura}x${c.altura}mm`, 18, yPos);
       yPos += 4.5;
-      if (yPos > 275) { doc.addPage(); yPos = 20; }
+      if (yPos > 275) {
+        doc.addPage();
+        yPos = 20;
+      }
     });
   } else {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(156, 163, 175);
-    doc.text("Nenhum clamp definido. Usando clamps padrão.", 18, yPos);
+    doc.text('Nenhum clamp definido. Usando clamps padrão.', 18, yPos);
     yPos += 5;
   }
   yPos += 4;
@@ -498,7 +558,7 @@ export async function exportarRelatorioSeguranca(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(226, 172, 0);
-  doc.text("HISTÓRICO DE ANOMALIAS DETECTADAS", 14, yPos);
+  doc.text('HISTÓRICO DE ANOMALIAS DETECTADAS', 14, yPos);
   doc.line(14, yPos + 1, 196, yPos + 1);
   yPos += 8;
 
@@ -506,10 +566,13 @@ export async function exportarRelatorioSeguranca(
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(22, 101, 52);
-    doc.text("Nenhuma anomalia detectada. Simulação segura para execução.", 18, yPos);
+    doc.text('Nenhuma anomalia detectada. Simulação segura para execução.', 18, yPos);
   } else {
     issuesWithRecs.forEach((iwr) => {
-      if (yPos > 270) { doc.addPage(); yPos = 20; }
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
       const issue = iwr.issue;
       const isError = issue.severidade === 'error';
       doc.setFillColor(isError ? 254 : 255, isError ? 242 : 251, isError ? 242 : 235);
@@ -523,7 +586,11 @@ export async function exportarRelatorioSeguranca(
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(75, 85, 99);
-      doc.text(`Posição: X:${issue.posicao.x.toFixed(0)} Y:${issue.posicao.y.toFixed(0)} Z:${issue.posicao.z.toFixed(0)}`, 18, yPos + 8);
+      doc.text(
+        `Posição: X:${issue.posicao.x.toFixed(0)} Y:${issue.posicao.y.toFixed(0)} Z:${issue.posicao.z.toFixed(0)}`,
+        18,
+        yPos + 8,
+      );
       doc.text(`Sugestão: ${issue.sugestao}`, 18, yPos + 12);
 
       if (iwr.bestRecommendation) {
@@ -557,7 +624,7 @@ export async function exportarEtiquetaIndividualCNC(
   index: number,
   totalPieces: number,
   nomePlano: string = 'Simulação CNC',
-  skuChapa: string = 'MDF'
+  skuChapa: string = 'MDF',
 ) {
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -622,9 +689,9 @@ export async function exportarEtiquetaIndividualCNC(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6);
     doc.setTextColor(156, 163, 175);
-    doc.text("SCAN RASTREAMENTO", 82, 34, { align: 'center' });
+    doc.text('SCAN RASTREAMENTO', 82, 34, { align: 'center' });
   } catch (err) {
-    console.warn("Erro ao gerar código QR na etiqueta:", err);
+    console.warn('Erro ao gerar código QR na etiqueta:', err);
   }
 
   // Rodapé
@@ -633,7 +700,9 @@ export async function exportarEtiquetaIndividualCNC(
   doc.setTextColor(107, 114, 128);
   doc.text(`D'LUXURY — ${new Date().toLocaleDateString('pt-BR')}`, 82, 46, { align: 'center' });
 
-  const safeNome = peca.nome.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const safeNome = peca.nome
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '');
   doc.save(`etiqueta-${safeNome}-${peca.comprimento}x${peca.largura}.pdf`);
 }
-

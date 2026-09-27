@@ -1,21 +1,23 @@
 import { test, expect } from '@playwright/test';
 
+// Contrato do backend (tenantMiddleware): 401 = sem sessão/token inválido;
+// 403 = sessão válida, porém sem permissão de tenant.
 test.describe('Isolamento de Tenant', () => {
-  test('API retorna 403 sem token', async ({ request }) => {
+  test('API retorna 401 sem token', async ({ request }) => {
     const response = await request.get('/api/quotations', {
       headers: { Authorization: '' },
     });
-    expect(response.status()).toBe(403);
+    expect(response.status()).toBe(401);
   });
 
-  test('API retorna 403 com token inválido', async ({ request }) => {
+  test('API retorna 401 com token inválido', async ({ request }) => {
     const response = await request.get('/api/quotations', {
       headers: { Authorization: 'Bearer token_invalido_123' },
     });
-    expect(response.status()).toBe(403);
+    expect(response.status()).toBe(401);
   });
 
-  test('API retorna 403 com UUID de tenant inexistente', async ({ request }) => {
+  test('API bloqueia JWT de tenant inexistente (401 ou 403)', async ({ request }) => {
     const fakeJwt =
       'eyJhbGciOiJIUzI1NiJ9.eyJ0ZW5hbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCJ9.fake';
     const response = await request.get('/api/quotations', {

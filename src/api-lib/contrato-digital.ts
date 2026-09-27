@@ -203,7 +203,7 @@ const handleContratoDigitalCore: TenantHandler = async (req, res) => {
           and(eq(quotationItems.quotationId, quotation_id), eq(quotationItems.tenantId, tenantId)),
         );
 
-      const mappedItens = itens.map((item) => ({
+      const mappedItens = itens.map((item: any) => ({
         id: item.id,
         quotation_id: item.quotationId,
         sku_codigo: item.skuCodigo || '',
@@ -393,7 +393,7 @@ const handleContratoDigitalCore: TenantHandler = async (req, res) => {
               ),
             );
 
-          const mappedItensOrcamento = itensOrcamento.map((item) => ({
+          const mappedItensOrcamento = itensOrcamento.map((item: any) => ({
             id: item.id,
             sku_codigo: item.skuCodigo || '',
             quantidade: item.quantidade ? parseFloat(item.quantidade) : 0,

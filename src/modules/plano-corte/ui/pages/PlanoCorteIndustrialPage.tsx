@@ -445,7 +445,6 @@ export default function PlanoCorteIndustrialPage() {
 
       const retalhos_gerados: any[] = [];
       Object.values(resultados).forEach((res) => {
-        const qtdChapas = res.chapas_necessarias || 1;
         res.layouts.forEach((layout) => {
           layout.espacos_livres?.forEach((sobra) => {
             if (sobra.largura >= 300 && sobra.altura >= 300) {
@@ -811,9 +810,61 @@ export default function PlanoCorteIndustrialPage() {
       {/* MODALS E TOASTS */}
       {showExportModal && resultadoAtivo && (
         <ExportacaoModal
-          resultado={resultadoAtivo as any} // Ajustar tipagem legada se necessário
+          resultado={{
+            grupos: [],
+            totalPecasPositionadas: resultadoAtivo.layouts.reduce(
+              (s, l) => s + l.pecas_posicionadas.length,
+              0,
+            ),
+            totalChapasInteiras: resultadoAtivo.chapas_necessarias,
+            totalRetalhosUsados: resultadoAtivo.retalhos_utilizados || 0,
+            aproveitamentoGeral: resultadoAtivo.aproveitamento_percentual,
+            custoTotalMaterial: 0,
+            sobrasGeradas: [],
+            tempoCalculoMs: resultadoAtivo.tempo_calculo_ms || 0,
+            pecasNaoEncaixadas: (resultadoAtivo.pecas_rejeitadas || []).map((p) => ({
+              pecaId: p.id,
+              descricao: p.nome,
+              largura: p.largura,
+              altura: p.altura,
+              grupoMaterialId: '',
+            })) as any,
+          }}
           planoNome={projeto.nome}
-          activeSuperficie={resultadoAtivo.layouts[0]}
+          activeSuperficie={
+            resultadoAtivo.layouts[0]
+              ? {
+                  id: String(resultadoAtivo.layouts[0].indice_chapa ?? 0),
+                  tipo: resultadoAtivo.layouts[0].tipo === 'retalho' ? 'retalho' : 'inteira',
+                  largura: resultadoAtivo.layouts[0].largura_original_mm,
+                  altura: resultadoAtivo.layouts[0].altura_original_mm,
+                  espacosLivres: (resultadoAtivo.layouts[0].espacos_livres || []).map((e) => ({
+                    x: e.x,
+                    y: e.y,
+                    width: e.largura,
+                    height: e.altura,
+                  })),
+                  pecasPositionadas: resultadoAtivo.layouts[0].pecas_posicionadas.map((p) => ({
+                    pecaId: p.id,
+                    descricao: p.nome,
+                    superficieId: '',
+                    grupoMaterialId: '',
+                    x: p.x,
+                    y: p.y,
+                    largura: p.largura,
+                    altura: p.altura,
+                    rotacionada: p.rotacionada,
+                    corEtiqueta: '#6B7280',
+                    numeroEtiqueta: 0,
+                    areaMm2: p.largura * p.altura,
+                    custoProporcional: 0,
+                  })),
+                  aproveitamentoPct: resultadoAtivo.aproveitamento_percentual,
+                  custoTotal: 0,
+                  retalhoId: resultadoAtivo.layouts[0].retalho_id,
+                }
+              : undefined
+          }
           activeChapaIdx={0}
           onClose={() => setShowExportModal(false)}
         />

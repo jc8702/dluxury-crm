@@ -203,8 +203,6 @@ export default function QuotationForm() {
     const isImporting = getImportFlagFromUrl();
     if (isImporting && orcamentoId) {
       setIsImportModalOpen(true);
-      const newUrl = window.location.pathname + window.location.hash.split('?')[0];
-      const cleanUrl = orcamentoId ? `${newUrl}?id=${orcamentoId}` : newUrl;
       // Mantém ?id na search para compatibilidade mas remove &import
       window.history.replaceState(
         {},
@@ -850,7 +848,6 @@ export default function QuotationForm() {
         onAddItems={async (items) => {
           const ok = await importItems(items);
           if (ok) fetchRecentes();
-          return ok;
         }}
         orcamentoId={orcamentoId || ''}
       />

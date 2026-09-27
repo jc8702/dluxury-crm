@@ -2,7 +2,7 @@
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useCrmStore as useCRM } from '../../stores/useCrmStore';
-import { ArrowLeft, Edit2, Trash2, Plus, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Plus, Loader2 } from 'lucide-react';
 import { WhatsAppService } from '../../modules/plano-corte/infrastructure/services/WhatsAppService';
 import { Button, Card } from '../../components/ui';
 import { CardBody as CardContent } from '../../components/ui';
@@ -526,7 +526,7 @@ const ProductionPanel: React.FC = () => {
                 Configure as tarefas e confira as peças.
               </span>
               <Button
-                variant="destructive"
+                variant="danger"
                 size="sm"
                 onClick={() => deleteOP(editingOP.op_id)}
                 disabled={deleting}

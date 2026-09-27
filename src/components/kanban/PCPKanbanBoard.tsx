@@ -4,16 +4,7 @@ import type { KanbanBoardData, KanbanCardType } from '../../services/kanbanServi
 import KanbanColumn from './KanbanColumn.tsx';
 import KanbanFilters from './KanbanFilters.tsx';
 import KanbanCardDetail from './KanbanCardDetail.tsx';
-import { Activity, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react';
-
-interface KanbanBoardProps {
-  title?: string;
-  items?: any;
-  columns?: any;
-  onMove?: any;
-  onEdit?: any;
-  onDelete?: any;
-}
+import { ShieldAlert, RefreshCw } from 'lucide-react';
 
 export default function PCPKanbanBoard() {
   const [boardData, setBoardData] = useState<KanbanBoardData>({
@@ -38,7 +29,10 @@ export default function PCPKanbanBoard() {
     setLoading(true);
     setError(null);
     try {
-      const data: any = await kanbanService.getBoard(filtros);
+      const data: any = await kanbanService.getBoard({
+        ...filtros,
+        filtro_prioridade: filtros.filtro_prioridade === '' ? undefined : filtros.filtro_prioridade,
+      });
       // Defesa contra mock que retorna array ou formato inesperado
       if (Array.isArray(data)) {
         setBoardData({ a_fazer: [], em_progresso: [], bloqueado: [], concluido: [] });
